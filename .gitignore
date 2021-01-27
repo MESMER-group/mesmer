@@ -1,4 +1,5 @@
 
+startup
 tmp/
 #*.ipynb #if want to ignore ipython notebooks
 
