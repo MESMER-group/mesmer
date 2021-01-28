@@ -49,7 +49,6 @@ esms = [
 # - "GISS-E2-1-G" (sth wrong when reading in files, index issue)
 
 # to have unique seed for each esm no matter which ones I currently emulate
-# all_esms = ["CanESM5", "IPSL-CM6A-LR", "MPI-ESM1-2-LR","UKESM1-0-LL"]  # not all at all. But it is just for prototype development + tests -> should be fine
 all_esms = [
     "ACCESS-CM2",
     "ACCESS-ESM1-5",
@@ -111,9 +110,8 @@ scenarios_emus = [
     "ssp126",
     "ssp119",
 ]  # scenarios emulated
-# scen_name_tr = "hist_" + "_".join(scenarios_tr) #needed?!?! try without -> see how far I get
 
-hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly)
+hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly + think about how to deal with baseline period)
 wgt_scen_tr_eq= True # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
 
@@ -166,29 +164,29 @@ for esm in all_esms:
         j += 1
     i += 1
 
-# predictors
+# predictors (for global module)
 preds = {}
 preds["tas"] = {}  # predictors for the target variable tas
+preds["hfds"] = {}
 preds["tas"]["gt"] = ["saod"]
+preds["hfds"]["gt"] = []
 preds["tas"]["gv"] = []
 preds["tas"]["g_all"] = preds["tas"]["gt"] + preds["tas"]["gv"]
-#preds["tas"]["lt"] = ["gttas", "gttas2", "gthfds"]
-#preds["tas"]["lv"] = ["gvtas"]  
-#preds["tas"]["l_all"] = preds["tas"]["lt"] + preds["tas"]["lv"]
 
-# methods
+# methods (for all modules)
 methods = {}
 methods["tas"] = {}  # methods for the target variable tas
+methods["hfds"] = {}
 methods["tas"][
     "gt"
-] = "LOWESS_OLS"  # "LOWESS_OLS_" + "_".join(preds_g["tas"]["gt"])  # global trend emulation method
+] = "LOWESS_OLSVOLC" # global trend emulation method
+methods["hfds"]["gt"] = "LOWESS"
 methods["tas"][
     "gv"
-] = "AR"  # "AR" + "_".join(preds_g["tas"]["gv"])  # global variability emulation method
-methods["tas"]["lt"] = "OLS"  # "OLS_" + "_".join(preds_l["tas"]["lt"])
+] = "AR"  # global variability emulation method
+methods["tas"]["lt"] = "OLS"  # local trends emulation method
 method_lt_each_gp_sep = True  # method local trends applied to each gp separately
-methods["tas"]["lv"] = "OLS_AR1_sci"
-#("OLS_" + "_".join(preds_l["tas"]["lv"]) + "_AR1_sci")  # local variability emulation OLS to global var and  AR(1) process with spatially correlated innovations
+methods["tas"]["lv"] = "OLS_AR1_sci" # local variability emulation method
 
 
 # plots
