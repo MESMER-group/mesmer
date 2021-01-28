@@ -70,22 +70,28 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     params_gt["scenarios"] = scenarios_tr  # single entry in case of ic ensemble
 
     for scen in params_gt["scenarios"]:
-        params_gt[scen]={}
+        params_gt[scen] = {}
         params_gt[scen]["time"] = time[scen]
-    
+
     # apply the chosen method to the type of ensenble
     if "LOWESS" in params_gt["method"]:
         for scen in params_gt["scenarios"]:  # ie derive gt for each scen individually
-            params_gt[scen]["gt"],params_gt[scen]["frac_lowess"] = train_gt_ic_LOWESS(var[scen])
+            params_gt[scen]["gt"], params_gt[scen]["frac_lowess"] = train_gt_ic_LOWESS(
+                var[scen]
+            )
 
     if params_gt["method"] == "LOWESS_OLSVOLC":
         for scen in params_gt["scenarios"]:  # ie derive gt for each scen individually
-            if time[scen].min()<2000: # check if historical period is part of the training runs
+            if (
+                time[scen].min() < 2000
+            ):  # check if historical period is part of the training runs
                 # overwrites existing smooth trend with smooth trend + volcanic spikes
-                params_gt[scen]["saod"],params_gt[scen]["gt"]=train_gt_ic_OLSVOLC(var[scen],params_gt[scen]["gt"],time[scen],cfg)
+                params_gt[scen]["saod"], params_gt[scen]["gt"] = train_gt_ic_OLSVOLC(
+                    var[scen], params_gt[scen]["gt"], time[scen], cfg
+                )
             else:  # no volcanic eruptions in the scenario time period
-                params_gt[scen]["saod"]=None
-                params_gt[scen]["gt"]=gt_lowess[scen]
+                params_gt[scen]["saod"] = None
+                params_gt[scen]["gt"] = gt_lowess[scen]
 
     # save the global trend paramters if requested
     if save_params:
@@ -129,24 +135,24 @@ def train_gt_ic_LOWESS(var):
 
     # number time steps
     nr_ts = var.shape[1]
-    
+
     # average across all runs to get a first smoothing
-    av_var = np.mean(var,axis=0)
-    
+    av_var = np.mean(var, axis=0)
+
     # apply lowess smoother to further smooth the Tglob time series
     frac_lowess = (
         50 / nr_ts
     )  # rather arbitrarily chosen value that gives a smooth enough trend,
     # open to changes but if much smaller, var trend ends up very wiggly
-    
+
     gt_lowess = lowess(
         av_var, np.arange(nr_ts), return_sorted=False, frac=frac_lowess, it=0
     )
-    
+
     return gt_lowess, frac_lowess
 
 
-def train_gt_ic_OLSVOLC(var, gt_lowess,time , cfg):
+def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     """ Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble by adding volcanic spikes to LOWESS trend.
 
     Args:
@@ -165,8 +171,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess,time , cfg):
     gen = cfg.gen
     dir_obs = cfg.dir_obs
 
-    nr_runs,nr_ts = var.shape
-    
+    nr_runs, nr_ts = var.shape
+
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
     aod_obs = load_strat_aod(time, gen, dir_obs).reshape(
@@ -195,4 +201,4 @@ def train_gt_ic_OLSVOLC(var, gt_lowess,time , cfg):
     coef_saod = linreg_gv_volc.coef_[0]
     gt = contrib_volc + gt_lowess
 
-    return coef_saod,gt
+    return coef_saod, gt

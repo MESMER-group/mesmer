@@ -6,6 +6,7 @@ Functions to merge emulations of different MESMER modules.
 
 Functions:
     create_emus_g_T()
+    create_emus_l()
 
 """
 

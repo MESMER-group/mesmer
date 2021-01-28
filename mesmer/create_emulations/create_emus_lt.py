@@ -60,7 +60,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, scenarios="emus", save_emus=True):
     dir_mesmer_emus = cfg.dir_mesmer_emus
 
     # check predictors
-    pred_names=list(preds_lt.keys())
+    pred_names = list(preds_lt.keys())
     if pred_names != params_lt["preds"]:  # check if correct predictors
         print("Wrong predictors were passed. The emulations cannot be created.")
 

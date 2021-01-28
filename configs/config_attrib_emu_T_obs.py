@@ -149,7 +149,7 @@ scenarios_emus = [
 ]  # scenarios emulated <- for this study combine lt params with MAGICC for NDC (-top5) pathways
 scen_name_tr = "hist_" + "_".join(scenarios_tr)
 hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly)
-wgt_scen_tr_eq= True # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
+wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 scen_name_emus = "all"
 reg_type = "countries"
 ref = {}

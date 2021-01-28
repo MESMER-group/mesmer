@@ -20,7 +20,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 
-def train_lt(preds, targs, esm, cfg, save_params=True,res_lt=False):
+def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     """ Derive local trends (i.e., forced response) parameters for given ESM for given set of tragets and predictors.
 
     Args:
@@ -66,26 +66,25 @@ def train_lt(preds, targs, esm, cfg, save_params=True,res_lt=False):
     """
 
     targ_names = list(targs.keys())
-    targ_name = targ_names[0] # because same approach for each targ
+    targ_name = targ_names[0]  # because same approach for each targ
     pred_names = list(preds.keys())
-    
-    # specify necessary variables from config file    
+
+    # specify necessary variables from config file
     ens_type_tr = cfg.ens_type_tr
     hist_tr = cfg.hist_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
-    
+
     preds_lt = []
     preds_lv = []
-    # for now only gt/gv implemented, but could easily extend to rt/rv (regional) lt/lv (local)  if wanted such preds  
-    for pred in pred_names:  
-        if 'gt' in pred:
+    # for now only gt/gv implemented, but could easily extend to rt/rv (regional) lt/lv (local)  if wanted such preds
+    for pred in pred_names:
+        if "gt" in pred:
             preds_lt.append(pred)
-        elif 'gv' in pred:
+        elif "gv" in pred:
             preds_lv.append(pred)
 
-    
-    method_lt = cfg.methods[targ_name]["lt"] #+"_" + "_".join(preds_lt)
-    method_lv = cfg.methods[targ_name]["lv"] #+"_" + "_".join(preds_lv)
+    method_lt = cfg.methods[targ_name]["lt"]  # +"_" + "_".join(preds_lt)
+    method_lv = cfg.methods[targ_name]["lv"]  # +"_" + "_".join(preds_lv)
     method_lt_each_gp_sep = cfg.method_lt_each_gp_sep
     dir_mesmer_params = cfg.dir_mesmer_params
 
@@ -103,7 +102,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True,res_lt=False):
     params_lt["method"] = method_lt
     params_lt["method_each_gp_sep"] = method_lt_each_gp_sep
     params_lt["preds"] = preds_lt
-    params_lt["scenarios"] = scenarios_tr 
+    params_lt["scenarios"] = scenarios_tr
 
     # select the method from a dict of fcts
     training_method_func_mapping = {"OLS": LinearRegression().fit}
@@ -115,7 +114,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True,res_lt=False):
     X, y, wgt_scen_eq = train_lt_prepare_X_y_wgteq(preds, targs, method_lt_each_gp_sep)
 
     # prepare weights for individual runs
-    
+
     # train the full model + save it (may also contain lv module parts)
     params_lt["full_model"] = {}
     if wgt_scen_tr_eq:
@@ -310,11 +309,13 @@ def train_lt_prepare_X_y_wgteq(preds, targs, method_lt_each_gp_sep):
 
     """
     targ_names = list(targs.keys())
-    targ_name = targ_names[0] # because same approach for each targ
+    targ_name = targ_names[0]  # because same approach for each targ
     pred_names = list(preds.keys())
-    
+
     # identify characteristics of the predictors and the targets
-    targ = targs[targ_name]  # predictors are not influenced by whether there is a single or there are multiple targets
+    targ = targs[
+        targ_name
+    ]  # predictors are not influenced by whether there is a single or there are multiple targets
     scens = list(targ.keys())
 
     # assumption: nr_runs per scen and nr_ts for these runs can vary
@@ -323,18 +324,18 @@ def train_lt_prepare_X_y_wgteq(preds, targs, method_lt_each_gp_sep):
     for scen in scens:
         nr_runs, nr_ts, nr_gps = targ[scen].shape
         nr_samples_scen = nr_runs * nr_ts
-        wgt_scen_eq=np.append(wgt_scen_eq,np.repeat(1/nr_runs,nr_samples_scen))
+        wgt_scen_eq = np.append(wgt_scen_eq, np.repeat(1 / nr_runs, nr_samples_scen))
         nr_samples += nr_samples_scen
-        
+
     nr_preds = len(pred_names)
     nr_targs = len(targ_names)
 
     # derive X (ie array of predictors)
     X = np.zeros([nr_samples, nr_preds])
     for p in np.arange(nr_preds):  # index for predictors
-        pred_name = pred_names[p] # name of predictor p
+        pred_name = pred_names[p]  # name of predictor p
         s = 0  # index for samples
-        pred_raw = preds[pred_name] # values of predictor p
+        pred_raw = preds[pred_name]  # values of predictor p
         for scen in scens:
             if (
                 len(pred_raw[scen].shape) == 2
