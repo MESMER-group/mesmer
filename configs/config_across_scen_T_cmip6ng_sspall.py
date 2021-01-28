@@ -112,7 +112,7 @@ scenarios_emus = [
 ]  # scenarios emulated
 
 hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly + think about how to deal with baseline period)
-wgt_scen_tr_eq= True # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
+wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
 
 scen_name_emus = "all"
@@ -177,16 +177,12 @@ preds["tas"]["g_all"] = preds["tas"]["gt"] + preds["tas"]["gv"]
 methods = {}
 methods["tas"] = {}  # methods for the target variable tas
 methods["hfds"] = {}
-methods["tas"][
-    "gt"
-] = "LOWESS_OLSVOLC" # global trend emulation method
+methods["tas"]["gt"] = "LOWESS_OLSVOLC"  # global trend emulation method
 methods["hfds"]["gt"] = "LOWESS"
-methods["tas"][
-    "gv"
-] = "AR"  # global variability emulation method
+methods["tas"]["gv"] = "AR"  # global variability emulation method
 methods["tas"]["lt"] = "OLS"  # local trends emulation method
 method_lt_each_gp_sep = True  # method local trends applied to each gp separately
-methods["tas"]["lv"] = "OLS_AR1_sci" # local variability emulation method
+methods["tas"]["lv"] = "OLS_AR1_sci"  # local variability emulation method
 
 
 # plots

@@ -5,10 +5,10 @@ import sys
 import configs.config_cmip5ng_tas_rcp85_obs as cfg
 
 # import MESMER tools
-from mesmer.calibrate_mesmer import train_gt_T, train_gv_T, train_lt, train_lv
+from mesmer.calibrate_mesmer import train_gt, train_gv_T, train_lt, train_lv
 from mesmer.create_emulations import (
     create_emus_g_T,
-    create_emus_gt_T,
+    create_emus_gt,
     create_emus_gv_T,
     create_emus_l,
     create_emus_lt,

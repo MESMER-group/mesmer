@@ -107,14 +107,14 @@ def extract_time_period(var, time, start, end):
     - time_tp (np.ndarray): 1d array of years of extracted time period
 
     """
-    
+
     # find index of start and end of time period
     idx_start = np.where(time == int(start))[0][0]
     idx_end = np.where(time == int(end))[0][0] + 1  # to include the end year
 
     # extract time period from variable dictionary
-    if len(var.shape)>1:
-        var_tp = var[:,idx_start:idx_end]
+    if len(var.shape) > 1:
+        var_tp = var[:, idx_start:idx_end]
     else:
         var_tp = var[idx_start:idx_end]
 
