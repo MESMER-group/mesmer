@@ -27,7 +27,7 @@ import xarray as xr
 
 
 def gaspari_cohn(r):
-    """ Computes the smooth, exponentially decaying Gaspari-Cohn correlation function for a given r.
+    """Computes the smooth, exponentially decaying Gaspari-Cohn correlation function for a given r.
 
     Args:
     - r (float): d/L with d = geographical distance in km, L = localisation radius in km
@@ -61,10 +61,10 @@ def gaspari_cohn(r):
 
 
 def infer_interval_breaks(x, y, clip=False):
-    """ Find edges of gridcells, given their centers.
+    """Find edges of gridcells, given their centers.
 
-        General Remarks:
-        - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
+    General Remarks:
+    - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
 
     """
 
@@ -86,14 +86,14 @@ def infer_interval_breaks(x, y, clip=False):
 
 def _infer_interval_breaks(coord, axis=0):
     """
-        >>> _infer_interval_breaks(np.arange(5))
-        array([-0.5,  0.5,  1.5,  2.5,  3.5,  4.5])
-        >>> _infer_interval_breaks([[0, 1], [3, 4]], axis=1)
-        array([[-0.5,  0.5,  1.5],
-               [ 2.5,  3.5,  4.5]])
+    >>> _infer_interval_breaks(np.arange(5))
+    array([-0.5,  0.5,  1.5,  2.5,  3.5,  4.5])
+    >>> _infer_interval_breaks([[0, 1], [3, 4]], axis=1)
+    array([[-0.5,  0.5,  1.5],
+           [ 2.5,  3.5,  4.5]])
 
-        General remarks:
-        - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
+    General remarks:
+    - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
 
     """
 
@@ -121,15 +121,15 @@ def _infer_interval_breaks(coord, axis=0):
 
 def _is_monotonic(coord, axis=0):
     """
-        >>> _is_monotonic(np.array([0, 1, 2]))
-        True
-        >>> _is_monotonic(np.array([2, 1, 0]))
-        True
-        >>> _is_monotonic(np.array([0, 2, 1]))
-        False
+    >>> _is_monotonic(np.array([0, 1, 2]))
+    True
+    >>> _is_monotonic(np.array([2, 1, 0]))
+    True
+    >>> _is_monotonic(np.array([0, 2, 1]))
+    False
 
-        General remarks:
-        - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
+    General remarks:
+    - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
 
     """
     coord = np.asarray(coord)
@@ -149,7 +149,7 @@ def _is_monotonic(coord, axis=0):
 
 
 def load_phi_gc(lon, lat, ls, cfg):
-    """ Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation matrix.
+    """Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation matrix.
 
     Args:
     - lon (dict): longitude dictionary with key
@@ -237,7 +237,7 @@ def load_phi_gc(lon, lat, ls, cfg):
 
 
 def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
-    """ Load constant files.
+    """Load constant files.
 
     Args:
     - reg_type (str): region type ('countries','srex') # remember: if additional regions will be added later on mesmer.utils.select.extract_land() needs to be adapted to account for them
@@ -313,12 +313,12 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
 
 def mask_percentage(regions, lon, lat):
-    """ Sample with 10 times higher resolution.
+    """Sample with 10 times higher resolution.
 
-        General remarks:
-        - assumes equally-spaced lat & lon!
-        - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in August 2020
-        -> prototype of what will eventually be integrated in his regionmask package
+    General remarks:
+    - assumes equally-spaced lat & lon!
+    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in August 2020
+    -> prototype of what will eventually be integrated in his regionmask package
 
     """
 
@@ -348,11 +348,11 @@ def mask_percentage(regions, lon, lat):
 
 
 def sample_coord(coord):
-    """ Sample coords for the percentage overlap.
+    """Sample coords for the percentage overlap.
 
-        General remarks:
-        - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in August 2020
-        -> prototype of what will eventually be integrated in his regionmask package
+    General remarks:
+    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in August 2020
+    -> prototype of what will eventually be integrated in his regionmask package
 
     """
     d_coord = coord[1] - coord[0]

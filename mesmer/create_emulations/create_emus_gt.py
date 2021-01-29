@@ -15,10 +15,10 @@ import joblib
 
 
 def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
-    """ Create global trend (emissions + volcanoes) emulations for specified ensemble type and method.
+    """Create global trend (emissions + volcanoes) emulations for specified ensemble type and method.
 
     Args:
-    - params_gt (dict): 
+    - params_gt (dict):
         ['targ'] (emulated variable, str)
         ['esm'] (Earth System Model, str)
         ['ens_type'] (type of ensemble which is emulated, str)
@@ -34,7 +34,7 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
     Returns:
     - emus_gt (dict): global trend emulations dictionary with keys
         [scen] (1d array of global trend emulation time series)
- 
+
     """
 
     # specify necessary variables from config file

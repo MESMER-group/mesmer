@@ -21,12 +21,12 @@ from sklearn.linear_model import LinearRegression
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
-    """ Derive local trends (i.e., forced response) parameters for given ESM for given set of tragets and predictors.
+    """Derive local trends (i.e., forced response) parameters for given ESM for given set of tragets and predictors.
 
     Args:
-    - preds (dict): nested dictionary of predictors with keys 
+    - preds (dict): nested dictionary of predictors with keys
         [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - targs (dict): nested dictionary of targets with keys 
+    - targs (dict): nested dictionary of targets with keys
         [targ][scen] with 3d arrays (run,time,gp)
     - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
     - cfg (module): config file containnig metadata
@@ -34,7 +34,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     - res_lt (bool, optional): determines if residual is fitted on or full time series
 
     Returns:
-    - params_lt (dict): dictionary with the trained local trend parameters 
+    - params_lt (dict): dictionary with the trained local trend parameters
         ['targs'] (emulated variables, str)
         ['esm'] (Earth System Model, str)
         ['ens_type'] (ensemble type, str)
@@ -216,10 +216,10 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
 
 
 def train_lt_extract_additional_params_OLS(params_lt, params_lv):
-    """ Extract additional parameters for the ordinary least squares (OLS) method.
+    """Extract additional parameters for the ordinary least squares (OLS) method.
 
     Args:
-    - params_lt (dict): dictionary with the trained local trend parameters 
+    - params_lt (dict): dictionary with the trained local trend parameters
         ['targs'] (emulated variables, str)
         ['esm'] (Earth System Model, str)
         ['ens_type'] (ensemble type, str)
@@ -291,12 +291,12 @@ def train_lt_extract_additional_params_OLS(params_lt, params_lv):
 
 
 def train_lt_prepare_X_y_wgteq(preds, targs, method_lt_each_gp_sep):
-    """ Create single array of predictors and single array of targets.
+    """Create single array of predictors and single array of targets.
 
     Args:
-    - preds (dict): nested dictionary of predictors with keys 
+    - preds (dict): nested dictionary of predictors with keys
         [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - targs (dict): nested dictionary of targets with keys 
+    - targs (dict): nested dictionary of targets with keys
         [targ][scen] with 3d arrays (run,time,gp)
     - method_lt_each_gp_sep (bool): determines if method is applied to each grid point separately
 

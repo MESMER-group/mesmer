@@ -14,7 +14,7 @@ import numpy as np
 
 
 def convert_dict_to_arr(var_dict):
-    """ Convert dictionary to array.
+    """Convert dictionary to array.
 
     Args:
     - var_dict (dict): nested variable (e.g., tas) dictionary with keys

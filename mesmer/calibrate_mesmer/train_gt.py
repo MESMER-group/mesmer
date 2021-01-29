@@ -23,14 +23,14 @@ from mesmer.io import load_strat_aod
 
 
 def train_gt(var, targ, esm, time, cfg, save_params=True):
-    """ Derive global trend (emissions + volcanoes) parameters from specified ensemble type with specified method.
+    """Derive global trend (emissions + volcanoes) parameters from specified ensemble type with specified method.
 
     Args:
     - var (dict): nested global mean variable dictionary with keys for each scenario employed for training
         [scen] (2d array (run,time) of globally-averaged variable time series)
     - targ (str): target variable (e.g., 'tas')
     - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - time (np.ndarray): 
+    - time (np.ndarray):
         [scen] (1d array of years)
     - cfg (module): config file containnig metadata
     - save_params (bool, optional): determines if parameters are saved or not, default = True
@@ -91,7 +91,6 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
                 )
             else:  # no volcanic eruptions in the scenario time period
                 params_gt[scen]["saod"] = None
-                params_gt[scen]["gt"] = gt_lowess[scen]
 
     # save the global trend paramters if requested
     if save_params:
@@ -122,7 +121,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
 
 def train_gt_ic_LOWESS(var):
-    """ Derive smooth global trend of variable from single ESM ic ensemble with LOWESS smoother.
+    """Derive smooth global trend of variable from single ESM ic ensemble with LOWESS smoother.
 
     Args:
     - var (np.ndarray): 2d array (run, time) of globally-averaged time series
@@ -153,7 +152,7 @@ def train_gt_ic_LOWESS(var):
 
 
 def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
-    """ Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble by adding volcanic spikes to LOWESS trend.
+    """Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble by adding volcanic spikes to LOWESS trend.
 
     Args:
     - var (np.ndarray): 2d array (run, time) of globally-averaged time series

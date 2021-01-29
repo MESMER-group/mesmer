@@ -2,11 +2,11 @@
 import copy
 import sys
 
-# load in configurations used in this script
-import configs.config_attrib_emu_T_obs as cfg
 import joblib
 import numpy as np
 
+# load in configurations used in this script
+import configs.config_attrib_emu_T_obs as cfg
 from mesmer.io import load_cmipng, load_mesmer_output, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land
 

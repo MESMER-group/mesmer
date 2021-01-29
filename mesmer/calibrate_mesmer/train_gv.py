@@ -19,7 +19,7 @@ from statsmodels.tsa.ar_model import ar_select_order
 
 
 def train_gv_T(gv_novolc_T, targ, esm, cfg, save_params=True):
-    """ Derive global variability parameters for a specified method from a specified ensemble type.
+    """Derive global variability parameters for a specified method from a specified ensemble type.
 
     Args:
     - gv_novolc_T(dict): nested global mean temperature variability (volcanic influence removed) dictionary with keys
@@ -102,7 +102,7 @@ def train_gv_T(gv_novolc_T, targ, esm, cfg, save_params=True):
 
 
 def train_gv_T_AR(params_gv_T, gv_novolc_T):
-    """ Derive AR parameters of global variability under the assumption that gv does not depend on the scenario.
+    """Derive AR parameters of global variability under the assumption that gv does not depend on the scenario.
 
     Args:
     - params_gv_T (dict): parameter dictionary containing keys which do not depend on applied method

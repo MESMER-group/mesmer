@@ -17,7 +17,7 @@ import numpy as np
 
 
 def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
-    """ Extract all land grid points and area weights in regions and in land-sea mask for given threshold.
+    """Extract all land grid points and area weights in regions and in land-sea mask for given threshold.
 
     Args:
     - var (dict): nested variable dictionary with keys
@@ -94,7 +94,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
 
 
 def extract_time_period(var, time, start, end):
-    """ Extract selected time period.
+    """Extract selected time period.
 
     Args:
     - var (np.ndarray): variable in 1-4d array (time);(run,time);(run,time,gp_l);(run,time,lat,lon)
@@ -103,7 +103,7 @@ def extract_time_period(var, time, start, end):
     - end (str or int): last year included in extracted time period
 
     Returns:
-    - var_tp (np.ndarray): variable 1-3d array (time);(time,gp_l);(time,lat,lon) 
+    - var_tp (np.ndarray): variable 1-3d array (time);(time,gp_l);(time,lat,lon)
     - time_tp (np.ndarray): 1d array of years of extracted time period
 
     """

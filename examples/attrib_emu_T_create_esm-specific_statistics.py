@@ -3,12 +3,13 @@
 # add pathway to folders 1 level higher (i.e., to mesmer and configs)
 import sys
 
-# load in configurations used in this script
-import configs.config_attrib_emu_T_obs as cfg
 import joblib
 import numpy as np
 import xarray as xr
 from scipy.stats import percentileofscore
+
+# load in configurations used in this script
+import configs.config_attrib_emu_T_obs as cfg
 
 # import MESMER tools
 from mesmer.create_emulations import create_emus_lt

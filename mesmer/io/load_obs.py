@@ -18,7 +18,7 @@ import xarray as xr
 
 
 def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
-    """ Load observations which you previously downloaded.
+    """Load observations which you previously downloaded.
 
     Args:
     - targ (str): target variable (e.g., 'tblend')
@@ -75,7 +75,7 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
 
 
 def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
-    """ Load spatially infilled tblend observations. Currently available: best and cw.
+    """Load spatially infilled tblend observations. Currently available: best and cw.
 
     Args:
     - prod (str): product (e.g., 'best' or 'cw')
@@ -132,7 +132,7 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
 
 
 def load_strat_aod(time, gen, dir_obs):
-    """ Load observed global stratospheric aerosol optical depth time series.
+    """Load observed global stratospheric aerosol optical depth time series.
 
     Args:
     - time (np.ndarray): 1d array of years the AOD time series is required for

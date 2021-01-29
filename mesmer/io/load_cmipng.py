@@ -24,7 +24,7 @@ import xarray as xr
 
 
 def extract_time_lon_lat_wgt3d(data):
-    """ Extract time, longitude, latitude, and 3d weights from file from ETHZ cmip-ng archive.
+    """Extract time, longitude, latitude, and 3d weights from file from ETHZ cmip-ng archive.
 
     Args:
     - data (xr.core.dataset.Dataset): dataset to extract time, lon, lat, and wgt3d from
@@ -58,7 +58,7 @@ def extract_time_lon_lat_wgt3d(data):
 
 
 def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
-    """ Find filname in ETHZ cmip-ng archive.
+    """Find filname in ETHZ cmip-ng archive.
 
     Args:
     - gen (int): generation (5 or 6)
@@ -233,7 +233,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 
 
 def load_cmipng(targ, esm, scen, cfg):
-    """ Load ESM runs from cmip-ng archive at ETHZ.
+    """Load ESM runs from cmip-ng archive at ETHZ.
 
     Args:
     - targ (str): target variable (e.g., 'tas')
@@ -265,7 +265,7 @@ def load_cmipng(targ, esm, scen, cfg):
 
 
 def load_cmipng_file(run_path, gen, scen):
-    """ Load file in ETHZ cmip-ng archive.
+    """Load file in ETHZ cmip-ng archive.
 
     Args:
     - run_path (str): path to file
@@ -320,7 +320,7 @@ def load_cmipng_file(run_path, gen, scen):
 
 
 def load_cmipng_hfds(esm, scen, cfg):
-    """ Load ESM hfds runs from cmip-ng archive at ETHZ.
+    """Load ESM hfds runs from cmip-ng archive at ETHZ.
 
     Args:
     - esm (str): Earth System Model (e.g., 'CanESM2' or 'CanESM5')
@@ -427,7 +427,7 @@ def load_cmipng_hfds(esm, scen, cfg):
 
 
 def load_cmipng_tas(esm, scen, cfg):
-    """ Load ESM tas runs from cmip-ng archive at ETHZ.
+    """Load ESM tas runs from cmip-ng archive at ETHZ.
 
     Args:
     - esm (str): Earth System Model (e.g., 'CanESM2' or 'CanESM5')
@@ -527,7 +527,7 @@ def load_cmipng_tas(esm, scen, cfg):
 
 
 def preprocess_ssp534over(ds):
-    """ Preprocess datasets to manage to combine historical, ssp585, and ssp534-over into single time series.
+    """Preprocess datasets to manage to combine historical, ssp585, and ssp534-over into single time series.
 
     Args:
     - ds (xr.core.dataset.Dataset): dataset to be concatenated with other datasets

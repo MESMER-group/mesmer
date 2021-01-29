@@ -18,10 +18,10 @@ import numpy as np
 
 
 def create_emus_gv_T(params_gv_T, cfg, save_emus=True):
-    """ Create global variablity emulations for specified ensemble type and method.
-    
+    """Create global variablity emulations for specified ensemble type and method.
+
     Args:
-    - params_gv_T (dict): 
+    - params_gv_T (dict):
         ['targ'] (variable which is emulated, str)
         ['esm'] (Earth System Model, str)
         ['ens_type'] (type of ensemble which is emulated, str)
@@ -31,11 +31,11 @@ def create_emus_gv_T(params_gv_T, cfg, save_emus=True):
         [xx] (additional keys depend on employed method and are listed in train_gv_T_ens_type_method() function)
     - cfg (module): config file containnig metadata
     - save_emus (bool,optional): determines if emulation is saved or not, default = True
-    
+
     Returns:
     - emus_gv_T (dict): global variability emulations dictionary with keys
         [scen] (2d array  (emus x time) of global trend emulation time series)
-        
+
     """
 
     # specify necessary variables from config file
@@ -85,10 +85,10 @@ def create_emus_gv_T(params_gv_T, cfg, save_emus=True):
 
 
 def create_emus_gv_T_AR(params_gv_T, scen, cfg):
-    """ Draw global variablity emulations from an AR process.
-    
+    """Draw global variablity emulations from an AR process.
+
     Args:
-    - params_gv_T (dict): 
+    - params_gv_T (dict):
         ['targ'] (variable which is emulated, str)
         ['esm'] (Earth System Model, str)
         ['ens_type'] (type of ensemble which is emulated, str)
@@ -104,11 +104,11 @@ def create_emus_gv_T_AR(params_gv_T, scen, cfg):
     - scen (str): emulated scenario
     - cfg (module): config file containnig metadata
     - seed_offset (int): offset for the model-specific seed listed in the cfg file, used if different emulations for each scenario
-    
+
     Returns:
     - emus_gv_T (dict): global variability emulations dictionary with keys
         [scen] (2d array  (emus x time) of global trend emulation time series)
-        
+
     """
 
     # specify necessary variables from config file

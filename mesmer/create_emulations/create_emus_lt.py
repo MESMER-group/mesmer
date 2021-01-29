@@ -17,10 +17,10 @@ import numpy as np
 
 
 def create_emus_lt(params_lt, preds_lt, cfg, scenarios="emus", save_emus=True):
-    """ Create local trends (i.e., forced response) emulations for given parameter set and predictors.
+    """Create local trends (i.e., forced response) emulations for given parameter set and predictors.
 
     Args:
-    - params_lt (dict): dictionary with the trained local trend parameters 
+    - params_lt (dict): dictionary with the trained local trend parameters
         ['targs'] (emulated variables, str)
         ['esm'] (Earth System Model, str)
         ['ens_type'] (ensemble type, str)
@@ -30,7 +30,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, scenarios="emus", save_emus=True):
         ['scenarios'] (emission scenarios used for training, list of strs)
         [xx] additional params depend on method employed, specified in train_gt_T_enstype_method() function
         ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
-    - preds_lt (dict): nested dictionary of predictors for local trends with keys 
+    - preds_lt (dict): nested dictionary of predictors for local trends with keys
         [pred][scen] with 1d/2d arrays (time)/(run,time)
     - cfg (module): config file containnig metadata
     - scenarios (str), optional: determines if local trends are created for the emulation or training scenarios
