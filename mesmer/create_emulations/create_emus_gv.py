@@ -43,11 +43,11 @@ def create_emus_gv_T(params_gv_T, cfg, save_emus=True):
     scen_name_emus = cfg.scen_name_emus
     dir_mesmer_emus = cfg.dir_mesmer_emus
 
-    ## set up dictionary for emulations of global variability with emulated scenarios as keys
+    # set up dictionary for emulations of global variability with emulated scenarios as keys
     emus_gv_T = {}
 
     for scen in scenarios_emus:
-        ## apply the chosen method
+        # apply the chosen method
         if (
             params_gv_T["method"] == "AR"
         ):  # for now irrespective of ens_type and scenario. Could still be adapted later if necessary
@@ -56,30 +56,24 @@ def create_emus_gv_T(params_gv_T, cfg, save_emus=True):
             print("No alternative method is currently implemented")
             # if the emulations should depend on the scenario, scen needs to be passed to the fct
 
-    ## save the global variability emus if requested
+    # save the global variability emus if requested
     if save_emus:
         dir_mesmer_emus_gv = dir_mesmer_emus + "global/global_variability/"
         # check if folder to save emus in exists, if not: make it
         if not os.path.exists(dir_mesmer_emus_gv):
             os.makedirs(dir_mesmer_emus_gv)
             print("created dir:", dir_mesmer_emus_gv)
-        joblib.dump(
-            emus_gv_T,
-            dir_mesmer_emus_gv
-            + "emus_gv_"
-            + params_gv_T["ens_type"]
-            + "_"
-            + params_gv_T["method"]
-            + "_"
-            + "_".join(params_gv_T["preds"])
-            + "_"
-            + params_gv_T["targ"]
-            + "_"
-            + params_gv_T["esm"]
-            + "_"
-            + scen_name_emus
-            + ".pkl",
-        )
+        filename_parts = [
+            "emus_gv",
+            params_gv_T["ens_type"],
+            params_gv_T["method"],
+            *params_gv_T["preds"],
+            params_gv_T["targ"],
+            params_gv_T["esm"],
+            scen_name_emus,
+        ]
+        filename_emus_gv = dir_mesmer_emus_gv + "_".join(filename_parts) + ".pkl"
+        joblib.dump(emus_gv_T, filename_emus_gv)
 
     return emus_gv_T
 

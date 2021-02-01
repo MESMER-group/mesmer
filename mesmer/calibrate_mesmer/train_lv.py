@@ -60,28 +60,21 @@ def train_lv(preds_list, targs_list, targ_names, esm, cfg, save_params=True, aux
             y[targ_name][j : j + k] = targ[scen].reshape(-1, nr_gps)
             j += k
 
-    # check if params_lv file already exists, if not, initialize it
-    dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
-    name_params_lv = (
-        "params_lv_"
-        + ens_type_tr
-        + "_"
-        + method_lv
-        + "_"
-        + "_".join(preds_lv)
-        + "_"
-        + "_".join(targ_names)
-        + "_"
-        + esm
-        + "_"
-        + scen_name_tr
-        + ".pkl"
-    )
-
     if "OLS" in method_lv and "OLS" in method_lt:
+        dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
+        filename_parts = [
+            "params_lv",
+            ens_type_tr,
+            method_lv,
+            *preds_lv,
+            *targ_names,
+            esm,
+            scen_name_tr,
+        ]
+        filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
         print("Load existing params_lv dictionary")
-        if os.path.exists(dir_mesmer_params_lv + name_params_lv):
-            params_lv = joblib.load(dir_mesmer_params_lv + name_params_lv)
+        if os.path.exists(filename_params_lv):
+            params_lv = joblib.load(filename_params_lv)
         else:
             print(
                 "An error occurred. The OLS parameters of the lv method have not been saved when applying train_lt()."
@@ -218,21 +211,16 @@ def train_lv(preds_list, targs_list, targ_names, esm, cfg, save_params=True, aux
         if not os.path.exists(dir_mesmer_params_lv):
             os.makedirs(dir_mesmer_params_lv)
             print("created dir:", dir_mesmer_params_lv)
-        joblib.dump(
-            params_lv,
-            dir_mesmer_params_lv
-            + "params_lv_"
-            + ens_type_tr
-            + "_"
-            + method_lv
-            + "_"
-            + "_".join(preds_lv)
-            + "_"
-            + "_".join(targ_names)
-            + "_"
-            + esm
-            + "_"
-            + scen_name_tr
-            + ".pkl",
-        )
+        filename_parts = [
+            "params_lv",
+            ens_type_tr,
+            method_lv,
+            *preds_lv,
+            *targ_names,
+            esm,
+            scen_name_tr,
+        ]
+        filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
+        joblib.dump(params_lv, filename_params_lv)
+
     return params_lv

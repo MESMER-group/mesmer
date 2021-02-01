@@ -80,23 +80,17 @@ def train_gv_T(gv_novolc_T, targ, esm, cfg, save_params=True):
         if not os.path.exists(dir_mesmer_params_gv):
             os.makedirs(dir_mesmer_params_gv)
             print("created dir:", dir_mesmer_params_gv)
-        joblib.dump(
-            params_gv_T,
-            dir_mesmer_params_gv
-            + "params_gv_"
-            + ens_type_tr
-            + "_"
-            + method_gv
-            + "_"
-            + "_".join(preds_gv)
-            + "_"
-            + targ
-            + "_"
-            + esm
-            + "_"
-            + scen_name_tr
-            + ".pkl",
-        )
+        filename_parts = [
+            "params_gv",
+            ens_type_tr,
+            method_gv,
+            *preds_gv,
+            targ,
+            esm,
+            scen_name_tr,
+        ]
+        filename_params_gv = dir_mesmer_params_gv + "_".join(filename_parts) + ".pkl"
+        joblib.dump(params_gv_T, filename_params_gv)
 
     return params_gv_T
 
