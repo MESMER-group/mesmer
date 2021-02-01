@@ -5,7 +5,7 @@ import sys
 import configs.config_attrib_emu_T_obs as cfg
 
 # import MESMER tools
-from mesmer.create_emulations import create_emus_gv_T, create_emus_lv
+from mesmer.create_emulations import create_emus_gv, create_emus_lv
 from mesmer.io import load_mesmer_output
 
 sys.path.append("../")
@@ -17,7 +17,7 @@ for esm in cfg.esms:
     params_gv_T = load_mesmer_output("params_gv", targ_names, esm, cfg, scen_type="tr")
 
     print(esm, "Create global variability emulations.")
-    emus_gv_T = create_emus_gv_T(params_gv_T, cfg, save_emus=True)
+    emus_gv_T = create_emus_gv(params_gv_T, cfg, save_emus=True)
 
     params_lv = load_mesmer_output("params_lv", targ_names, esm, cfg, scen_type="tr")
 
