@@ -86,27 +86,22 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         if not os.path.exists(dir_mesmer_emus_g):
             os.makedirs(dir_mesmer_emus_g)
             print("created dir:", dir_mesmer_emus_g)
-        joblib.dump(
-            emus_g,
-            dir_mesmer_emus_g
-            + "emus_g_"
-            + ens_type
-            + "_gt_"
-            + params_gt["method"]
-            + "_"
-            + "_".join(params_gt["preds"])
-            + "_gv_"
-            + params_gv["method"]
-            + "_"
-            + "_".join(params_gv["preds"])
-            + "_"
-            + targ
-            + "_"
-            + esm
-            + "_"
-            + scen_name_emus
-            + ".pkl",
-        )
+
+        filename_parts = [
+            "emus_g",
+            ens_type,
+            "gt",
+            params_gt["method"],
+            *params_gt["preds"],
+            "gv",
+            params_gv["method"],
+            *params_gv["preds"],
+            targ,
+            esm,
+            scen_name_emus,
+        ]
+        filename_emus_g = dir_mesmer_emus_g + "_".join(filename_parts) + ".pkl"
+        joblib.dump(emus_g, filename_emus_g)
 
     return emus_g
 
@@ -159,7 +154,9 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
         print("The scenarios do not match. No local emulation is created.")
         emus_l = []
 
-    elif targs_lt != targs_lv:
+    if targs_lt == targs_lv:
+        targs = params_lt["targs"]
+    else:
         print("The target variables do not match. No local emulation is created.")
         emus_l = []
 
@@ -182,26 +179,20 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
         if not os.path.exists(dir_mesmer_emus_l):
             os.makedirs(dir_mesmer_emus_l)
             print("created dir:", dir_mesmer_emus_l)
-        joblib.dump(
-            emus_l,
-            dir_mesmer_emus_l
-            + "emus_l_"
-            + ens_type
-            + "_lt_"
-            + params_lt["method"]
-            + "_"
-            + "_".join(params_lt["preds"])
-            + "_lv_"
-            + params_lv["method"]
-            + "_"
-            + "_".join(params_lv["preds"])
-            + "_"
-            + "_".join(params_lt["targs"])
-            + "_"
-            + esm
-            + "_"
-            + scen_name_emus
-            + ".pkl",
-        )
+        filename_parts = [
+            "emus_l",
+            ens_type,
+            "lt",
+            params_lt["method"],
+            *params_lt["preds"],
+            "lv",
+            params_lv["method"],
+            *params_lv["preds"],
+            *targs,
+            esm,
+            scen_name_emus,
+        ]
+        filename_emus_l = dir_mesmer_emus_l + "_".join(filename_parts) + ".pkl"
+        joblib.dump(emus_l, filename_emus_l)
 
     return emus_l

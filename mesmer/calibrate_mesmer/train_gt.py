@@ -99,23 +99,17 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         if not os.path.exists(dir_mesmer_params_gt):
             os.makedirs(dir_mesmer_params_gt)
             print("created dir:", dir_mesmer_params_gt)
-        joblib.dump(
-            params_gt,
-            dir_mesmer_params_gt
-            + "params_gt_"
-            + ens_type_tr
-            + "_"
-            + method_gt
-            + "_"
-            + "_".join(preds_gt)
-            + "_"
-            + targ
-            + "_"
-            + esm
-            + "_"
-            + scen_name_tr
-            + ".pkl",
-        )
+        filename_parts = [
+            "params_gt",
+            ens_type_tr,
+            method_gt,
+            *preds_gt,
+            targ,
+            esm,
+            scen_name_tr,
+        ]
+        filename_params_gt = dir_mesmer_params_gt + "_".join(filename_parts) + ".pkl"
+        joblib.dump(params_gt, filename_params_gt)
 
     return params_gt
 

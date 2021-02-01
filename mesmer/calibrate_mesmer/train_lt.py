@@ -165,23 +165,18 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
         if not os.path.exists(dir_mesmer_params_lt):
             os.makedirs(dir_mesmer_params_lt)
             print("created dir:", dir_mesmer_params_lt)
-        joblib.dump(
-            params_lt,
-            dir_mesmer_params_lt
-            + "params_lt_"
-            + ens_type_tr
-            + "_"
-            + method_lt
-            + "_"
-            + "_".join(preds_lt)
-            + "_"
-            + "_".join(targ_names)
-            + "_"
-            + esm
-            + "_"
-            + scen_name_tr
-            + ".pkl",
-        )
+        filename_parts = [
+            "params_lt",
+            ens_type_tr,
+            method_lt,
+            *preds_lt,
+            *targ_names,
+            esm,
+            scen_name_tr,
+        ]
+        filename_params_lt = dir_mesmer_params_lt + "_".join(filename_parts) + ".pkl"
+        joblib.dump(params_lt, filename_params_lt)
+
         # check if local variability parameters need to be saved too
         if (
             len(params_lv) > 0
@@ -191,23 +186,17 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
             if not os.path.exists(dir_mesmer_params_lv):
                 os.makedirs(dir_mesmer_params_lv)
                 print("created dir:", dir_mesmer_params_lv)
-            joblib.dump(
-                params_lv,
-                dir_mesmer_params_lv
-                + "params_lv_"
-                + ens_type_tr
-                + "_"
-                + method_lv
-                + "_"
-                + "_".join(preds_lv)
-                + "_"
-                + "_".join(targ_names)
-                + "_"
-                + esm
-                + "_"
-                + scen_name_tr
-                + ".pkl",
-            )
+        filename_parts = [
+            "params_lv",
+            ens_type_tr,
+            method_lv,
+            *preds_lv,
+            *targ_names,
+            esm,
+            scen_name_tr,
+        ]
+        filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
+        joblib.dump(params_lv, filename_params_lv)
 
     if len(params_lv) > 0:
         return params_lt, params_lv

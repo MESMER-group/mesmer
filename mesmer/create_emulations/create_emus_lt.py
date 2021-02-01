@@ -88,29 +88,23 @@ def create_emus_lt(params_lt, preds_lt, cfg, scenarios="emus", save_emus=True):
                         + params_lt["intercept"][targ][gp]
                     )
 
-    ## save the local trends emulation if requested
+    # save the local trends emulation if requested
     if save_emus:
         dir_mesmer_emus_lt = dir_mesmer_emus + "local/local_trends/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_emus_lt):
             os.makedirs(dir_mesmer_emus_lt)
             print("created dir:", dir_mesmer_emus_lt)
-        joblib.dump(
-            emus_lt,
-            dir_mesmer_emus_lt
-            + "emus_lt_"
-            + params_lt["ens_type"]
-            + "_"
-            + params_lt["method"]
-            + "_"
-            + "_".join(params_lt["preds"])
-            + "_"
-            + "_".join(params_lt["targs"])
-            + "_"
-            + params_lt["esm"]
-            + "_"
-            + scen_name_emus
-            + ".pkl",
-        )
+        filename_parts = [
+            "emus_lt",
+            params_lt["ens_type"],
+            params_lt["method"],
+            *params_lt["preds"],
+            *params_lt["targs"],
+            params_lt["esm"],
+            scen_name_emus,
+        ]
+        filename_emus_lt = dir_mesmer_emus_lt + "_".join(filename_parts) + ".pkl"
+        joblib.dump(emus_lt, filename_emus_lt)
 
     return emus_lt

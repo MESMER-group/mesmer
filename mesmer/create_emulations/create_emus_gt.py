@@ -67,22 +67,16 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
         if not os.path.exists(dir_mesmer_emus_gt):
             os.makedirs(dir_mesmer_emus_gt)
             print("created dir:", dir_mesmer_emus_gt)
-        joblib.dump(
-            emus_gt,
-            dir_mesmer_emus_gt
-            + "emus_gt_"
-            + params_gt["ens_type"]
-            + "_"
-            + params_gt["method"]
-            + "_"
-            + "_".join(params_gt["preds"])
-            + "_"
-            + params_gt["targ"]
-            + "_"
-            + params_gt["esm"]
-            + "_"
-            + scen_name_emus
-            + ".pkl",
-        )
+        filename_parts = [
+            "emus_gt",
+            params_gt["ens_type"],
+            params_gt["method"],
+            *params_gt["preds"],
+            params_gt["targ"],
+            params_gt["esm"],
+            scen_name_emus,
+        ]
+        filename_emus_gt = dir_mesmer_emus_gt + "_".join(filename_parts) + ".pkl"
+        joblib.dump(emus_gt, filename_emus_gt)
 
     return emus_gt

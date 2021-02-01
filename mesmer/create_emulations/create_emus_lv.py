@@ -134,29 +134,23 @@ def create_emus_lv(
                 print("Create the full local variability emulations")
                 emus_lv[scen][targ] += emus_lv_tmp
 
-    ## save the local trends emulation if requested
+    # save the local trends emulation if requested
     if save_emus:
         dir_mesmer_emus_lv = dir_mesmer_emus + "local/local_variability/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_emus_lv):
             os.makedirs(dir_mesmer_emus_lv)
             print("created dir:", dir_mesmer_emus_lv)
-        joblib.dump(
-            emus_lv,
-            dir_mesmer_emus_lv
-            + "emus_lv_"
-            + params_lv["ens_type"]
-            + "_"
-            + submethod
-            + "_"
-            + "_".join(params_lv["preds"])
-            + "_"
-            + "_".join(params_lv["targs"])
-            + "_"
-            + params_lv["esm"]
-            + "_"
-            + scen_name_emus
-            + ".pkl",
-        )
+        filename_parts = [
+            "emus_lv",
+            params_lv["ens_type"],
+            submethod,
+            *params_lv["preds"],
+            *params_lv["targs"],
+            params_lv["esm"],
+            scen_name_emus,
+        ]
+        filename_emus_lv = dir_mesmer_emus_lv + "_".join(filename_parts) + ".pkl"
+        joblib.dump(emus_lv, filename_emus_lv)
 
     return emus_lv
