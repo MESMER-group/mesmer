@@ -46,8 +46,6 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     hist_tr = cfg.hist_tr
     method_gv = cfg.methods[targ]["gv"]
     preds_gv = cfg.preds[targ]["gv"]
-    scenarios_tr = cfg.scenarios_tr
-    scen_name_tr = cfg.scen_name_tr
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(gv.keys())

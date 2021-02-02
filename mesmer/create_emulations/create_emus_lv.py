@@ -29,8 +29,8 @@ def create_emus_lv(
 
     # specify necessary variables from config file
     if scenarios == "emus":
-        scenarios_emus = cfg.scenarios_emus
-        scen_name_emus = cfg.scen_name_emus
+        scenarios_emus = cfg.scenarios_emus_v
+        scen_name_emus = cfg.scen_name_emus_v
     elif scenarios == "tr":  # not sure if even needed?!
         scenarios_emus = params_lv["scenarios"]
         if cfg.hist_tr:  # check whether historical data was used in training

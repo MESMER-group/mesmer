@@ -112,10 +112,20 @@ scenarios_emus = [
 ]  # scenarios emulated
 
 hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly + think about how to deal with baseline period)
+hist_emu = True  # if historcal part of run is included in the emulations
 wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
+scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
+if scen_seed_offset_v == 0:  # Potential TODO: integrate hist in this name too?
+    scen_name_emus_v = "all"
+    scenarios_emus_v = ["all"]
+else:
+    if cfg.hist_emu:  # check whether historical data was used in training
+        scen_name_emus_v = "hist_" + "_".join(scenarios_emus)
+    else:
+        scen_name_emus_v = "_".join(scenarios_emus)
+    scenarios_emus_v = scenarios_emus
 
-scen_name_emus = "all"
 reg_type = "srex"
 ref = {}
 ref["type"] = "individ"  # alternatives: 'first','all'
@@ -146,21 +156,20 @@ dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/emulations/"
 dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/"
 
 nr_emus = {}
-nr_emus[
-    "all"
-] = 6000  # per ESM and scen (to be seen if feasible or needs to be reduced)
 nr_ts_emus_v = {}
-nr_ts_emus_v["all"] = 251  # 1850-2100
 seed = {}
-scen_seed_offset = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 i = 0
 for esm in all_esms:
     seed[esm] = {}
+    nr_emus[esm] = {}
+    nr_ts_emus_v[esm] = {}
     j = 0
-    for scen in scenarios_emus:
+    for scen in scenarios_emus_v:
+        nr_emus[esm][scen] = 6000  # nr of emulation time series
+        nr_ts_emus_v[esm][scen] = 251  # nr of emulated time steps
         seed[esm][scen] = {}
-        seed[esm][scen]["gv"] = i + j * scen_seed_offset
-        seed[esm][scen]["lv"] = i + j * scen_seed_offset + 1000000
+        seed[esm][scen]["gv"] = i + j * scen_seed_offset_v
+        seed[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1000000
         j += 1
     i += 1
 

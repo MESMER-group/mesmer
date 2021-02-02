@@ -39,8 +39,8 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
     """
 
     # specify necessary variables from config file
-    scenarios_emus = cfg.scenarios_emus
-    scen_name_emus = cfg.scen_name_emus
+    scenarios_emus = cfg.scenarios_emus_v
+    scen_name_emus = cfg.scen_name_emus_v
     dir_mesmer_emus = cfg.dir_mesmer_emus
 
     # set up dictionary for emulations of global variability with emulated scenarios as keys
@@ -109,8 +109,8 @@ def create_emus_gv_AR(params_gv, scen, cfg):
     esm = params_gv["esm"]
     seed = cfg.seed[esm][scen]["gv"]
 
-    nr_ts_emus_v = cfg.nr_ts_emus_v[scen]  # how long emulations
-    nr_emus = cfg.nr_emus[scen]  # how many emulations
+    nr_ts_emus_v = cfg.nr_ts_emus_v[esm][scen]  # how long emulations
+    nr_emus = cfg.nr_emus[esm][scen]  # how many emulations
 
     # ensure reproducibility
     np.random.seed(seed)
