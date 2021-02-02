@@ -12,6 +12,7 @@ Functions:
 
 import os
 
+import copy
 import joblib
 import numpy as np
 
@@ -51,11 +52,11 @@ def create_emus_lt(params_lt, preds_lt, cfg, scenarios="emus", save_emus=True):
         scenarios_emus = cfg.scenarios_emus
         scen_name_emus = cfg.scen_name_emus
     elif scenarios == "tr":
-        scenarios_emus = params_lt["scenarios"]
-        if cfg.hist_tr:  # check whether historical data was used in training
-            scen_name_emus = "hist_" + "_".join(scenarios_emus)
-        else:
-            scen_name_emus = "_".join(scenarios_emus)
+        scenarios_emus = copy.deepcopy(params_lt["scenarios"])
+        scen_name_emus = "_".join(scenarios_emus)
+        if 'hist' in scenarios_emus:  # check if historical data had its own scenario during training
+            scenarios_emus.remove('hist')
+                # because in lt want hist and scen to be concatenated again
 
     dir_mesmer_emus = cfg.dir_mesmer_emus
 

@@ -60,6 +60,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
                     - all available scenarios are used for training
                     - in predictor list: local trend predictors belong before local variability predictors (if there are any)
                     - identified parameters are valid for all training scenarios
+                    - if historical data is used for training, it has its own scenario
     - Disclaimer:   - parameters must be saved in case also params_lv are created, otherwise train_lv() cannot find them
                     - not convinced yet whether I really need the res_lt variable
 
@@ -89,10 +90,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(targs[targ_name].keys())
-    if hist_tr:  # check whether historical data is used in training
-        scen_name_tr = "hist_" + "_".join(scenarios_tr)
-    else:
-        scen_name_tr = "_".join(scenarios_tr)
+    scen_name_tr = "_".join(scenarios_tr)
 
     # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
     params_lt = {}

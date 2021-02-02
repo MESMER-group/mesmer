@@ -44,6 +44,9 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         ['preds'] (predictors, list of strs)
         ['scenarios'] (emission scenarios used for training, list of strs)
         [xx] (additional params depend on method employed)
+        
+    Assumption: 
+    If historical data is used for training, it is contained in the same dict key as its associated scenario.
 
     """
 

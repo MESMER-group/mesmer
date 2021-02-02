@@ -12,6 +12,7 @@ Functions:
 
 import os
 
+import copy
 import joblib
 import numpy as np
 
@@ -32,11 +33,11 @@ def create_emus_lv(
         scenarios_emus = cfg.scenarios_emus_v
         scen_name_emus = cfg.scen_name_emus_v
     elif scenarios == "tr":  # not sure if even needed?!
-        scenarios_emus = params_lv["scenarios"]
-        if cfg.hist_tr:  # check whether historical data was used in training
-            scen_name_emus = "hist_" + "_".join(scenarios_emus)
-        else:
-            scen_name_emus = "_".join(scenarios_emus)
+        scenarios_emus = copy.deepcopy(params_lv["scenarios"])
+        scen_name_emus = "_".join(scenarios_emus)
+        if 'hist' in scenarios_emus:  # check if historical data had its own scenario during training
+            scenarios_emus.remove('hist')
+                # because in lv want hist and scen to be concatenated again
 
     dir_mesmer_emus = cfg.dir_mesmer_emus
     nr_emus_all_scens = cfg.nr_emus

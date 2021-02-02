@@ -38,6 +38,9 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
         ['preds'] (predictors, list of strs)
         ['scenarios'] (emission scenarios used for training, list of strs)
         [xx] additional params depend on method employed, specified in train_gv_T_ens_type_method() function
+        
+    Assumption: 
+    If historical data is used for training, it has its own scenario.
 
     """
 
@@ -49,10 +52,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(gv.keys())
-    if hist_tr:  # check whether historical data is used during training too
-        scen_name_tr = "hist_" + "_".join(scenarios_tr)
-    else:
-        scen_name_tr = "_".join(scenarios_tr)
+    scen_name_tr = "_".join(scenarios_tr)
 
     # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
     params_gv = {}
@@ -141,7 +141,7 @@ def train_gv_AR(params_gv, gv):
     sel_crit = "bic"  # selection criterion
 
     # select AR order and fit the AR model
-    AR_order_sel = ar_select_order(gv_all, maxlag=max_lag, ic=sel_crit, glob=True)
+    AR_order_sel = ar_select_order(gv_all, maxlag=max_lag, ic=sel_crit)
     AR_model = AR_order_sel.model.fit()
 
     # fill in the parameter dictionary

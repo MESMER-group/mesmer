@@ -45,10 +45,13 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
     # specify necessary variables from config file
     dir_mesmer_emus = cfg.dir_mesmer_emus
-    scen_name_emus = cfg.scen_name_emus
+    scenarios_emus = cfg.scenarios_emus
+    scen_name_emus = "_".join(scenarios_emus)
 
     scenarios_gt = list(emus_gt.keys())
     scenarios_gv = list(emus_gv.keys())
+    if scenarios_gv == ['all']:
+        scenarios_gv = scenarios_emus
 
     if scenarios_gt == scenarios_gv:
         emus_g = {}
