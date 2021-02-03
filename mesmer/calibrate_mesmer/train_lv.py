@@ -26,7 +26,6 @@ def train_lv(preds_list, targs_list, targ_names, esm, cfg, save_params=True, aux
     # specify necessary variables from config file
     targ_name = targ_names[0]
     ens_type_tr = cfg.ens_type_tr
-    hist_tr = cfg.hist_tr
     preds_lv = cfg.preds[targ_name]["lv"]
     method_lv = cfg.methods[targ_name]["lv"]
     method_lt = cfg.methods[targ_name]["lt"]

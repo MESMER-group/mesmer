@@ -38,15 +38,14 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
         ['preds'] (predictors, list of strs)
         ['scenarios'] (emission scenarios used for training, list of strs)
         [xx] additional params depend on method employed, specified in train_gv_T_ens_type_method() function
-        
-    Assumption: 
+
+    Assumption:
     If historical data is used for training, it has its own scenario.
 
     """
 
     # specify necessary variables from config file
     ens_type_tr = cfg.ens_type_tr
-    hist_tr = cfg.hist_tr
     method_gv = cfg.methods[targ]["gv"]
     preds_gv = cfg.preds[targ]["gv"]
     dir_mesmer_params = cfg.dir_mesmer_params

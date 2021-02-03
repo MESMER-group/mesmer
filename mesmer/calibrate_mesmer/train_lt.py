@@ -72,7 +72,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
 
     # specify necessary variables from config file
     ens_type_tr = cfg.ens_type_tr
-    hist_tr = cfg.hist_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
     preds_lt = []
@@ -247,7 +246,7 @@ def train_lt_extract_additional_params_OLS(params_lt, params_lv):
             params_lv["coef_" + pred] = {}
 
     # fill the reg coef dictionaries for each target
-    for targ_idx in np.arange(len(params_lt["targs"])):
+    for targ_idx in np.arange(nr_targs):
         targ = params_lt["targs"][targ_idx]
 
         params_lt["intercept"][targ] = np.zeros(nr_mod_keys)
