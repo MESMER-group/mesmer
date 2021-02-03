@@ -5,11 +5,11 @@ import sys
 import configs.config_cmip5ng_tas_rcp85_obs as cfg
 
 # import MESMER tools
-from mesmer.calibrate_mesmer import train_gt, train_gv_T, train_lt, train_lv
+from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
     create_emus_g,
     create_emus_gt,
-    create_emus_gv_T,
+    create_emus_gv,
     create_emus_l,
     create_emus_lt,
     create_emus_lv,
@@ -56,26 +56,26 @@ for esm in cfg.esms:
 
     print(esm, "Start with global mean temperature modules")
     print(esm, "Start with the global trend module.")
-    params_gt_T = train_gt_T(GSAT_arr, targ, esm, time, cfg, save_params=True)
+    params_gt_T = train_gt(GSAT_arr, targ, esm, time, cfg, save_params=True)
 
     # create emulation of global trend from training scenarios to be used as predictors for lt training
-    gt_T = create_emus_gt_T(params_gt_T, cfg, scenarios="tr", save_emus=False)
+    gt_T = create_emus_gt(params_gt_T, cfg, scenarios="tr", save_emus=False)
 
     # create emulation of global trend for emulation scenarios to be used as predictors for lt emulation
     # (same in this ic setup but done for completeness)
-    emus_gt_T = create_emus_gt_T(params_gt_T, cfg, scenarios="emus", save_emus=True)
+    emus_gt_T = create_emus_gt(params_gt_T, cfg, scenarios="emus", save_emus=True)
 
     # extract global variability left after removing smooth trend with volcanic spikes
     gv_novolc_T = {}
     for scen in cfg.scenarios_tr:
         gv_novolc_T[scen] = GSAT_arr[scen] - gt_T[scen]
 
-    params_gv_T = train_gv_T(gv_novolc_T, targ, esm, cfg, save_params=True)
+    params_gv_T = train_gv(gv_novolc_T, targ, esm, cfg, save_params=True)
 
-    emus_gv_T = create_emus_gv_T(params_gv_T, cfg, save_emus=True)
+    emus_gv_T = create_emus_gv(params_gv_T, cfg, save_emus=True)
 
     print(esm, "Merge the global trend and the global variability.")
-    emus_g_T = create_emus_g_T(
+    emus_g_T = create_emus_g(
         emus_gt_T, emus_gv_T, params_gt_T, params_gv_T, cfg, save_emus=True
     )
 

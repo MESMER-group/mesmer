@@ -50,11 +50,13 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     scenarios_gt = list(emus_gt.keys())
     scenarios_gv = list(emus_gv.keys())
 
+    emus_g = {}
     if scenarios_gt == scenarios_gv:
-        emus_g = {}
         for scen in scenarios_gt:
             emus_g[scen] = emus_gt[scen] + emus_gv[scen]
-
+    elif scenarios_gv == ["all"]:
+        for scen in scenarios_gt:
+            emus_g[scen] = emus_gt[scen] + emus_gv["all"]
     else:
         print(
             "The global trend and the global variabilty emulations are not from the same scenario, no global emulation is created"
@@ -143,14 +145,18 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
     targs_lt = list(emus_lt[scenarios_lt[0]].keys())
     targs_lv = list(emus_lv[scenarios_lv[0]].keys())
 
+    emus_l = {}
     if scenarios_lt == scenarios_lv and targs_lt == targs_lv:
-        emus_l = {}
         for scen in scenarios_lt:
             emus_l[scen] = {}
             for targ in targs_lt:
                 emus_l[scen][targ] = emus_lt[scen][targ] + emus_lv[scen][targ]
-
-    elif scenarios_lt != scenarios_lv:
+    elif scenarios_lv == ["all"] and targs_lt == targs_lv:
+        for scen in scenarios_lt:
+            emus_l[scen] = {}
+            for targ in targs_lt:
+                emus_l[scen][targ] = emus_lt[scen][targ] + emus_lv["all"][targ]
+    else:
         print("The scenarios do not match. No local emulation is created.")
         emus_l = []
 

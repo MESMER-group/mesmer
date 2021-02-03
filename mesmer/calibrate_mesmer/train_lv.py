@@ -20,22 +20,19 @@ from statsmodels.tsa.ar_model import AutoReg
 
 def train_lv(preds_list, targs_list, targ_names, esm, cfg, save_params=True, aux={}):
     # remarks: assumption: lv does not depend on scenario
+    # remarks: assumption2: if historical data is used for training, it has its own scenario
     # remark: currently no method with preds implemented. But already have in there for consistency reason
 
     # specify necessary variables from config file
     targ_name = targ_names[0]
     ens_type_tr = cfg.ens_type_tr
-    hist_tr = cfg.hist_tr
     preds_lv = cfg.preds[targ_name]["lv"]
     method_lv = cfg.methods[targ_name]["lv"]
     method_lt = cfg.methods[targ_name]["lt"]
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(targs_list[0].keys())
-    if hist_tr:  # check whether historical data is used in training
-        scen_name_tr = "hist_" + "_".join(scenarios_tr)
-    else:
-        scen_name_tr = "_".join(scenarios_tr)
+    scen_name_tr = "_".join(scenarios_tr)
 
     # prepare the y (can also add prepare the preds_list data if I will actually use preds once)
     # keep individ targs split at this point but will need to revisit this choice in future

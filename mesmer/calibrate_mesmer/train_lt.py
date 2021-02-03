@@ -60,6 +60,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
                     - all available scenarios are used for training
                     - in predictor list: local trend predictors belong before local variability predictors (if there are any)
                     - identified parameters are valid for all training scenarios
+                    - if historical data is used for training, it has its own scenario
     - Disclaimer:   - parameters must be saved in case also params_lv are created, otherwise train_lv() cannot find them
                     - not convinced yet whether I really need the res_lt variable
 
@@ -71,7 +72,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
 
     # specify necessary variables from config file
     ens_type_tr = cfg.ens_type_tr
-    hist_tr = cfg.hist_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
     preds_lt = []
@@ -89,10 +89,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(targs[targ_name].keys())
-    if hist_tr:  # check whether historical data is used in training
-        scen_name_tr = "hist_" + "_".join(scenarios_tr)
-    else:
-        scen_name_tr = "_".join(scenarios_tr)
+    scen_name_tr = "_".join(scenarios_tr)
 
     # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
     params_lt = {}
@@ -249,7 +246,7 @@ def train_lt_extract_additional_params_OLS(params_lt, params_lv):
             params_lv["coef_" + pred] = {}
 
     # fill the reg coef dictionaries for each target
-    for targ_idx in np.arange(len(params_lt["targs"])):
+    for targ_idx in np.arange(nr_targs):
         targ = params_lt["targs"][targ_idx]
 
         params_lt["intercept"][targ] = np.zeros(nr_mod_keys)
