@@ -10,6 +10,15 @@ jobs:
         python-version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2.0.1
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        activate-environment: test
+    - name: Conda info
+      shell: bash -l {0}
+      run: conda info
     - name: Checkout repository
       uses: actions/checkout@v2
     - name: Setup python
@@ -23,4 +32,6 @@ jobs:
         pip install -e .[tests]
     - name: Run test script
       run: |
+          which python
+          make conda-environment
           python examples/train_create_emus_automated.py
