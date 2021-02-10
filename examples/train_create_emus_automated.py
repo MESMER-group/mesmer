@@ -1,9 +1,3 @@
-# add pathway to folders 1 level higher (i.e., to mesmer and configs)
-import sys
-
-sys.path.append("../")
-
-
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
 
