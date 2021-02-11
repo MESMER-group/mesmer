@@ -1,3 +1,11 @@
+# outputs
+calibrated_parametersglobal
+calibrated_parameterslocal
+emulationsglobal
+emulationslocal
+
+# ignore test data unless we explicitly add it
+tests/test-data
 
 startup
 tmp/

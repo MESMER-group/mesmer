@@ -35,6 +35,7 @@ CLASSIFIERS = [
 
 
 REQUIREMENTS_INSTALL = [
+    "dask[complete]",
     "geopy",
     "numpy",
     "pandas",
