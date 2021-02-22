@@ -1,4 +1,5 @@
 """
+<<<<<<< HEAD
 Configuration file for cmip6-ng, tas, rcp85, for the emulator attribution paper
 
 """
@@ -22,6 +23,56 @@ esms = ["IPSL-CM6A-LR"]
 # - "GISS-E2-1-G" (sth wrong when reading in files, index issue)
 
 # to have unique seed for each esm no matter which ones I currently emulate
+=======
+Configuration file for tests
+
+"""
+
+# pathways to adapt depending on local setup:
+
+# cmip-data
+gen = 6  # generation
+dir_cmipng = (
+    "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/cmip" + str(gen) + "-ng/"
+)
+# ie change to:
+# dir_cmipng = "/yourpath/cmip" + str(gen) + "-ng/"
+
+# observations
+dir_obs = "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/observations/"
+# dir_obs = "/yourpath/observations/"
+
+# mesmer
+dir_mesmer_params = (
+    "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/mesmer/calibrated_parameters/"
+)
+# dir_mesmer_params = "/yourpath/mesmer/calibrated_parameters/"
+dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/mesmer/emulations/"
+# dir_mesmer_emus = "/yourpath/mesmer/emulations/"
+
+
+# directories below not needed for parts that we test so far (20210210)
+# auxiliary data
+# dir_aux = "/net/cfc/landclim1/beuschl/mesmer/data/auxiliary/"
+
+# emulation statistics
+# dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/"
+
+# plots
+# dir_plots = "/net/cfc/landclim1/beuschl/across_scen_T/plots/"
+
+
+# all other config information
+
+# cmip-ng
+# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
+# assumes folder structure / file name as in cmip-ng archives at ETHZ -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
+
+# esms we actually use
+esms = ["IPSL-CM6A-LR"]
+
+# all esms that are in the cmip-ng archive to have unique seed for each esm no matter which ones I currently emulate
+>>>>>>> 3a5c99e2998b1fe262f9f13984a955878e04de59
 all_esms = [
     "ACCESS-CM2",
     "ACCESS-ESM1-5",
@@ -87,7 +138,10 @@ else:
     scen_name_emus_v = scen_name_emus
     scenarios_emus_v = scenarios_emus
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3a5c99e2998b1fe262f9f13984a955878e04de59
 reg_type = "srex"
 ref = {}
 ref["type"] = "individ"  # alternatives: 'first','all'
@@ -97,6 +151,7 @@ time = {}
 time["start"] = "1850"  # first included year
 time["end"] = "2100"  # last included year
 threshold_land = 1 / 3
+<<<<<<< HEAD
 dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
 
 # observations
@@ -116,6 +171,13 @@ dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/emulations/"
 
 # emulation statistics
 dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/"
+=======
+
+# observations
+# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
+# will probably add obs (Cowtan + Way) / (BEST) in here too (preferably land only as well).
+
+>>>>>>> 3a5c99e2998b1fe262f9f13984a955878e04de59
 
 nr_emus = {}
 nr_ts_emus_v = {}
@@ -154,7 +216,10 @@ methods["tas"]["gv"] = "AR"  # global variability emulation method
 methods["tas"]["lt"] = "OLS"  # local trends emulation method
 method_lt_each_gp_sep = True  # method local trends applied to each gp separately
 methods["tas"]["lv"] = "OLS_AR1_sci"  # local variability emulation method
+<<<<<<< HEAD
 
 
 # plots
 dir_plots = "/net/cfc/landclim1/beuschl/across_scen_T/plots/"
+=======
+>>>>>>> 3a5c99e2998b1fe262f9f13984a955878e04de59

@@ -31,7 +31,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
     - cfg (module): config file containnig metadata
     - save_params (bool, optional): determines if parameters are saved or not, default = True
-    - res_lt (bool, optional): determines if residual is fitted on or full time series
+    - res_lt (bool, optional): determines if residual is fitted on residual or full time series
 
     Returns:
     - params_lt (dict): dictionary with the trained local trend parameters
@@ -42,7 +42,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
         ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
         ['preds'] (predictors, list of strs)
         ['scenarios'] (emission scenarios used for training, list of strs)
-        [xx] additional params depend on method employed, specified in train_gt_T_enstype_method() function
+        [xx] additional params depend on method employed
         ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
     - params_lv (dict, optional): dictionary of local variability paramters which are derived together with the local trend parameters
         ['targs'] (emulated variables, str)
@@ -83,8 +83,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
         elif "gv" in pred:
             preds_lv.append(pred)
 
-    method_lt = cfg.methods[targ_name]["lt"]  # +"_" + "_".join(preds_lt)
-    method_lv = cfg.methods[targ_name]["lv"]  # +"_" + "_".join(preds_lv)
+    method_lt = cfg.methods[targ_name]["lt"]
+    method_lv = cfg.methods[targ_name]["lv"]
     method_lt_each_gp_sep = cfg.method_lt_each_gp_sep
     dir_mesmer_params = cfg.dir_mesmer_params
 
