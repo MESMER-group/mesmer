@@ -64,6 +64,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     - Disclaimer:   - parameters must be saved in case also params_lv are created, otherwise train_lv() cannot find them
                     - not convinced yet whether I really need the res_lt variable
 
+    - TODO: consider if res_lt parameter is really needed or if want to remove again
+    
     """
 
     targ_names = list(targs.keys())
