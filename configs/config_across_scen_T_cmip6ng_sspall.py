@@ -66,6 +66,7 @@ all_esms = [
     "EC-Earth3",
     "EC-Earth3-Veg",
     "EC-Earth3-Veg-LR",
+    "FGOALS-f3-L",
     "FGOALS-g3",
     "FIO-ESM-2-0",
     "GFDL-CM4",
