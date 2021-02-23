@@ -7,7 +7,6 @@ Functions to train local trends module of MESMER.
 Functions:
     train_lt()
     train_lt_extract_additional_params_OLS()
-    train_lt_prepare_X_y_wgteq()
 
 """
 
@@ -19,8 +18,10 @@ import joblib
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
+from mesmer.calibrate_mesmer.train_utils import train_l_prepare_X_y_wgteq
 
-def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
+
+def train_lt(preds, targs, esm, cfg, save_params=True):
     """Derive local trends (i.e., forced response) parameters for given ESM for given set of tragets and predictors.
 
     Args:
@@ -31,7 +32,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
     - cfg (module): config file containnig metadata
     - save_params (bool, optional): determines if parameters are saved or not, default = True
-    - res_lt (bool, optional): determines if residual is fitted on residual or full time series
 
     Returns:
     - params_lt (dict): dictionary with the trained local trend parameters
@@ -61,11 +61,9 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
                     - in predictor list: local trend predictors belong before local variability predictors (if there are any)
                     - identified parameters are valid for all training scenarios
                     - if historical data is used for training, it has its own scenario
+                    - either each scenario is given the same weight or each time step
     - Disclaimer:   - parameters must be saved in case also params_lv are created, otherwise train_lv() cannot find them
-                    - not convinced yet whether I really need the res_lt variable
 
-    - TODO: consider if res_lt parameter is really needed or if want to remove again
-    
     """
 
     targ_names = list(targs.keys())
@@ -110,25 +108,25 @@ def train_lt(preds, targs, esm, cfg, save_params=True, res_lt=False):
     training_method_lt = training_method_func_mapping[method_lt]
 
     # prepare predictors and targets such that they can be ingested into the training function
-    X, y, wgt_scen_eq = train_lt_prepare_X_y_wgteq(preds, targs, method_lt_each_gp_sep)
+    X, y, wgt_scen_eq = train_l_prepare_X_y_wgteq(preds, targs)
 
     # prepare weights for individual runs
 
     # train the full model + save it (may also contain lv module parts)
     params_lt["full_model"] = {}
-    if wgt_scen_tr_eq:
-        for mod_key in y.keys():
-            reg = training_method_lt(X, y[mod_key], wgt_scen_eq)
-            params_lt["full_model"][mod_key] = copy.deepcopy(
+    if wgt_scen_tr_eq is False:
+        wgt_scen_eq[
+            :
+        ] = 1  # if each scen does not get the same weight, each sample gets it instead
+
+    if method_lt_each_gp_sep:
+        nr_gps = y.shape[1]
+        for gp in np.arange(nr_gps):
+            reg = training_method_lt(X, y[:, gp, :], wgt_scen_eq)
+            params_lt["full_model"][gp] = copy.deepcopy(
                 reg
             )  # needed because otherwise the last coef everywhere
 
-    else:
-        for mod_key in y.keys():
-            reg = training_method_lt(X, y[mod_key])
-            params_lt["full_model"][mod_key] = copy.deepcopy(
-                reg
-            )  # needed because otherwise the last coef everywhere
     # check if parameters for local variability module have been derived too, if yes, initialize params_lv
     if method_lt in method_lv:
         params_lt["full_model_contains_lv"] = True
@@ -276,96 +274,3 @@ def train_lt_extract_additional_params_OLS(params_lt, params_lv):
                 coef_idx += 1
 
     return params_lt, params_lv
-
-
-def train_lt_prepare_X_y_wgteq(preds, targs, method_lt_each_gp_sep):
-    """Create single array of predictors and single array of targets.
-
-    Args:
-    - preds (dict): nested dictionary of predictors with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - targs (dict): nested dictionary of targets with keys
-        [targ][scen] with 3d arrays (run,time,gp)
-    - method_lt_each_gp_sep (bool): determines if method is applied to each grid point separately
-
-    Returns:
-    - X (np.ndarray): 2d array (sample,pred) of predictors
-    - y (dict): target dictionary with keys
-        if method_lt_each_gp_sep is True:
-            [gp] 2d array (sample,targ) of targets at every grid point
-    - wgt_scen_eq (np.ndarray): 1d array (sample) of sample weights based on equal treatment of each scenario (if scen has more ic member, each sample gets less weight)
-
-    """
-    targ_names = list(targs.keys())
-    targ_name = targ_names[0]  # because same approach for each targ
-    pred_names = list(preds.keys())
-
-    # identify characteristics of the predictors and the targets
-    targ = targs[
-        targ_name
-    ]  # predictors are not influenced by whether there is a single or there are multiple targets
-    scens = list(targ.keys())
-
-    # assumption: nr_runs per scen and nr_ts for these runs can vary
-    nr_samples = 0
-    wgt_scen_eq = []
-    for scen in scens:
-        nr_runs, nr_ts, nr_gps = targ[scen].shape
-        nr_samples_scen = nr_runs * nr_ts
-        wgt_scen_eq = np.append(wgt_scen_eq, np.repeat(1 / nr_runs, nr_samples_scen))
-        nr_samples += nr_samples_scen
-
-    nr_preds = len(pred_names)
-    nr_targs = len(targ_names)
-
-    # derive X (ie array of predictors)
-    X = np.zeros([nr_samples, nr_preds])
-    for p in np.arange(nr_preds):  # index for predictors
-        pred_name = pred_names[p]  # name of predictor p
-        s = 0  # index for samples
-        pred_raw = preds[pred_name]  # values of predictor p
-        for scen in scens:
-            if (
-                len(pred_raw[scen].shape) == 2
-            ):  # if 1 time series per run for predictor (e.g., gv)
-                k = (
-                    pred_raw[scen].shape[0] * pred_raw[scen].shape[1]
-                )  # nr_runs*nr_ts for this specific scenario
-                X[s : s + k, p] = pred_raw[scen].flatten()
-                s += k
-            elif (
-                len(pred_raw[scen].shape) == 1
-            ):  # if single time series as predictor (e.g. gt): repeat ts as many times as runs available
-                nr_runs, nr_ts, nr_gps = targ[scen].shape
-                nr_samples_scen = nr_runs * nr_ts
-                X[s : s + nr_samples_scen, p] = np.tile(pred_raw[scen], nr_runs)
-                s += nr_samples_scen
-            else:
-                print("Predictors in this shape cannot be processed.")
-
-    # derive y (ie dictionary with arrays of targets)
-    y = {}
-    if method_lt_each_gp_sep:
-        # initialize the target arrays
-        for gp in np.arange(nr_gps):
-            y[gp] = np.zeros(
-                [nr_samples, nr_targs]
-            )  # dict with key for each gp (ie key for each model)
-        # loop through all target vars (often just a single one)
-        for t in np.arange(nr_targs):
-            targ_name = targ_names[t]
-            targ = targs[targ_name]
-            for gp in np.arange(nr_gps):
-                s = 0
-                for scen in scens:
-                    k = (
-                        targ[scen].shape[0] * targ[scen].shape[1]
-                    )  # nr_runs*nr_ts for this specific scenario
-                    y[gp][s : s + k, t] = targ[scen][:, :, gp].flatten()
-                    s += k
-    else:
-        print(
-            "No method for a single lt model is currently implemented. (If added, should also use a dict.)"
-        )
-
-    return X, y, wgt_scen_eq
