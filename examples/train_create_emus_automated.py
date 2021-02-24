@@ -255,6 +255,7 @@ def _compare_dictionaries(regression, this_run):
 print("Running quasi-regression tests")
 for root, dirs, files in os.walk(REGRESSION_TEST_OUTPUT_DIR):
     if files:
+        print("Checking {}".format(root))
         for f in files:
             # load pickl files
             regression_file = os.path.join(root, f)
