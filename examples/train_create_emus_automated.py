@@ -1,3 +1,10 @@
+import os.path
+
+import joblib
+import numpy as np
+import numpy.testing as npt
+import sklearn
+
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
 
@@ -13,6 +20,7 @@ from mesmer.create_emulations import (
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, extract_time_period
+
 
 # specify the target variable
 targ = cfg.targs[0]
@@ -216,3 +224,46 @@ for esm in cfg.esms:
 
     # print(esm, "Merge the local trends and the local variability.")
     # emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
+
+
+REGRESSION_TEST_OUTPUT_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "tests",
+    "test-data",
+    "first-run-test",
+    "expected-output",
+)
+
+THIS_RUN_OUTPUT_DIR = "."
+
+
+def _compare_dictionaries(regression, this_run):
+    for key, regression_value in regression.items():
+        this_run_value = this_run[key]
+
+        if isinstance(this_run_value, dict):
+            _compare_dictionaries(this_run_value, regression_value)
+        elif isinstance(this_run_value, sklearn.linear_model.LinearRegression):
+            pass
+        elif isinstance(this_run_value, np.ndarray):
+            npt.assert_allclose(this_run_value, regression_value)
+        else:
+            assert this_run_value == regression_value
+
+
+print("Running quasi-regression tests")
+for root, dirs, files in os.walk(REGRESSION_TEST_OUTPUT_DIR):
+    if files:
+        for f in files:
+            # load pickl files
+            regression_file = os.path.join(root, f)
+            regression_output = joblib.load(regression_file)
+
+            this_run_file = os.path.join(
+                root.replace(REGRESSION_TEST_OUTPUT_DIR, THIS_RUN_OUTPUT_DIR),
+                f
+            )
+            this_run_output = joblib.load(this_run_file)
+
+            _compare_dictionaries(regression_output, this_run_output)
