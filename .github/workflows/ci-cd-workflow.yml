@@ -1,4 +1,4 @@
-name: scmdata CI-CD
+name: mesmer CI-CD
 on: push
 
 jobs:
