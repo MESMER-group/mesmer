@@ -112,7 +112,6 @@ else:
     scen_name_emus_v = scen_name_emus
     scenarios_emus_v = scenarios_emus
 
-
 reg_type = "srex"
 ref = {}
 ref["type"] = "individ"  # alternatives: 'first','all'
@@ -123,10 +122,10 @@ time["start"] = "1850"  # first included year
 time["end"] = "2100"  # last included year
 threshold_land = 1 / 3
 
-
 # observations
 # - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
 # will probably add obs (Cowtan + Way) / (BEST) in here too (preferably land only as well).
+
 
 nr_emus = {}
 nr_ts_emus_v = {}
