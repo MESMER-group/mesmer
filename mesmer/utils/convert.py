@@ -42,8 +42,8 @@ def convert_dict_to_arr(var_dict):
     return var_arr
 
 
-def separate_hist_future(var_c,time_c,cfg):
-    """ Separate historical and future time periods into separate keys in dictionary.
+def separate_hist_future(var_c, time_c, cfg):
+    """Separate historical and future time periods into separate keys in dictionary.
 
     Args:
     - var_c (dict): variable dictionary with concatenated historical and future scenarios as keys
@@ -57,39 +57,41 @@ def separate_hist_future(var_c,time_c,cfg):
         [hist] / [scen_f] (xd array of variable (run,time,x), np.ndarray)
     - time_s (dict): time dictionary with separated historical and future scenarios as keys
         ['hist] / [scen_f] (1d array of years, np.ndarray)
-        
+
     General remarks:
     - Assumption:   - each scenario starts in the same year
                     - at least 2-dim variable array is passed with 1st dim nr runs, 2nd dim nr ts
-    
+
     """
-    
+
     gen = cfg.gen
-    scens_c = list(var_c.keys()) # concatenated scens
-    scens_f = list(map(lambda x: x.replace('h-',''),scens_c)) # future scens
-    
+    scens_c = list(var_c.keys())  # concatenated scens
+    scens_f = list(map(lambda x: x.replace("h-", ""), scens_c))  # future scens
+
     if gen == 5:
-        end_year_hist = 2005  # last year included in historical time period 
+        end_year_hist = 2005  # last year included in historical time period
     if gen == 6:
         end_year_hist = 2014
-        
+
     scen_c = scens_c[0]
     scen_f = scens_f[0]
-    idx_start_fut = np.where(time_c[scen_c]==end_year_hist)[0][0]+1
+    idx_start_fut = np.where(time_c[scen_c] == end_year_hist)[0][0] + 1
 
-    time_s={}
-    time_s['hist']=time_c[scen_c][:idx_start_fut]
-    
-    var_s={}
-    var_s['hist']=var_c[scen_c][:,:idx_start_fut]
-    var_s[scen_f]=var_c[scen_c][:,idx_start_fut:]
-    time_s[scen_f]=time_c[scen_c][idx_start_fut:]
-    for scen_f,scen_c in zip(scens_f[1:],scens_c[1:]):
-        var_s['hist']=np.vstack([var_s['hist'],var_c[scen_c][:,:idx_start_fut]]) #stack all available historical runs
-        var_s[scen_f]=var_c[scen_c][:,idx_start_fut:]
-        time_s[scen_f]=time_c[scen_c][idx_start_fut:]
-        
+    time_s = {}
+    time_s["hist"] = time_c[scen_c][:idx_start_fut]
+
+    var_s = {}
+    var_s["hist"] = var_c[scen_c][:, :idx_start_fut]
+    var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
+    time_s[scen_f] = time_c[scen_c][idx_start_fut:]
+    for scen_f, scen_c in zip(scens_f[1:], scens_c[1:]):
+        var_s["hist"] = np.vstack(
+            [var_s["hist"], var_c[scen_c][:, :idx_start_fut]]
+        )  # stack all available historical runs
+        var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
+        time_s[scen_f] = time_c[scen_c][idx_start_fut:]
+
     # exclude duplicate historical runs that are available in several scenarios
-    var_s['hist']=np.unique(var_s['hist'],axis=0)
+    var_s["hist"] = np.unique(var_s["hist"], axis=0)
 
-    return var_s,time_s
+    return var_s, time_s
