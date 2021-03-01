@@ -45,23 +45,22 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         ['scenarios'] (emission scenarios used for training, list of strs)
         [xx] (additional params depend on method employed)
 
-    Assumption:
-    If historical data is used for training, it is contained in the same dict key as its associated scenario.
+    General remarks:
+    - Assumptions:  - All scens start at the same point in time
+                    - If historical data is present, historical data and future scenarios are transmitted as single time series
+    - No perfect smoothness enforced at transition from historical to future scenario
+    - No perfect overlap between future scenarios which share the same forcing in the beginning is enforced
 
     """
 
     # specify necessary variables from config file
     ens_type_tr = cfg.ens_type_tr
-    hist_tr = cfg.hist_tr
+    gen = cfg.gen
     method_gt = cfg.methods[targ]["gt"]
     preds_gt = cfg.preds[targ]["gt"]
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(var.keys())
-    if hist_tr:  # check whether historical data is used in training
-        scen_name_tr = "hist_" + "_".join(scenarios_tr)
-    else:
-        scen_name_tr = "_".join(scenarios_tr)
 
     # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
     params_gt = {}
@@ -72,28 +71,63 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     params_gt["preds"] = preds_gt
     params_gt["scenarios"] = scenarios_tr  # single entry in case of ic ensemble
 
-    for scen in params_gt["scenarios"]:
-        params_gt[scen] = {}
-        params_gt[scen]["time"] = time[scen]
-
     # apply the chosen method to the type of ensenble
+    gt = {}
     if "LOWESS" in params_gt["method"]:
-        for scen in params_gt["scenarios"]:  # ie derive gt for each scen individually
-            params_gt[scen]["gt"], params_gt[scen]["frac_lowess"] = train_gt_ic_LOWESS(
-                var[scen]
-            )
+        for scen in scenarios_tr:  # ie derive gt for each scen individually
+            gt[scen], frac_lowess_name = train_gt_ic_LOWESS(var[scen])
+        params_gt["frac_lowess"] = frac_lowess_name
+    else:
+        print(
+            "No alternative method to LOWESS implemented for now. If one is added must also produce a gt dict."
+        )
 
-    if params_gt["method"] == "LOWESS_OLSVOLC":
-        for scen in params_gt["scenarios"]:  # ie derive gt for each scen individually
-            if (
-                time[scen].min() < 2000
-            ):  # check if historical period is part of the training runs
-                # overwrites existing smooth trend with smooth trend + volcanic spikes
-                params_gt[scen]["saod"], params_gt[scen]["gt"] = train_gt_ic_OLSVOLC(
-                    var[scen], params_gt[scen]["gt"], time[scen], cfg
-                )
-            else:  # no volcanic eruptions in the scenario time period
-                params_gt[scen]["saod"] = None
+    params_gt["time"] = {}
+
+    if scenarios_tr[0][:2] == "h-":  # ie if hist included
+
+        if gen == 5:
+            start_year_fut = 2005
+        elif gen == 6:
+            start_year_fut = 2014
+
+        idx_start_year_fut = np.where(time[scen] == start_year_fut)[0][0] + 1
+
+        params_gt["time"]["hist"] = time[scen][:idx_start_year_fut]
+
+        # compute median LOWESS estimate of historical part across all scenarios
+        gt_lowess_hist_all = np.zeros([len(gt.keys()), len(params_gt["time"]["hist"])])
+        for i, scen in enumerate(gt.keys()):
+            gt_lowess_hist_all[i] = gt[scen][:idx_start_year_fut]
+        gt_lowess_hist = np.median(gt_lowess_hist_all, axis=0)
+
+        if params_gt["method"] == "LOWESS_OLSVOLC":
+            scen = scenarios_tr[0]
+            var_all = var[scen][:, :idx_start_year_fut]
+            for scen in scenarios_tr[1:]:
+                var_tmp = var[scen][:, :idx_start_year_fut]
+                var_all = np.vstack([var_all, var_tmp])
+
+                # check for duplicates & exclude those runs
+                var_all = np.unique(var_all, axis=0)
+
+            params_gt["saod"], params_gt["hist"] = train_gt_ic_OLSVOLC(
+                var_all, gt_lowess_hist, params_gt["time"]["hist"], cfg
+            )
+        elif params_gt["method"] == "LOWESS":
+            params_gt["hist"] = gt_lowess_hist
+
+        scenarios_tr_f = list(
+            map(lambda x: x.replace("h-", ""), scenarios_tr)
+        )  # isolte future scen names
+
+    else:
+        idx_start_year_fut = 0  # because first year would be already in future
+        scenarios_tr_f = scenarios_tr  # because only future covered anyways
+
+    for scen_f, scen in zip(scenarios_tr_f, scenarios_tr):
+        params_gt["time"][scen_f] = time[scen][idx_start_year_fut:]
+        params_gt[scen_f] = gt[scen][idx_start_year_fut:]
 
     # save the global trend paramters if requested
     if save_params:
@@ -109,7 +143,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
             *preds_gt,
             targ,
             esm,
-            scen_name_tr,
+            *scenarios_tr,
         ]
         filename_params_gt = dir_mesmer_params_gt + "_".join(filename_parts) + ".pkl"
         joblib.dump(params_gt, filename_params_gt)
@@ -140,12 +174,13 @@ def train_gt_ic_LOWESS(var):
         50 / nr_ts
     )  # rather arbitrarily chosen value that gives a smooth enough trend,
     # open to changes but if much smaller, var trend ends up very wiggly
+    frac_lowess_name = "50/nr_ts"
 
     gt_lowess = lowess(
         av_var, np.arange(nr_ts), return_sorted=False, frac=frac_lowess, it=0
     )
 
-    return gt_lowess, frac_lowess
+    return gt_lowess, frac_lowess_name
 
 
 def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
@@ -161,17 +196,19 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     - coef_saod (float): stratospheric AOD OLS coefficient for variable variability
     - gt (np.ndarray): 1d array of global temperature trend with volcanic spikes
 
+    General remarks:
+    - Assumption: - only historical time period data is passed
+
     """
 
     # specify necessary variables from cfg file
-    gen = cfg.gen
     dir_obs = cfg.dir_obs
 
     nr_runs, nr_ts = var.shape
 
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
-    aod_obs = load_strat_aod(time, gen, dir_obs).reshape(
+    aod_obs = load_strat_aod(time, dir_obs).reshape(
         -1, 1
     )  # bring in correct format for sklearn linear regression
     aod_obs_all = np.tile(
@@ -179,22 +216,29 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     )  # repeat aod time series as many times as runs available
     nr_aod_obs = len(aod_obs)
 
+    if nr_ts != nr_aod_obs:
+        print(
+            "An error occurred. The number of time steps of the variable and the saod do not match. This function will crash."
+        )
     # extract global variability (which still includes volc eruptions) by removing smooth trend from Tglob in historic period
     gv_all_for_aod = np.zeros(nr_runs * nr_aod_obs)
     i = 0
     for run in np.arange(nr_runs):
-        gv_all_for_aod[i : i + nr_aod_obs] = (var[run] - gt_lowess)[:nr_aod_obs]
+        gv_all_for_aod[i : i + nr_aod_obs] = var[run] - gt_lowess
         i += nr_aod_obs
     # fit linear regression of gv to aod (because some ESMs react very strongly to volcanoes)
     linreg_gv_volc = LinearRegression(fit_intercept=False).fit(
         aod_obs_all, gv_all_for_aod
     )  # no intercept to not artifically
     # move the ts
-    # apply linear regression model to obtain volcanic spikes
-    contrib_volc = np.concatenate(
-        (linreg_gv_volc.predict(aod_obs), np.zeros(nr_ts - nr_aod_obs))
-    )  # aod contribution in past, 0 in future
+
+    # extract the saod coefficient
     coef_saod = linreg_gv_volc.coef_[0]
-    gt = contrib_volc + gt_lowess
+
+    # apply linear regression model to obtain volcanic spikes
+    contrib_volc = linreg_gv_volc.predict(aod_obs)
+
+    # merge the lowess trend wit the volc contribution
+    gt = gt_lowess + contrib_volc
 
     return coef_saod, gt
