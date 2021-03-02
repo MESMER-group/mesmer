@@ -36,17 +36,19 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
     - emus_gv (dict): global variability emulations dictionary with keys
         [scen] (2d array  (emus x time) of global trend emulation time series)
 
+    General remarks:
+    - Scenarios and the number of time steps for each scenario are defined in the config file.
+
     """
 
     # specify necessary variables from config file
-    scenarios_emus = cfg.scenarios_emus_v
-    scen_name_emus = cfg.scen_name_emus_v
     dir_mesmer_emus = cfg.dir_mesmer_emus
+    scenarios_emus_v = cfg.scenarios_emus_v
 
     # set up dictionary for emulations of global variability with emulated scenarios as keys
     emus_gv = {}
 
-    for scen in scenarios_emus:
+    for scen in scenarios_emus_v:
         # apply the chosen method
         if (
             params_gv["method"] == "AR"
@@ -70,7 +72,7 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
             *params_gv["preds"],
             params_gv["targ"],
             params_gv["esm"],
-            scen_name_emus,
+            *scenarios_emus_v,
         ]
         filename_emus_gv = dir_mesmer_emus_gv + "_".join(filename_parts) + ".pkl"
         joblib.dump(emus_gv, filename_emus_gv)

@@ -89,27 +89,20 @@ ens_type_tr = (
     "msic"  # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
 )
 scenarios_tr = [
-    "ssp126",
+    "h-ssp126",
 ]  # scenarios trained on, ATTENTION: full potential list. Not all ESMs have all ssps available.
 scenarios_emus = [
-    "ssp126",
+    "h-ssp126",
 ]  # scenarios emulated
 
-hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly + think about how to deal with baseline period)
-hist_emus = True  # if historcal part of run is included in the emulations
+
 wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
-if hist_emus:
-    scen_name_emus = "hist_" + "_".join(scenarios_emus)
-else:
-    scen_name_emus = "_".join(scenarios_emus)
 
 scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 if scen_seed_offset_v == 0:  # Potential TODO: integrate hist in this name too?
-    scen_name_emus_v = "all"
     scenarios_emus_v = ["all"]
 else:
-    scen_name_emus_v = scen_name_emus
     scenarios_emus_v = scenarios_emus
 
 reg_type = "srex"

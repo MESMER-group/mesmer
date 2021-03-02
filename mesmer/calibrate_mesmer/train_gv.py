@@ -39,8 +39,8 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
         ['scenarios'] (emission scenarios used for training, list of strs)
         [xx] additional params depend on method employed, specified in train_gv_T_ens_type_method() function
 
-    Assumption:
-    If historical data is used for training, it has its own scenario.
+    General remarks:
+    - Assumption: If historical data is used for training, it has its own scenario.
 
     """
 
@@ -51,7 +51,6 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(gv.keys())
-    scen_name_tr = "_".join(scenarios_tr)
 
     # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
     params_gv = {}
@@ -84,7 +83,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
             *preds_gv,
             targ,
             esm,
-            scen_name_tr,
+            *scenarios_tr,
         ]
         filename_params_gv = dir_mesmer_params_gv + "_".join(filename_parts) + ".pkl"
         joblib.dump(params_gv, filename_params_gv)
@@ -113,6 +112,10 @@ def train_gv_AR(params_gv, gv):
         ['AR_coefs'] (coefficients of the AR model for the lags which are contained in the selected AR model, list of floats)
         ['AR_lags'] (AR lags which are contained in the selected AR model, list of ints)
         ['AR_std_innovs'] (standard deviation of the innovations of the selected AR model, float)
+
+    General remarks:
+    - TODO: change fct to 1) train AR params on each run individually -> 2) average across all runs of specific scen -> 3) all scens
+    - TODO: learn proper way for bic selection -> eg same process as described above but 2x: 1x to select order (always take median) 1x to fit params (take mean or median again?)
 
     """
 

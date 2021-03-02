@@ -71,6 +71,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     pred_names = list(preds.keys())
 
     # specify necessary variables from config file
+    dir_mesmer_params = cfg.dir_mesmer_params
     ens_type_tr = cfg.ens_type_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
@@ -86,10 +87,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     method_lt = cfg.methods[targ_name]["lt"]
     method_lv = cfg.methods[targ_name]["lv"]
     method_lt_each_gp_sep = cfg.method_lt_each_gp_sep
-    dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(targs[targ_name].keys())
-    scen_name_tr = "_".join(scenarios_tr)
 
     # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
     params_lt = {}
@@ -169,7 +168,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
             *preds_lt,
             *targ_names,
             esm,
-            scen_name_tr,
+            *scenarios_tr,
         ]
         filename_params_lt = dir_mesmer_params_lt + "_".join(filename_parts) + ".pkl"
         joblib.dump(params_lt, filename_params_lt)
@@ -190,7 +189,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
             *preds_lv,
             *targ_names,
             esm,
-            scen_name_tr,
+            *scenarios_tr,
         ]
         filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
         joblib.dump(params_lv, filename_params_lv)

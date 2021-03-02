@@ -131,18 +131,18 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     return tblend, time
 
 
-def load_strat_aod(time, gen, dir_obs):
+def load_strat_aod(time, dir_obs):
     """Load observed global stratospheric aerosol optical depth time series.
 
     Args:
     - time (np.ndarray): 1d array of years the AOD time series is required for
-    - gen (int): cmip generation (to determine after which year to set AOD to 0)
     - dir_obs (str): pathway to observations
 
     Returns:
     - aod_obs (np.ndarray): 1d array of observed global stratospheric AOD time series
 
     General remarks:
+    - Assumption: time covers max full extend historical period (ie 1850 - 2014 for cimp6, 1850 - 2005 for cmip5)
     - potentially TODO: check if want to integrate it into load_obs() fct somehow, but likely not as it is quite different from other obs
 
     """
@@ -168,10 +168,6 @@ def load_strat_aod(time, gen, dir_obs):
     )
 
     aod_obs = aod_obs.groupby("time.year").mean("time")
-    if gen == 5:
-        end_year = "2005"  # last year included in historical time period in which volcanoes are included
-    if gen == 6:
-        end_year = "2014"
-    aod_obs = aod_obs.sel(year=slice(str(time[0]), end_year)).values
+    aod_obs = aod_obs.sel(year=slice(str(time[0]), str(time[-1]))).values
 
     return aod_obs

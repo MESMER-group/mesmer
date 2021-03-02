@@ -45,7 +45,6 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
     # specify necessary variables from config file
     dir_mesmer_emus = cfg.dir_mesmer_emus
-    scen_name_emus = cfg.scen_name_emus
 
     scenarios_gt = list(emus_gt.keys())
     scenarios_gv = list(emus_gv.keys())
@@ -100,7 +99,7 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
             *params_gv["preds"],
             targ,
             esm,
-            scen_name_emus,
+            *scenarios_gt,
         ]
         filename_emus_g = dir_mesmer_emus_g + "_".join(filename_parts) + ".pkl"
         joblib.dump(emus_g, filename_emus_g)
@@ -137,7 +136,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
     # specify necessary variables from config file
     dir_mesmer_emus = cfg.dir_mesmer_emus
-    scen_name_emus = cfg.scen_name_emus
 
     scenarios_lt = list(emus_lt.keys())
     scenarios_lv = list(emus_lv.keys())
@@ -196,7 +194,7 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
             *params_lv["preds"],
             *targs,
             esm,
-            scen_name_emus,
+            *scenarios_lt,
         ]
         filename_emus_l = dir_mesmer_emus_l + "_".join(filename_parts) + ".pkl"
         joblib.dump(emus_l, filename_emus_l)

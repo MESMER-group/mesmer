@@ -254,12 +254,20 @@ def load_cmipng(targ, esm, scen, cfg):
 
     """
 
+    # check if scenario describes
+    if scen[:2] == "h-":
+        scen_fut = scen[2:]
+    else:
+        print(
+            "No version without historical time period is currently implemented. This function will crash."
+        )
+
     targ_func_mapping = {"hfds": load_cmipng_hfds, "tas": load_cmipng_tas}
     # once start working with other vars, extend dict eg {"pr": load_cmipng_pr, "hfds": load_cmipng_hfds, "tas": load_cmipng_tas}
 
     load_targ = targ_func_mapping[targ]
 
-    targ, GTARG, lon, lat, time = load_targ(esm, scen, cfg)
+    targ, GTARG, lon, lat, time = load_targ(esm, scen_fut, cfg)
 
     return targ, GTARG, lon, lat, time
 

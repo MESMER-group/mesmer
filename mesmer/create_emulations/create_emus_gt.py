@@ -12,9 +12,10 @@ Functions:
 import os
 
 import joblib
+import numpy as np
 
 
-def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
+def create_emus_gt(params_gt, cfg, scenarios="emus", concat_h_f=False, save_emus=True):
     """Create global trend (emissions + volcanoes) emulations for specified ensemble type and method.
 
     Args:
@@ -29,6 +30,8 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
         [xx] (additional keys depend on employed method and are listed in train_gt_T_ens_type_method() function)
     - cfg (module): config file containnig metadata
     - scenarios (str,optional): determines if training or emulations scenarios are emulated, default = 'emus'
+    - concat_h_f (bool,optional): determines if historical and future time period is concatenated into a single
+                                    emulation or not, default = False (must be set to false if no historical data provided)
     - save_emus (bool,optional): determines if emulation is saved or not, default = True
 
     Returns:
@@ -38,25 +41,37 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
     """
 
     # specify necessary variables from config file
+    dir_mesmer_emus = cfg.dir_mesmer_emus
+
     if scenarios == "emus":
         scenarios_emus = cfg.scenarios_emus
-        scen_name_emus = cfg.scen_name_emus
     elif scenarios == "tr":
         scenarios_emus = params_gt["scenarios"]
-        if cfg.hist_tr:  # check whether historical data was used in training
-            scen_name_emus = "hist_" + "_".join(scenarios_emus)
-        else:
-            scen_name_emus = "_".join(scenarios_emus)
 
-    dir_mesmer_emus = cfg.dir_mesmer_emus
+    scens_out_f = list(map(lambda x: x.replace("h-", ""), scenarios_emus))
+    # does nothing in case 'h-' not actually included
+
+    if concat_h_f:
+        scens_out = scenarios_emus
+    else:
+        if "h-" in scenarios_emus[0]:
+            scens_out = ["hist"] + scens_out_f
+        else:
+            scens_out = scens_out_f
 
     # initialize global trend emulations dictionary with scenarios as keys
     emus_gt = {}
 
     # apply the chosen method
     if "LOWESS" in params_gt["method"]:
-        for scen in scenarios_emus:
-            emus_gt[scen] = params_gt[scen]["gt"]
+        if concat_h_f:
+            for scen_out, scen_out_f in zip(scens_out, scens_out_f):
+                emus_gt[scen_out] = np.concatenate(
+                    [params_gt["hist"], params_gt[scen_out_f]]
+                )
+        else:
+            for scen_out in scens_out:
+                emus_gt[scen_out] = params_gt[scen_out]
     else:
         print("No alternative method is currently implemented.")
 
@@ -74,7 +89,7 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", save_emus=True):
             *params_gt["preds"],
             params_gt["targ"],
             params_gt["esm"],
-            scen_name_emus,
+            *scens_out,
         ]
         filename_emus_gt = dir_mesmer_emus_gt + "_".join(filename_parts) + ".pkl"
         joblib.dump(emus_gt, filename_emus_gt)
