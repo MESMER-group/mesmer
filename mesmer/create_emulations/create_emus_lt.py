@@ -7,11 +7,10 @@ Functions to create local trends emulations with MESMER.
 Functions:
     create_emus_lt()
     create_emus_OLS_each_gp_sep()
-    
+
 """
 
 
-import copy
 import os
 
 import joblib
@@ -95,9 +94,9 @@ def create_emus_lt(
     # create emulations
     emus_lt = {}
     if concat_h_f:
-        lt_hist = create_emus_OLS_each_gp_sep(params_lt, preds_lt, "hist")
+        lt_hist = create_emus_method_lt(params_lt, preds_lt, "hist")
         for scen_out, scen_out_f in zip(scens_out, scens_out_f):
-            lt_scen_f = create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen_out_f)
+            lt_scen_f = create_emus_method_lt(params_lt, preds_lt, scen_out_f)
             emus_lt[scen_out] = {}
             for targ in params_lt["targs"]:
                 emus_lt[scen_out][targ] = np.concatenate(
@@ -105,9 +104,7 @@ def create_emus_lt(
                 )
     else:
         for scen_out in scens_out:
-            emus_lt[scen_out] = create_emus_OLS_each_gp_sep(
-                params_lt, preds_lt, scen_out
-            )
+            emus_lt[scen_out] = create_emus_method_lt(params_lt, preds_lt, scen_out)
 
     # save the local trends emulation if requested
     if save_emus:
