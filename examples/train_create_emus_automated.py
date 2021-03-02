@@ -18,7 +18,12 @@ from mesmer.create_emulations import (
     create_emus_lv,
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
-from mesmer.utils import convert_dict_to_arr, extract_land, extract_time_period
+from mesmer.utils import (
+    convert_dict_to_arr,
+    extract_land,
+    extract_time_period,
+    separate_hist_future,
+)
 
 # specify the target variable
 targ = cfg.targs[0]
@@ -35,7 +40,6 @@ tas_g = {}
 GSAT = {}
 GHFDS = {}
 time = {}
-scen_max_runs = {}
 
 for esm in esms:
     print(esm)
@@ -43,9 +47,9 @@ for esm in esms:
     GSAT_dict[esm] = {}
     GHFDS_dict[esm] = {}
     time[esm] = {}
-    max_runs = 0
 
     for scen in cfg.scenarios_tr:
+
         tas_g_tmp, GSAT_tmp, lon_tmp, lat_tmp, time_tmp = load_cmipng(
             targ, esm, scen, cfg
         )
@@ -61,10 +65,6 @@ for esm in esms:
                 time_tmp,
             )
             _, GHFDS_dict[esm][scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
-            nr_runs = len(GSAT_dict[esm][scen])
-            if max_runs < nr_runs:
-                max_runs = nr_runs
-                scen_max_runs[esm] = scen
 
     tas_g[esm] = convert_dict_to_arr(tas_g_dict[esm])
     GSAT[esm] = convert_dict_to_arr(GSAT_dict[esm])
@@ -79,80 +79,41 @@ tas, reg_dict, ls = extract_land(
 )
 
 
-for esm in cfg.esms:
+for esm in esms:
     print(esm)
 
-    print(esm, "Start with the global trend module.")
+    print(esm, "Start with global trend module")
     params_gt_T = train_gt(GSAT[esm], targ, esm, time[esm], cfg, save_params=True)
     params_gt_hfds = train_gt(GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=True)
 
-    # create emulation of global trend T from training scenarios to be used as predictor for lt training
-    gt_T = create_emus_gt(params_gt_T, cfg, scenarios="tr", save_emus=False)
-
-    # create emulation of global trend T for emulation scenarios to be used as predictor for lt emulation
-    # (same in this ic setup but done for completeness)
-    emus_gt_T = create_emus_gt(params_gt_T, cfg, scenarios="emus", save_emus=True)
-
-    # create emulation of global trend hfds from training scenarios to be used as predictor for lt emulation
-    gt_hfds = create_emus_gt(params_gt_hfds, cfg, scenarios="tr", save_emus=True)
-
-    # create emulation of global trend hfds from emulation scenarios to be used as predictor for lt emulation
-    # (same in this ic setup but done for completeness)
-    emus_gt_hfds = create_emus_gt(params_gt_hfds, cfg, scenarios="emus", save_emus=True)
+    emus_gt_T = create_emus_gt(
+        params_gt_T, cfg, scenarios="tr", concat_h_f=True, save_emus=True
+    )
+    gt_T_s = create_emus_gt(
+        params_gt_T, cfg, scenarios="tr", concat_h_f=False, save_emus=False
+    )
 
     print(
         esm,
-        "Prepare predictors for global variability, local trend, and local variability module.",
+        "Start preparing predictors for global variability, local trends, and local variability",
     )
-    # extract global variability left after removing smooth trend with volcanic spikes
+    gt_T2_s = {}
+    for scen in gt_T_s.keys():
+        gt_T2_s[scen] = gt_T_s[scen] ** 2
+
+    gt_hfds_s = create_emus_gt(
+        params_gt_hfds, cfg, scenarios="tr", concat_h_f=False, save_emus=False
+    )
+
     gv_novolc_T = {}
-    gt_T2 = {}
-    for scen in gt_T.keys():
-        gt_T2[scen] = gt_T[scen] ** 2
-        gv_novolc_T[scen] = GSAT[esm][scen] - gt_T[scen]
+    for scen in emus_gt_T.keys():
+        gv_novolc_T[scen] = GSAT[esm][scen] - emus_gt_T[scen]
+    gv_novolc_T_s, time_s = separate_hist_future(gv_novolc_T, time[esm], cfg)
 
-    # turn hist into a "scenario" -> useful for gv, lt, lv (but still not very clean with my naming conventions)
-    tas_tmp = {}
-    gt_T_tmp = {}
-    gt_T2_tmp = {}
-    gt_hfds_tmp = {}
-    gv_novolc_T_tmp = {}
+    tas_s, time_s = separate_hist_future(tas[esm], time[esm], cfg)
 
-    tas_tmp["hist"], time_tmp = extract_time_period(
-        tas[esm][scen_max_runs[esm]], time[esm][scen_max_runs[esm]], 1850, 2014
-    )
-    gt_T_tmp["hist"], time_tmp = extract_time_period(
-        gt_T[scen_max_runs[esm]], time[esm][scen_max_runs[esm]], 1850, 2014
-    )
-    gt_T2_tmp["hist"], time_tmp = extract_time_period(
-        gt_T2[scen_max_runs[esm]], time[esm][scen_max_runs[esm]], 1850, 2014
-    )
-    gt_hfds_tmp["hist"], time_tmp = extract_time_period(
-        gt_hfds[scen_max_runs[esm]], time[esm][scen_max_runs[esm]], 1850, 2014
-    )
-    gv_novolc_T_tmp["hist"], time_tmp = extract_time_period(
-        gv_novolc_T[scen_max_runs[esm]], time[esm][scen_max_runs[esm]], 1850, 2014
-    )
-
-    for scen in GSAT[esm].keys():
-        tas_tmp[scen], time_tmp = extract_time_period(
-            tas[esm][scen], time[esm][scen], 2015, 2100
-        )
-        gt_T_tmp[scen], time_tmp = extract_time_period(
-            gt_T[scen], time[esm][scen], 2015, 2100
-        )
-        gt_T2_tmp[scen], time_tmp = extract_time_period(
-            gt_T2[scen], time[esm][scen], 2015, 2100
-        )
-        gt_hfds_tmp[scen], time_tmp = extract_time_period(
-            gt_hfds[scen], time[esm][scen], 2015, 2100
-        )
-        gv_novolc_T_tmp[scen], time_tmp = extract_time_period(
-            gv_novolc_T[scen], time[esm][scen], 2015, 2100
-        )
-
-    print(esm, "Start with global variability module.")
-    params_gv_T = train_gv(gv_novolc_T_tmp, targ, esm, cfg, save_params=True)
+    print(esm, "Start with global variability module")
+    params_gv_T = train_gv(gv_novolc_T_s, targ, esm, cfg, save_params=True)
     emus_gv_T = create_emus_gv(params_gv_T, cfg, save_emus=True)
 
     print(esm, "Merge the global trend and the global variability.")
@@ -160,32 +121,35 @@ for esm in cfg.esms:
         emus_gt_T, emus_gv_T, params_gt_T, params_gv_T, cfg, save_emus=True
     )
 
-    print(esm, "Start with local modules.")
-
-    print(esm, "Start with local trends module.")
+    print(esm, "Start with local trends module")
     preds = {
-        "gttas": gt_T_tmp,
-        "gttas2": gt_T2_tmp,
-        "gthfds": gt_hfds_tmp,
-        "gvtas": gv_novolc_T_tmp,
-    }  # predictors_list including gv
-    targs = {"tas": tas_tmp}  # targets list
+        "gttas": gt_T_s,
+        "gttas2": gt_T2_s,
+        "gthfds": gt_hfds_s,
+        "gvtas": gv_novolc_T_s,
+    }  # predictors_list
+    targs = {"tas": tas_s}  # targets list
     params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=True)
 
-    preds = {
-        "gttas": gt_T_tmp,
-        "gttas2": gt_T2_tmp,
-        "gthfds": gt_hfds_tmp,
-    }  # predictors_list just trends
-    lt = create_emus_lt(params_lt, preds, cfg, scenarios="tr", save_emus=False)
-
-    preds_emus_lt = {"gttas": gt_T, "gttas2": gt_T2, "gthfds": gt_hfds}
-    emus_lt = create_emus_lt(
-        params_lt, preds_emus_lt, cfg, scenarios="emus", save_emus=True
+    preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
+    lt_s = create_emus_lt(
+        params_lt,
+        preds_lt,
+        cfg,
+        scenarios="tr",
+        concat_h_f=False,
+        save_emus=True,
     )
-    preds_list_emus_lt = [emus_gt_T]
+    emus_lt = create_emus_lt(
+        params_lt,
+        preds_lt,
+        cfg,
+        scenarios="tr",
+        concat_h_f=True,
+        save_emus=True,
+    )
 
-    print(esm, "Start with local variability module.")
+    print(esm, "Start with local variability module")
     print("ATTENTION: CURRENTLY NOT WORKING. Will (hopefully) reintroduce soon.")
 
     # tas_lv = {}

@@ -91,41 +91,34 @@ ens_type_tr = (
     "msic"  # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
 )
 scenarios_tr = [
-    "ssp585",
-    "ssp370",
-    "ssp460",
-    "ssp245",
-    "ssp534-over",
-    "ssp434",
-    "ssp126",
-    "ssp119",
+    "h-ssp585",
+    "h-ssp370",
+    "h-ssp460",
+    "h-ssp245",
+    "h-ssp534-over",
+    "h-ssp434",
+    "h-ssp126",
+    "h-ssp119",
 ]  # scenarios trained on, ATTENTION: full potential list. Not all ESMs have all ssps available.
 scenarios_emus = [
-    "ssp585",
-    "ssp370",
-    "ssp460",
-    "ssp245",
-    "ssp534-over",
-    "ssp434",
-    "ssp126",
-    "ssp119",
+    "h-ssp585",
+    "h-ssp370",
+    "h-ssp460",
+    "h-ssp245",
+    "h-ssp534-over",
+    "h-ssp434",
+    "h-ssp126",
+    "h-ssp119",
 ]  # scenarios emulated
 
-hist_tr = True  # if historical part of run is included in training (not yet implemented for False. Would need to write loading fct() accordingly + think about how to deal with baseline period)
-hist_emus = True  # if historcal part of run is included in the emulations
+
 wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
-if hist_emus:
-    scen_name_emus = "hist_" + "_".join(scenarios_emus)
-else:
-    scen_name_emus = "_".join(scenarios_emus)
 
 scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
-if scen_seed_offset_v == 0:  # Potential TODO: integrate hist in this name too?
-    scen_name_emus_v = "all"
+if scen_seed_offset_v == 0:
     scenarios_emus_v = ["all"]
 else:
-    scen_name_emus_v = scen_name_emus
     scenarios_emus_v = scenarios_emus
 
 
@@ -136,7 +129,7 @@ ref["start"] = "1850"  # first included year
 ref["end"] = "1900"  # last included year
 time = {}
 time["start"] = "1850"  # first included year
-time["end"] = "2100"  # last included year
+time["end"] = "2100"  # last included year #TODO: check if even used anywhere??
 threshold_land = 1 / 3
 dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
 
@@ -169,7 +162,9 @@ for esm in all_esms:
     j = 0
     for scen in scenarios_emus_v:
         nr_emus[esm][scen] = 6000  # nr of emulation time series
-        nr_ts_emus_v[esm][scen] = 251  # nr of emulated time steps
+        nr_ts_emus_v[esm][
+            scen
+        ] = 251  # nr of emulated time steps, careful that matches!
         seed[esm][scen] = {}
         seed[esm][scen]["gv"] = i + j * scen_seed_offset_v
         seed[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1000000
