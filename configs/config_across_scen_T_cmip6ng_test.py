@@ -23,8 +23,8 @@ dir_cmipng = os.path.join(TEST_DATA_ROOT, "cmip{}-ng/".format(gen))  # TODO: rem
 dir_obs = os.path.join(TEST_DATA_ROOT, "observations/")  # TODO: remove need for trailing "/" here
 
 # mesmer
-dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters")
-dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations")
+dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters/")
+dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations/")
 
 
 # directories below not needed for parts that we test so far (20210210)

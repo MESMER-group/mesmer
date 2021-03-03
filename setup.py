@@ -46,6 +46,8 @@ REQUIREMENTS_INSTALL = [
 ]
 REQUIREMENTS_TESTS = [
     "pytest",
+    "pytest-cov",
+    "pytest-xdist",
 ]
 requirements_dev = [
     *[
