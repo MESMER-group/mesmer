@@ -3,3 +3,4 @@ cartopy
 cython
 gdal
 netcdf4
+numpy
