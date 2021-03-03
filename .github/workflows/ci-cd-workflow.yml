@@ -29,5 +29,6 @@ jobs:
     - name: Run test script
       run: |
           which python
+          conda activate test
           make conda-environment
           python examples/train_create_emus_automated.py
