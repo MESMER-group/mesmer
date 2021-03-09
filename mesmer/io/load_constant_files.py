@@ -204,6 +204,11 @@ def load_phi_gc(lon, lat, ls, cfg):
             if i % 200 == 0:
                 print("done with gp", i)
 
+        # check if auxiliary directory already exists, if not, create it
+        if not os.path.exists(dir_aux):
+            os.makedirs(dir_aux)
+            print("created dir:", dir_aux)
+
         joblib.dump(geodist, dir_aux + geodist_name)
 
     else:
