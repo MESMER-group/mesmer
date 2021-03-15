@@ -148,7 +148,7 @@ def _is_monotonic(coord, axis=0):
     return np.all(delta_pos) or np.all(delta_neg)
 
 
-def load_phi_gc(lon, lat, ls, cfg):
+def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     """Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation matrix.
 
     Args:
@@ -169,18 +169,21 @@ def load_phi_gc(lon, lat, ls, cfg):
         ['grid_l_m'] (2d masked array (lat,lon) with ocean masked out for plotting on map)
         ['wgt_gp_l'] (1d array of land area weights, i.e., area weight * land fraction)
     - cfg (module): config file containnig metadata
+    - L_start (int,optional): smallest localisation radius which is tested
+    - L_end (int,optional): largest localisation radius which is tested (should not exceed 10000 by much because eventually ValueError: the input matrix must be positive semidefinite in train_lv())
+    - L_interval (int,optional): spacing interval between tested localisation radii
 
     Returns:
     - phi_gc (np.ndarray): 2d array (gp,gp) of Gaspari-Cohn correlation matrix for grid points used for covariance localisation
+
+    General remarks:
+    - If no complete number of L_intervals fits between L_start and L_end, L_intervals are repeated until the closest possible L value below L_end is reached.
 
     """
 
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
 
-    L_start = 1500
-    L_end = 11000
-    L_interval = 250
     L_set = np.arange(L_start, L_end + 1, L_interval)
 
     # geodistance for all gps for certain threshold
