@@ -18,11 +18,7 @@ from mesmer.create_emulations import (
     create_emus_lv,
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
-from mesmer.utils import (
-    convert_dict_to_arr,
-    extract_land,
-    separate_hist_future,
-)
+from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
 # specify the target variable
 targ = cfg.targs[0]
@@ -151,7 +147,9 @@ for esm in esms:
 
     # load in the auxiliary files
     aux = {}
-    aux["phi_gc"] = load_phi_gc(lon, lat, ls, cfg)
+    aux["phi_gc"] = load_phi_gc(
+        lon, lat, ls, cfg, L_start=1750, L_end=2000, L_interval=250
+    )  # better results with default values L, but like this much faster + less space needed
 
     # train lv AR1_sci on residual variability
     targs_res_lv = {"tas": res_lv_s}
