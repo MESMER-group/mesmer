@@ -1,14 +1,38 @@
 """
-Configuration file for cmip6-ng, tas, rcp85, for the emulator attribution paper
+Configuration file for cmip6-ng, tas, hist + all ssps
 
 """
 
+
+# ---------------------------------------------------------------------------------
+
+# directories:
+
 # cmip-ng
-# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
-# assumes folder structure / file name as in cmip-ng archives at ETHZ -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
 gen = 6  # generations
-# esms = ["CanESM5", "IPSL-CM6A-LR", "MPI-ESM1-2-LR","UKESM1-0-LL"]  # Earth System Models (used for code development)
-# esms = ["CanESM5", "IPSL-CM6A-LR", "MIROC6","UKESM1-0-LL"]  # Earth System Models (used for code development)
+dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
+
+# observations
+dir_obs = "/net/cfc/landclim1/beuschl/mesmer/data/observations/"
+
+# auxiliary data
+dir_aux = "/net/cfc/landclim1/beuschl/mesmer/data/auxiliary/"
+
+# MESMER
+dir_mesmer_params = (
+    "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/calibrated_parameters/"
+)
+dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/emulations/"
+
+# emulation statistics
+dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/"
+
+# plots
+dir_plots = "/net/cfc/landclim1/beuschl/across_scen_T/plots/"
+
+# configs that can be set for every run:
+
+# esms
 esms = [
     "ACCESS-CM2",
     "ACCESS-ESM1-5",
@@ -37,8 +61,7 @@ esms = [
     "UKESM1-0-LL",
 ]
 
-
-# tmp removed:
+# tmp removed (need to investigate stms soon how can get them in too!):
 # -CAMS-CSM1-0 (train_lt did not work: nans?!)
 # -CIESM (sth wrong with GHFDS)
 # -"EC-Earth3" (sth wrong when reading in files, index issue)
@@ -48,7 +71,56 @@ esms = [
 # - "GFDL-ESM4" (didn't even try. Just assumed same problem)
 # - "GISS-E2-1-G" (sth wrong when reading in files, index issue)
 
-# to have unique seed for each esm no matter which ones I currently emulate
+targs = ["tas"]  # emulated variables
+
+ens_type_tr = (
+    "msic"  # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
+)
+
+reg_type = "srex"
+
+ref = {}
+ref["type"] = "individ"  # alternatives: 'first','all'
+ref["start"] = "1850"  # first included year
+ref["end"] = "1900"  # last included year
+
+time = {}
+time["start"] = "1850"  # first included year
+time["end"] = "2100"  # last included year #TODO: check if even used anywhere??
+
+threshold_land = 1 / 3
+
+wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
+
+nr_emus_v = 1000  # tmp made smaller for testing purposes. Normally 6000.
+scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
+max_iter_cv = 15  # max. nr of iterations in cross validation, will increase later
+
+# predictors (for global module)
+preds = {}
+preds["tas"] = {}  # predictors for the target variable tas
+preds["hfds"] = {}
+preds["tas"]["gt"] = ["saod"]
+preds["hfds"]["gt"] = []
+preds["tas"]["gv"] = []
+preds["tas"]["g_all"] = preds["tas"]["gt"] + preds["tas"]["gv"]
+
+# methods (for all modules)
+methods = {}
+methods["tas"] = {}  # methods for the target variable tas
+methods["hfds"] = {}
+methods["tas"]["gt"] = "LOWESS_OLSVOLC"  # global trend emulation method
+methods["hfds"]["gt"] = "LOWESS"
+methods["tas"]["gv"] = "AR"  # global variability emulation method
+methods["tas"]["lt"] = "OLS"  # local trends emulation method
+method_lt_each_gp_sep = True  # method local trends applied to each gp separately
+methods["tas"]["lv"] = "OLS_AR1_sci"  # local variability emulation method
+
+# ---------------------------------------------------------------------------------
+
+# configs that should remain untouched:
+
+# full list of esms (to have unique seed for each esm no matter how)
 all_esms = [
     "ACCESS-CM2",
     "ACCESS-ESM1-5",
@@ -85,12 +157,8 @@ all_esms = [
     "UKESM1-0-LL",
 ]
 
-
-targs = ["tas"]  # emulated variables
-ens_type_tr = (
-    "msic"  # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
-)
-scenarios_tr = [
+# full list of scenarios that could be considered
+scenarios = [
     "h-ssp585",
     "h-ssp370",
     "h-ssp460",
@@ -99,57 +167,12 @@ scenarios_tr = [
     "h-ssp434",
     "h-ssp126",
     "h-ssp119",
-]  # scenarios trained on, ATTENTION: full potential list. Not all ESMs have all ssps available.
-scenarios_emus = [
-    "h-ssp585",
-    "h-ssp370",
-    "h-ssp460",
-    "h-ssp245",
-    "h-ssp534-over",
-    "h-ssp434",
-    "h-ssp126",
-    "h-ssp119",
-]  # scenarios emulated
+]
 
-
-wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
-
-
-scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 if scen_seed_offset_v == 0:
     scenarios_emus_v = ["all"]
 else:
-    scenarios_emus_v = scenarios_emus
-
-
-reg_type = "srex"
-ref = {}
-ref["type"] = "individ"  # alternatives: 'first','all'
-ref["start"] = "1850"  # first included year
-ref["end"] = "1900"  # last included year
-time = {}
-time["start"] = "1850"  # first included year
-time["end"] = "2100"  # last included year #TODO: check if even used anywhere??
-threshold_land = 1 / 3
-dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
-
-# observations
-dir_obs = "/net/cfc/landclim1/beuschl/mesmer/data/observations/"
-
-# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
-# will probably add obs (Cowtan + Way) / (BEST) in here too (preferably land only as well).
-
-# auxiliary data
-dir_aux = "/net/cfc/landclim1/beuschl/mesmer/data/auxiliary/"
-
-# MESMER
-dir_mesmer_params = (
-    "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/calibrated_parameters/"
-)
-dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/emulations/"
-
-# emulation statistics
-dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/"
+    scenarios_emus_v = scenarios
 
 nr_emus = {}
 nr_ts_emus_v = {}
@@ -161,7 +184,7 @@ for esm in all_esms:
     nr_ts_emus_v[esm] = {}
     j = 0
     for scen in scenarios_emus_v:
-        nr_emus[esm][scen] = 6000  # nr of emulation time series
+        nr_emus[esm][scen] = 1000  # nr of emulation time series
         nr_ts_emus_v[esm][
             scen
         ] = 251  # nr of emulated time steps, careful that matches!
@@ -171,26 +194,42 @@ for esm in all_esms:
         j += 1
     i += 1
 
-# predictors (for global module)
-preds = {}
-preds["tas"] = {}  # predictors for the target variable tas
-preds["hfds"] = {}
-preds["tas"]["gt"] = ["saod"]
-preds["hfds"]["gt"] = []
-preds["tas"]["gv"] = []
-preds["tas"]["g_all"] = preds["tas"]["gt"] + preds["tas"]["gv"]
 
-# methods (for all modules)
-methods = {}
-methods["tas"] = {}  # methods for the target variable tas
-methods["hfds"] = {}
-methods["tas"]["gt"] = "LOWESS_OLSVOLC"  # global trend emulation method
-methods["hfds"]["gt"] = "LOWESS"
-methods["tas"]["gv"] = "AR"  # global variability emulation method
-methods["tas"]["lt"] = "OLS"  # local trends emulation method
-method_lt_each_gp_sep = True  # method local trends applied to each gp separately
-methods["tas"]["lv"] = "OLS_AR1_sci"  # local variability emulation method
+# ---------------------------------------------------------------------------------
+
+# information about loaded data:
+
+# cmip-ng
+# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
+# assumes folder structure / file name as in cmip-ng archives at ETHZ -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
+# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
 
 
-# plots
-dir_plots = "/net/cfc/landclim1/beuschl/across_scen_T/plots/"
+# ---------------------------------------------------------------------------------
+
+# things I want to get rid of in future but that are still here to ensure current code runs
+
+# will likely get rid of scenarios_tr & scenarios_emus
+scenarios_tr = [
+    "h-ssp585",
+    "h-ssp370",
+    "h-ssp460",
+    "h-ssp245",
+    "h-ssp534-over",
+    "h-ssp434",
+    "h-ssp126",
+    "h-ssp119",
+]  # scenarios emulated
+
+scenarios_emus = [
+    "h-ssp585",
+    "h-ssp370",
+    "h-ssp460",
+    "h-ssp245",
+    "h-ssp534-over",
+    "h-ssp434",
+    "h-ssp126",
+    "h-ssp119",
+]  # scenarios emulated
+
+# nr_emus, nr_ts_emus_v

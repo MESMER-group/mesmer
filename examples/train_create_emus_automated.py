@@ -18,12 +18,7 @@ from mesmer.create_emulations import (
     create_emus_lv,
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
-from mesmer.utils import (
-    convert_dict_to_arr,
-    extract_land,
-    extract_time_period,
-    separate_hist_future,
-)
+from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
 # specify the target variable
 targ = cfg.targs[0]
@@ -133,56 +128,39 @@ for esm in esms:
 
     preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
     lt_s = create_emus_lt(
-        params_lt,
-        preds_lt,
-        cfg,
-        scenarios="tr",
-        concat_h_f=False,
-        save_emus=True,
+        params_lt, preds_lt, cfg, scenarios="tr", concat_h_f=False, save_emus=True
     )
     emus_lt = create_emus_lt(
-        params_lt,
-        preds_lt,
-        cfg,
-        scenarios="tr",
-        concat_h_f=True,
-        save_emus=True,
+        params_lt, preds_lt, cfg, scenarios="tr", concat_h_f=True, save_emus=True
     )
 
     print(esm, "Start with local variability module")
-    print("ATTENTION: CURRENTLY NOT WORKING. Will (hopefully) reintroduce soon.")
 
-    # tas_lv = {}
-    # for scen in cfg.scenarios_tr:
-    #   tas_lv[scen] = tas_arr[scen] - lt[scen]["tas"]
+    # derive variability part induced by gv
+    preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
+    lv_gv_s = create_emus_lv(params_lv, preds_lv, cfg, save_emus=False, submethod="OLS")
 
-    # extract the global influence on the variability
-    # preds_list = [gv_novolc_T]
-    # lv_g = create_emus_lv(
-    #   params_lv, preds_list, cfg, scenarios="tr", save_emus=False, submethod="OLS"
-    # )
-
-    # tas_rlv = {}  # tas residual local variability in array
-    # for scen in cfg.scenarios_tr:
-    #   tas_rlv[scen] = tas_lv[scen] - lv_g[scen]["tas"]
+    # derive residual variability i.e. what remains of tas once lt + gv removed
+    res_lv_s = {}  # residual local variability
+    for scen in tas_s.keys():
+        res_lv_s[scen] = tas_s[scen] - lt_s[scen]["tas"] - lv_gv_s[scen]["tas"]
 
     # load in the auxiliary files
-    # aux = {}
-    # aux["phi_gc"] = load_phi_gc(lon, lat, ls, cfg)
+    aux = {}
+    aux["phi_gc"] = load_phi_gc(
+        lon, lat, ls, cfg, L_start=1750, L_end=2000, L_interval=250
+    )  # better results with default values L, but like this much faster + less space needed
 
-    # train on the residual local variability
-    # preds_list = []
-    # targs_list = [tas_rlv]
-    # targ_names = ["tas"]
-    # params_lv = train_lv(
-    #   preds_list, targs_list, targ_names, esm, cfg, save_params=True, aux=aux
-    # )
+    # train lv AR1_sci on residual variability
+    targs_res_lv = {"tas": res_lv_s}
+    params_lv = train_lv(
+        {}, targs_res_lv, esm, cfg, save_params=True, aux=aux, params_lv=params_lv
+    )
 
-    # create local variability emulations
-    # preds_list = [emus_gv_T]
-    # emus_lv = create_emus_lv(
-    #   params_lv, preds_list, cfg, scenarios="emus", save_emus=True, submethod=""
-    # )
+    # create full lv emulations
+    preds_lv = {"gvtas": emus_gv_T}  # predictors_list
+    emus_lv = create_emus_lv(params_lv, preds_lv, cfg, save_emus=True)
 
-    # print(esm, "Merge the local trends and the local variability.")
-    # emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
+    # create full emulations
+    print(esm, "Merge the local trends and the local variability.")
+    emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
