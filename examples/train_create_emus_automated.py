@@ -43,7 +43,7 @@ for esm in esms:
     GHFDS_dict[esm] = {}
     time[esm] = {}
 
-    for scen in cfg.scenarios_tr:
+    for scen in cfg.scenarios:
 
         tas_g_tmp, GSAT_tmp, lon_tmp, lat_tmp, time_tmp = load_cmipng(
             targ, esm, scen, cfg
@@ -110,7 +110,13 @@ for esm in esms:
 
     print(esm, "Start with global variability module")
     params_gv_T = train_gv(gv_novolc_T_s, targ, esm, cfg, save_params=True)
-    emus_gv_T = create_emus_gv(params_gv_T, cfg, save_emus=True)
+
+    time_v = {}
+    time_v["all"] = time[esm][scen]
+    # remember: scen comes from emus_gt_T.keys() here
+    # (= necessary to derive compatible emus_gt & emus_gv)
+    preds_gv = {"time": time_v}
+    emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=True)
 
     print(esm, "Merge the global trend and the global variability.")
     emus_g_T = create_emus_g(

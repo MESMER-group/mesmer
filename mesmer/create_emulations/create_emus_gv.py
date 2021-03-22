@@ -17,7 +17,7 @@ import joblib
 import numpy as np
 
 
-def create_emus_gv(params_gv, cfg, save_emus=True):
+def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     """Create global variablity emulations for specified ensemble type and method.
 
     Args:
@@ -29,6 +29,8 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
         ['preds'] (predictors, list of strs)
         ['scenarios'] (scenarios which are used for training, list of strs)
         [xx] (additional keys depend on employed method and are listed in train_gv_T_ens_type_method() function)
+    - preds_lv (dict):nested dictionary of predictors for global variability with keys
+        [pred][scen] with 1d/2d arrays (time)/(run,time)
     - cfg (module): config file containnig metadata
     - save_emus (bool,optional): determines if emulation is saved or not, default = True
 
@@ -37,23 +39,39 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
         [scen] (2d array  (emus x time) of global trend emulation time series)
 
     General remarks:
-    - Scenarios and the number of time steps for each scenario are defined in the config file.
+    - Assumption: - if no preds_gv needed, pass time as predictor instead such that can get info about how many scenarios / ts per scenario should be drawn for stochastic part
 
     """
 
     # specify necessary variables from config file
     dir_mesmer_emus = cfg.dir_mesmer_emus
-    scenarios_emus_v = cfg.scenarios_emus_v
+    nr_emus_v = cfg.nr_emus_v
+    seed_all_scens = cfg.seed[params_gv["esm"]]
+
+    pred_names = list(preds_gv.keys())
+    scens_out = list(preds_gv[pred_names[0]].keys())
+
+    if scens_out != list(seed_all_scens.keys()):
+        print(
+            "The scenarios which should be emulated do not have a seed assigned in the config file. The emulations cannot be created."
+        )
 
     # set up dictionary for emulations of global variability with emulated scenarios as keys
     emus_gv = {}
 
-    for scen in scenarios_emus_v:
+    for scen in scens_out:
+        if len(preds_gv[pred_names[0]][scen].shape) > 1:
+            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[1]
+        else:
+            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[0]
+
         # apply the chosen method
         if (
             params_gv["method"] == "AR"
         ):  # for now irrespective of ens_type and scenario. Could still be adapted later if necessary
-            emus_gv[scen] = create_emus_gv_AR(params_gv, scen, cfg)
+            emus_gv[scen] = create_emus_gv_AR(
+                params_gv, nr_emus_v, nr_ts_emus_v, seed_all_scens[scen]["gv"]
+            )
         else:
             print("No alternative method is currently implemented")
             # if the emulations should depend on the scenario, scen needs to be passed to the fct
@@ -72,7 +90,7 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
             *params_gv["preds"],
             params_gv["targ"],
             params_gv["esm"],
-            *scenarios_emus_v,
+            *scens_out,
         ]
         filename_emus_gv = dir_mesmer_emus_gv + "_".join(filename_parts) + ".pkl"
         joblib.dump(emus_gv, filename_emus_gv)
@@ -80,7 +98,7 @@ def create_emus_gv(params_gv, cfg, save_emus=True):
     return emus_gv
 
 
-def create_emus_gv_AR(params_gv, scen, cfg):
+def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     """Draw global variablity emulations from an AR process.
 
     Args:
@@ -97,22 +115,15 @@ def create_emus_gv_AR(params_gv, scen, cfg):
         ['AR_coefs'] (coefficients of the AR model for the lags which are contained in the selected AR model, list of floats)
         ['AR_lags'] (AR lags which are contained in the selected AR model, list of ints)
         ['AR_std_innovs'] (standard deviation of the innovations of the selected AR model, float)
-    - scen (str): emulated scenario
-    - cfg (module): config file containnig metadata
-    - seed_offset (int): offset for the model-specific seed listed in the cfg file, used if different emulations for each scenario
+    - nr_emus_v (int): number of global variability emulations
+    - nr_ts_emus_v (int): number of time steps in each global variability emulation
+    - seed (int): esm and scenario specific seed for gv module to ensure reproducability of results
 
     Returns:
     - emus_gv (dict): global variability emulations dictionary with keys
         [scen] (2d array  (emus x time) of global trend emulation time series)
 
     """
-
-    # specify necessary variables from config file
-    esm = params_gv["esm"]
-    seed = cfg.seed[esm][scen]["gv"]
-
-    nr_ts_emus_v = cfg.nr_ts_emus_v[esm][scen]  # how long emulations
-    nr_emus = cfg.nr_emus[esm][scen]  # how many emulations
 
     # ensure reproducibility
     np.random.seed(seed)
@@ -126,13 +137,13 @@ def create_emus_gv_AR(params_gv, scen, cfg):
     ar_lags = params_gv["AR_lags"]
 
     innovs_emus_gv = np.random.normal(
-        loc=0, scale=params_gv["AR_std_innovs"], size=(nr_emus, nr_ts_emus_v + buffer)
+        loc=0, scale=params_gv["AR_std_innovs"], size=(nr_emus_v, nr_ts_emus_v + buffer)
     )
 
     # initialize global variability emulations (dim array: nr_emus x nr_ts)
-    emus_gv = np.zeros([nr_emus, nr_ts_emus_v + buffer])
+    emus_gv = np.zeros([nr_emus_v, nr_ts_emus_v + buffer])
 
-    for i in np.arange(nr_emus):
+    for i in np.arange(nr_emus_v):
         # simulate from AR process
         for t in np.arange(ar_lags[-1], len(emus_gv[i])):  # avoid misleading indices
             emus_gv[i, t] = (
