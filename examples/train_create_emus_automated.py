@@ -127,12 +127,8 @@ for esm in esms:
     params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=True)
 
     preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
-    lt_s = create_emus_lt(
-        params_lt, preds_lt, cfg, scenarios="tr", concat_h_f=False, save_emus=True
-    )
-    emus_lt = create_emus_lt(
-        params_lt, preds_lt, cfg, scenarios="tr", concat_h_f=True, save_emus=True
-    )
+    lt_s = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True)
+    emus_lt = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True)
 
     print(esm, "Start with local variability module")
 

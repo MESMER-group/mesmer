@@ -17,9 +17,7 @@ import joblib
 import numpy as np
 
 
-def create_emus_lt(
-    params_lt, preds_lt, cfg, scenarios="emus", concat_h_f=False, save_emus=True
-):
+def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     """Create local trends (i.e., forced response) emulations for given parameter set and predictors.
 
     Args:
@@ -36,7 +34,6 @@ def create_emus_lt(
     - preds_lt (dict): nested dictionary of predictors for local trends with keys
         [pred][scen] with 1d/2d arrays (time)/(run,time)
     - cfg (module): config file containnig metadata
-    - scenarios (str), optional: determines if local trends are created for the emulation or training scenarios
     - concat_h_f (bool,optional): determines if historical and future time period is concatenated into a single
                                 emulation or not, default = False (must be set to False if no historical data provided)
     - save_emus (bool, optional): determines if parameters are saved or not, default = True
@@ -50,16 +47,16 @@ def create_emus_lt(
                     - if historical time period is included in predictors, it has its own dictionary key
                     - if historical time period was included in training, it has its own scenario
                     - either historical period is included for every scenario or for no scenario
+    - Potential TODO: - evaluate if really need / want concat_h_f or if I want output to be determined by shape predictors
 
     """
 
     # specify necessary variables from config file
     dir_mesmer_emus = cfg.dir_mesmer_emus
 
-    if scenarios == "emus":
-        scenarios_emus = cfg.scenarios_emus
-    elif scenarios == "tr":
-        scenarios_emus = params_lt["scenarios"]
+    # derive necessary scenario names
+    pred_names = list(preds_lt.keys())
+    scenarios_emus = list(preds_lt[pred_names[0]].keys())
 
     if concat_h_f:
         if scenarios_emus[0] == "hist":
@@ -75,7 +72,7 @@ def create_emus_lt(
             scens_out = scens_out_f = scenarios_emus
 
     # check predictors
-    if list(preds_lt.keys()) != params_lt["preds"]:  # check if correct predictors
+    if pred_names != params_lt["preds"]:  # check if correct predictors
         print("Wrong predictors were passed. The emulations cannot be created.")
 
     # select the method from a dict of fcts
