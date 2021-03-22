@@ -15,7 +15,7 @@ import joblib
 import numpy as np
 
 
-def create_emus_gt(params_gt, cfg, scenarios="emus", concat_h_f=False, save_emus=True):
+def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """Create global trend (emissions + volcanoes) emulations for specified ensemble type and method.
 
     Args:
@@ -28,8 +28,9 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", concat_h_f=False, save_emus
         ['scenarios'] (scenarios which are used for training, list of strs)
         ['time'] (1d array of years, np.ndarray)
         [xx] (additional keys depend on employed method and are listed in train_gt_T_ens_type_method() function)
+    - preds_gt (dict): nested dictionary of predictors for global trend with keys
+        [pred][scen] with 1d/2d arrays (time)/(run,time)
     - cfg (module): config file containnig metadata
-    - scenarios (str,optional): determines if training or emulations scenarios are emulated, default = 'emus'
     - concat_h_f (bool,optional): determines if historical and future time period is concatenated into a single
                                     emulation or not, default = False (must be set to false if no historical data provided)
     - save_emus (bool,optional): determines if emulation is saved or not, default = True
@@ -38,15 +39,17 @@ def create_emus_gt(params_gt, cfg, scenarios="emus", concat_h_f=False, save_emus
     - emus_gt (dict): global trend emulations dictionary with keys
         [scen] (1d array of global trend emulation time series)
 
+    General remarks:
+    - Assumption: - if no preds_gt needed, pass time as predictor instead to know which scenarios to emulate
+
     """
 
     # specify necessary variables from config file
     dir_mesmer_emus = cfg.dir_mesmer_emus
 
-    if scenarios == "emus":
-        scenarios_emus = cfg.scenarios_emus
-    elif scenarios == "tr":
-        scenarios_emus = params_gt["scenarios"]
+    # derive necessary scenario names
+    pred_names = list(preds_gt.keys())
+    scenarios_emus = list(preds_gt[pred_names[0]].keys())
 
     scens_out_f = list(map(lambda x: x.replace("h-", ""), scenarios_emus))
     # does nothing in case 'h-' not actually included

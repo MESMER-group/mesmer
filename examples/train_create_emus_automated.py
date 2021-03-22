@@ -81,11 +81,12 @@ for esm in esms:
     params_gt_T = train_gt(GSAT[esm], targ, esm, time[esm], cfg, save_params=True)
     params_gt_hfds = train_gt(GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=True)
 
+    preds_gt = {"time": time[esm]}
     emus_gt_T = create_emus_gt(
-        params_gt_T, cfg, scenarios="tr", concat_h_f=True, save_emus=True
+        params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=True
     )
     gt_T_s = create_emus_gt(
-        params_gt_T, cfg, scenarios="tr", concat_h_f=False, save_emus=False
+        params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
     )
 
     print(
@@ -97,7 +98,7 @@ for esm in esms:
         gt_T2_s[scen] = gt_T_s[scen] ** 2
 
     gt_hfds_s = create_emus_gt(
-        params_gt_hfds, cfg, scenarios="tr", concat_h_f=False, save_emus=False
+        params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
     )
 
     gv_novolc_T = {}
