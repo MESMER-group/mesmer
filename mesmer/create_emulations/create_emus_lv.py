@@ -51,7 +51,8 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     """
 
     # specify necessary variables from config file
-    dir_mesmer_emus = cfg.dir_mesmer_emus
+    if save_emus:
+        dir_mesmer_emus = cfg.dir_mesmer_emus
 
     pred_names = list(preds_lv.keys())
     scens_out = list(preds_lv[pred_names[0]].keys())
