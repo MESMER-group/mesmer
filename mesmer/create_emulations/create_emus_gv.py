@@ -44,7 +44,9 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     """
 
     # specify necessary variables from config file
-    dir_mesmer_emus = cfg.dir_mesmer_emus
+    if save_emus:
+        dir_mesmer_emus = cfg.dir_mesmer_emus
+
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_gv["esm"]]
 

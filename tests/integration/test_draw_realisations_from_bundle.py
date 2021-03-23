@@ -39,23 +39,25 @@ def test_make_realisations(
         "gthfds": {"hist": hist_hfds, "ssp126": scen_hfds},
     }
 
-    res = mesmer.create_emulations.make_realisations(
+    result = mesmer.create_emulations.make_realisations(
         preds_lt,
         params_lt,
         preds_lv,
         params_lv,
-        n_realisations,
+        30,
         seeds,
         land_fractions,
     )
+    import pdb
+    pdb.set_trace()
 
     if update_expected_files:
-        res.to_netcdf(expected_output_file)
+        result.to_netcdf(expected_output_file)
         pytest.skip(f"Updated {expected_output_file}")
 
     else:
         exp = xr.open_dataset(expected_output_file)
-        assert res.identical(exp)
+        assert result.identical(exp)
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
         assert set(exp_reshaped.dims) == {

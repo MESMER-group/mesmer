@@ -16,8 +16,9 @@ from .merge_emus import *
 def make_realisations(
     preds_lt,
     params_lt,
-    preds_lv,
     params_lv,
+    params_gv_T,
+    time,
     n_realisations,
     seeds,
     land_fractions,
@@ -37,13 +38,13 @@ def make_realisations(
     params_lt : dict
         Description to come
 
-    preds_lv : dict
-        Dictionary with a single key, ``gvtas``, whose value is itself a
-        dictionary. The value should also have a single key, ``all``, the
-        value for which should be an array of shape
-        ``(n_realisations, n_timesteps)``.
-
     params_lv : dict
+        Description to come
+
+    params_gv_T : dict
+        Description to come
+
+    time : :obj:`np.ndarray` ?
         Description to come
 
     n_realisations : int
@@ -66,7 +67,13 @@ def make_realisations(
             self.nr_emus_v = n_realisations
             self.seed = seeds
 
+
     cfg = _Config(n_realisations, seeds)
+
+
+    preds_gv = {"time": {"all": time}}
+    emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=False)
+    preds_lv = {"gvtas": emus_gv_T}
 
     emus_lt = create_emus_lt(
         params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False
