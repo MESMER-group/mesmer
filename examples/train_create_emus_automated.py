@@ -43,7 +43,7 @@ for esm in esms:
     GHFDS_dict[esm] = {}
     time[esm] = {}
 
-    for scen in cfg.scenarios_tr:
+    for scen in cfg.scenarios:
 
         tas_g_tmp, GSAT_tmp, lon_tmp, lat_tmp, time_tmp = load_cmipng(
             targ, esm, scen, cfg
@@ -81,11 +81,12 @@ for esm in esms:
     params_gt_T = train_gt(GSAT[esm], targ, esm, time[esm], cfg, save_params=True)
     params_gt_hfds = train_gt(GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=True)
 
+    preds_gt = {"time": time[esm]}
     emus_gt_T = create_emus_gt(
-        params_gt_T, cfg, scenarios="tr", concat_h_f=True, save_emus=True
+        params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=True
     )
     gt_T_s = create_emus_gt(
-        params_gt_T, cfg, scenarios="tr", concat_h_f=False, save_emus=False
+        params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
     )
 
     print(
@@ -97,7 +98,7 @@ for esm in esms:
         gt_T2_s[scen] = gt_T_s[scen] ** 2
 
     gt_hfds_s = create_emus_gt(
-        params_gt_hfds, cfg, scenarios="tr", concat_h_f=False, save_emus=False
+        params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
     )
 
     gv_novolc_T = {}
@@ -109,7 +110,13 @@ for esm in esms:
 
     print(esm, "Start with global variability module")
     params_gv_T = train_gv(gv_novolc_T_s, targ, esm, cfg, save_params=True)
-    emus_gv_T = create_emus_gv(params_gv_T, cfg, save_emus=True)
+
+    time_v = {}
+    time_v["all"] = time[esm][scen]
+    # remember: scen comes from emus_gt_T.keys() here
+    # (= necessary to derive compatible emus_gt & emus_gv)
+    preds_gv = {"time": time_v}
+    emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=True)
 
     print(esm, "Merge the global trend and the global variability.")
     emus_g_T = create_emus_g(
@@ -127,12 +134,8 @@ for esm in esms:
     params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=True)
 
     preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
-    lt_s = create_emus_lt(
-        params_lt, preds_lt, cfg, scenarios="tr", concat_h_f=False, save_emus=True
-    )
-    emus_lt = create_emus_lt(
-        params_lt, preds_lt, cfg, scenarios="tr", concat_h_f=True, save_emus=True
-    )
+    lt_s = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True)
+    emus_lt = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True)
 
     print(esm, "Start with local variability module")
 

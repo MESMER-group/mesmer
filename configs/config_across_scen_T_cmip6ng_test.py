@@ -138,14 +138,8 @@ seed = {}
 i = 0
 for esm in all_esms:
     seed[esm] = {}
-    nr_emus[esm] = {}
-    nr_ts_emus_v[esm] = {}
     j = 0
     for scen in scenarios_emus_v:
-        nr_emus[esm][scen] = 5  # nr of emulation time series
-        nr_ts_emus_v[esm][
-            scen
-        ] = 251  # nr of emulated time steps, careful that matches!
         seed[esm][scen] = {}
         seed[esm][scen]["gv"] = i + j * scen_seed_offset_v
         seed[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1000000
@@ -161,15 +155,3 @@ for esm in all_esms:
 # Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
 # assumes folder structure / file name as in cmip-ng archives at ETHZ -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
 # - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
-
-
-# ---------------------------------------------------------------------------------
-
-# things I want to get rid of in future but that are still here to ensure current code runs
-
-# will likely get rid of scenarios_tr & scenarios_emus
-scenarios_tr = ["h-ssp126"]  # scenarios emulated
-
-scenarios_emus = ["h-ssp126"]  # scenarios emulated
-
-# nr_emus, nr_ts_emus_v
