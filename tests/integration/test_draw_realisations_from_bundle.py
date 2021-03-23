@@ -6,6 +6,7 @@ import xarray as xr
 
 import mesmer.create_emulations
 
+
 def test_make_realisations(
     test_data_root_dir, test_mesmer_bundle, update_expected_files
 ):
@@ -17,11 +18,10 @@ def test_make_realisations(
     # TODO: split out load_mesmer_bundle function
     params_lt = test_mesmer_bundle["params_lt"]
     params_lv = test_mesmer_bundle["params_lv"]
-    preds_lv = test_mesmer_bundle["preds_lv"]
+    params_gv_T = test_mesmer_bundle["params_gv_T"]
     seeds = test_mesmer_bundle["seeds"]
     land_fractions = test_mesmer_bundle["land_fractions"]
-    # TODO: make this something which isn't defined by the bundle
-    n_realisations = test_mesmer_bundle["n_realisations"]
+    time = test_mesmer_bundle["time"]
 
     # TODO: split out function to format e.g. ScmRun correctly (put in
     # mesmer-magicc repo, not here)
@@ -42,14 +42,13 @@ def test_make_realisations(
     result = mesmer.create_emulations.make_realisations(
         preds_lt,
         params_lt,
-        preds_lv,
         params_lv,
-        30,
-        seeds,
-        land_fractions,
+        params_gv_T,
+        n_realisations=30,
+        seeds=seeds,
+        land_fractions=land_fractions,
+        time=time,
     )
-    import pdb
-    pdb.set_trace()
 
     if update_expected_files:
         result.to_netcdf(expected_output_file)
@@ -61,5 +60,5 @@ def test_make_realisations(
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
         assert set(exp_reshaped.dims) == {
-            'scenario', 'realisation', 'lon', 'timestep', 'lat'
+            'scenario', 'realisation', 'lon', 'lat', 'year'
         }

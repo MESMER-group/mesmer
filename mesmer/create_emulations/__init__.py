@@ -82,12 +82,12 @@ def make_realisations(
     emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=False)
 
     # xarray DataArrays or DataSets with labelled dimensions
-    out = _convert_raw_mesmer_to_xarray(emus_l, land_fractions)
+    out = _convert_raw_mesmer_to_xarray(emus_l, land_fractions, time=time)
 
     return out
 
 
-def _convert_raw_mesmer_to_xarray(emulations, land_fractions):
+def _convert_raw_mesmer_to_xarray(emulations, land_fractions, time):
     land_fractions_stacked = land_fractions.stack(z=("lat", "lon")).dropna("z")
 
     tmp = []
@@ -95,8 +95,7 @@ def _convert_raw_mesmer_to_xarray(emulations, land_fractions):
         for variable, values in outputs.items():
             variable_out = (
                 land_fractions_stacked
-                # TODO: actually return date times, not just integers
-                .expand_dims({"timestep": range(values.shape[1])})
+                .expand_dims({"year": time})
                 .expand_dims({"realisation": range(values.shape[0])})
                 .copy()
             )

@@ -3,6 +3,10 @@ import sys
 
 sys.path.append("../")
 
+import os.path
+
+import joblib
+import xarray as xr
 
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
@@ -19,6 +23,34 @@ from mesmer.create_emulations import (
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
+
+
+def save_mesmer_bundle(bundle_file, params_lt, params_lv, params_gv_T, seeds, land_fractions, lat, lon, time):
+    """
+    Save all the information required to draw MESMER emulations to disk
+
+    TODO: parameters
+
+    TODO: return info
+
+    TODO: move this function into the mesmer package
+    """
+    assert land_fractions.shape[0] == lat.shape[0]
+    assert land_fractions.shape[1] == lon.shape[0]
+
+    # hopefully right way around
+    land_fractions = xr.DataArray(land_fractions, dims=["lat", "lon"], coords={"lat": lat, "lon": lon})
+
+    mesmer_bundle = {
+        "params_lt": params_lt,
+        "params_lv": params_lv,
+        "params_gv_T": params_gv_T,
+        "seeds": seeds,
+        "land_fractions": land_fractions,
+        "time": time,
+    }
+    joblib.dump(mesmer_bundle, bundle_file)
+
 
 # specify the target variable
 targ = cfg.targs[0]
@@ -113,8 +145,6 @@ for esm in esms:
 
     time_v = {}
     time_v["all"] = time[esm][scen]
-    import pdb
-    pdb.set_trace()
     # remember: scen comes from emus_gt_T.keys() here
     # (= necessary to derive compatible emus_gt & emus_gv)
     preds_gv = {"time": time_v}
@@ -169,3 +199,16 @@ for esm in esms:
     # create full emulations
     print(esm, "Merge the local trends and the local variability.")
     emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
+
+    save_mesmer_bundle(
+        os.path.join("tests", "test-data", "test-mesmer-bundle.pkl"),
+        params_lt,
+        params_lv,
+        params_gv_T,
+        seeds=cfg.seed,
+        land_fractions=ls["grid_l_m"],
+        lat=lat["c"],
+        lon=lon["c"],
+        time=time_v["all"],
+    )
+
