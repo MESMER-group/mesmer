@@ -50,7 +50,7 @@ def test_make_realisations(
         n_realisations=30,
         seeds=seeds,
         land_fractions=land_fractions,
-        time=np.concatenate([time["hist"], time[scenario]]),
+        time=time,
     )
 
     if update_expected_files:

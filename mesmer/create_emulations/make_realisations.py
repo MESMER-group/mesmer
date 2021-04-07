@@ -1,3 +1,4 @@
+import numpy as np
 import xarray as xr
 
 from .create_emus_gv import create_emus_gv
@@ -37,7 +38,7 @@ def make_realisations(
     params_gv_T : dict
         Description to come
 
-    time : :obj:`np.ndarray` ?
+    time : dict
         Description to come
 
     n_realisations : int
@@ -64,7 +65,12 @@ def make_realisations(
     cfg = _Config(n_realisations, seeds)
 
 
-    preds_gv = {"time": {"all": time}}
+    # TODO: add better checks for what happens if scenarios have different
+    # time axis etc.
+    a_scenario_key = [k for k in time.keys() if k != "hist"][0]
+    time_all = np.concatenate([time["hist"], time[a_scenario_key]])
+
+    preds_gv = {"time": {"all": time_all}}
     emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=False)
     preds_lv = {"gvtas": emus_gv_T}
 
@@ -86,6 +92,9 @@ def _convert_raw_mesmer_to_xarray(emulations, land_fractions, time):
     tmp = []
     for scenario, outputs in emulations.items():
         for variable, values in outputs.items():
+            time = np.concatenate([
+                time["hist"], time[scenario.replace("h-", "")]
+            ])
             variable_out = (
                 land_fractions_stacked
                 .expand_dims({"year": time})
