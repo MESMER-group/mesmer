@@ -21,36 +21,13 @@ from mesmer.create_emulations import (
     create_emus_lt,
     create_emus_lv,
 )
-from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
+from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
 
-def save_mesmer_bundle(bundle_file, params_lt, params_lv, params_gv_T, seeds, land_fractions, lat, lon, time):
-    """
-    Save all the information required to draw MESMER emulations to disk
-
-    TODO: parameters
-
-    TODO: return info
-
-    TODO: move this function into the mesmer package
-    """
-    assert land_fractions.shape[0] == lat.shape[0]
-    assert land_fractions.shape[1] == lon.shape[0]
-
-    # hopefully right way around
-    land_fractions = xr.DataArray(land_fractions, dims=["lat", "lon"], coords={"lat": lat, "lon": lon})
-
-    mesmer_bundle = {
-        "params_lt": params_lt,
-        "params_lv": params_lv,
-        "params_gv_T": params_gv_T,
-        "seeds": seeds,
-        "land_fractions": land_fractions,
-        "time": time,
-    }
-    joblib.dump(mesmer_bundle, bundle_file)
-
+# where to save the bundle
+bundle_out_file = os.path.join("tests", "test-data", "test-mesmer-bundle.pkl")
+os.makedirs(os.path.dirname(bundle_out_file), exist_ok=True)
 
 # specify the target variable
 targ = cfg.targs[0]
@@ -201,7 +178,7 @@ for esm in esms:
     emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
 
     save_mesmer_bundle(
-        os.path.join("tests", "test-data", "test-mesmer-bundle.pkl"),
+        bundle_out_file,
         params_lt,
         params_lv,
         params_gv_T,
@@ -209,6 +186,6 @@ for esm in esms:
         land_fractions=ls["grid_l_m"],
         lat=lat["c"],
         lon=lon["c"],
-        time=time_v["all"],
+        time=time_s,
     )
 

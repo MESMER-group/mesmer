@@ -25,8 +25,11 @@ def test_make_realisations(
 
     # TODO: split out function to format e.g. ScmRun correctly (put in
     # mesmer-magicc repo, not here)
-    hist_length = 165
-    scen_length = 86
+    # can hardcode scenario for now
+    scenario = "ssp126"
+
+    hist_length = len(time["hist"])
+    scen_length = len(time[scenario])
 
     hist_tas = np.linspace(0, 1, hist_length)
     scen_tas = np.linspace(1, 2, scen_length)
@@ -34,9 +37,9 @@ def test_make_realisations(
     scen_hfds = np.linspace(2, 3, scen_length)
 
     preds_lt = {
-        "gttas": {"hist": hist_tas, "ssp126": scen_tas},
-        "gttas2": {"hist": hist_tas ** 2, "ssp126": scen_tas ** 2},
-        "gthfds": {"hist": hist_hfds, "ssp126": scen_hfds},
+        "gttas": {"hist": hist_tas, scenario: scen_tas},
+        "gttas2": {"hist": hist_tas ** 2, scenario: scen_tas ** 2},
+        "gthfds": {"hist": hist_hfds, scenario: scen_hfds},
     }
 
     result = mesmer.create_emulations.make_realisations(
@@ -47,7 +50,7 @@ def test_make_realisations(
         n_realisations=30,
         seeds=seeds,
         land_fractions=land_fractions,
-        time=time,
+        time=np.concatenate([time["hist"], time[scenario]]),
     )
 
     if update_expected_files:

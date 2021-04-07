@@ -30,7 +30,7 @@ dir_obs = os.path.join(TEST_DATA_ROOT, "observations/")  # TODO: remove need for
 
 # auxiliary data
 dir_aux = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/auxiliary/"
-dir_aux = "auxillary"
+dir_aux = "auxillary/"
 
 # mesmer
 dir_mesmer_params = (
