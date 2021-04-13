@@ -55,15 +55,15 @@ def make_realisations(
     land_fractions : :obj:`xarray.DataArray`
         Land fractions of each cell. Used to convert the MESMER outputs back onto grids.
     """
+
     class _Config:
         """TODO: remove, just used now as a way to make things not explode"""
+
         def __init__(self, n_realisations, seeds):
             self.nr_emus_v = n_realisations
             self.seed = seeds
 
-
     cfg = _Config(n_realisations, seeds)
-
 
     # TODO: add better checks for what happens if scenarios have different
     # time axis etc.
@@ -74,9 +74,7 @@ def make_realisations(
     emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=False)
     preds_lv = {"gvtas": emus_gv_T}
 
-    emus_lt = create_emus_lt(
-        params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False
-    )
+    emus_lt = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False)
     emus_lv = create_emus_lv(params_lv, preds_lv, cfg, save_emus=False)
     emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=False)
 
@@ -92,18 +90,17 @@ def _convert_raw_mesmer_to_xarray(emulations, land_fractions, time):
     tmp = []
     for scenario, outputs in emulations.items():
         for variable, values in outputs.items():
-            time = np.concatenate([
-                time["hist"], time[scenario.replace("h-", "")]
-            ])
+            time = np.concatenate([time["hist"], time[scenario.replace("h-", "")]])
             variable_out = (
-                land_fractions_stacked
-                .expand_dims({"year": time})
+                land_fractions_stacked.expand_dims({"year": time})
                 .expand_dims({"realisation": range(values.shape[0])})
                 .copy()
             )
             variable_out.values = values
 
-            variable_out = variable_out.reset_index("z").expand_dims({"scenario": [scenario]})
+            variable_out = variable_out.reset_index("z").expand_dims(
+                {"scenario": [scenario]}
+            )
             variable_out.name = variable
 
             tmp.append(variable_out)

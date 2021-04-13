@@ -3,7 +3,10 @@ import os.path
 import joblib
 import pytest
 
-TEST_DATA_ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-data")
+TEST_DATA_ROOT_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "test-data"
+)
+
 
 @pytest.fixture(scope="session")
 def test_data_root_dir():
@@ -14,9 +17,7 @@ def test_data_root_dir():
 
 @pytest.fixture()
 def test_mesmer_bundle(test_data_root_dir):
-    return joblib.load(
-        os.path.join(test_data_root_dir, "test-mesmer-bundle.pkl")
-    )
+    return joblib.load(os.path.join(test_data_root_dir, "test-mesmer-bundle.pkl"))
 
 
 def pytest_addoption(parser):

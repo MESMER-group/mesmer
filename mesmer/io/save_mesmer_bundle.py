@@ -22,7 +22,9 @@ def save_mesmer_bundle(
     assert land_fractions.shape[1] == lon.shape[0]
 
     # hopefully right way around
-    land_fractions = xr.DataArray(land_fractions, dims=["lat", "lon"], coords={"lat": lat, "lon": lon})
+    land_fractions = xr.DataArray(
+        land_fractions, dims=["lat", "lon"], coords={"lat": lat, "lon": lon}
+    )
 
     mesmer_bundle = {
         "params_lt": params_lt,

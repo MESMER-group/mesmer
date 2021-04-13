@@ -63,5 +63,9 @@ def test_make_realisations(
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
         assert set(exp_reshaped.dims) == {
-            'scenario', 'realisation', 'lon', 'lat', 'year'
+            "scenario",
+            "realisation",
+            "lon",
+            "lat",
+            "year",
         }
