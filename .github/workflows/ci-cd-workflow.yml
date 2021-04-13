@@ -40,9 +40,8 @@ jobs:
       shell: bash -l {0}
       run: |
           which python
-          pip install -e .[dev]
+          make -B conda-environment
           black --check mesmer tests setup.py
-
 
   build:
     runs-on: ${{ matrix.os }}
