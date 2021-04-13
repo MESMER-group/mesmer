@@ -62,9 +62,7 @@ def test_make_realisations(
 
         rtol = 1e-4
         for v in exp.data_vars:
-            np.testing.assert_allclose(
-                result[v].values, exp[v].values, rtol=rtol
-            )
+            np.testing.assert_allclose(result[v].values, exp[v].values, rtol=rtol)
 
         xr.testing.assert_allclose(result, exp, rtol=rtol)
 
