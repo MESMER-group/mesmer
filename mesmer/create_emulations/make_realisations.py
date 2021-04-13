@@ -22,42 +22,49 @@ def make_realisations(
 
     Parameters
     ----------
-    preds_lt : dict
-        Dictionary where each key is a different variable. The values are
-        themselves dictionaries. These sub-dictionaries have keys which are
-        different scenarios ("hist" separate from scenarios), each of which is
-        a :obj:`np.ndarray` of shape ``(n_timesteps)`` i.e. the length of the
-        scenario.
-
-    params_lt : dict
-        Description to come
-
-    params_lv : dict
-        Description to come
-
-    params_gv_T : dict
-        Description to come
-
-    time : dict
-        Description to come
-
-    n_realisations : int
+    - preds_lt (dict): nested dictionary of predictors for local trends with keys
+        [pred][scen] with 1d/2d arrays (time)/(run,time)
+    - params_lt (dict): dictionary with the trained local trend parameters
+        ['targs'] (emulated variables, str)
+        ['esm'] (Earth System Model, str)
+        ['ens_type'] (ensemble type, str)
+        ['method'] (applied method, str)
+        ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
+        ['preds'] (predictors, list of strs)
+        ['scenarios'] (emission scenarios used for training, list of strs)
+        [xx] additional params depend on method employed, specified in train_gt_T_enstype_method() function
+        ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
+    - params_lv (dict): dictionary with the trained local variability parameters
+        ['targ'] (variable which is emulated, str)
+        ['esm'] (Earth System Model, str)
+        ['ens_type'] (type of ensemble which is emulated, str)
+        ['method'] (applied method, str)
+        ['preds'] (predictors, list of strs)
+        ['scenarios'] (scenarios which are used for training, list of strs)
+        [xx] (additional keys depend on employed method)
+    - params_gv (dict):
+        ['targ'] (variable which is emulated, str)
+        ['esm'] (Earth System Model, str)
+        ['ens_type'] (type of ensemble which is emulated, str)
+        ['method'] (applied method, str)
+        ['preds'] (predictors, list of strs)
+        ['scenarios'] (scenarios which are used for training, list of strs)
+        [xx] (additional keys depend on employed method and are listed in train_gv_T_ens_type_method() function)
+    - time (dict):
+        ['scenario'] timepoints used for training of the scenario (note that hist and scenario e.g. ssp126 are kept separate)
+    - n_realisations (int):
         Number of realisations to draw
-
-    seeds : dict
-        Seeds to use for random number generators. Keys are different climate
-        models, values are themselves dictionaries. Each value has keys which
-        are different scenarios (or ``"all"``) and values which are themselves
-        dictionaries. These final sub-values contain two keys, ``["gv",
-        "lv"]``, whiche define the seeds for the global variability and local
-        variability generators respectively.
-
-    land_fractions : :obj:`xarray.DataArray`
+    - seeds (dict):
+        ['esm'] (dict):
+            ['scenario'] (dict):
+                ['gv'] (seed for global variability)
+                ['lv'] (seed for local variability)
+    - land_fractions (xr.DataArray):
         Land fractions of each cell. Used to convert the MESMER outputs back onto grids.
     """
 
     class _Config:
-        """TODO: remove, just used now as a way to make things not explode"""
+        """Workaround to mock the ``cfg`` interface used elsewhere"""
 
         def __init__(self, n_realisations, seeds):
             self.nr_emus_v = n_realisations
