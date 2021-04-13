@@ -67,7 +67,9 @@ def test_make_realisations(
             # happening with numpy's random seed (we get different values
             # depending on the operating system) so we currently can't do any
             # better than this.
-            differing_spots = np.sum(~np.isclose(result[v].values, exp[v].values, rtol=rtol))
+            differing_spots = np.sum(
+                ~np.isclose(result[v].values, exp[v].values, rtol=rtol)
+            )
             assert differing_spots / np.product(result[v].values.shape) < wrong_tol
 
         # # Ideally we would use the below, but we can't because of numpy's
