@@ -59,7 +59,14 @@ def test_make_realisations(
 
     else:
         exp = xr.open_dataset(expected_output_file)
-        xr.testing.assert_allclose(result, exp, rtol=1e-4)
+
+        rtol = 1e-4
+        for v in exp.data_vars:
+            np.testing.assert_allclose(
+                result[v].values, exp[v].values, rtol=rtol
+            )
+
+        xr.testing.assert_allclose(result, exp, rtol=rtol)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")

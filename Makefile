@@ -37,7 +37,7 @@ help:
 
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
-	$(VENV_DIR)/bin/pytest --cov -r a -n $(N_JOBS) -v --cov-report term-missing
+	$(VENV_DIR)/bin/pytest --cov -r a -v --cov-report term-missing
 
 .PHONY: conda-environment
 conda-environment:  $(VENV_DIR)  ## make virtual environment for development
