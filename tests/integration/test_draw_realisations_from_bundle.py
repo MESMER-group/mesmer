@@ -59,8 +59,8 @@ def test_make_realisations(
 
     else:
         exp = xr.open_dataset(expected_output_file)
-        xr.testing.assert_allclose(result, exp)
-        # assert result.identical(exp)
+        xr.testing.assert_allclose(result, exp, rtol=1e-4)
+
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
         assert set(exp_reshaped.dims) == {
