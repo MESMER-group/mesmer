@@ -55,7 +55,7 @@ def load_mesmer_output(
     # choose directory depending on whether want to load params or emus
     if "params" in name:
         dir_mesmer = cfg.dir_mesmer_params
-    elif "emu" in name:
+    elif "emus" in name:
         dir_mesmer = cfg.dir_mesmer_emus
 
     # choose middle part of pathway depending on what exactly want to load
