@@ -41,7 +41,8 @@ jobs:
       run: |
           which python
           make -B conda-environment
-          black --check mesmer tests setup.py
+          black --check mesmer examples tests setup.py
+          flake8 mesmer examples tests setup.py
 
   build:
     runs-on: ${{ matrix.os }}

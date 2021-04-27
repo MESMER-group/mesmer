@@ -1,5 +1,6 @@
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
+
+# from setuptools.command.test import test as TestCommand
 
 PACKAGE_NAME = "mesmer"
 DESCRIPTION = "TBD Lea"

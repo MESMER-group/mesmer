@@ -5,9 +5,6 @@ sys.path.append("../")
 
 import os.path
 
-import joblib
-import xarray as xr
-
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
 
@@ -21,7 +18,12 @@ from mesmer.create_emulations import (
     create_emus_lt,
     create_emus_lv,
 )
-from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
+from mesmer.io import (
+    load_cmipng,
+    load_phi_gc,
+    load_regs_ls_wgt_lon_lat,
+    save_mesmer_bundle,
+)
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
 
@@ -188,4 +190,3 @@ for esm in esms:
         lon=lon["c"],
         time=time_s,
     )
-
