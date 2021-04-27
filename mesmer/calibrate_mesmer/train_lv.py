@@ -208,7 +208,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
                     AR1_model = AutoReg(
                         targ[scen][run, :, gp], lags=1, old_names=False
                     ).fit()
-                    # old_names=False temporarily needed to avoid Future Warning (in statsmodels 0.12.2)
                     AR1_int_runs[gp] += AR1_model.params[0] / nr_runs
                     AR1_coef_runs[gp] += AR1_model.params[1] / nr_runs
                     AR1_std_innovs_runs[gp] += (
