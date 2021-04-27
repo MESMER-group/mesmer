@@ -38,7 +38,7 @@ def load_mesmer_output(
     - targs_str (str, optional): target variables (e.g., 'tas')
     - esm_str (str, optional): Earth System Model (e.g., 'CanESM2', 'CanESM5')
     - scen_str (str, otional): scenario (e.g., 'rcp85', 'ssp585', 'h-ssp585')
-    - mid_path (str, optional): middle part of pathway depending on what exactly want to load (e.g.,)
+    - mid_path (str, optional): middle part of pathway depending on what exactly want to load (e.g., 'local/local_trends')
 
     Returns:
     - dict_out (dict): loaded MESMER output dictionary
