@@ -15,6 +15,7 @@ import glob
 import joblib
 
 
+# -> ok, this fct war transferred to the load_mesmer.py file on 20210418
 def load_mesmer_output(
     name,
     cfg,
@@ -24,18 +25,20 @@ def load_mesmer_output(
     targs_str="_",
     esm_str="_",
     scen_str="",
+    mid_path=None,
 ):
-    """Load in saved MESMER output (parameters or emulations).
+    """Load saved MESMER output (parameters or emulations).
 
     Args:
     - name (str): saved MESMER output to load (e.g., 'params_lt', 'emus_lv', 'emus_g')
     - cfg (module): config file containnig metadata
-    - ens_type_str (str): ensemble type (e.g., 'msic')
-    - method_str (str): method (e.g., 'OLS')
-    - preds_str (st): predictos (e.g., 'gttas', 'gttas_gttas2')
-    - targs_str (str): target variables (e.g., 'tas')
-    - esm_str (str): Earth System Model (e.g., 'CanESM2', 'CanESM5')
-    - scen_str (str): scenario (e.g., 'rcp85', 'ssp585', 'h-ssp585')
+    - ens_type_str (str, optional): ensemble type (e.g., 'msic')
+    - method_str (str, optional): method (e.g., 'OLS')
+    - preds_str (st, optional): predictos (e.g., 'gttas', 'gttas_gttas2')
+    - targs_str (str, optional): target variables (e.g., 'tas')
+    - esm_str (str, optional): Earth System Model (e.g., 'CanESM2', 'CanESM5')
+    - scen_str (str, otional): scenario (e.g., 'rcp85', 'ssp585', 'h-ssp585')
+    - mid_path (str, optional): middle part of pathway depending on what exactly want to load (e.g., "local/local_trends/")
 
     Returns:
     - dict_out (dict): loaded MESMER output dictionary
@@ -48,6 +51,7 @@ def load_mesmer_output(
     - Also partial strings are accepted (with the exception of esm_str, where the full ESM name is needed): e.g.,
             scen_str='h-' for joint historical + ssp scenarios
             scen_str='hist' for separated historical + ssp scenarios
+    - If no mid_path is provided the default MESMER structure for saved params and emus is assumed
     - TODO: generalize writing of mid_path strings such that no longer require "/" (issues with other systems)
 
     """
@@ -55,22 +59,23 @@ def load_mesmer_output(
     # choose directory depending on whether want to load params or emus
     if "params" in name:
         dir_mesmer = cfg.dir_mesmer_params
-    elif "emus" in name:
+    elif "emu" in name:
         dir_mesmer = cfg.dir_mesmer_emus
 
     # choose middle part of pathway depending on what exactly want to load
-    if "gt" in name:
-        mid_path = "global/global_trend/"
-    elif "gv" in name:
-        mid_path = "global/global_variability/"
-    elif "g" in name:
-        mid_path = "global/"
-    elif "lt" in name:
-        mid_path = "local/local_trends/"
-    elif "lv" in name:
-        mid_path = "local/local_variability/"
-    elif "l" in name:
-        mid_path = "local/"
+    if mid_path is None:
+        if "gt" in name:
+            mid_path = "global/global_trend/"
+        elif "gv" in name:
+            mid_path = "global/global_variability/"
+        elif "g" in name:
+            mid_path = "global/"
+        elif "lt" in name:
+            mid_path = "local/local_trends/"
+        elif "lv" in name:
+            mid_path = "local/local_variability/"
+        elif "l" in name:
+            mid_path = "local/"
 
     # to ensure that don't end up with multiple files if multiple ESMs share same beginning of name
     if esm_str != "_":
