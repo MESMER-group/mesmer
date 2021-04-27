@@ -205,7 +205,9 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
                 nr_runs
             ):  # check if doesn't use up too much time. I assume it will take too much
                 for gp in np.arange(nr_gps):
-                    AR1_model = AutoReg(targ[scen][run, :, gp], lags=1).fit()
+                    AR1_model = AutoReg(
+                        targ[scen][run, :, gp], lags=1, old_names=False
+                    ).fit()
                     AR1_int_runs[gp] += AR1_model.params[0] / nr_runs
                     AR1_coef_runs[gp] += AR1_model.params[1] / nr_runs
                     AR1_std_innovs_runs[gp] += (
