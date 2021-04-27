@@ -11,11 +11,11 @@ Functions:
 
 
 import glob
+import os.path
 
 import joblib
 
 
-# -> ok, this fct war transferred to the load_mesmer.py file on 20210418
 def load_mesmer_output(
     name,
     cfg,
@@ -38,7 +38,7 @@ def load_mesmer_output(
     - targs_str (str, optional): target variables (e.g., 'tas')
     - esm_str (str, optional): Earth System Model (e.g., 'CanESM2', 'CanESM5')
     - scen_str (str, otional): scenario (e.g., 'rcp85', 'ssp585', 'h-ssp585')
-    - mid_path (str, optional): middle part of pathway depending on what exactly want to load (e.g., "local/local_trends/")
+    - mid_path (str, optional): middle part of pathway depending on what exactly want to load (e.g.,)
 
     Returns:
     - dict_out (dict): loaded MESMER output dictionary
@@ -52,7 +52,6 @@ def load_mesmer_output(
             scen_str='h-' for joint historical + ssp scenarios
             scen_str='hist' for separated historical + ssp scenarios
     - If no mid_path is provided the default MESMER structure for saved params and emus is assumed
-    - TODO: generalize writing of mid_path strings such that no longer require "/" (issues with other systems)
 
     """
 
@@ -62,42 +61,31 @@ def load_mesmer_output(
     elif "emu" in name:
         dir_mesmer = cfg.dir_mesmer_emus
 
-    # choose middle part of pathway depending on what exactly want to load
+    # identify middle part of pathway depending on what exactly want to load if not passed as keyword argument
     if mid_path is None:
         if "gt" in name:
-            mid_path = "global/global_trend/"
+            mid_path = os.path.join("global", "global_trend")
         elif "gv" in name:
-            mid_path = "global/global_variability/"
+            mid_path = os.path.join("global", "global_variability")
         elif "g" in name:
-            mid_path = "global/"
+            mid_path = "global"
         elif "lt" in name:
-            mid_path = "local/local_trends/"
+            mid_path = os.path.join("local", "local_trends")
         elif "lv" in name:
-            mid_path = "local/local_variability/"
+            mid_path = os.path.join("local", "local_variability")
         elif "l" in name:
-            mid_path = "local/"
+            mid_path = "local"
 
     # to ensure that don't end up with multiple files if multiple ESMs share same beginning of name
     if esm_str != "_":
         esm_str = esm_str + "_"
 
     path_list = glob.glob(
-        dir_mesmer
-        + mid_path
-        + name
-        + "*"
-        + ens_type_str
-        + "*"
-        + method_str
-        + "*"
-        + preds_str
-        + "*"
-        + targs_str
-        + "*"
-        + esm_str
-        + "*"
-        + scen_str
-        + "*.pkl"
+        os.path.join(
+            dir_mesmer,
+            mid_path,
+            f"{name}*{ens_type_str}*{method_str}*{preds_str}*{targs_str}*{esm_str}*{scen_str}*.pkl",
+        )
     )
 
     # load the requested output dictionary
