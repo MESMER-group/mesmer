@@ -32,7 +32,7 @@ def make_realisations(
         ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
         ['preds'] (predictors, list of strs)
         ['scenarios'] (emission scenarios used for training, list of strs)
-        [xx] additional params depend on method employed, specified in train_gt_T_enstype_method() function
+        [xx] additional params depending on method employed
         ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
     - params_lv (dict): dictionary with the trained local variability parameters
         ['targ'] (variable which is emulated, str)
@@ -51,7 +51,7 @@ def make_realisations(
         ['scenarios'] (scenarios which are used for training, list of strs)
         [xx] (additional keys depend on employed method and are listed in train_gv_T_ens_type_method() function)
     - time (dict):
-        ['scenario'] timepoints used for training of the scenario (note that hist and scenario e.g. ssp126 are kept separate)
+        ['scenario'] timepoints (1D np.ndarray) used for training of the scenario (note that hist and scenario e.g. ssp126 are kept separate)
     - n_realisations (int):
         Number of realisations to draw
     - seeds (dict):
