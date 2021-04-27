@@ -76,8 +76,10 @@ def make_realisations(
     # time axis etc.
     a_scenario_key = [k for k in time.keys() if k != "hist"][0]
     time_all = np.concatenate([time["hist"], time[a_scenario_key]])
+    esm_gv_T = params_gv_T["esm"]
+    time_seeds = seeds[esm_gv_T].keys()
+    preds_gv = {"time": {k: time_all for k in time_seeds}}
 
-    preds_gv = {"time": {"all": time_all}}
     emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=False)
     preds_lv = {"gvtas": emus_gv_T}
 
