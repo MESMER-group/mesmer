@@ -277,8 +277,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     # choose the Regions object depending on the region type
     if reg_type == "countries":
         reg = regionmask.defined_regions.natural_earth.countries_110
-    if reg_type == "srex":
+    elif reg_type == "srex":
         reg = regionmask.defined_regions.srex
+    elif reg_type == "ar6.land":
+        reg = regionmask.defined_regions.ar6.land
 
     # extract all the desired information from the Regions object
     reg_dict = {}
