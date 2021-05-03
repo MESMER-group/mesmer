@@ -77,7 +77,7 @@ ens_type_tr = (
     "msic"  # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
 )
 
-reg_type = "srex"
+reg_type = "ar6.land"
 
 ref = {}
 ref["type"] = "individ"  # alternatives: 'first','all'
