@@ -322,6 +322,7 @@ def load_cmipng_file(run_path, gen, scen):
         data = data.assign_coords(
             lon=(((data.lon + 180) % 360) - 180)
         )  # assign_coords so that labels = reasonable
+        data = data.sortby(["lat", "lon"])
         run = data.attrs["realization_index"]
 
     return data, run

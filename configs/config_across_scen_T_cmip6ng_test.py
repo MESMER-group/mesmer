@@ -2,6 +2,16 @@
 Configuration file for tests
 
 """
+import os.path
+
+# path to mesmer root directory can be found in a slightly sneaky way
+# like this
+MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
+
+# using os.path makes the paths platform-portable i.e. this will
+# still work on windows (hard-coding "/" as file separators does not
+# work on windows)
+TEST_DATA_ROOT = os.path.join(MESMER_ROOT, "tests", "test-data", "first-run-test-coarse-grid")
 
 # ---------------------------------------------------------------------------------
 
@@ -12,24 +22,23 @@ gen = 6  # generation
 dir_cmipng = (
     "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/cmip" + str(gen) + "-ng/"
 )
-# ie change to:
-# dir_cmipng = "/yourpath/cmip" + str(gen) + "-ng/"
+dir_cmipng = os.path.join(TEST_DATA_ROOT, "cmip{}-ng/".format(gen))  # TODO: remove need for trailing "/" here
 
 # observations
 dir_obs = "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/observations/"
-# dir_obs = "/yourpath/observations/"
+dir_obs = os.path.join(TEST_DATA_ROOT, "observations/")  # TODO: remove need for trailing "/" here
 
 # auxiliary data
 dir_aux = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/auxiliary/"
-# dir_aux = "/yourpath/observations/"
+dir_aux = "auxillary/"
 
 # mesmer
 dir_mesmer_params = (
     "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/mesmer/calibrated_parameters/"
 )
-# dir_mesmer_params = "/yourpath/mesmer/calibrated_parameters/"
+dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters/")
 dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/mesmer/emulations/"
-# dir_mesmer_emus = "/yourpath/mesmer/emulations/"
+dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations/")
 
 
 # configs that can be set for every run:

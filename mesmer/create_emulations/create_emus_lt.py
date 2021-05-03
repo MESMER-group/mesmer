@@ -50,9 +50,9 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     - Potential TODO: - evaluate if really need / want concat_h_f or if I want output to be determined by shape predictors
 
     """
-
     # specify necessary variables from config file
-    dir_mesmer_emus = cfg.dir_mesmer_emus
+    if save_emus:
+        dir_mesmer_emus = cfg.dir_mesmer_emus
 
     # derive necessary scenario names
     pred_names = list(preds_lt.keys())
@@ -162,14 +162,11 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     for targ in params_lt["targs"]:
         emus_lt[targ] = np.zeros([nr_ts, nr_gp])  # nr_ts x nr_gp
         for gp in params_lt["full_model"].keys():
-            emus_lt[targ][:, gp] = (
-                sum(
-                    [
-                        params_lt["coef_" + pred][targ][gp] * preds_lt[pred][scen]
-                        for pred in params_lt["preds"]
-                    ]
-                )
-                + params_lt["intercept"][targ][gp]
-            )
+            pred_vals = [
+                params_lt["coef_" + pred][targ][gp] * preds_lt[pred][scen]
+                for pred in params_lt["preds"]
+            ]
+
+            emus_lt[targ][:, gp] = sum(pred_vals) + params_lt["intercept"][targ][gp]
 
     return emus_lt

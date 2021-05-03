@@ -5,14 +5,12 @@ import sys
 
 import joblib
 import numpy as np
-import xarray as xr
 from scipy.stats import percentileofscore
 
 # load in configurations used in this script
 import configs.config_attrib_emu_T_obs as cfg
 
 # import MESMER tools
-from mesmer.create_emulations import create_emus_lt
 from mesmer.io import load_mesmer_output
 
 sys.path.append("../")

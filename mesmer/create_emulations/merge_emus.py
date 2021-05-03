@@ -135,7 +135,8 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
     """
 
     # specify necessary variables from config file
-    dir_mesmer_emus = cfg.dir_mesmer_emus
+    if save_emus:
+        dir_mesmer_emus = cfg.dir_mesmer_emus
 
     scenarios_lt = list(emus_lt.keys())
     scenarios_lv = list(emus_lv.keys())

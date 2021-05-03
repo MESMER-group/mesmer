@@ -1,0 +1,79 @@
+name: mesmer CI-CD
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  linting-and-docs:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+        python-version: [3.8]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Cache conda
+      uses: actions/cache@v2
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{
+          hashFiles('environment.yml') }}
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2.0.1
+      with:
+        channels: conda-forge
+        channel-priority: strict
+        activate-environment: mesmer-tests
+        auto-update-conda: false
+        python-version: ${{ matrix.python-version }}
+    - name: Conda info
+      shell: bash -l {0}
+      run: conda info
+    - name: Run format and linting tests
+      shell: bash -l {0}
+      run: |
+          which python
+          make -B conda-environment
+          black --check mesmer examples tests setup.py
+          flake8 mesmer examples tests setup.py
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+        python-version: [3.8]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Cache conda
+      uses: actions/cache@v2
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{
+          hashFiles('environment.yml') }}
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2.0.1
+      with:
+        channels: conda-forge
+        channel-priority: strict
+        activate-environment: mesmer-tests
+        auto-update-conda: false
+        python-version: ${{ matrix.python-version }}
+    - name: Conda info
+      shell: bash -l {0}
+      run: conda info
+    - name: Run tests
+      shell: bash -l {0}
+      run: |
+          which python
+          make -B test

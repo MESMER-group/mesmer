@@ -51,7 +51,8 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     """
 
     # specify necessary variables from config file
-    dir_mesmer_emus = cfg.dir_mesmer_emus
+    if save_emus:
+        dir_mesmer_emus = cfg.dir_mesmer_emus
 
     pred_names = list(preds_lv.keys())
     scens_out = list(preds_lv[pred_names[0]].keys())
@@ -128,7 +129,6 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     print("Start with AR(1) with spatially correlated innovations.")
     pred_names = list(preds_lv.keys())
     scens_out = list(preds_lv[pred_names[0]].keys())
-
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_lv["esm"]]
 
