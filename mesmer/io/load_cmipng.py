@@ -258,8 +258,8 @@ def load_cmipng(targ, esm, scen, cfg):
     if scen[:2] == "h-":
         scen_fut = scen[2:]
     else:
-        print(
-            "No version without historical time period is currently implemented. This function will crash."
+        raise ValueError(
+            "No version without historical time period is currently implemented."
         )
 
     targ_func_mapping = {"hfds": load_cmipng_hfds, "tas": load_cmipng_tas}

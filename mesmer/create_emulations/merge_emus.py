@@ -12,6 +12,7 @@ Functions:
 
 
 import os
+import warnings
 
 import joblib
 
@@ -57,27 +58,39 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         for scen in scenarios_gt:
             emus_g[scen] = emus_gt[scen] + emus_gv["all"]
     else:
-        print(
-            "The global trend and the global variabilty emulations are not from the same scenario, no global emulation is created"
+        # TODO: create custom warning class? (also all others)
+        warnings.warn(
+            "The global trend and the global variabilty emulations are not from the"
+            " same scenario, no global emulation is created",
+            UserWarning,
         )
         emus_g = []
 
     if params_gt["targ"] == params_gv["targ"]:
         targ = params_gt["targ"]
     else:
-        print("The target variables do not match. No global emulation is created")
+        warnings.warn(
+            "The target variables do not match. No global emulation is created",
+            UserWarning,
+        )
         emus_g = []
 
     if params_gt["esm"] == params_gv["esm"]:
         esm = params_gt["esm"]
     else:
-        print("The Earth System Models do not match. No global emulation is created")
+        warnings.warn(
+            "The Earth System Models do not match. No global emulation is created",
+            UserWarning,
+        )
         emus_g = []
 
     if params_gt["ens_type"] == params_gv["ens_type"]:
         ens_type = params_gt["ens_type"]
     else:
-        print("The ensemble types do not match. No global emulation is created")
+        warnings.warn(
+            "The ensemble types do not match. No global emulation is created",
+            UserWarning,
+        )
         emus_g = []
 
     # save the global emus if requested
@@ -156,25 +169,36 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
             for targ in targs_lt:
                 emus_l[scen][targ] = emus_lt[scen][targ] + emus_lv["all"][targ]
     else:
-        print("The scenarios do not match. No local emulation is created.")
+        warnings.warn(
+            "The scenarios do not match. No local emulation is created.", UserWarning
+        )
         emus_l = []
 
     if targs_lt == targs_lv:
         targs = params_lt["targs"]
     else:
-        print("The target variables do not match. No local emulation is created.")
+        warnings.warn(
+            "The target variables do not match. No local emulation is created.",
+            UserWarning,
+        )
         emus_l = []
 
     if params_lt["esm"] == params_lv["esm"]:
         esm = params_lt["esm"]
     else:
-        print("The Earth System Models do not match. No global emulation is created.")
+        warnings.warn(
+            "The Earth System Models do not match. No global emulation is created.",
+            UserWarning,
+        )
         emus_l = []
 
     if params_lt["ens_type"] == params_lv["ens_type"]:
         ens_type = params_lt["ens_type"]
     else:
-        print("The ensemble types do not match. No global emulation is created.")
+        warnings.warn(
+            "The ensemble types do not match. No global emulation is created.",
+            UserWarning,
+        )
         emus_l = []
 
     # save the global emus if requested

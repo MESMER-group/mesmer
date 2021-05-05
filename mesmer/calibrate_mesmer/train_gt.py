@@ -78,8 +78,9 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
             gt[scen], frac_lowess_name = train_gt_ic_LOWESS(var[scen])
         params_gt["frac_lowess"] = frac_lowess_name
     else:
-        print(
-            "No alternative method to LOWESS implemented for now. If one is added must also produce a gt dict."
+        raise ValueError(
+            "No alternative method to LOWESS implemented for now."
+            " If one is added must also produce a `gt` dict."
         )
 
     params_gt["time"] = {}
@@ -217,8 +218,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     nr_aod_obs = len(aod_obs)
 
     if nr_ts != nr_aod_obs:
-        print(
-            "An error occurred. The number of time steps of the variable and the saod do not match. This function will crash."
+        raise ValueError(
+            f"The number of time steps of the variable ({nr_ts}) and the saod ({nr_aod_obs}) do not match."
         )
     # extract global variability (which still includes volc eruptions) by removing smooth trend from Tglob in historic period
     gv_all_for_aod = np.zeros(nr_runs * nr_aod_obs)

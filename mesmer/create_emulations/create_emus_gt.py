@@ -76,7 +76,7 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
             for scen_out in scens_out:
                 emus_gt[scen_out] = params_gt[scen_out]
     else:
-        print("No alternative method is currently implemented.")
+        raise ValueError("No alternative method is currently implemented.")
 
     # save the global trend emulation if requested
     if save_emus:

@@ -63,7 +63,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
             scens_out_f = scenarios_emus[1:]
             scens_out = ["h-" + s for s in scens_out_f]
         else:
-            print("This combination is not supported. The script will crash.")
+            raise ValueError("This combination is not supported.")
     else:
         if "h-" in scenarios_emus[0]:
             scens_out_f = list(map(lambda x: x.replace("h-", ""), scenarios_emus))
@@ -73,7 +73,9 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 
     # check predictors
     if pred_names != params_lt["preds"]:  # check if correct predictors
-        print("Wrong predictors were passed. The emulations cannot be created.")
+        raise ValueError(
+            "Wrong predictors were passed. The emulations cannot be created."
+        )
 
     # select the method from a dict of fcts
     create_emus_method_func_mapping = {"OLS_each_gp_sep": create_emus_OLS_each_gp_sep}
@@ -84,7 +86,9 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     if params_lt["method_each_gp_sep"]:
         method_lt = method_lt + "_each_gp_sep"
     else:
-        print("No such method is currently implemented. This script will crash.")
+        raise ValueError(
+            f"No such method ({params_lt['method_each_gp_sep']}) is currently implemented."
+        )
 
     create_emus_method_lt = create_emus_method_func_mapping[method_lt]
 
