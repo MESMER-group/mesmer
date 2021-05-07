@@ -271,10 +271,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     - lat (dict): latitude dictionary with added keys
         ['e'] (1d array with latitudes at edges of grid cells)
         ['grid'] (2d array (lat,lon) of latitudes)
-        
+
     General remarks:
     - If additional region types are added in this function, mesmer.utils.select.extract_land() needs to be adapted too
-    
+
 
     """
 
