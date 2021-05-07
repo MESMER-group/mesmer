@@ -126,7 +126,7 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
         )
         # .mean() ignores nan in the selected time slice. Only if all time steps are nans, the mean is a nan too.
     else:
-        raise ValueError("No such method is currently implemented")
+        raise ValueError("No such re-baselining is currently implemented.")
 
     return tblend, time
 
