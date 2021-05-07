@@ -83,7 +83,9 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     if params_gt["ens_type"] == params_gv["ens_type"]:
         ens_type = params_gt["ens_type"]
     else:
-        warnings.warn("The ensemble types do not match. No global emulation is created.")
+        warnings.warn(
+            "The ensemble types do not match. No global emulation is created."
+        )
         emus_g = []
 
     # save the global emus if requested
@@ -184,9 +186,7 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
     if params_lt["ens_type"] == params_lv["ens_type"]:
         ens_type = params_lt["ens_type"]
     else:
-        warnings.warn(
-            "The ensemble types do not match. No local emulation is created."
-        )
+        warnings.warn("The ensemble types do not match. No local emulation is created.")
         emus_l = []
 
     # save the global emus if requested
