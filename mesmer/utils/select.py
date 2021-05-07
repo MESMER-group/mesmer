@@ -59,7 +59,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     ls["grid_l"] = copy.deepcopy(ls["grid_no_ANT"])
     ls["grid_l"][~idx_l] = 0
     ls["idx_grid_l"] = (
-        ls["grid_l"] > 0.01
+        ls["grid_l"] > threshold_land
     )  # gives back a binary (boolean) mask to help with plotting
     ls["grid_l_m"] = np.ma.masked_array(
         ls["grid_l"], mask=np.logical_not(ls["idx_grid_l"])
@@ -73,10 +73,10 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     reg_dict["wgt_gps_l"] = (
         wgt[idx_l] * reg_dict["gps_l"]
     )  # weights for regions (1st axis): region fraction * area weights
-    if reg_dict["type"] == "srex":
+    if reg_dict["type"] == "srex" or reg_dict["type"] == "ar6.land":
         reg_dict["wgt_gps_l"] = (
             reg_dict["wgt_gps_l"] * ls["gp_l"]
-        )  # * land fraction to account for coastal cells because SREX regions include ocean
+        )  # * land fraction to account for coastal cells because SREX / ar6.land regions include ocean
     reg_dict["gp_b_l"] = reg_dict["grid_b"][
         idx_l
     ]  # not sure if needed; extracts land from the "binary" mask
