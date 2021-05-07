@@ -93,16 +93,13 @@ def load_mesmer_output(
     if len(path_list) == 1:
         dict_out = joblib.load(path_list[0])
     elif len(path_list) == 0:
-        warnings.warn(
-            "No such file exists. An empty dictionary will be returned.", UserWarning
-        )
+        warnings.warn("No such file exists. An empty dictionary will be returned.")
         dict_out = {}
     elif len(path_list) > 1:
         warnings.warn(
             "More than 1 file exists for these critera. "
             "Please be more concrete in your selection."
             " An empty dictionary will be returned",
-            UserWarning,
         )
         dict_out = {}
 
