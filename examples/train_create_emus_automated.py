@@ -61,9 +61,7 @@ for esm in esms:
         )
 
         if tas_g_tmp is None:
-            warnings.warn(
-                f"Scenario {scen} does not exist for tas for ESM {esm}", UserWarning
-            )
+            warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
         else:  # if scen exists: save fields + load hfds fields for it too
             tas_g_dict[esm][scen], GSAT_dict[esm][scen], lon, lat, time[esm][scen] = (
                 tas_g_tmp,
