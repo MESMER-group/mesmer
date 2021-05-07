@@ -25,7 +25,7 @@ dir_mesmer_params = (
 dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/mesmer/emulations/"
 
 # emulation statistics
-dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/"
+dir_stats = "/net/cfc/landclim1/beuschl/across_scen_T/statistics/magicc_hadcrut5/"
 
 # plots
 dir_plots = "/net/cfc/landclim1/beuschl/across_scen_T/plots/"
@@ -77,7 +77,7 @@ ens_type_tr = (
     "msic"  # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
 )
 
-reg_type = "srex"
+reg_type = "ar6.land"
 
 ref = {}
 ref["type"] = "individ"  # alternatives: 'first','all'
@@ -92,7 +92,7 @@ threshold_land = 1 / 3
 
 wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
-nr_emus_v = 1000  # tmp made smaller for testing purposes. Normally 6000.
+nr_emus_v = 600  # reasonable-ish trade-off between stable quantiles for individ ESMs and a not too large probab ensemble
 scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 max_iter_cv = 15  # max. nr of iterations in cross validation, will increase later
 
