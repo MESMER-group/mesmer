@@ -58,7 +58,6 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         for scen in scenarios_gt:
             emus_g[scen] = emus_gt[scen] + emus_gv["all"]
     else:
-        # TODO: create custom warning class? (also all others)
         warnings.warn(
             "The global trend and the global variabilty emulations are not from the"
             " same scenario, no global emulation is created",
