@@ -61,7 +61,6 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     ls["idx_grid_l"] = (
         ls["grid_l"] > threshold_land
     )  # gives back a binary (boolean) mask to help with plotting
-    # should be: ls["grid_l"] > 0.01
     ls["grid_l_m"] = np.ma.masked_array(
         ls["grid_l"], mask=np.logical_not(ls["idx_grid_l"])
     )  # masked array (ocean masked out)
