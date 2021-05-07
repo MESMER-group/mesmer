@@ -67,7 +67,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     ):  # for now irrespective of ens_type. Could still be adapted later if necessary
         params_gv = train_gv_AR(params_gv, gv)
     else:
-        raise ValueError("No alternative method is currently implemented")
+        raise ValueError("No alternative method is currently implemented.")
 
     # save the global variability paramters if requested
     if save_params:
