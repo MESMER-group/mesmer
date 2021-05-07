@@ -247,7 +247,7 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     """Load constant files.
 
     Args:
-    - reg_type (str): region type ('countries','srex') # remember: if additional regions will be added later on mesmer.utils.select.extract_land() needs to be adapted to account for them
+    - reg_type (str): region type ('ar6.land','countries','srex')
     - lon (dict): longitude dictionary with key
         ['c'] (1d array with longitudes at center of grid cell)
     - lat (dict): latitude dictionary with key
@@ -271,6 +271,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     - lat (dict): latitude dictionary with added keys
         ['e'] (1d array with latitudes at edges of grid cells)
         ['grid'] (2d array (lat,lon) of latitudes)
+        
+    General remarks:
+    - If additional region types are added in this function, mesmer.utils.select.extract_land() needs to be adapted too
+    
 
     """
 
