@@ -76,7 +76,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
                 params_gv, nr_emus_v, nr_ts_emus_v, seed_all_scens[scen]["gv"]
             )
         else:
-            raise ValueError("No alternative method is currently implemented")
+            raise ValueError("The chosen method is currently not implemented.")
             # if the emulations should depend on the scenario, scen needs to be passed to the fct
 
     # save the global variability emus if requested
