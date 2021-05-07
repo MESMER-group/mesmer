@@ -24,7 +24,7 @@ def train_l_prepare_X_y_wgteq(preds, targs):
 
     Returns:
     - X (np.ndarray): empty array if none, else 2d array (sample,pred) of predictors
-    - y (np.ndarray): 3d array (sample,gp,targ) or targets
+    - y (np.ndarray): 3d array (sample,gp,targ) of targets
     - wgt_scen_eq (np.ndarray): 1d array (sample) of sample weights based on equal treatment of each scenario (if scen has more samples, each sample gets less weight)
 
     """
