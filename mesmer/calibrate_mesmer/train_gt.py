@@ -78,10 +78,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
             gt[scen], frac_lowess_name = train_gt_ic_LOWESS(var[scen])
         params_gt["frac_lowess"] = frac_lowess_name
     else:
-        raise ValueError(
-            "No alternative method to LOWESS implemented for now."
-            " If one is added must also produce a `gt` dict."
-        )
+        raise ValueError("No alternative method to LOWESS is implemented for now.")
 
     params_gt["time"] = {}
 

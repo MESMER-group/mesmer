@@ -11,7 +11,9 @@ MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
 # using os.path makes the paths platform-portable i.e. this will
 # still work on windows (hard-coding "/" as file separators does not
 # work on windows)
-TEST_DATA_ROOT = os.path.join(MESMER_ROOT, "tests", "test-data", "first-run-test-coarse-grid")
+TEST_DATA_ROOT = os.path.join(
+    MESMER_ROOT, "tests", "test-data", "first-run-test-coarse-grid"
+)
 
 # ---------------------------------------------------------------------------------
 
@@ -22,11 +24,15 @@ gen = 6  # generation
 dir_cmipng = (
     "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/cmip" + str(gen) + "-ng/"
 )
-dir_cmipng = os.path.join(TEST_DATA_ROOT, "cmip{}-ng/".format(gen))  # TODO: remove need for trailing "/" here
+dir_cmipng = os.path.join(
+    TEST_DATA_ROOT, "cmip{}-ng/".format(gen)
+)  # TODO: remove need for trailing "/" here
 
 # observations
 dir_obs = "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/observations/"
-dir_obs = os.path.join(TEST_DATA_ROOT, "observations/")  # TODO: remove need for trailing "/" here
+dir_obs = os.path.join(
+    TEST_DATA_ROOT, "observations/"
+)  # TODO: remove need for trailing "/" here
 
 # auxiliary data
 dir_aux = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/auxiliary/"

@@ -78,7 +78,7 @@ def train_l_prepare_X_y_wgteq(preds, targs):
                     X[s : s + nr_samples_scen, p] = np.tile(pred_raw[scen], nr_runs)
                     s += nr_samples_scen
                 else:
-                    raise ValueError("Predictors in this shape cannot be processed.")
+                    raise ValueError("Predictors of this shape cannot be processed.")
 
     # derive y (ie array of targets)
     y = np.zeros([nr_samples, nr_gps, nr_targs])

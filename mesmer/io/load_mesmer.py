@@ -99,7 +99,7 @@ def load_mesmer_output(
         warnings.warn(
             "More than 1 file exists for these critera. "
             "Please be more concrete in your selection."
-            " An empty dictionary will be returned",
+            " An empty dictionary will be returned.",
         )
         dict_out = {}
 

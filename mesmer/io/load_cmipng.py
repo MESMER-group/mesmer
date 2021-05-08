@@ -72,6 +72,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 
     General remarks:
     - Not fool-proof enough yet for ESMs with different forcings. Could/should be improved if there is time.
+    - TODO: improve and extend list of excluded runs / ESMs for all cmip generations and variables
 
     """
 
@@ -122,7 +123,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
                 "tas_ann_UKESM1-0-LL_ssp370_r6i1p1f2_g025.nc",
                 "tas_ann_UKESM1-0-LL_ssp370_r7i1p1f2_g025.nc",
             ]  # list of excluded runs
-            print("TO DO: extend list of excluded runs / ESMs")
+            # TODO: extend list of excluded runs / ESMs
         elif var == "hfds":
             esms_excl = ["ACCESS-ESM1-5", "IPSL-CM6A-LR", "UKESM1-0-LL"]
             runs_excl = [
