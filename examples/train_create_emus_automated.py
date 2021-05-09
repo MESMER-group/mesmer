@@ -4,6 +4,7 @@ import sys
 sys.path.append("../")
 
 import os.path
+import warnings
 
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
@@ -25,7 +26,6 @@ from mesmer.io import (
     save_mesmer_bundle,
 )
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
-
 
 # where to save the bundle
 bundle_out_file = os.path.join("tests", "test-data", "test-mesmer-bundle.pkl")
@@ -61,7 +61,7 @@ for esm in esms:
         )
 
         if tas_g_tmp is None:
-            print("Scenario " + scen + " does not exist for tas for ESM " + esm)
+            warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
         else:  # if scen exists: save fields + load hfds fields for it too
             tas_g_dict[esm][scen], GSAT_dict[esm][scen], lon, lat, time[esm][scen] = (
                 tas_g_tmp,

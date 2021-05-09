@@ -12,6 +12,7 @@ Functions:
 
 import glob
 import os.path
+import warnings
 
 import joblib
 
@@ -92,11 +93,13 @@ def load_mesmer_output(
     if len(path_list) == 1:
         dict_out = joblib.load(path_list[0])
     elif len(path_list) == 0:
-        print("No such file exists. An empty dictionary will be returned.")
+        warnings.warn("No such file exists. An empty dictionary will be returned.")
         dict_out = {}
     elif len(path_list) > 1:
-        print(
-            "More than 1 file exists for these critera. Please be more concrete in your selection. An empty dictionary will be returned"
+        warnings.warn(
+            "More than 1 file exists for these critera. "
+            "Please be more concrete in your selection."
+            " An empty dictionary will be returned.",
         )
         dict_out = {}
 

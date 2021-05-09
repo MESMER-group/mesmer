@@ -54,8 +54,9 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     scens_out = list(preds_gv[pred_names[0]].keys())
 
     if scens_out != list(seed_all_scens.keys()):
-        print(
-            "The scenarios which should be emulated do not have a seed assigned in the config file. The emulations cannot be created."
+        raise ValueError(
+            "The scenarios which should be emulated do not have a seed assigned in the"
+            " config file. The emulations cannot be created."
         )
 
     # set up dictionary for emulations of global variability with emulated scenarios as keys
@@ -75,7 +76,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
                 params_gv, nr_emus_v, nr_ts_emus_v, seed_all_scens[scen]["gv"]
             )
         else:
-            print("No alternative method is currently implemented")
+            raise ValueError("The chosen method is currently not implemented.")
             # if the emulations should depend on the scenario, scen needs to be passed to the fct
 
     # save the global variability emus if requested

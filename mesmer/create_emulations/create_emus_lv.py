@@ -213,7 +213,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     print("Start with OLS")
     pred_names = list(preds_lv.keys())
     if pred_names != params_lv["preds"]:
-        print("Wrong list of predictors was passed. This script will crash.")
+        raise ValueError("Wrong list of predictors was passed.")
 
     scens_OLS = list(preds_lv[pred_names[0]].keys())
     emus_lv = {}

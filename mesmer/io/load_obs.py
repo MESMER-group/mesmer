@@ -107,8 +107,8 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
 
     # check if lon / lat of tblend matches lon / lat of cmip models
     if (tblend.lon != lon["c"]).any() or (tblend.lat != lat["c"]).any():
-        print(
-            "The grids of the ESM output and the observations do not agree. Cannot proceed."
+        raise ValueError(
+            "The grids of the ESM output and the observations do not agree."
         )
         tblend = []
 
@@ -126,7 +126,7 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
         )
         # .mean() ignores nan in the selected time slice. Only if all time steps are nans, the mean is a nan too.
     else:
-        print("No such method is currently implemented")
+        raise ValueError("No such re-baselining is currently implemented.")
 
     return tblend, time
 
