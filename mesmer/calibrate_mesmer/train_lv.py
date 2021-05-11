@@ -161,7 +161,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     targs : dict
         nested dictionary of targets with keys
 
-        - [targ][scen] with 3d arrays (run,time,gp)
+        - [targ][scen] with 3d arrays (run, time, gp)
     y : np.ndarray
         3d array (sample,gp,targ) of targets
     wgt_scen_eq : np.ndarray
@@ -178,7 +178,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     emus_lv : dict
         local variability emulations dictionary with keys
 
-        - [scen] (2d array  (emu,time, gp) of local variability in response to global
+        - [scen] (2d array  (emu, time, gp) of local variability in response to global
           variability emulation time series)
 
     Notes
@@ -295,9 +295,9 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     L_sel : numpy.int64
         selected localization radius
     ecov : np.ndarray
-        2d empirical covariance matrix array (gp,gp)
+        2d empirical covariance matrix array (gp, gp)
     loc_ecov : np.ndarray
-        2d localized empirical covariance matrix array (gp,gp)
+        2d localized empirical covariance matrix array (gp, gp)
 
     Notes
     -----

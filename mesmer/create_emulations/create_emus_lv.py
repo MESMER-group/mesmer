@@ -27,7 +27,7 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     preds_lv : dict
         ested dictionary of predictors for local variability with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen] with 1d/2d arrays (time)/(run, time)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
@@ -131,7 +131,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen] with 1d/2d arrays (time)/(run, time)
     cfg : module
         config file containing metadata
 
@@ -140,7 +140,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     emus_lv : dict
         local variability emulations dictionary with keys
 
-        - [scen] (2d array  (emu,time, gp) of local variability in response to global
+        - [scen] (2d array  (emu, time, gp) of local variability in response to global
           variability emulation time series)
 
     Notes
@@ -236,13 +236,13 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     emus_lv : dict
         local variability emulations dictionary with keys
 
-        - [scen] (3d array  (emu,time, gp) of local variability in response to global
+        - [scen] (3d array  (emu, time, gp) of local variability in response to global
           variability emulation time series)
 
     Notes
     -----
     - Assumptions:
-        - first submethod that gets executed (ie assumes can make a new emus_lv dict
+        - first submethod that gets executed (i.e., assumes can make a new emus_lv dict
           within this function)
         - all predictors in preds_lv are being used (ie no other part of method is
           allowed to have predictors)

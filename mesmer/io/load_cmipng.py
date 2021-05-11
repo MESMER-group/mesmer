@@ -372,7 +372,7 @@ def load_cmipng_hfds(esm, scen, cfg):
     hfds : dict
         Downward Heat Flux at Sea Water Surface (hfds) anomaly dictionary with keys
 
-        - [run] (3d array (time,lat,lon) of variable)
+        - [run] (3d array (time, lat, lon) of variable)
     GHFDS : dict
         area-weighted global mean hfds anomaly dictionary with keys
 

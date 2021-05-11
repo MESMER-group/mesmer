@@ -58,9 +58,9 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
 
         - ['gp_l'] (1d array of fraction of land at land grid points)
         - ['grid_l'] (2d array (lat,lon) of fraction of land at land grid points)
-        - ['idx_grid_l'] (2d boolean array (lat,lon) with land grid points = True for
+        - ['idx_grid_l'] (2d boolean array (lat, lon) with land grid points = True for
           plotting on map)
-        - ['grid_l_m'] (2d masked array (lat,lon) with ocean masked out for plotting on
+        - ['grid_l_m'] (2d masked array (lat, lon) with ocean masked out for plotting on
           map)
         - ['wgt_gp_l'] (1d array of land area weights, i.e., area weight * land
           fraction)
@@ -131,7 +131,7 @@ def extract_time_period(var, time, start, end):
     Returns
     -------
     var_tp : np.ndarray
-        variable 1-3d array (time); (time,gp_l); (time, lat, lon)
+        variable 1-3d array (time); (time, gp_l); (time, lat, lon)
     time_tp : np.ndarray
         1d array of years of extracted time period
 

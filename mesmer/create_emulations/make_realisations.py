@@ -25,7 +25,7 @@ def make_realisations(
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen] with 1d/2d arrays (time)/(run, time)
     params_lt : dict
         dictionary with the trained local trend parameters
 

@@ -28,7 +28,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen] with 1d/2d arrays (time)/(run, time)
     cfg : module
         config file containing metadata
     save_emus : bool, optional

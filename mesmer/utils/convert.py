@@ -48,7 +48,7 @@ def separate_hist_future(var_c, time_c, cfg):
     var_c : dict
         variable dictionary with concatenated historical and future scenarios as keys
 
-        - ['h-scen_f'] (xd array of variable (run,time,x), np.ndarray)
+        - ['h-scen_f'] (xd array of variable (run, time, x), np.ndarray)
     time_c : dict
         time dictionary with concatenated historical and future scenarios as keys
 
@@ -61,7 +61,7 @@ def separate_hist_future(var_c, time_c, cfg):
     var_s : dict
         variable dictionary with separated historical and future scenarios as keys
 
-        - [hist] / [scen_f] (xd array of variable (run,time,x), np.ndarray)
+        - [hist] / [scen_f] (xd array of variable (run, time, x), np.ndarray)
     time_s : dict
         time dictionary with separated historical and future scenarios as keys
 

@@ -198,7 +198,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     Returns
     -------
     phi_gc : np.ndarray
-        2d array (gp,gp) of Gaspari-Cohn correlation matrix for grid points used for
+        2d array (gp, gp) of Gaspari-Cohn correlation matrix for grid points used for
         covariance localisation
 
     Notes
@@ -294,14 +294,14 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
         - ['type'] (region type)
         - ['abbrevs'] (abbreviations for regions)
         - ['names'] (full names of regions)
-        - ['grids'] (3d array (region,lat,lon) of subsampled region fraction)
-        - ['grid_b'] (2d array (lat,lon) of regions with each grid point being assigned
+        - ['grids'] (3d array (region, lat, lon) of subsampled region fraction)
+        - ['grid_b'] (2d array (lat, lon) of regions with each grid point being assigned
           to a single region ("binary" grid))
         - ['full'] (full Region object (for plotting region outlines))
     ls : dict
         land-sea dictionary with keys
 
-        - ['grid_raw'] (2d array (lat,lon) of subsampled land fraction)
+        - ['grid_raw'] (2d array (lat, lon) of subsampled land fraction)
         - ['grid_no_ANT'] (grid_raw with Antarctica removed)
     wgt : np.ndarray
         2d array (lat,lon) of weights to be used for area weighted means

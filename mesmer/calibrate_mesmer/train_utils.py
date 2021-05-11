@@ -16,18 +16,18 @@ def train_l_prepare_X_y_wgteq(preds, targs):
     preds : dict
         empty dictionary if none, else nested dictionary of predictors with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen] with 1d/2d arrays (time)/(run, time)
     targs : dict
         nested dictionary of targets with keys
 
-        - [targ][scen] with 3d arrays (run,time,gp)
+        - [targ][scen] with 3d arrays (run, time, gp)
 
     Returns
     -------
     X : np.ndarray
-        empty array if none, else 2d array (sample,pred) of predictors
+        empty array if none, else 2d array (sample, pred) of predictors
     y : np.ndarray
-        3d array (sample,gp,targ) of targets
+        3d array (sample, gp, targ) of targets
     wgt_scen_eq : np.ndarray
         1d array (sample) of sample weights based on equal treatment of each scenario
         (if scen has more samples, each sample gets less weight)

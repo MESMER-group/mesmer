@@ -44,7 +44,7 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     GVAR : dict
         area-weighted global mean variable anomaly dictionary with keys
 
-        - [obs] (2d array (run,time) of globally-averaged variable anomaly time series)
+        - [obs] (2d array (run, time) of globally-averaged variable anomaly time series)
     time : np.ndarray
         1d array of years
 
@@ -108,7 +108,7 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     Returns
     -------
     var np.ndarray
-        3d array (time,lat,lon) of blended temperatures
+        3d array (time, lat, lon) of blended temperatures
     time np.ndarray
         1d array of years
 

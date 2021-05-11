@@ -66,7 +66,7 @@ def save_mesmer_bundle(
         Time dictionary
 
         - ['scenario'] timepoints (1D np.ndarray) used for training of the scenario 
-          (note that hist and scenario e.g. ssp126 are kept separate)
+          (note that hist and scenario e.g., ssp126 are kept separate)
 
     """
     assert land_fractions.shape[0] == lat.shape[0]
