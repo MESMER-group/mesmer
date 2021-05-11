@@ -285,8 +285,8 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
-        ["phi_gc"] dict with localisation radii as keys and each containing a 2d array
-        (gp, gp) of of Gaspari-Cohn correlation matrix
+        - ["phi_gc"] dict with localisation radii as keys and each containing a 2d array
+          (gp, gp) of of Gaspari-Cohn correlation matrix
     cfg : module
         config file containing metadata
 

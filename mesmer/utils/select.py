@@ -18,15 +18,15 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     var : dict
         nested variable dictionary with keys
 
-        - [esm][scen] (4d array (run,time,lat,lon) of variable)
+        - [esm][scen] (4d array (run, time, lat, lon) of variable)
     reg_dict : dict
         region dictionary with keys
 
         - ['type'] (region type)
         - ['abbrevs'] (abbreviations for regions)
         - ['names'] (full names of regions)
-        - ['grids'] (3d array (regions,lat,lon) of subsampled region fraction)
-        - ['grid_b'] (2d array (lat,lon) of regions with each grid point being assigned
+        - ['grids'] (3d array (regions, lat, lon) of subsampled region fraction)
+        - ['grid_b'] (2d array (lat, lon) of regions with each grid point being assigned
           to a single region ("binary" grid))
         - ['full'] (full Region object (for plotting region outlines))
     wgt : np.ndarray
@@ -34,7 +34,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     ls : dict
         land sea dictionary with keys
 
-        - ['grid_raw'] (2d array (lat,lon) of subsampled land fraction)
+        - ['grid_raw'] (2d array (lat, lon) of subsampled land fraction)
         - ['grid_no_ANT'] (grid_raw with Antarctica removed)
     threshold_land : float, default=0.25
         threshold above which land fraction to consider a grid point as a land grid
@@ -49,8 +49,8 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     reg_dict : dict
         region dictionary with added keys
 
-        - ['gps_l'] (2d array (region,gp_l) of region fraction at land grid points)
-        - ['wgt_gps_l'] (2d array (region,gp_l) of area weights for each region on land)
+        - ['gps_l'] (2d array (region, gp_l) of region fraction at land grid points)
+        - ['wgt_gps_l'] (2d array (region, gp_l) of area weights for each region on land)
         - ['gp_b_l'] (1d array of region index at land grid points with each grid point
           being assigned to a single region)
     ls : dict
@@ -131,7 +131,7 @@ def extract_time_period(var, time, start, end):
     Returns
     -------
     var_tp : np.ndarray
-        variable 1-3d array (time);(time,gp_l);(time,lat,lon)
+        variable 1-3d array (time); (time,gp_l); (time, lat, lon)
     time_tp : np.ndarray
         1d array of years of extracted time period
 

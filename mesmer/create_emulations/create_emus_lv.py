@@ -227,7 +227,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
         - ['scenarios'] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
     preds_lv : dict
-        ested dictionary of predictors for local variability with keys
+        nested dictionary of predictors for local variability with keys
 
         - [pred][scen] with 1d/2d arrays (time)/(run,time)
 

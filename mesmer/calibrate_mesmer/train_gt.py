@@ -25,19 +25,14 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         training
 
         - [scen] (2d array (run,time) of globally-averaged variable time series)
-
     targ : str
         target variable (e.g., 'tas')
-
     esm : str
         associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-
     time : np.ndarray
         [scen] (1d array of years)
-
     cfg : module
         config file containing metadata
-
     save_params : bool, default True
         determines if parameters are saved or not, default = True
 

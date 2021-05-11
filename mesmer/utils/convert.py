@@ -14,14 +14,14 @@ def convert_dict_to_arr(var_dict):
     var_dict : dict
         nested variable (e.g., tas) dictionary with keys
 
-        - [scen][run] (xd array (time,x) of variable)
+        - [scen][run] (xd array (time, x) of variable)
 
     Returns
     -------
     var_arr : dict
         variable dictionary with keys
 
-        - [scen] (xd array (run,time,x) of variable)
+        - [scen] (xd array (run, time, x) of variable)
 
     """
 

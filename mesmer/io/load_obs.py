@@ -39,7 +39,7 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     var : dict
         variable anomaly dictionary with keys
 
-        - [obs](4d array (run,time,lat,lon) of variable whereby run=1 because only a
+        - [obs](4d array (run, time, lat, lon) of variable whereby run=1 because only a
           single realization of real world)
     GVAR : dict
         area-weighted global mean variable anomaly dictionary with keys
@@ -170,7 +170,7 @@ def load_strat_aod(time, dir_obs):
 
     Notes
     -----
-    - Assumption: time covers max full extend historical period (ie 1850 - 2014 for
+    - Assumption: time covers max full extend historical period (i.e., 1850 - 2014 for
       cimp6, 1850 - 2005 for cmip5)
     - potentially TODO: check if want to integrate it into load_obs() fct somehow, but
       likely not as it is quite different from other obs

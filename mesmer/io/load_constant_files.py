@@ -20,12 +20,12 @@ def gaspari_cohn(r):
 
     Parameters
     ----------
-    r : (float
+    r : float
         d/L with d = geographical distance in km, L = localisation radius in km
 
     Returns
     -------
-    y : (np.ndarray
+    y : np.ndarray
         Gaspari-Cohn correlation function value for given r
 
     Notes
@@ -276,7 +276,7 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     Parameters
     ----------
     reg_type : str
-        region type ('ar6.land','countries','srex')
+        region type ('ar6.land', 'countries', 'srex')
     lon : dict
         longitude dictionary with key
 

@@ -31,7 +31,7 @@ def extract_time_lon_lat_wgt3d(data):
 
         - ['c'] (1d array with latitudes at center of grid cell)
     wgt3d : np.ndarray
-        3d array (time,lat,lon) of area weight of each grid point
+        3d array (time, lat, lon) of area weight of each grid point
     """
 
     # extract time
@@ -75,10 +75,10 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 
     Notes
     -----
-    - Not fool-proof enough yet for ESMs with different forcings. Could/should be
+    - Not fool-proof enough yet for ESMs with different forcings. Could/ should be
       improved if there is time.
     - TODO:
-        - improve and extend list of excluded runs / ESMs for all cmip generations and
+        - improve and extend list of excluded runs/ ESMs for all cmip generations and
           variables
     """
 

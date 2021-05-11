@@ -115,7 +115,6 @@ def train_gv_AR(params_gv, gv):
         - ['ens_type'] (ensemble type, i.e., ic or ms, str)
         - ['method'] (applied method, i.e., AR, str)
         - ['scenarios'] (emission scenarios used for training, list of strs)
-
     gv : dict
         nested global mean temperature variability (volcanic influence removed)
         dictionary with keys
