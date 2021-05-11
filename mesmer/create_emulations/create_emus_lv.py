@@ -1,14 +1,5 @@
 """
-mesmer.create_emulations.create_emus_lv
-===================
 Functions to create local variability emulations with MESMER.
-
-
-Functions:
-    create_emus_lv()
-    create_emus_lv_AR1_sci()
-    create_emus_lv_OLS()
-
 """
 
 
@@ -21,33 +12,52 @@ import numpy as np
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     """Create local variablity emulations.
 
-    Args:
-    - params_lv (dict): dictionary with the trained local variability parameters
-        ['targ'] (variable which is emulated, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (scenarios which are used for training, list of strs)
-        [xx] (additional keys depend on employed method)
-    - preds_lv (dict):nested dictionary of predictors for local variability with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - cfg (module): config file containnig metadata
-    - save_emus (bool,optional): determines if emulation is saved or not, default = True
-    - submethod (str, optional): determines if only submethod should be used, default = "" indicating using the full method
+    Parameters
+    ----------
+    params_lv : dict
+        dictionary with the trained local variability parameters
 
-    Returns:
-    - emus_lv (dict): local variability emulations dictionary with keys
-        [scen] (3d array  (emu,time, gp) of local variability emulation time series)
+        - ['targ'] (variable which is emulated, str)
+        - ['esm'] (Earth System Model, str)
+        - ['ens_type'] (type of ensemble which is emulated, str)
+        - ['method'] (applied method, str)
+        - ['preds'] (predictors, list of strs)
+        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - [xx] (additional keys depend on employed method)
+    preds_lv : dict
+        ested dictionary of predictors for local variability with keys
 
-    General remarks:
-    - Assumptions:  - if stochastic realizations are drawn, preds_lv must contain concatenated hist + future scenarios or only future scenarios
-                    - if no preds_lv needed, pass time as predictor instead such that can get info about how many scenarios / ts per scenario should be drawn for stochastic part
-                    - submethod specific assumptions are listed in the submethod description
-    - Long-term TODO:   - improve consistency with actual esms by sharing same realizations in historical time period and diff one for each scen in future
-                        - improve this function in terms of generalization properties + design (+ consistency with rest of code)
-                        - improve function to also work if only part of predictors are used for OLS and others for other methods
+        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+    cfg : module
+        config file containing metadata
+    save_emus : bool, optional
+        determines if emulation is saved or not, default = True
+    submethod : str, optional
+        determines if only submethod should be used, default = "" indicating using the
+        full method
 
+    Returns
+    -------
+    emus_lv : dict
+        local variability emulations dictionary with keys
+
+        - [scen] (3d array  (emu,time, gp) of local variability emulation time series)
+
+    Notes
+    -----
+    - Assumptions:
+        - if stochastic realizations are drawn, preds_lv must contain concatenated
+          hist + future scenarios or only future scenarios
+        - if no preds_lv needed, pass time as predictor instead such that can get info
+          about how many scenarios / ts per scenario should be drawn for stochastic part
+        - submethod specific assumptions are listed in the submethod description
+    - Long-term TODO:
+        - improve consistency with actual esms by sharing same realizations in
+          historical time period and diff one for each scen in future
+        - improve this function in terms of generalization properties + design
+          (+ consistency with rest of code)
+        - improve function to also work if only part of predictors are used for OLS and
+          others for other methods
     """
 
     # specify necessary variables from config file
@@ -97,32 +107,49 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
 
 
 def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
-    """Create local variablity emulations with AR(1) process with spatially-correlated innovations.
+    r"""
+    Create local variablity emulations with AR(1) process with spatially-correlated
+    innovations.
 
-     Args:
-    - emus_lv (dict): local variability emulations dictionary with keys
-         [scen] (3d array  (emu,time, gp) of local variability from previous submethods)
-         empty dict if no previous submethod
-     - params_lv (dict): dictionary with the trained local variability parameters
-         ['targ'] (variable which is emulated, str)
-         ['esm'] (Earth System Model, str)
-         ['ens_type'] (type of ensemble which is emulated, str)
-         ['method'] (applied method, str)
-         ['preds'] (predictors, list of strs)
-         ['scenarios'] (scenarios which are used for training, list of strs)
-         [xx] (additional keys depend on employed method)
-     - preds_lv (dict):nested dictionary of predictors for local variability with keys
-         [pred][scen] with 1d/2d arrays (time)/(run,time)
-     - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    emus_lv : dict
+        local variability emulations dictionary with keys
 
-     Returns:
-     - emus_lv (dict): local variability emulations dictionary with keys
-         [scen] (2d array  (emu,time, gp) of local variability in response to global variability emulation time series)
+        - [scen] (3d array (emu,time, gp) of local variability from previous submethods)
+        - empty dict if no previous submethod
+    params_lv : dict
+        dictionary with the trained local variability parameters
 
-     General remarks:
-     - Assumptions:  - do for each target variable independently.
-                     - the variability is Gaussian
-     - Long-term TODO: - add possibility to account for cross-correlation between different variables
+        - ['targ'] (variable which is emulated, str)
+        - ['esm'] (Earth System Model, str)
+        - ['ens_type'] (type of ensemble which is emulated, str)
+        - ['method'] (applied method, str)
+        - ['preds'] (predictors, list of strs)
+        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - [xx] (additional keys depend on employed method)
+    preds_lv : dict
+        nested dictionary of predictors for local variability with keys
+
+        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+    cfg : module
+        config file containing metadata
+
+    Returns
+    -------
+    emus_lv : dict
+        local variability emulations dictionary with keys
+
+        - [scen] (2d array  (emu,time, gp) of local variability in response to global
+          variability emulation time series)
+
+    Notes
+    -----
+    - Assumptions:
+        - do for each target variable independently.
+        - the variability is Gaussian
+    - Long-term TODO:
+        - add possibility to account for cross-correlation between different variables
 
     """
 
@@ -187,27 +214,39 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
 def create_emus_lv_OLS(params_lv, preds_lv):
     """Create local variablity emulations with OLS.
 
-    Args:
-    - params_lv (dict): dictionary with the trained local variability parameters
-        ['targ'] (variable which is emulated, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (scenarios which are used for training, list of strs)
-        [xx] (additional keys depend on employed method)
-    - preds_lv (dict):nested dictionary of predictors for local variability with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
+    Parameters
+    ----------
+    params_lv : dict
+        dictionary with the trained local variability parameters
 
-    Returns:
-    - emus_lv (dict): local variability emulations dictionary with keys
-        [scen] (3d array  (emu,time, gp) of local variability in response to global variability emulation time series)
+        - ['targ'] (variable which is emulated, str)
+        - ['esm'] (Earth System Model, str)
+        - ['ens_type'] (type of ensemble which is emulated, str)
+        - ['method'] (applied method, str)
+        - ['preds'] (predictors, list of strs)
+        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - [xx] (additional keys depend on employed method)
+    preds_lv : dict
+        ested dictionary of predictors for local variability with keys
 
-    General remarks:
-    - Assumptions:  - first submethod that gets executed (ie assumes can make a new emus_lv dict within this function)
-                    - all predictors in preds_lv are being used (ie no other part of method is allowed to have predictors)
-                    - OLS coefs are the same for each scenario
+        - [pred][scen] with 1d/2d arrays (time)/(run,time)
 
+    Returns
+    -------
+    emus_lv : dict
+        local variability emulations dictionary with keys
+
+        - [scen] (3d array  (emu,time, gp) of local variability in response to global
+          variability emulation time series)
+
+    Notes
+    -----
+    - Assumptions:
+        - first submethod that gets executed (ie assumes can make a new emus_lv dict
+          within this function)
+        - all predictors in preds_lv are being used (ie no other part of method is
+          allowed to have predictors)
+        - OLS coefs are the same for each scenario
     """
 
     print("Start with OLS")

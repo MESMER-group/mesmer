@@ -1,12 +1,5 @@
 """
-mesmer.create_emulations.create_emus_gt
-===================
 Functions to create global trend emulations with MESMER.
-
-
-Functions:
-    create_emus_gt()
-
 """
 
 import os
@@ -16,31 +9,49 @@ import numpy as np
 
 
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
-    """Create global trend (emissions + volcanoes) emulations for specified ensemble type and method.
+    """
+    Create global trend (emissions + volcanoes) emulations for specified ensemble type
+    and method.
 
-    Args:
-    - params_gt (dict):
-        ['targ'] (emulated variable, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (scenarios which are used for training, list of strs)
-        ['time'] (1d array of years, np.ndarray)
-        [xx] (additional keys depend on employed method and are listed in train_gt_T_ens_type_method() function)
-    - preds_gt (dict): nested dictionary of predictors for global trend with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - cfg (module): config file containnig metadata
-    - concat_h_f (bool,optional): determines if historical and future time period is concatenated into a single
-                                    emulation or not, default = False (must be set to false if no historical data provided)
-    - save_emus (bool,optional): determines if emulation is saved or not, default = True
+    Parameters
+    ----------
+    params_gt : dict
+        Parameters dictionary
 
-    Returns:
-    - emus_gt (dict): global trend emulations dictionary with keys
-        [scen] (1d array of global trend emulation time series)
+        - ['targ'] (emulated variable, str)
+        - ['esm'] (Earth System Model, str)
+        - ['ens_type'] (type of ensemble which is emulated, str)
+        - ['method'] (applied method, str)
+        - ['preds'] (predictors, list of strs)
+        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ['time'] (1d array of years, np.ndarray)
+        - [xx] (additional keys depend on employed method and are listed in
+          train_gt_T_ens_type_method() function)
+    preds_gt : dict
+        nested dictionary of predictors for global trend with keys
 
-    General remarks:
-    - Assumption: - if no preds_gt needed, pass time as predictor instead to know which scenarios to emulate
+        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+    cfg : module
+        config file containing metadata
+    concat_h_f : bool, optional
+        determines if historical and future time period is concatenated into a single
+        emulation or not, default = False (must be set to false if no historical data
+        provided)
+    save_emus : bool, optional
+        determines if emulation is saved or not, default = True
+
+    Returns
+    -------
+    emus_gt : dict
+        global trend emulations dictionary with keys
+
+        - [scen] (1d array of global trend emulation time series)
+
+    Notes
+    -----
+    - Assumptions:
+        - if no preds_gt needed, pass time as predictor instead to know which scenarios
+          to emulate
 
     """
 

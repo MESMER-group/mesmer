@@ -1,14 +1,5 @@
 """
-mesmer.io.load_obs
-===================
 Functions to load in observations which are saved locally.
-
-
-Functions:
-    load_obs()
-    load_obs_tblend()
-    load_strat_aod()
-
 """
 
 
@@ -20,23 +11,42 @@ import xarray as xr
 def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     """Load observations which you previously downloaded.
 
-    Args:
-    - targ (str): target variable (e.g., 'tblend')
-    - prod (str): product (e.g., 'best' or 'cw')
-    - cfg (module): config file containnig metadata
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-    - sel_ref (str, optional): selected reference period, (e.g., 'native' (original one) or 'esm' (the one of the esm))
-    - ignore_nans (bool, optional): if True global average = average across available gp, if False nan value if not all gps available
+    Parameters
+    ----------
+    targ : str
+        target variable (e.g., 'tblend')
+    prod : str
+        product (e.g., 'best' or 'cw')
+    cfg : module
+        config file containing metadata
+    lon : dict
+        longitude dictionary with key
 
-    Returns:
-    - var (dict): variable anomaly dictionary with keys
-        [obs](4d array (run,time,lat,lon) of variable whereby run=1 because only a single realization of real world)
-    - GVAR (dict): area-weighted global mean variable anomaly dictionary with keys
-        [obs] (2d array (run,time) of globally-averaged variable anomaly time series)
-    - time (np.ndarray): 1d array of years
+        - ['c'] (1d array with longitudes at center of grid cell)
+    lat : dict
+        latitude dictionary with key
+
+        - ['c'] (1d array with latitudes at center of grid cell)
+    sel_ref : str, optional
+        selected reference period, (e.g., 'native' (original one) or 'esm' (the one of
+        the esm))
+    ignore_nans : bool, optional
+        if True global average = average across available gp, if False nan value if not
+        all gps available
+
+    Returns
+    -------
+    var : dict
+        variable anomaly dictionary with keys
+
+        - [obs](4d array (run,time,lat,lon) of variable whereby run=1 because only a
+          single realization of real world)
+    GVAR : dict
+        area-weighted global mean variable anomaly dictionary with keys
+
+        - [obs] (2d array (run,time) of globally-averaged variable anomaly time series)
+    time : np.ndarray
+        1d array of years
 
     """
 
@@ -77,18 +87,30 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
 def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     """Load spatially infilled tblend observations. Currently available: best and cw.
 
-    Args:
-    - prod (str): product (e.g., 'best' or 'cw')
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-    - cfg (module): config file containnig metadata
-    - sel_ref (str, optional): selected reference period, (e.g., 'native' (original one) or 'esm' (the one of the esm))
+    Parameters
+    ----------
+    prod str
+        product (e.g., 'best' or 'cw')
+    lon dict
+        longitude dictionary with key
 
-    Returns:
-    - var (np.ndarray): 3d array (time,lat,lon) of blended temperatures
-    - time (np.ndarray): 1d array of years
+        - ['c'] (1d array with longitudes at center of grid cell)
+    lat dict
+        latitude dictionary with key
+
+        - ['c'] (1d array with latitudes at center of grid cell)
+    cfg module
+        config file containing metadata
+    sel_ref str, optional
+        selected reference period, (e.g., 'native' (original one) or 'esm' (the one of
+        the esm))
+
+    Returns
+    -------
+    var np.ndarray
+        3d array (time,lat,lon) of blended temperatures
+    time np.ndarray
+        1d array of years
 
     """
 
@@ -134,16 +156,24 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
 def load_strat_aod(time, dir_obs):
     """Load observed global stratospheric aerosol optical depth time series.
 
-    Args:
-    - time (np.ndarray): 1d array of years the AOD time series is required for
-    - dir_obs (str): pathway to observations
+    Parameters
+    ----------
+    time : np.ndarray
+        1d array of years the AOD time series is required for
+    dir_obs : str
+        pathway to observations
 
-    Returns:
-    - aod_obs (np.ndarray): 1d array of observed global stratospheric AOD time series
+    Returns
+    -------
+    aod_obs : np.ndarray
+        1d array of observed global stratospheric AOD time series
 
-    General remarks:
-    - Assumption: time covers max full extend historical period (ie 1850 - 2014 for cimp6, 1850 - 2005 for cmip5)
-    - potentially TODO: check if want to integrate it into load_obs() fct somehow, but likely not as it is quite different from other obs
+    Notes
+    -----
+    - Assumption: time covers max full extend historical period (ie 1850 - 2014 for
+      cimp6, 1850 - 2005 for cmip5)
+    - potentially TODO: check if want to integrate it into load_obs() fct somehow, but
+      likely not as it is quite different from other obs
 
     """
 

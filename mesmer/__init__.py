@@ -1,6 +1,5 @@
 """
 The mesmer package provides tools to train the MESMER emulator, create emulations, and analyze the results.
-
 """
 # flake8: noqa
 

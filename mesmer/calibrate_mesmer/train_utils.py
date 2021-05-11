@@ -1,12 +1,5 @@
 """
-mesmer.calibrate_mesmer.train_utils
-===================
 Functions to aid the training of MESMER.
-
-
-Functions:
-    train_l_prepare_X_y_wgteq()
-
 """
 
 
@@ -14,19 +7,30 @@ import numpy as np
 
 
 def train_l_prepare_X_y_wgteq(preds, targs):
-    """Create single array of predictors, single array of targets, and single array of weights.
+    """
+    Create single array of predictors, single array of targets, and single array of
+    weights.
 
-    Args:
-    - preds (dict): empty dictionary if none, else nested dictionary of predictors with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - targs (dict): nested dictionary of targets with keys
-        [targ][scen] with 3d arrays (run,time,gp)
+    Parameters
+    ----------
+    preds : dict
+        empty dictionary if none, else nested dictionary of predictors with keys
 
-    Returns:
-    - X (np.ndarray): empty array if none, else 2d array (sample,pred) of predictors
-    - y (np.ndarray): 3d array (sample,gp,targ) of targets
-    - wgt_scen_eq (np.ndarray): 1d array (sample) of sample weights based on equal treatment of each scenario (if scen has more samples, each sample gets less weight)
+        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+    targs : dict
+        nested dictionary of targets with keys
 
+        - [targ][scen] with 3d arrays (run,time,gp)
+
+    Returns
+    -------
+    X : np.ndarray
+        empty array if none, else 2d array (sample,pred) of predictors
+    y : np.ndarray
+        3d array (sample,gp,targ) of targets
+    wgt_scen_eq : np.ndarray
+        1d array (sample) of sample weights based on equal treatment of each scenario
+        (if scen has more samples, each sample gets less weight)
     """
 
     targ_names = list(targs.keys())
