@@ -163,7 +163,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
         - [targ][scen] with 3d arrays (run, time, gp)
     y : np.ndarray
-        3d array (sample,gp,targ) of targets
+        3d array (sample, gp, targ) of targets
     wgt_scen_eq : np.ndarray
         1d array (sample) of sample weights
     aux : dict
