@@ -32,7 +32,7 @@ def gaspari_cohn(r):
     -----
     - Smooth exponentially decaying correlation function which mimics a Gaussian
       distribution but vanishes at r=2, i.e., 2x the localisation radius (L)
-    - based on Gaspari-Cohn 1999, QJR  (as taken from Carrassi et al 2018, Wiley
+    - based on Gaspari-Cohn 1999, QJR (as taken from Carrassi et al 2018, Wiley
       Interdiscip. Rev. Clim. Change)
 
     """
