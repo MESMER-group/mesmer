@@ -33,7 +33,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
           variability module, bool)
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
-        
+
         - [pred][scen] with 1d/2d arrays (time)/(run, time)
     cfg : module
         config file containing metadata
