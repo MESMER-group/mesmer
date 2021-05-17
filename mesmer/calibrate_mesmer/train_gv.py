@@ -22,9 +22,9 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
 
         - [scen] (2d array (run,time) of globally-averaged variability time series)
     targ : str
-        target variable (e.g., 'tas')
+        target variable (e.g., "tas")
     esm : str
-        associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        associated Earth System Model (e.g., "CanESM2" or "CanESM5")
     cfg : config module
         config file containing metadata
     save_params : bool, optional
@@ -36,12 +36,12 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
         dictionary containing the trained parameters for the chosen method / ensemble
         type
 
-        - ['targ'] (emulated variable, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (emission scenarios used for training, list of strs)
+        - ["targ"] (emulated variable, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
         - [xx] additional params depend on method employed, specified in
           ``train_gv_T_ens_type_method()`` function
 
@@ -110,11 +110,11 @@ def train_gv_AR(params_gv, gv):
     params_gv : dict
         parameter dictionary containing keys which do not depend on applied method
 
-        - ['targ'] (variable, i.e., tas or tblend, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, i.e., ic or ms, str)
-        - ['method'] (applied method, i.e., AR, str)
-        - ['scenarios'] (emission scenarios used for training, list of strs)
+        - ["targ"] (variable, i.e., tas or tblend, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, i.e., ic or ms, str)
+        - ["method"] (applied method, i.e., AR, str)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
     gv : dict
         nested global mean temperature variability (volcanic influence removed)
         dictionary with keys
@@ -127,16 +127,16 @@ def train_gv_AR(params_gv, gv):
     params : dict
         parameter dictionary containing original keys plus
 
-        - ['max_lag'] (maximum lag considered when finding suitable AR model, hardcoded
+        - ["max_lag"] (maximum lag considered when finding suitable AR model, hardcoded
           to 15 here, int)
-        - ['sel_crit'] (selection criterion applied to find suitable AR model, hardcoded
+        - ["sel_crit"] (selection criterion applied to find suitable AR model, hardcoded
           to Bayesian Information Criterion bic here, str)
-        - ['AR_int'] (intercept of the AR model, float)
-        - ['AR_coefs'] (coefficients of the AR model for the lags which are contained in
+        - ["AR_int"] (intercept of the AR model, float)
+        - ["AR_coefs"] (coefficients of the AR model for the lags which are contained in
           the selected AR model, list of floats)
-        - ['AR_lags'] (AR lags which are contained in the selected AR model, list of
+        - ["AR_lags"] (AR lags which are contained in the selected AR model, list of
           ints)
-        - ['AR_std_innovs'] (standard deviation of the innovations of the selected AR
+        - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
 
     Notes

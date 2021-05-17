@@ -17,12 +17,12 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     params_gv : dict
         Parameters dictionary.
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
           train_gv_T_ens_type_method() function)
     preds_gv : dict
@@ -115,20 +115,20 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     params_gv : dict
         Parameters dictionary.
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
-        - ['max_lag'] (maximum lag considered when finding suitable AR model, int)
-        - ['sel_crit'] (selection criterion applied to find suitable AR model, str)
-        - ['AR_int'] (intercept of the AR model, float)
-        - ['AR_coefs'] (coefficients of the AR model for the lags which are contained in
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
+        - ["max_lag"] (maximum lag considered when finding suitable AR model, int)
+        - ["sel_crit"] (selection criterion applied to find suitable AR model, str)
+        - ["AR_int"] (intercept of the AR model, float)
+        - ["AR_coefs"] (coefficients of the AR model for the lags which are contained in
           the selected AR model, list of floats)
-        - ['AR_lags'] (AR lags which are contained in the selected AR model, list of
+        - ["AR_lags"] (AR lags which are contained in the selected AR model, list of
           ints)
-        - ['AR_std_innovs'] (standard deviation of the innovations of the selected AR
+        - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
     nr_emus_v : int
         number of global variability emulations

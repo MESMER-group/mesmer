@@ -62,7 +62,7 @@ ens_type_tr = (
 reg_type = "srex"
 
 ref = {}
-ref["type"] = "individ"  # alternatives: 'first','all'
+ref["type"] = "individ"  # alternatives: "first","all"
 ref["start"] = "1850"  # first included year
 ref["end"] = "1900"  # last included year
 

@@ -19,16 +19,16 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     params_lt : dict
         dictionary with the trained local trend parameters
 
-        - ['targs'] (emulated variables, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
-        - ['method_each_gp_sep'] (states if method is applied to each grid point
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (emission scenarios used for training, list of strs)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
         - [xx] (additional params depend on method employed)
-        - ['full_model_contains_lv'] (whether the full model contains part of the local
+        - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
@@ -48,7 +48,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     emus_lt : dict
         local trend emulations nested dictionary with keys
 
-        - [scen]['targ'] (2d array (time, gp) of local trend emulations)
+        - [scen]["targ"] (2d array (time, gp) of local trend emulations)
 
     Notes
     -----
@@ -150,16 +150,16 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     params_lt : dict
         dictionary with the trained local trend parameters
 
-        - ['targs'] (emulated variables, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
-        - ['method_each_gp_sep'] (states if method is applied to each grid point
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (emission scenarios used for training, list of strs)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
         - [xx] (additional params depend on method employed)
-        - ['full_model_contains_lv'] (whether the full model contains part of the local
+        - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
@@ -173,7 +173,7 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     emus_lt : dict
         local trend emulations dictionary with keys
 
-        - ['targ'] (2d array (time, gp) of local trend emulations)
+        - ["targ"] (2d array (time, gp) of local trend emulations)
 
     Notes
     -----

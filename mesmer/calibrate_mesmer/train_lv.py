@@ -27,7 +27,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
     esm : str
-        associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        associated Earth System Model (e.g., "CanESM2" or "CanESM5")
     cfg : module
         config file containing metadata
     save_params : bool, optional
@@ -44,14 +44,14 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     params_lv : dict
         dictionary of local variability paramters
 
-        - ['targs'] (emulated variables, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (emission scenarios used for training, list of strs)
-        - ['part_model_in_lt'] (states if part of the model is saved in params_lt, bool)
-        - ['method_lt_each_gp_sep'] (states if local trends method is applied to each
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - ["part_model_in_lt"] (states if part of the model is saved in params_lt, bool)
+        - ["method_lt_each_gp_sep"] (states if local trends method is applied to each
           grid point separately, bool)
         - [xx] (additional params depend on employed lv method)
 
@@ -151,12 +151,12 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     params_lv : dict
         dictionary with the trained local variability parameters
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
     targs : dict
         nested dictionary of targets with keys
@@ -169,7 +169,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
-        - ['phi_gc'] (Xd arrays of auxiliary variable)
+        - ["phi_gc"] (Xd arrays of auxiliary variable)
     cfg : module
         config file containing metadata
 
@@ -285,7 +285,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
-        - ['phi_gc'] (dict with localisation radii as keys and each containing a 2d array)
+        - ["phi_gc"] (dict with localisation radii as keys and each containing a 2d array)
           (gp, gp) of of Gaspari-Cohn correlation matrix
     cfg : module
         config file containing metadata
@@ -302,7 +302,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     Notes
     -----
     - Function could also handle determining ecov of several variables but would all
-      have to be passed in same 2d y array (with corresponding wgt_scen_eq,aux['phi_gc']
+      have to be passed in same 2d y array (with corresponding wgt_scen_eq,aux["phi_gc"]
       shapes)
 
     """

@@ -17,12 +17,12 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     params_lv : dict
         dictionary with the trained local variability parameters
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
@@ -121,12 +121,12 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     params_lv : dict
         dictionary with the trained local variability parameters
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
@@ -219,12 +219,12 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     params_lv : dict
         dictionary with the trained local variability parameters
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
     preds_lv : dict
         nested dictionary of predictors for local variability with keys

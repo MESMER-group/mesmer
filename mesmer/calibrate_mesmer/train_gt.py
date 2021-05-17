@@ -26,9 +26,9 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
         - [scen] (2d array (run,time) of globally-averaged variable time series)
     targ : str
-        target variable (e.g., 'tas')
+        target variable (e.g., "tas")
     esm : str
-        associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        associated Earth System Model (e.g., "CanESM2" or "CanESM5")
     time : np.ndarray
         [scen] (1d array of years)
     cfg : module
@@ -42,12 +42,12 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         dictionary containing the trained parameters for the chosen method / ensemble
         type
 
-        - ['targ'] (emulated variable, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (emission scenarios used for training, list of strs)
+        - ["targ"] (emulated variable, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
         - [xx] (additional params depend on method employed)
 
     Notes

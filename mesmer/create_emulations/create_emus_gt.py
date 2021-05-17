@@ -18,13 +18,13 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     params_gt : dict
         Parameters dictionary
 
-        - ['targ'] (emulated variable, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
-        - ['time'] (1d array of years, np.ndarray)
+        - ["targ"] (emulated variable, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
+        - ["time"] (1d array of years, np.ndarray)
         - [xx] (additional keys depend on employed method and are listed in
           train_gt_T_ens_type_method() function)
     preds_gt : dict

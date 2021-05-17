@@ -162,27 +162,27 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     lon : dict
         longitude dictionary with key
 
-        - ['c'] (1d array with longitudes at center of grid cell)
-        - ['e'] (1d array with longitudes at edges of grid cells)
-        - ['grid'] (2d array (lat,lon) of longitudes)
+        - ["c"] (1d array with longitudes at center of grid cell)
+        - ["e"] (1d array with longitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of longitudes)
     lat : dict
         latitude dictionary with key
 
-        - ['c'] (1d array with latitudes at center of grid cell)
-        - ['e'] (1d array with latitudes at edges of grid cells)
-        - ['grid'] (2d array (lat,lon) of latitudes)
+        - ["c"] (1d array with latitudes at center of grid cell)
+        - ["e"] (1d array with latitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of latitudes)
     ls : dict
         land-sea dictionary with keys
 
-        - ['grid_raw'] (2d array (lat,lon) of subsampled land fraction)
-        - ['grid_no_ANT'] (grid_raw with Antarctica removed)
-        - ['gp_l'] (1d array of fraction of land at land grid points)
-        - ['grid_l'] (2d array (lat,lon) of fraction of land at land grid points)
-        - ['idx_grid_l'] (2d boolean array (lat,lon) with land grid points = True for
+        - ["grid_raw"] (2d array (lat,lon) of subsampled land fraction)
+        - ["grid_no_ANT"] (grid_raw with Antarctica removed)
+        - ["gp_l"] (1d array of fraction of land at land grid points)
+        - ["grid_l"] (2d array (lat,lon) of fraction of land at land grid points)
+        - ["idx_grid_l"] (2d boolean array (lat,lon) with land grid points = True for
           plotting on map)
-        - ['grid_l_m'] (2d masked array (lat,lon) with ocean masked out for plotting on
+        - ["grid_l_m"] (2d masked array (lat,lon) with ocean masked out for plotting on
           map)
-        - ['wgt_gp_l'] (1d array of land area weights, i.e.,
+        - ["wgt_gp_l"] (1d array of land area weights, i.e.,
           area weight * land fraction)
     cfg : module
         config file containing metadata
@@ -274,45 +274,45 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     Parameters
     ----------
     reg_type : str
-        region type ('ar6.land', 'countries', 'srex')
+        region type ("ar6.land", "countries", "srex")
     lon : dict
         longitude dictionary with key
 
-        - ['c'] (1d array with longitudes at center of grid cell)
+        - ["c"] (1d array with longitudes at center of grid cell)
     lat : dict
         latitude dictionary with key
 
-        - ['c'] (1d array with latitudes at center of grid cell)
+        - ["c"] (1d array with latitudes at center of grid cell)
 
     Returns
     -------
     reg_dict : dict
         region dictionary with keys
 
-        - ['type'] (region type)
-        - ['abbrevs'] (abbreviations for regions)
-        - ['names'] (full names of regions)
-        - ['grids'] (3d array (region, lat, lon) of subsampled region fraction)
-        - ['grid_b'] (2d array (lat, lon) of regions with each grid point being assigned
+        - ["type"] (region type)
+        - ["abbrevs"] (abbreviations for regions)
+        - ["names"] (full names of regions)
+        - ["grids"] (3d array (region, lat, lon) of subsampled region fraction)
+        - ["grid_b"] (2d array (lat, lon) of regions with each grid point being assigned
           to a single region ("binary" grid))
-        - ['full'] (full Region object (for plotting region outlines))
+        - ["full"] (full Region object (for plotting region outlines))
     ls : dict
         land-sea dictionary with keys
 
-        - ['grid_raw'] (2d array (lat, lon) of subsampled land fraction)
-        - ['grid_no_ANT'] (grid_raw with Antarctica removed)
+        - ["grid_raw"] (2d array (lat, lon) of subsampled land fraction)
+        - ["grid_no_ANT"] (grid_raw with Antarctica removed)
     wgt : np.ndarray
         2d array (lat,lon) of weights to be used for area weighted means
     lon : dict
         longitude dictionary with added keys
 
-        - ['e'] (1d array with longitudes at edges of grid cells)
-        - ['grid'] (2d array (lat,lon) of longitudes)
+        - ["e"] (1d array with longitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of longitudes)
     lat : dict
         latitude dictionary with added keys
 
-        - ['e'] (1d array with latitudes at edges of grid cells)
-        - ['grid'] (2d array (lat,lon) of latitudes)
+        - ["e"] (1d array with latitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of latitudes)
 
     Notes
     -----

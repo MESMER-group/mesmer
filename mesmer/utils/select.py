@@ -22,20 +22,20 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     reg_dict : dict
         region dictionary with keys
 
-        - ['type'] (region type)
-        - ['abbrevs'] (abbreviations for regions)
-        - ['names'] (full names of regions)
-        - ['grids'] (3d array (regions, lat, lon) of subsampled region fraction)
-        - ['grid_b'] (2d array (lat, lon) of regions with each grid point being assigned
+        - ["type"] (region type)
+        - ["abbrevs"] (abbreviations for regions)
+        - ["names"] (full names of regions)
+        - ["grids"] (3d array (regions, lat, lon) of subsampled region fraction)
+        - ["grid_b"] (2d array (lat, lon) of regions with each grid point being assigned
           to a single region ("binary" grid))
-        - ['full'] (full Region object (for plotting region outlines))
+        - ["full"] (full Region object (for plotting region outlines))
     wgt : np.ndarray
         2d array (lat,lon) of weights to be used for area weighted means
     ls : dict
         land sea dictionary with keys
 
-        - ['grid_raw'] (2d array (lat, lon) of subsampled land fraction)
-        - ['grid_no_ANT'] (grid_raw with Antarctica removed)
+        - ["grid_raw"] (2d array (lat, lon) of subsampled land fraction)
+        - ["grid_no_ANT"] (grid_raw with Antarctica removed)
     threshold_land : float, default=0.25
         threshold above which land fraction to consider a grid point as a land grid
         point
@@ -49,20 +49,20 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     reg_dict : dict
         region dictionary with added keys
 
-        - ['gps_l'] (2d array (region, gp_l) of region fraction at land grid points)
-        - ['wgt_gps_l'] (2d array (region, gp_l) of area weights for each region on land)
-        - ['gp_b_l'] (1d array of region index at land grid points with each grid point
+        - ["gps_l"] (2d array (region, gp_l) of region fraction at land grid points)
+        - ["wgt_gps_l"] (2d array (region, gp_l) of area weights for each region on land)
+        - ["gp_b_l"] (1d array of region index at land grid points with each grid point
           being assigned to a single region)
     ls : dict
         land sea dictionary with added keys
 
-        - ['gp_l'] (1d array of fraction of land at land grid points)
-        - ['grid_l'] (2d array (lat,lon) of fraction of land at land grid points)
-        - ['idx_grid_l'] (2d boolean array (lat, lon) with land grid points = True for
+        - ["gp_l"] (1d array of fraction of land at land grid points)
+        - ["grid_l"] (2d array (lat,lon) of fraction of land at land grid points)
+        - ["idx_grid_l"] (2d boolean array (lat, lon) with land grid points = True for
           plotting on map)
-        - ['grid_l_m'] (2d masked array (lat, lon) with ocean masked out for plotting on
+        - ["grid_l_m"] (2d masked array (lat, lon) with ocean masked out for plotting on
           map)
-        - ['wgt_gp_l'] (1d array of land area weights, i.e., area weight * land
+        - ["wgt_gp_l"] (1d array of land area weights, i.e., area weight * land
           fraction)
 
     """

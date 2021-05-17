@@ -25,11 +25,11 @@ def extract_time_lon_lat_wgt3d(data):
         1d array of years
     lon : dict
         longitude dictionary with key
-     - ['c'] (1d array with longitudes at center of grid cell)
+     - ["c"] (1d array with longitudes at center of grid cell)
     lat : dict
         latitude dictionary with key
 
-        - ['c'] (1d array with latitudes at center of grid cell)
+        - ["c"] (1d array with latitudes at center of grid cell)
     wgt3d : np.ndarray
         3d array (time, lat, lon) of area weight of each grid point
     """
@@ -60,11 +60,11 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     gen : int
         generation (5 or 6)
     esm : str
-        Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
     var : str
-        variable (e.g., 'tas', 'tos')
+        variable (e.g., "tas", "tos")
     scenario : str
-        scenario (e.g., 'rcp85' or 'ssp585')
+        scenario (e.g., "rcp85" or "ssp585")
     dir_cmipng : str
         path to cmip-ng archive
 
@@ -189,7 +189,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 
         # TODO: redecide if I am fine with CanESM5 p2 but not all scenarios or if I prefer the worse p1 which has all scenarios
         # code below = old version when used p2 instead
-        # if esm != 'CanESM5':
+        # if esm != "CanESM5":
         #    path_runs_list = sorted(
         #       glob.glob(
         #   dir_name
@@ -245,11 +245,11 @@ def load_cmipng(targ, esm, scen, cfg):
     Parameters
     ----------
     targ : str
-        target variable (e.g., 'tas')
+        target variable (e.g., "tas")
     esm : str
-        Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
     scen : str
-        future scenario (e.g., 'rcp85' or 'ssp585')
+        future scenario (e.g., "rcp85" or "ssp585")
     cfg : module
         config file containing metadata
 
@@ -266,11 +266,11 @@ def load_cmipng(targ, esm, scen, cfg):
     lon : dict
         longitude dictionary with key
 
-        - ['c'] (1d array with longitudes at center of grid cell)
+        - ["c"] (1d array with longitudes at center of grid cell)
     lat : dict
         latitude dictionary with key
 
-        - ['c'] (1d array with latitudes at center of grid cell)
+        - ["c"] (1d array with latitudes at center of grid cell)
     time : np.ndarray
         1d array of years
     """
@@ -303,7 +303,7 @@ def load_cmipng_file(run_path, gen, scen):
     gen : int
         generation (5 or 6)
     scen : str
-        future scenario (e.g., 'rcp85' or 'ssp585')
+        future scenario (e.g., "rcp85" or "ssp585")
 
     Returns
     -------
@@ -361,9 +361,9 @@ def load_cmipng_hfds(esm, scen, cfg):
     Parameters
     ----------
     esm : str
-        Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
     scen : str
-        future scenario (e.g., 'rcp85' or 'ssp585')
+        future scenario (e.g., "rcp85" or "ssp585")
     cfg : module
         config file containnig metadata
 
@@ -380,11 +380,11 @@ def load_cmipng_hfds(esm, scen, cfg):
     lon : dict
         longitude dictionary with key
 
-        - ['c'] (1d array with longitudes at center of grid cell)
+        - ["c"] (1d array with longitudes at center of grid cell)
     lat : dict
         latitude dictionary with key
 
-        - ['c'] (1d array with latitudes at center of grid cell)
+        - ["c"] (1d array with latitudes at center of grid cell)
     time : np.ndarray
         1d array of years
 
@@ -483,9 +483,9 @@ def load_cmipng_tas(esm, scen, cfg):
     Parameters
     ----------
     esm : str
-        Earth System Model (e.g., 'CanESM2' or 'CanESM5')
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
     scen : str
-        future scenario (e.g., 'rcp85' or 'ssp585')
+        future scenario (e.g., "rcp85" or "ssp585")
     cfg : module
         config file containing metadata
 
@@ -502,11 +502,11 @@ def load_cmipng_tas(esm, scen, cfg):
     lon : dict
         longitude dictionary with key
 
-        - ['c'] (1d array with longitudes at center of grid cell)
+        - ["c"] (1d array with longitudes at center of grid cell)
     lat : dict
         latitude dictionary with key
 
-        - ['c'] (1d array with latitudes at center of grid cell)
+        - ["c"] (1d array with latitudes at center of grid cell)
     time : np.ndarray
         1d array of years
 

@@ -24,37 +24,37 @@ def save_mesmer_bundle(
         dictionary containing the calibrated parameters for the local trends emulations,
         keys relevant here:
 
-        - ['targs'] (list of emulated variables, list of strs)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
+        - ["targs"] (list of emulated variables, list of strs)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_lv : dict
         dictionary containing the calibrated parameters for the local variability
         emulations, keys relevant here
 
-        - ['targs'] (list of variables which are emulated, list of strs)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
+        - ["targs"] (list of variables which are emulated, list of strs)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_gv : dict
         dictionary containing the calibrated parameters for the global variability emulations, keys relevant here
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
-        - ['preds'] (predictors, list of strs)
-        - ['scenarios'] (scenarios which are used for training, list of strs)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depending on employed method)
     seeds : dict
         Seeds dictionary:
 
-        - ['esm'] (dict):
-            - ['scenario'] (dict):
-                - ['gv'] (seed for global variability)
-                - ['lv'] (seed for local variability)
+        - ["esm"] (dict):
+            - ["scenario"] (dict):
+                - ["gv"] (seed for global variability)
+                - ["lv"] (seed for local variability)
     land_fractions : np.MaskedArray
         data containing land fractions (also used for helping generate output on lat-lon
         grids)

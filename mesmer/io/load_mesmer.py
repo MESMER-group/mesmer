@@ -26,24 +26,24 @@ def load_mesmer_output(
     Parameters
     ----------
     name : str
-        saved MESMER output to load (e.g., 'params_lt', 'emus_lv', 'emus_g')
+        saved MESMER output to load (e.g., "params_lt", "emus_lv", "emus_g")
     cfg : module
         config file containing metadata
     ens_type_str : str, optional
-        ensemble type (e.g., 'msic')
+        ensemble type (e.g., "msic")
     method_str : str, optional
-        method (e.g., 'OLS')
+        method (e.g., "OLS")
     preds_str : st, optional
-        predictos (e.g., 'gttas', 'gttas_gttas2')
+        predictos (e.g., "gttas", "gttas_gttas2")
     targs_str : str, optional
-        target variables (e.g., 'tas')
+        target variables (e.g., "tas")
     esm_str : str, optional
-        Earth System Model (e.g., 'CanESM2', 'CanESM5')
+        Earth System Model (e.g., "CanESM2", "CanESM5")
     scen_str : str, otional
-        scenario (e.g., 'rcp85', 'ssp585', 'h-ssp585')
+        scenario (e.g., "rcp85", "ssp585", "h-ssp585")
     mid_path : str, optional
         middle part of pathway depending on what exactly want to load (e.g.,
-        'local/local_trends')
+        "local/local_trends")
 
     Returns
     -------
@@ -61,8 +61,8 @@ def load_mesmer_output(
     - Also partial strings are accepted (with the exception of esm_str, where the full
       ESM name is needed): e.g.:
 
-        - scen_str='h-' for joint historical + ssp scenarios
-        - scen_str='hist' for separated historical + ssp scenarios
+        - scen_str="h-" for joint historical + ssp scenarios
+        - scen_str="hist" for separated historical + ssp scenarios
     - If no mid_path is provided the default MESMER structure for saved params and emus
       is assumed
 

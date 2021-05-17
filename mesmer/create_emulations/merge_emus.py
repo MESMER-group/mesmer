@@ -26,18 +26,18 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         dictionary containing the calibrated parameters for the global trend emulations,
         keys relevant here:
 
-        - ['targ'] (emulated variable, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
+        - ["targ"] (emulated variable, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
     params_gv : dict
         dictionary containing the calibrated parameters for the global variability
         emulations, keys relevant here:
 
-        - ['targ'] (variable which is emulated, str)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
@@ -143,18 +143,18 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
         dictionary containing the calibrated parameters for the local trends emulations,
         keys relevant here
 
-        - ['targs'] (list of emulated variables, list of strs)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (ensemble type, str)
-        - ['method'] (applied method, str)
+        - ["targs"] (list of emulated variables, list of strs)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
     params_lv : dict
         dictionary containing the calibrated parameters for the local variability
         emulations, keys relevant here
 
-        - ['targs'] (list of variables which are emulated, list of strs)
-        - ['esm'] (Earth System Model, str)
-        - ['ens_type'] (type of ensemble which is emulated, str)
-        - ['method'] (applied method, str)
+        - ["targs"] (list of variables which are emulated, list of strs)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
