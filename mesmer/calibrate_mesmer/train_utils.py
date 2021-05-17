@@ -16,7 +16,7 @@ def train_l_prepare_X_y_wgteq(preds, targs):
     preds : dict
         empty dictionary if none, else nested dictionary of predictors with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run, time)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     targs : dict
         nested dictionary of targets with keys
 
