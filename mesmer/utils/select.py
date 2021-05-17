@@ -132,7 +132,7 @@ def extract_time_period(var, time, start, end):
     -------
     var_tp : np.ndarray
         variable 1-3d array
-        
+
         - (time);
         - (time, gp_l);
         - (time, lat, lon);
