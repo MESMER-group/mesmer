@@ -27,8 +27,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
           separately, bool)
         - ['preds'] (predictors, list of strs)
         - ['scenarios'] (emission scenarios used for training, list of strs)
-        - [xx] additional params depend on method employed, specified in
-          train_gt_T_enstype_method() function
+        - [xx] (additional params depend on method employed)
         - ['full_model_contains_lv'] (whether the full model contains part of the local
           variability module, bool)
     preds_lt : dict
@@ -159,14 +158,13 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
           separately, bool)
         - ['preds'] (predictors, list of strs)
         - ['scenarios'] (emission scenarios used for training, list of strs)
-        - [xx] additional params depend on method employed, specified in
-          train_gt_T_enstype_method() function
+        - [xx] (additional params depend on method employed)
         - ['full_model_contains_lv'] (whether the full model contains part of the local
           variability module, bool)
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run, time)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     scen : str
         emulated scenario
 

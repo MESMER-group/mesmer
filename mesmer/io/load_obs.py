@@ -39,7 +39,7 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     var : dict
         variable anomaly dictionary with keys
 
-        - [obs](4d array (run, time, lat, lon) of variable whereby run=1 because only a
+        - [obs] (4d array (run, time, lat, lon) of variable whereby run=1 because only a
           single realization of real world)
     GVAR : dict
         area-weighted global mean variable anomaly dictionary with keys
@@ -89,25 +89,25 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
 
     Parameters
     ----------
-    prod str
+    prod : str
         product (e.g., 'best' or 'cw')
-    lon dict
+    lon : dict
         longitude dictionary with key
 
         - ['c'] (1d array with longitudes at center of grid cell)
-    lat dict
+    lat : dict
         latitude dictionary with key
 
         - ['c'] (1d array with latitudes at center of grid cell)
-    cfg module
+    cfg : module
         config file containing metadata
-    sel_ref str, optional
+    sel_ref : str, optional
         selected reference period, (e.g., 'native' (original one) or 'esm' (the one of
         the esm))
 
     Returns
     -------
-    var np.ndarray
+    var : np.ndarray
         3d array (time, lat, lon) of blended temperatures
     time np.ndarray
         1d array of years

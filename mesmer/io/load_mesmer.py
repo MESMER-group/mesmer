@@ -50,7 +50,7 @@ def load_mesmer_output(
     dict_out : dict
         loaded MESMER output dictionary
 
-        - [xx] depending on the loaded output
+        - [xx] (depending on the loaded output)
 
     Notes
     -----

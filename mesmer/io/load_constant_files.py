@@ -189,9 +189,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     L_start : int, optional
         smallest localisation radius which is tested
     L_end : int, optional
-        largest localisation radius which is tested (should not exceed 10000 by much
-        because eventually ValueError: the input matrix must be positive semidefinite in
-        train_lv())
+        largest localisation radius which is tested
     L_interval : int, optional
         spacing interval between tested localisation radii
 
@@ -205,7 +203,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     -----
     - If no complete number of L_intervals fits between L_start and L_end, L_intervals
       are repeated until the closest possible L value below L_end is reached.
-
+    - L_end should not exceed 10000 by much because eventually ValueError: the input matrix must be positive semidefinite in train_lv())
     """
 
     dir_aux = cfg.dir_aux

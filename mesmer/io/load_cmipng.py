@@ -62,7 +62,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     esm : str
         Earth System Model (e.g., 'CanESM2' or 'CanESM5')
     var : str
-        variable (tas, tos, etc)
+        variable (e.g., 'tas', 'tos')
     scenario : str
         scenario (e.g., 'rcp85' or 'ssp585')
     dir_cmipng : str

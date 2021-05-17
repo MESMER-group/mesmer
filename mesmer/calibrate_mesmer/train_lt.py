@@ -23,11 +23,11 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     preds : dict
         nested dictionary of predictors with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     targs : dict
         nested dictionary of targets with keys
 
-        - [targ][scen] with 3d arrays (run,time,gp)
+        - [targ][scen] (3d array (run,time,gp) of target for specific scenario)
     esm : str
         associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
     cfg : module

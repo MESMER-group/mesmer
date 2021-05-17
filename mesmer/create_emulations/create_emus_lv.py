@@ -25,9 +25,9 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
         - ['scenarios'] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
     preds_lv : dict
-        ested dictionary of predictors for local variability with keys
+        nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run, time)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
@@ -107,7 +107,7 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
 
 
 def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
-    r"""
+    """
     Create local variablity emulations with AR(1) process with spatially-correlated
     innovations.
 
@@ -116,7 +116,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     emus_lv : dict
         local variability emulations dictionary with keys
 
-        - [scen] (3d array (emu,time, gp) of local variability from previous submethods)
+        - [scen] (3d array (emu, time, gp) of local variability from previous submethods)
         - empty dict if no previous submethod
     params_lv : dict
         dictionary with the trained local variability parameters
@@ -131,7 +131,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run, time)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     cfg : module
         config file containing metadata
 
@@ -229,7 +229,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
 
     Returns
     -------

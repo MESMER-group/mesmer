@@ -20,7 +20,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     gv : dict
         Nested global mean variability dictionary with keys
 
-        - "scen" 2d array (run,time) of globally-averaged variability time series
+        - [scen] (2d array (run,time) of globally-averaged variability time series)
     targ : str
         target variable (e.g., 'tas')
     esm : str

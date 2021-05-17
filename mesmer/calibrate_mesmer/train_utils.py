@@ -20,7 +20,7 @@ def train_l_prepare_X_y_wgteq(preds, targs):
     targs : dict
         nested dictionary of targets with keys
 
-        - [targ][scen] with 3d arrays (run, time, gp)
+        - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
 
     Returns
     -------

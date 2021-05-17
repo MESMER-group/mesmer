@@ -1,5 +1,5 @@
 """
-functions to merge emulations of different MESMER modules.
+Functions to merge emulations of different MESMER modules.
 """
 
 
@@ -21,7 +21,7 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     emus_gv : dict
         global variability emulations dictionary with keys
 
-        - [scen] (2d array  (emus x time) of global variability emulation time series)
+        - [scen] (2d array  (emus, time) of global variability emulation time series)
     params_gt : dict
         dictionary containing the calibrated parameters for the global trend emulations,
         keys relevant here:
@@ -165,7 +165,7 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
     emus_l : dict
         local emulations dictionary with keys
 
-        - [scen][targ] (3d array  (emus x time x grid points) of local emulation time
+        - [scen][targ] (3d array  (emus, time, grid points) of local emulation time
           series)
 
     """

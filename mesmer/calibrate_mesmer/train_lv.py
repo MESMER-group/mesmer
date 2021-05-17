@@ -21,11 +21,11 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     preds : dict
         empty dictionary if none, else nested dictionary of predictors with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run,time)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     targs : dict
         nested dictionary of targets with keys
 
-        - [targ][scen] with 3d arrays (run,time,gp)
+        - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
     esm : str
         associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
     cfg : module
@@ -35,7 +35,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     aux : dict, optional
         provides auxiliary variables needed for lv method at hand
 
-        - [var] Xd arrays of auxiliary variable
+        - [var] (Xd arrays of auxiliary variable)
     params_lv : dict, optional
         pass the params_lv dict, if it already exists so that builds upon that one
 
@@ -53,7 +53,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
         - ['part_model_in_lt'] (states if part of the model is saved in params_lt, bool)
         - ['method_lt_each_gp_sep'] (states if local trends method is applied to each
           grid point separately, bool)
-        - [xx] additional params depend on employed lv method
+        - [xx] (additional params depend on employed lv method)
 
     Notes
     -----
@@ -169,7 +169,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
-        - ["phi_gc"] Xd arrays of auxiliary variable
+        - ['phi_gc'] (Xd arrays of auxiliary variable)
     cfg : module
         config file containing metadata
 
@@ -186,7 +186,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     - Assumptions:
         - do for each target variable independently.
         - the variability is Gaussian
-    - Todo:
+    - Potential TODO:
         - add possibility to account for cross-correlation between different variables
           (i.e., joint instead of independent emulation)
 
@@ -285,7 +285,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
-        - ["phi_gc"] dict with localisation radii as keys and each containing a 2d array
+        - ['phi_gc'] (dict with localisation radii as keys and each containing a 2d array)
           (gp, gp) of of Gaspari-Cohn correlation matrix
     cfg : module
         config file containing metadata

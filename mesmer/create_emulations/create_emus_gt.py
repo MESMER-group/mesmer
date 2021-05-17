@@ -30,7 +30,7 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     preds_gt : dict
         nested dictionary of predictors for global trend with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/ (run, time)
+        - [pred][scen]  (1d/2d arrays (time)/(run,time) of predictor for specific scenario)
     cfg : module
         config file containing metadata
     concat_h_f : bool, optional

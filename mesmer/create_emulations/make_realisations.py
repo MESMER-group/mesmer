@@ -25,7 +25,7 @@ def make_realisations(
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
-        - [pred][scen] with 1d/2d arrays (time)/(run, time)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
     params_lt : dict
         dictionary with the trained local trend parameters
 
@@ -37,7 +37,7 @@ def make_realisations(
           separately, bool)
         - ['preds'] (predictors, list of strs)
         - ['scenarios'] (emission scenarios used for training, list of strs)
-        - [xx] additional params depending on method employed
+        - [xx] (additional params depending on method employed)
         - ['full_model_contains_lv'] (whether the full model contains part of the local
           variability module, bool)
     params_lv : dict

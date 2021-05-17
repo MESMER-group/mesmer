@@ -131,7 +131,11 @@ def extract_time_period(var, time, start, end):
     Returns
     -------
     var_tp : np.ndarray
-        variable 1-3d array (time); (time, gp_l); (time, lat, lon)
+        variable 1-3d array
+        
+        - (time);
+        - (time, gp_l);
+        - (time, lat, lon);
     time_tp : np.ndarray
         1d array of years of extracted time period
 

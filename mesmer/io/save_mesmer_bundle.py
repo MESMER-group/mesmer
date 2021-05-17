@@ -39,7 +39,7 @@ def save_mesmer_bundle(
         - ['method'] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_gv : dict
-        Parameters dictionary.
+        dictionary containing the calibrated parameters for the global variability emulations, keys relevant here
 
         - ['targ'] (variable which is emulated, str)
         - ['esm'] (Earth System Model, str)
@@ -65,9 +65,10 @@ def save_mesmer_bundle(
     time : dict
         Time dictionary
 
-        - ['scenario'] timepoints (1D np.ndarray) used for training of the scenario
-          (note that hist and scenario e.g., ssp126 are kept separate)
-
+        - [scen] (timepoints (1D np.ndarray) used for training of the scenario)
+    Notes
+    -----
+    - In time dictionary, historical (hist) and scenario (e.g., ssp126) are kept as separate keys
     """
     assert land_fractions.shape[0] == lat.shape[0]
     assert land_fractions.shape[1] == lon.shape[0]
