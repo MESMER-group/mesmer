@@ -24,7 +24,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         nested global mean variable dictionary with keys for each scenario employed for
         training
 
-        - [scen] (2d array (run,time) of globally-averaged variable time series)
+        - [scen] (2d array (run, time) of globally-averaged variable time series)
     targ : str
         target variable (e.g., "tas")
     esm : str

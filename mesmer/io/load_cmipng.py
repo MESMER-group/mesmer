@@ -258,7 +258,7 @@ def load_cmipng(targ, esm, scen, cfg):
     targ : dict
         target variable anomaly dictionary with keys
 
-        - [run] (3d array (time,lat,lon) of variable)
+        - [run] (3d array (time, lat, lon) of variable)
     GTARG : dict
         area-weighted global mean target variable anomaly dictionary with keys
 
@@ -494,7 +494,7 @@ def load_cmipng_tas(esm, scen, cfg):
     tas : dict
         2-m air temperature anomaly dictionary with keys
 
-        - [run] (3d array (time,lat,lon) of variable)
+        - [run] (3d array (time, lat, lon) of variable)
     GSAT : dict
         area-weighted global mean 2-m air temperature anomaly dictionary with keys
 

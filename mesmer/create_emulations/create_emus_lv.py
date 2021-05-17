@@ -41,7 +41,7 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     emus_lv : dict
         local variability emulations dictionary with keys
 
-        - [scen] (3d array  (emu,time, gp) of local variability emulation time series)
+        - [scen] (3d array  (emu, time, gp) of local variability emulation time series)
 
     Notes
     -----

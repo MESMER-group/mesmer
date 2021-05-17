@@ -279,7 +279,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     Parameters
     ----------
     y : np.ndarray
-        2d array (sample,gp) of specific target
+        2d array (sample, gp) of specific target
     wgt_scen_eq : np.ndarray
         1d array (sample) of sample weights
     aux : dict
@@ -302,8 +302,8 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     Notes
     -----
     - Function could also handle determining ecov of several variables but would all
-      have to be passed in same 2d y array (with corresponding wgt_scen_eq,aux["phi_gc"]
-      shapes)
+      have to be passed in same 2d y array (with corresponding wgt_scen_eq,
+      aux["phi_gc"] shapes)
 
     """
 

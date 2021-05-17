@@ -30,7 +30,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
           to a single region ("binary" grid))
         - ["full"] (full Region object (for plotting region outlines))
     wgt : np.ndarray
-        2d array (lat,lon) of weights to be used for area weighted means
+        2d array (lat, lon) of weights to be used for area weighted means
     ls : dict
         land sea dictionary with keys
 
@@ -45,7 +45,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     var_l : dict
         nested variable at land grid points dictionary with keys
 
-        - [esm] (3d array (run,time,gp_l) of variable at land grid points)
+        - [esm] (3d array (run, time, gp_l) of variable at land grid points)
     reg_dict : dict
         region dictionary with added keys
 
@@ -57,7 +57,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
         land sea dictionary with added keys
 
         - ["gp_l"] (1d array of fraction of land at land grid points)
-        - ["grid_l"] (2d array (lat,lon) of fraction of land at land grid points)
+        - ["grid_l"] (2d array (lat, lon) of fraction of land at land grid points)
         - ["idx_grid_l"] (2d boolean array (lat, lon) with land grid points = True for
           plotting on map)
         - ["grid_l_m"] (2d masked array (lat, lon) with ocean masked out for plotting on
