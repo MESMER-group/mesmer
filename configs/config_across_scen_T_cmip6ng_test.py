@@ -21,29 +21,20 @@ TEST_DATA_ROOT = os.path.join(
 
 # cmip-ng
 gen = 6  # generation
-dir_cmipng = (
-    "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/cmip" + str(gen) + "-ng/"
-)
 dir_cmipng = os.path.join(
     TEST_DATA_ROOT, "cmip{}-ng/".format(gen)
 )  # TODO: remove need for trailing "/" here
 
 # observations
-dir_obs = "/net/cfc/landclim1/beuschl/across_scen_T/data/test_data/observations/"
 dir_obs = os.path.join(
     TEST_DATA_ROOT, "observations/"
 )  # TODO: remove need for trailing "/" here
 
 # auxiliary data
-dir_aux = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/auxiliary/"
 dir_aux = "auxillary/"
 
 # mesmer
-dir_mesmer_params = (
-    "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/mesmer/calibrated_parameters/"
-)
 dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters/")
-dir_mesmer_emus = "/net/cfc/landclim1/beuschl/across_scen_T/data/tmp/mesmer/emulations/"
 dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations/")
 
 
@@ -140,7 +131,16 @@ all_esms = [
 ]
 
 # full list of scenarios that could be considered
-scenarios = ["h-ssp126"]
+scenarios = [
+    "h-ssp585",
+    "h-ssp370",
+    "h-ssp460",
+    "h-ssp245",
+    "h-ssp534-over",
+    "h-ssp434",
+    "h-ssp126",
+    "h-ssp119",
+]
 
 if scen_seed_offset_v == 0:
     scenarios_emus_v = ["all"]
