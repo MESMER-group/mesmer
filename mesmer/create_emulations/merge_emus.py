@@ -48,7 +48,7 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     emus_g : dict
         global emulations dictionary with keys
 
-        - [scen] (2d array  (emus x time) of global emulation time series)
+        - [scen] (2d array (emus, time) of global emulation time series)
     """
 
     # specify necessary variables from config file

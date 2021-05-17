@@ -39,7 +39,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     emus_gv : dict
         global variability emulations dictionary with keys
 
-        - [scen] (2d array  (emus x time) of global trend emulation time series)
+        - [scen] (2d array  (emus, time) of global trend emulation time series)
 
     Notes
     -----
