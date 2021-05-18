@@ -7,12 +7,12 @@ Required dependencies
 - Python (3.6 or later)
 - `dask <https://dask.org/>`__
 - `geopy <https://geopy.readthedocs.io/en/stable/>`__
-- `numpy <http://www.numpy.org/>`__ (1.17 or later)
+- `numpy <http://www.numpy.org/>`__
 - `pandas <https://pandas.pydata.org/>`__
 - `scikit-learn <https://scikit-learn.org/stable/>`__
 - `statsmodels <https://www.statsmodels.org/stable/index.html>`__
 - `regionmask <https://regionmask.readthedocs.io/en/stable/>`__
-- `xarray <http://xarray.pydata.org/>`__ (0.15 or later)
+- `xarray <http://xarray.pydata.org/>`__
 
 Instructions
 ------------
