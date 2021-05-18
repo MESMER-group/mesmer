@@ -4,7 +4,7 @@ Installation
 Required dependencies
 ---------------------
 
-- Python (3.6 or later)
+- Python (3.7 or later)
 - `dask <https://dask.org/>`__
 - `geopy <https://geopy.readthedocs.io/en/stable/>`__
 - `numpy <http://www.numpy.org/>`__
