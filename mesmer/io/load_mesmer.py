@@ -1,12 +1,5 @@
 """
-mesmer.io.load_mesmer
-===================
 Functions to load in mesmer output.
-
-
-Functions:
-    load_mesmer_output()
-
 """
 
 
@@ -30,29 +23,48 @@ def load_mesmer_output(
 ):
     """Load saved MESMER output (parameters or emulations).
 
-    Args:
-    - name (str): saved MESMER output to load (e.g., 'params_lt', 'emus_lv', 'emus_g')
-    - cfg (module): config file containnig metadata
-    - ens_type_str (str, optional): ensemble type (e.g., 'msic')
-    - method_str (str, optional): method (e.g., 'OLS')
-    - preds_str (st, optional): predictos (e.g., 'gttas', 'gttas_gttas2')
-    - targs_str (str, optional): target variables (e.g., 'tas')
-    - esm_str (str, optional): Earth System Model (e.g., 'CanESM2', 'CanESM5')
-    - scen_str (str, otional): scenario (e.g., 'rcp85', 'ssp585', 'h-ssp585')
-    - mid_path (str, optional): middle part of pathway depending on what exactly want to load (e.g., 'local/local_trends')
+    Parameters
+    ----------
+    name : str
+        saved MESMER output to load (e.g., "params_lt", "emus_lv", "emus_g")
+    cfg : module
+        config file containing metadata
+    ens_type_str : str, optional
+        ensemble type (e.g., "msic")
+    method_str : str, optional
+        method (e.g., "OLS")
+    preds_str : st, optional
+        predictos (e.g., "gttas", "gttas_gttas2")
+    targs_str : str, optional
+        target variables (e.g., "tas")
+    esm_str : str, optional
+        Earth System Model (e.g., "CanESM2", "CanESM5")
+    scen_str : str, otional
+        scenario (e.g., "rcp85", "ssp585", "h-ssp585")
+    mid_path : str, optional
+        middle part of pathway depending on what exactly want to load (e.g.,
+        "local/local_trends")
 
-    Returns:
-    - dict_out (dict): loaded MESMER output dictionary
-        [xx] depending on the loaded output
+    Returns
+    -------
+    dict_out : dict
+        loaded MESMER output dictionary
 
-    General remarks:
+        - [xx] (depending on the loaded output)
+
+    Notes
+    -----
     - This function can only load a single .pkl file at every call
-    - If multiple files exist for the given input strings, an empty dictionary is returned
+    - If multiple files exist for the given input strings, an empty dictionary is
+      returned
     - If no file exists for the given input strings, an empty dictionary is returned
-    - Also partial strings are accepted (with the exception of esm_str, where the full ESM name is needed): e.g.,
-            scen_str='h-' for joint historical + ssp scenarios
-            scen_str='hist' for separated historical + ssp scenarios
-    - If no mid_path is provided the default MESMER structure for saved params and emus is assumed
+    - Also partial strings are accepted (with the exception of esm_str, where the full
+      ESM name is needed): e.g.:
+
+        - scen_str="h-" for joint historical + ssp scenarios
+        - scen_str="hist" for separated historical + ssp scenarios
+    - If no mid_path is provided the default MESMER structure for saved params and emus
+      is assumed
 
     """
 

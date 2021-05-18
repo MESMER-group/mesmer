@@ -1,13 +1,5 @@
 """
-mesmer.create_emulations.create_emus_gv
-===================
 Functions to create global variability emulations with MESMER.
-
-
-Functions:
-    create_emus_gv()
-    create_emus_gv_AR()
-
 """
 
 
@@ -20,26 +12,40 @@ import numpy as np
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     """Create global variablity emulations for specified ensemble type and method.
 
-    Args:
-    - params_gv (dict):
-        ['targ'] (variable which is emulated, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (scenarios which are used for training, list of strs)
-        [xx] (additional keys depend on employed method and are listed in train_gv_T_ens_type_method() function)
-    - preds_lv (dict):nested dictionary of predictors for global variability with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - cfg (module): config file containnig metadata
-    - save_emus (bool,optional): determines if emulation is saved or not, default = True
+    Parameters
+    ----------
+    params_gv : dict
+        Parameters dictionary.
 
-    Returns:
-    - emus_gv (dict): global variability emulations dictionary with keys
-        [scen] (2d array  (emus x time) of global trend emulation time series)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
+        - [xx] (additional keys depend on employed method and are listed in
+          train_gv_T_ens_type_method() function)
+    preds_gv : dict
+        nested dictionary of predictors for global variability with keys
 
-    General remarks:
-    - Assumption: - if no preds_gv needed, pass time as predictor instead such that can get info about how many scenarios / ts per scenario should be drawn for stochastic part
+        - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific scenario)
+    cfg : module
+        config file containing metadata
+    save_emus : bool, optional
+        determines if emulation is saved or not, default = True
+
+    Returns
+    -------
+    emus_gv : dict
+        global variability emulations dictionary with keys
+
+        - [scen] (2d array  (emus, time) of global trend emulation time series)
+
+    Notes
+    -----
+    - Assumptions:
+        - if no preds_gv needed, pass time as predictor instead such that can get info
+          about how many scenarios / ts per scenario should be drawn for stochastic part
 
     """
 
@@ -104,28 +110,40 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
 def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     """Draw global variablity emulations from an AR process.
 
-    Args:
-    - params_gv (dict):
-        ['targ'] (variable which is emulated, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (scenarios which are used for training, list of strs)
-        ['max_lag'] (maximum lag considered when finding suitable AR model, int)
-        ['sel_crit'] (selection criterion applied to find suitable AR model, str)
-        ['AR_int'] (intercept of the AR model, float)
-        ['AR_coefs'] (coefficients of the AR model for the lags which are contained in the selected AR model, list of floats)
-        ['AR_lags'] (AR lags which are contained in the selected AR model, list of ints)
-        ['AR_std_innovs'] (standard deviation of the innovations of the selected AR model, float)
-    - nr_emus_v (int): number of global variability emulations
-    - nr_ts_emus_v (int): number of time steps in each global variability emulation
-    - seed (int): esm and scenario specific seed for gv module to ensure reproducability of results
+    Parameters
+    ----------
+    params_gv : dict
+        Parameters dictionary.
 
-    Returns:
-    - emus_gv (dict): global variability emulations dictionary with keys
-        [scen] (2d array  (emus x time) of global trend emulation time series)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
+        - ["max_lag"] (maximum lag considered when finding suitable AR model, int)
+        - ["sel_crit"] (selection criterion applied to find suitable AR model, str)
+        - ["AR_int"] (intercept of the AR model, float)
+        - ["AR_coefs"] (coefficients of the AR model for the lags which are contained in
+          the selected AR model, list of floats)
+        - ["AR_lags"] (AR lags which are contained in the selected AR model, list of
+          ints)
+        - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
+          model, float)
+    nr_emus_v : int
+        number of global variability emulations
+    nr_ts_emus_v : int
+        number of time steps in each global variability emulation
+    seed : int
+        esm and scenario specific seed for gv module to ensure reproducability of
+        results
 
+    Returns
+    -------
+    emus_gv : dict
+        global variability emulations dictionary with keys
+
+        - [scen] (2d array  (emus, time) of global variability emulation time series)
     """
 
     # ensure reproducibility

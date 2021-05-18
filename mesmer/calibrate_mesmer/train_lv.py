@@ -1,14 +1,5 @@
 """
-mesmer.calibrate_mesmer.train_lv
-===================
 Functions to train local variability module of MESMER.
-
-
-Functions:
-    train_lv()
-    train_lv_AR1_sci()
-    train_lv_find_localized_ecov()
-
 """
 
 
@@ -25,38 +16,58 @@ from mesmer.calibrate_mesmer import train_l_prepare_X_y_wgteq
 def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     """Derive local variability (i.e., natural variabiliy) parameters.
 
-    Args:
-    - preds (dict): empty dictionary if none, else nested dictionary of predictors with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - targs (dict): nested dictionary of targets with keys
-        [targ][scen] with 3d arrays (run,time,gp)
-    - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - cfg (module): config file containnig metadata
-    - save_params (bool, optional): determines if parameters are saved or not, default = True
-    - aux (dict, optional): provides auxiliary variables needed for lv method at hand
-        [var] Xd arrays of auxiliary variable
-    - params_lv (dict, optional): pass the params_lv dict, if it already exists so that builds upon that one
+    Parameters
+    ----------
+    preds : dict
+        empty dictionary if none, else nested dictionary of predictors with keys
 
-    Returns:
-    - params_lv (dict): dictionary of local variability paramters
-        ['targs'] (emulated variables, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        ['part_model_in_lt'] (states if part of the model is saved in params_lt, bool)
-        ['method_lt_each_gp_sep'] (states if local trends method is applied to each grid point separately, bool)
-        [xx] additional params depend on employed lv method
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+    targs : dict
+        nested dictionary of targets with keys
 
-    General remarks:
-    - Assumptions:  - all targets use same approach and same predictors
-                    - each predictor and each target has the same scenarios as keys
-                    - all available scenarios are used for training
-                    - identified parameters are valid for all training scenarios
-                    - if historical data is used for training, it has its own scenario
-                    - need to pass the params_lv dict if it already exists so that can continue to build on it
-    - Disclaimer:   - currently no method with preds implemented; but already have in there for consistency
+        - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
+    esm : str
+        associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+    cfg : module
+        config file containing metadata
+    save_params : bool, optional
+        determines if parameters are saved or not, default = True
+    aux : dict, optional
+        provides auxiliary variables needed for lv method at hand
+
+        - [var] (Xd arrays of auxiliary variable)
+    params_lv : dict, optional
+        pass the params_lv dict, if it already exists so that builds upon that one
+
+    Returns
+    -------
+    params_lv : dict
+        dictionary of local variability paramters
+
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - ["part_model_in_lt"] (states if part of the model is saved in params_lt, bool)
+        - ["method_lt_each_gp_sep"] (states if local trends method is applied to each
+          grid point separately, bool)
+        - [xx] (additional params depend on employed lv method)
+
+    Notes
+    -----
+    - Assumptions:
+        - all targets use same approach and same predictors
+        - each predictor and each target has the same scenarios as keys
+        - all available scenarios are used for training
+        - identified parameters are valid for all training scenarios
+        - if historical data is used for training, it has its own scenario
+        - need to pass the params_lv dict if it already exists so that can continue to
+          build on it
+    - Disclaimer:
+        - currently no method with preds implemented; but already have in there for
+          consistency
 
     """
 
@@ -135,32 +146,49 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     """Derive parameters for AR(1) process with spatially-correlated innovations.
 
-    Args:
-    - params_lv (dict): dictionary with the trained local variability parameters
-        ['targ'] (variable which is emulated, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (scenarios which are used for training, list of strs)
-        [xx] (additional keys depend on employed method)
-    - targs (dict): nested dictionary of targets with keys
-        [targ][scen] with 3d arrays (run,time,gp)
-    - y (np.ndarray): 3d array (sample,gp,targ) of targets
-    - wgt_scen_eq (np.ndarray): 1d array (sample) of sample weights
-    - aux (dict): provides auxiliary variables needed for lv method at hand
-        ["phi_gc"] Xd arrays of auxiliary variable
-    - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    params_lv : dict
+        dictionary with the trained local variability parameters
 
-    Returns:
-    - emus_lv (dict): local variability emulations dictionary with keys
-        [scen] (2d array  (emu,time, gp) of local variability in response to global variability emulation time series)
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (scenarios which are used for training, list of strs)
+        - [xx] (additional keys depend on employed method)
+    targs : dict
+        nested dictionary of targets with keys
 
-    General remarks:
-    - Assumptions:  - do for each target variable independently.
-                    - the variability is Gaussian
-    - Long-term TODO: - add possibility to account for cross-correlation between different variables
-                        (i.e., joint instead of independent emulation)
+        - [targ][scen] with 3d arrays (run, time, gp)
+    y : np.ndarray
+        3d array (sample, gp, targ) of targets
+    wgt_scen_eq : np.ndarray
+        1d array (sample) of sample weights
+    aux : dict
+        provides auxiliary variables needed for lv method at hand
+
+        - ["phi_gc"] (Xd arrays of auxiliary variable)
+    cfg : module
+        config file containing metadata
+
+    Returns
+    -------
+    emus_lv : dict
+        local variability emulations dictionary with keys
+
+        - [scen] (2d array  (emu, time, gp) of local variability in response to global
+          variability emulation time series)
+
+    Notes
+    -----
+    - Assumptions:
+        - do for each target variable independently.
+        - the variability is Gaussian
+    - Potential TODO:
+        - add possibility to account for cross-correlation between different variables
+          (i.e., joint instead of independent emulation)
 
     """
 
@@ -244,24 +272,38 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
 
 def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
-    """Find suitable localization radius for empirical covariance matrix and derive localized empirical cov matrix.
+    """
+    Find suitable localization radius for empirical covariance matrix and derive
+    localized empirical cov matrix.
 
-    Args:
-    - y (np.ndarray): 2d array (sample,gp) of specific target
-    - wgt_scen_eq (np.ndarray): 1d array (sample) of sample weights
-    - aux (dict): provides auxiliary variables needed for lv method at hand
-        ["phi_gc"] dict with localisation radii as keys and each containing
-                    a 2d array (gp,gp) of of Gaspari-Cohn correlation matrix
-    - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    y : np.ndarray
+        2d array (sample, gp) of specific target
+    wgt_scen_eq : np.ndarray
+        1d array (sample) of sample weights
+    aux : dict
+        provides auxiliary variables needed for lv method at hand
 
-    Returns:
-    - L_sel (numpy.int64): selected localization radius
-    - ecov (np.ndarray): 2d empirical covariance matrix array (gp,gp)
-    - loc_ecov (np.ndarray): 2d localized empirical covariance matrix array (gp,gp)
+        - ["phi_gc"] (dict with localisation radii as keys and each containing a 2d array)
+          (gp, gp) of of Gaspari-Cohn correlation matrix
+    cfg : module
+        config file containing metadata
 
-    General remarks:
-    - Function could also handle determining ecov of several variables
-        but would all have to be passed in same 2d y array (with corresponding wgt_scen_eq,aux['phi_gc'] shapes)
+    Returns
+    -------
+    L_sel : numpy.int64
+        selected localization radius
+    ecov : np.ndarray
+        2d empirical covariance matrix array (gp, gp)
+    loc_ecov : np.ndarray
+        2d localized empirical covariance matrix array (gp, gp)
+
+    Notes
+    -----
+    - Function could also handle determining ecov of several variables but would all
+      have to be passed in same 2d y array (with corresponding wgt_scen_eq,
+      aux["phi_gc"] shapes)
 
     """
 

@@ -1,13 +1,5 @@
 """
-mesmer.utils.convert
-===================
 Functions to process data.
-
-
-Functions:
-    convert_dict_to_arr()
-    separate_hist_future()
-
 """
 
 
@@ -17,13 +9,19 @@ import numpy as np
 def convert_dict_to_arr(var_dict):
     """Convert dictionary to array.
 
-    Args:
-    - var_dict (dict): nested variable (e.g., tas) dictionary with keys
-        [scen][run] (xd array (time,x) of variable)
+    Parameters
+    ----------
+    var_dict : dict
+        nested variable (e.g., tas) dictionary with keys
 
-    Returns:
-    - var_arr (dict): variable dictionary with keys
-        [scen] (xd array (run,time,x) of variable)
+        - [scen][run] (xd array (time, x) of variable)
+
+    Returns
+    -------
+    var_arr : dict
+        variable dictionary with keys
+
+        - [scen] (xd array (run, time, x) of variable)
 
     """
 
@@ -45,22 +43,35 @@ def convert_dict_to_arr(var_dict):
 def separate_hist_future(var_c, time_c, cfg):
     """Separate historical and future time periods into separate keys in dictionary.
 
-    Args:
-    - var_c (dict): variable dictionary with concatenated historical and future scenarios as keys
-        ['h-scen_f'] (xd array of variable (run,time,x), np.ndarray)
-    - time_c (dict): time dictionary with concatenated historical and future scenarios as keys
-        ['h-scen_f'] (1d array of years, np.ndarray)
-    - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    var_c : dict
+        variable dictionary with concatenated historical and future scenarios as keys
+
+        - ["h-scen_f"] (xd array of variable (run, time, x), np.ndarray)
+    time_c : dict
+        time dictionary with concatenated historical and future scenarios as keys
+
+        - ["h-scen_f"] (1d array of years, np.ndarray)
+    cfg : module
+        config file containing metadata
 
     Returns
-    - var_s (dict): variable dictionary with separated historical and future scenarios as keys
-        [hist] / [scen_f] (xd array of variable (run,time,x), np.ndarray)
-    - time_s (dict): time dictionary with separated historical and future scenarios as keys
-        ['hist] / [scen_f] (1d array of years, np.ndarray)
+    -------
+    var_s : dict
+        variable dictionary with separated historical and future scenarios as keys
 
-    General remarks:
-    - Assumption:   - each scenario starts in the same year
-                    - at least 2-dim variable array is passed with 1st dim nr runs, 2nd dim nr ts
+        - [hist] / [scen_f] (xd array of variable (run, time, x), np.ndarray)
+    time_s : dict
+        time dictionary with separated historical and future scenarios as keys
+
+        - ["hist] / [scen_f] (1d array of years, np.ndarray)
+
+    Notes
+    -----
+    - Assumption
+        - each scenario starts in the same year
+        - at least 2-dim variable array is passed with 1st dim nr runs, 2nd dim nr ts
 
     """
 

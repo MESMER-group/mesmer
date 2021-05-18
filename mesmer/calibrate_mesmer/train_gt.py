@@ -1,14 +1,5 @@
 """
-mesmer.calibrate_mesmer.train_gt
-===================
 Functions to train global trend module of MESMER.
-
-
-Functions:
-    train_gt()
-    train_gt_ic_LOWESS()
-    train_gt_ic_OLSVOLC()
-
 """
 
 
@@ -23,33 +14,51 @@ from mesmer.io import load_strat_aod
 
 
 def train_gt(var, targ, esm, time, cfg, save_params=True):
-    """Derive global trend (emissions + volcanoes) parameters from specified ensemble type with specified method.
+    """
+    Derive global trend (emissions + volcanoes) parameters from specified ensemble type
+    with specified method.
 
-    Args:
-    - var (dict): nested global mean variable dictionary with keys for each scenario employed for training
-        [scen] (2d array (run,time) of globally-averaged variable time series)
-    - targ (str): target variable (e.g., 'tas')
-    - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - time (np.ndarray):
+    Parameters
+    ----------
+    var : dict
+        nested global mean variable dictionary with keys for each scenario employed for
+        training
+
+        - [scen] (2d array (run, time) of globally-averaged variable time series)
+    targ : str
+        target variable (e.g., "tas")
+    esm : str
+        associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+    time : np.ndarray
         [scen] (1d array of years)
-    - cfg (module): config file containnig metadata
-    - save_params (bool, optional): determines if parameters are saved or not, default = True
+    cfg : module
+        config file containing metadata
+    save_params : bool, default True
+        determines if parameters are saved or not, default = True
 
-    Returns:
-    - params_gt (dict): dictionary containing the trained parameters for the chosen method / ensemble type
-        ['targ'] (emulated variable, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        [xx] (additional params depend on method employed)
+    Returns
+    -------
+    params_gt : dict
+        dictionary containing the trained parameters for the chosen method / ensemble
+        type
 
-    General remarks:
-    - Assumptions:  - All scens start at the same point in time
-                    - If historical data is present, historical data and future scenarios are transmitted as single time series
+        - ["targ"] (emulated variable, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - [xx] (additional params depend on method employed)
+
+    Notes
+    -----
+    - Assumptions:
+        - All scens start at the same point in time
+        - If historical data is present, historical data and future scenarios are
+          transmitted as single time series
     - No perfect smoothness enforced at transition from historical to future scenario
-    - No perfect overlap between future scenarios which share the same forcing in the beginning is enforced
+    - No perfect overlap between future scenarios which share the same forcing in the
+      beginning is enforced
 
     """
 
@@ -150,15 +159,21 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
 
 def train_gt_ic_LOWESS(var):
-    """Derive smooth global trend of variable from single ESM ic ensemble with LOWESS smoother.
+    """
+    Derive smooth global trend of variable from single ESM ic ensemble with LOWESS
+    smoother.
 
-    Args:
-    - var (np.ndarray): 2d array (run, time) of globally-averaged time series
+    Parameters
+    ----------
+    var : np.ndarray
+        2d array (run, time) of globally-averaged time series
 
-    Returns:
-    - gt_lowess (np.ndarray): 1d array of smooth global trend of variable
-    - frac_lowess (float): fraction of the data used when estimating each y-value
-
+    Returns
+    -------
+    gt_lowess : np.ndarray
+        1d array of smooth global trend of variable
+    frac_lowess : float
+        fraction of the data used when estimating each y-value
     """
 
     # number time steps
@@ -182,20 +197,32 @@ def train_gt_ic_LOWESS(var):
 
 
 def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
-    """Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble by adding volcanic spikes to LOWESS trend.
+    """
+    Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble
+    by adding volcanic spikes to LOWESS trend.
 
-    Args:
-    - var (np.ndarray): 2d array (run, time) of globally-averaged time series
-    - gt_lowess (np.ndarray): 1d array of smooth global trend of variable
-    - time (np.ndarray): 1d array of years
-    - cfg (module): config file containnig metadata needed to load in stratospheric AOD time series
+    Parameters
+    ----------
+    var : np.ndarray
+        2d array (run, time) of globally-averaged time series
+    gt_lowess : np.ndarray
+        1d array of smooth global trend of variable
+    time : np.ndarray
+        1d array of years
+    cfg : module
+        config file containing metadata needed to load in stratospheric AOD time series
 
-    Returns:
-    - coef_saod (float): stratospheric AOD OLS coefficient for variable variability
-    - gt (np.ndarray): 1d array of global temperature trend with volcanic spikes
+    Returns
+    -------
+    coef_saod : float
+        stratospheric AOD OLS coefficient for variable variability
+    gt : np.ndarray
+        1d array of global temperature trend with volcanic spikes
 
-    General remarks:
-    - Assumption: - only historical time period data is passed
+    Notes
+    -----
+    - Assumptions:
+        - only historical time period data is passed
 
     """
 

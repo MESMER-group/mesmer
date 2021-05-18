@@ -1,13 +1,5 @@
 """
-mesmer.create_emulations.create_emus_lt
-===================
 Functions to create local trends emulations with MESMER.
-
-
-Functions:
-    create_emus_lt()
-    create_emus_OLS_each_gp_sep()
-
 """
 
 
@@ -18,36 +10,57 @@ import numpy as np
 
 
 def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
-    """Create local trends (i.e., forced response) emulations for given parameter set and predictors.
+    """
+    Create local trends (i.e., forced response) emulations for given parameter set and
+    predictors.
 
-    Args:
-    - params_lt (dict): dictionary with the trained local trend parameters
-        ['targs'] (emulated variables, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-        ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        [xx] additional params depend on method employed, specified in train_gt_T_enstype_method() function
-        ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
-    - preds_lt (dict): nested dictionary of predictors for local trends with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - cfg (module): config file containnig metadata
-    - concat_h_f (bool,optional): determines if historical and future time period is concatenated into a single
-                                emulation or not, default = False (must be set to False if no historical data provided)
-    - save_emus (bool, optional): determines if parameters are saved or not, default = True
+    Parameters
+    ----------
+    params_lt : dict
+        dictionary with the trained local trend parameters
 
-    Returns:
-    - emus_lt (dict): local trend emulations nested dictionary with keys
-        [scen]['targ'] (2d array (time,gp) of local trend emulations)
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["method_each_gp_sep"] (states if method is applied to each grid point
+          separately, bool)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - [xx] (additional params depend on method employed)
+        - ["full_model_contains_lv"] (whether the full model contains part of the local
+          variability module, bool)
+    preds_lt : dict
+        nested dictionary of predictors for local trends with keys
 
-    General remarks:
-    - Assumptions:  - same predictors for each target
-                    - if historical time period is included in predictors, it has its own dictionary key
-                    - if historical time period was included in training, it has its own scenario
-                    - either historical period is included for every scenario or for no scenario
-    - Potential TODO: - evaluate if really need / want concat_h_f or if I want output to be determined by shape predictors
+        - [pred][scen] (1d/2d arrays (time)/(run, time) of predictor for specific scenario)
+    cfg : module
+        config file containing metadata
+    concat_h_f : bool, optional
+        determines if historical and future time period is concatenated into a single
+        emulation or not, default = False (must be set to False if no historical data
+        provided)
+    save_emus : bool, optional
+        determines if parameters are saved or not, default = True
+
+    Returns
+    -------
+    emus_lt : dict
+        local trend emulations nested dictionary with keys
+
+        - [scen]["targ"] (2d array (time, gp) of local trend emulations)
+
+    Notes
+    -----
+    - Assumptions:
+        - same predictors for each target
+        - if historical time period is included in predictors, it has its own dictionary
+          key
+        - if historical time period was included in training, it has its own scenario
+        - either historical period is included for every scenario or for no scenario
+    - Potential TODO:
+        - evaluate if really need / want concat_h_f or if I want output to be determined
+          by shape predictors
 
     """
     # specify necessary variables from config file
@@ -132,27 +145,40 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     """Create local trends with OLS with grid-point-specific predictors
 
-    Args:
-    - params_lt (dict): dictionary with the trained local trend parameters
-        ['targs'] (emulated variables, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-        ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        [xx] additional params depend on method employed, specified in train_gt_T_enstype_method() function
-        ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
-    - preds_lt (dict): nested dictionary of predictors for local trends with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - scen (str): emulated scenario
+    Parameters
+    ----------
+    params_lt : dict
+        dictionary with the trained local trend parameters
 
-    Returns:
-    - emus_lt (dict): local trend emulations dictionary with keys
-        ['targ'] (2d array (time,gp) of local trend emulations)
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["method_each_gp_sep"] (states if method is applied to each grid point
+          separately, bool)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - [xx] (additional params depend on method employed)
+        - ["full_model_contains_lv"] (whether the full model contains part of the local
+          variability module, bool)
+    preds_lt : dict
+        nested dictionary of predictors for local trends with keys
 
-    General remarks
-    - Assumption: - Coefficients are the same for every scenario
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+    scen : str
+        emulated scenario
+
+    Returns
+    -------
+    emus_lt : dict
+        local trend emulations dictionary with keys
+
+        - ["targ"] (2d array (time, gp) of local trend emulations)
+
+    Notes
+    -----
+    - Assumptions:
+        - Coefficients are the same for every scenario
 
     """
 

@@ -1,13 +1,5 @@
 """
-mesmer.create_emulations.merge_emus
-===================
 Functions to merge emulations of different MESMER modules.
-
-
-Functions:
-    create_emus_g()
-    create_emus_l()
-
 """
 
 
@@ -20,28 +12,43 @@ import joblib
 def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     """Merge global trend and global variability emulations of the same scenarios.
 
-    Args:
-    - emus_gt (dict): global trend emulations dictionary with keys
-        [scen] (1d array of global trend emulation time series)
-    - emus_gv (dict): global variability emulations dictionary with keys
-        [scen] (2d array  (emus x time) of global variability emulation time series)
-    - params_gt (dict): dictionary containing the calibrated parameters for the global trend emulations, keys relevant here
-        ['targ'] (emulated variable, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-    - params_gv (dict): dictionary containing the calibrated parameters for the global variability emulations, keys relevant here
-        ['targ'] (variable which is emulated, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-    - cfg (module): config file containnig metadata
-    - save_emus (bool,optional): determines if emulation is saved or not, default = True
+    Parameters
+    ----------
+    emus_gt : dict
+        global trend emulations dictionary with keys
 
-    Returns:
-    - emus_g (dict): global emulations dictionary with keys
-        [scen] (2d array  (emus x time) of global emulation time series)
+        - [scen] (1d array of global trend emulation time series)
+    emus_gv : dict
+        global variability emulations dictionary with keys
 
+        - [scen] (2d array  (emus, time) of global variability emulation time series)
+    params_gt : dict
+        dictionary containing the calibrated parameters for the global trend emulations,
+        keys relevant here:
+
+        - ["targ"] (emulated variable, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+    params_gv : dict
+        dictionary containing the calibrated parameters for the global variability
+        emulations, keys relevant here:
+
+        - ["targ"] (variable which is emulated, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+    cfg : module
+        config file containing metadata
+    save_emus : bool, optional
+        determines if emulation is saved or not, default = True
+
+    Returns
+    -------
+    emus_g : dict
+        global emulations dictionary with keys
+
+        - [scen] (2d array (emus, time) of global emulation time series)
     """
 
     # specify necessary variables from config file
@@ -116,29 +123,50 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
 
 def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
-    """Merge local trends and local variability temperature emulations of the same scenarios and targets.
+    """
+    Merge local trends and local variability temperature emulations of the same
+    scenarios and targets.
 
-    Args:
-    - emus_lt (dict): local trend emulations dictionary with keys
-        [scen][targ] (2d array (time x grid points) of local trends emulation time series)
-    - emus_lv (dict): local variability emulations dictionary with keys
-        [scen][targ] (3d array  (emus x time x grid points) of local varaibility emulation time series)
-    - params_lt (dict): dictionary containing the calibrated parameters for the local trends emulations, keys relevant here
-        ['targs'] (list of emulated variables, list of strs)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-    - params_lv (dict): dictionary containing the calibrated parameters for the local variability emulations, keys relevant here
-        ['targs'] (list of variables which are emulated, list of strs)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (type of ensemble which is emulated, str)
-        ['method'] (applied method, str)
-    - cfg (module): config file containnig metadata
-    - save_emus (bool,optional): determines if emulation is saved or not, default = True
+    Parameters
+    ----------
+    emus_lt : dict
+        local trend emulations dictionary with keys
 
-    Returns:
-    - emus_l (dict): local emulations dictionary with keys
-        [scen][targ] (3d array  (emus x time x grid points) of local emulation time series)
+        - [scen][targ] (2d array (time x grid points) of local trends emulation time
+          series)
+    emus_lv : dict
+        local variability emulations dictionary with keys
+
+        - [scen][targ] (3d array  (emus x time x grid points) of local varaibility
+          emulation time series)
+    params_lt : dict
+        dictionary containing the calibrated parameters for the local trends emulations,
+        keys relevant here
+
+        - ["targs"] (list of emulated variables, list of strs)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+    params_lv : dict
+        dictionary containing the calibrated parameters for the local variability
+        emulations, keys relevant here
+
+        - ["targs"] (list of variables which are emulated, list of strs)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (type of ensemble which is emulated, str)
+        - ["method"] (applied method, str)
+    cfg : module
+        config file containing metadata
+    save_emus : bool, optional
+        determines if emulation is saved or not, default = True
+
+    Returns
+    -------
+    emus_l : dict
+        local emulations dictionary with keys
+
+        - [scen][targ] (3d array  (emus, time, grid points) of local emulation time
+          series)
 
     """
 

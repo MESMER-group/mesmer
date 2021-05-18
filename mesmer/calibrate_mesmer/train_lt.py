@@ -1,13 +1,5 @@
 """
-mesmer.calibrate_mesmer.train_lt
-===================
 Functions to train local trends module of MESMER.
-
-
-Functions:
-    train_lt()
-    train_lt_extract_additional_params_OLS()
-
 """
 
 
@@ -22,47 +14,71 @@ from mesmer.calibrate_mesmer.train_utils import train_l_prepare_X_y_wgteq
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
-    """Derive local trends (i.e., forced response) parameters for given ESM for given set of tragets and predictors.
+    """
+    Derive local trends (i.e., forced response) parameters for given ESM for given set
+    of targets and predictors.
 
-    Args:
-    - preds (dict): nested dictionary of predictors with keys
-        [pred][scen] with 1d/2d arrays (time)/(run,time)
-    - targs (dict): nested dictionary of targets with keys
-        [targ][scen] with 3d arrays (run,time,gp)
-    - esm (str): associated Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - cfg (module): config file containnig metadata
-    - save_params (bool, optional): determines if parameters are saved or not, default = True
+    Parameters
+    ----------
+    preds : dict
+        nested dictionary of predictors with keys
 
-    Returns:
-    - params_lt (dict): dictionary with the trained local trend parameters
-        ['targs'] (emulated variables, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-        ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        [xx] additional params depend on method employed
-        ['full_model_contains_lv'] (whether the full model contains part of the local variability module, bool)
-    - params_lv (dict, optional): dictionary of local variability paramters which are derived together with the local trend parameters
-        ['targs'] (emulated variables, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] (applied method, str)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        ['part_model_in_lt'] (states if part of the model is saved in params_lt, bool)
-        ['method_lt_each_gp_sep'] (states if local trends method is applied to each grid point separately, bool)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+    targs : dict
+        nested dictionary of targets with keys
 
-    General remarks:
-    - Assumptions:  - all targets use same approach and same predictors
-                    - each predictor and each target has the same scenarios as keys
-                    - all available scenarios are used for training
-                    - in predictor list: local trend predictors belong before local variability predictors (if there are any)
-                    - identified parameters are valid for all training scenarios
-                    - if historical data is used for training, it has its own scenario
-                    - either each scenario is given the same weight or each time step
-    - Disclaimer:   - parameters must be saved in case also params_lv are created, otherwise train_lv() cannot find them
+        - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
+    esm : str
+        associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+    cfg : module
+        config file containing metadata
+    save_params : bool, optional
+        determines if parameters are saved or not, default = True
+
+    Returns
+    -------
+    params_lt : dict
+        dictionary with the trained local trend parameters
+
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["method_each_gp_sep"] (states if method is applied to each grid point
+          separately, bool)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - [xx] additional params depend on method employed
+        - ["full_model_contains_lv"] (whether the full model contains part of the local
+          variability module, bool)
+    params_lv : dict, optional
+        dictionary of local variability paramters which are derived together with the
+        local trend parameters
+
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - ["part_model_in_lt"] (states if part of the model is saved in params_lt, bool)
+        - ["method_lt_each_gp_sep"] (states if local trends method is applied to each
+          grid point separately, bool)
+
+    Notes
+    -----
+    - Assumptions:
+        - all targets use same approach and same predictors
+        - each predictor and each target has the same scenarios as keys
+        - all available scenarios are used for training
+        - in predictor list: local trend predictors belong before local variability
+          predictors (if there are any)
+        - identified parameters are valid for all training scenarios
+        - if historical data is used for training, it has its own scenario
+        - either each scenario is given the same weight or each time step
+    - Disclaimer:
+        - parameters must be saved in case also params_lv are created, otherwise
+          train_lv() cannot find them
 
     """
 
@@ -203,35 +219,48 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 def train_lt_extract_additional_params_OLS(params_lt, params_lv):
     """Extract additional parameters for the ordinary least squares (OLS) method.
 
-    Args:
-    - params_lt (dict): dictionary with the trained local trend parameters
-        ['targs'] (emulated variables, str)
-        ['esm'] (Earth System Model, str)
-        ['ens_type'] (ensemble type, str)
-        ['method'] ('OLS')
-        ['method_each_gp_sep'] (states if method is applied to each grid point separately,bool)
-        ['preds'] (predictors, list of strs)
-        ['scenarios'] (emission scenarios used for training, list of strs)
-        ['full_model'] (full local trends model)
-    - params_lv (dict): dictionary of local variability paramters which are derived together with the local trend parameters
-        if len(params_lv)>0:
-            ['targs'] (emulated variables, str)
-            ['esm'] (Earth System Model, str)
-            ['ens_type'] (ensemble type, str)
-            ['method'] (applied method, str)
-            ['preds'] (predictors, list of strs)
-            ['scenarios'] (emission scenarios used for training, list of strs)
-            ['part_model_in_lt'] (states if part of the model is saved in params_lt, bool)
-            ['method_lt_each_gp_sep'] (states if local trends method is applied to each grid point separately, bool)
+    Parameters
+    ----------
+    params_lt : dict
+        dictionary with the trained local trend parameters
 
-    Returns:
-    - params_lt (dict): local trends parameters dictionary with added keys
-        ['intercept'][targ] (1d array (gp) of intercept terms for each target)
-        ['coef_'+pred][targ] (1d array (gp) of OLS regression coefficient terms for each predictor and each target)
-    - params_lv (dict): local variability parameters dictionary with added keys
-        if len(params_lv)>0:
-            ['coef_'+pred][targ] (1d array (gp) of OLS regression coefficient terms for each predictor and each target)
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] ("OLS")
+        - ["method_each_gp_sep"] (states if method is applied to each grid point
+          separately, bool)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - ["full_model"] (full local trends model)
+    params_lv : dict
+        dictionary of local variability paramters which are derived together with the
+        local trend parameters. if len(params_lv)>0 requires
 
+        - ["targs"] (emulated variables, str)
+        - ["esm"] (Earth System Model, str)
+        - ["ens_type"] (ensemble type, str)
+        - ["method"] (applied method, str)
+        - ["preds"] (predictors, list of strs)
+        - ["scenarios"] (emission scenarios used for training, list of strs)
+        - ["part_model_in_lt"] (states if part of the model is saved in params_lt, bool)
+        - ["method_lt_each_gp_sep"] (states if local trends method is applied to each
+          grid point separately, bool)
+
+    Returns
+    -------
+    params_lt : dict
+        local trends parameters dictionary with added keys
+
+        - ["intercept"][targ] (1d array (gp) of intercept terms for each target)
+        - ["coef\\_" + pred][targ] (1d array (gp) of OLS regression coefficient terms
+          for each predictor and each target)
+    params_lv : dict
+        local variability parameters dictionary with added keys. if len(params_lv)>0
+        returns
+
+        - ["coef\\_" + pred][targ] (1d array (gp) of OLS regression coefficient terms
+          for each predictor and each target)
     """
     nr_mod_keys = len(params_lt["full_model"])  # often grid points but not necessarily
     nr_targs = len(params_lt["targs"])

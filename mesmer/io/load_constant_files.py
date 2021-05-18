@@ -1,19 +1,6 @@
 """
-mesmer.io.load_constant_files
-===================
-Functions to load in constant files such as  region information, land-sea mask, area weights, longitude and latitude information.
-
-
-Functions:
-    gaspari_cohn()
-    infer_interval_breaks()
-    _infer_interval_breaks()
-    _is_monotonic()
-    load_phi_gc()
-    load_regs_ls_wgt_lon_lat()
-    mask_percentage()
-    sample_coord()
-
+Functions to load in constant files such as region information, land-sea mask, area
+weights, longitude and latitude information.
 """
 
 import copy as copy
@@ -27,17 +14,26 @@ import xarray as xr
 
 
 def gaspari_cohn(r):
-    """Computes the smooth, exponentially decaying Gaspari-Cohn correlation function for a given r.
+    """
+    Computes the smooth, exponentially decaying Gaspari-Cohn correlation function for a
+    given r.
 
-    Args:
-    - r (float): d/L with d = geographical distance in km, L = localisation radius in km
+    Parameters
+    ----------
+    r : float
+        d/L with d = geographical distance in km, L = localisation radius in km
 
-    Returns:
-    - y (np.ndarray): Gaspari-Cohn correlation function value for given r
+    Returns
+    -------
+    y : np.ndarray
+        Gaspari-Cohn correlation function value for given r
 
-    General remarks:
-    - Smooth exponentially decaying correlation function which mimics a Gaussian distribution but vanishes at r=2, i.e., 2x the localisation radius (L)
-    - based on Gaspari-Cohn 1999, QJR  (as taken from Carrassi et al 2018, Wiley Interdiscip. Rev. Clim. Change)
+    Notes
+    -----
+    - Smooth exponentially decaying correlation function which mimics a Gaussian
+      distribution but vanishes at r=2, i.e., 2x the localisation radius (L)
+    - based on Gaspari-Cohn 1999, QJR (as taken from Carrassi et al 2018, Wiley
+      Interdiscip. Rev. Clim. Change)
 
     """
     r = np.abs(r)
@@ -63,9 +59,11 @@ def gaspari_cohn(r):
 def infer_interval_breaks(x, y, clip=False):
     """Find edges of gridcells, given their centers.
 
-    General Remarks:
-    - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
-
+    Notes
+    -----
+    - copied from Mathias Hauser mplotutils package:
+      https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py
+      in August 2020 who has it from xarray
     """
 
     if len(x.shape) == 1:
@@ -92,8 +90,11 @@ def _infer_interval_breaks(coord, axis=0):
     array([[-0.5,  0.5,  1.5],
            [ 2.5,  3.5,  4.5]])
 
-    General remarks:
-    - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
+    Notes
+    -----
+    - copied from Mathias Hauser mplotutils package:
+      https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py
+      in August 2020 who has it from xarray
 
     """
 
@@ -128,8 +129,11 @@ def _is_monotonic(coord, axis=0):
     >>> _is_monotonic(np.array([0, 2, 1]))
     False
 
-    General remarks:
-    - copied from Mathias Hauser mplotutils package: https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in August 2020 who has it from xarray
+    Notes
+    -----
+    - copied from Mathias Hauser mplotutils package:
+      https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in
+      August 2020 who has it from xarray
 
     """
     coord = np.asarray(coord)
@@ -149,36 +153,57 @@ def _is_monotonic(coord, axis=0):
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
-    """Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation matrix.
+    """
+    Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation
+    matrix.
 
-    Args:
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-        ['e'] (1d array with longitudes at edges of grid cells)
-        ['grid'] (2d array (lat,lon) of longitudes)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-        ['e'] (1d array with latitudes at edges of grid cells)
-        ['grid'] (2d array (lat,lon) of latitudes)
-    - ls (dict): land-sea dictionary with keys
-        ['grid_raw'] (2d array (lat,lon) of subsampled land fraction)
-        ['grid_no_ANT'] (grid_raw with Antarctica removed)
-        ['gp_l'] (1d array of fraction of land at land grid points)
-        ['grid_l'] (2d array (lat,lon) of fraction of land at land grid points)
-        ['idx_grid_l'] (2d boolean array (lat,lon) with land grid points = True for plotting on map)
-        ['grid_l_m'] (2d masked array (lat,lon) with ocean masked out for plotting on map)
-        ['wgt_gp_l'] (1d array of land area weights, i.e., area weight * land fraction)
-    - cfg (module): config file containnig metadata
-    - L_start (int,optional): smallest localisation radius which is tested
-    - L_end (int,optional): largest localisation radius which is tested (should not exceed 10000 by much because eventually ValueError: the input matrix must be positive semidefinite in train_lv())
-    - L_interval (int,optional): spacing interval between tested localisation radii
+    Parameters
+    ----------
+    lon : dict
+        longitude dictionary with key
 
-    Returns:
-    - phi_gc (np.ndarray): 2d array (gp,gp) of Gaspari-Cohn correlation matrix for grid points used for covariance localisation
+        - ["c"] (1d array with longitudes at center of grid cell)
+        - ["e"] (1d array with longitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of longitudes)
+    lat : dict
+        latitude dictionary with key
 
-    General remarks:
-    - If no complete number of L_intervals fits between L_start and L_end, L_intervals are repeated until the closest possible L value below L_end is reached.
+        - ["c"] (1d array with latitudes at center of grid cell)
+        - ["e"] (1d array with latitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of latitudes)
+    ls : dict
+        land-sea dictionary with keys
 
+        - ["grid_raw"] (2d array (lat,lon) of subsampled land fraction)
+        - ["grid_no_ANT"] (grid_raw with Antarctica removed)
+        - ["gp_l"] (1d array of fraction of land at land grid points)
+        - ["grid_l"] (2d array (lat,lon) of fraction of land at land grid points)
+        - ["idx_grid_l"] (2d boolean array (lat,lon) with land grid points = True for
+          plotting on map)
+        - ["grid_l_m"] (2d masked array (lat,lon) with ocean masked out for plotting on
+          map)
+        - ["wgt_gp_l"] (1d array of land area weights, i.e.,
+          area weight * land fraction)
+    cfg : module
+        config file containing metadata
+    L_start : int, optional
+        smallest localisation radius which is tested
+    L_end : int, optional
+        largest localisation radius which is tested
+    L_interval : int, optional
+        spacing interval between tested localisation radii
+
+    Returns
+    -------
+    phi_gc : np.ndarray
+        2d array (gp, gp) of Gaspari-Cohn correlation matrix for grid points used for
+        covariance localisation
+
+    Notes
+    -----
+    - If no complete number of L_intervals fits between L_start and L_end, L_intervals
+      are repeated until the closest possible L value below L_end is reached.
+    - L_end should not exceed 10000 by much because eventually ValueError: the input matrix must be positive semidefinite in train_lv())
     """
 
     dir_aux = cfg.dir_aux
@@ -246,35 +271,53 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
 def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     """Load constant files.
 
-    Args:
-    - reg_type (str): region type ('ar6.land','countries','srex')
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
+    Parameters
+    ----------
+    reg_type : str
+        region type ("ar6.land", "countries", "srex")
+    lon : dict
+        longitude dictionary with key
 
-    Returns:
-    - reg_dict (dict): region dictionary with keys
-        ['type'] (region type)
-        ['abbrevs'] (abbreviations for regions)
-        ['names'] (full names of regions)
-        ['grids'] (3d array (region,lat,lon) of subsampled region fraction)
-        ['grid_b'] (2d array (lat,lon) of regions with each grid point being assigned to a single region ("binary" grid))
-        ['full'] (full Region object (for plotting region outlines))
-    - ls (dict): land-sea dictionary with keys
-        ['grid_raw'] (2d array (lat,lon) of subsampled land fraction)
-        ['grid_no_ANT'] (grid_raw with Antarctica removed)
-    - wgt (np.ndarray): 2d array (lat,lon) of weights to be used for area weighted means
-    - lon (dict): longitude dictionary with added keys
-        ['e'] (1d array with longitudes at edges of grid cells)
-        ['grid'] (2d array (lat,lon) of longitudes)
-    - lat (dict): latitude dictionary with added keys
-        ['e'] (1d array with latitudes at edges of grid cells)
-        ['grid'] (2d array (lat,lon) of latitudes)
+        - ["c"] (1d array with longitudes at center of grid cell)
+    lat : dict
+        latitude dictionary with key
 
-    General remarks:
-    - If additional region types are added in this function, mesmer.utils.select.extract_land() needs to be adapted too
+        - ["c"] (1d array with latitudes at center of grid cell)
 
+    Returns
+    -------
+    reg_dict : dict
+        region dictionary with keys
+
+        - ["type"] (region type)
+        - ["abbrevs"] (abbreviations for regions)
+        - ["names"] (full names of regions)
+        - ["grids"] (3d array (region, lat, lon) of subsampled region fraction)
+        - ["grid_b"] (2d array (lat, lon) of regions with each grid point being assigned
+          to a single region ("binary" grid))
+        - ["full"] (full Region object (for plotting region outlines))
+    ls : dict
+        land-sea dictionary with keys
+
+        - ["grid_raw"] (2d array (lat, lon) of subsampled land fraction)
+        - ["grid_no_ANT"] (grid_raw with Antarctica removed)
+    wgt : np.ndarray
+        2d array (lat,lon) of weights to be used for area weighted means
+    lon : dict
+        longitude dictionary with added keys
+
+        - ["e"] (1d array with longitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of longitudes)
+    lat : dict
+        latitude dictionary with added keys
+
+        - ["e"] (1d array with latitudes at edges of grid cells)
+        - ["grid"] (2d array (lat,lon) of latitudes)
+
+    Notes
+    -----
+    - If additional region types are added in this function,
+      mesmer.utils.select.extract_land() needs to be adapted too
 
     """
 
@@ -328,10 +371,12 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 def mask_percentage(regions, lon, lat):
     """Sample with 10 times higher resolution.
 
-    General remarks:
+    Notes
+    -----
     - assumes equally-spaced lat & lon!
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in August 2020
-    -> prototype of what will eventually be integrated in his regionmask package
+    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in
+      August 2020
+    - prototype of what will eventually be integrated in his regionmask package
 
     """
 
@@ -363,8 +408,10 @@ def mask_percentage(regions, lon, lat):
 def sample_coord(coord):
     """Sample coords for the percentage overlap.
 
-    General remarks:
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in August 2020
+    Notes
+    -----
+    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38
+      in August 2020
     -> prototype of what will eventually be integrated in his regionmask package
 
     """

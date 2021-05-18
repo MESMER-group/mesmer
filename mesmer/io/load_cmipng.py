@@ -1,20 +1,6 @@
 """
-mesmer.io.load_cmipng
-===================
 Functions to load in cmip5 and cmip6 data from the cmip-ng archive at ETHZ.
-
-
-Functions:
-    extract_time_lon_lat_wgt3d()
-    find_files_cmipng()
-    load_cmipng()
-    load_cmipng_file()
-    load_cmipng_hfds()
-    load_cmipng_tas()
-    preprocess_ssp534over()
-
 """
-
 
 import copy as copy
 import glob as glob
@@ -24,19 +10,28 @@ import xarray as xr
 
 
 def extract_time_lon_lat_wgt3d(data):
-    """Extract time, longitude, latitude, and 3d weights from file from ETHZ cmip-ng archive.
+    """
+    Extract time, longitude, latitude, and 3d weights from file from ETHZ cmip-ng
+    archive.
 
-    Args:
-    - data (xr.core.dataset.Dataset): dataset to extract time, lon, lat, and wgt3d from
+    Parameters
+    ----------
+    data : xr.core.dataset.Dataset
+        dataset to extract time, lon, lat, and wgt3d from
 
-    Returns:
-    - time (np.ndarray): 1d array of years
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-    - wgt3d (np.ndarray): 3d array (time,lat,lon) of area weight of each grid point
+    Returns
+    -------
+    time : np.ndarray
+        1d array of years
+    lon : dict
+        longitude dictionary with key
+     - ["c"] (1d array with longitudes at center of grid cell)
+    lat : dict
+        latitude dictionary with key
 
+        - ["c"] (1d array with latitudes at center of grid cell)
+    wgt3d : np.ndarray
+        3d array (time, lat, lon) of area weight of each grid point
     """
 
     # extract time
@@ -60,20 +55,31 @@ def extract_time_lon_lat_wgt3d(data):
 def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     """Find filname in ETHZ cmip-ng archive.
 
-    Args:
-    - gen (int): generation (5 or 6)
-    - esm (str): Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - var (str): variable (tas, tos, etc)
-    - scenario (str): scenario (e.g., 'rcp85' or 'ssp585')
-    - dir_cmipng (str): path to cmip-ng archive
+    Parameters
+    ----------
+    gen : int
+        generation (5 or 6)
+    esm : str
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
+    var : str
+        variable (e.g., "tas", "tos")
+    scenario : str
+        scenario (e.g., "rcp85" or "ssp585")
+    dir_cmipng : str
+        path to cmip-ng archive
 
-    Returns:
-    - path_runs_list (list): list of paths to all the filenames found for the given input
+    Returns
+    -------
+    path_runs_list : list
+        list of paths to all the filenames found for the given input
 
-    General remarks:
-    - Not fool-proof enough yet for ESMs with different forcings. Could/should be improved if there is time.
-    - TODO: improve and extend list of excluded runs / ESMs for all cmip generations and variables
-
+    Notes
+    -----
+    - Not fool-proof enough yet for ESMs with different forcings. Could/ should be
+      improved if there is time.
+    - TODO:
+        - improve and extend list of excluded runs/ ESMs for all cmip generations and
+          variables
     """
 
     # for cmip5-ng
@@ -183,7 +189,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 
         # TODO: redecide if I am fine with CanESM5 p2 but not all scenarios or if I prefer the worse p1 which has all scenarios
         # code below = old version when used p2 instead
-        # if esm != 'CanESM5':
+        # if esm != "CanESM5":
         #    path_runs_list = sorted(
         #       glob.glob(
         #   dir_name
@@ -236,23 +242,37 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 def load_cmipng(targ, esm, scen, cfg):
     """Load ESM runs from cmip-ng archive at ETHZ.
 
-    Args:
-    - targ (str): target variable (e.g., 'tas')
-    - esm (str): Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - scen (str): future scenario (e.g., 'rcp85' or 'ssp585')
-    - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    targ : str
+        target variable (e.g., "tas")
+    esm : str
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
+    scen : str
+        future scenario (e.g., "rcp85" or "ssp585")
+    cfg : module
+        config file containing metadata
 
-    Returns:
-    - targ (dict): target variable anomaly dictionary with keys
-        [run] (3d array (time,lat,lon) of variable)
-    - GTARG (dict): area-weighted global mean target variable anomaly dictionary with keys
-        [run]  (1d array of globally-averaged variable anomaly time series)
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-    - time (np.ndarray): 1d array of years
+    Returns
+    -------
+    targ : dict
+        target variable anomaly dictionary with keys
 
+        - [run] (3d array (time, lat, lon) of variable)
+    GTARG : dict
+        area-weighted global mean target variable anomaly dictionary with keys
+
+        - [run]  (1d array of globally-averaged variable anomaly time series)
+    lon : dict
+        longitude dictionary with key
+
+        - ["c"] (1d array with longitudes at center of grid cell)
+    lat : dict
+        latitude dictionary with key
+
+        - ["c"] (1d array with latitudes at center of grid cell)
+    time : np.ndarray
+        1d array of years
     """
 
     # check if scenario describes
@@ -276,15 +296,21 @@ def load_cmipng(targ, esm, scen, cfg):
 def load_cmipng_file(run_path, gen, scen):
     """Load file in ETHZ cmip-ng archive.
 
-    Args:
-    - run_path (str): path to file
-    - gen (int): generation (5 or 6)
-    - scen (str): future scenario (e.g., 'rcp85' or 'ssp585')
+    Parameters
+    ----------
+    run_path : str
+        path to file
+    gen : int
+        generation (5 or 6)
+    scen : str
+        future scenario (e.g., "rcp85" or "ssp585")
 
-    Returns:
-    - data (xr.core.dataset.Dataset): loaded dataset
-    - run (int): realization index
-
+    Returns
+    -------
+    data : xr.core.dataset.Dataset
+        loaded dataset
+    run : int
+        realization index
     """
 
     # account for difference in naming convention in cmipx-ng archives
@@ -332,23 +358,38 @@ def load_cmipng_file(run_path, gen, scen):
 def load_cmipng_hfds(esm, scen, cfg):
     """Load ESM hfds runs from cmip-ng archive at ETHZ.
 
-    Args:
-    - esm (str): Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - scen (str): future scenario (e.g., 'rcp85' or 'ssp585')
-    - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    esm : str
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
+    scen : str
+        future scenario (e.g., "rcp85" or "ssp585")
+    cfg : module
+        config file containnig metadata
 
-    Returns:
-    - hfds (dict): Downward Heat Flux at Sea Water Surface (hfds) anomaly dictionary with keys
-        [run] (3d array (time,lat,lon) of variable)
-    - GHFDS (dict): area-weighted global mean hfds anomaly dictionary with keys
-        [run]  (1d array of globally-averaged tas anomaly time series)
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-    - time (np.ndarray): 1d array of years
+    Returns
+    -------
+    hfds : dict
+        Downward Heat Flux at Sea Water Surface (hfds) anomaly dictionary with keys
 
-    General remarks:
+        - [run] (3d array (time, lat, lon) of variable)
+    GHFDS : dict
+        area-weighted global mean hfds anomaly dictionary with keys
+
+        - [run]  (1d array of globally-averaged tas anomaly time series)
+    lon : dict
+        longitude dictionary with key
+
+        - ["c"] (1d array with longitudes at center of grid cell)
+    lat : dict
+        latitude dictionary with key
+
+        - ["c"] (1d array with latitudes at center of grid cell)
+    time : np.ndarray
+        1d array of years
+
+    Notes
+    -----
     - There are some overlaps with load_cmipng_tas()
     - These functions could be more optimally merged in the future to avoid repetition
 
@@ -439,23 +480,38 @@ def load_cmipng_hfds(esm, scen, cfg):
 def load_cmipng_tas(esm, scen, cfg):
     """Load ESM tas runs from cmip-ng archive at ETHZ.
 
-    Args:
-    - esm (str): Earth System Model (e.g., 'CanESM2' or 'CanESM5')
-    - scen (str): future scenario (e.g., 'rcp85' or 'ssp585')
-    - cfg (module): config file containnig metadata
+    Parameters
+    ----------
+    esm : str
+        Earth System Model (e.g., "CanESM2" or "CanESM5")
+    scen : str
+        future scenario (e.g., "rcp85" or "ssp585")
+    cfg : module
+        config file containing metadata
 
-    Returns:
-    - tas (dict): 2-m air temperature anomaly dictionary with keys
-        [run] (3d array (time,lat,lon) of variable)
-    - GSAT (dict): area-weighted global mean 2-m air temperature anomaly dictionary with keys
-        [run]  (1d array of globally-averaged tas anomaly time series)
-    - lon (dict): longitude dictionary with key
-        ['c'] (1d array with longitudes at center of grid cell)
-    - lat (dict): latitude dictionary with key
-        ['c'] (1d array with latitudes at center of grid cell)
-    - time (np.ndarray): 1d array of years
+    Returns
+    -------
+    tas : dict
+        2-m air temperature anomaly dictionary with keys
 
-    General remarks:
+        - [run] (3d array (time, lat, lon) of variable)
+    GSAT : dict
+        area-weighted global mean 2-m air temperature anomaly dictionary with keys
+
+        - [run]  (1d array of globally-averaged tas anomaly time series)
+    lon : dict
+        longitude dictionary with key
+
+        - ["c"] (1d array with longitudes at center of grid cell)
+    lat : dict
+        latitude dictionary with key
+
+        - ["c"] (1d array with latitudes at center of grid cell)
+    time : np.ndarray
+        1d array of years
+
+    Notes
+    -----
     - There are some overlaps with load_cmipng_hfds()
     - These functions could be more optimally merged in the future to avoid repetition
 
@@ -537,17 +593,25 @@ def load_cmipng_tas(esm, scen, cfg):
 
 
 def preprocess_ssp534over(ds):
-    """Preprocess datasets to manage to combine historical, ssp585, and ssp534-over into single time series.
+    """
+    Preprocess datasets to manage to combine historical, ssp585, and ssp534-over into
+    single time series.
 
-    Args:
-    - ds (xr.core.dataset.Dataset): dataset to be concatenated with other datasets
+    Parameters
+    ----------
+    ds : xr.Dataset
+        dataset to be concatenated with other datasets
 
-    Returns:
-    - ds (xr.core.dataset.Dataset): dataset cut after 2039 unless the start year is after 2030
+    Returns
+    -------
+    ds : xr.Dataset
+        dataset cut after 2039 unless the start year is after 2030
 
-    General remarks:
+    Notes
+    -----
     - ssp534over starts in 2040, before it follows ssp585
-    - This pre-processing allows to concatenate the individual files without running into overlapping time periods
+    - This pre-processing allows to concatenate the individual files without running
+      into overlapping time periods
     - Code received from Mathias Hauser on 20201117 (personal exchange via slack)
 
     """
