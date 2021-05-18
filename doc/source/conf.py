@@ -28,9 +28,7 @@ release = "dev"
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named "sphinx.ext.*") or your custom
-# ones.
+# add sphinx extension modules
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -53,8 +51,6 @@ napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_use_param = False
 napoleon_use_rtype = False
-napoleon_custom_sections = ["Assumptions"]
-napoleon_custom_sections = [("Returns", "params_style")]
 
 # napoleon_use_ivar = True
 # napoleon_use_admonition_for_notes = True
@@ -76,12 +72,6 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-# if not on_rtd:
-#     import sphinx_rtd_theme
-#
-#     html_theme = "sphinx_rtd_theme"
-#     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 html_theme = "sphinx_rtd_theme"
 html_theme = "sphinx_book_theme"

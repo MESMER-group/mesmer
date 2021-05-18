@@ -4,7 +4,7 @@
 API reference
 #############
 
-This page provides an auto-generated summary of mesmers" API.
+This page provides an auto-generated summary of mesmers' API.
 
 
 Top-level functions
