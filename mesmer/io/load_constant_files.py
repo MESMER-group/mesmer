@@ -10,7 +10,9 @@ import geopy.distance  # https://geopy.readthedocs.io/en/latest/ # give coord as
 import joblib
 import numpy as np
 import regionmask as regionmask
-import xarray as xr
+
+from ..utils.regionmaskcompat import mask_percentage
+from ..utils.xrcompat import infer_interval_breaks
 
 
 def gaspari_cohn(r):
@@ -54,102 +56,6 @@ def gaspari_cohn(r):
         y = 0
 
     return y
-
-
-def infer_interval_breaks(x, y, clip=False):
-    """Find edges of gridcells, given their centers.
-
-    Notes
-    -----
-    - copied from Mathias Hauser mplotutils package:
-      https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py
-      in August 2020 who has it from xarray
-    """
-
-    if len(x.shape) == 1:
-        x = _infer_interval_breaks(x)
-        y = _infer_interval_breaks(y)
-    else:
-        # we have to infer the intervals on both axes
-        x = _infer_interval_breaks(x, axis=1)
-        x = _infer_interval_breaks(x, axis=0)
-        y = _infer_interval_breaks(y, axis=1)
-        y = _infer_interval_breaks(y, axis=0)
-
-    if clip:
-        y = np.clip(y, -90, 90)
-
-    return x, y
-
-
-def _infer_interval_breaks(coord, axis=0):
-    """
-    >>> _infer_interval_breaks(np.arange(5))
-    array([-0.5,  0.5,  1.5,  2.5,  3.5,  4.5])
-    >>> _infer_interval_breaks([[0, 1], [3, 4]], axis=1)
-    array([[-0.5,  0.5,  1.5],
-           [ 2.5,  3.5,  4.5]])
-
-    Notes
-    -----
-    - copied from Mathias Hauser mplotutils package:
-      https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py
-      in August 2020 who has it from xarray
-
-    """
-
-    if not _is_monotonic(coord, axis=axis):
-        raise ValueError(
-            "The input coordinate is not sorted in increasing "
-            "order along axis %d. This can lead to unexpected "
-            "results. Consider calling the `sortby` method on "
-            "the input DataArray. To plot data with categorical "
-            "axes, consider using the `heatmap` function from "
-            "the `seaborn` statistical plotting library." % axis
-        )
-
-    coord = np.asarray(coord)
-    deltas = 0.5 * np.diff(coord, axis=axis)
-    if deltas.size == 0:
-        deltas = np.array(0.0)
-    first = np.take(coord, [0], axis=axis) - np.take(deltas, [0], axis=axis)
-    last = np.take(coord, [-1], axis=axis) + np.take(deltas, [-1], axis=axis)
-    trim_last = tuple(
-        slice(None, -1) if n == axis else slice(None) for n in range(coord.ndim)
-    )
-    return np.concatenate([first, coord[trim_last] + deltas, last], axis=axis)
-
-
-def _is_monotonic(coord, axis=0):
-    """
-    >>> _is_monotonic(np.array([0, 1, 2]))
-    True
-    >>> _is_monotonic(np.array([2, 1, 0]))
-    True
-    >>> _is_monotonic(np.array([0, 2, 1]))
-    False
-
-    Notes
-    -----
-    - copied from Mathias Hauser mplotutils package:
-      https://github.com/mathause/mplotutils/blob/master/mplotutils/cartopy_utils.py in
-      August 2020 who has it from xarray
-
-    """
-    coord = np.asarray(coord)
-
-    if coord.shape[axis] < 3:
-        return True
-    else:
-        n = coord.shape[axis]
-        delta_pos = coord.take(np.arange(1, n), axis=axis) >= coord.take(
-            np.arange(0, n - 1), axis=axis
-        )
-        delta_neg = coord.take(np.arange(1, n), axis=axis) <= coord.take(
-            np.arange(0, n - 1), axis=axis
-        )
-
-    return np.all(delta_pos) or np.all(delta_neg)
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
@@ -366,60 +272,3 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     lon["e"], lat["e"] = infer_interval_breaks(lon["c"], lat["c"])
 
     return reg_dict, ls, wgt, lon, lat
-
-
-def mask_percentage(regions, lon, lat):
-    """Sample with 10 times higher resolution.
-
-    Notes
-    -----
-    - assumes equally-spaced lat & lon!
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in
-      August 2020
-    - prototype of what will eventually be integrated in his regionmask package
-
-    """
-
-    lon_sampled = sample_coord(lon)
-    lat_sampled = sample_coord(lat)
-
-    mask = regions.mask(lon_sampled, lat_sampled)
-
-    isnan = np.isnan(mask.values)
-
-    numbers = np.unique(mask.values[~isnan])
-    numbers = numbers.astype(np.int)
-
-    mask_sampled = list()
-    for num in numbers:
-        # coarsen the mask again
-        mask_coarse = (mask == num).coarsen(lat=10, lon=10).mean()
-        mask_sampled.append(mask_coarse)
-
-    mask_sampled = xr.concat(
-        mask_sampled, dim="region", compat="override", coords="minimal"
-    )
-
-    mask_sampled = mask_sampled.assign_coords(region=("region", numbers))
-
-    return mask_sampled
-
-
-def sample_coord(coord):
-    """Sample coords for the percentage overlap.
-
-    Notes
-    -----
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38
-      in August 2020
-    -> prototype of what will eventually be integrated in his regionmask package
-
-    """
-    d_coord = coord[1] - coord[0]
-
-    n_cells = len(coord)
-
-    left = coord[0] - d_coord / 2 + d_coord / 20
-    right = coord[-1] + d_coord / 2 - d_coord / 20
-
-    return np.linspace(left, right, n_cells * 10)
