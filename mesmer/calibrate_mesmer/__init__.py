@@ -36,6 +36,7 @@ def calibrate_mesmer(
     reg_type,
     threshold_land,
     output_file,
+    scen_seed_offset_v,
 ):
     tas_g_dict = {}  # tas with global coverage
     GSAT_dict = {}  # global mean tas
@@ -44,6 +45,18 @@ def calibrate_mesmer(
     GSAT = {}
     GHFDS = {}
     time = {}
+
+    seeds = {}
+    i = 0
+    for esm in esms:
+        seeds[esm] = {}
+        j = 0
+        for scen in scenarios_to_train:
+            seeds[esm][scen] = {}
+            seeds[esm][scen]["gv"] = i + j * scen_seed_offset_v
+            seeds[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1000000
+            j += 1
+        i += 1
 
     for esm in esms:
         LOGGER.info("Loading data for %s", esm)
@@ -188,7 +201,7 @@ def calibrate_mesmer(
             params_lt,
             params_lv,
             params_gv_T,
-            seeds=cfg.seed,
+            seeds=seeds,
             land_fractions=ls["grid_l_m"],
             lat=lat["c"],
             lon=lon["c"],
