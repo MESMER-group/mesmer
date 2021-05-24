@@ -77,9 +77,7 @@ class _Config:
                 "lt": tas_local_trend_method,
                 "lv": tas_local_variability_method,
             },
-            "hfds": {
-                "gt": hfds_global_trend_method
-            },
+            "hfds": {"gt": hfds_global_trend_method},
         }
         self.method_lt_each_gp_sep = method_lt_each_gp_sep
 
@@ -89,7 +87,7 @@ class _Config:
                 "gt": ["saod"],
                 "gv": [],
             },
-            "hfds": {"gt": []}
+            "hfds": {"gt": []},
         }
         self.preds["tas"]["g_all"] = self.preds["tas"]["gt"] + self.preds["tas"]["gv"]
 
@@ -196,7 +194,13 @@ def calibrate_mesmer(
                 # should this be an error?
                 warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
             else:  # if scen exists: save fields + load hfds fields for it too
-                tas_g_dict[esm][scen], GSAT_dict[esm][scen], lon, lat, time[esm][scen] = (
+                (
+                    tas_g_dict[esm][scen],
+                    GSAT_dict[esm][scen],
+                    lon,
+                    lat,
+                    time[esm][scen],
+                ) = (
                     tas_g_tmp,
                     GSAT_tmp,
                     lon_tmp,
@@ -223,9 +227,13 @@ def calibrate_mesmer(
         LOGGER.info("Calibrating global trend module")
         # TODO: `target_variable` is used here but not elsewhere (where tas is
         #       basically hard-coded)
-        params_gt_T = train_gt(GSAT[esm], target_variable, esm, time[esm], cfg, save_params=False)
+        params_gt_T = train_gt(
+            GSAT[esm], target_variable, esm, time[esm], cfg, save_params=False
+        )
         # TODO: remove hard-coded hfds
-        params_gt_hfds = train_gt(GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=False)
+        params_gt_hfds = train_gt(
+            GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=False
+        )
 
         # Do you need to create emulations in order to calibrate the global
         # variability and local trends modules? Or do I misunderstand what is
@@ -260,7 +268,9 @@ def calibrate_mesmer(
         tas_s, time_s = separate_hist_future(tas[esm], time[esm], cfg)
 
         LOGGER.info("Calibrating global variability module")
-        params_gv_T = train_gv(gv_novolc_T_s, target_variable, esm, cfg, save_params=False)
+        params_gv_T = train_gv(
+            gv_novolc_T_s, target_variable, esm, cfg, save_params=False
+        )
 
         time_v = {}
         time_v["all"] = time[esm][scen]
@@ -288,15 +298,21 @@ def calibrate_mesmer(
         # Are these necessary for calibration?
         LOGGER.info("Creating local trends emulations")
         preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
-        lt_s = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False)
-        emus_lt = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False)
+        lt_s = create_emus_lt(
+            params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False
+        )
+        emus_lt = create_emus_lt(
+            params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False
+        )
 
         LOGGER.info("Calibrating local variability module")
         # derive variability part induced by gv
         preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
 
         # we need to create emulations to train local variability?
-        lv_gv_s = create_emus_lv(params_lv, preds_lv, cfg, save_emus=False, submethod="OLS")
+        lv_gv_s = create_emus_lv(
+            params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
+        )
 
         # tas essentially hard-coded here too
         LOGGER.debug(

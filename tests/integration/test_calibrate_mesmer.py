@@ -10,9 +10,7 @@ import xarray.testing as xrt
 from mesmer.calibrate_mesmer import calibrate_mesmer
 
 
-def test_calibrate_mesmer(
-    test_data_root_dir, tmpdir, update_expected_files
-):
+def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
     expected_output_file = os.path.join(test_data_root_dir, "test-mesmer-bundle.pkl")
 
     test_esms = ["IPSL-CM6A-LR"]
@@ -38,7 +36,6 @@ def test_calibrate_mesmer(
         "calibrate-coarse-grid",
         "auxiliary",
     )
-
 
     calibrate_mesmer(
         esms=test_esms,

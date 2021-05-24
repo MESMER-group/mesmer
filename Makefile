@@ -35,6 +35,14 @@ export PRINT_HELP_PYSCRIPT
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
+.PHONY: black
+black: $(VENV_DIR)  ## auto-format the code using black
+	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON)
+
+.PHONY: flake8
+flake8: $(VENV_DIR)  ## lint the code using flake8
+	$(VENV_DIR)/bin/flake8 $(FILES_TO_FORMAT_PYTHON)
+
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
 	$(VENV_DIR)/bin/pytest --cov -r a -v --cov-report term-missing
