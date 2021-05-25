@@ -1,5 +1,4 @@
-# MESMER, copyright (c) 2021 ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne)
-# Licensed under the GNU General Public License v3.0; see LICENSE or https://www.gnu.org/licenses/# MESMER, copyright (c) 2021 ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne)
+# Copyright (c) 2021 ETH Zurich, contributors listed in AUTHORS.
 # Licensed under the GNU General Public License v3.0; see LICENSE or https://www.gnu.org/licenses/
 """
 Functions to load in cmip5 and cmip6 data from the cmip-ng archive at ETHZ.
