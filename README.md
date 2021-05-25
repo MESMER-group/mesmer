@@ -4,9 +4,9 @@
 
 
 
-## References
+##  Citing MESMER
 
-Scientific publications using code based on MESMER should cite the following publication:
+Scientific publications using MESMER should cite the following publication:
 
 Beusch, Lea, Lukas Gudmundsson, and Sonia I. Seneviratne, 2020: Emulating Earth system
 model temperatures with MESMER: from global mean temperature trajectories to
@@ -15,7 +15,7 @@ https://doi.org/10.5194/esd-11-139-2020
 
 ## License
 
-Copyright (c) 2021 ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne)
+Copyright (c) 2021 ETH Zurich, contributors listed in AUTHORS.
 
 MESMER is free software; you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, version 3.
