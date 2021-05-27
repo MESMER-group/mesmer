@@ -15,7 +15,7 @@ https://doi.org/10.5194/esd-11-139-2020
 
 ## License
 
-Copyright (c) 2021 ETH Zurich, contributors listed in AUTHORS.
+Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 
 MESMER is free software; you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, version 3.
@@ -27,4 +27,5 @@ PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with MESMER. If
 not, see https://www.gnu.org/licenses/.
 
-A full list of code contributors can be found at https://github.com/MESMER-group/mesmer/graphs/contributors.
+The full list of code contributors can be found in AUTORS or on
+[github.com/contributors](https://github.com/MESMER-group/mesmer/graphs/contributors).
