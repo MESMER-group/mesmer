@@ -392,6 +392,7 @@ def load_cmipng_hfds(esm, scen, cfg):
 
     return _load_cmipng_var(esm, scen, cfg, "hfds")
 
+
 def load_cmipng_tas(esm, scen, cfg):
     """Load ESM tas runs from cmip-ng archive at ETHZ.
 
@@ -459,7 +460,8 @@ def _load_cmipng_var(esm, scen, cfg, varn):
         if ref["type"] == "all":
             if run_path == path_runs_list[0]:  # for the first run need to initialize
                 dta_ref = (
-                    data[varn].sel(time=slice(ref["start"], ref["end"]))
+                    data[varn]
+                    .sel(time=slice(ref["start"], ref["end"]))
                     .mean(dim="time")
                     .values
                     * 1.0
@@ -467,7 +469,8 @@ def _load_cmipng_var(esm, scen, cfg, varn):
                 )
             else:
                 dta_ref += (
-                    data[varn].sel(time=slice(ref["start"], ref["end"]))
+                    data[varn]
+                    .sel(time=slice(ref["start"], ref["end"]))
                     .mean(dim="time")
                     .values
                     * 1.0
@@ -476,7 +479,8 @@ def _load_cmipng_var(esm, scen, cfg, varn):
 
         if ref["type"] == "individ":
             dta_ref = (
-                data[varn].sel(time=slice(ref["start"], ref["end"]))
+                data[varn]
+                .sel(time=slice(ref["start"], ref["end"]))
                 .mean(dim="time")
                 .values
             )
@@ -485,7 +489,8 @@ def _load_cmipng_var(esm, scen, cfg, varn):
         if ref["type"] == "first" and run == "1":
             # TO CHECK
             dta_ref = (
-                data[varn].sel(time=slice(ref["start"], ref["end"]))
+                data[varn]
+                .sel(time=slice(ref["start"], ref["end"]))
                 .mean(dim="time")
                 .values
             )
@@ -512,8 +517,6 @@ def _load_cmipng_var(esm, scen, cfg, varn):
         dta_global[run] = np.average(dta_masked, axis=(1, 2), weights=wgt3d).data
 
     return dta, dta_global, lon, lat, time
-
-
 
 
 def preprocess_ssp534over(ds):
