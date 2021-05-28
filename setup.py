@@ -24,11 +24,10 @@ PROJECT_URLS = {
     "Source": "TBD Lea https://github.com/znicholls/netcdf-scm",
 }
 
-LICENSE = "TBD Lea"
+LICENSE = "GPLv3+"
 CLASSIFIERS = [
-    "TBD Lea",
     "Development Status :: 4 - Beta",
-    # "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     # "Intended Audience :: Developers",
     # "Operating System :: OS Independent",
     # "Programming Language :: Python :: 3.7",
