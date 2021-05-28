@@ -18,7 +18,8 @@ https://doi.org/10.5194/esd-11-139-2020
 Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 
 MESMER is free software; you can redistribute it and/or modify it under the terms of the
-GNU General Public License as published by the Free Software Foundation, version 3.
+GNU General Public License as published by the Free Software Foundation, version 3  or
+(at your option) any later version.
 
 MESMER is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
