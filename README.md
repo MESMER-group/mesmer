@@ -27,5 +27,5 @@ PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with MESMER. If
 not, see https://www.gnu.org/licenses/.
 
-The full list of code contributors can be found in AUTORS or on
+The full list of code contributors can be found in AUTHORS or on
 [github.com/contributors](https://github.com/MESMER-group/mesmer/graphs/contributors).
