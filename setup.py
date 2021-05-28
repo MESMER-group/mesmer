@@ -15,23 +15,27 @@ KEYWORDS = [
     # "data processing",
 ]
 
-AUTHOR = "Lea Beusch"
+AUTHOR = "mesmer developpers"
 EMAIL = "TBD Lea"
-URL = "TBD Lea"
+URL = "https://github.com/MESMER-group/mesmer" # use documentation url?
 PROJECT_URLS = {
-    "Bug Reports": "TBD Lea https://github.com/znicholls/netcdf-scm/issues",
-    # "Documentation": "TBD Lea https://openscm.readthedocs.io/en/latest",
-    "Source": "TBD Lea https://github.com/znicholls/netcdf-scm",
+    "Source": "https://github.com/MESMER-group/mesmer",
+    "Bug Reports": "https://github.com/MESMER-group/mesmer/issues",
+    # "Documentation": "TBD",
 }
 
 LICENSE = "TBD Lea"
 CLASSIFIERS = [
-    "TBD Lea",
     "Development Status :: 4 - Beta",
-    # "License :: OSI Approved :: BSD License",
-    # "Intended Audience :: Developers",
-    # "Operating System :: OS Independent",
-    # "Programming Language :: Python :: 3.7",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 
 
@@ -51,11 +55,9 @@ REQUIREMENTS_TESTS = [
     "pytest-xdist",
 ]
 requirements_dev = [
-    *[
-        "black",
-        "flake8",
-        "isort",
-    ],
+    "black",
+    "flake8",
+    "isort",
     *REQUIREMENTS_TESTS,
 ]
 
@@ -67,7 +69,7 @@ REQUIREMENTS_EXTRAS = {
 
 SOURCE_DIR = "mesmer"
 
-PACKAGES = find_packages(exclude=["tests"])
+PACKAGES = find_packages()
 PACKAGE_DATA = {}
 
 
