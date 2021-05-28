@@ -98,7 +98,7 @@ class _Config:
         self.max_iter_cv = cross_validation_max_iterations
 
 
-def calibrate_mesmer(
+def _calibrate_mesmer(
     esms,
     scenarios_to_train,
     target_variable,
