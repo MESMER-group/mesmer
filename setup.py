@@ -3,21 +3,16 @@ from setuptools import find_packages, setup
 # from setuptools.command.test import test as TestCommand
 
 PACKAGE_NAME = "mesmer"
-DESCRIPTION = "TBD Lea"
+DESCRIPTION = "Modular Earth System Model Emulator with spatially Resolved output"
 KEYWORDS = [
-    "TBD",
-    "Lea",
-    "python",
     "climate",
-    # "atmosphere",
-    # "simple climate model",
-    # "reduced complexity climate model",
-    # "data processing",
+    "atmosphere",
+    "Earth System Model Emulator",
 ]
 
 AUTHOR = "mesmer developpers"
-EMAIL = "TBD Lea"
-URL = "https://github.com/MESMER-group/mesmer" # use documentation url?
+EMAIL = "mesmer@env.ethz.ch"
+URL = "https://github.com/MESMER-group/mesmer"  # use documentation url?
 PROJECT_URLS = {
     "Source": "https://github.com/MESMER-group/mesmer",
     "Bug Reports": "https://github.com/MESMER-group/mesmer/issues",
@@ -54,7 +49,7 @@ REQUIREMENTS_TESTS = [
     "pytest-cov",
     "pytest-xdist",
 ]
-requirements_dev = [
+REQUIREMENTS_DEV = [
     "black",
     "flake8",
     "isort",
@@ -62,7 +57,7 @@ requirements_dev = [
 ]
 
 REQUIREMENTS_EXTRAS = {
-    "dev": requirements_dev,
+    "dev": REQUIREMENTS_DEV,
     "tests": REQUIREMENTS_TESTS,
 }
 
