@@ -24,7 +24,7 @@ PROJECT_URLS = {
     # "Documentation": "TBD",
 }
 
-LICENSE = "TBD Lea"
+LICENSE = "GPLv3+"
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
