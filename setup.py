@@ -3,35 +3,34 @@ from setuptools import find_packages, setup
 # from setuptools.command.test import test as TestCommand
 
 PACKAGE_NAME = "mesmer"
-DESCRIPTION = "TBD Lea"
+DESCRIPTION = "Modular Earth System Model Emulator with spatially Resolved output"
 KEYWORDS = [
-    "TBD",
-    "Lea",
-    "python",
     "climate",
-    # "atmosphere",
-    # "simple climate model",
-    # "reduced complexity climate model",
-    # "data processing",
+    "atmosphere",
+    "Earth System Model Emulator",
 ]
 
-AUTHOR = "Lea Beusch"
-EMAIL = "TBD Lea"
-URL = "TBD Lea"
+AUTHOR = "mesmer developpers"
+EMAIL = "mesmer@env.ethz.ch"
+URL = "https://github.com/MESMER-group/mesmer"  # use documentation url?
 PROJECT_URLS = {
-    "Bug Reports": "TBD Lea https://github.com/znicholls/netcdf-scm/issues",
-    # "Documentation": "TBD Lea https://openscm.readthedocs.io/en/latest",
-    "Source": "TBD Lea https://github.com/znicholls/netcdf-scm",
+    "Source": "https://github.com/MESMER-group/mesmer",
+    "Bug Reports": "https://github.com/MESMER-group/mesmer/issues",
+    # "Documentation": "TBD",
 }
 
-LICENSE = "TBD Lea"
+LICENSE = "GPLv3+"
 CLASSIFIERS = [
-    "TBD Lea",
     "Development Status :: 4 - Beta",
-    # "License :: OSI Approved :: BSD License",
-    # "Intended Audience :: Developers",
-    # "Operating System :: OS Independent",
-    # "Programming Language :: Python :: 3.7",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 
 
@@ -50,24 +49,22 @@ REQUIREMENTS_TESTS = [
     "pytest-cov",
     "pytest-xdist",
 ]
-requirements_dev = [
-    *[
-        "black",
-        "flake8",
-        "isort",
-    ],
+REQUIREMENTS_DEV = [
+    "black",
+    "flake8",
+    "isort",
     *REQUIREMENTS_TESTS,
 ]
 
 REQUIREMENTS_EXTRAS = {
-    "dev": requirements_dev,
+    "dev": REQUIREMENTS_DEV,
     "tests": REQUIREMENTS_TESTS,
 }
 
 
 SOURCE_DIR = "mesmer"
 
-PACKAGES = find_packages(exclude=["tests"])
+PACKAGES = find_packages()
 PACKAGE_DATA = {}
 
 
