@@ -81,7 +81,9 @@ class _Config:
         }
         self.method_lt_each_gp_sep = method_lt_each_gp_sep
 
-        # TODO: should this be hard-coded like this?
+        # Essentially metadata about predictors used. Maybe used for naming etc.
+        # TODO: work out where and how this is used in future so it can be defined
+        # more precisely.
         self.preds = {
             "tas": {
                 "gt": ["saod"],
