@@ -100,7 +100,8 @@ class _Config:
         self.max_iter_cv = cross_validation_max_iterations
 
 
-def _calibrate_mesmer(
+# TODO: remove draw realisations functionality
+def _calibrate_mesmer_and_draw_realisations(
     esms,
     scenarios_to_train,
     target_variable,
