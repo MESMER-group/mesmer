@@ -276,10 +276,10 @@ def _calibrate_mesmer(
             gv_novolc_T_s, target_variable, esm, cfg, save_params=False
         )
 
+        # TODO: remove because these emulations are not needed for calibration
         time_v = {}
         time_v["all"] = time[esm][scen]
 
-        # Are these necessary for calibration?
         LOGGER.info("Creating global variability emulations")
         preds_gv = {"time": time_v}
         emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=False)
