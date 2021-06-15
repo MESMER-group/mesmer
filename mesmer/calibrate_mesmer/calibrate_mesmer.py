@@ -6,10 +6,7 @@ import os
 import warnings
 
 from ..create_emulations import (
-    create_emus_g,
     create_emus_gt,
-    create_emus_gv,
-    create_emus_l,
     create_emus_lt,
     create_emus_lv,
 )
@@ -283,15 +280,6 @@ def _calibrate_and_draw_realisations(
         time_v = {}
         time_v["all"] = time[esm][scen]
 
-        LOGGER.info("Creating global variability emulations")
-        preds_gv = {"time": time_v}
-        emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=False)
-
-        LOGGER.info("Joining global trend and global variability emulations")
-        emus_g_T = create_emus_g(
-            emus_gt_T, emus_gv_T, params_gt_T, params_gv_T, cfg, save_emus=False
-        )
-
         LOGGER.info("Calibrating local trends module")
         preds = {
             "gttas": gt_T_s,
@@ -308,10 +296,6 @@ def _calibrate_and_draw_realisations(
         preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
         lt_s = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False
-        )
-        # TODO: remove emus_lt as only needed for emulations
-        emus_lt = create_emus_lt(
-            params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False
         )
 
         LOGGER.info("Calibrating local variability module")
