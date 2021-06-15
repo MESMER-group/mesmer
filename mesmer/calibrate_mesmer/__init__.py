@@ -51,8 +51,8 @@ class _Config:
         tas_local_trend_method,
         tas_local_variability_method,
         method_lt_each_gp_sep,
-        nr_emus_v,
-        seeds,
+        nr_emus_v,  # TODO: remove when we remove the emulation part
+        seeds,  # TODO: remove when we remove the emulation part
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
@@ -108,7 +108,7 @@ def _calibrate_mesmer_and_draw_realisations(
     reg_type,
     threshold_land,
     output_file,
-    scen_seed_offset_v,
+    scen_seed_offset_v,  # TODO: remove when we remove the emulation part
     cmip_data_root_dir,
     observations_root_dir,
     auxiliary_data_dir,
@@ -122,8 +122,10 @@ def _calibrate_mesmer_and_draw_realisations(
     tas_global_variability_method="AR",
     tas_local_trend_method="OLS",
     tas_local_variability_method="OLS_AR1_sci",
-    method_lt_each_gp_sep=True,  # TODO: work out what this is
-    nr_emus_v=100,  # Why is this required now?
+    # specify if the local trends method is applied to each grid point separately.
+    # Currently it must be set to True
+    method_lt_each_gp_sep=True,
+    nr_emus_v=100,  # TODO: remove when we remove the emulation part
     weight_scenarios_equally=True,
     cross_validation_max_iterations=30,
 ):
