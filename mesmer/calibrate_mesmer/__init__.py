@@ -304,12 +304,14 @@ def _calibrate_mesmer_and_draw_realisations(
         targs = {"tas": tas_s}
         params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=False)
 
-        # Are these necessary for calibration?
+        # Create forced local warming samples used for training the local variability
+        # module. Samples are cheap to create so not an issue to have here.
         LOGGER.info("Creating local trends emulations")
         preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
         lt_s = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False
         )
+        # TODO: remove emus_lt as only needed for emulations
         emus_lt = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=True, save_emus=False
         )
@@ -318,7 +320,8 @@ def _calibrate_mesmer_and_draw_realisations(
         # derive variability part induced by gv
         preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
 
-        # we need to create emulations to train local variability?
+        # Create local variability due to global variability warming samples
+        # used for training the local variability module. Samples are cheap to create so not an issue to have here.
         lv_gv_s = create_emus_lv(
             params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
         )
@@ -338,7 +341,7 @@ def _calibrate_mesmer_and_draw_realisations(
             lon, lat, ls, cfg, L_start=1750, L_end=2000, L_interval=250
         )  # better results with default values L, but like this much faster + less space needed
 
-        LOGGER.debug("Training local variability module on derived data")
+        LOGGER.debug("Finalising training of local variability module on derived data")
         targs_res_lv = {"tas": res_lv_s}
         params_lv = train_lv(
             {}, targs_res_lv, esm, cfg, save_params=False, aux=aux, params_lv=params_lv
