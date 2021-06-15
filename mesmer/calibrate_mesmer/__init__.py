@@ -124,6 +124,7 @@ def _calibrate_mesmer(
     weight_scenarios_equally=True,
     cross_validation_max_iterations=30,
 ):
+    """calibrate mesmer - additional predictors configuration. used for end-to-end test"""
 
     tas_g_dict = {}  # tas with global coverage
     GSAT_dict = {}  # global mean tas
