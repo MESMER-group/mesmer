@@ -10,7 +10,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from statsmodels.tsa.ar_model import AutoReg
 
-from mesmer.calibrate_mesmer import train_l_prepare_X_y_wgteq
+from .train_utils import train_l_prepare_X_y_wgteq
 
 
 def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):

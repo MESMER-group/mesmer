@@ -7,7 +7,7 @@ import sklearn.linear_model
 import xarray as xr
 import xarray.testing as xrt
 
-from mesmer.calibrate_mesmer import _calibrate_mesmer_and_draw_realisations
+from mesmer.calibrate_mesmer import _calibrate_and_draw_realisations
 
 
 def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
@@ -37,7 +37,7 @@ def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
         "auxiliary",
     )
 
-    _calibrate_mesmer_and_draw_realisations(
+    _calibrate_and_draw_realisations(
         esms=test_esms,
         scenarios_to_train=test_scenarios_to_train,
         target_variable=test_target_variable,
