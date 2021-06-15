@@ -236,11 +236,14 @@ def _calibrate_mesmer(
             GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=False
         )
 
-        # Do you need to create emulations in order to calibrate the global
-        # variability and local trends modules? Or do I misunderstand what is
-        # going on here?
+        # From params_gt_T, extract the global-trend so that the global
+        # variability, local trends, and local variability modules can be
+        # trained.
+        # In this case we're not actually creating emulations
         LOGGER.info("Creating global-trend emulations")
         preds_gt = {"time": time[esm]}
+
+        # TODO: rename function so the lack of emulation is clear
         emus_gt_T = create_emus_gt(
             params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=False
         )
