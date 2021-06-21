@@ -243,7 +243,7 @@ def _calibrate_and_draw_realisations(
         LOGGER.info("Creating global-trend emulations")
         preds_gt = {"time": time[esm]}
 
-        # TODO: rename function so the lack of emulation is clear
+        # TODO: remove use of emus_gt from this script. 
         emus_gt_T = create_emus_gt(
             params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=False
         )
@@ -276,7 +276,7 @@ def _calibrate_and_draw_realisations(
             gv_novolc_T_s, target_variable, esm, cfg, save_params=False
         )
 
-        # TODO: remove because these emulations are not needed for calibration
+        # TODO: remove because time_v is not needed for calibration
         time_v = {}
         time_v["all"] = time[esm][scen]
 
