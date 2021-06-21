@@ -8,6 +8,8 @@ import joblib
 import numpy as np
 
 
+# TODO: rename because there's actually no emulation involved in this process
+# (global trends always come from an external source)
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """
     Create global trend (emissions + volcanoes) emulations for specified ensemble type

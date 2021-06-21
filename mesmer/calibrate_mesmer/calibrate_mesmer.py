@@ -243,7 +243,7 @@ def _calibrate_and_draw_realisations(
         LOGGER.info("Creating global-trend emulations")
         preds_gt = {"time": time[esm]}
 
-        # TODO: remove use of emus_gt from this script. 
+        # TODO: remove use of emus_gt from this script.
         emus_gt_T = create_emus_gt(
             params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=False
         )
