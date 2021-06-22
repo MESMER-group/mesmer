@@ -325,9 +325,7 @@ def _calibrate_and_draw_realisations(
             params_lt,
             params_lv,
             params_gv_T,
-            seeds=seeds,  # TODO: remove
             land_fractions=ls["grid_l_m"],
             lat=lat["c"],
             lon=lon["c"],
-            time=time_s,  # TODO: remove
         )

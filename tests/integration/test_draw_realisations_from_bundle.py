@@ -7,6 +7,10 @@ import xarray as xr
 import mesmer.create_emulations
 
 
+# TODO:
+# - write test of what happens if you pass in a time dictionary of the wrong length
+
+
 def test_make_realisations(
     test_data_root_dir, test_mesmer_bundle, update_expected_files
 ):
@@ -15,21 +19,24 @@ def test_make_realisations(
         "test_make_realisations_expected_output.nc",
     )
 
+    tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1000000}}}
+
     # TODO: split out load_mesmer_bundle function
     params_lt = test_mesmer_bundle["params_lt"]
     params_lv = test_mesmer_bundle["params_lv"]
     params_gv_T = test_mesmer_bundle["params_gv"]
-    seeds = test_mesmer_bundle["seeds"]
     land_fractions = test_mesmer_bundle["land_fractions"]
-    time = test_mesmer_bundle["time"]
 
     # TODO: split out function to format e.g. ScmRun correctly (put in
     # mesmer-magicc repo, not here)
     # can hardcode scenario for now
     scenario = "ssp126"
-
-    hist_length = len(time["hist"])
-    scen_length = len(time[scenario])
+    ttime = {
+        "hist": np.arange(1850, 2014 + 1),
+        scenario: np.arange(2015, 2100 + 1),
+    }
+    hist_length = len(ttime["hist"])
+    scen_length = len(ttime[scenario])
 
     hist_tas = np.linspace(0, 1, hist_length)
     scen_tas = np.linspace(1, 2, scen_length)
@@ -48,9 +55,9 @@ def test_make_realisations(
         params_lv,
         params_gv_T,
         n_realisations=30,
-        seeds=seeds,
         land_fractions=land_fractions,
-        time=time,
+        seeds=tseeds,
+        time=ttime,
     )
 
     if update_expected_files:
