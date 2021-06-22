@@ -1,3 +1,7 @@
+# MESMER, land-climate dynamics group, S.I. Seneviratne
+# Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
+# Licensed under the GNU General Public License v3.0 or later see LICENSE or
+# https://www.gnu.org/licenses/
 """
 Functions to train global trend module of MESMER.
 """
@@ -67,7 +71,6 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     gen = cfg.gen
     method_gt = cfg.methods[targ]["gt"]
     preds_gt = cfg.preds[targ]["gt"]
-    dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(var.keys())
 
@@ -138,6 +141,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
     # save the global trend paramters if requested
     if save_params:
+        dir_mesmer_params = cfg.dir_mesmer_params
         dir_mesmer_params_gt = dir_mesmer_params + "global/global_trend/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_params_gt):

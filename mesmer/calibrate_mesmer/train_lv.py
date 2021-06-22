@@ -1,3 +1,7 @@
+# MESMER, land-climate dynamics group, S.I. Seneviratne
+# Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
+# Licensed under the GNU General Public License v3.0 or later see LICENSE or
+# https://www.gnu.org/licenses/
 """
 Functions to train local variability module of MESMER.
 """
@@ -10,7 +14,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from statsmodels.tsa.ar_model import AutoReg
 
-from mesmer.calibrate_mesmer import train_l_prepare_X_y_wgteq
+from .train_utils import train_l_prepare_X_y_wgteq
 
 
 def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
@@ -76,7 +80,6 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     pred_names = list(preds.keys())
 
     # specify necessary variables from config file
-    dir_mesmer_params = cfg.dir_mesmer_params
     ens_type_tr = cfg.ens_type_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
@@ -123,6 +126,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     if (
         save_params
     ):  # overwrites lv module if already exists, i.e., assumption: always lt before lv
+        dir_mesmer_params = cfg.dir_mesmer_params
         dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_params_lv):

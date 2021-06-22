@@ -1,3 +1,7 @@
+# MESMER, land-climate dynamics group, S.I. Seneviratne
+# Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
+# Licensed under the GNU General Public License v3.0 or later see LICENSE or
+# https://www.gnu.org/licenses/
 """
 Functions to train global variability module of MESMER.
 """
@@ -57,7 +61,6 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     ens_type_tr = cfg.ens_type_tr
     method_gv = cfg.methods[targ]["gv"]
     preds_gv = cfg.preds[targ]["gv"]
-    dir_mesmer_params = cfg.dir_mesmer_params
 
     scenarios_tr = list(gv.keys())
 
@@ -80,6 +83,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
 
     # save the global variability paramters if requested
     if save_params:
+        dir_mesmer_params = cfg.dir_mesmer_params
         dir_mesmer_params_gv = dir_mesmer_params + "global/global_variability/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_params_gv):

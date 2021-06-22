@@ -18,7 +18,7 @@ def test_make_realisations(
     # TODO: split out load_mesmer_bundle function
     params_lt = test_mesmer_bundle["params_lt"]
     params_lv = test_mesmer_bundle["params_lv"]
-    params_gv_T = test_mesmer_bundle["params_gv_T"]
+    params_gv_T = test_mesmer_bundle["params_gv"]
     seeds = test_mesmer_bundle["seeds"]
     land_fractions = test_mesmer_bundle["land_fractions"]
     time = test_mesmer_bundle["time"]
