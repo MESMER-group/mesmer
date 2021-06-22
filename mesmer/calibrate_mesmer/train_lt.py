@@ -91,7 +91,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     pred_names = list(preds.keys())
 
     # specify necessary variables from config file
-    dir_mesmer_params = cfg.dir_mesmer_params
     ens_type_tr = cfg.ens_type_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
@@ -176,6 +175,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # save the local trend paramters if requested
     if save_params:
+        dir_mesmer_params = cfg.dir_mesmer_params
         dir_mesmer_params_lt = dir_mesmer_params + "local/local_trends/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_params_lt):
