@@ -41,7 +41,7 @@ jobs:
       run: |
           which python
           make -B conda-environment
-          isort mesmer examples tests setup.py
+          isort --check mesmer examples tests setup.py
           black --check mesmer examples tests setup.py
           flake8 mesmer examples tests setup.py
 
