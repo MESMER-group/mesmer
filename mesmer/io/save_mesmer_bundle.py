@@ -58,10 +58,6 @@ def save_mesmer_bundle(
         grid latitudes (used to check land_fractions shape)
     lon : np.ndarray
         grid longitudes (used to check land_fractions shape)
-
-    Notes
-    -----
-    - In time dictionary, historical (hist) and scenario (e.g., ssp126) are kept as separate keys
     """
     assert land_fractions.shape[0] == lat.shape[0]
     assert land_fractions.shape[1] == lon.shape[0]
