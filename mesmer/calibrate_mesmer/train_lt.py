@@ -46,7 +46,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
@@ -61,7 +60,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (emission scenarios used for training, list of strs)
@@ -91,7 +89,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     pred_names = list(preds.keys())
 
     # specify necessary variables from config file
-    ens_type_tr = cfg.ens_type_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
     preds_lt = []
@@ -113,7 +110,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     params_lt = {}
     params_lt["targs"] = targ_names
     params_lt["esm"] = esm
-    params_lt["ens_type"] = ens_type_tr
     params_lt["method"] = method_lt
     params_lt["method_each_gp_sep"] = method_lt_each_gp_sep
     params_lt["preds"] = preds_lt
@@ -152,7 +148,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         params_lv = {}
         params_lv["targs"] = targ_names
         params_lv["esm"] = esm
-        params_lv["ens_type"] = ens_type_tr
         params_lv["method"] = method_lv
         params_lv["preds"] = preds_lv
         params_lv["scenarios"] = scenarios_tr
@@ -183,7 +178,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
             print("created dir:", dir_mesmer_params_lt)
         filename_parts = [
             "params_lt",
-            ens_type_tr,
             method_lt,
             *preds_lt,
             *targ_names,
@@ -204,7 +198,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
                 print("created dir:", dir_mesmer_params_lv)
         filename_parts = [
             "params_lv",
-            ens_type_tr,
             method_lv,
             *preds_lv,
             *targ_names,
@@ -230,7 +223,6 @@ def train_lt_extract_additional_params_OLS(params_lt, params_lv):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] ("OLS")
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
@@ -243,7 +235,6 @@ def train_lt_extract_additional_params_OLS(params_lt, params_lv):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (emission scenarios used for training, list of strs)
