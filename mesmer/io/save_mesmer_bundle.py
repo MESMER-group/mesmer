@@ -29,7 +29,6 @@ def save_mesmer_bundle(
 
         - ["targs"] (list of emulated variables, list of strs)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_lv : dict
@@ -38,7 +37,6 @@ def save_mesmer_bundle(
 
         - ["targs"] (list of variables which are emulated, list of strs)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_gv : dict
@@ -46,7 +44,6 @@ def save_mesmer_bundle(
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
