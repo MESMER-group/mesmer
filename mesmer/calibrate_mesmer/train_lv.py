@@ -50,7 +50,6 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (emission scenarios used for training, list of strs)
@@ -80,7 +79,6 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     pred_names = list(preds.keys())
 
     # specify necessary variables from config file
-    ens_type_tr = cfg.ens_type_tr
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
 
     preds_lv = []
@@ -109,7 +107,6 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
         params_lv = {}
         params_lv["targs"] = targ_names
         params_lv["esm"] = esm
-        params_lv["ens_type"] = ens_type_tr
         params_lv["method"] = method_lv
         params_lv["preds"] = preds_lv
         params_lv["scenarios"] = scenarios_tr
@@ -134,7 +131,6 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
             print("created dir:", dir_mesmer_params_lv)
         filename_parts = [
             "params_lv",
-            ens_type_tr,
             method_lv,
             *preds_lv,
             *targ_names,
@@ -157,7 +153,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
