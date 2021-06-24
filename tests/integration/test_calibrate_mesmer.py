@@ -1,4 +1,5 @@
 import os.path
+import shutil
 
 import joblib
 import numpy as np
@@ -52,28 +53,32 @@ def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
     )
 
     res = joblib.load(test_output_file)
-    exp = joblib.load(expected_output_file)
 
-    assert isinstance(res, dict)
-    assert type(res) == type(exp)
-    assert res.keys() == exp.keys()
+    if update_expected_files:
+        shutil.copyfile(test_output_file, expected_output_file)
+    else:
+        exp = joblib.load(expected_output_file)
 
-    def _check_dict(res, exp):
-        for k in res:
-            res_val = res[k]
-            exp_val = exp[k]
+        assert isinstance(res, dict)
+        assert type(res) == type(exp)
+        assert res.keys() == exp.keys()
 
-            assert type(res_val) == type(exp_val)
-            if isinstance(res_val, dict):
-                _check_dict(res_val, exp_val)
-            elif isinstance(res_val, sklearn.linear_model.LinearRegression):
-                # not sure if there's a better way to test this...
-                npt.assert_allclose(res_val.coef_, exp_val.coef_)
-            elif isinstance(res_val, np.ndarray):
-                npt.assert_allclose(res_val, exp_val)
-            elif isinstance(res_val, xr.DataArray):
-                xrt.assert_allclose(res_val, exp_val)
-            else:
-                assert res_val == exp_val, k
+        def _check_dict(res, exp):
+            for k in res:
+                res_val = res[k]
+                exp_val = exp[k]
 
-    _check_dict(res, exp)
+                assert type(res_val) == type(exp_val)
+                if isinstance(res_val, dict):
+                    _check_dict(res_val, exp_val)
+                elif isinstance(res_val, sklearn.linear_model.LinearRegression):
+                    # not sure if there's a better way to test this...
+                    npt.assert_allclose(res_val.coef_, exp_val.coef_)
+                elif isinstance(res_val, np.ndarray):
+                    npt.assert_allclose(res_val, exp_val)
+                elif isinstance(res_val, xr.DataArray):
+                    xrt.assert_allclose(res_val, exp_val)
+                else:
+                    assert res_val == exp_val, k
+
+        _check_dict(res, exp)
