@@ -6,7 +6,6 @@ import xarray as xr
 
 import mesmer.create_emulations
 
-
 # TODO:
 # - write test of what happens if you pass in a time dictionary of the wrong length
 

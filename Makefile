@@ -43,6 +43,10 @@ black: $(VENV_DIR)  ## auto-format the code using black
 flake8: $(VENV_DIR)  ## lint the code using flake8
 	$(VENV_DIR)/bin/flake8 $(FILES_TO_FORMAT_PYTHON)
 
+.PHONY: isort
+isort: $(VENV_DIR)  ## lint the code using flake8
+	$(VENV_DIR)/bin/isort $(FILES_TO_FORMAT_PYTHON)
+
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
 	$(VENV_DIR)/bin/pytest --cov -r a -v --cov-report term-missing
