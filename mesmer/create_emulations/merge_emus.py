@@ -32,7 +32,6 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
         - ["targ"] (emulated variable, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
     params_gv : dict
         dictionary containing the calibrated parameters for the global variability
@@ -40,7 +39,6 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
     cfg : module
         config file containing metadata
@@ -87,14 +85,6 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         )
         emus_g = []
 
-    if params_gt["ens_type"] == params_gv["ens_type"]:
-        ens_type = params_gt["ens_type"]
-    else:
-        warnings.warn(
-            "The ensemble types do not match. No global emulation is created."
-        )
-        emus_g = []
-
     # save the global emus if requested
     if save_emus:
         dir_mesmer_emus = cfg.dir_mesmer_emus
@@ -106,7 +96,6 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
         filename_parts = [
             "emus_g",
-            ens_type,
             "gt",
             params_gt["method"],
             *params_gt["preds"],
@@ -146,7 +135,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
         - ["targs"] (list of emulated variables, list of strs)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
     params_lv : dict
         dictionary containing the calibrated parameters for the local variability
@@ -154,7 +142,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
         - ["targs"] (list of variables which are emulated, list of strs)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
     cfg : module
         config file containing metadata
@@ -212,12 +199,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
         )
         emus_l = []
 
-    if params_lt["ens_type"] == params_lv["ens_type"]:
-        ens_type = params_lt["ens_type"]
-    else:
-        warnings.warn("The ensemble types do not match. No local emulation is created.")
-        emus_l = []
-
     # save the global emus if requested
     if save_emus:
         dir_mesmer_emus_l = dir_mesmer_emus + "local/"
@@ -227,7 +208,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
             print("created dir:", dir_mesmer_emus_l)
         filename_parts = [
             "emus_l",
-            ens_type,
             "lt",
             params_lt["method"],
             *params_lt["preds"],
