@@ -30,7 +30,6 @@ class _Config:
         reference_period_type,
         reference_period_start_year,
         reference_period_end_year,
-        ens_type_tr,
         tas_global_trend_method,
         hfds_global_trend_method,
         tas_global_variability_method,
@@ -55,7 +54,6 @@ class _Config:
             "start": reference_period_start_year,
             "end": reference_period_end_year,
         }
-        self.ens_type_tr = ens_type_tr
         self.methods = {
             "tas": {
                 "gt": tas_global_trend_method,
@@ -102,7 +100,6 @@ def _calibrate_and_draw_realisations(
     reference_period_type="individ",
     reference_period_start_year="1850",
     reference_period_end_year="1900",
-    ens_type_tr="msic",  # TODO: work out what this is
     tas_global_trend_method="LOWESS_OLSVOLC",
     hfds_global_trend_method="LOWESS",
     tas_global_variability_method="AR",
@@ -154,7 +151,6 @@ def _calibrate_and_draw_realisations(
         reference_period_type,
         reference_period_start_year,
         reference_period_end_year,
-        ens_type_tr,
         tas_global_trend_method,
         hfds_global_trend_method,
         tas_global_variability_method,
