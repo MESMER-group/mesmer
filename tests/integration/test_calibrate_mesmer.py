@@ -18,7 +18,9 @@ def _check_dict(first, second, first_name, second_name):
             second_val = second[k]
         except KeyError:
             raise AssertionError(
-                "Key `{}` is in '{}' but is not in '{}'".format(k, first_name, second_name)
+                "Key `{}` is in '{}' but is not in '{}'".format(
+                    k, first_name, second_name
+                )
             )
 
         assert type(first_val) == type(second_val)
