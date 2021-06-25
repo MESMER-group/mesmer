@@ -18,7 +18,7 @@ def _check_dict(first, second, first_name, second_name):
             second_val = second[k]
         except KeyError:
             raise AssertionError(
-                "Key `{}` is in {} but is not in {}".format(k, first_name, second_name)
+                "Key `{}` is in '{}' but is not in '{}'".format(k, first_name, second_name)
             )
 
         assert type(first_val) == type(second_val)
@@ -88,6 +88,6 @@ def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
         assert res.keys() == exp.keys()
 
         # check all keys of res match exp
-        _check_dict(res, exp, "res", "exp")
+        _check_dict(res, exp, "result", "expected")
         # check all keys of exp match res
-        _check_dict(exp, res, "exp", "res")
+        _check_dict(exp, res, "expected", "result")
