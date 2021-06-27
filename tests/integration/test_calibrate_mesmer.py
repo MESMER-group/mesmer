@@ -4,7 +4,6 @@ import shutil
 import joblib
 import numpy as np
 import numpy.testing as npt
-import sklearn.linear_model
 import xarray as xr
 import xarray.testing as xrt
 
@@ -26,9 +25,6 @@ def _check_dict(first, second, first_name, second_name):
         assert type(first_val) == type(second_val)
         if isinstance(first_val, dict):
             _check_dict(first_val, second_val, first_name, second_name)
-        elif isinstance(first_val, sklearn.linear_model.LinearRegression):
-            # not sure if there's a better way to test this...
-            npt.assert_allclose(first_val.coef_, second_val.coef_)
         elif isinstance(first_val, np.ndarray):
             npt.assert_allclose(first_val, second_val)
         elif isinstance(first_val, xr.DataArray):
