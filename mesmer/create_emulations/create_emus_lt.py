@@ -187,12 +187,12 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     nr_ts = len(
         preds_lt[pred_names[0]][scen]
     )  # nr_ts could vary for different scenarios but is the same for all predictors
-    nr_gp = len(params_lt["full_model"])
 
     emus_lt = {}
     for targ in params_lt["targs"]:
-        emus_lt[targ] = np.zeros([nr_ts, nr_gp])  # nr_ts x nr_gp
-        for gp in params_lt["full_model"].keys():
+        nr_gps = len(params_lt["intercept"][targ])
+        emus_lt[targ] = np.zeros([nr_ts, nr_gps])
+        for gp in np.arange(nr_gps):
             pred_vals = [
                 params_lt["coef_" + pred][targ][gp] * preds_lt[pred][scen]
                 for pred in params_lt["preds"]
