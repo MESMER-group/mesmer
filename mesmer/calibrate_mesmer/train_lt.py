@@ -77,6 +77,10 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         - identified parameters are valid for all training scenarios
         - if historical data is used for training, it has its own scenario
         - either each scenario is given the same weight or each time step
+    - TODO:
+        - find better way to deal with the assumption that local trend predictors belong
+        before local variability predictors (e.g., add check on whether this assumption
+        is fulfilled or rewrite code such that no longer necessary)
 
     """
 
