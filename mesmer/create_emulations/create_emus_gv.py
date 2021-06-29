@@ -23,12 +23,11 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
-          train_gv_T_ens_type_method() function)
+          train_gv_T_method() function)
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
@@ -79,9 +78,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[0]
 
         # apply the chosen method
-        if (
-            params_gv["method"] == "AR"
-        ):  # for now irrespective of ens_type and scenario. Could still be adapted later if necessary
+        if params_gv["method"] == "AR":
             emus_gv[scen] = create_emus_gv_AR(
                 params_gv, nr_emus_v, nr_ts_emus_v, seed_all_scens[scen]["gv"]
             )
@@ -98,7 +95,6 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             print("created dir:", dir_mesmer_emus_gv)
         filename_parts = [
             "emus_gv",
-            params_gv["ens_type"],
             params_gv["method"],
             *params_gv["preds"],
             params_gv["targ"],
@@ -121,7 +117,6 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)

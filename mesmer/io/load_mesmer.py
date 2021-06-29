@@ -17,7 +17,6 @@ import joblib
 def load_mesmer_output(
     name,
     cfg,
-    ens_type_str="_",
     method_str="_",
     preds_str="_",
     targs_str="_",
@@ -33,8 +32,6 @@ def load_mesmer_output(
         saved MESMER output to load (e.g., "params_lt", "emus_lv", "emus_g")
     cfg : module
         config file containing metadata
-    ens_type_str : str, optional
-        ensemble type (e.g., "msic")
     method_str : str, optional
         method (e.g., "OLS")
     preds_str : st, optional
@@ -101,7 +98,7 @@ def load_mesmer_output(
         os.path.join(
             dir_mesmer,
             mid_path,
-            f"{name}*{ens_type_str}*{method_str}*{preds_str}*{targs_str}*{esm_str}*{scen_str}*.pkl",
+            f"{name}*{method_str}*{preds_str}*{targs_str}*{esm_str}*{scen_str}*.pkl",
         )
     )
 

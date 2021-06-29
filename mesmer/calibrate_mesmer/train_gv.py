@@ -42,12 +42,11 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
 
         - ["targ"] (emulated variable, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (emission scenarios used for training, list of strs)
         - [xx] additional params depend on method employed, specified in
-          ``train_gv_T_ens_type_method()`` function
+          ``train_gv_T_method()`` function
 
     Notes
     -----
@@ -58,7 +57,6 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     """
 
     # specify necessary variables from config file
-    ens_type_tr = cfg.ens_type_tr
     method_gv = cfg.methods[targ]["gv"]
     preds_gv = cfg.preds[targ]["gv"]
 
@@ -68,15 +66,12 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     params_gv = {}
     params_gv["targ"] = targ
     params_gv["esm"] = esm
-    params_gv["ens_type"] = ens_type_tr
     params_gv["method"] = method_gv
     params_gv["preds"] = preds_gv
     params_gv["scenarios"] = scenarios_tr
 
     # apply the chosen method
-    if (
-        params_gv["method"] == "AR"
-    ):  # for now irrespective of ens_type. Could still be adapted later if necessary
+    if params_gv["method"] == "AR":
         params_gv = train_gv_AR(params_gv, gv)
     else:
         raise ValueError("The chosen method is currently not implemented.")
@@ -91,7 +86,6 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
             print("created dir:", dir_mesmer_params_gv)
         filename_parts = [
             "params_gv",
-            ens_type_tr,
             method_gv,
             *preds_gv,
             targ,
@@ -116,7 +110,6 @@ def train_gv_AR(params_gv, gv):
 
         - ["targ"] (variable, i.e., tas or tblend, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, i.e., ic or ms, str)
         - ["method"] (applied method, i.e., AR, str)
         - ["scenarios"] (emission scenarios used for training, list of strs)
     gv : dict

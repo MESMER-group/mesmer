@@ -25,7 +25,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
@@ -133,7 +132,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
             print("created dir:", dir_mesmer_emus_lt)
         filename_parts = [
             "emus_lt",
-            params_lt["ens_type"],
             params_lt["method"],
             *params_lt["preds"],
             *params_lt["targs"],
@@ -156,7 +154,6 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)

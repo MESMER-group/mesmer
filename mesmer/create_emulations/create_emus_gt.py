@@ -26,13 +26,12 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
 
         - ["targ"] (emulated variable, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - ["time"] (1d array of years, np.ndarray)
         - [xx] (additional keys depend on employed method and are listed in
-          train_gt_T_ens_type_method() function)
+          train_gt_T_method() function)
     preds_gt : dict
         nested dictionary of predictors for global trend with keys
 
@@ -101,7 +100,6 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
             print("created dir:", dir_mesmer_emus_gt)
         filename_parts = [
             "emus_gt",
-            params_gt["ens_type"],
             params_gt["method"],
             *params_gt["preds"],
             params_gt["targ"],
