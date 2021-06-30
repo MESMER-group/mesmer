@@ -31,7 +31,8 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
-        - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
+        scenario)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
@@ -68,7 +69,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             " config file. The emulations cannot be created."
         )
 
-    # set up dictionary for emulations of global variability with emulated scenarios as keys
+    # set up dict for emulations of global variability with emulated scenarios as keys
     emus_gv = {}
 
     for scen in scens_out:
@@ -84,7 +85,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             )
         else:
             raise ValueError("The chosen method is currently not implemented.")
-            # if the emulations should depend on the scenario, scen needs to be passed to the fct
+            # if the emuus should depend on the scen, scen needs to be passed to the fct
 
     # save the global variability emus if requested
     if save_emus:
@@ -155,8 +156,9 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     ar_coefs = params_gv["AR_coefs"]
     ar_lags = np.arange(1, params_gv["AR_order_sel"] + 1, dtype=int)
 
-    # if AR(0) process chosen, no AR_coefs are available -> to have code run nevertheless
-    # ar_coefs and ar_lags are set to 0 (-> emus are created with ar_int + innovs)
+    # if AR(0) process chosen, no AR_coefs are available -> to have code run
+    # nevertheless ar_coefs and ar_lags are set to 0 (-> emus are created with
+    # ar_int + innovs)
     if len(ar_coefs) == 0:
         ar_coefs = [0]
         ar_lags = [0]

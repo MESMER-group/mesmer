@@ -51,11 +51,9 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     Notes
     -----
     - Assumption
-
         - if historical data is used for training, it has its own scenario
 
     - TODO:
-
         - add ability to weigh samples differently than equal weight for
         each scenario
 
@@ -68,7 +66,8 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
 
     scenarios_tr = list(gv.keys())
 
-    # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
+    # initialize parameters dictionary and fill in the metadata which does not depend on
+    # the applied method
     params_gv = {}
     params_gv["targ"] = targ
     params_gv["esm"] = esm
@@ -144,15 +143,15 @@ def train_gv_AR(params_gv, gv):
     Notes
     -----
     - Assumptions
-
-        - number of runs per scenario and the number of time steps in each scenario can vary
+        - number of runs per scenario and the number of time steps in each scenario can
+        vary
         - each scenario receives equal weight during training
 
     """
 
     # specifiy parameters employed for AR process fitting
-    max_lag = 12  # rather arbitrarily chosen in trade off between allowing enough lags and computational time
-    # open to change
+    max_lag = 12  # rather arbitrarily chosen in trade off between allowing enough lags
+    # and computational time; open to change
     sel_crit = "bic"  # selection criterion
     params_gv["max_lag"] = max_lag
     params_gv["sel_crit"] = sel_crit
@@ -169,16 +168,15 @@ def train_gv_AR(params_gv, gv):
             run_ar_lags = ar_select_order(
                 gv[scen][run], maxlag=max_lag, ic=sel_crit, old_names=False
             ).ar_lags
-            if (
-                len(run_ar_lags) > 0
-            ):  # if order > 0 is selected,add selected order to vector
+            # if order > 0 is selected,add selected order to vector
+            if len(run_ar_lags) > 0:
                 AR_order_runs_tmp[run] = run_ar_lags[-1]
 
         AR_order_scens_tmp[scen_idx] = np.percentile(
             AR_order_runs_tmp, q=50, interpolation="nearest"
         )
-        # interpolation is not a good way to go here because it could lead to an AR order that
-        # wasn't chosen by run -> avoid it by just taking nearest
+        # interpolation is not a good way to go here because it could lead to an AR
+        # order that wasn't chosen by run -> avoid it by just taking nearest
 
     AR_order_sel = int(np.percentile(AR_order_scens_tmp, q=50, interpolation="nearest"))
 
@@ -214,7 +212,7 @@ def train_gv_AR(params_gv, gv):
     arma_process = sm.tsa.ArmaProcess(ar, ma)
     if not arma_process.isstationary:
         raise ValueError(
-            "The fitted AR process is not stationary. Another solution needs to be found."
+            "The fitted AR process is not stationary. Another solution is needed."
         )
 
     return params_gv
