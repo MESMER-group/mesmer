@@ -79,7 +79,9 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     if params_gv["method"] == "AR" and wgt_scen_tr_eq:
         params_gv = train_gv_AR(params_gv, gv)
     else:
-        raise ValueError("The chosen method is currently not implemented.")
+        raise ValueError(
+            "The chosen method and / or weighting approach is currently not implemented."
+        )
 
     # save the global variability paramters if requested
     if save_params:
