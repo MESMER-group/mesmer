@@ -25,7 +25,8 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     preds : dict
         empty dictionary if none, else nested dictionary of predictors with keys
 
-        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
+        scenario)
     targs : dict
         nested dictionary of targets with keys
 
@@ -71,6 +72,9 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     - Disclaimer:
         - currently no method with preds implemented; but already have in there for
           consistency
+    - TODO:
+        - add ability to weight samples differently than equal weight for each scenario
+        in AR process
 
     """
 
@@ -85,7 +89,8 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     # check if any preds from pr
     if len(params_lv) > 0:
         [preds_lv.append(pred) for pred in params_lv["preds"]]
-    # for now only gv implemented, but could easily extend to rv (regional) lv (local)  if wanted such preds
+    # for now only gv implemented, but could easily extend to rv (regional) lv (local)
+    # if wanted such preds
     for pred in pred_names:
         if "gv" in pred:
             preds_lv.append(pred)
@@ -112,17 +117,21 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
         params_lv["scenarios"] = scenarios_tr
         params_lv["part_model_in_lt"] = False
 
-    if "AR1_sci" in method_lv:
+    if "AR1_sci" in method_lv and wgt_scen_tr_eq:
 
         # assumption: target values I feed in here is already ready for AR1_sci method
-        # if were to add any other method before (ie introduce Link et al method for large-scale teleconnections),
-        # would have to execute it first & fit this one on residuals
+        # if were to add any other method before (ie introduce Link et al method for
+        # large-scale teleconnections), would have to execute it first & fit this one on
+        # residuals
 
         params_lv = train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg)
+    else:
+        raise ValueError(
+            "The chosen method and / or weighting approach is not implemented."
+        )
 
-    if (
-        save_params
-    ):  # overwrites lv module if already exists, i.e., assumption: always lt before lv
+    # overwrites lv module if already exists, i.e., assumption: always lt before lv
+    if save_params:
         dir_mesmer_params = cfg.dir_mesmer_params
         dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
         # check if folder to save params in exists, if not: make it
@@ -183,8 +192,9 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     Notes
     -----
     - Assumptions:
-        - do for each target variable independently.
+        - do for each target variable independently
         - the variability is Gaussian
+        - each scenario receives the same weight during training
     - Potential TODO:
         - add possibility to account for cross-correlation between different variables
           (i.e., joint instead of independent emulation)
@@ -197,21 +207,19 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     params_lv["AR1_coef"] = {}
     params_lv["AR1_std_innovs"] = {}
     params_lv["L"] = {}  # localisation radius
-    params_lv[
-        "ecov"
-    ] = {}  # empirical cov matrix of the local variability trained on here
+    # empirical cov matrix of the local variability trained on here
+    params_lv["ecov"] = {}
     params_lv["loc_ecov"] = {}  # localized empirical cov matrix
-    params_lv[
-        "loc_ecov_AR1_innovs"
-    ] = {}  # localized empirical cov matrix of the innovations of the AR(1) process
+    # localized empirical cov matrix of the innovations of the AR(1) process
+    params_lv["loc_ecov_AR1_innovs"] = {}
 
-    # largely ignore prepared targets and use original ones instead because in original easier
-    # to loop over individ runs / scenarios
+    # largely ignore prepared targets and use original ones instead because in original
+    # easier to loop over individ runs / scenarios
     targ_names = list(targs.keys())
     scenarios_tr = list(targs[targ_names[0]].keys())
     nr_scens = len(scenarios_tr)
 
-    # fit parameters for each target individualy
+    # fit parameters for each target individually
     for t, targ_name in enumerate(targ_names):
         targ = targs[targ_name]
         nr_gps = y.shape[1]
@@ -228,32 +236,30 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             AR1_coef_runs = np.zeros(nr_gps)
             AR1_std_innovs_runs = np.zeros(nr_gps)
 
-            for run in np.arange(
-                nr_runs
-            ):  # check if doesn't use up too much time. I assume it will take too much
+            for run in np.arange(nr_runs):
                 for gp in np.arange(nr_gps):
                     AR1_model = AutoReg(
                         targ[scen][run, :, gp], lags=1, old_names=False
                     ).fit()
                     AR1_int_runs[gp] += AR1_model.params[0] / nr_runs
                     AR1_coef_runs[gp] += AR1_model.params[1] / nr_runs
-                    AR1_std_innovs_runs[gp] += (
-                        np.sqrt(AR1_model.sigma2) / nr_runs
-                    )  # sqrt of variance = standard deviation
+                    # sqrt of variance = standard deviation
+                    AR1_std_innovs_runs[gp] += np.sqrt(AR1_model.sigma2) / nr_runs
 
             params_lv["AR1_int"][targ_name] += AR1_int_runs / nr_scens
             params_lv["AR1_coef"][targ_name] += AR1_coef_runs / nr_scens
             params_lv["AR1_std_innovs"][targ_name] += AR1_std_innovs_runs / nr_scens
 
-        # determine localization radius, empirical cov matrix, and localized empirical cov matrix
+        # determine localization radius, empirical cov matrix, and localized ecov matrix
         (
             params_lv["L"][targ_name],
             params_lv["ecov"][targ_name],
             params_lv["loc_ecov"][targ_name],
         ) = train_lv_find_localized_ecov(y_targ, wgt_scen_eq, aux, cfg)
 
-        # ATTENTION: STILL NEED TO CHECK IF THIS IS TRUE. I UNFORTUNATELY LEARNED THAT I WROTE THIS FORMULA DIFFERENTLY
-        # IN THE ESD PAPER!!!!!!! (But I am pretty sure that code is correct and the error is in the paper)
+        # ATTENTION: STILL NEED TO CHECK IF THIS IS TRUE. I UNFORTUNATELY LEARNED THAT I
+        # WROTE THIS FORMULA DIFFERENTLY IN THE ESD PAPER!!!!!!! (But I am pretty sure
+        # that code is correct and the error is in the paper)
         # compute localized cov matrix of the innovations of the AR(1) process
         loc_ecov_AR1_innovs = np.zeros(params_lv["loc_ecov"][targ_name].shape)
         for i in np.arange(nr_gps):
@@ -265,7 +271,8 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
                 )
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_ecov_AR1_innovs
-        # derive the localized ecov of the innovations of the AR(1) process (ie the one I will later draw innovs from)
+        # derive the localized ecov of the innovations of the AR(1) process (ie the one
+        # I will later draw innovs from)
 
     return params_lv
 
@@ -284,8 +291,8 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
-        - ["phi_gc"] (dict with localisation radii as keys and each containing a 2d array)
-          (gp, gp) of of Gaspari-Cohn correlation matrix
+        - ["phi_gc"] (dict with localisation radii as keys and each containing a 2d
+        array (gp, gp) of of Gaspari-Cohn correlation matrix
     cfg : module
         config file containing metadata
 
@@ -325,7 +332,8 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     while (idx_break is False) and (L_sel < L_set[-1]):
         # experience tells: once stop selecting larger loc radii, will not start again
-        # better to stop once max is reached (to limit computational effort + amount of singular matrices)
+        # better to stop once max is reached (to limit computational effort + amount of
+        # singular matrices)
         L = L_set[idx_L]
         llh_cv_sum[L] = 0
 
@@ -339,9 +347,8 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
             # compute ecov and likelihood of out fold to be drawn from it
             ecov = np.cov(y_est, rowvar=False, aweights=wgt_scen_eq_est)
             loc_ecov = aux["phi_gc"][L] * ecov
-            mean_0 = np.zeros(
-                aux["phi_gc"][L].shape[0]
-            )  # we want the mean of the res to be 0
+            # we want the mean of the res to be 0
+            mean_0 = np.zeros(aux["phi_gc"][L].shape[0])
 
             llh_cv_each_sample = multivariate_normal.logpdf(
                 y_cv, mean=mean_0, cov=loc_ecov, allow_singular=True
@@ -351,7 +358,8 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
             # -> reassuring that saw that in these ESMs L values where matrix
             # is not singular yet can end up being selected
 
-            # each cv sample gets its own likelihood -> can sum them up for overall likelhood
+            # each cv sample gets its own likelihood -> can sum them up for overall
+            # likelihood
             # sum over all samples = wgt average * nr_samples
             llh_cv_fold_sum = np.average(
                 llh_cv_each_sample, weights=wgt_scen_eq_cv
