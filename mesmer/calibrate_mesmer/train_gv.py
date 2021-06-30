@@ -54,8 +54,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
         - if historical data is used for training, it has its own scenario
 
     - TODO:
-        - add ability to weigh samples differently than equal weight for
-        each scenario
+        - add ability to weight samples differently than equal weight for each scenario
 
     """
 
