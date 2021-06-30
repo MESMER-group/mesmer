@@ -201,9 +201,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         joblib.dump(params_lt, filename_params_lt)
 
         # check if local variability parameters need to be saved too
-        if (
-            len(params_lv) > 0
-        ):  # overwrites lv module if already exists, i.e., assumption: lt before lv
+        # overwrites lv module if already exists, i.e., assumption: lt before lv
+        if len(params_lv) > 0:
             dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
             # check if folder to save params in exists, if not: make it
             if not os.path.exists(dir_mesmer_params_lv):
