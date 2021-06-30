@@ -26,7 +26,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     preds : dict
         nested dictionary of predictors with keys
 
-        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
+        scenario)
     targs : dict
         nested dictionary of targets with keys
 
@@ -96,7 +97,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     preds_lt = []
     preds_lv = []
-    # for now only gt/gv implemented, but could easily extend to rt/rv (regional) lt/lv (local)  if wanted such preds
+    # for now only gt/gv implemented, but could easily extend to rt/rv (regional) lt/lv
+    # (local)  if wanted such preds
     for pred in pred_names:
         if "gt" in pred:
             preds_lt.append(pred)
@@ -105,7 +107,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     scenarios_tr = list(targs[targ_name].keys())
 
-    # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
+    # initialize parameters dictionary and fill in the metadata which does not depend on
+    # the applied method
     params_lt = {}
     params_lt["targs"] = targ_names
     params_lt["esm"] = esm
@@ -114,7 +117,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     params_lt["preds"] = preds_lt
     params_lt["scenarios"] = scenarios_tr
 
-    # check if parameters for local variability module have been derived too, if yes, initialize params_lv
+    # check if parameters for local variability module have been derived too, if yes,
+    # initialize params_lv
     if method_lt in method_lv:
         params_lt["full_model_contains_lv"] = True
 
@@ -131,7 +135,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         params_lt["full_model_contains_lv"] = False
         params_lv = {}  # only initiate empty dictionary
 
-    # prepare predictors and targets such that they can be ingested into the training function
+    # prepare predictors and targets such that they can be ingested into the training
+    # function
     X, y, wgt_scen_eq = train_l_prepare_X_y_wgteq(preds, targs)
 
     # prepare weights for individual runs
@@ -198,7 +203,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         # check if local variability parameters need to be saved too
         if (
             len(params_lv) > 0
-        ):  # overwrites lv module if already exists, i.e., assumption: always lt before lv
+        ):  # overwrites lv module if already exists, i.e., assumption: lt before lv
             dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
             # check if folder to save params in exists, if not: make it
             if not os.path.exists(dir_mesmer_params_lv):
