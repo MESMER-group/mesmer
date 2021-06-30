@@ -125,8 +125,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - ["AR_int"] (intercept of the AR model, float)
         - ["AR_coefs"] (coefficients of the AR model for the lags which are contained in
           the selected AR model, list of floats)
-        - ["AR_lags"] (AR lags which are contained in the selected AR model, list of
-          ints)
+        - ["AR_order_sel"] (selected AR order, int)
         - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
     nr_emus_v : int
