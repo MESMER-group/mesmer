@@ -20,7 +20,7 @@
 
 project = "mesmer"
 copyright = "(c) 2021 ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne)"
-author = "Lea Beusch, Zeb Nicholls, Mathias Hauser"
+author = "Lea Beusch, Zebedee Nicholls, Mathias Hauser"
 
 # The full version, including alpha/beta/rc tags
 release = "dev"
