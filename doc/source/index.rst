@@ -14,7 +14,25 @@ Welcome to MESMER's documentation!
    installation
    api
 
-**MESMER** - Modular Earth System Model Emulator with spatially Resolved output.
+MESMER: spatially resolved Earth System Model emulations
+--------------------------------------------------------
+**MESMER** is a **M**\ odular **E**\ arth **S**\ ystem **M**\ odel **E**\ mulator with
+spatially **R**\ esolved output, which stochastically creates Earth System
+Model-specific spatio-temporally correlated climate variable field realizations at a
+negligible computational cost.
+
+In combination with a global mean temperature emulator, MESMER can account for all three
+major sources of climate change projection uncertainty at the local scale: (i) internal
+variability uncertainty, i.e., unforced natural climate variability; (ii) forced climate
+response uncertainty, i.e., the Earth’s system response to forced natural changes (solar
+and volcanic) and human influences (greenhouse gas and aerosol emissions, land use
+changes etc.); and (iii) emission uncertainty, i.e., uncertainty in the emission pathway
+humans decide to follow. An interface between MESMER and global mean temperature
+emulators can be found at https://github.com/MESMER-group/mesmer-openscmrunner.
+
+MESMER is under active development both scientifically and technically. Future work will
+increase its user friendliness and extend its emulation capabilities to include
+additional emulation methods and target climate variables.
 
 Citing MESMER
 -------------
