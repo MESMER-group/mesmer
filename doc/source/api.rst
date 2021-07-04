@@ -49,7 +49,6 @@ Train mesmer
    ~calibrate_mesmer.train_gv_AR
    ~calibrate_mesmer.train_gt_ic_LOWESS
    ~calibrate_mesmer.train_gt_ic_OLSVOLC
-   ~calibrate_mesmer.train_lt_extract_additional_params_OLS
    ~calibrate_mesmer.train_lv_AR1_sci
    ~calibrate_mesmer.train_lv_find_localized_ecov
    ~calibrate_mesmer.train_l_prepare_X_y_wgteq
