@@ -5,22 +5,13 @@ import logging
 import os
 import warnings
 
-from ..create_emulations import (
-    create_emus_gt,
-    create_emus_lt,
-    create_emus_lv,
-)
-from ..io import (
-    load_cmipng,
-    load_phi_gc,
-    load_regs_ls_wgt_lon_lat,
-    save_mesmer_bundle,
-)
-from .train_gv import train_gv
+from ..create_emulations import create_emus_gt, create_emus_lt, create_emus_lv
+from ..io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
+from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
 from .train_gt import train_gt
+from .train_gv import train_gv
 from .train_lt import train_lt
 from .train_lv import train_lv
-from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +30,6 @@ class _Config:
         reference_period_type,
         reference_period_start_year,
         reference_period_end_year,
-        ens_type_tr,
         tas_global_trend_method,
         hfds_global_trend_method,
         tas_global_variability_method,
@@ -64,7 +54,6 @@ class _Config:
             "start": reference_period_start_year,
             "end": reference_period_end_year,
         }
-        self.ens_type_tr = ens_type_tr
         self.methods = {
             "tas": {
                 "gt": tas_global_trend_method,
@@ -111,7 +100,6 @@ def _calibrate_and_draw_realisations(
     reference_period_type="individ",
     reference_period_start_year="1850",
     reference_period_end_year="1900",
-    ens_type_tr="msic",  # TODO: work out what this is
     tas_global_trend_method="LOWESS_OLSVOLC",
     hfds_global_trend_method="LOWESS",
     tas_global_variability_method="AR",
@@ -163,7 +151,6 @@ def _calibrate_and_draw_realisations(
         reference_period_type,
         reference_period_start_year,
         reference_period_end_year,
-        ens_type_tr,
         tas_global_trend_method,
         hfds_global_trend_method,
         tas_global_variability_method,
@@ -334,9 +321,7 @@ def _calibrate_and_draw_realisations(
             params_lt,
             params_lv,
             params_gv_T,
-            seeds=seeds,  # TODO: remove
             land_fractions=ls["grid_l_m"],
             lat=lat["c"],
             lon=lon["c"],
-            time=time_s,  # TODO: remove
         )

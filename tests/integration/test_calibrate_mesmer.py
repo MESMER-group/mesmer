@@ -1,13 +1,36 @@
 import os.path
+import shutil
 
 import joblib
 import numpy as np
 import numpy.testing as npt
-import sklearn.linear_model
 import xarray as xr
 import xarray.testing as xrt
 
 from mesmer.calibrate_mesmer import _calibrate_and_draw_realisations
+
+
+def _check_dict(first, second, first_name, second_name):
+    for k in first:
+        first_val = first[k]
+        try:
+            second_val = second[k]
+        except KeyError:
+            raise AssertionError(
+                "Key `{}` is in '{}' but is not in '{}'".format(
+                    k, first_name, second_name
+                )
+            )
+
+        assert type(first_val) == type(second_val)
+        if isinstance(first_val, dict):
+            _check_dict(first_val, second_val, first_name, second_name)
+        elif isinstance(first_val, np.ndarray):
+            npt.assert_allclose(first_val, second_val)
+        elif isinstance(first_val, xr.DataArray):
+            xrt.assert_allclose(first_val, second_val)
+        else:
+            assert first_val == second_val, k
 
 
 def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
@@ -52,28 +75,17 @@ def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
     )
 
     res = joblib.load(test_output_file)
-    exp = joblib.load(expected_output_file)
 
-    assert isinstance(res, dict)
-    assert type(res) == type(exp)
-    assert res.keys() == exp.keys()
+    if update_expected_files:
+        shutil.copyfile(test_output_file, expected_output_file)
+    else:
+        exp = joblib.load(expected_output_file)
 
-    def _check_dict(res, exp):
-        for k in res:
-            res_val = res[k]
-            exp_val = exp[k]
+        assert isinstance(res, dict)
+        assert type(res) == type(exp)
+        assert res.keys() == exp.keys()
 
-            assert type(res_val) == type(exp_val)
-            if isinstance(res_val, dict):
-                _check_dict(res_val, exp_val)
-            elif isinstance(res_val, sklearn.linear_model.LinearRegression):
-                # not sure if there's a better way to test this...
-                npt.assert_allclose(res_val.coef_, exp_val.coef_)
-            elif isinstance(res_val, np.ndarray):
-                npt.assert_allclose(res_val, exp_val)
-            elif isinstance(res_val, xr.DataArray):
-                xrt.assert_allclose(res_val, exp_val)
-            else:
-                assert res_val == exp_val, k
-
-    _check_dict(res, exp)
+        # check all keys of res match exp
+        _check_dict(res, exp, "result", "expected")
+        # check all keys of exp match res
+        _check_dict(exp, res, "expected", "result")

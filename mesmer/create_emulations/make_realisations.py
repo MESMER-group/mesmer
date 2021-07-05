@@ -36,7 +36,6 @@ def make_realisations(
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
@@ -50,7 +49,6 @@ def make_realisations(
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
@@ -59,12 +57,11 @@ def make_realisations(
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
-          train_gv_T_ens_type_method() function)
+          train_gv_T_method() function)
     time : dict
 
         - ["scenario"] timepoints (1D np.ndarray) used for training of the scenario

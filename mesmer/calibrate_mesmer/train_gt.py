@@ -48,7 +48,6 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
         - ["targ"] (emulated variable, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (emission scenarios used for training, list of strs)
@@ -67,7 +66,6 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     """
 
     # specify necessary variables from config file
-    ens_type_tr = cfg.ens_type_tr
     gen = cfg.gen
     method_gt = cfg.methods[targ]["gt"]
     preds_gt = cfg.preds[targ]["gt"]
@@ -78,7 +76,6 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     params_gt = {}
     params_gt["targ"] = targ
     params_gt["esm"] = esm
-    params_gt["ens_type"] = ens_type_tr
     params_gt["method"] = method_gt
     params_gt["preds"] = preds_gt
     params_gt["scenarios"] = scenarios_tr  # single entry in case of ic ensemble
@@ -149,7 +146,6 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
             print("created dir:", dir_mesmer_params_gt)
         filename_parts = [
             "params_gt",
-            ens_type_tr,
             method_gt,
             *preds_gt,
             targ,
