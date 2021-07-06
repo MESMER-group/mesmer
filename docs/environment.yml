@@ -1,29 +1,29 @@
-name: regionmask-docs
+name: mesmer-docs
 
 channels:
   - conda-forge
   - nodefaults
 
 dependencies:
- - python>=3.7
- - black
- - cartopy
- - cython
- - dask[complete]
- - flake8
- - gdal
- - geopy
- - isort
- - netcdf4
- - numpy
- - pandas
- - pytest
- - pytest-cov
- - pytest-xdist
- - scikit-learn
- - statsmodels
- - regionmask
- - xarray<=0.18.0
- - # required for docs
- - sphinx-book-theme
- - numpydoc
+  - python>=3.7
+  - black
+  - cartopy
+  - cython
+  - dask[complete]
+  - flake8
+  - gdal
+  - geopy
+  - isort
+  - netcdf4
+  - numpy
+  - pandas
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - scikit-learn
+  - statsmodels
+  - regionmask
+  - xarray<=0.18.0
+# required for docs
+  - sphinx-book-theme
+  - numpydoc
