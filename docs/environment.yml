@@ -27,3 +27,4 @@ dependencies:
 # required for docs
   - sphinx-book-theme
   - numpydoc
+  - ipython
