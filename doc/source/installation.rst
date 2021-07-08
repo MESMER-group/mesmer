@@ -17,24 +17,30 @@ Required dependencies
 Instructions
 ------------
 
-mesmer is a pure Python package, but its dependencies are not. As mesmer is not yet
-available from PyPI it's recommended is to first install the dependencies using conda/ mamba
+mesmer is a pure Python package, but its dependencies are not. As a result, we recommend
+installing mesmer's dependencies using conda/mamba e.g.
 
 .. code-block:: bash
 
-    conda install -c conda-forge dask geopy numpy pandas scikit statsmodels regionmask xarray
+    conda install -c conda-forge dask geopy numpy pandas scikit statsmodels regionmask xarray pip
 
-and afterwards install mesmer directly from github:
+and afterwards install mesmer from pypi:
 
 .. code-block:: bash
 
-   python -m pip install git+https://github.com/MESMER-group/mesmer.git
+   pip install mesmer-emulator
+
+or install mesmer directly from github:
+
+.. code-block:: bash
+
+   pip install git+https://github.com/MESMER-group/mesmer.git
 
 To install mesmer in development mode first clone it using git and install it afterwards:
 
 .. code-block:: bash
 
    git clone git+https://github.com/MESMER-group/mesmer.git
-   python -m pip install -e mesmer
+   pip install -e mesmer
 
 .. _conda: http://conda.io/
