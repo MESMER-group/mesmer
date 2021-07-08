@@ -17,8 +17,8 @@ Train mesmer
 .. autosummary::
    :toctree: generated/
 
-   ~calibrate_mesmer.train_gv
    ~calibrate_mesmer.train_gt
+   ~calibrate_mesmer.train_gv
    ~calibrate_mesmer.train_lt
    ~calibrate_mesmer.train_lv
 
