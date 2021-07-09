@@ -51,6 +51,14 @@ isort: $(VENV_DIR)  ## lint the code using flake8
 test: $(VENV_DIR)  ## run the testsuite
 	$(VENV_DIR)/bin/pytest --cov -r a -v --cov-report term-missing
 
+.PHONY: test-install
+test-install: $(VENV_DIR)  ## test whether installing locally in a fresh env works
+	$(eval TEMPVENV := $(shell mktemp -d))
+	python3 -m venv $(TEMPVENV)
+	$(TEMPVENV)/bin/pip install wheel pip --upgrade
+	$(TEMPVENV)/bin/pip install .
+	$(TEMPVENV)/bin/python scripts/test_install.py
+
 .PHONY: conda-environment
 conda-environment:  $(VENV_DIR)  ## make virtual environment for development
 $(VENV_DIR): $(CONDA_ENV_YML) setup.py
