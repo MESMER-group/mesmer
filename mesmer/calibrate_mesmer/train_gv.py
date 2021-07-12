@@ -15,7 +15,7 @@ import statsmodels.api as sm
 from statsmodels.tsa.ar_model import AutoReg, ar_select_order
 
 
-def train_gv(gv, targ, esm, cfg, save_params=True):
+def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     """
     Derive global variability parameters for a specified method.
 
@@ -33,6 +33,8 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
         config file containing metadata
     save_params : bool, optional
         determines if parameters are saved or not, default = True
+    **kwargs:
+        additional arguments
 
     Returns
     -------
@@ -76,7 +78,12 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
 
     # apply the chosen method
     if params_gv["method"] == "AR" and wgt_scen_tr_eq:
-        params_gv = train_gv_AR(params_gv, gv)
+        # specifiy parameters employed for AR process fitting
+        if "max_lag" not in kwargs:
+            kwargs["max_lag"] = 12
+        if "sel_crit" not in kwargs:
+            kwargs["sel_crit"] = "bic"
+        params_gv = train_gv_AR(params_gv, gv, kwargs["max_lag"], kwargs["sel_crit"])
     else:
         raise ValueError(
             "The chosen method and / or weighting approach is currently not implemented."
@@ -104,7 +111,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True):
     return params_gv
 
 
-def train_gv_AR(params_gv, gv):
+def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     """
     Derive AR parameters of global variability under the assumption that gv does not
     depend on the scenario.
@@ -124,6 +131,10 @@ def train_gv_AR(params_gv, gv):
 
         - [scen] (2d array (nr_runs, nr_ts) of globally-averaged temperature variability
           time series)
+    max_lag: int
+        maximum number of lags considered during fitting
+    sel_crit: str
+        selection criterion for the AR process order, e.g., 'bic' or 'aic'
 
     Returns
     -------
@@ -150,10 +161,6 @@ def train_gv_AR(params_gv, gv):
 
     """
 
-    # specifiy parameters employed for AR process fitting
-    max_lag = 12  # rather arbitrarily chosen in trade off between allowing enough lags
-    # and computational time; open to change
-    sel_crit = "bic"  # selection criterion
     params_gv["max_lag"] = max_lag
     params_gv["sel_crit"] = sel_crit
 
