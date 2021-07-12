@@ -29,13 +29,13 @@ the simplicity of installing mesmer's dependencies using pip)
 
 .. code-block:: bash
 
-   pip install mesmer-emulator
+   python -m pip install mesmer-emulator
 
 Otherwise, mesmer can be installed directly from github
 
 .. code-block:: bash
 
-   pip install git+https://github.com/MESMER-group/mesmer.git
+   python -m pip install git+https://github.com/MESMER-group/mesmer.git
 
 To install mesmer in development mode, first clone it using git and then
 install it in an editable mode afterwards:
@@ -43,6 +43,6 @@ install it in an editable mode afterwards:
 .. code-block:: bash
 
    git clone git+https://github.com/MESMER-group/mesmer.git
-   pip install -e mesmer
+   python -m pip install -e mesmer
 
 .. _conda: http://conda.io/
