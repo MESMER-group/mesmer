@@ -85,7 +85,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             )
         else:
             raise ValueError("The chosen method is currently not implemented.")
-            # if the emuus should depend on the scen, scen needs to be passed to the fct
+            # if the emus should depend on the scen, scen needs to be passed to the fct
 
     # save the global variability emus if requested
     if save_emus:
