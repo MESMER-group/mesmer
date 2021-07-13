@@ -34,7 +34,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     save_params : bool, optional
         determines if parameters are saved or not, default = True
     **kwargs:
-        additional arguments
+        additional arguments, passed through to the training function
 
     Returns
     -------
