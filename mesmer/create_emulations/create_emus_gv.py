@@ -14,7 +14,7 @@ import numpy as np
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
-    """Create global variablity emulations for specified ensemble type and method.
+    """Create global variablity emulations for specified method.
 
     Parameters
     ----------
@@ -31,7 +31,8 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
-        - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
+        scenario)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
@@ -68,7 +69,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             " config file. The emulations cannot be created."
         )
 
-    # set up dictionary for emulations of global variability with emulated scenarios as keys
+    # set up dict for emulations of global variability with emulated scenarios as keys
     emus_gv = {}
 
     for scen in scens_out:
@@ -84,7 +85,7 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
             )
         else:
             raise ValueError("The chosen method is currently not implemented.")
-            # if the emulations should depend on the scenario, scen needs to be passed to the fct
+            # if the emus should depend on the scen, scen needs to be passed to the fct
 
     # save the global variability emus if requested
     if save_emus:
@@ -125,8 +126,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - ["AR_int"] (intercept of the AR model, float)
         - ["AR_coefs"] (coefficients of the AR model for the lags which are contained in
           the selected AR model, list of floats)
-        - ["AR_lags"] (AR lags which are contained in the selected AR model, list of
-          ints)
+        - ["AR_order_sel"] (selected AR order, int)
         - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
     nr_emus_v : int
@@ -154,7 +154,14 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     # re-name params for easier reading of code below
     ar_int = params_gv["AR_int"]
     ar_coefs = params_gv["AR_coefs"]
-    ar_lags = params_gv["AR_lags"]
+    ar_lags = np.arange(1, params_gv["AR_order_sel"] + 1, dtype=int)
+
+    # if AR(0) process chosen, no AR_coefs are available -> to have code run
+    # nevertheless ar_coefs and ar_lags are set to 0 (-> emus are created with
+    # ar_int + innovs)
+    if len(ar_coefs) == 0:
+        ar_coefs = [0]
+        ar_lags = [0]
 
     innovs_emus_gv = np.random.normal(
         loc=0, scale=params_gv["AR_std_innovs"], size=(nr_emus_v, nr_ts_emus_v + buffer)
