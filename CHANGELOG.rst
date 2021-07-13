@@ -17,4 +17,4 @@ The changes listed in this file are categorised as follows:
 v0.1.0b0 - 2021-07-09
 ---------------------
 
-- (`!79 <https://github.com/MESMER-group/mesmer/pull/79>`_) First release on PyPI and conda
+- (`#79 <https://github.com/MESMER-group/mesmer/pull/79>`_) First release on PyPI and conda
