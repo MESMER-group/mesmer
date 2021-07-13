@@ -114,7 +114,9 @@ jobs:
 
   deploy-pypi:
     needs: [linting-and-docs,build,test-install]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: |
+      startsWith(github.ref, 'refs/tags/v')
+      && (github.ref == 'refs/heads/master')
 
     runs-on: ubuntu-latest
     strategy:
