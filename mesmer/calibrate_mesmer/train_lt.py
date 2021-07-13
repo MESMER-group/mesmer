@@ -27,7 +27,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         nested dictionary of predictors with keys
 
         - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
-        scenario)
+          scenario)
     targs : dict
         nested dictionary of targets with keys
 
@@ -80,8 +80,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         - either each scenario is given the same weight or each time step
     - TODO:
         - find better way to deal with the assumption that local trend predictors belong
-        before local variability predictors (e.g., add check on whether this assumption
-        is fulfilled or rewrite code such that no longer necessary)
+          before local variability predictors (e.g., add check on whether this
+          assumption is fulfilled or rewrite code such that no longer necessary)
 
     """
 

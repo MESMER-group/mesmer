@@ -56,9 +56,15 @@ REQUIREMENTS_DEV = [
     *REQUIREMENTS_TESTS,
 ]
 
+REQUIREMENTS_DOCS = [
+    "sphinx-book-theme",
+    "numpydoc",
+]
+
 REQUIREMENTS_EXTRAS = {
     "dev": REQUIREMENTS_DEV,
     "tests": REQUIREMENTS_TESTS,
+    "docs": REQUIREMENTS_DOCS,
 }
 
 
