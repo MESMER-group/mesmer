@@ -62,3 +62,9 @@ not, see https://www.gnu.org/licenses/.
 
 The full list of code contributors can be found in AUTHORS or on
 `github.com/contributors <https://github.com/MESMER-group/mesmer/graphs/contributors>`_
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Versions
+
+   changelog

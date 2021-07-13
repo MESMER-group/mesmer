@@ -1,8 +1,9 @@
 from setuptools import find_packages, setup
+from setuptools.command.test import test as TestCommand
 
-# from setuptools.command.test import test as TestCommand
+import versioneer
 
-PACKAGE_NAME = "mesmer"
+PACKAGE_NAME = "mesmer-emulator"
 DESCRIPTION = "Modular Earth System Model Emulator with spatially Resolved output"
 KEYWORDS = [
     "climate",
@@ -53,6 +54,9 @@ REQUIREMENTS_DEV = [
     "black",
     "flake8",
     "isort",
+    "setuptools",
+    "twine",
+    "wheel",
     *REQUIREMENTS_TESTS,
 ]
 
@@ -80,24 +84,24 @@ with open(README, "r") as readme_file:
     README_TEXT = readme_file.read()
 
 
-# class Mesmer(TestCommand):
-#     def finalize_options(self):
-#         TestCommand.finalize_options(self)
-#         self.test_args = []
-#         self.test_suite = True
+class Mesmer(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
 
-#     def run_tests(self):
-#         import pytest
+    def run_tests(self):
+        import pytest
 
-#         pytest.main(self.test_args)
+        pytest.main(self.test_args)
 
 
-# cmdclass = versioneer.get_cmdclass()
-# cmdclass.update({"test": Mesmer})
+cmdclass = versioneer.get_cmdclass()
+cmdclass.update({"test": Mesmer})
 
 setup(
     name=PACKAGE_NAME,
-    # version=versioneer.get_version(),
+    version=versioneer.get_version(),
     description=DESCRIPTION,
     long_description=README_TEXT,
     long_description_content_type="text/x-rst",
@@ -113,6 +117,6 @@ setup(
     include_package_data=True,
     install_requires=REQUIREMENTS_INSTALL,
     extras_require=REQUIREMENTS_EXTRAS,
-    # cmdclass=cmdclass,
+    cmdclass=cmdclass,
     # entry_points=ENTRY_POINTS,
 )
