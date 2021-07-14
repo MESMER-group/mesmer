@@ -10,6 +10,7 @@ import configs.config_across_scen_T_cmip6ng_test as cfg
 # import MESMER tools
 from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
+    create_emus_g,
     create_emus_gt,
     create_emus_gv,
     create_emus_l,
@@ -107,6 +108,12 @@ for esm in esms:
     preds_gv = {"time": time_v}
     emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=True)
 
+    # create full global emulations
+    print(esm, "Merge the global trend and the global variability.")
+    emus_g = create_emus_g(
+        emus_gt_T, emus_gv_T, params_gt_T, params_gv_T, cfg, save_emus=True
+    )
+
     print(esm, "Start with local trends module")
 
     preds = {
@@ -133,7 +140,7 @@ for esm in esms:
 
     # load in the auxiliary files
     aux = {}
-    aux["phi_gc"] = load_phi_gc(lon, lat, ls, cfg)
+    aux["phi_gc"] = load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=2000)
 
     # train lv AR1_sci on residual variability
     targs_res_lv = {"tas": res_lv_s}
