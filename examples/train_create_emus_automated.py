@@ -27,7 +27,6 @@ print(targ)
 # load in the ESM runs
 esms = cfg.esms
 print(esms)
-print(len(esms))
 
 # load in tas with global coverage
 tas_g_dict = {}  # tas with global coverage
@@ -140,7 +139,9 @@ for esm in esms:
 
     # load in the auxiliary files
     aux = {}
-    aux["phi_gc"] = load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=2000)
+    aux["phi_gc"] = load_phi_gc(
+        lon, lat, ls, cfg, L_start=1500, L_end=2000, L_interval=250
+    )
 
     # train lv AR1_sci on residual variability
     targs_res_lv = {"tas": res_lv_s}
