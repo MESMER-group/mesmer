@@ -14,7 +14,12 @@ The changes listed in this file are categorised as follows:
     - Fixed: any bug fixes
     - Security: in case of vulnerabilities.
 
+
+v0.8.1 - 2021-07-15
+-------------------
+ - Update example script (`#80 <https://github.com/MESMER-group/mesmer/pull/80>`_).
+
 v0.8.0 - 2021-07-13
 -------------------
 
-- (`#79 <https://github.com/MESMER-group/mesmer/pull/79>`_) First release on PyPI and conda
+- First release on PyPI and conda (`#79 <https://github.com/MESMER-group/mesmer/pull/79>`_).
