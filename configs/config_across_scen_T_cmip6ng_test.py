@@ -12,7 +12,7 @@ MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
 # still work on windows (hard-coding "/" as file separators does not
 # work on windows)
 TEST_DATA_ROOT = os.path.join(
-    MESMER_ROOT, "tests", "test-data", "first-run-test-coarse-grid"
+    MESMER_ROOT, "tests", "test-data", "calibrate-coarse-grid"
 )
 
 # ---------------------------------------------------------------------------------
@@ -53,15 +53,11 @@ ref["type"] = "individ"  # alternatives: "first","all"
 ref["start"] = "1850"  # first included year
 ref["end"] = "1900"  # last included year
 
-time = {}
-time["start"] = "1850"  # first included year
-time["end"] = "2100"  # last included year #TODO: check if even used anywhere??
-
 threshold_land = 1 / 3
 
 wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
-nr_emus_v = 5  # tmp made smaller for testing purposes. Normally 6000.
+nr_emus_v = 5  # tmp made smaller for testing purposes. Normally larger.
 scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 max_iter_cv = 15  # max. nr of iterations in cross validation, small for testing purpose
 
