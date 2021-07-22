@@ -3,4 +3,4 @@
  - [ ] Closes #xxx
  - [ ] Tests added
  - [ ] Passes `isort . && black . && flake8`
- - [ ] Fully documented, including `whats-new.rst`
+ - [ ] Fully documented, including `CHANGELOG.rst`
