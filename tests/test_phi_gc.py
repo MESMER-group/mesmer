@@ -1,8 +1,6 @@
-from mesmer.io import load_regs_ls_wgt_lon_lat
-
-from mesmer.io import load_phi_gc
-
 import numpy as np
+
+from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
 
 
 class mock_cfg:
