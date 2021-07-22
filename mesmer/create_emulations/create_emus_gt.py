@@ -12,6 +12,8 @@ import joblib
 import numpy as np
 
 
+# TODO: rename because there's actually no emulation involved in this process
+# (global trends always come from an external source)
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """
     Create global trend (emissions + volcanoes) emulations for specified ensemble type
@@ -24,13 +26,12 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
 
         - ["targ"] (emulated variable, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - ["time"] (1d array of years, np.ndarray)
         - [xx] (additional keys depend on employed method and are listed in
-          train_gt_T_ens_type_method() function)
+          train_gt_T_method() function)
     preds_gt : dict
         nested dictionary of predictors for global trend with keys
 
@@ -58,10 +59,6 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
           to emulate
 
     """
-
-    # specify necessary variables from config file
-    dir_mesmer_emus = cfg.dir_mesmer_emus
-
     # derive necessary scenario names
     pred_names = list(preds_gt.keys())
     scenarios_emus = list(preds_gt[pred_names[0]].keys())
@@ -95,6 +92,7 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
 
     # save the global trend emulation if requested
     if save_emus:
+        dir_mesmer_emus = cfg.dir_mesmer_emus
         dir_mesmer_emus_gt = dir_mesmer_emus + "global/global_trend/"
         # check if folder to save params in exists, if not: make it
         if not os.path.exists(dir_mesmer_emus_gt):
@@ -102,7 +100,6 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
             print("created dir:", dir_mesmer_emus_gt)
         filename_parts = [
             "emus_gt",
-            params_gt["ens_type"],
             params_gt["method"],
             *params_gt["preds"],
             params_gt["targ"],

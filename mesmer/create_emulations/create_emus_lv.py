@@ -23,7 +23,6 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
@@ -97,7 +96,6 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
             print("created dir:", dir_mesmer_emus_lv)
         filename_parts = [
             "emus_lv",
-            params_lv["ens_type"],
             submethod,
             *params_lv["preds"],
             *params_lv["targs"],
@@ -127,7 +125,6 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
@@ -225,7 +222,6 @@ def create_emus_lv_OLS(params_lv, preds_lv):
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
