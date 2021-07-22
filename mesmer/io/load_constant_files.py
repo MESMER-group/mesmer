@@ -10,16 +10,14 @@ weights, longitude and latitude information.
 import copy as copy
 import os
 
-# https://geopy.readthedocs.io/en/latest/ # give coord as (lat,lon)
-import geopy.distance
 import joblib
 import numpy as np
 import regionmask as regionmask
+from geographiclib.geodesic import Geodesic
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
 
-from geographiclib.geodesic import Geodesic
 
 def gaspari_cohn(r):
     """
@@ -48,20 +46,19 @@ def gaspari_cohn(r):
     # flatten the array
     r = r.ravel()
 
-    sel_0_1 = (r >= 0) & (r < 1)
-    sel_1_2 = (r >= 1) & (r < 2)
-
     y = np.zeros(r.shape)
 
     # subset the data
-    r_s = r[sel_0_1]
-    y[sel_0_1] = (
+    sel = (r >= 0) & (r < 1)
+    r_s = r[sel]
+    y[sel] = (
         1 - 5 / 3 * r_s ** 2 + 5 / 8 * r_s ** 3 + 1 / 2 * r_s ** 4 - 1 / 4 * r_s ** 5
     )
 
-    r_s = r[sel_1_2]
+    sel = (r >= 1) & (r < 2)
+    r_s = r[sel]
 
-    y[sel_1_2] = (
+    y[sel] = (
         4
         - 5 * r_s
         + 5 / 3 * r_s ** 2
@@ -76,22 +73,23 @@ def gaspari_cohn(r):
 
 def calc_geodist_exact(lon, lat):
 
-    # from geographiclib.geodesic import Geodesic
-    # g = Geodesic(6378.137, 1 / 298.257223563)
-    # g.Inverse(47, 8, 0.589, 0.2593, Geodesic.DISTANCE)["s12"]
+    g = Geodesic(6378.137, 1 / 298.257223563)
 
     n_points = len(lon)
 
     geodist = np.zeros([n_points, n_points])
 
-    # could be sped up by only computing upper or lower half of matrix
-    # since only needs to be done 1x for every land threshold, not implemented
-    for i in np.arange(n_points):
-        for j in np.arange(n_points):
-            geodist[i, j] = geopy.distance.distance((lat[i], lon[i]), (lat[j], lon[j])).km
+    # calculate only the upper half of the triangle
+    for i in range(n_points):
+        lt, ln = lat[i], lon[i]
+        for j in range(i + 1, n_points):
+            geodist[i, j] = g.Inverse(lt, ln, lat[j], lon[j], Geodesic.DISTANCE)["s12"]
 
         if i % 200 == 0:
             print("done with gp", i)
+
+    # fill the lower half of the triangle (in-place)
+    geodist += np.transpose(geodist)
 
     return geodist
 
