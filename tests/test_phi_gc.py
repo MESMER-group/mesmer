@@ -1,8 +1,11 @@
-from mesmer.io import load_regs_ls_wgt_lon_lat
-
-from mesmer.io import load_phi_gc, gaspari_cohn
-
 import numpy as np
+
+from mesmer.io import (
+    calc_geodist_exact,
+    gaspari_cohn,
+    load_phi_gc,
+    load_regs_ls_wgt_lon_lat,
+)
 
 
 class mock_cfg:
@@ -58,8 +61,6 @@ def test_phi_gc_end_to_end(tmp_path):
         ]
     )
     np.testing.assert_allclose(expected, actual[1000], rtol=1e-5)
-<<<<<<< HEAD
-
 
 
 def test_gaspari_cohn():
@@ -68,7 +69,7 @@ def test_gaspari_cohn():
     assert gaspari_cohn(2) == 0
 
     values = np.arange(0, 2.1, 0.5)
-    expected = np.array([1.        , 0.68489583, 0.20833333, 0.01649306, 0.        ])
+    expected = np.array([1.0, 0.68489583, 0.20833333, 0.01649306, 0.0])
 
     actual = gaspari_cohn(values)
     np.testing.assert_allclose(expected, actual, rtol=1e-6)
@@ -80,5 +81,33 @@ def test_gaspari_cohn():
     # make sure shape is conserved
     values = np.arange(9).reshape(3, 3)
     assert gaspari_cohn(values).shape == (3, 3)
-=======
->>>>>>> master
+
+
+def test_calc_geodist_exact_equal():
+    """test points with distance 0"""
+
+    expected = np.array([[0, 0], [0, 0]])
+
+    lat = [0, 0]
+    lons = [[0, 0], [0, 360], [1, 361], [180, -180]]
+
+    for lon in lons:
+        result = calc_geodist_exact(lon, lat)
+        np.testing.assert_equal(result, expected)
+
+    result = calc_geodist_exact(lon, lat)
+    np.testing.assert_equal(result, expected)
+
+
+def test_calc_geodist_exact():
+    """test some random points"""
+    result = calc_geodist_exact([-180, 0, 3], [0, 0, 5])
+    expected = np.array(
+        [
+            [0.0, 20003.93145863, 19366.51816487],
+            [20003.93145863, 0.0, 645.70051988],
+            [19366.51816487, 645.70051988, 0.0],
+        ]
+    )
+
+    np.testing.assert_allclose(result, expected)
