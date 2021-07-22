@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include CHANGELOG.rst
+
+include versioneer.py
+include mesmer/_version.py

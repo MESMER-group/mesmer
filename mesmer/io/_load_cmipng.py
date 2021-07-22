@@ -116,6 +116,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     if gen == 6:
         dir_name = dir_cmipng + var + "/ann/g025/"
 
+        # TODO: remove hard-coding
         if var == "tas":
             esms_excl = [
                 "ACCESS-ESM1-5",
