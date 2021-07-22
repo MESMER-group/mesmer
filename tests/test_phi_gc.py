@@ -58,6 +58,7 @@ def test_phi_gc_end_to_end(tmp_path):
         ]
     )
     np.testing.assert_allclose(expected, actual[1000], rtol=1e-5)
+<<<<<<< HEAD
 
 
 
@@ -79,3 +80,5 @@ def test_gaspari_cohn():
     # make sure shape is conserved
     values = np.arange(9).reshape(3, 3)
     assert gaspari_cohn(values).shape == (3, 3)
+=======
+>>>>>>> master
