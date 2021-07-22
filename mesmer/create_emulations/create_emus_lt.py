@@ -25,7 +25,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
@@ -133,7 +132,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
             print("created dir:", dir_mesmer_emus_lt)
         filename_parts = [
             "emus_lt",
-            params_lt["ens_type"],
             params_lt["method"],
             *params_lt["preds"],
             *params_lt["targs"],
@@ -156,7 +154,6 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - ["method_each_gp_sep"] (states if method is applied to each grid point
           separately, bool)
@@ -190,12 +187,12 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     nr_ts = len(
         preds_lt[pred_names[0]][scen]
     )  # nr_ts could vary for different scenarios but is the same for all predictors
-    nr_gp = len(params_lt["full_model"])
 
     emus_lt = {}
     for targ in params_lt["targs"]:
-        emus_lt[targ] = np.zeros([nr_ts, nr_gp])  # nr_ts x nr_gp
-        for gp in params_lt["full_model"].keys():
+        nr_gps = len(params_lt["intercept"][targ])
+        emus_lt[targ] = np.zeros([nr_ts, nr_gps])
+        for gp in np.arange(nr_gps):
             pred_vals = [
                 params_lt["coef_" + pred][targ][gp] * preds_lt[pred][scen]
                 for pred in params_lt["preds"]

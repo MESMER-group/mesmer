@@ -1,4 +1,8 @@
 
+# mesmer specific
+generated
+
+
 startup
 tmp/
 #*.ipynb #if want to ignore ipython notebooks

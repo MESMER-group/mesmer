@@ -6,6 +6,11 @@
 The mesmer package provides tools to train the MESMER emulator, create emulations, and
 analyze the results.
 """
+from ._version import get_versions
+
+__version__ = get_versions()["version"]
+del get_versions
+
 # flake8: noqa
 
 # import subpackages (so that if I import mesmer, I can directly access e.g., io content

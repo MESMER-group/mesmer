@@ -12,11 +12,9 @@ def save_mesmer_bundle(
     params_lt,
     params_lv,
     params_gv,
-    seeds,
     land_fractions,
     lat,
     lon,
-    time,
 ):
     """
     Save all the information required to draw MESMER emulations to disk
@@ -31,7 +29,6 @@ def save_mesmer_bundle(
 
         - ["targs"] (list of emulated variables, list of strs)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (ensemble type, str)
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_lv : dict
@@ -40,7 +37,6 @@ def save_mesmer_bundle(
 
         - ["targs"] (list of variables which are emulated, list of strs)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_gv : dict
@@ -48,18 +44,10 @@ def save_mesmer_bundle(
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
-        - ["ens_type"] (type of ensemble which is emulated, str)
         - ["method"] (applied method, str)
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depending on employed method)
-    seeds : dict
-        Seeds dictionary:
-
-        - ["esm"] (dict):
-            - ["scenario"] (dict):
-                - ["gv"] (seed for global variability)
-                - ["lv"] (seed for local variability)
     land_fractions : np.MaskedArray
         data containing land fractions (also used for helping generate output on lat-lon
         grids)
@@ -67,13 +55,6 @@ def save_mesmer_bundle(
         grid latitudes (used to check land_fractions shape)
     lon : np.ndarray
         grid longitudes (used to check land_fractions shape)
-    time : dict
-        Time dictionary
-
-        - [scen] (timepoints (1D np.ndarray) used for training of the scenario)
-    Notes
-    -----
-    - In time dictionary, historical (hist) and scenario (e.g., ssp126) are kept as separate keys
     """
     assert land_fractions.shape[0] == lat.shape[0]
     assert land_fractions.shape[1] == lon.shape[0]
@@ -87,8 +68,6 @@ def save_mesmer_bundle(
         "params_lt": params_lt,
         "params_lv": params_lv,
         "params_gv": params_gv,
-        "seeds": seeds,
         "land_fractions": land_fractions,
-        "time": time,
     }
     joblib.dump(mesmer_bundle, bundle_file)

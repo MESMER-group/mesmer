@@ -35,9 +35,29 @@ export PRINT_HELP_PYSCRIPT
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
+.PHONY: black
+black: $(VENV_DIR)  ## auto-format the code using black
+	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON)
+
+.PHONY: flake8
+flake8: $(VENV_DIR)  ## lint the code using flake8
+	$(VENV_DIR)/bin/flake8 $(FILES_TO_FORMAT_PYTHON)
+
+.PHONY: isort
+isort: $(VENV_DIR)  ## lint the code using flake8
+	$(VENV_DIR)/bin/isort $(FILES_TO_FORMAT_PYTHON)
+
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
 	$(VENV_DIR)/bin/pytest --cov -r a -v --cov-report term-missing
+
+.PHONY: test-install
+test-install: $(VENV_DIR)  ## test whether installing locally in a fresh env works
+	$(eval TEMPVENV := $(shell mktemp -d))
+	python3 -m venv $(TEMPVENV)
+	$(TEMPVENV)/bin/pip install wheel pip --upgrade
+	$(TEMPVENV)/bin/pip install .
+	$(TEMPVENV)/bin/python scripts/test_install.py
 
 .PHONY: conda-environment
 conda-environment:  $(VENV_DIR)  ## make virtual environment for development
