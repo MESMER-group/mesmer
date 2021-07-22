@@ -490,6 +490,7 @@ def _load_cmipng_var(esm, scen, cfg, varn):
             )
             dta[run] -= dta_ref  # compute anomalies
 
+        # TODO: remove "first" (used for Leas first paper but does not really make sense)
         if ref["type"] == "first" and run == "1":
             # TO CHECK
             dta_ref = (
