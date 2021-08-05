@@ -26,7 +26,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
         empty dictionary if none, else nested dictionary of predictors with keys
 
         - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
-        scenario)
+          scenario)
     targs : dict
         nested dictionary of targets with keys
 
@@ -74,7 +74,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
           consistency
     - TODO:
         - add ability to weight samples differently than equal weight for each scenario
-        in AR process
+          in AR process
 
     """
 
@@ -292,7 +292,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
         provides auxiliary variables needed for lv method at hand
 
         - ["phi_gc"] (dict with localisation radii as keys and each containing a 2d
-        array (gp, gp) of of Gaspari-Cohn correlation matrix
+          array (gp, gp) of of Gaspari-Cohn correlation matrix
     cfg : module
         config file containing metadata
 

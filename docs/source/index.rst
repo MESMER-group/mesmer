@@ -12,7 +12,18 @@ Welcome to MESMER's documentation!
    :caption: For users
 
    installation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
    api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Versions
+
+   changelog
 
 MESMER: spatially resolved Earth System Model emulations
 --------------------------------------------------------
@@ -62,9 +73,3 @@ not, see https://www.gnu.org/licenses/.
 
 The full list of code contributors can be found in AUTHORS or on
 `github.com/contributors <https://github.com/MESMER-group/mesmer/graphs/contributors>`_
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Versions
-
-   changelog
