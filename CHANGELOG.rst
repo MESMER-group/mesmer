@@ -27,7 +27,7 @@ Documentation
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
- - Refactor and speed up of the gaspari_cohn function and the calculation of the great
+ - Refactor and speed up of the Gaspari-Cohn function and the calculation of the great
    circle distance (`#85 <https://github.com/MESMER-group/mesmer/pull/85>`_).
    By `Mathias Hauser <https://github.com/mathause>`_.
 
