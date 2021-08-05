@@ -72,7 +72,22 @@ def gaspari_cohn(r):
 
 
 def calc_geodist_exact(lon, lat):
+    """exact great circle distance based on WSG 84
 
+    Parameters
+    ----------
+    lon : array-like
+        1D array of longitudes
+    lat : array-like
+        1D array of latitudes
+
+    Returns
+    -------
+    geodist : np.array
+        2D array of great circle distances.
+    """
+
+    # semi-major axis and flattening according to WGS 84
     g = Geodesic(6378.137, 1 / 298.257223563)
 
     n_points = len(lon)
@@ -145,7 +160,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     -----
     - If no complete number of L_intervals fits between L_start and L_end, L_intervals
       are repeated until the closest possible L value below L_end is reached.
-    - L_end should not exceed 10000 by much because eventually ValueError: the input
+    - L_end should not exceed 10'000 by much because eventually ValueError: the input
       matrix must be positive semidefinite in train_lv())
     """
 
