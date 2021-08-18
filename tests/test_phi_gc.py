@@ -82,6 +82,18 @@ def test_gaspari_cohn():
     values = np.arange(9).reshape(3, 3)
     assert gaspari_cohn(values).shape == (3, 3)
 
+def test_calc_geodist_exact_shape():
+
+    msg = "lon and lat need to be 1D arrays of the same shape"
+
+    # not the same shape
+    with pytest.raises(ValueError, match=msg):
+        calc_geodist_exact([0, 0], [0])
+
+    # not 1D
+    with pytest.raises(ValueError, match=msg):
+        calc_geodist_exact([[0, 0]], [[0, 0]])
+
 
 def test_calc_geodist_exact_equal():
     """test points with distance 0"""
