@@ -12,8 +12,8 @@ import os
 
 import joblib
 import numpy as np
-import regionmask as regionmask
 import pyproj
+import regionmask as regionmask
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
@@ -105,7 +105,7 @@ def calc_geodist_exact(lon, lat):
         lt = np.tile(lat[i], n_points - (i + 1))
         ln = np.tile(lon[i], n_points - (i + 1))
 
-        geodist[i, i + 1:] = geod.inv(ln, lt, lon[i+1:], lat[i+1:])[2]
+        geodist[i, i + 1 :] = geod.inv(ln, lt, lon[i + 1 :], lat[i + 1 :])[2]
 
     # convert m to km
     geodist /= 1000

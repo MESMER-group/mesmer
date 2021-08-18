@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from mesmer.io import (
     calc_geodist_exact,
@@ -81,6 +82,7 @@ def test_gaspari_cohn():
     # make sure shape is conserved
     values = np.arange(9).reshape(3, 3)
     assert gaspari_cohn(values).shape == (3, 3)
+
 
 def test_calc_geodist_exact_shape():
 
