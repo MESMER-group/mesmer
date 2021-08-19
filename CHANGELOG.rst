@@ -31,6 +31,9 @@ Internal Changes
    circle distance (`#85 <https://github.com/MESMER-group/mesmer/pull/85>`_,
    `#86 <https://github.com/MESMER-group/mesmer/pull/86>`_).
    By `Mathias Hauser <https://github.com/mathause>`_.
+ - The geopy package is no longer a dependency of mesmer
+   (`#86 <https://github.com/MESMER-group/mesmer/pull/86>`_).
+   By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.1 - 2021-07-15
 -------------------
