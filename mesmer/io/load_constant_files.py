@@ -98,7 +98,7 @@ def calc_geodist_exact(lon, lat):
 
     geodist = np.zeros([n_points, n_points])
 
-    # calculate only the lower half of the triangle
+    # calculate only the upper right half of the triangle
     for i in range(n_points):
 
         # need to duplicate gridpoint (required by geod.inv)
@@ -109,7 +109,7 @@ def calc_geodist_exact(lon, lat):
 
     # convert m to km
     geodist /= 1000
-    # fill the upper half of the triangle (in-place)
+    # fill the lower left half of the triangle (in-place)
     geodist += np.transpose(geodist)
 
     return geodist
