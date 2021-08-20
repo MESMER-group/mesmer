@@ -10,10 +10,10 @@ weights, longitude and latitude information.
 import copy as copy
 import os
 
-import geopy.distance  # https://geopy.readthedocs.io/en/latest/ # give coord as (lat,lon)
 import joblib
 import numpy as np
 import regionmask as regionmask
+from geographiclib.geodesic import Geodesic
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
@@ -21,12 +21,11 @@ from ..utils.xrcompat import infer_interval_breaks
 
 def gaspari_cohn(r):
     """
-    Computes the smooth, exponentially decaying Gaspari-Cohn correlation function for a
-    given r.
+    smooth, exponentially decaying Gaspari-Cohn correlation function
 
     Parameters
     ----------
-    r : float
+    r : np.ndarray
         d/L with d = geographical distance in km, L = localisation radius in km
 
     Returns
@@ -37,29 +36,77 @@ def gaspari_cohn(r):
     Notes
     -----
     - Smooth exponentially decaying correlation function which mimics a Gaussian
-      distribution but vanishes at r=2, i.e., 2x the localisation radius (L)
+      distribution but vanishes at r=2, i.e., 2 x the localisation radius (L)
     - based on Gaspari-Cohn 1999, QJR (as taken from Carrassi et al 2018, Wiley
       Interdiscip. Rev. Clim. Change)
 
     """
     r = np.abs(r)
+    shape = r.shape
+    # flatten the array
+    r = r.ravel()
 
-    if r >= 0 and r < 1:
-        y = 1 - 5 / 3 * r ** 2 + 5 / 8 * r ** 3 + 1 / 2 * r ** 4 - 1 / 4 * r ** 5
-    if r >= 1 and r < 2:
-        y = (
-            4
-            - 5 * r
-            + 5 / 3 * r ** 2
-            + 5 / 8 * r ** 3
-            - 1 / 2 * r ** 4
-            + 1 / 12 * r ** 5
-            - 2 / (3 * r)
-        )
-    if r >= 2:
-        y = 0
+    y = np.zeros(r.shape)
 
-    return y
+    # subset the data
+    sel = (r >= 0) & (r < 1)
+    r_s = r[sel]
+    y[sel] = (
+        1 - 5 / 3 * r_s ** 2 + 5 / 8 * r_s ** 3 + 1 / 2 * r_s ** 4 - 1 / 4 * r_s ** 5
+    )
+
+    sel = (r >= 1) & (r < 2)
+    r_s = r[sel]
+
+    y[sel] = (
+        4
+        - 5 * r_s
+        + 5 / 3 * r_s ** 2
+        + 5 / 8 * r_s ** 3
+        - 1 / 2 * r_s ** 4
+        + 1 / 12 * r_s ** 5
+        - 2 / (3 * r_s)
+    )
+
+    return y.reshape(shape)
+
+
+def calc_geodist_exact(lon, lat):
+    """exact great circle distance based on WSG 84
+
+    Parameters
+    ----------
+    lon : array-like
+        1D array of longitudes
+    lat : array-like
+        1D array of latitudes
+
+    Returns
+    -------
+    geodist : np.array
+        2D array of great circle distances.
+    """
+
+    # semi-major axis and flattening according to WGS 84
+    g = Geodesic(6378.137, 1 / 298.257223563)
+
+    n_points = len(lon)
+
+    geodist = np.zeros([n_points, n_points])
+
+    # calculate only the upper half of the triangle
+    for i in range(n_points):
+        lt, ln = lat[i], lon[i]
+        for j in range(i + 1, n_points):
+            geodist[i, j] = g.Inverse(lt, ln, lat[j], lon[j], Geodesic.DISTANCE)["s12"]
+
+        if i % 200 == 0:
+            print("done with gp", i)
+
+    # fill the lower half of the triangle (in-place)
+    geodist += np.transpose(geodist)
+
+    return geodist
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
@@ -113,7 +160,8 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     -----
     - If no complete number of L_intervals fits between L_start and L_end, L_intervals
       are repeated until the closest possible L value below L_end is reached.
-    - L_end should not exceed 10000 by much because eventually ValueError: the input matrix must be positive semidefinite in train_lv())
+    - L_end should not exceed 10'000 by much because eventually ValueError: the input
+      matrix must be positive semidefinite in train_lv())
     """
 
     dir_aux = cfg.dir_aux
@@ -126,23 +174,14 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     if not os.path.exists(dir_aux + geodist_name):
         # create geodist matrix + save it
         print("compute geographical distance between all land points")
-        nr_gp_l = ls["idx_grid_l"].sum()
+
+        # extract land gridpoints
         lon_l_vec = lon["grid"][ls["idx_grid_l"]]
         lat_l_vec = lat["grid"][ls["idx_grid_l"]]
-        geodist = np.zeros([nr_gp_l, nr_gp_l])
 
-        # could be sped up by only computing upper or lower half of matrix
-        # since only needs to be done 1x for every land threshold, not implemented
-        for i in np.arange(nr_gp_l):
-            for j in np.arange(nr_gp_l):
-                geodist[i, j] = geopy.distance.distance(
-                    (lat_l_vec[i], lon_l_vec[i]), (lat_l_vec[j], lon_l_vec[j])
-                ).km
+        geodist = calc_geodist_exact(lon_l_vec, lat_l_vec)
 
-            if i % 200 == 0:
-                print("done with gp", i)
-
-        # create auxiliary directory if does not exist already (else leave directory unaltered)
+        # create auxiliary directory if does not exist already
         os.makedirs(dir_aux, exist_ok=True)
 
         # save the geodist file
@@ -158,16 +197,11 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     )
 
     if not os.path.exists(dir_aux + phi_gc_name):
-        print(
-            "compute Gaspari-Cohn correlation function phi for a number of localization radii"
-        )
+        print("compute Gaspari-Cohn correlation function phi")
 
         phi_gc = {}
         for L in L_set:
-            phi_gc[L] = np.zeros(geodist.shape)
-            for i in np.arange(geodist.shape[0]):
-                for j in np.arange(geodist.shape[1]):
-                    phi_gc[L][i, j] = gaspari_cohn(geodist[i, j] / L)
+            phi_gc[L] = gaspari_cohn(geodist / L)
             print("done with L:", L)
 
         joblib.dump(phi_gc, dir_aux + phi_gc_name)

@@ -156,7 +156,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     -----
     - Assumptions
         - number of runs per scenario and the number of time steps in each scenario can
-        vary
+          vary
         - each scenario receives equal weight during training
 
     """
