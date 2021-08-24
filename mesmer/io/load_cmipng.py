@@ -227,9 +227,11 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         return path_runs_list
 
     # ordering does not work for ESMs with > 9 runs -> find first run + put in front
-    index_first = [i for i, s in enumerate(path_runs_list) if "r1i1" in s][
-        0
-    ]  # find first run
+    index_first = 0
+    for i, s in enumerate(path_runs_list):
+        if "r1i1" in s:
+            index_first = i
+            # if r1i1 run exists, move it to front; else leave first run at front
     path_runs_list.insert(
         0, path_runs_list.pop(index_first)
     )  # move first run to begin of list
