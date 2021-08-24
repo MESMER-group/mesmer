@@ -91,8 +91,13 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         dir_name = dir_cmipng + var + "/"
 
         if var == "tas":
-            esms_excl = ["GISS-E2-H"]  # list of all ESMs which have excluded runs
-            runs_excl = ["tas_ann_GISS-E2-H_rcp85_r2i1p1_g025"]  # list of excluded runs
+            esms_excl = ["GISS-E2-H", "EC-EARTH"]
+            # list of all ESMs which have excluded runs
+            runs_excl = [
+                "tas_ann_GISS-E2-H_rcp85_r2i1p1_g025.nc",
+                "tas_ann_EC-EARTH_rcp45_r14i1p1_g025.nc",
+            ]  # list of excluded runs
+
         else:
             esms_excl = []
             runs_excl = []
