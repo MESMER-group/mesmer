@@ -321,10 +321,12 @@ def load_cmipng_file(run_path, gen, scen):
     # account for difference in naming convention in cmipx-ng archives
     if gen == 5:
         data = (
-            xr.open_dataset(run_path)
+            xr.open_dataset(run_path, use_cftime=True)
             .rename({"year": "time"})
             .roll(lon=72, roll_coords=True)
-        )  # rename to time for consistency with cmip6, roll so land in center
+        )
+        # use_cftime because of employed calendar,
+        # rename to time for consistency with cmip6, roll so land in center
         data = data.assign_coords(
             lon=(((data.lon + 180) % 360) - 180)
         )  # assign_coords so that labels = reasonable
