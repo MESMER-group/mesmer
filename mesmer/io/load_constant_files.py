@@ -12,8 +12,8 @@ import os
 
 import joblib
 import numpy as np
+import pyproj
 import regionmask as regionmask
-from geographiclib.geodesic import Geodesic
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
@@ -87,23 +87,29 @@ def calc_geodist_exact(lon, lat):
         2D array of great circle distances.
     """
 
-    # semi-major axis and flattening according to WGS 84
-    g = Geodesic(6378.137, 1 / 298.257223563)
+    # ensure correct shape
+    lon, lat = np.asarray(lon), np.asarray(lat)
+    if lon.shape != lat.shape or lon.ndim != 1:
+        raise ValueError("lon and lat need to be 1D arrays of the same shape")
+
+    geod = pyproj.Geod(ellps="WGS84")
 
     n_points = len(lon)
 
     geodist = np.zeros([n_points, n_points])
 
-    # calculate only the upper half of the triangle
+    # calculate only the upper right half of the triangle
     for i in range(n_points):
-        lt, ln = lat[i], lon[i]
-        for j in range(i + 1, n_points):
-            geodist[i, j] = g.Inverse(lt, ln, lat[j], lon[j], Geodesic.DISTANCE)["s12"]
 
-        if i % 200 == 0:
-            print("done with gp", i)
+        # need to duplicate gridpoint (required by geod.inv)
+        lt = np.tile(lat[i], n_points - (i + 1))
+        ln = np.tile(lon[i], n_points - (i + 1))
 
-    # fill the lower half of the triangle (in-place)
+        geodist[i, i + 1 :] = geod.inv(ln, lt, lon[i + 1 :], lat[i + 1 :])[2]
+
+    # convert m to km
+    geodist /= 1000
+    # fill the lower left half of the triangle (in-place)
     geodist += np.transpose(geodist)
 
     return geodist

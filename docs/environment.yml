@@ -12,7 +12,6 @@ dependencies:
   - dask[complete]
   - flake8
   - gdal
-  - geopy
   - isort
   - netcdf4
   - numpy

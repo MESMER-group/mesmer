@@ -28,7 +28,11 @@ Internal Changes
 ^^^^^^^^^^^^^^^^
 
  - Refactor and speed up of the Gaspari-Cohn function and the calculation of the great
-   circle distance (`#85 <https://github.com/MESMER-group/mesmer/pull/85>`_).
+   circle distance (`#85 <https://github.com/MESMER-group/mesmer/pull/85>`_,
+   `#88 <https://github.com/MESMER-group/mesmer/pull/88>`_).
+   By `Mathias Hauser <https://github.com/mathause>`_.
+ - The geopy package is no longer a dependency of mesmer
+   (`#88 <https://github.com/MESMER-group/mesmer/pull/88>`_).
    By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.1 - 2021-07-15
