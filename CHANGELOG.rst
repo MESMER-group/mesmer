@@ -18,6 +18,9 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
+ - Reintroduce ability to read in cmip5 data from the cmip5-ng archive at ETH
+   (`#90 <https://github.com/MESMER-group/mesmer/pull/90>`_).
+   By `Lea Beusch <https://github.com/leabeusch>`_.
 
 
 Documentation
