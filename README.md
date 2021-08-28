@@ -12,7 +12,7 @@ response uncertainty, i.e., the Earth's system response to forced natural change
 and volcanic) and human influences (greenhouse gas and aerosol emissions, land use
 changes etc.); and (iii) emission uncertainty, i.e., uncertainty in the emission pathway
 humans decide to follow. An interface between MESMER and global mean temperature
-emulators can be found at https://github.com/MESMER-group/mesmer-openscmrunner.
+emulators can be found at [MESMER-group/mesmer-openscmrunner](https://github.com/MESMER-group/mesmer-openscmrunner).
 
 MESMER is under active development both scientifically and technically. Future work will
 increase its user friendliness and extend its emulation capabilities to include
@@ -29,7 +29,7 @@ realizations on land, Earth Syst. Dynam., 11, 139–159,
 https://doi.org/10.5194/esd-11-139-2020, 2020.
 
 If MESMER is used to emulate multiple emission pathways and/or in combination with a 
-global mean emulator,  the following publication should additionally be cited:
+global mean emulator, the following publication should additionally be cited:
 
 Beusch, L., Nicholls, Z., Gudmundsson, L., Hauser, M., Meinshausen M., and Seneviratne, 
 S. I.: From emission scenarios to spatially resolved projections with a chain of 
