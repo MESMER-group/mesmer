@@ -45,12 +45,16 @@ jobs:
           black --check mesmer examples tests setup.py
           flake8 mesmer examples tests setup.py
 
-  build:
+  test:
+    name: py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ["ubuntu-latest"]
         python-version: [3.8]
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
     - name: Checkout repository
@@ -60,8 +64,7 @@ jobs:
       with:
         path: ~/conda_pkgs_dir
         key:
-          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{
-          hashFiles('environment.yml') }}
+          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{ hashFiles('environment.yml') }}
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v2.0.1
       with:
@@ -71,10 +74,14 @@ jobs:
         auto-update-conda: false
         python-version: ${{ matrix.python-version }}
     - name: Conda info
-      shell: bash -l {0}
       run: conda info
+    - name: Install environment
+      run: |
+          which python
+          make -B conda-environment
+    - name: Conda list
+      run: conda list
     - name: Run tests
-      shell: bash -l {0}
       run: |
           which python
           make -B test
@@ -84,6 +91,9 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
     - name: Checkout repository
@@ -93,8 +103,7 @@ jobs:
       with:
         path: ~/conda_pkgs_dir
         key:
-          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{
-          hashFiles('environment.yml') }}
+          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{ hashFiles('environment.yml') }}
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v2.0.1
       with:
@@ -104,16 +113,14 @@ jobs:
         auto-update-conda: false
         python-version: ${{ matrix.python-version }}
     - name: Conda info
-      shell: bash -l {0}
       run: conda info
     - name: Test installation
-      shell: bash -l {0}
       run: |
           make -B conda-environment
           python scripts/test_install.py
 
   deploy-pypi:
-    needs: [linting-and-docs,build,test-install]
+    needs: [linting-and-docs,test,test-install]
     if: |
       startsWith(github.ref, 'refs/tags/v')
       && (github.ref == 'refs/heads/master')
