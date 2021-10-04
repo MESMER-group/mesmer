@@ -85,6 +85,17 @@ jobs:
       run: |
           which python
           make -B test
+    - name: Upload code coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: RUNNER_OS,PYTHON_VERSION
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+
+
 
   test-install:
     runs-on: ubuntu-latest
