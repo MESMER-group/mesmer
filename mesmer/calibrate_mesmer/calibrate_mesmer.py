@@ -290,7 +290,8 @@ def _calibrate_and_draw_realisations(
         preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
 
         # Create local variability due to global variability warming samples
-        # used for training the local variability module. Samples are cheap to create so not an issue to have here.
+        # used for training the local variability module. Samples are cheap to create so
+        # not an issue to have here.
         lv_gv_s = create_emus_lv(
             params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
         )
@@ -306,9 +307,10 @@ def _calibrate_and_draw_realisations(
 
         LOGGER.debug("Loading auxiliary files")
         aux = {}
+        # better results with default values L, but faster + less space needed
         aux["phi_gc"] = load_phi_gc(
             lon, lat, ls, cfg, L_start=1750, L_end=2000, L_interval=250
-        )  # better results with default values L, but like this much faster + less space needed
+        )
 
         LOGGER.debug("Finalising training of local variability module on derived data")
         targs_res_lv = {"tas": res_lv_s}

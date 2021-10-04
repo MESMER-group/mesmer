@@ -175,7 +175,8 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             seed = seed_all_scens[scen]["lv"]
             nr_gps = len(params_lv["AR1_int"][targ])
 
-            # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on existing one
+            # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on
+            # existing one
             if len(emus_lv[scen]) == 0:
 
                 emus_lv[scen][targ] = np.zeros(nr_emus_v, nr_ts_emus_stoch_v, nr_gps)
@@ -195,7 +196,8 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             )
 
             print(
-                "Compute the contribution to emus_lv by the AR(1) process with the spatially correlated innovations"
+                "Compute the contribution to emus_lv by the AR(1) process with the "
+                "spatially correlated innovations"
             )
             emus_lv_tmp = np.zeros([nr_emus_v, nr_ts_emus_stoch_v + buffer, nr_gps])
             for t in np.arange(1, nr_ts_emus_stoch_v + buffer):

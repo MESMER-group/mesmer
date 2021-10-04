@@ -176,10 +176,8 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
             emus_gv[i, t] = (
                 ar_int
                 + sum(
-                    [
-                        ar_coefs[k] * emus_gv[i, t - ar_lags[k]]
-                        for k in np.arange(len(ar_lags))
-                    ]
+                    ar_coefs[k] * emus_gv[i, t - ar_lags[k]]
+                    for k in np.arange(len(ar_lags))
                 )
                 + innovs_emus_gv[i, t]
             )

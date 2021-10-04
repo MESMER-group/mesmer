@@ -78,37 +78,35 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     ls["gp_l"] = ls["grid_no_ANT"][idx_l]
     ls["grid_l"] = copy.deepcopy(ls["grid_no_ANT"])
     ls["grid_l"][~idx_l] = 0
-    ls["idx_grid_l"] = (
-        ls["grid_l"] > threshold_land
-    )  # gives back a binary (boolean) mask to help with plotting
+    # gives back a binary (boolean) mask to help with plotting
+    ls["idx_grid_l"] = ls["grid_l"] > threshold_land
+    # masked array (ocean masked out)
     ls["grid_l_m"] = np.ma.masked_array(
         ls["grid_l"], mask=np.logical_not(ls["idx_grid_l"])
-    )  # masked array (ocean masked out)
-    ls["wgt_gp_l"] = (
-        wgt[idx_l] * ls["gp_l"]
-    )  # weights for land points: multiply weight by land fraction
+    )
+    # weights for land points: multiply weight by land fraction
+    ls["wgt_gp_l"] = wgt[idx_l] * ls["gp_l"]
 
     # extract the land points + weights from the region grids
     reg_dict["gps_l"] = reg_dict["grids"][:, idx_l]  # country is the first axis
-    reg_dict["wgt_gps_l"] = (
-        wgt[idx_l] * reg_dict["gps_l"]
-    )  # weights for regions (1st axis): region fraction * area weights
+    # weights for regions (1st axis): region fraction * area weights
+    reg_dict["wgt_gps_l"] = wgt[idx_l] * reg_dict["gps_l"]
+
     if reg_dict["type"] == "srex" or reg_dict["type"] == "ar6.land":
-        reg_dict["wgt_gps_l"] = (
-            reg_dict["wgt_gps_l"] * ls["gp_l"]
-        )  # * land fraction to account for coastal cells because SREX / ar6.land regions include ocean
-    reg_dict["gp_b_l"] = reg_dict["grid_b"][
-        idx_l
-    ]  # not sure if needed; extracts land from the "binary" mask
+        # multipyl by land fraction to account for coastal cells
+        # because SREX / ar6.land regions include ocean
+        reg_dict["wgt_gps_l"] = reg_dict["wgt_gps_l"] * ls["gp_l"]
+
+    # not sure if needed; extracts land from the "binary" mask
+    reg_dict["gp_b_l"] = reg_dict["grid_b"][idx_l]
 
     # extract the land points of the variable of interest
     var_l = {}
     for esm in var.keys():
         var_l[esm] = {}
         for scen in var[esm].keys():
-            var_l[esm][scen] = var[esm][scen][
-                :, :, idx_l
-            ]  # run is the first axis, followed by time
+            # run is the first axis, followed by time
+            var_l[esm][scen] = var[esm][scen][:, :, idx_l]
 
     return var_l, reg_dict, ls
 

@@ -69,20 +69,21 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     wgt_3d = np.tile(wgt_2d, [len(time), 1]).reshape(
         [len(time), wgt_2d.shape[0], wgt_2d.shape[1]]
     )
-    if (
-        ignore_nans
-    ):  # grid points with nans are left aside (ie global mean is global mean of non nan gp)
+
+    # grid points with nans are left aside (ie global mean is global mean of non nan gp)
+    if ignore_nans:
         masked_var = np.ma.masked_array(var, np.isnan(var))
         GVAR = np.ma.average(masked_var, axis=(1, 2), weights=wgt_3d)
-    else:  # each field with nans inside will result in nan as global mean
+
+    # each field with nans inside will result in nan as global mean
+    else:
         GVAR = np.average(var, axis=(1, 2), weights=wgt_3d)
 
-    # to adhere to same standards as the ESMs, add "scenario" key ("obs" for observational time period)
+    # same standards as the ESMs: add "scenario" key ("obs" for observational period)
     var_dict = {}
     GVAR_dict = {}
-    var_dict["obs"] = np.expand_dims(
-        var, axis=0
-    )  # same format as if were an ESM with a single run
+    # same format as if were an ESM with a single run
+    var_dict["obs"] = np.expand_dims(var, axis=0)
     GVAR_dict["obs"] = np.expand_dims(GVAR, axis=0)
 
     return var_dict, GVAR_dict, time
@@ -145,12 +146,11 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     if sel_ref == "native":
         tblend = tblend.values
     elif sel_ref == "esm":
+
         ref = cfg.ref
-        tblend = (
-            tblend.values
-            - tblend.sel(time=slice(ref["start"], ref["end"])).mean(dim="time").values
-        )
+        time_sel = slice(ref["start"], ref["end"])
         # .mean() ignores nan in the selected time slice. Only if all time steps are nans, the mean is a nan too.
+        tblend = tblend.values - tblend.sel(time=time_sel).mean(dim="time").values
     else:
         raise ValueError("No such re-baselining is currently implemented.")
 
@@ -185,18 +185,12 @@ def load_strat_aod(time, dir_obs):
     ts = pd.read_csv(
         path_file, delim_whitespace=True, skiprows=11, names=("year", "month", "AOD")
     )
-    date_range = pd.date_range(
-        *(
-            pd.to_datetime(
-                [
-                    str(ts["year"].iloc[0]) + "-" + str(ts["month"].iloc[0]),
-                    str(ts["year"].iloc[-1]) + "-" + str(ts["month"].iloc[-1]),
-                ]
-            )
-            + pd.offsets.MonthEnd()
-        ),
-        freq="m"
-    )
+
+    beg = str(ts["year"].iloc[0]) + "-" + str(ts["month"].iloc[0])
+    end = str(ts["year"].iloc[-1]) + "-" + str(ts["month"].iloc[-1])
+    range = pd.to_datetime([beg, end]) + pd.offsets.MonthEnd()
+    date_range = pd.date_range(*range, freq="m")
+
     aod_obs = xr.DataArray(
         ts["AOD"].values, dims=("time",), coords=dict(time=("time", date_range))
     )

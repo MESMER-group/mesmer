@@ -124,9 +124,8 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         elif params_gt["method"] == "LOWESS":
             params_gt["hist"] = gt_lowess_hist
 
-        scenarios_tr_f = list(
-            map(lambda x: x.replace("h-", ""), scenarios_tr)
-        )  # isolte future scen names
+        # isolate future scen names
+        scenarios_tr_f = list(map(lambda x: x.replace("h-", ""), scenarios_tr))
 
     else:
         idx_start_year_fut = 0  # because first year would be already in future
@@ -183,9 +182,9 @@ def train_gt_ic_LOWESS(var):
     av_var = np.mean(var, axis=0)
 
     # apply lowess smoother to further smooth the Tglob time series
-    frac_lowess = (
-        50 / nr_ts
-    )  # rather arbitrarily chosen value that gives a smooth enough trend,
+    # rather arbitrarily chosen value that gives a smooth enough trend,
+    frac_lowess = 50 / nr_ts
+
     # open to changes but if much smaller, var trend ends up very wiggly
     frac_lowess_name = "50/nr_ts"
 
@@ -243,19 +242,21 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
 
     if nr_ts != nr_aod_obs:
         raise ValueError(
-            f"The number of time steps of the variable ({nr_ts}) and the saod ({nr_aod_obs}) do not match."
+            f"The number of time steps of the variable ({nr_ts}) and the saod "
+            "({nr_aod_obs}) do not match."
         )
-    # extract global variability (which still includes volc eruptions) by removing smooth trend from Tglob in historic period
+    # extract global variability (which still includes volc eruptions) by removing
+    # smooth trend from Tglob in historic period
     gv_all_for_aod = np.zeros(nr_runs * nr_aod_obs)
     i = 0
     for run in np.arange(nr_runs):
         gv_all_for_aod[i : i + nr_aod_obs] = var[run] - gt_lowess
         i += nr_aod_obs
     # fit linear regression of gv to aod (because some ESMs react very strongly to volcanoes)
+    # no intercept to not artifically move the ts
     linreg_gv_volc = LinearRegression(fit_intercept=False).fit(
         aod_obs_all, gv_all_for_aod
-    )  # no intercept to not artifically
-    # move the ts
+    )
 
     # extract the saod coefficient
     coef_saod = linreg_gv_volc.coef_[0]

@@ -103,7 +103,8 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
         method_lt = method_lt + "_each_gp_sep"
     else:
         raise ValueError(
-            f"No such method ({params_lt['method_each_gp_sep']}) is currently implemented."
+            f"No such method ({params_lt['method_each_gp_sep']}) is currently "
+            "implemented."
         )
 
     create_emus_method_lt = create_emus_method_func_mapping[method_lt]

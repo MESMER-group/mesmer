@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 
 
-def mask_percentage(regions, lon, lat):
+def mask_percentage(regions, lon, lat, **kwargs):
     """Sample with 10 times higher resolution.
 
     Notes
@@ -20,7 +20,7 @@ def mask_percentage(regions, lon, lat):
     lon_sampled = sample_coord(lon)
     lat_sampled = sample_coord(lat)
 
-    mask = regions.mask(lon_sampled, lat_sampled)
+    mask = regions.mask(lon_sampled, lat_sampled, **kwargs)
 
     isnan = np.isnan(mask.values)
 
