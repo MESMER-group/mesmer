@@ -84,7 +84,7 @@ jobs:
     - name: Run tests
       run: |
           which python
-          make -B test
+          make -B test_cov_xml
     - name: Upload code coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
