@@ -197,23 +197,10 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
         # load geodist matrix
         geodist = joblib.load(dir_aux + geodist_name)
 
-    # gaspari-cohn correlation function phi
-    phi_gc_name = "phi_gaspari-cohn_landthres_{tl:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl".format(
-        tl=threshold_land, L_start=L_start, L_interval=L_interval, L_end=L_end
-    )
-
-    if not os.path.exists(dir_aux + phi_gc_name):
-        print("compute Gaspari-Cohn correlation function phi")
-
-        phi_gc = {}
-        for L in L_set:
-            phi_gc[L] = gaspari_cohn(geodist / L)
-            print("done with L:", L)
-
-        joblib.dump(phi_gc, dir_aux + phi_gc_name)
-
-    else:
-        phi_gc = joblib.load(dir_aux + phi_gc_name)
+    # compute gaspari-cohn correlation function phi
+    phi_gc = {}
+    for L in L_set:
+        phi_gc[L] = gaspari_cohn(geodist / L)
 
     return phi_gc
 
