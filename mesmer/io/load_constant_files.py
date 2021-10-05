@@ -286,7 +286,7 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     reg_dict["names"] = reg.names
     # have fraction of grid cells
     reg_dict["grids"] = mask_percentage(reg, lon["c"], lat["c"]).values
-    # not sure yet if needed: "binary" grid with each grid point assigned to single country
+    # not sure if needed: "binary" grid with each grid point assigned to single country
     reg_dict["grid_b"] = reg.mask(lon["c"], lat["c"]).values
     # to be used for plotting outlines (mainly useful for srex regs)
     reg_dict["full"] = reg

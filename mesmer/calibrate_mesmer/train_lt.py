@@ -174,7 +174,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
                     params_lt["coef_" + pred][targ][gp] = reg.coef_[targ_idx, coef_idx]
                     coef_idx += 1
 
-                if len(preds_lv) > 0:  # assumption: coefs of lv are behind coefs of lt
+                # assumption: coefs of lv are behind coefs of lt
+                if len(preds_lv) > 0:
                     for pred in params_lv["preds"]:
                         params_lv["coef_" + pred][targ][gp] = reg.coef_[
                             targ_idx, coef_idx

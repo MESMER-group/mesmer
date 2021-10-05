@@ -6,7 +6,6 @@
 Functions to load in observations which are saved locally.
 """
 
-
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -149,7 +148,8 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
 
         ref = cfg.ref
         time_sel = slice(ref["start"], ref["end"])
-        # .mean() ignores nan in the selected time slice. Only if all time steps are nans, the mean is a nan too.
+        # .mean() ignores nan in the selected time slice. Only if all time steps are
+        # nan, the mean is a nan too.
         tblend = tblend.values - tblend.sel(time=time_sel).mean(dim="time").values
     else:
         raise ValueError("No such re-baselining is currently implemented.")

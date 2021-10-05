@@ -92,8 +92,8 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     # weights for regions (1st axis): region fraction * area weights
     reg_dict["wgt_gps_l"] = wgt[idx_l] * reg_dict["gps_l"]
 
-    if reg_dict["type"] == "srex" or reg_dict["type"] == "ar6.land":
-        # multipyl by land fraction to account for coastal cells
+    if reg_dict["type"] in ["srex", "ar6.land"]:
+        # multiply by land fraction to account for coastal cells
         # because SREX / ar6.land regions include ocean
         reg_dict["wgt_gps_l"] = reg_dict["wgt_gps_l"] * ls["gp_l"]
 

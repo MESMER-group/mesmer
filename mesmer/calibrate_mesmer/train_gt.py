@@ -72,7 +72,8 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
     scenarios_tr = list(var.keys())
 
-    # initialize parameters dictionary and fill in the metadata which does not depend on the applied method
+    # initialize parameters dictionary and fill in the metadata which does not depend on
+    # the applied method
     params_gt = {}
     params_gt["targ"] = targ
     params_gt["esm"] = esm
@@ -83,7 +84,8 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     # apply the chosen method to the type of ensenble
     gt = {}
     if "LOWESS" in params_gt["method"]:
-        for scen in scenarios_tr:  # ie derive gt for each scen individually
+        # i.e. derive gt for each scen individually
+        for scen in scenarios_tr:
             gt[scen], frac_lowess_name = train_gt_ic_LOWESS(var[scen])
         params_gt["frac_lowess"] = frac_lowess_name
     else:
@@ -91,7 +93,8 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
     params_gt["time"] = {}
 
-    if scenarios_tr[0][:2] == "h-":  # ie if hist included
+    # i.e. if hist included
+    if scenarios_tr[0][:2] == "h-":
 
         if gen == 5:
             start_year_fut = 2005
@@ -128,8 +131,10 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         scenarios_tr_f = list(map(lambda x: x.replace("h-", ""), scenarios_tr))
 
     else:
-        idx_start_year_fut = 0  # because first year would be already in future
-        scenarios_tr_f = scenarios_tr  # because only future covered anyways
+        # because first year would be already in future
+        idx_start_year_fut = 0
+        # because only future covered anyways
+        scenarios_tr_f = scenarios_tr
 
     for scen_f, scen in zip(scenarios_tr_f, scenarios_tr):
         params_gt["time"][scen_f] = time[scen][idx_start_year_fut:]
@@ -245,6 +250,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
             f"The number of time steps of the variable ({nr_ts}) and the saod "
             "({nr_aod_obs}) do not match."
         )
+
     # extract global variability (which still includes volc eruptions) by removing
     # smooth trend from Tglob in historic period
     gv_all_for_aod = np.zeros(nr_runs * nr_aod_obs)
@@ -252,7 +258,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     for run in np.arange(nr_runs):
         gv_all_for_aod[i : i + nr_aod_obs] = var[run] - gt_lowess
         i += nr_aod_obs
-    # fit linear regression of gv to aod (because some ESMs react very strongly to volcanoes)
+    # fit linear regression of gv to aod (because some ESMs react very strongly to
+    # volcanoes)
     # no intercept to not artifically move the ts
     linreg_gv_volc = LinearRegression(fit_intercept=False).fit(
         aod_obs_all, gv_all_for_aod

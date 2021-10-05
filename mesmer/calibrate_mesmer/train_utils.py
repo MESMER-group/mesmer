@@ -20,7 +20,8 @@ def train_l_prepare_X_y_wgteq(preds, targs):
     preds : dict
         empty dictionary if none, else nested dictionary of predictors with keys
 
-        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
+          scenario)
     targs : dict
         nested dictionary of targets with keys
 
@@ -42,7 +43,7 @@ def train_l_prepare_X_y_wgteq(preds, targs):
     pred_names = list(preds.keys())
 
     # identify characteristics of the predictors and the targets
-    # predictors are not influenced by whether there is a single or there are multiple targets
+    # predictors are not influenced by whether there is a single or multiple targets
     targ = targs[targ_name]
     scens = list(targ.keys())
 
@@ -75,7 +76,8 @@ def train_l_prepare_X_y_wgteq(preds, targs):
                     k = pred_raw[scen].shape[0] * pred_raw[scen].shape[1]
                     X[s : s + k, p] = pred_raw[scen].flatten()
                     s += k
-                # if single time series as predictor (e.g. gt): repeat ts as many times as runs available
+                # if single time series as predictor (e.g. gt): repeat ts as many times
+                # as runs available
                 elif len(pred_raw[scen].shape) == 1:
                     nr_runs, nr_ts, nr_gps = targ[scen].shape
                     nr_samples_scen = nr_runs * nr_ts
@@ -84,7 +86,7 @@ def train_l_prepare_X_y_wgteq(preds, targs):
                 else:
                     raise ValueError("Predictors of this shape cannot be processed.")
 
-    # derive y (ie array of targets)
+    # derive y (i.e. array of targets)
     y = np.zeros([nr_samples, nr_gps, nr_targs])
     for t, targ_name in enumerate(targ_names):
         targ = targs[targ_name]
