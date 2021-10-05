@@ -18,15 +18,21 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
-- Reintroduce ability to read in cmip5 data from the cmip5-ng archive at ETH
-  (`#90 <https://github.com/MESMER-group/mesmer/pull/90>`_).
-  By `Lea Beusch <https://github.com/leabeusch>`_.
 
 
 Documentation
 ^^^^^^^^^^^^^
 
+v0.8.2 - 2021-10-01
+-------------------
 
+Bug fixes
+^^^^^^^^^
+
+- Reintroduce ability to read in cmip5 data from the cmip5-ng archive at ETH
+  (`#90 <https://github.com/MESMER-group/mesmer/pull/90>`_).
+  By `Lea Beusch <https://github.com/leabeusch>`_.
+   
 Internal Changes
 ^^^^^^^^^^^^^^^^
 - Reproduce the test files because of a change in regionmask which affected the mesmer
