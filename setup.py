@@ -77,7 +77,7 @@ PACKAGES = find_packages()
 PACKAGE_DATA = {}
 
 
-README = "README.md"
+README = "README.rst"
 
 with open(README, "r") as readme_file:
     README_TEXT = readme_file.read()
