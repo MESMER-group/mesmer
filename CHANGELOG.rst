@@ -18,14 +18,20 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
-- Reintroduce ability to read in cmip5 data from the cmip5-ng archive at ETH
-  (`#90 <https://github.com/MESMER-group/mesmer/pull/90>`_).
-  By `Lea Beusch <https://github.com/leabeusch>`_.
 
 
 Documentation
 ^^^^^^^^^^^^^
 
+v0.8.2 - 2021-10-07
+-------------------
+
+Bug fixes
+^^^^^^^^^
+
+- Reintroduce ability to read in cmip5 data from the cmip5-ng archive at ETH
+  (`#90 <https://github.com/MESMER-group/mesmer/pull/90>`_).
+  By `Lea Beusch <https://github.com/leabeusch>`_.
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
@@ -38,6 +44,10 @@ Internal Changes
   By `Mathias Hauser <https://github.com/mathause>`_.
 - The geopy package is no longer a dependency of mesmer
   (`#88 <https://github.com/MESMER-group/mesmer/pull/88>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Convert README from Markdown to reStructuredText to fix package build errors. Also allows
+  to include the README in the docs to avoid duplication
+  (`#102 <https://github.com/MESMER-group/mesmer/issues/102>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.1 - 2021-07-15
