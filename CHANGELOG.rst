@@ -23,6 +23,13 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+Internal Changes
+^^^^^^^^^^^^^^^^
+
+- Automatically upload the code coverage to codecov.io after the test suite has run
+  (`#99 <https://github.com/MESMER-group/mesmer/pull/99>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
 v0.8.2 - 2021-10-07
 -------------------
 
