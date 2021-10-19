@@ -6,7 +6,6 @@ Required dependencies
 
 - Python (3.7 or later)
 - `dask <https://dask.org/>`__
-- `geopy <https://geopy.readthedocs.io/en/stable/>`__
 - `numpy <http://www.numpy.org/>`__
 - `pandas <https://pandas.pydata.org/>`__
 - `scikit-learn <https://scikit-learn.org/stable/>`__

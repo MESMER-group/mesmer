@@ -12,8 +12,8 @@ import os
 
 import joblib
 import numpy as np
+import pyproj
 import regionmask as regionmask
-from geographiclib.geodesic import Geodesic
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
@@ -87,23 +87,29 @@ def calc_geodist_exact(lon, lat):
         2D array of great circle distances.
     """
 
-    # semi-major axis and flattening according to WGS 84
-    g = Geodesic(6378.137, 1 / 298.257223563)
+    # ensure correct shape
+    lon, lat = np.asarray(lon), np.asarray(lat)
+    if lon.shape != lat.shape or lon.ndim != 1:
+        raise ValueError("lon and lat need to be 1D arrays of the same shape")
+
+    geod = pyproj.Geod(ellps="WGS84")
 
     n_points = len(lon)
 
     geodist = np.zeros([n_points, n_points])
 
-    # calculate only the upper half of the triangle
+    # calculate only the upper right half of the triangle
     for i in range(n_points):
-        lt, ln = lat[i], lon[i]
-        for j in range(i + 1, n_points):
-            geodist[i, j] = g.Inverse(lt, ln, lat[j], lon[j], Geodesic.DISTANCE)["s12"]
 
-        if i % 200 == 0:
-            print("done with gp", i)
+        # need to duplicate gridpoint (required by geod.inv)
+        lt = np.tile(lat[i], n_points - (i + 1))
+        ln = np.tile(lon[i], n_points - (i + 1))
 
-    # fill the lower half of the triangle (in-place)
+        geodist[i, i + 1 :] = geod.inv(ln, lt, lon[i + 1 :], lat[i + 1 :])[2]
+
+    # convert m to km
+    geodist /= 1000
+    # fill the lower left half of the triangle (in-place)
     geodist += np.transpose(geodist)
 
     return geodist
@@ -278,29 +284,25 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     reg_dict["type"] = reg_type
     reg_dict["abbrevs"] = reg.abbrevs
     reg_dict["names"] = reg.names
-    reg_dict["grids"] = mask_percentage(
-        reg, lon["c"], lat["c"]
-    ).values  # have fraction of grid cells
-    reg_dict["grid_b"] = reg.mask(
-        lon["c"], lat["c"]
-    ).values  # not sure yet if needed: "binary" grid with each grid point assigned to single country
-    reg_dict[
-        "full"
-    ] = reg  # to be used for plotting outlines (mainly useful for srex regs)
+    # have fraction of grid cells
+    reg_dict["grids"] = mask_percentage(reg, lon["c"], lat["c"]).values
+    # not sure if needed: "binary" grid with each grid point assigned to single country
+    reg_dict["grid_b"] = reg.mask(lon["c"], lat["c"]).values
+    # to be used for plotting outlines (mainly useful for srex regs)
+    reg_dict["full"] = reg
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    ls["grid_raw"] = np.squeeze(
-        mask_percentage(
-            regionmask.defined_regions.natural_earth.land_110, lon["c"], lat["c"]
-        ).values
-    )
-    # gives fraction of land -> in extract_land() script decide above which land fraction threshold to consider a grid point as a land grid point
+    land_110 = regionmask.defined_regions.natural_earth.land_110
+
+    # gives fraction of land -> in extract_land() script decide above which land
+    # fraction threshold to consider a grid point as a land grid point
+    ls["grid_raw"] = np.squeeze(mask_percentage(land_110, lon["c"], lat["c"]).values)
 
     # remove Antarctica
     idx_ANT = np.where(lat["c"] < -60)[0]
     ls["grid_no_ANT"] = copy.deepcopy(ls["grid_raw"])
-    ls["grid_no_ANT"][idx_ANT] = 0  #
+    ls["grid_no_ANT"][idx_ANT] = 0
 
     # derive the weights
     lon["grid"], lat["grid"] = np.meshgrid(lon["c"], lat["c"])

@@ -91,8 +91,13 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         dir_name = dir_cmipng + var + "/"
 
         if var == "tas":
-            esms_excl = ["GISS-E2-H"]  # list of all ESMs which have excluded runs
-            runs_excl = ["tas_ann_GISS-E2-H_rcp85_r2i1p1_g025"]  # list of excluded runs
+            esms_excl = ["GISS-E2-H", "EC-EARTH"]
+            # list of all ESMs which have excluded runs
+            runs_excl = [
+                "tas_ann_GISS-E2-H_rcp85_r2i1p1_g025.nc",
+                "tas_ann_EC-EARTH_rcp45_r14i1p1_g025.nc",
+            ]  # list of excluded runs
+
         else:
             esms_excl = []
             runs_excl = []
@@ -227,9 +232,11 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         return path_runs_list
 
     # ordering does not work for ESMs with > 9 runs -> find first run + put in front
-    index_first = [i for i, s in enumerate(path_runs_list) if "r1i1" in s][
-        0
-    ]  # find first run
+    index_first = 0
+    for i, s in enumerate(path_runs_list):
+        if "r1i1" in s:
+            index_first = i
+            # if r1i1 run exists, move it to front; else leave first run at front
     path_runs_list.insert(
         0, path_runs_list.pop(index_first)
     )  # move first run to begin of list
@@ -321,10 +328,12 @@ def load_cmipng_file(run_path, gen, scen):
     # account for difference in naming convention in cmipx-ng archives
     if gen == 5:
         data = (
-            xr.open_dataset(run_path)
+            xr.open_dataset(run_path, use_cftime=True)
             .rename({"year": "time"})
             .roll(lon=72, roll_coords=True)
-        )  # rename to time for consistency with cmip6, roll so land in center
+        )
+        # use_cftime because of employed calendar,
+        # rename to time for consistency with cmip6, roll so land in center
         data = data.assign_coords(
             lon=(((data.lon + 180) % 360) - 180)
         )  # assign_coords so that labels = reasonable

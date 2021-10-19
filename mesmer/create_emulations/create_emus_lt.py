@@ -36,7 +36,8 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
-        - [pred][scen] (1d/2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen] (1d/2d arrays (time)/(run, time) of predictor for specific
+          scenario)
     cfg : module
         config file containing metadata
     concat_h_f : bool, optional
@@ -87,8 +88,8 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
         else:
             scens_out = scens_out_f = scenarios_emus
 
-    # check predictors
-    if pred_names != params_lt["preds"]:  # check if correct predictors
+    # check if correct predictors
+    if pred_names != params_lt["preds"]:
         raise ValueError(
             "Wrong predictors were passed. The emulations cannot be created."
         )
@@ -102,9 +103,8 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     if params_lt["method_each_gp_sep"]:
         method_lt = method_lt + "_each_gp_sep"
     else:
-        raise ValueError(
-            f"No such method ({params_lt['method_each_gp_sep']}) is currently implemented."
-        )
+        meth = params_lt["method_each_gp_sep"]
+        raise ValueError(f"No such method ({meth}) is currently implemented.")
 
     create_emus_method_lt = create_emus_method_func_mapping[method_lt]
 
@@ -165,7 +165,8 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
-        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific
+          scenario)
     scen : str
         emulated scenario
 

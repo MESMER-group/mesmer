@@ -23,20 +23,50 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
-
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
- - Refactor and speed up of the Gaspari-Cohn function and the calculation of the great
-   circle distance (`#85 <https://github.com/MESMER-group/mesmer/pull/85>`_).
-   By `Mathias Hauser <https://github.com/mathause>`_.
+- Automatically upload the code coverage to codecov.io after the test suite has run
+  (`#99 <https://github.com/MESMER-group/mesmer/pull/99>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
+v0.8.2 - 2021-10-07
+-------------------
+
+Bug fixes
+^^^^^^^^^
+
+- Reintroduce ability to read in cmip5 data from the cmip5-ng archive at ETH
+  (`#90 <https://github.com/MESMER-group/mesmer/pull/90>`_).
+  By `Lea Beusch <https://github.com/leabeusch>`_.
+
+Internal Changes
+^^^^^^^^^^^^^^^^
+- Reproduce the test files because of a change in regionmask which affected the mesmer
+  tests (`#95 <https://github.com/MESMER-group/mesmer/issues/95>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Refactor and speed up of the Gaspari-Cohn function and the calculation of the great
+  circle distance (`#85 <https://github.com/MESMER-group/mesmer/pull/85>`_,
+  `#88 <https://github.com/MESMER-group/mesmer/pull/88>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- The geopy package is no longer a dependency of mesmer
+  (`#88 <https://github.com/MESMER-group/mesmer/pull/88>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Convert README from Markdown to reStructuredText to fix package build errors. Also allows
+  to include the README in the docs to avoid duplication
+  (`#102 <https://github.com/MESMER-group/mesmer/issues/102>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Internal refactor: moved a number of inline comments to their own line (especially if
+  this allows to have the code on one line instead of several) and other minor cleanups
+  (`#98 <https://github.com/MESMER-group/mesmer/issues/98>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.1 - 2021-07-15
 -------------------
 
- - Update example script (`#80 <https://github.com/MESMER-group/mesmer/pull/80>`_).
+- Update example script (`#80 <https://github.com/MESMER-group/mesmer/pull/80>`_).
 
 v0.8.0 - 2021-07-13
 -------------------
 
- - First release on PyPI and conda (`#79 <https://github.com/MESMER-group/mesmer/pull/79>`_).
+- First release on PyPI and conda (`#79 <https://github.com/MESMER-group/mesmer/pull/79>`_).

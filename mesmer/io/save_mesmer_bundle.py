@@ -40,7 +40,8 @@ def save_mesmer_bundle(
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
     params_gv : dict
-        dictionary containing the calibrated parameters for the global variability emulations, keys relevant here
+        dictionary containing the calibrated parameters for the global variability
+        emulations, keys relevant here
 
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
