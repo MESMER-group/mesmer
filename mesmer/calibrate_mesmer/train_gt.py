@@ -128,7 +128,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
             params_gt["hist"] = gt_lowess_hist
 
         # isolate future scen names
-        scenarios_tr_f = list(map(lambda x: x.replace("h-", ""), scenarios_tr))
+        scenarios_tr_f = [scen.replace("h-", "") for scen in scenarios_tr]
 
     else:
         # because first year would be already in future
