@@ -56,6 +56,10 @@ Internal Changes
   to include the README in the docs to avoid duplication
   (`#102 <https://github.com/MESMER-group/mesmer/issues/102>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Internal refactor: moved a number of inline comments to their own line (especially if
+  this allows to have the code on one line instead of several) and other minor cleanups
+  (`#98 <https://github.com/MESMER-group/mesmer/issues/98>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.1 - 2021-07-15
 -------------------
