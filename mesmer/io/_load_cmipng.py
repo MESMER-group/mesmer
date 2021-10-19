@@ -519,7 +519,7 @@ def _load_cmipng_var(esm, scen, cfg, varn):
     time, lon, lat, wgt3d = extract_time_lon_lat_wgt3d(data)
 
     # compute area-weighted mean
-    # ATTENTION: does not account for land fraction within grid cells. I.e., coastal
+    # ATTENTION: does not account for land fraction within grid cells. i.e., coastal
     # grid cells count as full ocean grid cells. Expected to have negligible impact on
     # global mean.
 
