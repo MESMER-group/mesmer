@@ -81,10 +81,11 @@ def separate_hist_future(var_c, time_c, cfg):
 
     gen = cfg.gen
     scens_c = list(var_c.keys())  # concatenated scens
-    scens_f = list(map(lambda x: x.replace("h-", ""), scens_c))  # future scens
+    scens_f = [scen.replace("h-", "") for scen in scens_c]  # future scens
 
+    # get last year included in historical time period
     if gen == 5:
-        end_year_hist = 2005  # last year included in historical time period
+        end_year_hist = 2005
     if gen == 6:
         end_year_hist = 2014
 
@@ -100,9 +101,8 @@ def separate_hist_future(var_c, time_c, cfg):
     var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
     time_s[scen_f] = time_c[scen_c][idx_start_fut:]
     for scen_f, scen_c in zip(scens_f[1:], scens_c[1:]):
-        var_s["hist"] = np.vstack(
-            [var_s["hist"], var_c[scen_c][:, :idx_start_fut]]
-        )  # stack all available historical runs
+        # stack all available historical runs
+        var_s["hist"] = np.vstack([var_s["hist"], var_c[scen_c][:, :idx_start_fut]])
         var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
         time_s[scen_f] = time_c[scen_c][idx_start_fut:]
 

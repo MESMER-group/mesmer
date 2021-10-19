@@ -284,29 +284,25 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     reg_dict["type"] = reg_type
     reg_dict["abbrevs"] = reg.abbrevs
     reg_dict["names"] = reg.names
-    reg_dict["grids"] = mask_percentage(
-        reg, lon["c"], lat["c"]
-    ).values  # have fraction of grid cells
-    reg_dict["grid_b"] = reg.mask(
-        lon["c"], lat["c"]
-    ).values  # not sure yet if needed: "binary" grid with each grid point assigned to single country
-    reg_dict[
-        "full"
-    ] = reg  # to be used for plotting outlines (mainly useful for srex regs)
+    # have fraction of grid cells
+    reg_dict["grids"] = mask_percentage(reg, lon["c"], lat["c"]).values
+    # not sure if needed: "binary" grid with each grid point assigned to single country
+    reg_dict["grid_b"] = reg.mask(lon["c"], lat["c"]).values
+    # to be used for plotting outlines (mainly useful for srex regs)
+    reg_dict["full"] = reg
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    ls["grid_raw"] = np.squeeze(
-        mask_percentage(
-            regionmask.defined_regions.natural_earth.land_110, lon["c"], lat["c"]
-        ).values
-    )
-    # gives fraction of land -> in extract_land() script decide above which land fraction threshold to consider a grid point as a land grid point
+    land_110 = regionmask.defined_regions.natural_earth.land_110
+
+    # gives fraction of land -> in extract_land() script decide above which land
+    # fraction threshold to consider a grid point as a land grid point
+    ls["grid_raw"] = np.squeeze(mask_percentage(land_110, lon["c"], lat["c"]).values)
 
     # remove Antarctica
     idx_ANT = np.where(lat["c"] < -60)[0]
     ls["grid_no_ANT"] = copy.deepcopy(ls["grid_raw"])
-    ls["grid_no_ANT"][idx_ANT] = 0  #
+    ls["grid_no_ANT"][idx_ANT] = 0
 
     # derive the weights
     lon["grid"], lat["grid"] = np.meshgrid(lon["c"], lat["c"])

@@ -30,7 +30,8 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific
+          scenario)
     cfg : module
         config file containing metadata
     save_emus : bool, optional
@@ -118,7 +119,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     emus_lv : dict
         local variability emulations dictionary with keys
 
-        - [scen] (3d array (emu, time, gp) of local variability from previous submethods)
+        - [scen] 3d array (emu, time, gp) of local variability from previous submethods
         - empty dict if no previous submethod
     params_lv : dict
         dictionary with the trained local variability parameters
@@ -132,7 +133,8 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen] 1d/ 2d arrays (time)/(run, time) of predictor for specific
+          scenario
     cfg : module
         config file containing metadata
 
@@ -175,7 +177,8 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             seed = seed_all_scens[scen]["lv"]
             nr_gps = len(params_lv["AR1_int"][targ])
 
-            # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on existing one
+            # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on
+            # existing one
             if len(emus_lv[scen]) == 0:
 
                 emus_lv[scen][targ] = np.zeros(nr_emus_v, nr_ts_emus_stoch_v, nr_gps)
@@ -195,7 +198,8 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             )
 
             print(
-                "Compute the contribution to emus_lv by the AR(1) process with the spatially correlated innovations"
+                "Compute the contribution to emus_lv by the AR(1) process with the "
+                "spatially correlated innovations"
             )
             emus_lv_tmp = np.zeros([nr_emus_v, nr_ts_emus_stoch_v + buffer, nr_gps])
             for t in np.arange(1, nr_ts_emus_stoch_v + buffer):
@@ -229,7 +233,8 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
-        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+        - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific
+          scenario)
 
     Returns
     -------
@@ -266,10 +271,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
             for run in np.arange(nr_emus_v):
                 for gp in np.arange(nr_gps):
                     emus_lv[scen][targ][run, :, gp] = sum(
-                        [
-                            params_lv["coef_" + pred][targ][gp]
-                            * preds_lv[pred][scen][run]
-                            for pred in params_lv["preds"]
-                        ]
+                        params_lv["coef_" + pred][targ][gp] * preds_lv[pred][scen][run]
+                        for pred in params_lv["preds"]
                     )
     return emus_lv

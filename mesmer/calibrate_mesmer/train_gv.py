@@ -85,9 +85,8 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
             kwargs["sel_crit"] = "bic"
         params_gv = train_gv_AR(params_gv, gv, kwargs["max_lag"], kwargs["sel_crit"])
     else:
-        raise ValueError(
-            "The chosen method and / or weighting approach is currently not implemented."
-        )
+        msg = "The chosen method and / or weighting approach is currently not implemented."
+        raise ValueError(msg)
 
     # save the global variability paramters if requested
     if save_params:
