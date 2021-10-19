@@ -64,8 +64,6 @@ Internal Changes
   (`#98 <https://github.com/MESMER-group/mesmer/issues/98>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
-
-
 v0.8.1 - 2021-07-15
 -------------------
 
