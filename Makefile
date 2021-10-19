@@ -49,7 +49,11 @@ isort: $(VENV_DIR)  ## lint the code using flake8
 
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
-	$(VENV_DIR)/bin/pytest --cov -r a -v --cov-report term-missing
+	$(VENV_DIR)/bin/pytest -r a -v --cov=mesmer --cov-report=term-missing
+
+.PHONY: test_cov_xml
+test_cov_xml: $(VENV_DIR)  ## run the testsuite with xml report for codecov
+	$(VENV_DIR)/bin/pytest -r a -v --cov=mesmer --cov-report=xml
 
 .PHONY: test-install
 test-install: $(VENV_DIR)  ## test whether installing locally in a fresh env works
