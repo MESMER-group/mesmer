@@ -73,8 +73,8 @@ def test_load_cmipng(test_data_root_dir, varn):
     npt.assert_allclose(time, time_expected)
 
 
-@pytest.mark.parametrize("varn", ["tas", "hfds"])  #
-@pytest.mark.parametrize("start, end", [("1850", "1900"), ("1850", "1860")])  #
+@pytest.mark.parametrize("varn", ["tas", "hfds"])
+@pytest.mark.parametrize("start, end", [("1850", "1900"), ("1850", "1860")])
 def test_load_cmipng_ref(test_data_root_dir, varn, start, end):
 
     # TODO: test ref["type"] once there is more than one test dataset
