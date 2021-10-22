@@ -324,7 +324,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     # spatial cross-correlations with specified cross val folds
     L_set = np.sort(list(aux["phi_gc"].keys()))  # the Ls to loop through
 
-    llh_max = -10000
+    llh_max = float('-inf')
     llh_cv_sum = {}
     idx_L = 0
     L_sel = L_set[idx_L]
