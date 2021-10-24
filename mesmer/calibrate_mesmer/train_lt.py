@@ -182,6 +182,9 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
                         ]
                         coef_idx += 1
 
+    else:
+        raise NotImplementedError()
+
     # save the local trend paramters if requested
     if save_params:
         dir_mesmer_params = cfg.dir_mesmer_params
