@@ -222,5 +222,5 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     if len(params_lv) > 0:
         return params_lt, params_lv
-    else:
-        return params_lt
+
+    raise NotImplementedError("This path is never used")
