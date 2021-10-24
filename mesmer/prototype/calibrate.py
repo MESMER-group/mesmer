@@ -1,36 +1,53 @@
 import abc
 
+import numpy as np
+import sklearn.linear_model
+import xarray as xr
+
 
 class MesmerCalibrateBase(metaclass=abc.ABCMeta):
     """
     Abstract base class for calibration
     """
+    def _flatten_predictors(self, predictors, flat_dim_order):
+        predictors_flat = []
+        predictor_order = []
+        for v, vals in predictors.items():
+            predictor_order.append(v)
+            predictors_flat.append(self._flatten(vals, flat_dim_order))
 
-    # then we could build up utils, whether they were static methods of the
-    # base class or their own utils module doesn't really matter...
-    # an example is below, but we could have others to handle grouping, adding
-    # dimension information back to numpy arrays etc.
+        predictors_flat = np.vstack(predictors_flat).T
+
+        return predictors_flat, predictor_order
+
     @staticmethod
-    def _flatten(target, predictor):
-        """
-        Flatten xarray dataarrays into basic numpy arrays
+    def _flatten(values, flat_dim_order, dropna=True):
+        out = values.transpose(*flat_dim_order).values.flatten()
+        # TODO: better handling of nan
+        # Probably a better solution is to pass all the flattening up a level
+        # i.e. should be done before calibration is attempted/have a function
+        # to handle flattening scenarios
+        if dropna:
+            out = out[np.where(~np.isnan(out))]
 
-        Parameters
-        ----------
-        target : xarray.DataArray
-
-        predictor : xarray.DataArray
-
-        Returns
-        -------
-        (np.ndarray, np.ndarray, dict)
-            Flattened target, flattened predictor and info required to convert
-            back into xarray if desired
-        """
+        return out
 
     @staticmethod
     def _get_calibration_groups(target, groups):
         return target.groupby(groups)
+
+    @staticmethod
+    def _unflatten_calibrated_values(res, dim_names, coords):
+        res_flat = np.vstack(list(res.values()))
+        coords = {
+            **coords,
+            "predictor": list(res.keys())
+        }
+
+        out = xr.DataArray(res_flat, dims=["predictor"] + dim_names, coords=coords)
+
+        return out
+
 
 
 class MesmerCalibrateTargetOnly(MesmerCalibrateBase):
@@ -95,11 +112,11 @@ class LinearRegression(MesmerCalibrateTargetPredictor):
         if weights is not None:
             args.append(weights)
 
-        reg = LinearRegression().fit(*args)
+        reg = sklearn.linear_model.LinearRegression().fit(*args)
 
         return reg
 
-    def calibrate(self, target, predictor, weights=None, groups=["gridpoint"]):
+    def calibrate(self, target, predictors, weights=None, groups="gridpoint"):
         # this method handles the pre-processing to get the data ready for the
         # regression, does the regression (or calls another method to do so),
         # then puts it all back into a DataArray for output
@@ -107,17 +124,26 @@ class LinearRegression(MesmerCalibrateTargetPredictor):
         # would need to be smarter here too to handle multiple predictors and/
         # or target variables but that should be doable
         res = {
-            "intercepts": [],
-            "coef": [],
+            **{k: [] for k in predictors},
+            "intercept": [],
         }
-        for target_group in self._get_calibration_groups(target, groups):
-            res_group = target_group.apply(self._regress_single_point, predictor, weights)
+
+        flat_dim_order = [d for d in target.dims if d != groups]
+
+        predictor_numpy, predictor_order = self._flatten_predictors(predictors, flat_dim_order)
+        for group_val, target_group in self._get_calibration_groups(target, groups):
+            target_group_flat = self._flatten(target_group, flat_dim_order)
+
+            res_group = self._regress_single_point(target_group_flat, predictor_numpy, weights)
+
             # need to be smarter about this, but idea is to store things using
             # xarray DataArray
-            res["intercepts"].append(res_group.intercept_)
-            res["coef"].append(res_group.coef_)
+            res["intercept"].append(res_group.intercept_)
+            for i, p in enumerate(predictor_order):
+                res[p].append(res_group.coef_[i])
 
-        res = xr.DataArray(res)
+        res = self._unflatten_calibrated_values(res, dim_names=[groups], coords={groups: getattr(target, groups)})
+
         return res
 
 

@@ -84,13 +84,13 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
           assumption is fulfilled or rewrite code such that no longer necessary)
 
     """
-
     targ_names = list(targs.keys())
     targ_name = targ_names[0]  # because same approach for each targ
     pred_names = list(preds.keys())
 
     # specify necessary variables from config file
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
+    # This code will ever only work with a single target variable
     method_lt = cfg.methods[targ_name]["lt"]
     method_lv = cfg.methods[targ_name]["lv"]
     method_lt_each_gp_sep = cfg.method_lt_each_gp_sep
