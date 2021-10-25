@@ -4,6 +4,7 @@ import xarray as xr
 
 from mesmer.calibrate_mesmer.train_lt import train_lt
 from mesmer.prototype.calibrate import LinearRegression
+from mesmer.prototype.calibrate_multiple import flatten_predictors_and_target
 
 
 class _MockConfig:
@@ -147,14 +148,24 @@ def test_prototype_train_lt():
         cfg=_MockConfig(),
     )
 
-    res_updated = LinearRegression().calibrate(
-        esm_tas,
+    (
+        predictors_flattened,
+        target_flattened,
+        stack_coord_name,
+    ) = flatten_predictors_and_target(
         predictors={
             "emulator_tas": emulator_tas,
             "emulator_tas_squared": emulator_tas_squared,
             "emulator_hfds": emulator_hfds,
             "global_variability": global_variability,
         },
+        target=esm_tas,
+    )
+
+    res_updated = LinearRegression().calibrate(
+        target_flattened,
+        predictors_flattened,
+        stack_coord_name,
     )
 
     # check that calibrated parameters match for each predictor variable
