@@ -43,20 +43,20 @@ def _do_legacy_run(
             # we have to force this to have an extra dimension, run, for legacy
             # to work although this really isn't how it should be because it
             # means you have some weird reshaping to do at a really low level
-            preds_legacy[name][scenario] = vals_scen.dropna(dim="time").values[np.newaxis, :]
-
+            preds_legacy[name][scenario] = vals_scen.dropna(dim="time").values[
+                np.newaxis, :
+            ]
 
     targs_legacy = {}
-    for name, vals in (
-        ("tas", esm_tas),
-    ):
+    for name, vals in (("tas", esm_tas),):
         targs_legacy[name] = {}
         for scenario, vals_scen in vals.groupby("scenario"):
             # we have to force this to have an extra dimension, run, for legacy
             # to work although this really isn't how it should be
             # order of dimensions is very important for legacy too
-            targs_legacy[name][scenario] = vals_scen.T.dropna(dim="time").values[np.newaxis, :, :]
-
+            targs_legacy[name][scenario] = vals_scen.T.dropna(dim="time").values[
+                np.newaxis, :, :
+            ]
 
     res_legacy = train_lt(
         preds_legacy,
@@ -69,8 +69,7 @@ def _do_legacy_run(
     return res_legacy
 
 
-def test_prototype_train_lt(
-):
+def test_prototype_train_lt():
     time = [1850, 1950, 2014, 2015, 2050, 2100, 2300]
     scenarios = ["hist", "ssp126"]
 
@@ -81,27 +80,33 @@ def test_prototype_train_lt(
     )
 
     emulator_tas = xr.DataArray(
-        np.array([
-            [0, 0.5, 1, np.nan, np.nan, np.nan, np.nan],
-            [np.nan, np.nan, np.nan, 1.1, 1.5, 1.4, 1.2],
-        ]),
+        np.array(
+            [
+                [0, 0.5, 1, np.nan, np.nan, np.nan, np.nan],
+                [np.nan, np.nan, np.nan, 1.1, 1.5, 1.4, 1.2],
+            ]
+        ),
         dims=pred_dims,
         coords=pred_coords,
     )
     emulator_tas_squared = emulator_tas ** 2
     global_variability = xr.DataArray(
-        np.array([
-            [-0.1, 0.1, 0.03, np.nan, np.nan, np.nan, np.nan],
-            [np.nan, np.nan, np.nan, 0.04, 0.2, -0.03, 0.0],
-        ]),
+        np.array(
+            [
+                [-0.1, 0.1, 0.03, np.nan, np.nan, np.nan, np.nan],
+                [np.nan, np.nan, np.nan, 0.04, 0.2, -0.03, 0.0],
+            ]
+        ),
         dims=pred_dims,
         coords=pred_coords,
     )
     emulator_hfds = xr.DataArray(
-        np.array([
-            [0.5, 1.5, 2.0, np.nan, np.nan, np.nan, np.nan],
-            [np.nan, np.nan, np.nan, 2.1, 2.0, 1.5, 0.4],
-        ]),
+        np.array(
+            [
+                [0.5, 1.5, 2.0, np.nan, np.nan, np.nan, np.nan],
+                [np.nan, np.nan, np.nan, 2.1, 2.0, 1.5, 0.4],
+            ]
+        ),
         dims=pred_dims,
         coords=pred_coords,
     )
@@ -117,16 +122,18 @@ def test_prototype_train_lt(
         lon=(["gridpoint"], [120, 240]),
     )
     esm_tas = xr.DataArray(
-        np.array([
+        np.array(
             [
-                [0.6, 1.6, 2.6, np.nan, np.nan, np.nan, np.nan],
-                [0.43, 1.13, 2.21, np.nan, np.nan, np.nan, np.nan],
-            ],
-            [
-                [np.nan, np.nan, np.nan, 2.11, 2.01, 1.54, 1.22],
-                [np.nan, np.nan, np.nan, 2.19, 2.04, 1.53, 1.21],
+                [
+                    [0.6, 1.6, 2.6, np.nan, np.nan, np.nan, np.nan],
+                    [0.43, 1.13, 2.21, np.nan, np.nan, np.nan, np.nan],
+                ],
+                [
+                    [np.nan, np.nan, np.nan, 2.11, 2.01, 1.54, 1.22],
+                    [np.nan, np.nan, np.nan, 2.19, 2.04, 1.53, 1.21],
+                ],
             ]
-        ]),
+        ),
         dims=targ_dims,
         coords=targ_coords,
     )
@@ -140,7 +147,6 @@ def test_prototype_train_lt(
         cfg=_MockConfig(),
     )
 
-
     res_updated = LinearRegression().calibrate(
         esm_tas,
         predictors={
@@ -148,7 +154,7 @@ def test_prototype_train_lt(
             "emulator_tas_squared": emulator_tas_squared,
             "emulator_hfds": emulator_hfds,
             "global_variability": global_variability,
-        }
+        },
     )
 
     # check that calibrated parameters match for each predictor variable

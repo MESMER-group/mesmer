@@ -1,4 +1,6 @@
-def calibrate_multiple_scenarios_and_ensemble_members(targets, predictors, calibration_class, calibration_kwargs, weighting_style):
+def calibrate_multiple_scenarios_and_ensemble_members(
+    targets, predictors, calibration_class, calibration_kwargs, weighting_style
+):
     """
     Calibrate based on multiple scenarios and ensemble members per scenario
 
