@@ -9,81 +9,72 @@ class MesmerCalibrateBase(metaclass=abc.ABCMeta):
     """
     Abstract base class for calibration
     """
-    def _flatten_predictors(self, predictors, flat_dim_order):
+    @staticmethod
+    def _get_stack_coord_name(inp_array):
+        stack_coord_name = "stacked_coord"
+        if stack_coord_name in inp_array.dims:
+            stack_coord_name = "memser_stacked_coord"
+
+        if stack_coord_name in inp_array.dims:
+            raise NotImplementedError("You have dimensions we can't safely unstack yet")
+
+        return stack_coord_name
+
+    @staticmethod
+    def _check_coords_match(obj, obj_other, check_coord):
+        coords_match = obj.coords[check_coord].equals(obj_other.coords[check_coord])
+        if not coords_match:
+            raise AssertionError(f"{check_coord} is not the same on {obj} and {obj_other}")
+
+    @staticmethod
+    def _flatten_predictors(predictors, dims_to_flatten, stack_coord_name):
         predictors_flat = []
-        predictor_order = []
         for v, vals in predictors.items():
-            predictor_order.append(v)
-            predictors_flat.append(self._flatten(vals, flat_dim_order))
+            if stack_coord_name in vals.dims:
+                raise AssertionError(f"{stack_coord_name} is already in {vals.dims}")
 
-        predictors_flat = np.vstack(predictors_flat).T
+            vals_flat = vals.stack({stack_coord_name: dims_to_flatten}).dropna(stack_coord_name)
+            vals_flat.name = v
+            predictors_flat.append(vals_flat)
 
-        return predictors_flat, predictor_order
-
-    @staticmethod
-    def _flatten(values, flat_dim_order, dropna=True):
-        out = values.transpose(*flat_dim_order).values.flatten()
-        # TODO: better handling of nan
-        # Probably a better solution is to pass all the flattening up a level
-        # i.e. should be done before calibration is attempted/have a function
-        # to handle flattening scenarios
-        if dropna:
-            out = out[np.where(~np.isnan(out))]
+        out = xr.merge(predictors_flat).to_stacked_array("predictor", sample_dims=[stack_coord_name])
 
         return out
 
-    @staticmethod
-    def _get_calibration_groups(target, groups):
-        return target.groupby(groups)
+    def _flatten_predictors_and_target(self, predictors, target):
+        dims_to_flatten = self._get_predictor_dims(predictors)
+        stack_coord_name = self._get_stack_coord_name(target)
+
+        target_flattened = target.stack({stack_coord_name: dims_to_flatten}).dropna(stack_coord_name)
+        predictors_flattened = self._flatten_predictors(predictors, dims_to_flatten, stack_coord_name)
+        self._check_coords_match(target_flattened, predictors_flattened, stack_coord_name)
+
+        return predictors_flattened, target_flattened, stack_coord_name
 
     @staticmethod
-    def _unflatten_calibrated_values(res, dim_names, coords):
-        res_flat = np.vstack(list(res.values()))
-        coords = {
-            **coords,
-            "predictor": list(res.keys())
-        }
+    def _get_calibration_groups(target_flattened, stack_coord_name):
+        calibration_groups = list(set(target_flattened.dims) - {stack_coord_name})
+        if len(calibration_groups) > 1:
+            raise NotImplementedError()
 
-        out = xr.DataArray(res_flat, dims=["predictor"] + dim_names, coords=coords)
-
-        return out
-
-
-
-class MesmerCalibrateTargetOnly(MesmerCalibrateBase):
-    @abc.abstractmethod
-    def calibrate(self, predictor, **kwargs):
-        """
-        Calibrate a model
-
-        Parameters
-        ----------
-        predictor : xarray.DataArray
-            Predictor data array
-
-        **kwargs
-            Passed onto the calibration method
-
-        Returns
-        -------
-        xarray.DataArray
-            Fitting coefficients (have to think about how best to label and
-            store)
-        """
+        return calibration_groups[0]
 
 class MesmerCalibrateTargetPredictor(MesmerCalibrateBase):
     @abc.abstractmethod
-    def calibrate(self, predictor, target, **kwargs):
+    def calibrate(self, target, predictor, **kwargs):
         """
         Calibrate a model
 
+        [TODO: update this based on whatever LinearRegression.calibrate's docs
+        end up looking like]
+
         Parameters
         ----------
-        predictor : xarray.DataArray
-            Predictor data array
-
         target : xarray.DataArray
             Target data
+
+        predictor : xarray.DataArray
+            Predictor data array
 
         **kwargs
             Passed onto the calibration method
@@ -91,8 +82,7 @@ class MesmerCalibrateTargetPredictor(MesmerCalibrateBase):
         Returns
         -------
         xarray.DataArray
-            Fitting coefficients (have to think about how best to label and
-            store)
+            Fitting coefficients [TODO description of how labelled]
         """
 
 
@@ -106,7 +96,7 @@ class LinearRegression(MesmerCalibrateTargetPredictor):
     preparation, which makes it very hard to see what the model actually is
     """
     @staticmethod
-    def _regress_single_point(target_point, predictor, weights=None):
+    def _regress_single_group(target_point, predictor, weights=None):
         # this is the method that actually does the regression
         args = [predictor, target_point]
         if weights is not None:
@@ -116,59 +106,74 @@ class LinearRegression(MesmerCalibrateTargetPredictor):
 
         return reg
 
-    def calibrate(self, target, predictors, weights=None, groups="gridpoint"):
-        # this method handles the pre-processing to get the data ready for the
-        # regression, does the regression (or calls another method to do so),
-        # then puts it all back into a DataArray for output
+    @staticmethod
+    def _get_predictor_dims(predictors):
+        predictors_dims = {k: v.dims for k, v in predictors.items()}
+        predictors_dims_unique = set(predictors_dims.values())
+        if len(predictors_dims_unique) > 1:
+            raise AssertionError(f"Dimensions of predictors are not all the same, we have: {predictors_dims}")
 
-        # would need to be smarter here too to handle multiple predictors and/
-        # or target variables but that should be doable
-        res = {
-            **{k: [] for k in predictors},
-            "intercept": [],
-        }
+        return list(predictors_dims_unique)[0]
 
-        flat_dim_order = [d for d in target.dims if d != groups]
+    def _calibrate_groups(self, target_flattened, predictor_numpy, predictor_names, weights, calibration_groups):
+        def _calibrate_group(target_group):
+            target_group_numpy = target_group.values
+            res_group = self._regress_single_group(target_group_numpy, predictor_numpy, weights)
 
-        predictor_numpy, predictor_order = self._flatten_predictors(predictors, flat_dim_order)
-        for group_val, target_group in self._get_calibration_groups(target, groups):
-            target_group_flat = self._flatten(target_group, flat_dim_order)
+            res_xr = xr.DataArray(np.concatenate([[res_group.intercept_], res_group.coef_]), dims=["predictor"], coords={"predictor": predictor_names})
 
-            res_group = self._regress_single_point(target_group_flat, predictor_numpy, weights)
+            return res_xr
 
-            # need to be smarter about this, but idea is to store things using
-            # xarray DataArray
-            res["intercept"].append(res_group.intercept_)
-            for i, p in enumerate(predictor_order):
-                res[p].append(res_group.coef_[i])
-
-        res = self._unflatten_calibrated_values(res, dim_names=[groups], coords={groups: getattr(target, groups)})
+        res = target_flattened.groupby(calibration_groups).apply(_calibrate_group)
 
         return res
 
+    def calibrate(self, target, predictors, weights=None):
+        """
+        Calibrate a linear regression model
 
-class AutoRegression(MesmerCalibrateTargetOnly):
-    def _regress_single(target, lags):
-        res = AutoReg(target, lags=lags).fit()
+        Parameters
+        ----------
+        target : xarray.DataArray
+            Target data
 
-        return res
+        predictors : dict[str: xarray.DataArray]
+            Predictors to use, each key gives the name of the predictor, the
+            values give the values of the predictor.
 
-    def calibrate(self, target, groups=["gridpoint"], lags=1):
-        # would need to be smarter here too to handle multiple predictors and/
-        # or target variables but that should be doable
-        res = {
-            "intercepts": [],
-            "coef": [],
-            "stds": [],
-        }
-        for target_group in self._get_calibration_groups(target, groups):
-            res_group = target_group.apply(self._regress_single, lags)
-            # need to be smarter about this, but idea is to store things using
-            # xarray DataArray
-            res["intercepts"].append(res_group.params[0])
-            res["coef"].append(res_group.params[1])
-            res["stds"].append(np.sqrt(res_group.sigma2))
+        weights : optional, xarray.DataArray
+            Weights to use for dimensions in ``predictors``
 
-        res = xr.DataArray(res)
+        Returns
+        -------
+        xarray.DataArray
+            Fitting coefficients, the dimensions of which are the combination
+            of "predictor" and all dimensions in ``target`` which are not in
+            ``predictors``. For example, the resulting dimensions could be
+            ["gridpoint", "predictor"].
 
-        return res
+        Notes
+        -----
+        We flatten ``target``, ``predictors`` and ``weights`` across the
+        dimensions shared by ``target`` and ``predictors`` to create the input
+        arrays for the linear regression.
+        """
+        predictors_flattened, target_flattened, stack_coord_name = self._flatten_predictors_and_target(
+            predictors, target
+        )
+
+        # stacked coord has to go first for the regression to be setup correctly
+        predictors_flattened_dim_order = [stack_coord_name] + [d for d in predictors_flattened.dims if d != stack_coord_name]
+        predictors_flattened_reordered = predictors_flattened.transpose(*predictors_flattened_dim_order)
+        predictors_plus_intercept = ["intercept"] + list(predictors_flattened_reordered["variable"].values)
+        predictor_numpy = predictors_flattened_reordered.values
+
+        calibration_groups = self._get_calibration_groups(target_flattened, stack_coord_name)
+
+        return self._calibrate_groups(
+            target_flattened,
+            predictor_numpy,
+            predictor_names=predictors_plus_intercept,
+            weights=weights,
+            calibration_groups=calibration_groups,
+        )

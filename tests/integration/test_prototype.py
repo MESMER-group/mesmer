@@ -162,7 +162,7 @@ def test_prototype_train_lt(
         npt.assert_allclose(res_updated.sel(predictor=updated_name), legacy_vals)
 
 
-# things that aren't handled well:
-# - checking that ensemble member and scenario actually make a sensible set
-# - dropping of nans in prototyped method
-# - units (should probably be using dataset rather than dataarray for outputs)
+# things that aren't tested well:
+# - what happens if ensemble member and scenario don't actually make a coherent set
+# - units (should probably be using dataset rather than dataarray for inputs and outputs?)
+# - weights
