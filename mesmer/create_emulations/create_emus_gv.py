@@ -149,6 +149,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     np.random.seed(seed)
 
     # buffer so that initial start at 0 does not influence overall result
+    # Should this buffer be based on the length of ar_lags instead of hard-coded?
     buffer = 50
 
     # re-name params for easier reading of code below
@@ -175,6 +176,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         for t in np.arange(ar_lags[-1], len(emus_gv[i])):  # avoid misleading indices
             emus_gv[i, t] = (
                 ar_int
+                # could probably be replaced with ArmaProcess.generate_samples
                 + sum(
                     ar_coefs[k] * emus_gv[i, t - ar_lags[k]]
                     for k in np.arange(len(ar_lags))

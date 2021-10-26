@@ -1,10 +1,16 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 import xarray as xr
+from statsmodels.tsa.arima_process import ArmaProcess
 
 from mesmer.calibrate_mesmer.train_lt import train_lt
+from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.prototype.calibrate import LinearRegression
-from mesmer.prototype.calibrate_multiple import flatten_predictors_and_target
+from mesmer.prototype.calibrate_multiple import (
+    calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
+    flatten_predictors_and_target,
+)
 
 
 class _MockConfig:
@@ -12,6 +18,7 @@ class _MockConfig:
         self,
         method_lt="OLS",
         method_lv="OLS_AR1_sci",
+        method_gv="AR",
         separate_gridpoints=True,
         weight_scenarios_equally=True,
         target_variable="tas",
@@ -20,11 +27,18 @@ class _MockConfig:
         self.methods[target_variable] = {}
         self.methods[target_variable]["lt"] = method_lt
         self.methods[target_variable]["lv"] = method_lv
+        self.methods[target_variable]["gv"] = method_gv
+
+        # this has to be set but isn't actually used
+        self.preds = {}
+        self.preds[target_variable] = {}
+        self.preds[target_variable]["gv"] = None
+
         self.method_lt_each_gp_sep = separate_gridpoints
         self.wgt_scen_tr_eq = weight_scenarios_equally
 
 
-def _do_legacy_run(
+def _do_legacy_run_train_lt(
     emulator_tas,
     emulator_tas_squared,
     emulator_hfds,
@@ -139,7 +153,7 @@ def test_prototype_train_lt():
         coords=targ_coords,
     )
 
-    res_legacy = _do_legacy_run(
+    res_legacy = _do_legacy_run_train_lt(
         emulator_tas,
         emulator_tas_squared,
         emulator_hfds,
@@ -177,6 +191,121 @@ def test_prototype_train_lt():
         ("intercept", res_legacy[0]["intercept"]["tas"]),
     ):
         npt.assert_allclose(res_updated.sel(predictor=updated_name), legacy_vals)
+
+
+def _do_legacy_run_train_gv(
+    esm_tas_global_variability,
+    cfg,
+):
+    targs_legacy = {}
+    var_name = "tas"
+
+    targs_legacy = {}
+    for scenario, vals_scen in esm_tas_global_variability.groupby("scenario"):
+        targs_legacy[scenario] = (
+            vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time").values
+        )
+
+    res_legacy = train_gv(
+        targs_legacy,
+        targ=var_name,
+        esm="esm_name",
+        cfg=cfg,
+        save_params=False,
+        max_lag=2,
+    )
+
+    return res_legacy
+
+
+@pytest.mark.parametrize(
+    "ar",
+    (
+        [1, 0.5, 0.3],
+        [1, 0.5, 0.3, 0.3, 0.7],
+        [0.9, 1, 0.2, -0.1],
+    ),
+)
+def test_prototype_train_gv(ar):
+    time_history = range(1850, 2014 + 1)
+    time_scenario = range(2015, 2100 + 1)
+    time = list(time_history) + list(time_scenario)
+
+    magnitude = np.array([0.1])
+
+    scenarios = ["hist", "ssp126"]
+
+    # we wouldn't actually start like this, but we'd write a utils function
+    # to simply go from lat-lon to gridpoint and back
+    targ_dims = ["scenario", "ensemble_member", "time"]
+    targ_coords = dict(
+        time=time,
+        scenario=scenarios,
+        ensemble_member=["r1i1p1f1", "r2i1p1f1"],
+    )
+    esm_tas_global_variability = xr.DataArray(
+        np.array(
+            [
+                [
+                    np.concatenate(
+                        [
+                            ArmaProcess(ar, magnitude).generate_sample(
+                                nsample=len(time_history)
+                            ),
+                            np.nan * np.zeros(len(time_scenario)),
+                        ]
+                    ),
+                    np.concatenate(
+                        [
+                            ArmaProcess(ar, magnitude).generate_sample(
+                                nsample=len(time_history)
+                            ),
+                            np.nan * np.zeros(len(time_scenario)),
+                        ]
+                    ),
+                ],
+                [
+                    np.concatenate(
+                        [
+                            np.nan * np.zeros(len(time_history)),
+                            ArmaProcess(ar, magnitude).generate_sample(
+                                nsample=len(time_scenario)
+                            ),
+                        ]
+                    ),
+                    np.concatenate(
+                        [
+                            np.nan * np.zeros(len(time_history)),
+                            ArmaProcess(ar, magnitude).generate_sample(
+                                nsample=len(time_scenario)
+                            ),
+                        ]
+                    ),
+                ],
+            ]
+        ),
+        dims=targ_dims,
+        coords=targ_coords,
+    )
+
+    res_legacy = _do_legacy_run_train_gv(
+        esm_tas_global_variability,
+        cfg=_MockConfig(),
+    )
+
+    res_updated = (
+        calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
+            esm_tas_global_variability,
+            maxlag=2,
+        )
+    )
+
+    for key, comparison in (
+        ("intercept", res_legacy["AR_int"]),
+        ("lag_coefficients", res_legacy["AR_coefs"]),
+        ("standard_innovations", res_legacy["AR_std_innovs"]),
+    ):
+        npt.assert_allclose(res_updated[key], comparison)
 
 
 # things that aren't tested well:

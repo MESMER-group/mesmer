@@ -1,4 +1,7 @@
+import numpy as np
 import xarray as xr
+
+from .calibrate import AutoRegression1DOrderSelection, AutoRegression1D
 
 
 def _get_predictor_dims(predictors):
@@ -61,6 +64,84 @@ def flatten_predictors_and_target(predictors, target):
     _check_coords_match(target_flattened, predictors_flattened, stack_coord_name)
 
     return predictors_flattened, target_flattened, stack_coord_name
+
+
+def _select_auto_regressive_process_order(
+    target,
+    maxlag,
+    ic,
+    scenario_level="scenario",
+    ensemble_member_level="ensemble_member",
+    q=50,
+    interpolation="nearest",
+):
+    """
+
+    interpolation : str
+        Passed to :func:`numpy.percentile`. Interpolation is not a good way to
+        go here because it could lead to an AR order that wasn't actually chosen by any run. We recommend using the default value i.e. "nearest".
+    """
+    order = []
+    for _, scenario_vals in target.groupby(scenario_level):
+        scenario_orders = []
+        for _, em_vals in scenario_vals.groupby(ensemble_member_level):
+            em_orders = AutoRegression1DOrderSelection().calibrate(
+                em_vals, maxlag=maxlag, ic=ic
+            )
+
+            if em_orders is not None:
+                scenario_orders.append(em_orders[-1])
+            else:
+                scenario_orders.append(0)
+
+        if scenario_orders:
+            order.append(
+                np.percentile(scenario_orders, q=q, interpolation=interpolation)
+            )
+        else:
+            order.append(0)
+
+    res = int(np.percentile(order, q=q, interpolation=interpolation))
+
+    return res
+
+
+def _derive_auto_regressive_process_parameters(
+    target, order, scenario_level="scenario", ensemble_member_level="ensemble_member"
+):
+    # I don't like the fact that I'm duplicating these loops, surely there is a better way
+    parameters = {
+        "intercept": [],
+        "lag_coefficients": [],
+        "standard_innovations": [],
+    }
+    for _, scenario_vals in target.groupby(scenario_level):
+        scenario_parameters = {k: [] for k in parameters}
+        for _, em_vals in scenario_vals.groupby(ensemble_member_level):
+            em_parameters = AutoRegression1D().calibrate(em_vals, order=order)
+            for k, v in em_parameters.items():
+                scenario_parameters[k].append(v)
+
+        scenario_parameters_average = {
+            k: np.vstack(v).mean(axis=0) for k, v in scenario_parameters.items()
+        }
+        for k, v in scenario_parameters_average.items():
+            parameters[k].append(v)
+
+    parameters_average = {k: np.vstack(v).mean(axis=0) for k, v in parameters.items()}
+
+    return parameters_average
+
+
+def calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
+    target,
+    maxlag=12,
+    ic="bic",
+):
+    ar_order = _select_auto_regressive_process_order(target, maxlag, ic)
+    ar_params = _derive_auto_regressive_process_parameters(target, ar_order)
+
+    return ar_params
 
 
 def calibrate_multiple_scenarios_and_ensemble_members(

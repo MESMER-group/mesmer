@@ -2,6 +2,7 @@ import abc
 
 import numpy as np
 import sklearn.linear_model
+import statsmodels.tsa.ar_model
 import xarray as xr
 
 
@@ -15,26 +16,8 @@ class MesmerCalibrateTargetPredictor(MesmerCalibrateBase):
     @abc.abstractmethod
     def calibrate(self, target, predictor, **kwargs):
         """
-        Calibrate a model
-
-        [TODO: update this based on whatever LinearRegression.calibrate's docs
-        end up looking like]
-
-        Parameters
-        ----------
-        target : xarray.DataArray
-            Target data
-
-        predictor : xarray.DataArray
-            Predictor data array
-
-        **kwargs
-            Passed onto the calibration method
-
-        Returns
-        -------
-        xarray.DataArray
-            Fitting coefficients [TODO description of how labelled]
+        [TODO: update this based on however LinearRegression.calibrate's docs
+        end up looking]
         """
 
 
@@ -98,3 +81,62 @@ class LinearRegression(MesmerCalibrateTargetPredictor):
         ).rename({predictor_temporary_name: predictor_name})
 
         return res
+
+
+class MesmerCalibrateTarget(MesmerCalibrateBase):
+    @abc.abstractmethod
+    def calibrate(self, target, **kwargs):
+        """
+        [TODO: update this based on however LinearRegression.calibrate's docs
+        end up looking]
+        """
+
+    @staticmethod
+    def _check_target_is_one_dimensional(target, return_numpy_values):
+        if len(target.dims) > 1:
+            raise AssertionError(f"More than one dimension, found {target.dims}")
+
+        if not return_numpy_values:
+            return None
+
+        return target.dropna(dim=target.dims[0]).values
+
+
+class AutoRegression1DOrderSelection(MesmerCalibrateTarget):
+    def calibrate(
+        self,
+        target,
+        maxlag=12,
+        ic="bic",
+    ):
+        target_numpy = self._check_target_is_one_dimensional(
+            target, return_numpy_values=True
+        )
+
+        calibrated = statsmodels.tsa.ar_model.ar_select_order(
+            target_numpy, maxlag=maxlag, ic=ic, old_names=False
+        )
+
+        return calibrated.ar_lags
+
+
+class AutoRegression1D(MesmerCalibrateTarget):
+    def calibrate(
+        self,
+        target,
+        order,
+    ):
+        target_numpy = self._check_target_is_one_dimensional(
+            target, return_numpy_values=True
+        )
+
+        calibrated = statsmodels.tsa.ar_model.AutoReg(
+            target_numpy, lags=order, old_names=False
+        ).fit()
+
+        return {
+            "intercept": calibrated.params[0],
+            "lag_coefficients": calibrated.params[1:],
+            # I don't know what this is so a better name could probably be chosen
+            "standard_innovations": np.sqrt(calibrated.sigma2),
+        }

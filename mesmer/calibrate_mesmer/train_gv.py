@@ -176,7 +176,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
                 gv[scen][run], maxlag=max_lag, ic=sel_crit, old_names=False
             ).ar_lags
             # if order > 0 is selected,add selected order to vector
-            if len(run_ar_lags) > 0:
+            if run_ar_lags is not None:
                 AR_order_runs_tmp[run] = run_ar_lags[-1]
 
         AR_order_scens_tmp[scen_idx] = np.percentile(
@@ -201,6 +201,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         AR_std_innovs_tmp = 0
 
         for run in np.arange(nr_runs):
+            # AR parameters for scenario are average of runs
             AR_model_tmp = AutoReg(
                 gv[scen][run], lags=AR_order_sel, old_names=False
             ).fit()
@@ -208,6 +209,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
             AR_coefs_tmp += AR_model_tmp.params[1:] / nr_runs
             AR_std_innovs_tmp += np.sqrt(AR_model_tmp.sigma2) / nr_runs
 
+        # AR parameters are average over scenarios
         params_gv["AR_int"] += AR_int_tmp / nr_scens
         params_gv["AR_coefs"] += AR_coefs_tmp / nr_scens
         params_gv["AR_std_innovs"] += AR_std_innovs_tmp / nr_scens
