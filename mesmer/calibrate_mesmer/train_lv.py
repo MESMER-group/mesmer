@@ -251,9 +251,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             params_lv["AR1_std_innovs"][targ_name] += AR1_std_innovs_runs / nr_scens
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
-        import pdb
-
-        pdb.set_trace()
         # y_targ has dimensions (draw (flattened version of time and scenario and ensemble member), gridpoint)
         # wgt_scen_eq has dimensions (draw (flattened version of time and scenario and ensemble member),)
         # aux["phi_gc"][year] has dimensions (gridpoint, gridpoint)
