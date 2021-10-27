@@ -251,6 +251,12 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             params_lv["AR1_std_innovs"][targ_name] += AR1_std_innovs_runs / nr_scens
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
+        import pdb
+
+        pdb.set_trace()
+        # y_targ has dimensions (draw (flattened version of time and scenario and ensemble member), gridpoint)
+        # wgt_scen_eq has dimensions (draw (flattened version of time and scenario and ensemble member),)
+        # aux["phi_gc"][year] has dimensions (gridpoint, gridpoint)
         (
             params_lv["L"][targ_name],
             params_lv["ecov"][targ_name],
@@ -361,6 +367,7 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
             # each cv sample gets its own likelihood -> can sum them up for overall
             # likelihood
             # sum over all samples = wgt average * nr_samples
+            # TODO: check why this can't be done with sum
             llh_cv_fold_sum = np.average(
                 llh_cv_each_sample, weights=wgt_scen_eq_cv
             ) * len(wgt_scen_eq_cv)
@@ -369,7 +376,6 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
             llh_cv_sum[L] += llh_cv_fold_sum
 
         idx_L += 1
-
         if llh_cv_sum[L] > llh_max:
             L_sel = L
             llh_max = llh_cv_sum[L]

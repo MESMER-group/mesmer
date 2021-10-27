@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from .calibrate import AutoRegression1DOrderSelection, AutoRegression1D
@@ -66,6 +67,21 @@ def flatten_predictors_and_target(predictors, target):
     return predictors_flattened, target_flattened, stack_coord_name
 
 
+def _loop_levels(inp, levels):
+    # annoyingly, there doesn't seem to be an inbuilt solution for this
+    # https://github.com/pydata/xarray/issues/2438
+    def _yield_level(inph, levels_left, out_names):
+        for name, values in inph.groupby(levels_left[0]):
+            out_names_here = out_names + [name]
+            if len(levels_left) == 1:
+                yield tuple(out_names_here), values
+            else:
+                yield from _yield_level(values, levels_left[1:], out_names_here)
+
+    for names, values in _yield_level(inp, levels, []):
+        yield names, values
+
+
 def _select_auto_regressive_process_order(
     target,
     maxlag,
@@ -81,27 +97,31 @@ def _select_auto_regressive_process_order(
         Passed to :func:`numpy.percentile`. Interpolation is not a good way to
         go here because it could lead to an AR order that wasn't actually chosen by any run. We recommend using the default value i.e. "nearest".
     """
-    order = []
-    for _, scenario_vals in target.groupby(scenario_level):
-        scenario_orders = []
-        for _, em_vals in scenario_vals.groupby(ensemble_member_level):
-            em_orders = AutoRegression1DOrderSelection().calibrate(
-                em_vals, maxlag=maxlag, ic=ic
-            )
+    store = []
 
-            if em_orders is not None:
-                scenario_orders.append(em_orders[-1])
-            else:
-                scenario_orders.append(0)
+    for (scenario, ensemble_member), values in _loop_levels(
+        target, (scenario_level, ensemble_member_level)
+    ):
+        orders = AutoRegression1DOrderSelection().calibrate(
+            values, maxlag=maxlag, ic=ic
+        )
+        keep_order = 0 if orders is None else orders[-1]
+        store.append(
+            {
+                "scenario": scenario,
+                "ensemble_member": ensemble_member,
+                "order": keep_order,
+            }
+        )
 
-        if scenario_orders:
-            order.append(
-                np.percentile(scenario_orders, q=q, interpolation=interpolation)
-            )
-        else:
-            order.append(0)
-
-    res = int(np.percentile(order, q=q, interpolation=interpolation))
+    store = pd.DataFrame(store).set_index(["scenario", "ensemble_member"])
+    res = (
+        store.groupby("scenario")["order"]
+        # first operation gives result by scenario (i.e. over ensemble members)
+        .quantile(q=q / 100, interpolation=interpolation)
+        # second one gives result over all scenarios
+        .quantile(q=q / 100, interpolation=interpolation)
+    )
 
     return res
 
@@ -109,28 +129,29 @@ def _select_auto_regressive_process_order(
 def _derive_auto_regressive_process_parameters(
     target, order, scenario_level="scenario", ensemble_member_level="ensemble_member"
 ):
-    # I don't like the fact that I'm duplicating these loops, surely there is a better way
-    parameters = {
-        "intercept": [],
-        "lag_coefficients": [],
-        "standard_innovations": [],
-    }
-    for _, scenario_vals in target.groupby(scenario_level):
-        scenario_parameters = {k: [] for k in parameters}
-        for _, em_vals in scenario_vals.groupby(ensemble_member_level):
-            em_parameters = AutoRegression1D().calibrate(em_vals, order=order)
-            for k, v in em_parameters.items():
-                scenario_parameters[k].append(v)
+    store = []
+    for (scenario, ensemble_member), values in _loop_levels(
+        target, (scenario_level, ensemble_member_level)
+    ):
+        parameters = AutoRegression1D().calibrate(values, order=order)
+        parameters["scenario"] = scenario
+        parameters["ensemble_member"] = ensemble_member
+        store.append(parameters)
 
-        scenario_parameters_average = {
-            k: np.vstack(v).mean(axis=0) for k, v in scenario_parameters.items()
-        }
-        for k, v in scenario_parameters_average.items():
-            parameters[k].append(v)
+    store = pd.DataFrame(store).set_index(["scenario", "ensemble_member"])
 
-    parameters_average = {k: np.vstack(v).mean(axis=0) for k, v in parameters.items()}
+    def _axis_mean(inp):
+        return inp.apply(np.mean, axis=0)
 
-    return parameters_average
+    res = (
+        store.groupby("scenario")
+        # first operation gives result by scenario (i.e. over ensemble members)
+        .apply(_axis_mean)
+        # second one gives result over all scenarios
+        .apply(np.mean, axis=0).to_dict()
+    )
+
+    return res
 
 
 def calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
@@ -142,32 +163,3 @@ def calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
     ar_params = _derive_auto_regressive_process_parameters(target, ar_order)
 
     return ar_params
-
-
-def calibrate_multiple_scenarios_and_ensemble_members(
-    targets, predictors, calibration_class, calibration_kwargs, weighting_style
-):
-    """
-    Calibrate based on multiple scenarios and ensemble members per scenario
-
-    Parameters
-    ----------
-    targets : xarray.DataArray
-        Target variables to calibrate to. This should have a scenario and an ensemble-member dimension (you'd need a different function to prepare things such that the dimensions all worked)
-
-    predictors : xarray.DataArray
-        Predictor variables, as above re comments about prepping data
-
-    calibration_class : mesmer.calibration.MesmerCalibrateBase
-        Class to use for calibration
-
-    calibration_kwargs : dict
-        Keyword arguments to pass to the calibration class
-
-    weighting_style : ["equal", "equal_scenario", "equal_ensemble_member"]
-        How to weight combinations of scenarios and ensemble members. "equal" --> all scenario - ensemble member combination are treated equally. "equal_scenario" --> all scenarios get equal weight (so if a scenario has more ensemble members then each ensemble member gets less weight). "equal_ensemble_member" --> all ensemble members get the same weight (so if an ensemble member is reported for more than one scenario then each scenario gets less weight for that ensemble member)
-    """
-    # this function (or class) would handle all of the looping over scenarios
-    # and ensemble members. It would call the calibration class on each
-    # scenario and ensemble member and know how much weight to give each
-    # before combining them
