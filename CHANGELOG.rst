@@ -32,6 +32,8 @@ Internal Changes
 - Internal refactor: moved a number of inline comments to their own line (especially if
   this allows to have the code on one line instead of several) and other minor cleanups
   (`#98 <https://github.com/MESMER-group/mesmer/pull/98>`_).
+- Refactor :py:func:`io.load_cmipng_tas` and :py:func:`io.load_cmipng_hfds` to
+  de-duplicate their code and add tests for them (`#55 <https://github.com/MESMER-group/mesmer/pull/55>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.2 - 2021-10-07

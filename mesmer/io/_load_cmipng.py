@@ -402,93 +402,9 @@ def load_cmipng_hfds(esm, scen, cfg):
     time : np.ndarray
         1d array of years
 
-    Notes
-    -----
-    - There are some overlaps with load_cmipng_tas()
-    - These functions could be more optimally merged in the future to avoid repetition
-
     """
 
-    # specify necessary variables from cfg file
-    gen = cfg.gen
-    ref = cfg.ref
-    dir_cmipng = cfg.dir_cmipng
-
-    # find the files which fulfill the specifications
-    path_runs_list = find_files_cmipng(gen, esm, "hfds", scen, dir_cmipng)
-
-    # exit function in case path_runs_list is empty (ie no file matches the search criterion)
-    if len(path_runs_list) == 0:
-        hfds = GHFDS = lon = lat = time = None
-        return hfds, GHFDS, lon, lat, time
-
-    # load hfds on global grid and compute anomalies thereof
-    hfds = {}
-    run_nrs = {}
-
-    for run_path in path_runs_list:
-        # account for difference in naming convention in cmipx-ng archives
-        data, run = load_cmipng_file(run_path, gen, scen)
-
-        run_nrs[run_path] = run  # tmp saved this way for deriving anomalies later
-        hfds[run] = copy.deepcopy(data.hfds.values)
-
-        if ref["type"] == "all":
-            if run_path == path_runs_list[0]:  # for the first run need to initialize
-                hfds_ref = (
-                    data.hfds.sel(time=slice(ref["start"], ref["end"]))
-                    .mean(dim="time")
-                    .values
-                    * 1.0
-                    / len(path_runs_list)
-                )
-            else:
-                hfds_ref += (
-                    data.hfds.sel(time=slice(ref["start"], ref["end"]))
-                    .mean(dim="time")
-                    .values
-                    * 1.0
-                    / len(path_runs_list)
-                )  # sum up all ref climates
-
-        if ref["type"] == "individ":
-            hfds_ref = (
-                data.hfds.sel(time=slice(ref["start"], ref["end"]))
-                .mean(dim="time")
-                .values
-            )
-            hfds[run] -= hfds_ref  # compute anomalies
-
-        if ref["type"] == "first" and run == "1":
-            # TO CHECK
-            hfds_ref = (
-                data.hfds.sel(time=slice(ref["start"], ref["end"]))
-                .mean(dim="time")
-                .values
-            )
-
-    if ref["type"] == "all" or ref["type"] == "first":
-        for run_path in path_runs_list:
-            run = run_nrs[run_path]
-            hfds[run] -= hfds_ref  # compute anomalies
-
-    # extract time, longitude, latitude, and 3d weights from data
-    time, lon, lat, wgt3d = extract_time_lon_lat_wgt3d(data)
-
-    # compute area-weighted GHFDS from global hfds
-    # ATTENTION: currently not implemented to account for land fraction within grid cells.
-    # I.e., coastal grid cells count as full ocean grid cells here. Expected to have negligible impact on global mean.
-    GHFDS = {}
-    for run_path in path_runs_list:
-        run = run_nrs[run_path]
-        masked_hfds = np.ma.masked_array(
-            hfds[run], np.isnan(hfds[run])
-        )  # account for missing values over land
-        GHFDS[run] = np.average(
-            masked_hfds, axis=(1, 2), weights=wgt3d
-        ).data  # no need to keep mask since False everywhere
-
-    return hfds, GHFDS, lon, lat, time
+    return _load_cmipng_var(esm, scen, cfg, "hfds")
 
 
 def load_cmipng_tas(esm, scen, cfg):
@@ -524,28 +440,28 @@ def load_cmipng_tas(esm, scen, cfg):
     time : np.ndarray
         1d array of years
 
-    Notes
-    -----
-    - There are some overlaps with load_cmipng_hfds()
-    - These functions could be more optimally merged in the future to avoid repetition
-
     """
 
-    # specify necessary variables from cfg file
+    return _load_cmipng_var(esm, scen, cfg, "tas")
+
+
+def _load_cmipng_var(esm, scen, cfg, varn):
+
+    # specify necessary variables from cfg
     gen = cfg.gen
     ref = cfg.ref
     dir_cmipng = cfg.dir_cmipng
 
     # find the files which fulfill the specifications
-    path_runs_list = find_files_cmipng(gen, esm, "tas", scen, dir_cmipng)
+    path_runs_list = find_files_cmipng(gen, esm, varn, scen, dir_cmipng)
 
-    # exit function in case path_runs_list is empty (ie no file matches the search criterion)
+    # exit function in case path_runs_list is empty (i.e. no files found)
     if len(path_runs_list) == 0:
-        tas = GSAT = lon = lat = time = None
-        return tas, GSAT, lon, lat, time
+        dta = dta_global = lon = lat = time = None
+        return dta, dta_global, lon, lat, time
 
-    # load 2-m air temperature on global grid and compute anomalies thereof
-    tas = {}
+    # load data on global grid and compute anomalies
+    dta = {}
     run_nrs = {}
 
     for run_path in path_runs_list:
@@ -553,20 +469,22 @@ def load_cmipng_tas(esm, scen, cfg):
         data, run = load_cmipng_file(run_path, gen, scen)
 
         run_nrs[run_path] = run  # tmp saved this way for deriving anomalies later
-        tas[run] = copy.deepcopy(data.tas.values)
+        dta[run] = copy.deepcopy(data[varn].values)
 
         if ref["type"] == "all":
             if run_path == path_runs_list[0]:  # for the first run need to initialize
-                tas_ref = (
-                    data.tas.sel(time=slice(ref["start"], ref["end"]))
+                dta_ref = (
+                    data[varn]
+                    .sel(time=slice(ref["start"], ref["end"]))
                     .mean(dim="time")
                     .values
                     * 1.0
                     / len(path_runs_list)
                 )
             else:
-                tas_ref += (
-                    data.tas.sel(time=slice(ref["start"], ref["end"]))
+                dta_ref += (
+                    data[varn]
+                    .sel(time=slice(ref["start"], ref["end"]))
                     .mean(dim="time")
                     .values
                     * 1.0
@@ -574,17 +492,20 @@ def load_cmipng_tas(esm, scen, cfg):
                 )  # sum up all ref climates
 
         if ref["type"] == "individ":
-            tas_ref = (
-                data.tas.sel(time=slice(ref["start"], ref["end"]))
+            dta_ref = (
+                data[varn]
+                .sel(time=slice(ref["start"], ref["end"]))
                 .mean(dim="time")
                 .values
             )
-            tas[run] -= tas_ref  # compute anomalies
+            dta[run] -= dta_ref  # compute anomalies
 
+        # TODO: remove "first" (used for Leas first paper but does not really make sense)
         if ref["type"] == "first" and run == "1":
             # TO CHECK
-            tas_ref = (
-                data.tas.sel(time=slice(ref["start"], ref["end"]))
+            dta_ref = (
+                data[varn]
+                .sel(time=slice(ref["start"], ref["end"]))
                 .mean(dim="time")
                 .values
             )
@@ -592,18 +513,25 @@ def load_cmipng_tas(esm, scen, cfg):
     if ref["type"] == "all" or ref["type"] == "first":
         for run_path in path_runs_list:
             run = run_nrs[run_path]
-            tas[run] -= tas_ref  # compute anomalies
+            dta[run] -= dta_ref  # compute anomalies
 
     # extract time, longitude, latitude, and 3d weights from data
     time, lon, lat, wgt3d = extract_time_lon_lat_wgt3d(data)
 
-    # compute area-weighted GSAT from global tas
-    GSAT = {}
+    # compute area-weighted mean
+    # ATTENTION: does not account for land fraction within grid cells. i.e., coastal
+    # grid cells count as full ocean grid cells. Expected to have negligible impact on
+    # global mean.
+
+    dta_global = {}
     for run_path in path_runs_list:
         run = run_nrs[run_path]
-        GSAT[run] = np.average(tas[run], axis=(1, 2), weights=wgt3d)
+        # account for missing values over land
+        dta_masked = np.ma.masked_array(dta[run], np.isnan(dta[run]))
+        # no need to keep mask since False everywhere
+        dta_global[run] = np.average(dta_masked, axis=(1, 2), weights=wgt3d).data
 
-    return tas, GSAT, lon, lat, time
+    return dta, dta_global, lon, lat, time
 
 
 def preprocess_ssp534over(ds):
