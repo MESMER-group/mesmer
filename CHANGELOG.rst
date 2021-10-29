@@ -19,6 +19,10 @@ Deprecations
 Bug fixes
 ^^^^^^^^^
 
+- Initialize ``llh_max`` to ``-inf`` to ensure the cross validation loop is entered
+  (`#98 <https://github.com/MESMER-group/mesmer/pull/110>`_).
+  By `Jonas Schwaab <https://github.com/woodhome23>`_.
+
 
 Documentation
 ^^^^^^^^^^^^^
