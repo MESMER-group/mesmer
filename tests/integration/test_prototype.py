@@ -5,6 +5,7 @@ import xarray as xr
 from statsmodels.tsa.arima_process import ArmaProcess
 
 from mesmer.calibrate_mesmer.train_lt import train_lt
+from mesmer.calibrate_mesmer.train_lv import train_lv
 from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.prototype.calibrate import LinearRegression
 from mesmer.prototype.calibrate_multiple import (
@@ -308,6 +309,60 @@ def test_prototype_train_gv(ar):
         npt.assert_allclose(res_updated[key], comparison)
 
 
+def _do_legacy_run_train_lv(
+    esm_tas_global_variability,
+    cfg,
+):
+    targs_legacy = {}
+
+    targs_legacy = {}
+    for scenario, vals_scen in esm_tas_global_variability.groupby("scenario"):
+        targs_legacy[scenario] = (
+            vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time").values
+        )
+
+    aux = {
+        "phi_gc": calculate_gaspari_cohn_correlation_function(),
+    }
+    res_legacy = train_lv(
+        preds={},
+        targs=targs_legacy,
+        esm="test",
+        cfg=cfg,
+        save_params=False,
+        aux=aux,
+        params_lv={},  # unclear why this is passed in
+    )
+
+    return res_legacy
+
+
+def test_prototype_train_lv():
+    # input is residual local variability we want to reproduce (for Leah, residual
+    # means after removing local trend and local variability due to global variability
+    # but it could be whatever in reality)
+
+    # also input the phi gc stuff (that's part of the calibration but doesn't go in the train
+    # lv function for some reason --> put it in calibrate_local_variability prototype function)
+
+    res_legacy = _do_legacy_run_train_lv(
+        esm_tas_residual_local_variability,
+        cfg=_MockConfig(),
+    )
+
+    res_updated = (
+        calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
+            esm_tas_global_variability,
+            maxlag=2,
+        )
+    )
+
+    for key, comparison in (
+        ("intercept", res_legacy["AR_int"]),
+        ("lag_coefficients", res_legacy["AR_coefs"]),
+        ("standard_innovations", res_legacy["AR_std_innovs"]),
+    ):
+        npt.assert_allclose(res_updated[key], comparison)
 # things that aren't tested well:
 # - what happens if ensemble member and scenario don't actually make a coherent set
 # - units (should probably be using dataset rather than dataarray for inputs and outputs?)
