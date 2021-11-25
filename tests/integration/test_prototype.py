@@ -12,6 +12,7 @@ from mesmer.prototype.calibrate_multiple import (
     calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
     flatten_predictors_and_target,
 )
+from mesmer.prototype.utils import calculate_gaspari_cohn_correlation_matrix
 
 
 class _MockConfig:
@@ -236,8 +237,6 @@ def test_prototype_train_gv(ar):
 
     scenarios = ["hist", "ssp126"]
 
-    # we wouldn't actually start like this, but we'd write a utils function
-    # to simply go from lat-lon to gridpoint and back
     targ_dims = ["scenario", "ensemble_member", "time"]
     targ_coords = dict(
         time=time,
@@ -318,11 +317,14 @@ def _do_legacy_run_train_lv(
     targs_legacy = {}
     for scenario, vals_scen in esm_tas_residual_local_variability.groupby("scenario"):
         targs_legacy[scenario] = (
-            vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time").values
+            vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time", "gridpoint").values
         )
 
     aux = {
-        "phi_gc": calculate_gaspari_cohn_correlation_function(),
+        "phi_gc": calculate_gaspari_cohn_correlation_matrix(
+            latitudes=esm_tas_residual_local_variability.lat,
+            longitudes=esm_tas_residual_local_variability.lon,
+        ),
     }
     res_legacy = train_lv(
         preds={},
@@ -356,6 +358,74 @@ def test_prototype_train_lv():
     # as a performance boost)
 
     # see how much code I can reuse for the AR1 calibration
+    time_history = range(1850, 2014 + 1)
+    time_scenario = range(2015, 2100 + 1)
+    time = list(time_history) + list(time_scenario)
+    scenarios = ["hist", "ssp126"]
+
+    # we wouldn't actually start like this, but we'd write a utils function
+    # to simply go from lat-lon to gridpoint and back
+    targ_dims = ["scenario", "ensemble_member", "gridpoint", "time"]
+    targ_coords = dict(
+        time=time,
+        scenario=scenarios,
+        ensemble_member=["r1i1p1f1", "r2i1p1f1"],
+        gridpoint=[0, 1],
+        lat=(["gridpoint"], [-60, 60]),
+        lon=(["gridpoint"], [120, 240]),
+    )
+
+    ar = np.array([1])
+    magnitude = np.array([0.05])
+
+    def _get_history_sample():
+        return np.concatenate(
+            [
+                ArmaProcess(ar, magnitude).generate_sample(
+                    nsample=len(time_history)
+                ),
+                np.nan * np.zeros(len(time_scenario)),
+            ]
+        )
+
+    def _get_scenario_sample():
+        return np.concatenate(
+            [
+                np.nan * np.zeros(len(time_history)),
+                ArmaProcess(ar, magnitude).generate_sample(
+                    nsample=len(time_scenario)
+                ),
+            ]
+        )
+
+    esm_tas_residual_local_variability = xr.DataArray(
+        np.array(
+            [
+                [
+                    [
+                        _get_history_sample(),
+                        _get_history_sample(),
+                    ],
+                    [
+                        _get_history_sample(),
+                        _get_history_sample(),
+                    ]
+                ],
+                [
+                    [
+                        _get_scenario_sample(),
+                        _get_scenario_sample(),
+                    ],
+                    [
+                        _get_scenario_sample(),
+                        _get_scenario_sample(),
+                    ],
+                ],
+            ]
+        ),
+        dims=targ_dims,
+        coords=targ_coords,
+    )
 
     res_legacy = _do_legacy_run_train_lv(
         esm_tas_residual_local_variability,
