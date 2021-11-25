@@ -310,13 +310,13 @@ def test_prototype_train_gv(ar):
 
 
 def _do_legacy_run_train_lv(
-    esm_tas_global_variability,
+    esm_tas_residual_local_variability,
     cfg,
 ):
     targs_legacy = {}
 
     targs_legacy = {}
-    for scenario, vals_scen in esm_tas_global_variability.groupby("scenario"):
+    for scenario, vals_scen in esm_tas_residual_local_variability.groupby("scenario"):
         targs_legacy[scenario] = (
             vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time").values
         )
@@ -337,13 +337,25 @@ def _do_legacy_run_train_lv(
     return res_legacy
 
 
+# how train_lv works:
+# 1. AR1 process for each individual gridpoint (use calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members)
+# 2. find localised empirical covariance matrix
+# 3. combine AR1 and localised empirical covariance matrix to get localised empirical covariance matrix
+#    of innovations (i.e. errors) which can be used for later draws (again, with a bit of custom code
+#    that feels like it should really be done using an existing library)
+
+
 def test_prototype_train_lv():
     # input is residual local variability we want to reproduce (for Leah, residual
     # means after removing local trend and local variability due to global variability
     # but it could be whatever in reality)
 
     # also input the phi gc stuff (that's part of the calibration but doesn't go in the train
-    # lv function for some reason --> put it in calibrate_local_variability prototype function)
+    # lv function for some reason --> put it in calibrate_local_variability prototype function
+    # although split that function to allow for pre-calculating distance between points in future
+    # as a performance boost)
+
+    # see how much code I can reuse for the AR1 calibration
 
     res_legacy = _do_legacy_run_train_lv(
         esm_tas_residual_local_variability,
