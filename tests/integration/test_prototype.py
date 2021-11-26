@@ -10,6 +10,7 @@ from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.prototype.calibrate import LinearRegression
 from mesmer.prototype.calibrate_multiple import (
     calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
+    calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_scenarios_and_ensemble_members,
     flatten_predictors_and_target,
 )
 from mesmer.prototype.utils import calculate_gaspari_cohn_correlation_matrices
@@ -442,18 +443,17 @@ def test_prototype_train_lv():
     )
 
     res_updated = (
-        calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
+        calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_scenarios_and_ensemble_members(
             esm_tas_residual_local_variability,
             localisation_radii,
         )
     )
 
     for key, comparison in (
-        ("intercept", res_legacy["AR_int"]),
-        ("lag_coefficients", res_legacy["AR_coefs"]),
-        ("standard_innovations", res_legacy["AR_std_innovs"]),
+        ("localised_empirical_covariance_matrix_with_ar1_errors", res_legacy["loc_ecov_AR1_innovs"]["tas"]),
     ):
         npt.assert_allclose(res_updated[key], comparison)
+
 # things that aren't tested well:
 # - what happens if ensemble member and scenario don't actually make a coherent set
 # - units (should probably be using dataset rather than dataarray for inputs and outputs?)
