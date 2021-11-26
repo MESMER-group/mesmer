@@ -12,7 +12,7 @@ from mesmer.prototype.calibrate_multiple import (
     calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
     flatten_predictors_and_target,
 )
-from mesmer.prototype.utils import calculate_gaspari_cohn_correlation_matrix
+from mesmer.prototype.utils import calculate_gaspari_cohn_correlation_matrices
 
 
 class _MockConfig:
@@ -24,6 +24,7 @@ class _MockConfig:
         separate_gridpoints=True,
         weight_scenarios_equally=True,
         target_variable="tas",
+        cross_validation_max_iterations=30,
     ):
         self.methods = {}
         self.methods[target_variable] = {}
@@ -38,6 +39,8 @@ class _MockConfig:
 
         self.method_lt_each_gp_sep = separate_gridpoints
         self.wgt_scen_tr_eq = weight_scenarios_equally
+
+        self.max_iter_cv = cross_validation_max_iterations
 
 
 def _do_legacy_run_train_lt(
@@ -310,22 +313,25 @@ def test_prototype_train_gv(ar):
 
 def _do_legacy_run_train_lv(
     esm_tas_residual_local_variability,
+    localisation_radii,
     cfg,
 ):
-    targs_legacy = {}
-
-    targs_legacy = {}
+    targs_legacy = {"tas": {}}
     for scenario, vals_scen in esm_tas_residual_local_variability.groupby("scenario"):
-        targs_legacy[scenario] = (
+        targs_legacy["tas"][scenario] = (
             vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time", "gridpoint").values
         )
 
-    aux = {
-        "phi_gc": calculate_gaspari_cohn_correlation_matrix(
-            latitudes=esm_tas_residual_local_variability.lat,
-            longitudes=esm_tas_residual_local_variability.lon,
-        ),
+    gaspari_cohn_correlation_matrices = calculate_gaspari_cohn_correlation_matrices(
+        latitudes=esm_tas_residual_local_variability.lat,
+        longitudes=esm_tas_residual_local_variability.lon,
+        localisation_radii=localisation_radii,
+    )
+    gaspari_cohn_correlation_matrices = {
+        k: v.values for k, v in gaspari_cohn_correlation_matrices.items()
     }
+    aux = {"phi_gc": gaspari_cohn_correlation_matrices}
+
     res_legacy = train_lv(
         preds={},
         targs=targs_legacy,
@@ -356,6 +362,8 @@ def test_prototype_train_lv():
     # lv function for some reason --> put it in calibrate_local_variability prototype function
     # although split that function to allow for pre-calculating distance between points in future
     # as a performance boost)
+
+    localisation_radii = np.arange(700, 2000, 1000)
 
     # see how much code I can reuse for the AR1 calibration
     time_history = range(1850, 2014 + 1)
@@ -429,13 +437,14 @@ def test_prototype_train_lv():
 
     res_legacy = _do_legacy_run_train_lv(
         esm_tas_residual_local_variability,
+        localisation_radii,
         cfg=_MockConfig(),
     )
 
     res_updated = (
         calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members(
-            esm_tas_global_variability,
-            maxlag=2,
+            esm_tas_residual_local_variability,
+            localisation_radii,
         )
     )
 
