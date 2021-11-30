@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.linear_model import LinearRegression
 
 
@@ -25,4 +26,4 @@ def linear_regression(predictors, target, weights=None):
     reg = LinearRegression()
     reg.fit(X=predictors, y=target, sample_weight=weights)
 
-    return reg.get_params()
+    return np.hstack([reg.intercept_, reg.coef_])
