@@ -35,7 +35,9 @@ def test_linear_regression(predictors, target, weight):
             res = mesmer.core.linear_regression.linear_regression(predictors, target)
         else:
             expected_weights = weight
-            res = mesmer.core.linear_regression.linear_regression(predictors, target, weight)
+            res = mesmer.core.linear_regression.linear_regression(
+                predictors, target, weight
+            )
 
         mocked_linear_regression.assert_called_once()
         mocked_linear_regression.assert_called_with()
@@ -44,7 +46,9 @@ def test_linear_regression(predictors, target, weight):
             X=predictors, y=target, sample_weight=expected_weights
         )
 
-    npt.assert_allclose(res, np.hstack([mock_regressor.intercept_, mock_regressor.coef_]))
+    npt.assert_allclose(
+        res, np.hstack([mock_regressor.intercept_, mock_regressor.coef_])
+    )
 
 
 @pytest.mark.parametrize(
