@@ -25,7 +25,7 @@ def test_basic_regression_multidimensional():
 
     # intercept before coefficients, in same order as columns of
     # predictors
-    npt.assert_allclose(res, [-2, -3, 4], atol=1e-10)
+    npt.assert_allclose(res, [-2, -3, 4])
 
 
 def test_regression_order():
@@ -39,7 +39,7 @@ def test_regression_order():
     )
 
     npt.assert_allclose(res_original[0], res_reversed[0], atol=1e-10)
-    npt.assert_allclose(res_original[1:], res_reversed[-1:0:-1], atol=1e-10)
+    npt.assert_allclose(res_original[1:], res_reversed[-1:0:-1])
 
 
 def test_regression_order_with_weights():
@@ -55,5 +55,5 @@ def test_regression_order_with_weights():
     )
 
     npt.assert_allclose(res_original[0], -1.89, atol=1e-2)
-    npt.assert_allclose(res_original[0], res_reversed[0], atol=1e-10)
-    npt.assert_allclose(res_original[1:], res_reversed[-1:0:-1], atol=1e-10)
+    npt.assert_allclose(res_original[0], res_reversed[0])
+    npt.assert_allclose(res_original[1:], res_reversed[-1:0:-1])
