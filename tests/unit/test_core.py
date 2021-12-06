@@ -48,9 +48,7 @@ def test_linear_regression(predictors, target, weight):
 
     intercepts = np.atleast_2d(mock_regressor.intercept_).T
     coefficients = np.atleast_2d(mock_regressor.coef_)
-    npt.assert_allclose(
-        res, np.hstack([intercepts, coefficients])
-    )
+    npt.assert_allclose(res, np.hstack([intercepts, coefficients]))
 
 
 @pytest.mark.parametrize(

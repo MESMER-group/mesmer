@@ -13,8 +13,7 @@ def test_basic_regression():
 
 def test_basic_regression_two_targets():
     res = mesmer.core.linear_regression.linear_regression(
-        [[0], [1], [2]],
-        [[0, 1], [2, 3], [4, 5]]
+        [[0], [1], [2]], [[0, 1], [2, 3], [4, 5]]
     )
 
     npt.assert_allclose(res, [[0, 2], [1, 2]], atol=1e-10)
@@ -22,8 +21,7 @@ def test_basic_regression_two_targets():
 
 def test_basic_regression_three_targets():
     res = mesmer.core.linear_regression.linear_regression(
-        [[0], [1], [2]],
-        [[0, 1, 2], [2, 3, 7], [4, 5, 12]]
+        [[0], [1], [2]], [[0, 1, 2], [2, 3, 7], [4, 5, 12]]
     )
 
     # each target gets its own row in the results
@@ -63,7 +61,7 @@ def test_regression_with_weights_multidimensional_multitarget():
         [[0, 1], [1, 3], [2, 4], [3, 5]],
         [[2, 0], [7, 0], [8, 5], [11, 11]],
         # extra point with low weight alters results in a minor way
-        weights=[10, 10, 10, 1e-3]
+        weights=[10, 10, 10, 1e-3],
     )
 
     # intercept before coefficients, in same order as columns of
@@ -102,43 +100,40 @@ def test_regression_order_with_weights():
     npt.assert_allclose(res_original[0][1:], res_reversed[0][-1:0:-1])
 
 
-
-@pytest.mark.parametrize("x,y,exp_output_shape", (
-    # one predictor
+@pytest.mark.parametrize(
+    "x,y,exp_output_shape",
     (
-        np.array([[0], [1], [2]]), # (3, 1)
-        np.array([2, 7, 10]), # (3,)
-        (1, 2)
+        # one predictor
+        (np.array([[0], [1], [2]]), np.array([2, 7, 10]), (1, 2)),  # (3, 1)  # (3,)
+        (
+            np.array([[0], [1], [2]]),  # (3, 1)
+            np.array([[2], [7], [10]]),  # (3, 1)
+            (1, 2),
+        ),
+        (
+            np.array([[0], [1], [2]]),  # (3, 1)
+            np.array([[2, 4], [7, 14], [10, 20]]),  # (3, 2)
+            (2, 2),
+        ),
+        # two predictors
+        (
+            np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
+            np.array([2, 7, 10]),  # (3, )
+            (1, 3),
+        ),
+        (
+            np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
+            np.array([[2], [7], [10]]),  # (3, 1)
+            (1, 3),
+        ),
+        (
+            np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
+            np.array([[2, 4], [7, 14], [10, 20]]),  # (3, 2)
+            (2, 3),
+        ),
     ),
-    (
-        np.array([[0], [1], [2]]), # (3, 1)
-        np.array([[2], [7], [10]]), # (3, 1)
-        (1, 2)
-    ),
-    (
-        np.array([[0], [1], [2]]), # (3, 1)
-        np.array([[2, 4], [7, 14], [10, 20]]), # (3, 2)
-        (2, 2)
-    ),
-    # two predictors
-    (
-        np.array([[0, 1], [1, 3], [2, 4]]), # (3, 2)
-        np.array([2, 7, 10]), # (3, )
-        (1, 3)
-    ),
-    (
-        np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
-        np.array([[2], [7], [10]]),  # (3, 1)
-        (1, 3)
-    ),
-    (
-        np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
-        np.array([[2, 4], [7, 14], [10, 20]]), # (3, 2)
-        (2, 3)
-    ),
-))
+)
 def test_linear_regression_output_shape(x, y, exp_output_shape):
     res = mesmer.core.linear_regression.linear_regression(x, y)
 
     assert res.shape == exp_output_shape
-
