@@ -8,54 +8,6 @@ import mesmer.core.linear_regression
 
 
 @pytest.mark.parametrize(
-    "predictors,target,weight",
-    (
-        ([[1], [2], [3]], [1, 2, 2], None),
-        ([[1, 2, 3], [2, 4, 0]], [1, 2], [3, 1]),
-    ),
-)
-def test_linear_regression(predictors, target, weight):
-    # This testing is really nasty because the function is (deliberately)
-    # written without proper dependency injection. See e.g.
-    # https://stackoverflow.com/a/46865495 which recommends against this
-    # approach. At the moment, I can't see how to write a suitably simple
-    # function for regressions that uses proper dependency injection and
-    # doesn't make the interface more complicated.
-    mock_regressor = mock.Mock()
-    mock_regressor.intercept_ = 12
-    mock_regressor.coef_ = [123, -38]
-
-    with mock.patch(
-        "mesmer.core.linear_regression.LinearRegression"
-    ) as mocked_linear_regression:
-        mocked_linear_regression.return_value = mock_regressor
-
-        if weight is None:
-            # check that the default behaviour is to pass None to `fit`
-            # internally
-            expected_weights = None
-            res = mesmer.core.linear_regression.linear_regression(predictors, target)
-        else:
-            # check that the intended weights are indeed passed to `fit`
-            # internally
-            expected_weights = weight
-            res = mesmer.core.linear_regression.linear_regression(
-                predictors, target, weight
-            )
-
-        mocked_linear_regression.assert_called_once()
-        mocked_linear_regression.assert_called_with()
-        mock_regressor.fit.assert_called_once()
-        mock_regressor.fit.assert_called_with(
-            X=predictors, y=target, sample_weight=expected_weights
-        )
-
-    intercepts = np.atleast_2d(mock_regressor.intercept_).T
-    coefficients = np.atleast_2d(mock_regressor.coef_)
-    npt.assert_allclose(res, np.hstack([intercepts, coefficients]))
-
-
-@pytest.mark.parametrize(
     "predictors,target",
     (
         ([[1], [2], [3]], [1, 2]),
@@ -211,3 +163,54 @@ def test_linear_regression_output_shape(x, y, exp_output_shape):
     res = mesmer.core.linear_regression.linear_regression(x, y)
 
     assert res.shape == exp_output_shape
+
+
+@pytest.mark.parametrize(
+    "predictors,target,weight",
+    (
+        ([[1], [2], [3]], [1, 2, 2], None),
+        ([[1, 2, 3], [2, 4, 0]], [1, 2], [3, 1]),
+    ),
+)
+def test_linear_regression(predictors, target, weight):
+    # Unit test i.e. mocks as much as possible so that there are no
+    # dependencies on external libraries etc.
+
+    # This testing is really nasty because the function is (deliberately)
+    # written without proper dependency injection. See e.g.
+    # https://stackoverflow.com/a/46865495 which recommends against this
+    # approach. At the moment, I can't see how to write a suitably simple
+    # function for regressions that uses proper dependency injection and
+    # doesn't make the interface more complicated.
+    mock_regressor = mock.Mock()
+    mock_regressor.intercept_ = 12
+    mock_regressor.coef_ = [123, -38]
+
+    with mock.patch(
+        "mesmer.core.linear_regression.LinearRegression"
+    ) as mocked_linear_regression:
+        mocked_linear_regression.return_value = mock_regressor
+
+        if weight is None:
+            # check that the default behaviour is to pass None to `fit`
+            # internally
+            expected_weights = None
+            res = mesmer.core.linear_regression.linear_regression(predictors, target)
+        else:
+            # check that the intended weights are indeed passed to `fit`
+            # internally
+            expected_weights = weight
+            res = mesmer.core.linear_regression.linear_regression(
+                predictors, target, weight
+            )
+
+        mocked_linear_regression.assert_called_once()
+        mocked_linear_regression.assert_called_with()
+        mock_regressor.fit.assert_called_once()
+        mock_regressor.fit.assert_called_with(
+            X=predictors, y=target, sample_weight=expected_weights
+        )
+
+    intercepts = np.atleast_2d(mock_regressor.intercept_).T
+    coefficients = np.atleast_2d(mock_regressor.coef_)
+    npt.assert_allclose(res, np.hstack([intercepts, coefficients]))
