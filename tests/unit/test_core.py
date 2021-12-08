@@ -51,25 +51,3 @@ def test_linear_regression(predictors, target, weight):
     npt.assert_allclose(res, np.hstack([intercepts, coefficients]))
 
 
-@pytest.mark.parametrize(
-    "predictors,target",
-    (
-        ([[1], [2], [3]], [1, 2]),
-        ([[1, 2, 3], [2, 4, 0]], [1, 2, 2]),
-    ),
-)
-def test_bad_shape(predictors, target):
-    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
-        mesmer.core.linear_regression.linear_regression(predictors, target)
-
-
-@pytest.mark.parametrize(
-    "predictors,target,weight",
-    (
-        ([[1], [2], [3]], [1, 2, 2], [1, 10]),
-        ([[1, 2, 3], [2, 4, 0]], [1, 2], [3, 1, 1]),
-    ),
-)
-def test_bad_shape_weights(predictors, target, weight):
-    with pytest.raises(ValueError, match="sample_weight.shape.*expected"):
-        mesmer.core.linear_regression.linear_regression(predictors, target, weight)
