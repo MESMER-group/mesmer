@@ -15,6 +15,12 @@ Welcome to MESMER's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :caption: For developers
+
+   development
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
 
    api
