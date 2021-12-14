@@ -27,6 +27,8 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+- Add development/contributing docs (`#121 <https://github.com/MESMER-group/mesmer/pull/121>`_).
+  By `Zeb Nicholls <https://github.com/znicholls>`_.
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
