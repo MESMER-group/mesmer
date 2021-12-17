@@ -38,7 +38,7 @@ def test_check_dataarray_form_required_dims(required_dims):
     with pytest.raises(ValueError, match="da is missing the required dims"):
         mesmer.core.utils._check_dataarray_form(da, required_dims=required_dims)
 
-    with pytest.raises(ValueError, match="name is missing the required dims"):
+    with pytest.raises(ValueError, match="test is missing the required dims"):
         mesmer.core.utils._check_dataarray_form(
             da, required_dims=required_dims, name="test"
         )
