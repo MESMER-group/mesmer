@@ -35,7 +35,6 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "numpydoc",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
@@ -57,6 +56,8 @@ napoleon_use_rtype = False
 
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
+
+autodoc_typehints = 'none'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

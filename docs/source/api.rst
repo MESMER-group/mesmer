@@ -16,7 +16,7 @@ Statistical core functions
 .. autosummary::
    :toctree: generated/
 
-   ~core.linear_regression
+   ~core.linear_regression.linear_regression
 
 
 Train mesmer
