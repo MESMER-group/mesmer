@@ -7,9 +7,13 @@ v0.9.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
-- Add ``mesmer.core.linear_regression``. Starts the process of refactoring the
+- Add ``mesmer.core._linear_regression``. Starts the process of refactoring the
   codebase (`#116 <https://github.com/MESMER-group/mesmer/pull/116>`_).
   By `Zeb Nicholls <https://github.com/znicholls>`_.
+- Add ``mesmer.core.linear_regression``: xarray wrapper for ``mesmer.core._linear_regression``.
+  (`#123 <https://github.com/MESMER-group/mesmer/pull/123>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
