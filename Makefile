@@ -47,6 +47,10 @@ flake8: $(VENV_DIR)  ## lint the code using flake8
 isort: $(VENV_DIR)  ## lint the code using flake8
 	$(VENV_DIR)/bin/isort $(FILES_TO_FORMAT_PYTHON)
 
+.PHONY: docs
+docs: $(VENV_DIR)  ## build the docs
+	$(VENV_DIR)/bin/sphinx-build -M html docs/source docs/build
+
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
 	$(VENV_DIR)/bin/pytest -r a -v --cov=mesmer --cov-report=term-missing
