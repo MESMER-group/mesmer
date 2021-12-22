@@ -30,6 +30,10 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+- Fix copyright notice and release version in documentation
+  (`#127 <https://github.com/MESMER-group/mesmer/pull/127>`_).
+  By `Zeb Nicholls <https://github.com/znicholls>`_.
+
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
