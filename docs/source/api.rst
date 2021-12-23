@@ -74,13 +74,13 @@ Load CMIP-ng data
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_cmipng.extract_time_lon_lat_wgt3d
-   ~io.load_cmipng.find_files_cmipng
-   ~io.load_cmipng.load_cmipng
-   ~io.load_cmipng.load_cmipng_file
-   ~io.load_cmipng.load_cmipng_hfds
-   ~io.load_cmipng.load_cmipng_tas
-   ~io.load_cmipng.preprocess_ssp534over
+   ~io.extract_time_lon_lat_wgt3d
+   ~io.find_files_cmipng
+   ~io.load_cmipng
+   ~io.load_cmipng_file
+   ~io.load_cmipng_hfds
+   ~io.load_cmipng_tas
+   ~io.preprocess_ssp534over
 
 
 Load constant files
