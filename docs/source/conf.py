@@ -4,27 +4,18 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-import datetime
-import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../mesmer"))
-
 # -- Import packages ---------------------------------------------------------
 
+import datetime
 from mesmer._version import get_versions
 
 # -- Project information -----------------------------------------------------
 
 project = "mesmer"
 copyright_year = datetime.date.today().year
-copyright = "(c) 2021-{} ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne), MESMER contributors listed in AUTHORS".format(copyright_year)
+copyright = "(c) 2021-{} ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne), MESMER contributors listed in AUTHORS".format(
+    copyright_year
+)
 authors = "Authors, see AUTHORS"
 author = authors
 

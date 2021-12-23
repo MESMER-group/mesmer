@@ -37,7 +37,7 @@ help:
 
 .PHONY: black
 black: $(VENV_DIR)  ## auto-format the code using black
-	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON)
+	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON) docs/source/conf.py
 
 .PHONY: flake8
 flake8: $(VENV_DIR)  ## lint the code using flake8
