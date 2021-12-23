@@ -73,7 +73,7 @@ REQUIREMENTS_EXTRAS = {
 
 SOURCE_DIR = "mesmer"
 
-PACKAGES = find_packages()
+PACKAGES = find_packages(include={"mesmer*"})
 PACKAGE_DATA = {}
 
 
