@@ -20,15 +20,14 @@ All contributions are welcome, some possible suggestions include:
 - feature requests
 - pull requests
 
-Please report issues or discuss feature requests in the `MEMSER issue tracker`_.
-If your issue is a feature request or a bug, please use the templates available, otherwise, simply open a normal issue :)
+Please report issues or discuss feature requests in the `MESMER issue tracker`_.
 
 As a contributor, please follow a couple of conventions:
 
-- Create issues in the `MEMSER issue tracker`_ for changes and enhancements, this ensures that everyone in the community has a chance to comment
+- Create issues in the `MESMER issue tracker`_ for changes and enhancements, this ensures that everyone in the community has a chance to comment
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_
 - Only push to your own branches, this allows people to force push to their own branches as they need without fear or causing others headaches
-- Start all pull requests as draft pull requests and only mark them as ready for review once they've been rebased onto master, this makes it much simpler for reviewers
+- Start all pull requests as draft pull requests and only mark them as ready for review once they've had master merged into them or been rebased onto master, this makes it much simpler for reviewers
 - Several small pull requests are preferred over one large PR, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
 
 Development setup
@@ -53,7 +52,7 @@ Getting help
 ~~~~~~~~~~~~
 
 Whilst developing, unexpected things can go wrong (that's why it's called 'developing', if we knew what we were doing, it would already be 'developed').
-Normally, the fastest way to solve an issue is to contact us via the `MEMSER issue tracker`_.
+Normally, the fastest way to solve an issue is to contact us via the `MESMER issue tracker`_.
 The other option is to debug yourself.
 For this purpose, we provide a list of the tools we use during our development as starting points for your search to find what has gone wrong.
 
@@ -76,7 +75,7 @@ We include links with each of these tools to starting points that we think are u
 
 - `Continuous integration (CI) <https://docs.travis-ci.com/user/for-beginners/>`_
 
-    - we use `Travis CI <https://travis-ci.com/>`_ for our CI but there are a number of good providers
+    - we use `GitHub actions <https://docs.github.com/en/actions/quickstart>`_ for our CI but there are a number of good options
 
 - `Jupyter Notebooks <https://medium.com/codingthesmartway-com-blog/getting-started-with-jupyter-notebook-for-python-4e7082bd5d46>`_
 
@@ -154,4 +153,4 @@ Whilst it may not be standard practice, a ``Makefile`` is a simple way to automa
 Hence we have one here which basically acts as a notes file for how to do all those little jobs which we often forget e.g. setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxillary bits and pieces.
 
 .. _Sphinx: http://www.sphinx-doc.org/en/master/
-.. _MEMSER issue tracker: https://github.com/MESMER-group/mesmer/issues
+.. _MESMER issue tracker: https://github.com/MESMER-group/mesmer/issues
