@@ -29,14 +29,14 @@ As a contributor, please follow a couple of conventions:
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_
 - Only push to your own branches, this allows people to force push to their own branches as they need without fear or causing others headaches
 - Start all pull requests as draft pull requests and only mark them as ready for review once they've been rebased onto master, this makes it much simpler for reviewers
-- Try and make lots of small pull requests, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
+- Several small pull requests are preferred over one large PR, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
 
-Getting setup
--------------
+Development setup
+-----------------
 
 To get setup as a developer, we recommend the following steps (if any of these tools are unfamiliar, please see the resources we recommend in `Development tools`_):
 
-#. Install conda and make
+#. Install conda and the Make tool
 #. Run ``make conda-environment``, if that fails you can try doing it manually
 
     #. Change your current directory to MESMER's root directory (i.e. the one which contains ``README.rst``), ``cd mesmer``
@@ -96,7 +96,7 @@ Here we provide a list of these along with useful resources.
 
 - `Regular expressions <https://www.oreilly.com/ideas/an-introduction-to-regular-expressions>`_
 
-    - we use `regex101.com <regex101.com>`_ to help us write and check our regular expressions, make sure the language is set to Python to make your life easy!
+    - you can use `regex101.com <regex101.com>`_ to help write and check regular expressions, make sure the language is set to Python to make your life easy!
 
 Testing philosophy
 ------------------
@@ -119,6 +119,11 @@ Formatting
 ----------
 
 To help us focus on what the code does, not how it looks, we use a couple of automatic formatting tools.
+We use the following tools:
+- `isort <https://github.com/PyCQA/isort>`_ to sort import statements
+- `black <https://github.com/psf/black>`_ to auto-format the code
+- `flake8 <https://flake8.pycqa.org/en/latest/>`_ to check the format and small errors
+
 These automatically format the code for us and tell use where the errors are.
 To use them, after setting yourself up (see `Getting setup`_), simply run ``make format``.
 Note that ``make format`` can only be run if you have committed all your work i.e. your working directory is 'clean'.

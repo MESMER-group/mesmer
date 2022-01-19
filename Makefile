@@ -47,6 +47,7 @@ help:
 format: $(VENV_DIR)  ## auto-format the code using relevant tools
 	make isort
 	make black
+	make flake8
 
 .PHONY: black
 black: $(VENV_DIR)  ## auto-format the code using black
