@@ -10,6 +10,14 @@ This page provides an auto-generated summary of mesmers' API.
 Top-level functions
 ===================
 
+Statistical core functions
+--------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.linear_regression.linear_regression
+
 
 Train mesmer
 ------------

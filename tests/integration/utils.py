@@ -27,3 +27,35 @@ def _check_dict(first, second, first_name="left", second_name="right"):
             npt.assert_allclose(first_val, second_val)
         else:
             assert first_val == second_val, k
+
+
+def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1):
+
+    time = np.arange(n_timesteps)
+
+    rng = np.random.default_rng(0)
+    scatter = rng.normal(scale=scale, size=n_timesteps)
+
+    data = intercept + slope * time + scatter
+
+    return xr.DataArray(data, dims=("time"), coords={"time": time})
+
+
+def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
+
+    n_cells = n_lat * n_lon
+    time = np.arange(n_timesteps)
+
+    rng = np.random.default_rng(0)
+    scatter = rng.normal(scale=scale, size=(n_timesteps, n_cells)).T
+
+    data = intercept + slope * time + scatter
+    LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
+
+    coords = {
+        "time": time,
+        "lon": ("cells", LON.flatten()),
+        "lat": ("cells", LAT.flatten()),
+    }
+
+    return xr.DataArray(data, dims=("cells", "time"), coords=coords)
