@@ -99,7 +99,7 @@ jobs:
           fail_ci_if_error: false
 
   deploy-pypi:
-    needs: [linting-and-docs,test,test-install]
+    needs: [linting-and-docs,test]
     if: |
       startsWith(github.ref, 'refs/tags/v')
       && (github.ref == 'refs/heads/master')
