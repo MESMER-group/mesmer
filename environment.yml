@@ -15,4 +15,4 @@ pytest-xdist
 scikit-learn
 statsmodels
 regionmask
-xarray<=0.18.0
+xarray
