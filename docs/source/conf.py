@@ -7,6 +7,7 @@
 # -- Import packages ---------------------------------------------------------
 
 import datetime
+
 from mesmer._version import get_versions
 
 # -- Project information -----------------------------------------------------
@@ -56,7 +57,7 @@ napoleon_use_rtype = False
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
 
-autodoc_typehints = 'none'
+autodoc_typehints = "none"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
