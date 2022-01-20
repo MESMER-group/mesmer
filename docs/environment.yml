@@ -21,7 +21,7 @@ dependencies:
   - pytest-xdist
   - scikit-learn
   - statsmodels
-  - regionmask
+  - regionmask>=0.8
   - xarray
 # required for docs
   - sphinx-book-theme
