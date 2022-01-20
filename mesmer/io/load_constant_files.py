@@ -176,7 +176,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     L_set = np.arange(L_start, L_end + 1, L_interval)
 
     # geodistance for all gps for certain threshold
-    geodist_name = "geodist_landthres_{tl:1.2f}.pkl".format(tl=threshold_land)
+    geodist_name = f"geodist_landthres_{threshold_land:1.2f}.pkl"
     if not os.path.exists(dir_aux + geodist_name):
         # create geodist matrix + save it
         print("compute geographical distance between all land points")

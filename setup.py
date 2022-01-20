@@ -79,7 +79,7 @@ PACKAGE_DATA = {}
 
 README = "README.rst"
 
-with open(README, "r") as readme_file:
+with open(README) as readme_file:
     README_TEXT = readme_file.read()
 
 
