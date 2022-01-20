@@ -42,7 +42,7 @@ jobs:
           which python
           make -B conda-environment
           isort --check mesmer examples tests setup.py
-          black --check mesmer examples tests setup.py
+          black --check mesmer examples tests setup.py docs/source/conf.py
           flake8 mesmer examples tests setup.py
 
   test:

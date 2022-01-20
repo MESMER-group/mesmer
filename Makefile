@@ -37,7 +37,7 @@ help:
 
 .PHONY: black
 black: $(VENV_DIR)  ## auto-format the code using black
-	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON)
+	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON) docs/source/conf.py
 
 .PHONY: flake8
 flake8: $(VENV_DIR)  ## lint the code using flake8
@@ -46,6 +46,10 @@ flake8: $(VENV_DIR)  ## lint the code using flake8
 .PHONY: isort
 isort: $(VENV_DIR)  ## lint the code using flake8
 	$(VENV_DIR)/bin/isort $(FILES_TO_FORMAT_PYTHON)
+
+.PHONY: docs
+docs: $(VENV_DIR)  ## build the docs
+	$(VENV_DIR)/bin/sphinx-build -M html docs/source docs/build
 
 .PHONY: test
 test: $(VENV_DIR)  ## run the testsuite
