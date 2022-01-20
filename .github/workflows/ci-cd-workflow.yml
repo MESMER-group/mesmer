@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Checkout repository
@@ -26,10 +26,11 @@ jobs:
           ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{
           hashFiles('environment.yml') }}
     - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v2.0.1
+      uses: conda-incubator/setup-miniconda@v2
       with:
         channels: conda-forge
         channel-priority: strict
+        mamba-version: "*"
         activate-environment: mesmer-tests
         auto-update-conda: false
         python-version: ${{ matrix.python-version }}
@@ -51,7 +52,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: [3.8]
+        python-version: [3.7, 3.8, 3.9]
     defaults:
       run:
         shell: bash -l {0}
@@ -70,6 +71,7 @@ jobs:
       with:
         channels: conda-forge
         channel-priority: strict
+        mamba-version: "*"
         activate-environment: mesmer-tests
         auto-update-conda: false
         python-version: ${{ matrix.python-version }}
@@ -81,6 +83,8 @@ jobs:
           make -B conda-environment
     - name: Conda list
       run: conda list
+    - name: Test installation
+      run: python scripts/test_install.py
     - name: Run tests
       run: |
           which python
@@ -94,44 +98,8 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
-
-
-
-  test-install:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
-    defaults:
-      run:
-        shell: bash -l {0}
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Cache conda
-      uses: actions/cache@v2
-      with:
-        path: ~/conda_pkgs_dir
-        key:
-          ${{ runner.os }}-conda-py${{ matrix.python-version }}-${{ hashFiles('environment.yml') }}
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v2.0.1
-      with:
-        channels: conda-forge
-        channel-priority: strict
-        activate-environment: mesmer-tests
-        auto-update-conda: false
-        python-version: ${{ matrix.python-version }}
-    - name: Conda info
-      run: conda info
-    - name: Test installation
-      run: |
-          make -B conda-environment
-          python scripts/test_install.py
-
   deploy-pypi:
-    needs: [linting-and-docs,test,test-install]
+    needs: [linting-and-docs,test]
     if: |
       startsWith(github.ref, 'refs/tags/v')
       && (github.ref == 'refs/heads/master')
@@ -139,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [3.9]
 
     steps:
     - name: Checkout repository

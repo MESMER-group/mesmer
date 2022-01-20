@@ -7,6 +7,7 @@
 # -- Import packages ---------------------------------------------------------
 
 import datetime
+
 from mesmer._version import get_versions
 
 # -- Project information -----------------------------------------------------
