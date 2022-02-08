@@ -41,7 +41,7 @@ To get setup as a developer, we recommend the following steps (if any of these t
     #. Change your current directory to MESMER's root directory (i.e. the one which contains ``README.rst``), ``cd mesmer``
     #. Create a conda environment to use with MESMER ``conda create --name mesmer``
     #. Activate your conda environment ``conda activate mesmer``
-    #. Install the development dependencies (very important, make sure your conda environment is active before doing this) ``conda install -y --file environment.yml && pip install --upgrade pip wheel && pip install -e .[dev]``
+    #. Install the development dependencies (very important, make sure your conda environment is active before doing this) ``conda install -y --file environment.yml && pip install -e .[dev]``
 
 #. Make sure the tests pass by running ``make test``, if that fails the commands are
 
@@ -104,7 +104,7 @@ When writing tests, we try to put them in one of two categories: integration and
 Integration tests run bits of the code and assert the correct behaviour was achived.
 Some of the integration tests might run fairly big bits of code, others will be more targeted.
 Try to keep integration test files targeted and fairly small.
-We can always create fixtures to aid code reuse.
+We can always create `fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`__ to aid code reuse.
 The aim is to avoid testing files with thousands of lines of code as such files quickly become hard to rationalise or understand.
 
 In contrast, regression tests run bits of the code and assert the output matches a saved, known output.
