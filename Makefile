@@ -43,6 +43,12 @@ export PRINT_HELP_PYSCRIPT
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
+.PHONY: format
+format: $(VENV_DIR)  ## auto-format the code using relevant tools
+	make isort
+	make black
+	make flake8
+
 .PHONY: black
 black: $(VENV_DIR)  ## auto-format the code using black
 	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON) docs/source/conf.py
@@ -82,5 +88,5 @@ $(VENV_DIR): $(CONDA_ENV_YML) setup.py
 	$(MAMBA_OR_CONDA) install -y --file $(CONDA_ENV_YML)
 	# Install the remainder of the dependencies using pip
 	$(VENV_DIR)/bin/pip install --upgrade pip wheel
-	$(VENV_DIR)/bin/pip install --no-deps -e .[dev]
+	$(VENV_DIR)/bin/pip install -e .[dev]
 	touch $(VENV_DIR)
