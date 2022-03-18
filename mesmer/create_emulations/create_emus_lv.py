@@ -202,7 +202,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
                 "spatially correlated innovations"
             )
             emus_lv_tmp = np.zeros([nr_emus_v, nr_ts_emus_stoch_v + buffer, nr_gps])
-            for t in np.arange(1, nr_ts_emus_stoch_v + buffer):
+            for t in range(1, nr_ts_emus_stoch_v + buffer):
                 emus_lv_tmp[:, t, :] = (
                     params_lv["AR1_int"][targ]
                     + params_lv["AR1_coef"][targ] * emus_lv_tmp[:, t - 1, :]

@@ -154,7 +154,11 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     # re-name params for easier reading of code below
     ar_int = params_gv["AR_int"]
     ar_coefs = params_gv["AR_coefs"]
-    ar_lags = np.arange(1, params_gv["AR_order_sel"] + 1, dtype=int)
+    AR_order_sel = params_gv["AR_order_sel"]
+    AR_std_innovs = params_gv["AR_std_innovs"]
+
+    ar_lags = np.arange(1, AR_order_sel + 1, dtype=int)
+    shape = (nr_emus_v, nr_ts_emus_v + buffer)
 
     # if AR(0) process chosen, no AR_coefs are available -> to have code run
     # nevertheless ar_coefs and ar_lags are set to 0 (-> emus are created with
@@ -163,24 +167,22 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         ar_coefs = [0]
         ar_lags = [0]
 
-    innovs_emus_gv = np.random.normal(
-        loc=0, scale=params_gv["AR_std_innovs"], size=(nr_emus_v, nr_ts_emus_v + buffer)
-    )
+    innovs_emus_gv = np.random.normal(loc=0, scale=AR_std_innovs, size=shape)
 
     # initialize global variability emulations (dim array: nr_emus x nr_ts)
-    emus_gv = np.zeros([nr_emus_v, nr_ts_emus_v + buffer])
+    emus_gv = np.zeros(shape, dtype=float)
 
-    for i in np.arange(nr_emus_v):
-        # simulate from AR process
-        for t in np.arange(ar_lags[-1], len(emus_gv[i])):  # avoid misleading indices
-            emus_gv[i, t] = (
-                ar_int
-                + sum(
-                    ar_coefs[k] * emus_gv[i, t - ar_lags[k]]
-                    for k in np.arange(len(ar_lags))
-                )
-                + innovs_emus_gv[i, t]
-            )
+    # only use the selected coeffs
+    ar_coefs = ar_coefs[:AR_order_sel]
+
+    # simulate from AR process (all realizations)
+    for t in range(AR_order_sel + 1, nr_ts_emus_v + buffer):
+        emus_gv[:, t] = (
+            ar_int
+            + emus_gv[:, t - ar_lags] @ ar_coefs  # sum of products
+            + innovs_emus_gv[:, t]
+        )
+
     # remove buffer
     emus_gv = emus_gv[:, buffer:]
 
