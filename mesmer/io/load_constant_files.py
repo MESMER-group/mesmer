@@ -7,13 +7,14 @@ Functions to load in constant files such as region information, land-sea mask, a
 weights, longitude and latitude information.
 """
 
-import copy as copy
+import copy
 import os
 
 import joblib
 import numpy as np
 import pyproj
-import regionmask as regionmask
+import regionmask
+from packaging.version import Version
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
@@ -273,7 +274,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
     # choose the Regions object depending on the region type
     if reg_type == "countries":
-        reg = regionmask.defined_regions.natural_earth.countries_110
+        if Version(regionmask.__version__) >= Version("0.9.0"):
+            reg = regionmask.defined_regions.natural_earth_v5_0_0.countries_110
+        else:
+            reg = regionmask.defined_regions.natural_earth.countries_110
     elif reg_type == "srex":
         reg = regionmask.defined_regions.srex
     elif reg_type == "ar6.land":
@@ -293,7 +297,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    land_110 = regionmask.defined_regions.natural_earth.land_110
+    if Version(regionmask.__version__) >= Version("0.9.0"):
+        land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
+    else:
+        land_110 = regionmask.defined_regions.natural_earth.land_110
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point

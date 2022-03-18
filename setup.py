@@ -39,21 +39,22 @@ CLASSIFIERS = [
 REQUIREMENTS_INSTALL = [
     "dask[complete]",
     "numpy",
+    "packaging",
     "pandas",
+    "regionmask",
     "scikit-learn",
     "statsmodels",
-    "regionmask",
     "xarray",
 ]
 REQUIREMENTS_TESTS = [
-    "pytest",
     "pytest-cov",
     "pytest-xdist",
+    "pytest",
 ]
 REQUIREMENTS_DOCS = [
-    "sphinx",
-    "sphinx-book-theme",
     "numpydoc",
+    "sphinx-book-theme",
+    "sphinx",
 ]
 REQUIREMENTS_DEV = [
     "black",
@@ -68,8 +69,8 @@ REQUIREMENTS_DEV = [
 
 REQUIREMENTS_EXTRAS = {
     "dev": REQUIREMENTS_DEV,
-    "tests": REQUIREMENTS_TESTS,
     "docs": REQUIREMENTS_DOCS,
+    "tests": REQUIREMENTS_TESTS,
 }
 
 
