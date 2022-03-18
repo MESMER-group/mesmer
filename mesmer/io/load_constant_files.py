@@ -7,13 +7,13 @@ Functions to load in constant files such as region information, land-sea mask, a
 weights, longitude and latitude information.
 """
 
-import copy as copy
+import copy
 import os
 
 import joblib
 import numpy as np
 import pyproj
-import regionmask as regionmask
+import regionmask
 from packaging.version import Version
 
 from ..utils.regionmaskcompat import mask_percentage
