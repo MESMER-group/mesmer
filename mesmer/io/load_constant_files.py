@@ -297,7 +297,6 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    land_110 = regionmask.defined_regions.natural_earth.land_110
     if Version(regionmask.__version__) >= Version("0.9.0"):
         land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
     else:
