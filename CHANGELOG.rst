@@ -35,6 +35,9 @@ Internal Changes
 
 - Restore compatibility with regionmask v0.9.0 (`#136 <https://github.com/MESMER-group/mesmer/pull/136>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Renamed the ``interpolation`` keyword of ``np.quantile`` to ``method`` changed in
+  numpy v1.22.0 (`#137 <https://github.com/MESMER-group/mesmer/pull/137>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.3 - 2021-12-23
 -------------------
