@@ -7,6 +7,8 @@ from .utils import _check_dataarray_form, _check_dataset_form
 
 
 class LinearRegression:
+    """Ordinary least squares Linear Regression for xarray.DataArray objects."""
+
     def __init__(self):
         self._params = None
 
@@ -23,7 +25,8 @@ class LinearRegression:
         Parameters
         ----------
         predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+            A dict of DataArray objects used as predictors. Must be 1D and contain
+            `dim`.
 
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
@@ -107,13 +110,12 @@ class LinearRegression:
 
     @property
     def params(self):
-        """
-        The parameters of this estimator.
-        """
+        """The parameters of this estimator."""
 
         if self._params is None:
             raise ValueError(
-                "'params' not set - call `fit` or assign them to `LinearRegression().params`."
+                "'params' not set - call `fit` or assign them to "
+                "`LinearRegression().params`."
             )
 
         return self._params
@@ -133,6 +135,15 @@ class LinearRegression:
 
     @classmethod
     def from_netcdf(cls, filename, **kwargs):
+        """read params from a netCDF file
+
+        Parameters
+        ----------
+        filename : str
+            Name of the netCDF file to open.
+        kwargs : Any
+            Additional keyword arguments passed to ``xr.open_dataset``
+        """
         ds = xr.open_dataset(filename, **kwargs)
 
         obj = cls()
@@ -141,8 +152,17 @@ class LinearRegression:
         return obj
 
     def to_netcdf(self, filename, **kwargs):
-        params = self.params()
+        """save params to a netCDF file
 
+        Parameters
+        ----------
+        filename : str
+            Name of the netCDF file to save.
+        kwargs : Any
+            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+        """
+
+        params = self.params()
         params.to_netcdf(filename, **kwargs)
 
 

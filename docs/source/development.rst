@@ -79,7 +79,7 @@ We include links with each of these tools to starting points that we think are u
 
 - `Jupyter Notebooks <https://medium.com/codingthesmartway-com-blog/getting-started-with-jupyter-notebook-for-python-4e7082bd5d46>`_
 
-    - Jupyter is automatically included in your virtual environment if you follow our `Getting setup`_ instructions
+    - Jupyter is automatically included in your virtual environment if you follow our `Development setup`_ instructions
 
 - Sphinx_
 
@@ -124,7 +124,7 @@ We use the following tools:
 - `flake8 <https://flake8.pycqa.org/en/latest/>`_ to check the format and small errors
 
 These automatically format the code for us and tell use where the errors are.
-To use them, after setting yourself up (see `Getting setup`_), simply run ``make format``.
+To use them, after setting yourself up (see `Development setup`_), simply run ``make format``.
 Note that ``make format`` can only be run if you have committed all your work i.e. your working directory is 'clean'.
 This restriction is made to ensure that you don't format code without being able to undo it, just in case something goes wrong.
 
@@ -132,7 +132,7 @@ This restriction is made to ensure that you don't format code without being able
 Buiding the docs
 ----------------
 
-After setting yourself up (see `Getting setup`_), building the docs is as simple as running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date').
+After setting yourself up (see `Development setup`_), building the docs is as simple as running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date').
 This will build the docs for you.
 You can preview them by opening ``docs/build/html/index.html`` in a browser.
 

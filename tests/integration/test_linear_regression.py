@@ -12,6 +12,8 @@ from .utils import trend_data_1D, trend_data_2D
 
 def LinearRegression_fit_wrapper(*args, **kwargs):
     # wrapper for LinearRegression().fit() because it has no return value - should it?
+    # -> no: a class method should either change state or have a return value, it's a
+    # bit awkward for testing but better overall
 
     lr = mesmer.core.linear_regression.LinearRegression()
 
