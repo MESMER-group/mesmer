@@ -7,7 +7,7 @@ from .utils import _check_dataarray_form, _check_dataset_form
 
 
 class LinearRegression:
-    """Ordinary least squares Linear Regression for xarray.DataArray objects."""
+    """Ordinary least squares Linear Regression for xr.DataArray objects."""
 
     def __init__(self):
         self._params = None

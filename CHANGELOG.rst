@@ -7,7 +7,7 @@ v0.9.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 - Create :py:class:`mesmer.core.linear_regression.LinearRegression` which encapsulates
-  ``fit``, ``predict``, etc. methods aroung linear regression
+  ``fit``, ``predict``, etc. methods around linear regression
   (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Add ``mesmer.core.linear_regression``: xarray wrapper for ``mesmer.core._linear_regression``.
