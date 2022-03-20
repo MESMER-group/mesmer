@@ -9,10 +9,95 @@ import mesmer.core.linear_regression
 
 from .utils import trend_data_1D, trend_data_2D
 
-# TEST XARRAY WRAPPER
+
+def LinearRegression_fit_wrapper(*args, **kwargs):
+    # wrapper for LinearRegression().fit() because it has no return value - should it?
+    # -> no: a class method should either change state or have a return value, it's a
+    # bit awkward for testing but better overall
+
+    lr = mesmer.core.linear_regression.LinearRegression()
+
+    lr.fit(*args, **kwargs)
+    return lr.params
 
 
-def test_linear_regression_errors():
+LR_METHOD_OR_FUNCTION = [
+    mesmer.core.linear_regression.linear_regression,
+    LinearRegression_fit_wrapper,
+]
+
+# TEST LinearRegression class
+
+
+def test_LR_params():
+
+    lr = mesmer.core.linear_regression.LinearRegression()
+
+    with pytest.raises(ValueError, match="'params' not set"):
+        lr.params
+
+    with pytest.raises(TypeError, match="Expected params to be an xr.Dataset"):
+        lr.params = None
+
+    with pytest.raises(ValueError, match="missing the required data_vars"):
+        lr.params = xr.Dataset()
+
+    with pytest.raises(ValueError, match="missing the required data_vars"):
+        lr.params = xr.Dataset(data_vars={"weights": ("x", [5])})
+
+    with pytest.raises(ValueError, match="Expected additional variables"):
+        lr.params = xr.Dataset(data_vars={"intercept": ("x", [5])})
+
+    ds = xr.Dataset(data_vars={"intercept": ("x", [5]), "weights": ("y", [5])})
+    with pytest.raises(ValueError, match="Expected additional variables"):
+        lr.params = ds
+
+    ds = xr.Dataset(data_vars={"intercept": ("x", [5]), "tas": ("y", [5])})
+    lr.params = ds
+
+    xr.testing.assert_equal(ds, lr.params)
+
+
+def test_LR_predict():
+    lr = mesmer.core.linear_regression.LinearRegression()
+
+    params = xr.Dataset(data_vars={"intercept": ("x", [5]), "tas": ("x", [3])})
+    lr.params = params
+
+    with pytest.raises(ValueError, match="Missing or superflous predictors"):
+        lr.predict({})
+
+    with pytest.raises(ValueError, match="Missing or superflous predictors"):
+        lr.predict({"tas": None, "something else": None})
+
+    tas = xr.DataArray([0, 1, 2], dims="time")
+
+    result = lr.predict({"tas": tas})
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_LR_residuals():
+
+    lr = mesmer.core.linear_regression.LinearRegression()
+
+    params = xr.Dataset(data_vars={"intercept": ("x", [5]), "tas": ("x", [0])})
+    lr.params = params
+
+    tas = xr.DataArray([0, 1, 2], dims="time")
+    target = xr.DataArray([[5, 8, 0]], dims=("x", "time"))
+
+    expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"))
+
+    result = lr.residuals({"tas": tas}, target)
+
+    xr.testing.assert_equal(expected, result)
+
+
+# TEST XARRAY WRAPPER & LinearRegression().fit
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+def test_linear_regression_errors(lr_method_or_function):
 
     pred0 = trend_data_1D()
     pred1 = trend_data_1D()
@@ -24,14 +109,14 @@ def test_linear_regression_errors():
     weights = trend_data_1D(intercept=1, slope=0, scale=0)
 
     with pytest.raises(TypeError, match="predictors should be a dict"):
-        mesmer.core.linear_regression.linear_regression(pred0, tgt, dim="time")
+        lr_method_or_function(pred0, tgt, dim="time")
 
     def test_unequal_coords(pred0, pred1, tgt, weights):
 
         with pytest.raises(
             ValueError, match="indexes along dimension 'time' are not equal"
         ):
-            mesmer.core.linear_regression.linear_regression(
+            lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
 
@@ -42,7 +127,7 @@ def test_linear_regression_errors():
 
     def test_wrong_type(pred0, pred1, tgt, weights, name):
         with pytest.raises(TypeError, match=f"Expected {name} to be an xr.DataArray"):
-            mesmer.core.linear_regression.linear_regression(
+            lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
 
@@ -53,7 +138,7 @@ def test_linear_regression_errors():
 
     def test_wrong_shape(pred0, pred1, tgt, weights, name, ndim):
         with pytest.raises(ValueError, match=f"{name} should be {ndim}-dimensional"):
-            mesmer.core.linear_regression.linear_regression(
+            lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
 
@@ -72,7 +157,7 @@ def test_linear_regression_errors():
 
     def test_missing_dim(pred0, pred1, tgt, weights, name):
         with pytest.raises(ValueError, match=f"{name} is missing the required dims"):
-            mesmer.core.linear_regression.linear_regression(
+            lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
 
@@ -86,16 +171,15 @@ def test_linear_regression_errors():
     test_missing_dim(pred0, pred1, tgt, weights.rename(time="t"), name="weights")
 
 
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
-def test_linear_regression_one_predictor(intercept, slope):
+def test_linear_regression_one_predictor(lr_method_or_function, intercept, slope):
 
     pred0 = trend_data_1D(slope=1, scale=0)
     tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
 
-    result = mesmer.core.linear_regression.linear_regression(
-        {"pred0": pred0}, tgt, "time"
-    )
+    result = lr_method_or_function({"pred0": pred0}, tgt, "time")
 
     template = tgt.isel(time=0, drop=True)
 
@@ -107,17 +191,16 @@ def test_linear_regression_one_predictor(intercept, slope):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
-def test_linear_regression_two_predictors(intercept, slope):
+def test_linear_regression_two_predictors(lr_method_or_function, intercept, slope):
 
     pred0 = trend_data_1D(slope=1, scale=0)
     pred1 = trend_data_1D(slope=1, scale=0)
     tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
 
-    result = mesmer.core.linear_regression.linear_regression(
-        {"pred0": pred0, "pred1": pred1}, tgt, "time"
-    )
+    result = lr_method_or_function({"pred0": pred0, "pred1": pred1}, tgt, "time")
 
     template = tgt.isel(time=0, drop=True)
 
@@ -136,8 +219,9 @@ def test_linear_regression_two_predictors(intercept, slope):
     xr.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
-def test_linear_regression_weights(intercept):
+def test_linear_regression_weights(lr_method_or_function, intercept):
 
     pred0 = trend_data_1D(slope=1, scale=0)
     tgt = trend_data_2D(slope=1, scale=0, intercept=intercept)
@@ -145,9 +229,7 @@ def test_linear_regression_weights(intercept):
     weights = trend_data_1D(intercept=0, slope=0, scale=0)
     weights[0] = 1
 
-    result = mesmer.core.linear_regression.linear_regression(
-        {"pred0": pred0}, tgt, "time", weights=weights
-    )
+    result = lr_method_or_function({"pred0": pred0}, tgt, "time", weights=weights)
 
     template = tgt.isel(time=0, drop=True)
 
@@ -344,7 +426,7 @@ def test_linear_regression_np(predictors, target, weight):
     mock_regressor.coef_ = [123, -38]
 
     with mock.patch(
-        "mesmer.core.linear_regression.LinearRegression"
+        "sklearn.linear_model.LinearRegression"
     ) as mocked_linear_regression:
         mocked_linear_regression.return_value = mock_regressor
 

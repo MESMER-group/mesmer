@@ -2,9 +2,168 @@ from typing import Mapping, Optional
 
 import numpy as np
 import xarray as xr
-from sklearn.linear_model import LinearRegression
 
-from .utils import _check_dataarray_form
+from .utils import _check_dataarray_form, _check_dataset_form
+
+
+class LinearRegression:
+    """Ordinary least squares Linear Regression for xr.DataArray objects."""
+
+    def __init__(self):
+        self._params = None
+
+    def fit(
+        self,
+        predictors: Mapping[str, xr.DataArray],
+        target: xr.DataArray,
+        dim: str,
+        weights: Optional[xr.DataArray] = None,
+    ):
+        """
+        Fit a linear model
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray
+            A dict of DataArray objects used as predictors. Must be 1D and contain
+            `dim`.
+
+        target : xr.DataArray
+            Target DataArray. Must be 2D and contain `dim`.
+
+        dim : str
+            Dimension along which to fit the polynomials.
+
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample. Must be 1D and contain `dim`.
+        """
+
+        params = linear_regression(
+            predictors=predictors,
+            target=target,
+            dim=dim,
+            weights=weights,
+        )
+
+        self._params = params
+
+    def predict(
+        self,
+        predictors: Mapping[str, xr.DataArray],
+    ):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray
+            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+
+        Returns
+        -------
+        prediction : xr.DataArray
+            Returns predicted values.
+        """
+
+        params = self.params
+
+        required_predictors = set(params.data_vars) - set(["intercept", "weights"])
+        available_predictors = set(predictors.keys())
+
+        if required_predictors != available_predictors:
+            raise ValueError("Missing or superflous predictors.")
+
+        prediction = params.intercept
+        for key in required_predictors:
+            prediction = prediction + predictors[key] * params[key]
+
+        return prediction
+
+    def residuals(
+        self,
+        predictors: Mapping[str, xr.DataArray],
+        target: xr.DataArray,
+    ):
+        """
+        Calculate the residuals of the fitted linear model
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray
+            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+
+        target : xr.DataArray
+            Target DataArray. Must be 2D and contain `dim`.
+
+        Returns
+        -------
+        residuals : xr.DataArray
+            Returns residuals - the difference between the predicted values and target.
+
+        """
+
+        prediction = self.predict(predictors)
+
+        residuals = target - prediction
+
+        return residuals
+
+    @property
+    def params(self):
+        """The parameters of this estimator."""
+
+        if self._params is None:
+            raise ValueError(
+                "'params' not set - call `fit` or assign them to "
+                "`LinearRegression().params`."
+            )
+
+        return self._params
+
+    @params.setter
+    def params(self, params):
+
+        _check_dataset_form(
+            params,
+            "params",
+            required_vars="intercept",
+            optional_vars="weights",
+            requires_other_vars=True,
+        )
+
+        self._params = params
+
+    @classmethod
+    def from_netcdf(cls, filename, **kwargs):
+        """read params from a netCDF file
+
+        Parameters
+        ----------
+        filename : str
+            Name of the netCDF file to open.
+        kwargs : Any
+            Additional keyword arguments passed to ``xr.open_dataset``
+        """
+        ds = xr.open_dataset(filename, **kwargs)
+
+        obj = cls()
+        obj.params = ds
+
+        return obj
+
+    def to_netcdf(self, filename, **kwargs):
+        """save params to a netCDF file
+
+        Parameters
+        ----------
+        filename : str
+            Name of the netCDF file to save.
+        kwargs : Any
+            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+        """
+
+        params = self.params()
+        params.to_netcdf(filename, **kwargs)
 
 
 def linear_regression(
@@ -39,6 +198,11 @@ def linear_regression(
 
     if not isinstance(predictors, Mapping):
         raise TypeError(f"predictors should be a dict, got {type(predictors)}.")
+
+    if ("weights" in predictors) or ("intercept" in predictors):
+        raise ValueError(
+            "A predictor with the name 'weights' or 'intercept' is not allowed"
+        )
 
     for key, pred in predictors.items():
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
@@ -100,6 +264,9 @@ def _linear_regression(predictors, target, weights=None):
         followed by the intercept for each predictor (in the same order as the
         columns of ``predictors``).
     """
+
+    from sklearn.linear_model import LinearRegression
+
     reg = LinearRegression()
     reg.fit(X=predictors, y=target, sample_weight=weights)
 
