@@ -11,8 +11,10 @@ import os
 
 import joblib
 import numpy as np
+import xarray as xr
 from scipy.stats import multivariate_normal
-from statsmodels.tsa.ar_model import AutoReg
+
+from mesmer.core.auto_regression import _fit_auto_regression_xr
 
 from .train_utils import train_l_prepare_X_y_wgteq
 
@@ -217,7 +219,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     # easier to loop over individ runs / scenarios
     targ_names = list(targs.keys())
     scenarios_tr = list(targs[targ_names[0]].keys())
-    nr_scens = len(scenarios_tr)
 
     # fit parameters for each target individually
     for t, targ_name in enumerate(targ_names):
@@ -225,30 +226,26 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         nr_gps = y.shape[1]
         y_targ = y[:, :, t]
 
-        # AR(1)
-        params_lv["AR1_int"][targ_name] = np.zeros(nr_gps)
-        params_lv["AR1_coef"][targ_name] = np.zeros(nr_gps)
-        params_lv["AR1_std_innovs"][targ_name] = np.zeros(nr_gps)
-
+        res = list()
         for scen in scenarios_tr:
-            nr_runs, nr_ts, nr_gps = targ[scen].shape
-            AR1_int_runs = np.zeros(nr_gps)
-            AR1_coef_runs = np.zeros(nr_gps)
-            AR1_std_innovs_runs = np.zeros(nr_gps)
+            data = targ[scen]
 
-            for run in np.arange(nr_runs):
-                for gp in np.arange(nr_gps):
-                    AR1_model = AutoReg(
-                        targ[scen][run, :, gp], lags=1, old_names=False
-                    ).fit()
-                    AR1_int_runs[gp] += AR1_model.params[0] / nr_runs
-                    AR1_coef_runs[gp] += AR1_model.params[1] / nr_runs
-                    # sqrt of variance = standard deviation
-                    AR1_std_innovs_runs[gp] += np.sqrt(AR1_model.sigma2) / nr_runs
+            nr_runs, nr_ts, nr_gps = data.shape
 
-            params_lv["AR1_int"][targ_name] += AR1_int_runs / nr_scens
-            params_lv["AR1_coef"][targ_name] += AR1_coef_runs / nr_scens
-            params_lv["AR1_std_innovs"][targ_name] += AR1_std_innovs_runs / nr_scens
+            # create temporary DataArray
+            data = xr.DataArray(data, dims=("run", "time", "cell"))
+
+            params = _fit_auto_regression_xr(data, dim="time", lags=1)
+            params = params.mean("run")
+
+            res.append(params)
+
+        res = xr.concat(res, dim="scen")
+        res = res.mean("scen")
+
+        params_lv["AR1_int"][targ_name] = res.trend.values
+        params_lv["AR1_coef"][targ_name] = res.coeffs.values.squeeze()
+        params_lv["AR1_std_innovs"][targ_name] = res.standard_deviation.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
         (

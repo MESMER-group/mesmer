@@ -71,6 +71,7 @@ def _check_dataarray_form(
     *,
     ndim: int = None,
     required_dims: Union[str, Set[str]] = set(),
+    shape=None,
 ):
     """check if a dataset conforms to some conditions
 
@@ -82,6 +83,8 @@ def _check_dataarray_form(
         Number of required dimensions
     required_dims: str, set of str, optional
         Names of dims that are required for obj
+    shape : tuple of ints, default: None
+        Required shape. Ignored if None.
 
     Raises
     ------
@@ -101,3 +104,6 @@ def _check_dataarray_form(
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))
         raise ValueError(f"{name} is missing the required dims: {missing_dims}")
+
+    if shape is not None and obj.shape != shape:
+        raise ValueError(f"{name} has wrong shape - expected {shape}, got {obj.shape}")
