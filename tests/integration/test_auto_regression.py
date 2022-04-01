@@ -11,14 +11,14 @@ from .utils import trend_data_1D, trend_data_2D
 
 
 @pytest.mark.parametrize("obj", [xr.Dataset(), None])
-def test_auto_regression_xr_errors(obj):
+def test_fit_auto_regression_xr_errors(obj):
 
     with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
         mesmer.core.auto_regression._fit_auto_regression_xr(obj, "dim", lags=1)
 
 
 @pytest.mark.parametrize("lags", [1, 2])
-def test_auto_regression_xr_1D(lags):
+def test_fit_auto_regression_xr_1D(lags):
 
     data = trend_data_1D()
     res = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
@@ -26,10 +26,10 @@ def test_auto_regression_xr_1D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["trend", "coeffs", "standard_deviation"],
+        required_vars=["intercept", "coeffs", "standard_deviation"],
     )
 
-    _check_dataarray_form(res.trend, "trend", ndim=0, shape=())
+    _check_dataarray_form(res.intercept, "intercept", ndim=0, shape=())
     _check_dataarray_form(
         res.coeffs, "coeffs", ndim=1, required_dims={"lags"}, shape=(lags,)
     )
@@ -39,7 +39,7 @@ def test_auto_regression_xr_1D(lags):
 
 
 @pytest.mark.parametrize("lags", [1, 2])
-def test_auto_regression_xr_2D(lags):
+def test_fit_auto_regression_xr_2D(lags):
 
     data = trend_data_2D()
     res = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
@@ -49,10 +49,10 @@ def test_auto_regression_xr_2D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["trend", "coeffs", "standard_deviation"],
+        required_vars=["intercept", "coeffs", "standard_deviation"],
     )
 
-    _check_dataarray_form(res.trend, "trend", ndim=1, shape=(n_cells,))
+    _check_dataarray_form(res.intercept, "intercept", ndim=1, shape=(n_cells,))
     _check_dataarray_form(
         res.coeffs,
         "coeffs",
@@ -66,7 +66,7 @@ def test_auto_regression_xr_2D(lags):
 
 
 @pytest.mark.parametrize("lags", [1, 2])
-def test_auto_regression_np(lags):
+def test_fit_auto_regression_np(lags):
 
     data = np.array([0, 1, 3.14])
 

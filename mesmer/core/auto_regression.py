@@ -18,14 +18,14 @@ def _fit_auto_regression_xr(data, dim, lags):
     Returns
     -------
     :obj:`xr.Dataset`
-        Dataset containing the estimated parameters of the ``trend``, the AR ``coeffs``
+        Dataset containing the estimated parameters of the ``intercept``, the AR ``coeffs``
         and the ``standard_deviation`` of the residuals.
     """
 
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
-    trend, coeffs, std = xr.apply_ufunc(
+    intercept, coeffs, std = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
         input_core_dims=[[dim]],
@@ -36,7 +36,7 @@ def _fit_auto_regression_xr(data, dim, lags):
     )
 
     # TODO: are the names appropriate?
-    data_vars = {"trend": trend, "coeffs": coeffs, "standard_deviation": std}
+    data_vars = {"intercept": intercept, "coeffs": coeffs, "standard_deviation": std}
 
     # TODO: add coords for lags?
     return xr.Dataset(data_vars)
@@ -55,8 +55,8 @@ def _fit_auto_regression_np(data, lags):
 
     Returns
     -------
-    trend : :obj:`np.array`
-        Trend part of the fited AR model.
+    intercept : :obj:`np.array`
+        Intercept of the fitted AR model.
     coeffs : :obj:`np.array`
         Coefficients if the AR model. Will have as many entries as ``lags``.
     std :obj:`np.array`
@@ -68,10 +68,10 @@ def _fit_auto_regression_np(data, lags):
     AR_model = AutoReg(data, lags=lags, old_names=False)
     AR_result = AR_model.fit()
 
-    trend = AR_result.params[0]
+    intercept = AR_result.params[0]
     coeffs = AR_result.params[1:]
 
     # sqrt of variance = standard deviation
     std = np.sqrt(AR_result.sigma2)
 
-    return trend, coeffs, std
+    return intercept, coeffs, std

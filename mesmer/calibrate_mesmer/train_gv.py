@@ -213,7 +213,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
 
     # TODO: remove np.float64(...) (only here so the tests pass)
     params_gv["AR_order_sel"] = AR_order_sel
-    params_gv["AR_int"] = np.float64(res.trend.values)
+    params_gv["AR_int"] = np.float64(res.intercept.values)
     params_gv["AR_coefs"] = res.coeffs.values.squeeze()
     params_gv["AR_std_innovs"] = np.float64(res.standard_deviation.values)
 

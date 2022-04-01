@@ -243,7 +243,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         res = xr.concat(res, dim="scen")
         res = res.mean("scen")
 
-        params_lv["AR1_int"][targ_name] = res.trend.values
+        params_lv["AR1_int"][targ_name] = res.intercept.values
         params_lv["AR1_coef"][targ_name] = res.coeffs.values.squeeze()
         params_lv["AR1_std_innovs"][targ_name] = res.standard_deviation.values
 
