@@ -208,7 +208,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
 
         params_scen.append(params)
 
-    params_scen = xr.concat(res, dim="scen")
+    params_scen = xr.concat(params_scen, dim="scen")
     params_scen = params_scen.mean("scen")
 
     # TODO: remove np.float64(...) (only here so the tests pass)

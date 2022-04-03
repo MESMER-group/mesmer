@@ -240,7 +240,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
             params_scen.append(params)
 
-        params_scen = xr.concat(res, dim="scen")
+        params_scen = xr.concat(params_scen, dim="scen")
         params_scen = params_scen.mean("scen")
 
         params_lv["AR1_int"][targ_name] = params_scen.intercept.values
