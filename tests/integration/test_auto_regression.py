@@ -17,6 +17,24 @@ def test_fit_auto_regression_xr_errors(obj):
         mesmer.core.auto_regression._fit_auto_regression_xr(obj, "dim", lags=1)
 
 
+def test_fit_auto_regression_xr_1D_values():
+    # values obtained by running the example - to ensure there are no changes in
+    # statsmodels.tsa.ar_model.AutoReg
+
+    data = trend_data_1D()
+    result = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=1)
+
+    expected = xr.Dataset(
+        {
+            "intercept": 1.04728995,
+            "coeffs": ("lags", [0.99682459]),
+            "standard_deviation": 1.02655342,
+        }
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
 @pytest.mark.parametrize("lags", [1, 2])
 def test_fit_auto_regression_xr_1D(lags):
 
