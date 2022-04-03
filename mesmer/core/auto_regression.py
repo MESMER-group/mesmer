@@ -35,7 +35,6 @@ def _fit_auto_regression_xr(data, dim, lags):
         kwargs={"lags": lags},
     )
 
-    # TODO: are the names appropriate?
     data_vars = {"intercept": intercept, "coeffs": coeffs, "standard_deviation": std}
 
     # TODO: add coords for lags?
@@ -71,7 +70,7 @@ def _fit_auto_regression_np(data, lags):
     intercept = AR_result.params[0]
     coeffs = AR_result.params[1:]
 
-    # sqrt of variance = standard deviation
+    # standard deviation of the residuals
     std = np.sqrt(AR_result.sigma2)
 
     return intercept, coeffs, std
