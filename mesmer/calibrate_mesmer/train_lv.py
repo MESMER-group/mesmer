@@ -226,7 +226,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         nr_gps = y.shape[1]
         y_targ = y[:, :, t]
 
-        res = list()
+        params_scen = list()
         for scen in scenarios_tr:
             data = targ[scen]
 
@@ -238,14 +238,14 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             params = _fit_auto_regression_xr(data, dim="time", lags=1)
             params = params.mean("run")
 
-            res.append(params)
+            params_scen.append(params)
 
-        res = xr.concat(res, dim="scen")
-        res = res.mean("scen")
+        params_scen = xr.concat(res, dim="scen")
+        params_scen = params_scen.mean("scen")
 
-        params_lv["AR1_int"][targ_name] = res.intercept.values
-        params_lv["AR1_coef"][targ_name] = res.coeffs.values.squeeze()
-        params_lv["AR1_std_innovs"][targ_name] = res.standard_deviation.values
+        params_lv["AR1_int"][targ_name] = params_scen.intercept.values
+        params_lv["AR1_coef"][targ_name] = params_scen.coeffs.values.squeeze()
+        params_lv["AR1_std_innovs"][targ_name] = params_scen.standard_deviation.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
         (

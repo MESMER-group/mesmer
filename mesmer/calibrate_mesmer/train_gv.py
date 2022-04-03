@@ -196,7 +196,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     AR_order_sel = int(np.percentile(AR_order_scens_tmp, **pct_kwargs))
 
     # determine the AR params for the selected AR order
-    res = list()
+    params_scen = list()
     for scen_idx, scen in enumerate(gv.keys()):
         data = gv[scen]
 
@@ -206,16 +206,16 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         params = _fit_auto_regression_xr(data, dim="time", lags=AR_order_sel)
         params = params.mean("run")
 
-        res.append(params)
+        params_scen.append(params)
 
-    res = xr.concat(res, dim="scen")
-    res = res.mean("scen")
+    params_scen = xr.concat(res, dim="scen")
+    params_scen = params_scen.mean("scen")
 
     # TODO: remove np.float64(...) (only here so the tests pass)
     params_gv["AR_order_sel"] = AR_order_sel
-    params_gv["AR_int"] = np.float64(res.intercept.values)
-    params_gv["AR_coefs"] = res.coeffs.values.squeeze()
-    params_gv["AR_std_innovs"] = np.float64(res.standard_deviation.values)
+    params_gv["AR_int"] = np.float64(params_scen.intercept.values)
+    params_gv["AR_coefs"] = params_scen.coeffs.values.squeeze()
+    params_gv["AR_std_innovs"] = np.float64(params_scen.standard_deviation.values)
 
     # check if fitted AR process is stationary
     # (highly unlikely this test will ever fail but better safe than sorry)
