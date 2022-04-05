@@ -44,7 +44,7 @@ def test_make_realisations(
 
     preds_lt = {
         "gttas": {"hist": hist_tas, scenario: scen_tas},
-        "gttas2": {"hist": hist_tas ** 2, scenario: scen_tas ** 2},
+        "gttas2": {"hist": hist_tas**2, scenario: scen_tas**2},
         "gthfds": {"hist": hist_hfds, scenario: scen_hfds},
     }
 

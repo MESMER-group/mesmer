@@ -12,6 +12,7 @@ import os
 import joblib
 import numpy as np
 import statsmodels.api as sm
+from packaging.version import Version
 from statsmodels.tsa.ar_model import AutoReg, ar_select_order
 
 
@@ -79,10 +80,10 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     # apply the chosen method
     if params_gv["method"] == "AR" and wgt_scen_tr_eq:
         # specifiy parameters employed for AR process fitting
-        if "max_lag" not in kwargs:
-            kwargs["max_lag"] = 12
-        if "sel_crit" not in kwargs:
-            kwargs["sel_crit"] = "bic"
+
+        kwargs["max_lag"] = kwargs.get("max_lag", 12)
+        kwargs["sel_crit"] = kwargs.get("sel_crit", "bic")
+
         params_gv = train_gv_AR(params_gv, gv, kwargs["max_lag"], kwargs["sel_crit"])
     else:
         msg = "The chosen method and / or weighting approach is currently not implemented."
@@ -167,6 +168,12 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     nr_scens = len(gv.keys())
     AR_order_scens_tmp = np.zeros(nr_scens)
 
+    # np.percentile renamed the keyword in numpy v1.22
+    if Version(np.__version__) >= Version("1.22.0"):
+        pct_kwargs = {"q": 50, "method": "nearest"}
+    else:
+        pct_kwargs = {"q": 50, "interpolation": "nearest"}
+
     for scen_idx, scen in enumerate(gv.keys()):
         nr_runs = gv[scen].shape[0]
         AR_order_runs_tmp = np.zeros(nr_runs)
@@ -179,13 +186,11 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
             if len(run_ar_lags) > 0:
                 AR_order_runs_tmp[run] = run_ar_lags[-1]
 
-        AR_order_scens_tmp[scen_idx] = np.percentile(
-            AR_order_runs_tmp, q=50, interpolation="nearest"
-        )
         # interpolation is not a good way to go here because it could lead to an AR
         # order that wasn't chosen by run -> avoid it by just taking nearest
+        AR_order_scens_tmp[scen_idx] = np.percentile(AR_order_runs_tmp, **pct_kwargs)
 
-    AR_order_sel = int(np.percentile(AR_order_scens_tmp, q=50, interpolation="nearest"))
+    AR_order_sel = int(np.percentile(AR_order_scens_tmp, **pct_kwargs))
 
     # determine the AR params for the selected AR order
     params_gv["AR_int"] = 0

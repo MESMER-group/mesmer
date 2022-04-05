@@ -349,15 +349,12 @@ def load_cmipng_file(run_path, gen, scen):
             data = xr.open_mfdataset(
                 [run_path_hist, run_path_ssp_585, run_path_ssp_534over],
                 combine="by_coords",
-                concat_dim="time",
                 preprocess=preprocess_ssp534over,
             )
         else:  # for every other scenario
             run_path_ssp = run_path
             run_path_hist = run_path.replace(scen, "historical")
-            data = xr.open_mfdataset(
-                [run_path_hist, run_path_ssp], combine="by_coords", concat_dim="time"
-            )
+            data = xr.open_mfdataset([run_path_hist, run_path_ssp], combine="by_coords")
 
         data = data.roll(lon=72, roll_coords=True)  # roll so land in center
         data = data.assign_coords(

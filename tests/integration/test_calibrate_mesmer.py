@@ -22,7 +22,7 @@ def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
     test_cmip_data_root_dir = os.path.join(
         test_data_root_dir,
         "calibrate-coarse-grid",
-        "cmip{}-ng".format(test_cmip_generation),
+        f"cmip{test_cmip_generation}-ng",
     )
     test_observations_root_dir = os.path.join(
         test_data_root_dir,

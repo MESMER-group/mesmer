@@ -10,6 +10,18 @@ This page provides an auto-generated summary of mesmers' API.
 Top-level functions
 ===================
 
+Statistical core functions
+--------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.linear_regression.LinearRegression
+   ~core.linear_regression.LinearRegression.fit
+   ~core.linear_regression.LinearRegression.predict
+   ~core.linear_regression.LinearRegression.residuals
+   ~core.linear_regression.LinearRegression.to_netcdf
+   ~core.linear_regression.LinearRegression.from_netcdf
 
 Train mesmer
 ------------
@@ -67,21 +79,6 @@ Create emulations
 
 IO
 --
-
-Load CMIP-ng data
-^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_cmipng.extract_time_lon_lat_wgt3d
-   ~io.load_cmipng.find_files_cmipng
-   ~io.load_cmipng.load_cmipng
-   ~io.load_cmipng.load_cmipng_file
-   ~io.load_cmipng.load_cmipng_hfds
-   ~io.load_cmipng.load_cmipng_tas
-   ~io.load_cmipng.preprocess_ssp534over
-
 
 Load constant files
 ^^^^^^^^^^^^^^^^^^^

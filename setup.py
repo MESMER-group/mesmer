@@ -30,6 +30,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
@@ -38,16 +39,22 @@ CLASSIFIERS = [
 REQUIREMENTS_INSTALL = [
     "dask[complete]",
     "numpy",
+    "packaging",
     "pandas",
+    "regionmask",
     "scikit-learn",
     "statsmodels",
-    "regionmask",
     "xarray",
 ]
 REQUIREMENTS_TESTS = [
-    "pytest",
     "pytest-cov",
     "pytest-xdist",
+    "pytest",
+]
+REQUIREMENTS_DOCS = [
+    "numpydoc",
+    "sphinx-book-theme",
+    "sphinx",
 ]
 REQUIREMENTS_DEV = [
     "black",
@@ -57,29 +64,25 @@ REQUIREMENTS_DEV = [
     "twine",
     "wheel",
     *REQUIREMENTS_TESTS,
-]
-
-REQUIREMENTS_DOCS = [
-    "sphinx-book-theme",
-    "numpydoc",
+    *REQUIREMENTS_DOCS,
 ]
 
 REQUIREMENTS_EXTRAS = {
     "dev": REQUIREMENTS_DEV,
-    "tests": REQUIREMENTS_TESTS,
     "docs": REQUIREMENTS_DOCS,
+    "tests": REQUIREMENTS_TESTS,
 }
 
 
 SOURCE_DIR = "mesmer"
 
-PACKAGES = find_packages()
+PACKAGES = find_packages(include={"mesmer*"})
 PACKAGE_DATA = {}
 
 
 README = "README.rst"
 
-with open(README, "r") as readme_file:
+with open(README) as readme_file:
     README_TEXT = readme_file.read()
 
 
@@ -114,6 +117,7 @@ setup(
     packages=PACKAGES,
     package_data=PACKAGE_DATA,
     include_package_data=True,
+    python_requires=">=3.7",
     install_requires=REQUIREMENTS_INSTALL,
     extras_require=REQUIREMENTS_EXTRAS,
     cmdclass=cmdclass,

@@ -7,13 +7,14 @@ Functions to load in constant files such as region information, land-sea mask, a
 weights, longitude and latitude information.
 """
 
-import copy as copy
+import copy
 import os
 
 import joblib
 import numpy as np
 import pyproj
-import regionmask as regionmask
+import regionmask
+from packaging.version import Version
 
 from ..utils.regionmaskcompat import mask_percentage
 from ..utils.xrcompat import infer_interval_breaks
@@ -52,7 +53,7 @@ def gaspari_cohn(r):
     sel = (r >= 0) & (r < 1)
     r_s = r[sel]
     y[sel] = (
-        1 - 5 / 3 * r_s ** 2 + 5 / 8 * r_s ** 3 + 1 / 2 * r_s ** 4 - 1 / 4 * r_s ** 5
+        1 - 5 / 3 * r_s**2 + 5 / 8 * r_s**3 + 1 / 2 * r_s**4 - 1 / 4 * r_s**5
     )
 
     sel = (r >= 1) & (r < 2)
@@ -61,10 +62,10 @@ def gaspari_cohn(r):
     y[sel] = (
         4
         - 5 * r_s
-        + 5 / 3 * r_s ** 2
-        + 5 / 8 * r_s ** 3
-        - 1 / 2 * r_s ** 4
-        + 1 / 12 * r_s ** 5
+        + 5 / 3 * r_s**2
+        + 5 / 8 * r_s**3
+        - 1 / 2 * r_s**4
+        + 1 / 12 * r_s**5
         - 2 / (3 * r_s)
     )
 
@@ -176,7 +177,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     L_set = np.arange(L_start, L_end + 1, L_interval)
 
     # geodistance for all gps for certain threshold
-    geodist_name = "geodist_landthres_{tl:1.2f}.pkl".format(tl=threshold_land)
+    geodist_name = f"geodist_landthres_{threshold_land:1.2f}.pkl"
     if not os.path.exists(dir_aux + geodist_name):
         # create geodist matrix + save it
         print("compute geographical distance between all land points")
@@ -273,7 +274,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
     # choose the Regions object depending on the region type
     if reg_type == "countries":
-        reg = regionmask.defined_regions.natural_earth.countries_110
+        if Version(regionmask.__version__) >= Version("0.9.0"):
+            reg = regionmask.defined_regions.natural_earth_v5_0_0.countries_110
+        else:
+            reg = regionmask.defined_regions.natural_earth.countries_110
     elif reg_type == "srex":
         reg = regionmask.defined_regions.srex
     elif reg_type == "ar6.land":
@@ -293,7 +297,10 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    land_110 = regionmask.defined_regions.natural_earth.land_110
+    if Version(regionmask.__version__) >= Version("0.9.0"):
+        land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
+    else:
+        land_110 = regionmask.defined_regions.natural_earth.land_110
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point

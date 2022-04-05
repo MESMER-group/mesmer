@@ -22,7 +22,7 @@ TEST_DATA_ROOT = os.path.join(
 # cmip-ng
 gen = 6  # generation
 dir_cmipng = os.path.join(
-    TEST_DATA_ROOT, "cmip{}-ng/".format(gen)
+    TEST_DATA_ROOT, f"cmip{gen}-ng/"
 )  # TODO: remove need for trailing "/" here
 
 # observations

@@ -4,26 +4,26 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+# -- Import packages ---------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
+import datetime
 
-# import sys
-# sys.path.insert(0, os.path.abspath("."))
-
+from mesmer._version import get_versions
 
 # -- Project information -----------------------------------------------------
 
 project = "mesmer"
-copyright = "(c) 2021 ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne)"
-author = "Lea Beusch, Zebedee Nicholls, Mathias Hauser"
+copyright_year = datetime.date.today().year
+copyright = "(c) 2021-{} ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne), MESMER contributors listed in AUTHORS".format(
+    copyright_year
+)
+authors = "Authors, see AUTHORS"
+author = authors
 
+# The short X.Y version
+version = get_versions()["version"].split("+")[0]
 # The full version, including alpha/beta/rc tags
-release = "dev"
+release = get_versions()["version"]
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,7 +35,6 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "numpydoc",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
@@ -57,6 +56,8 @@ napoleon_use_rtype = False
 
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
+
+autodoc_typehints = "none"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
