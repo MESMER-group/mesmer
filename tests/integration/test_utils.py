@@ -109,3 +109,18 @@ def test_check_dataarray_form_required_dims(required_dims):
     mesmer.core.utils._check_dataarray_form(da, required_dims="y")
     mesmer.core.utils._check_dataarray_form(da, required_dims=["x", "y"])
     mesmer.core.utils._check_dataarray_form(da, required_dims={"x", "y"})
+
+
+def test_check_dataarray_form_shape():
+
+    da = xr.DataArray(np.ones((2, 2)), dims=("x", "y"))
+
+    for shape in ((), (1,), (1, 2), (2, 1), (1, 2, 3)):
+        with pytest.raises(ValueError, match="obj has wrong shape"):
+            mesmer.core.utils._check_dataarray_form(da, shape=shape)
+
+    with pytest.raises(ValueError, match="test has wrong shape"):
+        mesmer.core.utils._check_dataarray_form(da, name="test", shape=())
+
+    # no error
+    mesmer.core.utils._check_dataarray_form(da, shape=(2, 2))

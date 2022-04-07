@@ -12,8 +12,11 @@ import os
 import joblib
 import numpy as np
 import statsmodels.api as sm
+import xarray as xr
 from packaging.version import Version
-from statsmodels.tsa.ar_model import AutoReg, ar_select_order
+from statsmodels.tsa.ar_model import ar_select_order
+
+from mesmer.core.auto_regression import _fit_auto_regression_xr
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -193,29 +196,26 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     AR_order_sel = int(np.percentile(AR_order_scens_tmp, **pct_kwargs))
 
     # determine the AR params for the selected AR order
-    params_gv["AR_int"] = 0
-    params_gv["AR_coefs"] = np.zeros(AR_order_sel)
-    params_gv["AR_order_sel"] = AR_order_sel
-    params_gv["AR_std_innovs"] = 0
-
+    params_scen = list()
     for scen_idx, scen in enumerate(gv.keys()):
-        nr_runs = gv[scen].shape[0]
-        AR_order_runs_tmp = np.zeros(nr_runs)
-        AR_int_tmp = 0
-        AR_coefs_tmp = np.zeros(AR_order_sel)
-        AR_std_innovs_tmp = 0
+        data = gv[scen]
 
-        for run in np.arange(nr_runs):
-            AR_model_tmp = AutoReg(
-                gv[scen][run], lags=AR_order_sel, old_names=False
-            ).fit()
-            AR_int_tmp += AR_model_tmp.params[0] / nr_runs
-            AR_coefs_tmp += AR_model_tmp.params[1:] / nr_runs
-            AR_std_innovs_tmp += np.sqrt(AR_model_tmp.sigma2) / nr_runs
+        # create temporary DataArray
+        data = xr.DataArray(data, dims=("run", "time"))
 
-        params_gv["AR_int"] += AR_int_tmp / nr_scens
-        params_gv["AR_coefs"] += AR_coefs_tmp / nr_scens
-        params_gv["AR_std_innovs"] += AR_std_innovs_tmp / nr_scens
+        params = _fit_auto_regression_xr(data, dim="time", lags=AR_order_sel)
+        params = params.mean("run")
+
+        params_scen.append(params)
+
+    params_scen = xr.concat(params_scen, dim="scen")
+    params_scen = params_scen.mean("scen")
+
+    # TODO: remove np.float64(...) (only here so the tests pass)
+    params_gv["AR_order_sel"] = AR_order_sel
+    params_gv["AR_int"] = np.float64(params_scen.intercept.values)
+    params_gv["AR_coefs"] = params_scen.coeffs.values.squeeze()
+    params_gv["AR_std_innovs"] = np.float64(params_scen.standard_deviation.values)
 
     # check if fitted AR process is stationary
     # (highly unlikely this test will ever fail but better safe than sorry)
