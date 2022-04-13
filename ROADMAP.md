@@ -56,7 +56,7 @@ Note that these tasks are highly dependent on the _Internal data structures_.
 
 Currently, calibrated parameters and emulations are stored in a python-internal format (the [pickle](https://docs.python.org/3/library/pickle.html) format via [`joblib.dump`](https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html)). The current format is problematic from a security perspective (see the [pickle documentation](https://docs.python.org/3/library/pickle.html)) and can pose problems with backward compatibility ([#50](https://github.com/MESMER-group/mesmer/issues/50)).
 
-The calibrated parameters (e.g. the spatially-explicit linear regression coefficients) and  need to be saved in a more standard format, i.e. as netCDFs ([#65](https://github.com/MESMER-group/mesmer/issues/65)). Note that switching the internal _Array data structure_ to xarray will greatly simplify this task because they can be directly saved as netCDF files.
+The calibrated parameters (e.g. the spatially-explicit linear regression coefficients) and need to be saved in a more standard format, i.e. as netCDFs ([#65](https://github.com/MESMER-group/mesmer/issues/65)). Note that switching the internal _Array data structure_ to xarray will greatly simplify this task because they can be directly saved as netCDF files.
 
 Specific tasks
 - Return emulations and calibrated parameters as xarray Dataset, which can directly be stored as netCDF.
