@@ -7,12 +7,13 @@ Many of these changes are intricately connected with each other, therefore we th
 
 ## Envisioned updates
 
-### User interface
+### User experience
 
 Running MESMER currently involves a mixture of data loading, data preprocessing, defining the statistical model for calibration, storing the determined model parameters, as well as drawing realizations. We hope to improve on this by addressing the following points:
 
-
 - Clearer separation of individual steps from data loading and preprocessing.
+- More flexible and powerful array structures.
+- Better documentation, including examples and tutorials.
 
 
 ### Internal data structures
