@@ -154,8 +154,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         for pred in params_lv["preds"]:
             params_lv[f"coef_{pred}"] = {}
 
+        # NOTE: atm only one target can be and is present
         for targ_idx, targ in enumerate(params_lt["targs"]):
-
             reg_xr = _fit_linear_regression_xr(
                 predictors=X,
                 target=y[targ],
@@ -169,7 +169,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
                 params_lt[f"coef_{pred}"][targ] = reg_xr[pred].values
 
             for pred in params_lv["preds"]:
-                params_lv["coef_" + pred][targ] = reg_xr[pred].values
+                params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
 
     # save the local trend paramters if requested
     if save_params:
