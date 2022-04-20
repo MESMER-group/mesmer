@@ -233,7 +233,6 @@ def _fit_linear_regression_xr(
     dataarrays = {key: (target_dim, out[:, i]) for i, key in enumerate(keys)}
 
     out = xr.Dataset(dataarrays, coords=target.coords)
-
     if dim in out.coords:
         out = out.drop_vars(dim)
 
