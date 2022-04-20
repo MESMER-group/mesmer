@@ -136,7 +136,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # prepare predictors and targets such that they can be ingested into the training
     # function
-
     X, y, wgt_scen_eq = _train_l_prepare_X_y_wgteq_xr(preds, targs)
 
     # prepare weights for individual runs
