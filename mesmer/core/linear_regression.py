@@ -38,7 +38,7 @@ class LinearRegression:
             Individual weights for each sample. Must be 1D and contain `dim`.
         """
 
-        params = linear_regression(
+        params = _fit_linear_regression_xr(
             predictors=predictors,
             target=target,
             dim=dim,
@@ -166,7 +166,7 @@ class LinearRegression:
         params.to_netcdf(filename, **kwargs)
 
 
-def linear_regression(
+def _fit_linear_regression_xr(
     predictors: Mapping[str, xr.DataArray],
     target: xr.DataArray,
     dim: str,
@@ -222,7 +222,7 @@ def linear_regression(
 
     target_dim = list(set(target.dims) - {dim})[0]
 
-    out = _linear_regression(
+    out = _fit_linear_regression_np(
         predictors_concat.transpose(dim, "predictor"),
         target.transpose(dim, target_dim),
         weights,
@@ -231,7 +231,11 @@ def linear_regression(
     # split `out` into individual DataArrays
     keys = ["intercept"] + list(predictors)
     dataarrays = {key: (target_dim, out[:, i]) for i, key in enumerate(keys)}
-    out = xr.Dataset(dataarrays, coords=target.coords).drop_vars(dim)
+
+    out = xr.Dataset(dataarrays, coords=target.coords)
+
+    if dim in out.coords:
+        out = out.drop_vars(dim)
 
     if weights is not None:
         out["weights"] = weights
@@ -239,7 +243,7 @@ def linear_regression(
     return out
 
 
-def _linear_regression(predictors, target, weights=None):
+def _fit_linear_regression_np(predictors, target, weights=None):
     """
     Perform a linear regression - numpy wrapper
 

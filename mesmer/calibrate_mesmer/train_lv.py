@@ -223,7 +223,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     # fit parameters for each target individually
     for t, targ_name in enumerate(targ_names):
         targ = targs[targ_name]
-        nr_gps = y.shape[1]
         y_targ = y[:, :, t]
 
         params_scen = list()
