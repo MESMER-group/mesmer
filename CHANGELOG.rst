@@ -50,8 +50,9 @@ v0.8.3 - 2021-12-23
 New Features
 ^^^^^^^^^^^^
 
-- Add ``mesmer.core._linear_regression``. Starts the process of refactoring the
-  codebase (`#116 <https://github.com/MESMER-group/mesmer/pull/116>`_).
+- Add ``mesmer.core._linear_regression`` (renamed to ``mesmer.core._fit_linear_regression_np``
+  in `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_). Starts the process of
+  refactoring the codebase (`#116 <https://github.com/MESMER-group/mesmer/pull/116>`_).
   By `Zeb Nicholls <https://github.com/znicholls>`_.
 
 Bug fixes
