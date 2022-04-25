@@ -187,7 +187,29 @@ def test_linear_regression_one_predictor(lr_method_or_function, intercept, slope
     expected_pred0 = xr.full_like(template, slope)
 
     expected = xr.Dataset({"intercept": expected_intercept, "pred0": expected_pred0})
+    xr.testing.assert_allclose(result, expected)
 
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+def test_linear_regression_no_coords(lr_method_or_function):
+
+    slope, intercept = 3.14, 3.14
+
+    pred0 = trend_data_1D(slope=1, scale=0)
+    tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
+
+    # remove the coords
+    pred0 = pred0.drop_vars(pred0.coords.keys())
+    tgt = tgt.drop_vars(tgt.coords.keys())
+
+    result = lr_method_or_function({"pred0": pred0}, tgt, "time")
+
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_pred0 = xr.full_like(template, slope)
+
+    expected = xr.Dataset({"intercept": expected_intercept, "pred0": expected_pred0})
     xr.testing.assert_allclose(result, expected)
 
 
