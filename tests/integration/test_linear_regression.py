@@ -22,7 +22,7 @@ def LinearRegression_fit_wrapper(*args, **kwargs):
 
 
 LR_METHOD_OR_FUNCTION = [
-    mesmer.core.linear_regression.linear_regression,
+    mesmer.core.linear_regression._fit_linear_regression_xr,
     LinearRegression_fit_wrapper,
 ]
 
@@ -187,7 +187,29 @@ def test_linear_regression_one_predictor(lr_method_or_function, intercept, slope
     expected_pred0 = xr.full_like(template, slope)
 
     expected = xr.Dataset({"intercept": expected_intercept, "pred0": expected_pred0})
+    xr.testing.assert_allclose(result, expected)
 
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+def test_linear_regression_no_coords(lr_method_or_function):
+
+    slope, intercept = 3.14, 3.14
+
+    pred0 = trend_data_1D(slope=1, scale=0)
+    tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
+
+    # remove the coords
+    pred0 = pred0.drop_vars(pred0.coords.keys())
+    tgt = tgt.drop_vars(tgt.coords.keys())
+
+    result = lr_method_or_function({"pred0": pred0}, tgt, "time")
+
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_pred0 = xr.full_like(template, slope)
+
+    expected = xr.Dataset({"intercept": expected_intercept, "pred0": expected_pred0})
     xr.testing.assert_allclose(result, expected)
 
 
@@ -255,7 +277,7 @@ def test_linear_regression_weights(lr_method_or_function, intercept):
 )
 def test_bad_shape(predictors, target):
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
-        mesmer.core.linear_regression._linear_regression(predictors, target)
+        mesmer.core.linear_regression._fit_linear_regression_np(predictors, target)
 
 
 @pytest.mark.parametrize(
@@ -267,17 +289,21 @@ def test_bad_shape(predictors, target):
 )
 def test_bad_shape_weights(predictors, target, weight):
     with pytest.raises(ValueError, match="sample_weight.shape.*expected"):
-        mesmer.core.linear_regression._linear_regression(predictors, target, weight)
+        mesmer.core.linear_regression._fit_linear_regression_np(
+            predictors, target, weight
+        )
 
 
 def test_basic_regression():
-    res = mesmer.core.linear_regression._linear_regression([[0], [1], [2]], [0, 2, 4])
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
+        [[0], [1], [2]], [0, 2, 4]
+    )
 
     npt.assert_allclose(res, [[0, 2]], atol=1e-10)
 
 
 def test_basic_regression_two_targets():
-    res = mesmer.core.linear_regression._linear_regression(
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
         [[0], [1], [2]], [[0, 1], [2, 3], [4, 5]]
     )
 
@@ -285,7 +311,7 @@ def test_basic_regression_two_targets():
 
 
 def test_basic_regression_three_targets():
-    res = mesmer.core.linear_regression._linear_regression(
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
         [[0], [1], [2]], [[0, 1, 2], [2, 3, 7], [4, 5, 12]]
     )
 
@@ -294,7 +320,7 @@ def test_basic_regression_three_targets():
 
 
 def test_basic_regression_with_weights():
-    res = mesmer.core.linear_regression._linear_regression(
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
         [[0], [1], [2], [3]], [0, 2, 4, 5], [10, 10, 10, 0.1]
     )
 
@@ -302,7 +328,7 @@ def test_basic_regression_with_weights():
 
 
 def test_basic_regression_multidimensional():
-    res = mesmer.core.linear_regression._linear_regression(
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
         [[0, 1], [1, 3], [2, 4]], [2, 7, 8]
     )
 
@@ -312,7 +338,7 @@ def test_basic_regression_multidimensional():
 
 
 def test_basic_regression_multidimensional_multitarget():
-    res = mesmer.core.linear_regression._linear_regression(
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
         [[0, 1], [1, 3], [2, 4]], [[2, 0], [7, 0], [8, 5]]
     )
 
@@ -322,7 +348,7 @@ def test_basic_regression_multidimensional_multitarget():
 
 
 def test_regression_with_weights_multidimensional_multitarget():
-    res = mesmer.core.linear_regression._linear_regression(
+    res = mesmer.core.linear_regression._fit_linear_regression_np(
         [[0, 1], [1, 3], [2, 4], [3, 5]],
         [[2, 0], [7, 0], [8, 5], [11, 11]],
         # extra point with low weight alters results in a minor way
@@ -338,9 +364,9 @@ def test_regression_order():
     x = np.array([[0, 1], [1, 3], [2, 4]])
     y = np.array([2, 7, 10])
 
-    res_original = mesmer.core.linear_regression._linear_regression(x, y)
+    res_original = mesmer.core.linear_regression._fit_linear_regression_np(x, y)
 
-    res_reversed = mesmer.core.linear_regression._linear_regression(
+    res_reversed = mesmer.core.linear_regression._fit_linear_regression_np(
         np.flip(x, axis=1), y
     )
 
@@ -353,10 +379,10 @@ def test_regression_order_with_weights():
     y = np.array([2, 7, 8, 0])
     weights = [10, 10, 10, 0.1]
 
-    res_original = mesmer.core.linear_regression._linear_regression(
+    res_original = mesmer.core.linear_regression._fit_linear_regression_np(
         x, y, weights=weights
     )
-    res_reversed = mesmer.core.linear_regression._linear_regression(
+    res_reversed = mesmer.core.linear_regression._fit_linear_regression_np(
         np.flip(x, axis=1), y, weights=weights
     )
 
@@ -399,7 +425,7 @@ def test_regression_order_with_weights():
     ),
 )
 def test_linear_regression_np_output_shape(x, y, exp_output_shape):
-    res = mesmer.core.linear_regression._linear_regression(x, y)
+    res = mesmer.core.linear_regression._fit_linear_regression_np(x, y)
 
     assert res.shape == exp_output_shape
 
@@ -434,12 +460,14 @@ def test_linear_regression_np(predictors, target, weight):
             # check that the default behaviour is to pass None to `fit`
             # internally
             expected_weights = None
-            res = mesmer.core.linear_regression._linear_regression(predictors, target)
+            res = mesmer.core.linear_regression._fit_linear_regression_np(
+                predictors, target
+            )
         else:
             # check that the intended weights are indeed passed to `fit`
             # internally
             expected_weights = weight
-            res = mesmer.core.linear_regression._linear_regression(
+            res = mesmer.core.linear_regression._fit_linear_regression_np(
                 predictors, target, weight
             )
 
