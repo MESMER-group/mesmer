@@ -63,7 +63,7 @@ def _stack_predictor(predictor, target):
         if values.ndim == 2:
             out.append(values.flatten())
 
-        # if single time series as predictor (e.g. gt): repeat ts as many times
+        # if single time series as predictor (e.g., gt): repeat ts as many times
         # as runs available
         elif values.ndim == 1:
             nr_runs = target[scen].shape[0]
