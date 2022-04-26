@@ -7,7 +7,6 @@ Functions to aid the training of MESMER.
 """
 
 import numpy as np
-import xarray as xr
 
 
 def get_scenario_weights(target):
