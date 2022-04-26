@@ -20,6 +20,10 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+- The :py:func:`train_l_prepare_X_y_wgteq` was refactored and split into two functions:
+  :py:func:`get_scenario_weights` and :py:func:`stack_predictors_and_targets`
+  (`#143 <https://github.com/MESMER-group/mesmer/pull/143>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Deprecations
 ^^^^^^^^^^^^
