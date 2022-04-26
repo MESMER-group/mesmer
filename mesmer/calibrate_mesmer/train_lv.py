@@ -16,7 +16,7 @@ from scipy.stats import multivariate_normal
 
 from mesmer.core.auto_regression import _fit_auto_regression_xr
 
-from .train_utils import train_l_prepare_X_y_wgteq
+from .train_utils import get_scenario_weights, stack_predictors_and_targets
 
 
 def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
@@ -105,7 +105,9 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     scenarios_tr = list(targs[targ_name].keys())
 
     # prepare predictors and targets
-    X, y, wgt_scen_eq = train_l_prepare_X_y_wgteq(preds, targs)
+    __, y = stack_predictors_and_targets(preds, targs)
+
+    wgt_scen_eq = get_scenario_weights(targs[targ_name])
     if wgt_scen_tr_eq is False:
         wgt_scen_eq[:] = 1  # each sample same weight
 
@@ -217,18 +219,12 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
     # largely ignore prepared targets and use original ones instead because in original
     # easier to loop over individ runs / scenarios
-    targ_names = list(targs.keys())
-    scenarios_tr = list(targs[targ_names[0]].keys())
 
     # fit parameters for each target individually
-    for t, targ_name in enumerate(targ_names):
-        targ = targs[targ_name]
-        nr_gps = y.shape[1]
-        y_targ = y[:, :, t]
+    for targ_name, targ in targs.items():
 
         params_scen = list()
-        for scen in scenarios_tr:
-            data = targ[scen]
+        for scen, data in targ.items():
 
             nr_runs, nr_ts, nr_gps = data.shape
 
@@ -252,7 +248,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             params_lv["L"][targ_name],
             params_lv["ecov"][targ_name],
             params_lv["loc_ecov"][targ_name],
-        ) = train_lv_find_localized_ecov(y_targ, wgt_scen_eq, aux, cfg)
+        ) = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
 
         # ATTENTION: STILL NEED TO CHECK IF THIS IS TRUE. I UNFORTUNATELY LEARNED THAT I
         # WROTE THIS FORMULA DIFFERENTLY IN THE ESD PAPER!!!!!!! (But I am pretty sure
