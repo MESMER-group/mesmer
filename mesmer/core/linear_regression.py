@@ -18,6 +18,7 @@ class LinearRegression:
         target: xr.DataArray,
         dim: str,
         weights: Optional[xr.DataArray] = None,
+        fit_intercept: bool = True,
     ):
         """
         Fit a linear model
@@ -36,6 +37,11 @@ class LinearRegression:
 
         weights : xr.DataArray, default: None.
             Individual weights for each sample. Must be 1D and contain `dim`.
+
+        fit_intercept : bool, default=True
+            Whether to calculate the intercept for this model. If set to False, no
+            intercept will be used in calculations (i.e. data is expected to be
+            centered).
         """
 
         params = _fit_linear_regression_xr(
@@ -43,6 +49,7 @@ class LinearRegression:
             target=target,
             dim=dim,
             weights=weights,
+            fit_intercept=fit_intercept,
         )
 
         self._params = params
@@ -67,7 +74,8 @@ class LinearRegression:
 
         params = self.params
 
-        required_predictors = set(params.data_vars) - set(["intercept", "weights"])
+        non_predictor_vars = {"intercept", "weights", "fit_intercept"}
+        required_predictors = set(params.data_vars) - non_predictor_vars
         available_predictors = set(predictors.keys())
 
         if required_predictors != available_predictors:
@@ -126,7 +134,7 @@ class LinearRegression:
         _check_dataset_form(
             params,
             "params",
-            required_vars="intercept",
+            required_vars={"intercept", "fit_intercept"},
             optional_vars="weights",
             requires_other_vars=True,
         )
@@ -171,6 +179,7 @@ def _fit_linear_regression_xr(
     target: xr.DataArray,
     dim: str,
     weights: Optional[xr.DataArray] = None,
+    fit_intercept: bool = True,
 ) -> xr.Dataset:
     """
     Perform a linear regression
@@ -188,6 +197,10 @@ def _fit_linear_regression_xr(
 
     weights : xr.DataArray, default: None.
         Individual weights for each sample. Must be 1D and contain `dim`.
+
+    fit_intercept : bool, default=True
+        Whether to calculate the intercept for this model. If set to False, no intercept
+        will be used in calculations (i.e. data is expected to be centered).
 
     Returns
     -------
@@ -226,12 +239,16 @@ def _fit_linear_regression_xr(
         predictors_concat.transpose(dim, "predictor"),
         target.transpose(dim, target_dim),
         weights,
+        fit_intercept,
     )
 
     # split `out` into individual DataArrays
     keys = ["intercept"] + list(predictors)
     dataarrays = {key: (target_dim, out[:, i]) for i, key in enumerate(keys)}
     out = xr.Dataset(dataarrays, coords=target.coords)
+
+    out["fit_intercept"] = fit_intercept
+
     if dim in out.coords:
         out = out.drop_vars(dim)
 
@@ -241,7 +258,7 @@ def _fit_linear_regression_xr(
     return out
 
 
-def _fit_linear_regression_np(predictors, target, weights=None):
+def _fit_linear_regression_np(predictors, target, weights=None, fit_intercept=True):
     """
     Perform a linear regression - numpy wrapper
 
@@ -269,10 +286,14 @@ def _fit_linear_regression_np(predictors, target, weights=None):
 
     from sklearn.linear_model import LinearRegression
 
-    reg = LinearRegression()
+    reg = LinearRegression(fit_intercept=fit_intercept)
     reg.fit(X=predictors, y=target, sample_weight=weights)
 
     intercepts = np.atleast_2d(reg.intercept_).T
     coefficients = np.atleast_2d(reg.coef_)
+
+    # necessary when fit_intercept = False
+    if not fit_intercept:
+        intercepts = np.zeros_like(coefficients[:, :1])
 
     return np.hstack([intercepts, coefficients])
