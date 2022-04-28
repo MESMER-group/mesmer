@@ -165,7 +165,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
             params_lv[f"coef_{pred}"] = {}
 
         # NOTE: atm only one target can be and is present
-        for targ_idx, targ in enumerate(params_lt["targs"]):
+        for targ in params_lt["targs"]:
             reg_xr = _fit_linear_regression_xr(
                 predictors=X,
                 target=y[targ],
