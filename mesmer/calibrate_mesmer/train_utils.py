@@ -17,7 +17,7 @@ def get_scenario_weights(target):
     Parameters
     ----------
     targs : dict
-        nested dictionary of targets with key
+        dictionary of targets with key
 
         - [scen] (3d array (run, time, gp) of target for specific scenario)
 
