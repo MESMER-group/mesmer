@@ -10,8 +10,12 @@ Functions to train local trends module of MESMER.
 import os
 
 import joblib
+import xarray as xr
 
-from mesmer.calibrate_mesmer.train_utils import _train_l_prepare_X_y_wgteq_xr
+from mesmer.calibrate_mesmer.train_utils import (
+    get_scenario_weights,
+    stack_predictors_and_targets,
+)
 from mesmer.core.linear_regression import _fit_linear_regression_xr
 
 
@@ -136,7 +140,14 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # prepare predictors and targets such that they can be ingested into the training
     # function
-    X, y, wgt_scen_eq = _train_l_prepare_X_y_wgteq_xr(preds, targs)
+    X, y = stack_predictors_and_targets(preds, targs)
+    # TODO: use DataArray objects throughout the code
+    X = {key: xr.DataArray(value, dims="sample") for key, value in X.items()}
+    y = {key: xr.DataArray(value, dims=("sample", "cell")) for key, value in y.items()}
+
+    wgt_scen_eq = get_scenario_weights(targs[targ_name])
+    # TODO: use DataArray objects throughout the code
+    wgt_scen_eq = xr.DataArray(wgt_scen_eq, dims="sample")
 
     # prepare weights for individual runs
     if wgt_scen_tr_eq is False:

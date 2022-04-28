@@ -63,7 +63,8 @@ Train mesmer
    ~calibrate_mesmer.train_gt_ic_OLSVOLC
    ~calibrate_mesmer.train_lv_AR1_sci
    ~calibrate_mesmer.train_lv_find_localized_ecov
-   ~calibrate_mesmer.train_l_prepare_X_y_wgteq
+   ~calibrate_mesmer.get_scenario_weights
+   ~calibrate_mesmer.stack_predictors_and_targets
 
 Create emulations
 ^^^^^^^^^^^^^^^^^
