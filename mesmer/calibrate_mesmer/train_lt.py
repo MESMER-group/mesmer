@@ -13,7 +13,10 @@ import joblib
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from mesmer.calibrate_mesmer.train_utils import train_l_prepare_X_y_wgteq
+from mesmer.calibrate_mesmer.train_utils import (
+    get_scenario_weights,
+    stack_predictors_and_targets,
+)
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -137,8 +140,12 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # prepare predictors and targets such that they can be ingested into the training
     # function
-    X, y, wgt_scen_eq = train_l_prepare_X_y_wgteq(preds, targs)
+    X, y = stack_predictors_and_targets(preds, targs)
+    # temporary workaround, will be removed again with #141
+    y = np.stack(list(y.values()), axis=2)
+    X = np.stack(list(X.values()), axis=1)
 
+    wgt_scen_eq = get_scenario_weights(targs[targ_name])
     # prepare weights for individual runs
     if wgt_scen_tr_eq is False:
         wgt_scen_eq[:] = 1
