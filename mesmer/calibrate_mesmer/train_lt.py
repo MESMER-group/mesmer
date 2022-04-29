@@ -10,13 +10,13 @@ Functions to train local trends module of MESMER.
 import os
 
 import joblib
-import numpy as np
-from sklearn.linear_model import LinearRegression
+import xarray as xr
 
 from mesmer.calibrate_mesmer.train_utils import (
     get_scenario_weights,
     stack_predictors_and_targets,
 )
+from mesmer.core.linear_regression import _fit_linear_regression_xr
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -141,11 +141,14 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     # prepare predictors and targets such that they can be ingested into the training
     # function
     X, y = stack_predictors_and_targets(preds, targs)
-    # temporary workaround, will be removed again with #141
-    y = np.stack(list(y.values()), axis=2)
-    X = np.stack(list(X.values()), axis=1)
+    # TODO: use DataArray objects throughout the code
+    X = {key: xr.DataArray(value, dims="sample") for key, value in X.items()}
+    y = {key: xr.DataArray(value, dims=("sample", "cell")) for key, value in y.items()}
 
     wgt_scen_eq = get_scenario_weights(targs[targ_name])
+    # TODO: use DataArray objects throughout the code
+    wgt_scen_eq = xr.DataArray(wgt_scen_eq, dims="sample")
+
     # prepare weights for individual runs
     if wgt_scen_tr_eq is False:
         wgt_scen_eq[:] = 1
@@ -153,41 +156,30 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # train the full model + save it (may also contain lv module parts)
     if method_lt_each_gp_sep and method_lt == "OLS":
-        nr_gps = y.shape[1]
 
         # initialize the regression coefficient dictionaries
         params_lt["intercept"] = {}
-        for targ in params_lt["targs"]:
-            params_lt["intercept"][targ] = np.zeros(nr_gps)
         for pred in params_lt["preds"]:
-            params_lt["coef_" + pred] = {}
-            for targ in params_lt["targs"]:
-                params_lt["coef_" + pred][targ] = np.zeros(nr_gps)
-        if len(params_lv) > 0:
+            params_lt[f"coef_{pred}"] = {}
+        for pred in params_lv["preds"]:
+            params_lv[f"coef_{pred}"] = {}
+
+        # NOTE: atm only one target can be and is present
+        for targ in params_lt["targs"]:
+            reg_xr = _fit_linear_regression_xr(
+                predictors=X,
+                target=y[targ],
+                dim="sample",
+                weights=wgt_scen_eq,
+            )
+
+            params_lt["intercept"][targ] = reg_xr.intercept.values
+
+            for pred in params_lt["preds"]:
+                params_lt[f"coef_{pred}"][targ] = reg_xr[pred].values
+
             for pred in params_lv["preds"]:
-                params_lv["coef_" + pred] = {}
-                for targ in params_lt["targs"]:
-                    params_lv["coef_" + pred][targ] = np.zeros(nr_gps)
-
-        # derive the OLS parameters for each gp
-        for gp in np.arange(nr_gps):
-            reg = LinearRegression().fit(X, y[:, gp, :], wgt_scen_eq)
-
-            for targ_idx, targ in enumerate(params_lt["targs"]):
-                params_lt["intercept"][targ][gp] = reg.intercept_[targ_idx]
-
-                coef_idx = 0  # coefficient index
-                for pred in params_lt["preds"]:
-                    params_lt["coef_" + pred][targ][gp] = reg.coef_[targ_idx, coef_idx]
-                    coef_idx += 1
-
-                # assumption: coefs of lv are behind coefs of lt
-                if len(preds_lv) > 0:
-                    for pred in params_lv["preds"]:
-                        params_lv["coef_" + pred][targ][gp] = reg.coef_[
-                            targ_idx, coef_idx
-                        ]
-                        coef_idx += 1
+                params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
 
     # save the local trend paramters if requested
     if save_params:
