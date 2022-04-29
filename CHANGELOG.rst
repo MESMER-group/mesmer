@@ -13,6 +13,9 @@ New Features
 - Add ``mesmer.core._fit_linear_regression_xr``: xarray wrapper for ``mesmer.core._fit_linear_regression_np``.
   (`#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Add add ``fit_intercept`` argument to the ``linear_regression`` fitting methods and
+  functions (`#144 <https://github.com/MESMER-group/mesmer/pull/144>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 - Add ``mesmer.core.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
   auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
