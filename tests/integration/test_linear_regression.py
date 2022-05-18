@@ -46,13 +46,23 @@ def test_LR_params():
         lr.params = xr.Dataset(data_vars={"weights": ("x", [5])})
 
     with pytest.raises(ValueError, match="Expected additional variables"):
-        lr.params = xr.Dataset(data_vars={"intercept": ("x", [5])})
+        lr.params = xr.Dataset(
+            data_vars={"intercept": ("x", [5]), "fit_intercept": True}
+        )
 
-    ds = xr.Dataset(data_vars={"intercept": ("x", [5]), "weights": ("y", [5])})
+    ds = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "weights": ("y", [5]),
+        }
+    )
     with pytest.raises(ValueError, match="Expected additional variables"):
         lr.params = ds
 
-    ds = xr.Dataset(data_vars={"intercept": ("x", [5]), "tas": ("y", [5])})
+    ds = xr.Dataset(
+        data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("y", [5])}
+    )
     lr.params = ds
 
     xr.testing.assert_equal(ds, lr.params)
@@ -61,7 +71,9 @@ def test_LR_params():
 def test_LR_predict():
     lr = mesmer.core.linear_regression.LinearRegression()
 
-    params = xr.Dataset(data_vars={"intercept": ("x", [5]), "tas": ("x", [3])})
+    params = xr.Dataset(
+        data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [3])}
+    )
     lr.params = params
 
     with pytest.raises(ValueError, match="Missing or superflous predictors"):
@@ -82,7 +94,9 @@ def test_LR_residuals():
 
     lr = mesmer.core.linear_regression.LinearRegression()
 
-    params = xr.Dataset(data_vars={"intercept": ("x", [5]), "tas": ("x", [0])})
+    params = xr.Dataset(
+        data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [0])}
+    )
     lr.params = params
 
     tas = xr.DataArray([0, 1, 2], dims="time")
@@ -186,7 +200,36 @@ def test_linear_regression_one_predictor(lr_method_or_function, intercept, slope
     expected_intercept = xr.full_like(template, intercept)
     expected_pred0 = xr.full_like(template, slope)
 
-    expected = xr.Dataset({"intercept": expected_intercept, "pred0": expected_pred0})
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "fit_intercept": True,
+        }
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+def test_linear_regression_fit_intercept(lr_method_or_function):
+
+    pred0 = trend_data_1D(slope=1, scale=0)
+    tgt = trend_data_2D(slope=1, scale=0, intercept=1)
+
+    result = lr_method_or_function({"pred0": pred0}, tgt, "time", fit_intercept=False)
+
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, 0)
+    expected_pred0 = xr.full_like(template, 1.05084746)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "fit_intercept": False,
+        }
+    )
     xr.testing.assert_allclose(result, expected)
 
 
@@ -209,7 +252,13 @@ def test_linear_regression_no_coords(lr_method_or_function):
     expected_intercept = xr.full_like(template, intercept)
     expected_pred0 = xr.full_like(template, slope)
 
-    expected = xr.Dataset({"intercept": expected_intercept, "pred0": expected_pred0})
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "fit_intercept": True,
+        }
+    )
     xr.testing.assert_allclose(result, expected)
 
 
@@ -235,6 +284,7 @@ def test_linear_regression_two_predictors(lr_method_or_function, intercept, slop
             "intercept": expected_intercept,
             "pred0": expected_pred0,
             "pred1": expected_pred1,
+            "fit_intercept": True,
         }
     )
 
@@ -259,7 +309,12 @@ def test_linear_regression_weights(lr_method_or_function, intercept):
     expected_pred0 = xr.zeros_like(template)
 
     expected = xr.Dataset(
-        {"intercept": expected_intercept, "pred0": expected_pred0, "weights": weights}
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "weights": weights,
+            "fit_intercept": True,
+        }
     )
 
     xr.testing.assert_allclose(result, expected)
@@ -392,39 +447,23 @@ def test_regression_order_with_weights():
 
 
 @pytest.mark.parametrize(
-    "x,y,exp_output_shape",
+    "x_shape,y_shape,exp_output_shape",
     (
         # one predictor
-        (np.array([[0], [1], [2]]), np.array([2, 7, 10]), (1, 2)),  # (3, 1)  # (3,)
-        (
-            np.array([[0], [1], [2]]),  # (3, 1)
-            np.array([[2], [7], [10]]),  # (3, 1)
-            (1, 2),
-        ),
-        (
-            np.array([[0], [1], [2]]),  # (3, 1)
-            np.array([[2, 4], [7, 14], [10, 20]]),  # (3, 2)
-            (2, 2),
-        ),
+        ((3, 1), (3,), (1, 2)),
+        ((3, 1), (3, 1), (1, 2)),
+        ((3, 1), (3, 2), (2, 2)),
         # two predictors
-        (
-            np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
-            np.array([2, 7, 10]),  # (3, )
-            (1, 3),
-        ),
-        (
-            np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
-            np.array([[2], [7], [10]]),  # (3, 1)
-            (1, 3),
-        ),
-        (
-            np.array([[0, 1], [1, 3], [2, 4]]),  # (3, 2)
-            np.array([[2, 4], [7, 14], [10, 20]]),  # (3, 2)
-            (2, 3),
-        ),
+        ((3, 2), (3,), (1, 3)),
+        ((3, 2), (3, 1), (1, 3)),
+        ((3, 2), (3, 2), (2, 3)),
     ),
 )
-def test_linear_regression_np_output_shape(x, y, exp_output_shape):
+def test_linear_regression_np_output_shape(x_shape, y_shape, exp_output_shape):
+
+    x = np.random.randn(*x_shape)
+    y = np.random.randn(*y_shape)
+
     res = mesmer.core.linear_regression._fit_linear_regression_np(x, y)
 
     assert res.shape == exp_output_shape
@@ -437,7 +476,8 @@ def test_linear_regression_np_output_shape(x, y, exp_output_shape):
         ([[1, 2, 3], [2, 4, 0]], [1, 2], [3, 1]),
     ),
 )
-def test_linear_regression_np(predictors, target, weight):
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_linear_regression_np(predictors, target, weight, fit_intercept):
     # Unit test i.e. mocks as much as possible so that there are no
     # dependencies on external libraries etc.
 
@@ -448,7 +488,7 @@ def test_linear_regression_np(predictors, target, weight):
     # function for regressions that uses proper dependency injection and
     # doesn't make the interface more complicated.
     mock_regressor = mock.Mock()
-    mock_regressor.intercept_ = 12
+    mock_regressor.intercept_ = 12 if fit_intercept else 0
     mock_regressor.coef_ = [123, -38]
 
     with mock.patch(
@@ -461,18 +501,18 @@ def test_linear_regression_np(predictors, target, weight):
             # internally
             expected_weights = None
             res = mesmer.core.linear_regression._fit_linear_regression_np(
-                predictors, target
+                predictors, target, fit_intercept=fit_intercept
             )
         else:
             # check that the intended weights are indeed passed to `fit`
             # internally
             expected_weights = weight
             res = mesmer.core.linear_regression._fit_linear_regression_np(
-                predictors, target, weight
+                predictors, target, weight, fit_intercept=fit_intercept
             )
 
         mocked_linear_regression.assert_called_once()
-        mocked_linear_regression.assert_called_with()
+        mocked_linear_regression.assert_called_with(fit_intercept=fit_intercept)
         mock_regressor.fit.assert_called_once()
         mock_regressor.fit.assert_called_with(
             X=predictors, y=target, sample_weight=expected_weights
