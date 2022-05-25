@@ -182,20 +182,19 @@ def load_strat_aod(time, dir_obs):
     """
 
     path_file = dir_obs + "aerosols/isaod_gl.dat"
-    ts = pd.read_csv(
-        path_file, delim_whitespace=True, skiprows=11, names=("year", "month", "AOD")
+    df = pd.read_csv(
+        path_file,
+        delim_whitespace=True,
+        skiprows=11,
+        names=("year", "month", "AOD"),
+        parse_dates=[["year", "month"]],
     )
 
-    beg = str(ts["year"].iloc[0]) + "-" + str(ts["month"].iloc[0])
-    end = str(ts["year"].iloc[-1]) + "-" + str(ts["month"].iloc[-1])
-    range = pd.to_datetime([beg, end]) + pd.offsets.MonthEnd()
-    date_range = pd.date_range(*range, freq="m")
-
     aod_obs = xr.DataArray(
-        ts["AOD"].values, dims=("time",), coords=dict(time=("time", date_range))
+        df["AOD"], dims=("time",), coords=dict(time=("time", df["year_month"]))
     )
 
     aod_obs = aod_obs.groupby("time.year").mean("time")
-    aod_obs = aod_obs.sel(year=slice(str(time[0]), str(time[-1]))).values
+    aod_obs = aod_obs.sel(year=slice(time[0], time[-1]))
 
     return aod_obs

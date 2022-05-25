@@ -11,9 +11,10 @@ import os
 
 import joblib
 import numpy as np
-from sklearn.linear_model import LinearRegression
+import xarray as xr
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
+from mesmer.core.linear_regression import LinearRegression
 from mesmer.io import load_strat_aod
 
 
@@ -237,41 +238,46 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
 
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
-    aod_obs = load_strat_aod(time, dir_obs).reshape(
-        -1, 1
-    )  # bring in correct format for sklearn linear regression
-    aod_obs_all = np.tile(
-        aod_obs, (nr_runs, 1)
-    )  # repeat aod time series as many times as runs available
-    nr_aod_obs = len(aod_obs)
+    aod_obs = load_strat_aod(time, dir_obs)
+    # drop "year" coords - aod_obs_all does not have coords (currently)
+    aod_obs = aod_obs.drop_vars("year")
 
+    # repeat aod time series as many times as runs available
+    aod_obs_all = xr.concat([aod_obs] * nr_runs, dim="year")
+
+    nr_aod_obs = aod_obs.shape[0]
     if nr_ts != nr_aod_obs:
         raise ValueError(
             f"The number of time steps of the variable ({nr_ts}) and the saod "
-            "({nr_aod_obs}) do not match."
+            f"({nr_aod_obs}) do not match."
         )
 
     # extract global variability (which still includes volc eruptions) by removing
     # smooth trend from Tglob in historic period
-    gv_all_for_aod = np.zeros(nr_runs * nr_aod_obs)
-    i = 0
-    for run in np.arange(nr_runs):
-        gv_all_for_aod[i : i + nr_aod_obs] = var[run] - gt_lowess
-        i += nr_aod_obs
-    # fit linear regression of gv to aod (because some ESMs react very strongly to
+    # (should broadcast, and flatten the correct way - hopefully)
+    gv_all_for_aod = (var - gt_lowess).ravel()
+
+    gv_all_for_aod = xr.DataArray(gv_all_for_aod, dims="year").expand_dims("x")
+
+    lr = LinearRegression()
+
+    # fit linear regression of gt to aod (because some ESMs react very strongly to
     # volcanoes)
     # no intercept to not artifically move the ts
-    linreg_gv_volc = LinearRegression(fit_intercept=False).fit(
-        aod_obs_all, gv_all_for_aod
+    lr.fit(
+        predictors={"aod_obs": aod_obs_all},
+        target=gv_all_for_aod,
+        dim="year",
+        fit_intercept=False,
     )
 
     # extract the saod coefficient
-    coef_saod = linreg_gv_volc.coef_[0]
+    coef_saod = lr.params["aod_obs"].values
 
     # apply linear regression model to obtain volcanic spikes
-    contrib_volc = linreg_gv_volc.predict(aod_obs)
+    contrib_volc = lr.predict(predictors={"aod_obs": aod_obs_all})
 
     # merge the lowess trend wit the volc contribution
-    gt = gt_lowess + contrib_volc
+    gt = gt_lowess + contrib_volc.values.squeeze()
 
     return coef_saod, gt
