@@ -239,7 +239,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
     aod_obs = load_strat_aod(time, dir_obs)
-    # drop "year" coords - aod_obs_all does not have coords (currently)
+    # drop "year" coords - aod_obs does not have coords (currently)
     aod_obs = aod_obs.drop_vars("year")
 
     # repeat aod time series as many times as runs available
