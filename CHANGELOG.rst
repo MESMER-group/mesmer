@@ -50,6 +50,9 @@ Internal Changes
 - Renamed the ``interpolation`` keyword of ``np.quantile`` to ``method`` changed in
   numpy v1.22.0 (`#137 <https://github.com/MESMER-group/mesmer/pull/137>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Make use of :py:class:`mesmer.core.linear_regression.LinearRegression` in
+  :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.3 - 2021-12-23
 -------------------
