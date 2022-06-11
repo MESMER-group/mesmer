@@ -199,6 +199,6 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
                 for pred in params_lt["preds"]
             ]
 
-            emus_lt[targ][:, gp] = sum(pred_vals) + params_lt["intercept"][targ][gp]
+            emus_lt[targ][:, gp] = np.sum(pred_vals) + params_lt["intercept"][targ][gp]
 
     return emus_lt

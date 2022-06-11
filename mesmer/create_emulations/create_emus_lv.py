@@ -270,7 +270,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
             emus_lv[scen][targ] = np.zeros([nr_emus_v, nr_ts_emus_v, nr_gps])
             for run in np.arange(nr_emus_v):
                 for gp in np.arange(nr_gps):
-                    emus_lv[scen][targ][run, :, gp] = sum(
+                    emus_lv[scen][targ][run, :, gp] = np.sum(
                         params_lv["coef_" + pred][targ][gp] * preds_lv[pred][scen][run]
                         for pred in params_lv["preds"]
                     )
