@@ -204,7 +204,6 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             )
 
             emus_lv[scen][targ] += emus_ar.squeeze()
-            print(f"{emus_lv[scen][targ]=}")
     return emus_lv
 
 
