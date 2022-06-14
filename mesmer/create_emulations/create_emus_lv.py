@@ -12,6 +12,8 @@ import os
 import joblib
 import numpy as np
 
+from mesmer.core.auto_regression import _predict_auto_regression_np
+
 
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     """Create local variablity emulations.
@@ -180,39 +182,29 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on
             # existing one
             if len(emus_lv[scen]) == 0:
-
                 emus_lv[scen][targ] = np.zeros(nr_emus_v, nr_ts_emus_stoch_v, nr_gps)
 
-            # ensure reproducibility
-            np.random.seed(seed)
+            intercept = params_lv["AR1_int"][targ]
+            # reshape to n_coefs x n_cells
+            coefs = params_lv["AR1_coef"][targ][np.newaxis, :]
+            covariance = params_lv["loc_ecov_AR1_innovs"][targ]
 
             # buffer so that initial start at 0 does not influence overall result
             buffer = 20
 
-            print("Draw the innovations")
-            # draw the innovations
-            innovs = np.random.multivariate_normal(
-                np.zeros(nr_gps),
-                params_lv["loc_ecov_AR1_innovs"][targ],
-                size=[nr_emus_v, nr_ts_emus_stoch_v + buffer],
+            emus_ar = _predict_auto_regression_np(
+                intercept=intercept,
+                coefs=coefs,
+                covariance=covariance,
+                n_emus=nr_emus_v,
+                n_ts=nr_ts_emus_stoch_v,
+                n_cells=nr_gps,
+                seed=seed,
+                buffer=buffer,
             )
 
-            print(
-                "Compute the contribution to emus_lv by the AR(1) process with the "
-                "spatially correlated innovations"
-            )
-            emus_lv_tmp = np.zeros([nr_emus_v, nr_ts_emus_stoch_v + buffer, nr_gps])
-            for t in range(1, nr_ts_emus_stoch_v + buffer):
-                emus_lv_tmp[:, t, :] = (
-                    params_lv["AR1_int"][targ]
-                    + params_lv["AR1_coef"][targ] * emus_lv_tmp[:, t - 1, :]
-                    + innovs[:, t, :]
-                )
-            emus_lv_tmp = emus_lv_tmp[:, buffer:, :]
-
-            print("Create the full local variability emulations")
-            emus_lv[scen][targ] += emus_lv_tmp
-
+            emus_lv[scen][targ] += emus_ar.squeeze()
+            print(f"{emus_lv[scen][targ]=}")
     return emus_lv
 
 

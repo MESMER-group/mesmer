@@ -2,6 +2,37 @@ import numpy as np
 import xarray as xr
 
 
+def _predict_auto_regression_np(
+    intercept, coefs, covariance, n_emus, n_ts, n_cells, seed, buffer
+):
+
+    intercept = np.array(intercept)
+    covariance = np.atleast_2d(covariance)
+
+    # ensure reproducibility
+    np.random.seed(seed)
+
+    innovs = np.random.multivariate_normal(
+        mean=np.zeros(n_cells),
+        cov=covariance,
+        size=[n_emus, n_ts + buffer],
+    )
+
+    emus_lv_tmp = np.zeros([n_emus, n_ts + buffer, n_cells])
+
+    coefs = coefs
+    AR_order = coefs.shape[0]
+    ar_lags = np.arange(1, AR_order + 1, dtype=int)
+
+    for t in range(AR_order + 1, n_ts + buffer):
+
+        ar = np.sum(coefs * emus_lv_tmp[:, t - ar_lags, :], axis=1)
+
+        emus_lv_tmp[:, t, :] = intercept + ar + innovs[:, t, :]
+
+    return emus_lv_tmp[:, buffer:, :]
+
+
 def _fit_auto_regression_xr(data, dim, lags):
     """
     fit an auto regression - xarray wrapper
