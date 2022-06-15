@@ -184,10 +184,6 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             if len(emus_lv[scen]) == 0:
                 emus_lv[scen][targ] = np.zeros(nr_emus_v, nr_ts_emus_stoch_v, nr_gps)
 
-
-            # buffer so that initial start at 0 does not influence overall result
-            buffer = 20
-
             emus_ar = _predict_auto_regression_np(
                 intercept=params_lv["AR1_int"][targ],
                 # reshape to n_coefs x n_cells
@@ -197,7 +193,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
                 n_ts=nr_ts_emus_stoch_v,
                 n_cells=nr_gps,
                 seed=seed,
-                buffer=buffer,
+                buffer=20,
             )
 
             emus_lv[scen][targ] += emus_ar.squeeze()
