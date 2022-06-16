@@ -53,6 +53,8 @@ Internal Changes
 - Make use of :py:class:`mesmer.core.linear_regression.LinearRegression` in
   :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.3 - 2021-12-23
 -------------------
