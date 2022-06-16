@@ -52,6 +52,20 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
     np.testing.assert_equal(result, expected)
 
+    result = mesmer.core.auto_regression._draw_auto_regression_np(
+        intercept=np.array([[0, intercept]]),
+        coefs=np.array([[0, 0]]),
+        covariance=np.zeros((2, 2)),
+        n_samples=1,
+        n_ts=1,
+        seed=0,
+        buffer=10,
+    )
+
+    expected = np.array([0, intercept]).reshape(1, 1, 2)
+
+    np.testing.assert_equal(result, expected)
+
 
 def test_draw_auto_regression_deterministic_coefs_buffer():
 
