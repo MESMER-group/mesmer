@@ -22,6 +22,8 @@ Statistical core functions
    ~core.linear_regression.LinearRegression.residuals
    ~core.linear_regression.LinearRegression.to_netcdf
    ~core.linear_regression.LinearRegression.from_netcdf
+   ~core.auto_regression._fit_auto_regression_xr
+   ~core.auto_regression._draw_auto_regression_np
 
 Train mesmer
 ------------
