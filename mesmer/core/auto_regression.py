@@ -9,12 +9,12 @@ def _draw_auto_regression_np(
 
     Parameters
     ----------
-    intercept : float
-        Intercept of the model.
+    intercept : ndarray, float
+        Intercept of the model. Must be scalar or have size n_cells.
     coefs : ndarray
         The coefficients of the autoregressive process. Must be a 2D array with shape
         ar_order x n_cells, i.e., the autoregressive coefficients are aligned along
-        axis=0, while axis=1
+        axis=0, while axis=1 contains all grid cells.
     covariance : float or ndarray
         The (co-)variance array. Needs to have shape n_cells x n_cells.
     n_samples : int
@@ -30,6 +30,8 @@ def _draw_auto_regression_np(
     Returns
     -------
     out : ndarray
+        Drawn realizations of the specified autoregressive process. The array has shape
+        n_samples x n_ts x n_cells.
 
     Notes
     -----
