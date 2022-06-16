@@ -2,35 +2,68 @@ import numpy as np
 import xarray as xr
 
 
-def _predict_auto_regression_np(
-    intercept, coefs, covariance, n_emus, n_ts, n_cells, seed, buffer
+def _draw_auto_regression_np(
+    *, intercept, coefs, covariance, n_samples, n_ts, seed, buffer
 ):
+    """draw time series of an autoregressive process
+
+    Parameters
+    ----------
+    intercept : float
+        Intercept of the model.
+    coefs : ndarray
+        The coefficients of the autoregressive process. Must be a 2D array with shape
+        ar_order x n_cells, i.e., the autoregressive coefficients are aligned along
+        axis=0, while axis=1
+    covariance : float or ndarray
+        The (co-)variance array. Needs to have shape n_cells x n_cells.
+    n_samples : int
+        Number of samples to draw.
+    n_ts : int
+        Number of time steps to draw.
+    seed : int
+        Seed used to initialize the pseudo-random number generator.
+    buffer : int
+        Buffer to initialize the autoregressive process (ensures that start at 0 does
+        not influence overall result).
+
+    Returns
+    -------
+    out : ndarray
+
+    Notes
+    -----
+    As this is not an deterministic function it is not called `predict`. "Predicting"
+    an autoregressive process does not include the innovations and therefore asymptotes
+    towards certain value (in constrast to this function).
+    """
 
     intercept = np.array(intercept)
     covariance = np.atleast_2d(covariance)
 
+    # coeffs must be ar_order x n_cells
+    ar_order, n_cells = coefs.shape
+
+    # TODO: allow arbitrary lags? (e.g., [1, 12]) -> need to pass `ar_lags`
+    ar_lags = np.arange(1, ar_order + 1, dtype=int)
+
     # ensure reproducibility
     np.random.seed(seed)
 
-    innovs = np.random.multivariate_normal(
+    innovations = np.random.multivariate_normal(
         mean=np.zeros(n_cells),
         cov=covariance,
-        size=[n_emus, n_ts + buffer],
+        size=[n_samples, n_ts + buffer],
     )
 
-    emus_lv_tmp = np.zeros([n_emus, n_ts + buffer, n_cells])
+    out = np.zeros([n_samples, n_ts + buffer, n_cells])
+    for t in range(ar_order + 1, n_ts + buffer):
 
-    coefs = coefs
-    AR_order = coefs.shape[0]
-    ar_lags = np.arange(1, AR_order + 1, dtype=int)
+        ar = np.sum(coefs * out[:, t - ar_lags, :], axis=1)
 
-    for t in range(AR_order + 1, n_ts + buffer):
+        out[:, t, :] = intercept + ar + innovations[:, t, :]
 
-        ar = np.sum(coefs * emus_lv_tmp[:, t - ar_lags, :], axis=1)
-
-        emus_lv_tmp[:, t, :] = intercept + ar + innovs[:, t, :]
-
-    return emus_lv_tmp[:, buffer:, :]
+    return out[:, buffer:, :]
 
 
 def _fit_auto_regression_xr(data, dim, lags):
