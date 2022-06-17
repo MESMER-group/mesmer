@@ -12,7 +12,7 @@ import os
 import joblib
 import numpy as np
 
-from mesmer.core.auto_regression import _draw_auto_regression_np
+from mesmer.core.auto_regression import _draw_auto_regression_correlated_np
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -168,7 +168,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     # only use the selected coeffs
     ar_coefs = ar_coefs[:AR_order_sel]
 
-    emus_gv = _draw_auto_regression_np(
+    emus_gv = _draw_auto_regression_correlated_np(
         intercept=ar_int,
         # reshape to n_coefs x n_cells
         coefs=ar_coefs[:, np.newaxis],
