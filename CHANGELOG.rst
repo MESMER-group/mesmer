@@ -6,6 +6,7 @@ v0.9.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
+
 - Create :py:class:`mesmer.core.linear_regression.LinearRegression` which encapsulates
   ``fit``, ``predict``, etc. methods around linear regression
   (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
@@ -18,6 +19,9 @@ New Features
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Add ``mesmer.core.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
   auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Add ``mesmer.core.auto_regression._draw_auto_regression_np``: to draw samples of an
+  auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 Breaking changes
