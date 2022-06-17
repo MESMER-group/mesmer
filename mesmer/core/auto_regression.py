@@ -5,7 +5,9 @@ import xarray as xr
 def _draw_auto_regression_np(
     *, intercept, coefs, covariance, n_samples, n_ts, seed, buffer
 ):
-    """draw time series of an autoregressive process
+    """
+    Draw time series of an auto regression process with possibly spatially-correlated
+    innovations
 
     Parameters
     ----------
@@ -35,21 +37,21 @@ def _draw_auto_regression_np(
 
     Notes
     -----
-    As this is not an deterministic function it is not called `predict`. "Predicting"
+    As this is not a deterministic function it is not called `predict`. "Predicting"
     an autoregressive process does not include the innovations and therefore asymptotes
-    towards certain value (in constrast to this function).
+    towards a certain value (in contrast to this function).
     """
-
     intercept = np.array(intercept)
     covariance = np.atleast_2d(covariance)
 
-    # coeffs must be ar_order x n_cells
+    # coeffs assumed to be ar_order x n_cells
     ar_order, n_cells = coefs.shape
 
     # TODO: allow arbitrary lags? (e.g., [1, 12]) -> need to pass `ar_lags`
+    # see https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
-    # ensure reproducibility
+    # ensure reproducibility (TODO: clarify approach to this see #35)
     np.random.seed(seed)
 
     innovations = np.random.multivariate_normal(
