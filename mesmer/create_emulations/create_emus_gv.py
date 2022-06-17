@@ -170,6 +170,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
 
     emus_gv = _draw_auto_regression_np(
         intercept=ar_int,
+        # reshape to n_coefs x n_cells
         coefs=ar_coefs[:, np.newaxis],
         covariance=AR_std_innovs**2,  # pass the (co-)variance!
         n_samples=nr_emus_v,
