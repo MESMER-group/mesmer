@@ -2,6 +2,80 @@ import numpy as np
 import xarray as xr
 
 
+def _draw_auto_regression_correlated_np(
+    *, intercept, coefs, covariance, n_samples, n_ts, seed, buffer
+):
+    """
+    Draw time series of an auto regression process with possibly spatially-correlated
+    innovations
+
+    Creates `n_samples` auto-correlated time series of order `ar_order` and length
+    `n_ts` for each set of `n_coefs` coefficients (typically one set for each grid
+    point), the resulting array has shape n_samples x n_ts x n_coefs. The innovations
+    can be spatially correlated.
+
+    Parameters
+    ----------
+    intercept : float or ndarray of length n_coefs
+        Intercept of the model.
+    coefs : ndarray of shape ar_order x n_coefs
+        The coefficients of the autoregressive process. Must be a 2D array with the
+        autoregressive coefficients along axis=0, while axis=1 contains all idependent
+        coefficients.
+    covariance : float or ndarray of shape n_coefs x n_coefs
+        The (co-)variance array. Must be symmetric and positive-semidefinite.
+    n_samples : int
+        Number of samples to draw for each set of coefficients.
+    n_ts : int
+        Number of time steps to draw.
+    seed : int
+        Seed used to initialize the pseudo-random number generator.
+    buffer : int
+        Buffer to initialize the autoregressive process (ensures that start at 0 does
+        not influence overall result).
+
+    Returns
+    -------
+    out : ndarray
+        Drawn realizations of the specified autoregressive process. The array has shape
+        n_samples x n_ts x n_coefs.
+
+    Notes
+    -----
+    The 'innovations' is the error or noise term.
+
+    As this is not a deterministic function it is not called `predict`. "Predicting"
+    an autoregressive process does not include the innovations and therefore asymptotes
+    towards a certain value (in contrast to this function).
+    """
+    intercept = np.array(intercept)
+    covariance = np.atleast_2d(covariance)
+
+    # coeffs assumed to be ar_order x n_coefs
+    ar_order, n_coefs = coefs.shape
+
+    # TODO: allow arbitrary lags? (e.g., [1, 12]) -> need to pass `ar_lags` (see #164)
+    ar_lags = np.arange(1, ar_order + 1, dtype=int)
+
+    # ensure reproducibility (TODO: clarify approach to this, see #35)
+    np.random.seed(seed)
+
+    innovations = np.random.multivariate_normal(
+        mean=np.zeros(n_coefs),
+        cov=covariance,
+        size=[n_samples, n_ts + buffer],
+    )
+
+    out = np.zeros([n_samples, n_ts + buffer, n_coefs])
+    for t in range(ar_order + 1, n_ts + buffer):
+
+        ar = np.sum(coefs * out[:, t - ar_lags, :], axis=1)
+
+        out[:, t, :] = intercept + ar + innovations[:, t, :]
+
+    return out[:, buffer:, :]
+
+
 def _fit_auto_regression_xr(data, dim, lags):
     """
     fit an auto regression - xarray wrapper
