@@ -105,7 +105,7 @@ def _fit_auto_regression_xr(data, dim, lags):
         input_core_dims=[[dim]],
         output_core_dims=((), ("lags",), ()),
         vectorize=True,
-        output_dtypes=[float, float, float, int],
+        output_dtypes=[float, float, float],
         kwargs={"lags": lags},
     )
 
