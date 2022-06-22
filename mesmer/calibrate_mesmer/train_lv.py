@@ -250,22 +250,19 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             params_lv["loc_ecov"][targ_name],
         ) = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
 
-        # ATTENTION: STILL NEED TO CHECK IF THIS IS TRUE. I UNFORTUNATELY LEARNED THAT I
-        # WROTE THIS FORMULA DIFFERENTLY IN THE ESD PAPER!!!!!!! (But I am pretty sure
-        # that code is correct and the error is in the paper)
         # compute localized cov matrix of the innovations of the AR(1) process
-        loc_ecov_AR1_innovs = np.zeros(params_lv["loc_ecov"][targ_name].shape)
-        for i in np.arange(nr_gps):
-            for j in np.arange(nr_gps):
-                loc_ecov_AR1_innovs[i, j] = (
-                    np.sqrt(1 - params_lv["AR1_coef"][targ_name][i] ** 2)
-                    * np.sqrt(1 - params_lv["AR1_coef"][targ_name][j] ** 2)
-                    * params_lv["loc_ecov"][targ_name][i, j]
-                )
+        # See Eq. (8) in https://esd.copernicus.org/articles/11/139/2020/
+
+        # ATTENTION: STILL NEED TO CHECK IF THIS IS TRUE.
+        # THIS FORMULA IS DIFFERENT IN THE ESD PAPER! (coef not squared)
+        # But I am pretty sure that code is correct and the error is in the paper)
+
+        c = np.sqrt(1 - params_lv["AR1_coef"][targ_name] ** 2)
+        c = np.atleast_2d(c)  # so it can be transposed
+
+        loc_ecov_AR1_innovs = c * c.T * params_lv["loc_ecov"][targ_name]
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_ecov_AR1_innovs
-        # derive the localized ecov of the innovations of the AR(1) process (ie the one
-        # I will later draw innovs from)
 
     return params_lv
 
@@ -306,31 +303,30 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     """
 
+    return _find_localized_empirical_covariance(
+        y, wgt_scen_eq, aux["phi_gc"], cfg.max_iter_cv
+    )
+
+
+def _find_localized_empirical_covariance(y, wgt_scen_eq, phi_gc, max_iter_cv):
+
     # derive the indices for the cross validation
-    max_iter_cv = cfg.max_iter_cv
-    nr_samples = y.shape[0]
+    nr_samples, nr_gridpoints = y.shape
     nr_it = np.min([nr_samples, max_iter_cv])
     idx_cv_out = np.zeros([nr_it, nr_samples], dtype=bool)
-    for i in np.arange(nr_it):
+    for i in range(nr_it):
         idx_cv_out[i, i::max_iter_cv] = True
 
     # spatial cross-correlations with specified cross val folds
-    L_set = np.sort(list(aux["phi_gc"].keys()))  # the Ls to loop through
+    L_set = sorted(phi_gc.keys())  # the localisation radii to loop through
 
     llh_max = float("-inf")
     llh_cv_sum = {}
-    idx_L = 0
-    L_sel = L_set[idx_L]
-    idx_break = False
 
-    while (idx_break is False) and (L_sel < L_set[-1]):
-        # experience tells: once stop selecting larger loc radii, will not start again
-        # better to stop once max is reached (to limit computational effort + amount of
-        # singular matrices)
-        L = L_set[idx_L]
+    for L in L_set:
         llh_cv_sum[L] = 0
 
-        for it in np.arange(nr_it):
+        for it in range(nr_it):
             # extract folds
             y_est = y[~idx_cv_out[it]]  # to estimate params
             y_cv = y[idx_cv_out[it]]  # to crossvalidate the estimate
@@ -339,10 +335,12 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
             # compute ecov and likelihood of out fold to be drawn from it
             ecov = np.cov(y_est, rowvar=False, aweights=wgt_scen_eq_est)
-            loc_ecov = aux["phi_gc"][L] * ecov
-            # we want the mean of the res to be 0
-            mean_0 = np.zeros(aux["phi_gc"][L].shape[0])
+            loc_ecov = phi_gc[L] * ecov
 
+            # we want the mean of the normal distribution to be 0
+            mean_0 = np.zeros(nr_gridpoints)
+
+            # NOTE: 90 % of time is spent here - not much point optimizing the rest
             llh_cv_each_sample = multivariate_normal.logpdf(
                 y_cv, mean=mean_0, cov=loc_ecov, allow_singular=True
             )
@@ -354,24 +352,26 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
             # each cv sample gets its own likelihood -> can sum them up for overall
             # likelihood
             # sum over all samples = wgt average * nr_samples
-            llh_cv_fold_sum = np.average(
-                llh_cv_each_sample, weights=wgt_scen_eq_cv
-            ) * len(wgt_scen_eq_cv)
+            llh_cv_fold_sum = (
+                np.average(llh_cv_each_sample, weights=wgt_scen_eq_cv)
+                * wgt_scen_eq_cv.size
+            )
 
             # add to full sum over all folds
             llh_cv_sum[L] += llh_cv_fold_sum
 
-        idx_L += 1
-
+        # experience tells: once stop selecting larger localisation radii, will not
+        # start again. Better to stop once max is reached (to limit computational effort
+        # and amount of singular matrices).
         if llh_cv_sum[L] > llh_max:
             L_sel = L
             llh_max = llh_cv_sum[L]
             print("Newly selected L =", L_sel)
         else:
             print("Final selected L =", L_sel)
-            idx_break = True
+            break
 
     ecov = np.cov(y, rowvar=False, aweights=wgt_scen_eq)
-    loc_ecov = aux["phi_gc"][L_sel] * ecov
+    loc_ecov = phi_gc[L_sel] * ecov
 
     return L_sel, ecov, loc_ecov
