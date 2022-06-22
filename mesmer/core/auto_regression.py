@@ -109,9 +109,16 @@ def _fit_auto_regression_xr(data, dim, lags):
         kwargs={"lags": lags},
     )
 
-    data_vars = {"intercept": intercept, "coeffs": coeffs, "standard_deviation": std}
+    if np.ndim(lags) == 0:
+        lags = np.arange(lags) + 1
 
-    # TODO: add coords for lags?
+    data_vars = {
+        "intercept": intercept,
+        "coeffs": coeffs,
+        "standard_deviation": std,
+        "lags": lags,
+    }
+
     return xr.Dataset(data_vars)
 
 

@@ -136,17 +136,39 @@ def test_fit_auto_regression_xr_1D_values():
             "intercept": 1.04728995,
             "coeffs": ("lags", [0.99682459]),
             "standard_deviation": 1.02655342,
+            "lags": [1],
         }
     )
 
     xr.testing.assert_allclose(result, expected)
 
 
-@pytest.mark.parametrize("lags", [1, 2])
+def test_fit_auto_regression_xr_1D_values_lags():
+    # values obtained by running the example - to ensure there are no changes in
+    # statsmodels.tsa.ar_model.AutoReg
+
+    data = trend_data_1D()
+    result = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=[2])
+
+    expected = xr.Dataset(
+        {
+            "intercept": 2.08295035,
+            "coeffs": ("lags", [0.99318256]),
+            "standard_deviation": 1.08955374,
+            "lags": [2],
+        }
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lags", [1, 2, [2]])
 def test_fit_auto_regression_xr_1D(lags):
 
     data = trend_data_1D()
     res = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
+
+    lags = lags if not np.ndim(lags) == 0 else np.arange(lags) + 1
 
     _check_dataset_form(
         res,
@@ -156,11 +178,15 @@ def test_fit_auto_regression_xr_1D(lags):
 
     _check_dataarray_form(res.intercept, "intercept", ndim=0, shape=())
     _check_dataarray_form(
-        res.coeffs, "coeffs", ndim=1, required_dims={"lags"}, shape=(lags,)
+        res.coeffs, "coeffs", ndim=1, required_dims={"lags"}, shape=(len(lags),)
     )
     _check_dataarray_form(
         res.standard_deviation, "standard_deviation", ndim=0, shape=()
     )
+
+    expected = xr.DataArray(lags, coords={"lags": lags})
+
+    xr.testing.assert_allclose(res.lags, expected)
 
 
 @pytest.mark.parametrize("lags", [1, 2])
