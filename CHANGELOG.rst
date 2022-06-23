@@ -59,6 +59,9 @@ Internal Changes
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Move contents of setup.py to setup.cfg (`#169 <https://github.com/MESMER-group/mesmer/pull/169>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
 
 v0.8.3 - 2021-12-23
 -------------------
