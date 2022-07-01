@@ -13,7 +13,6 @@ import joblib
 import numpy as np
 import statsmodels.api as sm
 import xarray as xr
-
 from packaging.version import Version
 
 from mesmer.core.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
@@ -168,10 +167,10 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     params_gv["sel_crit"] = sel_crit
 
     if Version(xr.__version__) >= Version("2022.03.0"):
-        method  = "method"
-    else: 
-        method  = "interpolation"
-        
+        method = "method"
+    else:
+        method = "interpolation"
+
     # select the AR Order
     AR_order_scen = list()
     for scen in gv.keys():
