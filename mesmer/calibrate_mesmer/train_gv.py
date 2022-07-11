@@ -178,7 +178,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         # create temporary DataArray
         data = xr.DataArray(gv[scen], dims=["run", "time"])
 
-        AR_order = _select_ar_order_xr(data, "time", maxlag=max_lag, ic=sel_crit)
+        AR_order = _select_ar_order_xr(data, dim="time", maxlag=max_lag, ic=sel_crit)
 
         # median over all ensemble members ("nearest" ensures an 'existing' lag is selected)
         AR_order = AR_order.quantile(q=0.5, **{method: "nearest"})

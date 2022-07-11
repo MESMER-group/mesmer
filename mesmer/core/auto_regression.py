@@ -3,7 +3,7 @@ import xarray as xr
 
 
 def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
-    """Select the order of an autoregressive AR-X(p) process - xarray wrapper
+    """Select the order of an autoregressive process - xarray wrapper
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
 
 
 def _select_ar_order_np(data, maxlag, ic="bic"):
-    """Select the order of an autoregressive AR-X(p) process - numpy wrapper
+    """Select the order of an autoregressive AR(p) process - numpy wrapper
 
     Parameters
     ----------

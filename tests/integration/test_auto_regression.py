@@ -19,8 +19,8 @@ def test_select_ar_order_xr_1d():
     _check_dataarray_form(result, "selected_ar_order", ndim=0, shape=())
 
 
-@pytest.mark.parametrize("n_lon", [4, 5])
-@pytest.mark.parametrize("n_lat", [4, 5])
+@pytest.mark.parametrize("n_lon", [1, 2])
+@pytest.mark.parametrize("n_lat", [3, 4])
 def test_select_ar_order_xr_3d(n_lon, n_lat):
 
     data = trend_data_3D(n_lat=n_lat, n_lon=n_lon)
