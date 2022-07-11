@@ -1,2 +1,2 @@
 # flake8: noqa
-from . import linear_regression
+from . import auto_regression, linear_regression

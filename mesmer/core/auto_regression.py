@@ -18,7 +18,7 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
 
     Returns
     -------
-    selected_order : DataArray
+    selected_ar_order : DataArray
         Array indicating the selected order with the same size as the input but ``dim``
         removed.
 
@@ -27,23 +27,25 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
     Only full models can be selected along one dimension.
     """
 
-    selected_order = xr.apply_ufunc(
-        _select_order_np,
+    selected_ar_order = xr.apply_ufunc(
+        _select_ar_order_np,
         data,
         input_core_dims=[[dim]],
         output_core_dims=((),),
         vectorize=True,
-        output_dtypes=[int],
+        output_dtypes=[float],
         kwargs={"maxlag": maxlag, "ic": ic},
     )
 
     # remove zeros
-    selected_order[selected_order == 0] = np.NaN
+    selected_ar_order.data[selected_ar_order.data == 0] = np.NaN
 
-    return selected_order
+    selected_ar_order.name = "selected_ar_order"
+
+    return selected_ar_order
 
 
-def _select_order_np(data, maxlag, ic="bic"):
+def _select_ar_order_np(data, maxlag, ic="bic"):
     """Select the order of an autoregressive AR-X(p) process - numpy wrapper
 
     Parameters
@@ -57,7 +59,7 @@ def _select_order_np(data, maxlag, ic="bic"):
 
     Returns
     -------
-    selected_order : int
+    selected_ar_order : int
         The selected order.
 
     Notes
@@ -70,7 +72,10 @@ def _select_order_np(data, maxlag, ic="bic"):
 
     ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic, old_names=False).ar_lags
 
-    return ar_lags[-1]
+    # None is returned if no lag is selected
+    selected_ar_order = np.NaN if ar_lags is None else ar_lags[-1]
+
+    return selected_ar_order
 
 
 def _draw_auto_regression_correlated_np(
