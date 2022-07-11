@@ -251,20 +251,63 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         ) = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
 
         # compute localized cov matrix of the innovations of the AR(1) process
-        # See Eq. (8) in https://esd.copernicus.org/articles/11/139/2020/
-
-        # ATTENTION: STILL NEED TO CHECK IF THIS IS TRUE.
-        # THIS FORMULA IS DIFFERENT IN THE ESD PAPER! (coef not squared)
-        # But I am pretty sure that code is correct and the error is in the paper)
-
-        c = np.sqrt(1 - params_lv["AR1_coef"][targ_name] ** 2)
-        c = np.atleast_2d(c)  # so it can be transposed
-
-        loc_ecov_AR1_innovs = c * c.T * params_lv["loc_ecov"][targ_name]
+        loc_ecov_AR1_innovs = _adjust_ecov_ar1(
+            params_lv["loc_ecov"][targ_name], params_lv["AR1_coef"][targ_name]
+            )
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_ecov_AR1_innovs
 
     return params_lv
+
+
+def _adjust_ecov_ar1(ecov, ar_coefs):
+    """
+    adjust localized empirical covariance matrix for autoregressive process of order 1
+
+    Parameters
+    ----------
+    ecov : 2D np.array
+        Empirical covariance matrix.
+    ar_coefs : 1D np.array
+        The coefficients of the autoregressive process of order 1.
+
+    Returns
+    -------
+    adjusted_ecov : np.array
+        Adjusted empirical covariance matrix.
+
+    Notes
+    -----
+    - Adjusts ``ecov`` for an AR(1) process according to [1]_, eq (8).
+
+    - The formula is specific for an AR(1) process, see also https://github.com/MESMER-group/mesmer/pull/167#discussion_r912481495
+
+    - According to [2]_ "The multiplication with the ``reduction_factor`` scales the
+      empirical standard error under the assumption of an autoregressive process of 
+      order 1 [3]_. This accounts for the fact that the variance of an autoregressive
+      process is larger than that of the driving white noise process."
+
+    - This formula is wrong in [1]_. However, it is correct in the code. See also [2]_
+       and [3]_.
+
+.. [1] Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system model
+   temperatures with MESMER: from global mean temperature trajectories to grid-point-
+   level realizations on land, Earth Syst. Dynam., 11, 139–159, 
+   https://doi.org/10.5194/esd-11-139-2020, 2020.
+
+.. [2] Humphrey, V. and Gudmundsson, L.: GRACE-REC: a reconstruction of climate-driven
+   water storage changes over the last century, Earth Syst. Sci. Data, 11, 1153–1170,
+   https://doi.org/10.5194/essd-11-1153-2019, 2019. 
+
+.. [3] Cressie, N. and Wikle, C. K.: Statistics for spatio-temporal data, John Wiley &
+   Sons, Hoboken, New Jersey, USA, 2011.
+    """
+
+    reduction_factor = np.sqrt(1 - ar_coefs ** 2)
+    reduction_factor = np.atleast_2d(reduction_factor)  # so it can be transposed
+
+    # equivalent to ``diag(reduction_factor) @ ecov @ diag(reduction_factor)``
+    return reduction_factor * reduction_factor.T * ecov
 
 
 def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
