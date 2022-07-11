@@ -7,8 +7,8 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
 
     Parameters
     ----------
-    data : array_like
-        A 1-d endogenous response variable. The independent variable.
+    data : DataArray
+        A ``xr.DataArray`` to estimate the auto regression order.
     dim : str
         Dimension along which to determine the order.
     maxlag : int
@@ -24,7 +24,7 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
 
     Notes
     -----
-    Only full models can be selected.
+    Only full models can be selected along one dimension.
     """
 
     selected_order = xr.apply_ufunc(
@@ -49,7 +49,7 @@ def _select_order_np(data, maxlag, ic="bic"):
     Parameters
     ----------
     data : array_like
-        A 1-d endogenous response variable. The independent variable.
+        A numpy array to estimate the auto regression order. Must be 1D.
     maxlag : int
         The maximum lag to consider.
     ic : {'aic', 'hqic', 'bic'}, default 'bic'
@@ -62,7 +62,8 @@ def _select_order_np(data, maxlag, ic="bic"):
 
     Notes
     -----
-    Only full models can be selected.
+    Thin wrapper around ``statsmodels.tsa.ar_model.ar_select_order``. Only full models
+    can be selected.
     """
 
     from statsmodels.tsa.ar_model import ar_select_order
