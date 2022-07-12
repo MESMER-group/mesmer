@@ -23,6 +23,9 @@ New Features
 - Add ``mesmer.core.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
   auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Extract function to select the order of the auto regressive model: ``mesmer.core.auto_regression._select_ar_order_xr``
+  (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

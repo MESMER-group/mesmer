@@ -2,6 +2,82 @@ import numpy as np
 import xarray as xr
 
 
+def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
+    """Select the order of an autoregressive process - xarray wrapper
+
+    Parameters
+    ----------
+    data : DataArray
+        A ``xr.DataArray`` to estimate the auto regression order.
+    dim : str
+        Dimension along which to determine the order.
+    maxlag : int
+        The maximum lag to consider.
+    ic : {'aic', 'hqic', 'bic'}, default 'bic'
+        The information criterion to use in the selection.
+
+    Returns
+    -------
+    selected_ar_order : DataArray
+        Array indicating the selected order with the same size as the input but ``dim``
+        removed.
+
+    Notes
+    -----
+    Only full models can be selected along one dimension.
+    """
+
+    selected_ar_order = xr.apply_ufunc(
+        _select_ar_order_np,
+        data,
+        input_core_dims=[[dim]],
+        output_core_dims=((),),
+        vectorize=True,
+        output_dtypes=[float],
+        kwargs={"maxlag": maxlag, "ic": ic},
+    )
+
+    # remove zeros
+    selected_ar_order.data[selected_ar_order.data == 0] = np.NaN
+
+    selected_ar_order.name = "selected_ar_order"
+
+    return selected_ar_order
+
+
+def _select_ar_order_np(data, maxlag, ic="bic"):
+    """Select the order of an autoregressive AR(p) process - numpy wrapper
+
+    Parameters
+    ----------
+    data : array_like
+        A numpy array to estimate the auto regression order. Must be 1D.
+    maxlag : int
+        The maximum lag to consider.
+    ic : {'aic', 'hqic', 'bic'}, default 'bic'
+        The information criterion to use in the selection.
+
+    Returns
+    -------
+    selected_ar_order : int
+        The selected order.
+
+    Notes
+    -----
+    Thin wrapper around ``statsmodels.tsa.ar_model.ar_select_order``. Only full models
+    can be selected.
+    """
+
+    from statsmodels.tsa.ar_model import ar_select_order
+
+    ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic, old_names=False).ar_lags
+
+    # None is returned if no lag is selected
+    selected_ar_order = np.NaN if ar_lags is None else ar_lags[-1]
+
+    return selected_ar_order
+
+
 def _draw_auto_regression_correlated_np(
     *, intercept, coefs, covariance, n_samples, n_ts, seed, buffer
 ):

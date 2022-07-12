@@ -7,7 +7,71 @@ import xarray as xr
 import mesmer.core.auto_regression
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
-from .utils import trend_data_1D, trend_data_2D
+from .utils import trend_data_1D, trend_data_2D, trend_data_3D
+
+
+def test_select_ar_order_xr_1d():
+
+    data = trend_data_1D()
+
+    result = mesmer.core.auto_regression._select_ar_order_xr(data, "time", 4)
+
+    _check_dataarray_form(result, "selected_ar_order", ndim=0, shape=())
+
+
+@pytest.mark.parametrize("n_lon", [1, 2])
+@pytest.mark.parametrize("n_lat", [3, 4])
+def test_select_ar_order_xr_3d(n_lon, n_lat):
+
+    data = trend_data_3D(n_lat=n_lat, n_lon=n_lon)
+
+    result = mesmer.core.auto_regression._select_ar_order_xr(data, "time", 1)
+
+    _check_dataarray_form(
+        result,
+        "selected_ar_order",
+        ndim=2,
+        required_dims={"lon", "lat"},
+        shape=(n_lat, n_lon),
+    )
+
+
+def test_select_ar_order_xr_dim():
+
+    data = trend_data_3D(n_timesteps=4, n_lon=5)
+    result = mesmer.core.auto_regression._select_ar_order_xr(data, "lon", 1)
+
+    _check_dataarray_form(
+        result, "selected_ar_order", ndim=2, required_dims={"time", "lat"}, shape=(4, 3)
+    )
+
+
+def test_select_ar_order_xr():
+
+    data = trend_data_2D()
+
+    result = mesmer.core.auto_regression._select_ar_order_xr(data, "time", 4)
+
+    coords = data.drop_vars("time").coords
+
+    expected = xr.DataArray([4.0, 2.0, 2.0, 3.0, 4.0, 2.0], dims="cells", coords=coords)
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_select_ar_order_np():
+
+    rng = np.random.default_rng(seed=0)
+    data = rng.normal(size=100)
+
+    result = mesmer.core.auto_regression._select_ar_order_np(data, 2)
+    assert np.isnan(result)
+
+    result = mesmer.core.auto_regression._select_ar_order_np(data[:10], 2)
+    assert result == 2
+
+    with pytest.raises(ValueError):
+        mesmer.core.auto_regression._select_ar_order_np(data[:6], 5)
 
 
 @pytest.mark.parametrize("ar_order", [1, 8])

@@ -14,9 +14,8 @@ import numpy as np
 import statsmodels.api as sm
 import xarray as xr
 from packaging.version import Version
-from statsmodels.tsa.ar_model import ar_select_order
 
-from mesmer.core.auto_regression import _fit_auto_regression_xr
+from mesmer.core.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -167,33 +166,27 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     params_gv["max_lag"] = max_lag
     params_gv["sel_crit"] = sel_crit
 
-    # select the AR Order
-    nr_scens = len(gv.keys())
-    AR_order_scens_tmp = np.zeros(nr_scens)
-
-    # np.percentile renamed the keyword in numpy v1.22
-    if Version(np.__version__) >= Version("1.22.0"):
-        pct_kwargs = {"q": 50, "method": "nearest"}
+    if Version(xr.__version__) >= Version("2022.03.0"):
+        method = "method"
     else:
-        pct_kwargs = {"q": 50, "interpolation": "nearest"}
+        method = "interpolation"
 
-    for scen_idx, scen in enumerate(gv.keys()):
-        nr_runs = gv[scen].shape[0]
-        AR_order_runs_tmp = np.zeros(nr_runs)
+    # select the AR Order
+    AR_order_scen = list()
+    for scen in gv.keys():
 
-        for run in np.arange(nr_runs):
-            run_ar_lags = ar_select_order(
-                gv[scen][run], maxlag=max_lag, ic=sel_crit, old_names=False
-            ).ar_lags
-            # if order > 0 is selected,add selected order to vector
-            if len(run_ar_lags) > 0:
-                AR_order_runs_tmp[run] = run_ar_lags[-1]
+        # create temporary DataArray
+        data = xr.DataArray(gv[scen], dims=["run", "time"])
 
-        # interpolation is not a good way to go here because it could lead to an AR
-        # order that wasn't chosen by run -> avoid it by just taking nearest
-        AR_order_scens_tmp[scen_idx] = np.percentile(AR_order_runs_tmp, **pct_kwargs)
+        AR_order = _select_ar_order_xr(data, dim="time", maxlag=max_lag, ic=sel_crit)
 
-    AR_order_sel = int(np.percentile(AR_order_scens_tmp, **pct_kwargs))
+        # median over all ensemble members ("nearest" ensures an 'existing' lag is selected)
+        AR_order = AR_order.quantile(q=0.5, **{method: "nearest"})
+        AR_order_scen.append(AR_order)
+
+    # median over all scenarios
+    AR_order_scen = xr.concat(AR_order_scen, dim="scen")
+    AR_order_sel = int(AR_order.quantile(q=0.5, **{method: "nearest"}).item())
 
     # determine the AR params for the selected AR order
     params_scen = list()

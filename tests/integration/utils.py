@@ -59,3 +59,18 @@ def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=
     }
 
     return xr.DataArray(data, dims=("cells", "time"), coords=coords)
+
+
+def trend_data_3D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
+
+    data = trend_data_2D(
+        n_timesteps=n_timesteps,
+        n_lat=n_lat,
+        n_lon=n_lon,
+        intercept=intercept,
+        slope=slope,
+        scale=scale,
+    )
+
+    # reshape to 3D (time x lat x lon)
+    return data.set_index(cells=("lat", "lon")).unstack("cells")
