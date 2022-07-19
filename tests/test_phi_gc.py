@@ -1,12 +1,8 @@
 import numpy as np
 import pytest
 
-from mesmer.io import (
-    calc_geodist_exact,
-    gaspari_cohn,
-    load_phi_gc,
-    load_regs_ls_wgt_lon_lat,
-)
+from mesmer.core.computation import calc_geodist_exact, gaspari_cohn
+from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
 
 
 class mock_cfg:

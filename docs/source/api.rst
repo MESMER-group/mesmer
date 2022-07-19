@@ -26,6 +26,15 @@ Statistical core functions
    ~core.auto_regression._fit_auto_regression_xr
    ~core.auto_regression._draw_auto_regression_correlated_np
 
+Computation
+-----------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.computation.calc_geodist_exact
+   ~core.computation.gaspari_cohn
+
 Train mesmer
 ------------
 
@@ -90,7 +99,6 @@ Load constant files
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_constant_files.gaspari_cohn
    ~io.load_constant_files.infer_interval_breaks
    ~io.load_constant_files.load_phi_gc
    ~io.load_constant_files.load_regs_ls_wgt_lon_lat
