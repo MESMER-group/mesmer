@@ -10,11 +10,13 @@ Functions to train local variability module of MESMER.
 import os
 
 import joblib
-import numpy as np
 import xarray as xr
-from scipy.stats import multivariate_normal
 
 from mesmer.core.auto_regression import _fit_auto_regression_xr
+from mesmer.core.localized_covariance import (
+    _adjust_ecov_ar1_np,
+    _find_localized_empirical_covariance_np,
+)
 
 from .train_utils import get_scenario_weights, stack_predictors_and_targets
 
@@ -251,62 +253,13 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         ) = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
 
         # compute localized cov matrix of the innovations of the AR(1) process
-        loc_ecov_AR1_innovs = _adjust_ecov_ar1(
+        loc_ecov_AR1_innovs = _adjust_ecov_ar1_np(
             params_lv["loc_ecov"][targ_name], params_lv["AR1_coef"][targ_name]
         )
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_ecov_AR1_innovs
 
     return params_lv
-
-
-def _adjust_ecov_ar1(ecov, ar_coefs):
-    """adjust localized empirical covariance matrix for autoregressive process of order 1
-
-    Parameters
-    ----------
-    ecov : 2D np.array
-        Empirical covariance matrix.
-    ar_coefs : 1D np.array
-        The coefficients of the autoregressive process of order 1.
-
-    Returns
-    -------
-    adjusted_ecov : np.array
-        Adjusted empirical covariance matrix.
-
-    Notes
-    -----
-    - Adjusts ``ecov`` for an AR(1) process according to [1]_, eq (8).
-
-    - The formula is specific for an AR(1) process, see also https://github.com/MESMER-group/mesmer/pull/167#discussion_r912481495
-
-    - According to [2]_ "The multiplication with the ``reduction_factor`` scales the
-      empirical standard error under the assumption of an autoregressive process of
-      order 1 [3]_. This accounts for the fact that the variance of an autoregressive
-      process is larger than that of the driving white noise process."
-
-    - This formula is wrong in [1]_. However, it is correct in the code. See also [2]_
-       and [3]_.
-
-    .. [1] Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system model
-       temperatures with MESMER: from global mean temperature trajectories to grid-point-
-       level realizations on land, Earth Syst. Dynam., 11, 139–159,
-       https://doi.org/10.5194/esd-11-139-2020, 2020.
-
-    .. [2] Humphrey, V. and Gudmundsson, L.: GRACE-REC: a reconstruction of climate-driven
-       water storage changes over the last century, Earth Syst. Sci. Data, 11, 1153–1170,
-       https://doi.org/10.5194/essd-11-1153-2019, 2019.
-
-    .. [3] Cressie, N. and Wikle, C. K.: Statistics for spatio-temporal data, John Wiley &
-       Sons, Hoboken, New Jersey, USA, 2011.
-    """
-
-    reduction_factor = np.sqrt(1 - ar_coefs**2)
-    reduction_factor = np.atleast_2d(reduction_factor)  # so it can be transposed
-
-    # equivalent to ``diag(reduction_factor) @ ecov @ diag(reduction_factor)``
-    return reduction_factor * reduction_factor.T * ecov
 
 
 def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
@@ -345,75 +298,13 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     """
 
-    return _find_localized_empirical_covariance(
-        y, wgt_scen_eq, aux["phi_gc"], cfg.max_iter_cv
+    # data = xr.DataArray(y, dims=("sample", "cell"))
+    # weights = xr.DataArray(wgt_scen_eq, "sample")
+
+    # phi_gc = aux["phi_gc"]
+    # dims = ("cell_i", "cell_j")
+    # localizer = {k: xr.DataArray(v, dims=dims) for k, v in phi_gc.items()}
+
+    return _find_localized_empirical_covariance_np(
+        data=y, weights=wgt_scen_eq, localizer=aux["phi_gc"], k_folds=cfg.max_iter_cv
     )
-
-
-def _find_localized_empirical_covariance(y, wgt_scen_eq, phi_gc, max_iter_cv):
-
-    # derive the indices for the cross validation
-    nr_samples, nr_gridpoints = y.shape
-    nr_it = np.min([nr_samples, max_iter_cv])
-    idx_cv_out = np.zeros([nr_it, nr_samples], dtype=bool)
-    for i in range(nr_it):
-        idx_cv_out[i, i::max_iter_cv] = True
-
-    # spatial cross-correlations with specified cross val folds
-    L_set = sorted(phi_gc.keys())  # the localisation radii to loop through
-
-    llh_max = float("-inf")
-    llh_cv_sum = {}
-
-    for L in L_set:
-        llh_cv_sum[L] = 0
-
-        for it in range(nr_it):
-            # extract folds
-            y_est = y[~idx_cv_out[it]]  # to estimate params
-            y_cv = y[idx_cv_out[it]]  # to crossvalidate the estimate
-            wgt_scen_eq_est = wgt_scen_eq[~idx_cv_out[it]]
-            wgt_scen_eq_cv = wgt_scen_eq[idx_cv_out[it]]
-
-            # compute ecov and likelihood of out fold to be drawn from it
-            ecov = np.cov(y_est, rowvar=False, aweights=wgt_scen_eq_est)
-            loc_ecov = phi_gc[L] * ecov
-
-            # we want the mean of the normal distribution to be 0
-            mean_0 = np.zeros(nr_gridpoints)
-
-            # NOTE: 90 % of time is spent here - not much point optimizing the rest
-            llh_cv_each_sample = multivariate_normal.logpdf(
-                y_cv, mean=mean_0, cov=loc_ecov, allow_singular=True
-            )
-            # allow_singular = True because stms ran into singular matrices
-            # ESMs eg affected: CanESM2, CanESM5, IPSL-CM5A-LR, MCM-UA-1-0
-            # -> reassuring that saw that in these ESMs L values where matrix
-            # is not singular yet can end up being selected
-
-            # each cv sample gets its own likelihood -> can sum them up for overall
-            # likelihood
-            # sum over all samples = wgt average * nr_samples
-            llh_cv_fold_sum = (
-                np.average(llh_cv_each_sample, weights=wgt_scen_eq_cv)
-                * wgt_scen_eq_cv.size
-            )
-
-            # add to full sum over all folds
-            llh_cv_sum[L] += llh_cv_fold_sum
-
-        # experience tells: once stop selecting larger localisation radii, will not
-        # start again. Better to stop once max is reached (to limit computational effort
-        # and amount of singular matrices).
-        if llh_cv_sum[L] > llh_max:
-            L_sel = L
-            llh_max = llh_cv_sum[L]
-            print("Newly selected L =", L_sel)
-        else:
-            print("Final selected L =", L_sel)
-            break
-
-    ecov = np.cov(y, rowvar=False, aweights=wgt_scen_eq)
-    loc_ecov = phi_gc[L_sel] * ecov
-
-    return L_sel, ecov, loc_ecov
