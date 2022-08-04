@@ -34,6 +34,9 @@ Breaking changes
   :py:func:`get_scenario_weights` and :py:func:`stack_predictors_and_targets`
   (`#143 <https://github.com/MESMER-group/mesmer/pull/143>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Moved ``gaspari_cohn`` & ``calc_geodist_exact`` from ``io.load_constant_files`` to ``core.computation``
+  (`#158 <https://github.com/MESMER-group/mesmer/issues/158>`_).
+  By `Yann Quilcaille <https://github.com/yquilcaille>`_.
 
 Deprecations
 ^^^^^^^^^^^^
