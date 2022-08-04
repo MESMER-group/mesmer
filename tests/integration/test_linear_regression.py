@@ -5,6 +5,8 @@ import numpy.testing as npt
 import pytest
 import xarray as xr
 
+from packaging.version import Version
+
 import mesmer.core.linear_regression
 
 from .utils import trend_data_1D, trend_data_2D
@@ -127,9 +129,13 @@ def test_linear_regression_errors(lr_method_or_function):
 
     def test_unequal_coords(pred0, pred1, tgt, weights):
 
-        with pytest.raises(
-            ValueError, match="indexes along dimension 'time' are not equal"
-        ):
+        # updated error message with the indexing refactor
+        if Version(xr.__version__) >= Version("2022.06"):
+            match = "cannot align objects"
+        else:
+            match = "indexes along dimension 'time' are not equal"
+
+        with pytest.raises(ValueError, match=match):
             lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
