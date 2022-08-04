@@ -83,6 +83,9 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     and a leave-one-out cross validation otherwise.
     """
 
+    if not isinstance(k_folds, int) or k_folds <= 1:
+        raise ValueError("'k_folds' must be an integer larger than 1.")
+
     localisation_radii = sorted(localizer.keys())
 
     # find _local_ minimum because
@@ -120,15 +123,15 @@ def _ecov_crossvalidation(localisation_radius, *, data, weights, localizer, k_fo
         sel[it::k_folds] = False
 
         # extract training set
-        data_est = data[sel, :]
-        weights_est = weights[sel]
+        data_train = data[sel, :]
+        weights_train = weights[sel]
 
         # extract validation set
         data_cv = data[~sel, :]
         weights_cv = weights[~sel]
 
         # compute (localized) empirical covariance
-        ecov = np.cov(data_est, rowvar=False, aweights=weights_est)
+        ecov = np.cov(data_train, rowvar=False, aweights=weights_train)
         loc_ecov = localizer[localisation_radius] * ecov
 
         # sum log likelihood of all crossvalidation folds
@@ -167,7 +170,11 @@ def _get_neg_loglikelihood(data, covariance, weights):
     # -> reassuring that saw that in these ESMs L values where matrix
     # is not singular yet can end up being selected
 
+    # logpdf can return a scalar which np.average does not like
+    log_likelihood = np.atleast_1d(log_likelihood)
+
     # weighted sum for each cv sample
+    # equals `log_likelihood @ weights * weights.size / weights.sum()`
     weighted_llh = np.average(log_likelihood, weights=weights) * weights.size
 
     return -weighted_llh
@@ -202,16 +209,19 @@ def _minimize_local_discrete(func, sequence, **kwargs):
     """
 
     current_min = float("inf")
-    for element in sequence:
+    # ensure it's a list because we cannot get an item from an iterable
+    sequence = list(sequence)
+
+    for i, element in enumerate(sequence):
 
         res = func(element, **kwargs)
 
-        if np.isneginf(res):
-            raise ValueError("`fun` returned `-inf`")
+        if np.isinf(np.abs(res)):
+            raise ValueError("`fun` returned `+/-inf`")
         elif res < current_min:
             current_min = res
         else:
-            return element
+            return sequence[i - 1]
 
     # warn if the local minimum is not reached?
     return element
