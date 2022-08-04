@@ -4,7 +4,6 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
-
 from packaging.version import Version
 
 import mesmer.core.linear_regression
