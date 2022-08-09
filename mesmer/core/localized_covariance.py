@@ -12,6 +12,7 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
         Empirical covariance matrix.
     ar_coefs : 1D np.array
         The coefficients of the autoregressive process of order 1.
+        Must have length equal to the size of `covariance`.
 
     Returns
     -------
@@ -89,7 +90,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     localisation_radii = sorted(localizer.keys())
 
     # find _local_ minimum because
-    # experience tells: once stop selecting larger localisation radii, will not
+    # experience tells: once we stop selecting larger localisation radii, we will not
     # start again. Better to stop once min is reached (to limit computational effort
     # and singular matrices).
 
@@ -158,7 +159,7 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     Notes
     -----
-    The mean is zero for all points.
+    The mean is assumed to be zero for all points.
     """
 
     # NOTE: 90 % of time is spent here - not much point optimizing the rest
