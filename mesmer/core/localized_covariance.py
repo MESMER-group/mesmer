@@ -1,5 +1,9 @@
+import warnings
+
 import numpy as np
 from scipy.stats import multivariate_normal
+
+from mesmer.core.utils import LinAlgWarning, _minimize_local_discrete
 
 
 def _adjust_ecov_ar1_np(covariance, ar_coefs):
@@ -47,10 +51,15 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
        & Sons, Hoboken, New Jersey, USA, 2011.
     """
 
+    if ar_coefs.ndim != 1 or ar_coefs.size != covariance.shape[0]:
+        raise ValueError(
+            "`ar_coefs` must be 1D and have length equal to the size of `covariance`"
+        )
+
     reduction_factor = np.sqrt(1 - ar_coefs**2)
     reduction_factor = np.atleast_2d(reduction_factor)  # so it can be transposed
 
-    # equivalent to ``diag(reduction_factor) @ ecov @ diag(reduction_factor)``
+    # equivalent to ``diag(reduction_factor) @ covariance @ diag(reduction_factor)``
     return reduction_factor * reduction_factor.T * covariance
 
 
@@ -60,22 +69,22 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     Parameters
     ----------
     data : 2D array
-        Data array with shape nr_samples x nr_gridpoints.
+        Data array with shape n_samples x n_gridpoints.
     weights : 1D array
         Weights for the individual samples.
     localizer : dict of array-like
-        Dictonary containing the localization radii as keys and the localisation as
-        values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
+        Dictonary containing the localization radii as keys and the localization matrix
+        as values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
     k_folds : int
         Number of folds to use for cross validation.
 
     Returns
     -------
-    localisation_radius : float
-        Selected localisation radius.
-    ecov : ndarray
+    localization_radius : float
+        Selected localization radius.
+    covariance : ndarray
         Empirical covariance matrix.
-    loc_ecov : ndarray
+    localized_covariance : ndarray
         Localized empirical covariance matrix.
 
     Notes
@@ -87,56 +96,65 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     if not isinstance(k_folds, int) or k_folds <= 1:
         raise ValueError("'k_folds' must be an integer larger than 1.")
 
-    localisation_radii = sorted(localizer.keys())
+    if data.shape[0] != weights.size:
+        raise ValueError("weights and data have incompatible shape")
+
+    localization_radii = sorted(localizer.keys())
 
     # find _local_ minimum because
-    # experience tells: once we stop selecting larger localisation radii, we will not
+    # experience tells: once we stop selecting larger localization radii, we will not
     # start again. Better to stop once min is reached (to limit computational effort
     # and singular matrices).
 
-    localisation_radius = _minimize_local_discrete(
+    localization_radius = _minimize_local_discrete(
         _ecov_crossvalidation,
-        localisation_radii,
+        localization_radii,
         data=data,
         weights=weights,
         localizer=localizer,
         k_folds=k_folds,
     )
 
-    ecov = np.cov(data, rowvar=False, aweights=weights)
-    loc_ecov = localizer[localisation_radius] * ecov
+    covariance = np.cov(data, rowvar=False, aweights=weights)
+    localized_covariance = localizer[localization_radius] * covariance
 
-    return localisation_radius, ecov, loc_ecov
+    return localization_radius, covariance, localized_covariance
 
 
-def _ecov_crossvalidation(localisation_radius, *, data, weights, localizer, k_folds):
-    """k-fold crossvalidation for a single localisation radius"""
+def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
+    """k-fold crossvalidation for a single localization radius"""
 
-    nr_samples, __ = data.shape
-    nr_iterations = min(nr_samples, k_folds)
+    n_samples, __ = data.shape
+    n_iterations = min(n_samples, k_folds)
 
     log_likelihood = 0
 
-    for it in range(nr_iterations):
+    for it in range(n_iterations):
 
         # every `k_folds` element for validation such that each is used exactly once
-        sel = np.ones(nr_samples, dtype=bool)
+        sel = np.ones(n_samples, dtype=bool)
         sel[it::k_folds] = False
 
         # extract training set
-        data_train = data[sel, :]
-        weights_train = weights[sel]
+        data_train, weights_train = data[sel, :], weights[sel]
 
         # extract validation set
-        data_cv = data[~sel, :]
-        weights_cv = weights[~sel]
+        data_cv, weights_cv = data[~sel, :], weights[~sel]
 
         # compute (localized) empirical covariance
-        ecov = np.cov(data_train, rowvar=False, aweights=weights_train)
-        loc_ecov = localizer[localisation_radius] * ecov
+        cov = np.cov(data_train, rowvar=False, aweights=weights_train)
+        localized_cov = localizer[localization_radius] * cov
 
-        # sum log likelihood of all crossvalidation folds
-        log_likelihood += _get_neg_loglikelihood(data_cv, loc_ecov, weights_cv)
+        try:
+            # sum log likelihood of all crossvalidation folds
+            log_likelihood += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
+        except np.linalg.LinAlgError:
+            warnings.warn(
+                f"Singular matrix for localization_radius of {localization_radius}."
+                " Skipping this radius.",
+                LinAlgWarning,
+            )
+            return float("inf")
 
     return log_likelihood
 
@@ -157,21 +175,22 @@ def _get_neg_loglikelihood(data, covariance, weights):
     -------
     weighted_log_likelihood : float
 
+    Raises
+    ------
+    np.linalg.LinAlgError if a singular covariance matrix is passed. See `#187
+    <https://github.com/MESMER-group/mesmer/issues/187>`__ for a discussion.
+
     Notes
     -----
     The mean is assumed to be zero for all points.
     """
 
-    # NOTE: 90 % of time is spent here - not much point optimizing the rest
-    log_likelihood = multivariate_normal.logpdf(
-        data, cov=covariance, allow_singular=True
-    )
-    # ``allow_singular = True`` because stms ran into singular matrices
-    # ESMs eg affected: CanESM2, CanESM5, IPSL-CM5A-LR, MCM-UA-1-0
-    # -> reassuring that saw that in these ESMs L values where matrix
-    # is not singular yet can end up being selected
+    # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
+    # optimizing the rest
 
-    # logpdf can return a scalar which np.average does not like
+    log_likelihood = multivariate_normal.logpdf(data, cov=covariance)
+
+    # logpdf can return a scalar, which np.average does not like
     log_likelihood = np.atleast_1d(log_likelihood)
 
     # weighted sum for each cv sample
@@ -179,50 +198,3 @@ def _get_neg_loglikelihood(data, covariance, weights):
     weighted_llh = np.average(log_likelihood, weights=weights) * weights.size
 
     return -weighted_llh
-
-
-def _minimize_local_discrete(func, sequence, **kwargs):
-    """find the local minimum for a function that consumes discrete input
-
-    Parameters
-    ----------
-    func : callable
-        The objective function to be minimized. Should take the elements of ``sequence``
-        as input and return a float that is to be minimized.
-    sequence : iterable
-        An iterable with discrete values to evaluate func for.
-    kwargs : Mapping
-        Keyword arguments passed to `func`.
-
-    Returns
-    -------
-    element
-        The element from sequence which corresponds to the local minimum.
-
-    Raises
-    ------
-    ValueError : if `func` returns negative infinity for any input.
-
-    Notes
-    -----
-    - The function determines the local minimum, i.e., the loop is aborted if
-      `func(sequence[i-1]) >= func(sequence[i])`.
-    """
-
-    current_min = float("inf")
-    # ensure it's a list because we cannot get an item from an iterable
-    sequence = list(sequence)
-
-    for i, element in enumerate(sequence):
-
-        res = func(element, **kwargs)
-
-        if np.isinf(np.abs(res)):
-            raise ValueError("`fun` returned `+/-inf`")
-        elif res < current_min:
-            current_min = res
-        else:
-            return sequence[i - 1]
-
-    # warn if the local minimum is not reached?
-    return element

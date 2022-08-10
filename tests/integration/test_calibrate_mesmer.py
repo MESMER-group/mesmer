@@ -2,12 +2,14 @@ import os.path
 import shutil
 
 import joblib
+import pytest
 
 from mesmer.calibrate_mesmer import _calibrate_and_draw_realisations
 
 from .utils import _check_dict
 
 
+@pytest.mark.filterwarnings("ignore:No local minimum found")
 def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
     expected_output_file = os.path.join(test_data_root_dir, "test-mesmer-bundle.pkl")
 
