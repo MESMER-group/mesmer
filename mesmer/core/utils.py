@@ -53,9 +53,9 @@ def _minimize_local_discrete(func, sequence, **kwargs):
             raise ValueError("`fun` returned `-inf`")
         # skip element if inf is returned - not sure about this?
         elif np.isinf(res):
-            # warnings.warn(f"`fun` retured `inf`, skipping {element}}")
-            pass
-        elif res < current_min:
+            warnings.warn("`fun` retured `inf`", OptimizeWarning)
+
+        if res < current_min:
             current_min = res
         else:
             return sequence[i - 1]

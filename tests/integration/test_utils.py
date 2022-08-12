@@ -7,7 +7,7 @@ import mesmer.core.utils
 
 @pytest.mark.parametrize(
     "values, expected",
-    [((5, 4, 3, 2, 3, 0), 3), ((0, 1, 2), 0), ((5, np.inf, 3, 2, 3, 0), 3)],
+    [((5, 4, 3, 2, 3, 0), 3), ((0, 1, 2), 0)],
 )
 def test_minimize_local_discrete(values, expected):
 
@@ -22,16 +22,26 @@ def test_minimize_local_discrete(values, expected):
 
 
 def test_minimize_local_discrete_warning():
+    def func(i, data_dict):
+        return data_dict[i]
 
     data_dict = {key: value for key, value in enumerate((3, 2, 1))}
 
-    def func(i):
-        return data_dict[i]
-
     with pytest.warns(mesmer.core.utils.OptimizeWarning, match="No local minimum"):
-        result = mesmer.core.utils._minimize_local_discrete(func, data_dict.keys())
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
 
     assert result == 2
+
+    data_dict = {key: value for key, value in enumerate((5, np.inf, 3))}
+
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` retured `inf`"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 0
 
 
 def test_minimize_local_discrete_error():
