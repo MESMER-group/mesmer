@@ -14,8 +14,8 @@ try:
     from importlib.metadata import version as _get_version
 except ImportError:
     # importlib.metadata not available in python 3.7
-    from importlib_metadata import version as _get_version  # type: ignore[no-redef]
-
+    import pkg_resources
+    _get_version = lambda pkg: pkg_resources.get_distribution(pkg).version
 try:
     __version__ = _get_version("mesmer-emulator")
 except Exception:
