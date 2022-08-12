@@ -5,6 +5,53 @@ import xarray as xr
 import mesmer.core.utils
 
 
+@pytest.mark.parametrize(
+    "values, expected",
+    [((5, 4, 3, 2, 3, 0), 3), ((0, 1, 2), 0)],
+)
+def test_minimize_local_discrete(values, expected):
+
+    data_dict = {key: value for key, value in enumerate(values)}
+
+    def func(i):
+        return data_dict[i]
+
+    result = mesmer.core.utils._minimize_local_discrete(func, data_dict.keys())
+
+    assert result == expected
+
+
+def test_minimize_local_discrete_warning():
+    def func(i, data_dict):
+        return data_dict[i]
+
+    data_dict = {key: value for key, value in enumerate((3, 2, 1))}
+
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="No local minimum"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 2
+
+    data_dict = {key: value for key, value in enumerate((5, np.inf, 3))}
+
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` retured `inf`"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 0
+
+
+def test_minimize_local_discrete_error():
+    def func(i):
+        return float("-inf")
+
+    with pytest.raises(ValueError, match=r"`fun` returned `\-inf`"):
+        mesmer.core.utils._minimize_local_discrete(func, [0])
+
+
 @pytest.mark.parametrize("obj", (None, xr.DataArray()))
 def test_check_dataset_form_wrong_type(obj):
 

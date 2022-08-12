@@ -1,12 +1,74 @@
+import warnings
 from typing import Set, Union
 
+import numpy as np
 import xarray as xr
+
+
+class OptimizeWarning(UserWarning):
+    pass
+
+
+class LinAlgWarning(UserWarning):
+    pass
+
+
+def _minimize_local_discrete(func, sequence, **kwargs):
+    """find the local minimum for a function that consumes discrete input
+
+    Parameters
+    ----------
+    func : callable
+        The objective function to be minimized. Should take the elements of ``sequence``
+        as input and return a float that is to be minimized.
+    sequence : iterable
+        An iterable with discrete values to evaluate func for.
+    **kwargs : Mapping
+        Keyword arguments passed to `func`.
+
+    Returns
+    -------
+    element
+        The element from sequence which corresponds to the local minimum.
+
+    Raises
+    ------
+    ValueError : if `func` returns negative infinity for any input.
+
+    Notes
+    -----
+    - The function determines the local minimum, i.e., the loop is aborted if
+      `func(sequence[i-1]) >= func(sequence[i])`.
+    """
+
+    current_min = float("inf")
+    # ensure it's a list because we cannot get an item from an iterable
+    sequence = list(sequence)
+
+    for i, element in enumerate(sequence):
+
+        res = func(element, **kwargs)
+
+        if np.isneginf(res):
+            raise ValueError("`fun` returned `-inf`")
+        # skip element if inf is returned - not sure about this?
+        elif np.isinf(res):
+            warnings.warn("`fun` retured `inf`", OptimizeWarning)
+
+        if res < current_min:
+            current_min = res
+        else:
+            return sequence[i - 1]
+
+    warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
+
+    return element
 
 
 def _to_set(arg):
 
     if arg is None:
-        arg = {}
+        arg = set()
 
     if isinstance(arg, str):
         arg = {arg}
