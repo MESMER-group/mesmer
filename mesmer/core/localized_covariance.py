@@ -75,6 +75,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     localizer : dict of array-like
         Dictonary containing the localization radii as keys and the localization matrix
         as values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
+        Currently only the Gaspari-Cohn localizer is implemented in MESMER.
     k_folds : int
         Number of folds to use for cross validation.
 
