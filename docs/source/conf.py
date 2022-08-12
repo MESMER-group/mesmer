@@ -8,22 +8,24 @@
 
 import datetime
 
-from mesmer._version import get_versions
+import mesmer
 
 # -- Project information -----------------------------------------------------
 
 project = "mesmer"
 copyright_year = datetime.date.today().year
-copyright = "(c) 2021-{} ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne), MESMER contributors listed in AUTHORS".format(
-    copyright_year
+copyright = (
+    f"(c) 2021-{copyright_year} ETH Zurich (Land-climate dynamics group, Prof. S.I. "
+    "Seneviratne), MESMER contributors listed in AUTHORS"
 )
+
 authors = "Authors, see AUTHORS"
 author = authors
 
 # The short X.Y version
-version = get_versions()["version"].split("+")[0]
+version = mesmer.__version__.split("+")[0]
 # The full version, including alpha/beta/rc tags
-release = get_versions()["version"]
+release = mesmer.__version__
 
 
 # -- General configuration ---------------------------------------------------

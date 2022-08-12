@@ -72,6 +72,9 @@ Internal Changes
 - Refactored functions dealing with the spatial covariance and its localization (`#167 <https://github.com/MESMER-group/mesmer/pull/167>`__
   and `#184 <https://github.com/MESMER-group/mesmer/pull/184>`__).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Use pyproject.toml for the build-system and setuptools_scm for the `__version__`
+  (`#188 <https://github.com/MESMER-group/mesmer/pull/188>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 
 v0.8.3 - 2021-12-23
