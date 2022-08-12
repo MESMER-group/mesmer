@@ -67,7 +67,9 @@ Internal Changes
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Move contents of setup.py to setup.cfg (`#169 <https://github.com/MESMER-group/mesmer/pull/169>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-
+- Use pyproject.toml for the build-system and setuptools_scm for the `__version__`
+  (`#188 <https://github.com/MESMER-group/mesmer/pull/188>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.3 - 2021-12-23
 -------------------
