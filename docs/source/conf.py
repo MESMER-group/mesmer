@@ -7,8 +7,29 @@
 # -- Import packages ---------------------------------------------------------
 
 import datetime
+from importlib.metadata import version
+import sys
+import subprocess
+import os
 
 import mesmer
+
+# -- Display version info ----------------------------------------------------
+# for debugging on RTD
+
+print("python exec:", sys.executable)
+print("sys.path:", sys.path)
+print("os.getcwd():", os.getcwd())
+
+if "CONDA_DEFAULT_ENV" in os.environ or "conda" in sys.executable:
+    print("conda environment:")
+    subprocess.run([os.environ.get("CONDA_EXE", "conda"), "list"])
+else:
+    print("pip environment:")
+    subprocess.run([sys.executable, "-m", "pip", "list"])
+
+print(f"mesmer: {mesmer.__version__=}, {mesmer.__file__=}")
+
 
 # -- Project information -----------------------------------------------------
 
@@ -22,10 +43,10 @@ copyright = (
 authors = "Authors, see AUTHORS"
 author = authors
 
-# The short X.Y version
-version = mesmer.__version__.split("+")[0]
 # The full version, including alpha/beta/rc tags
-release = mesmer.__version__
+release = version("mesmer-emulator")
+# The short X.Y version
+version = ".".join(release.split(".")[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,17 +55,11 @@ release = mesmer.__version__
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.extlinks",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
-
-extlinks = {
-    "issue": ("https://github.com/mesmer-group/mesmer/issues/%s", "GH"),
-    "pull": ("https://github.com/mesmer-group/mesmer/pull/%s", "PR"),
-}
 
 autosummary_generate = True
 
@@ -76,7 +91,6 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 
-html_theme = "sphinx_rtd_theme"
 html_theme = "sphinx_book_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
