@@ -15,7 +15,7 @@ import os
 import mesmer
 
 # -- Display version info ----------------------------------------------------
-#
+# for debugging on RTD
 
 print("python exec:", sys.executable)
 print("sys.path:", sys.path)
