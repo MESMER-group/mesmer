@@ -1,26 +1,32 @@
 import warnings
 
 import numpy as np
+import xarray as xr
 from scipy.stats import multivariate_normal
 
-from mesmer.core.utils import LinAlgWarning, _minimize_local_discrete
+from mesmer.core.utils import (
+    LinAlgWarning,
+    _check_dataarray_form,
+    _minimize_local_discrete,
+    create_equal_dim_names,
+)
 
 
-def _adjust_ecov_ar1_np(covariance, ar_coefs):
+def adjust_covariance_ar1(covariance, ar_coefs):
     """
     adjust localized empirical covariance matrix for autoregressive process of order 1
 
     Parameters
     ----------
-    covariance : 2D np.array
+    covariance : 2D xr.DataArray
         Empirical covariance matrix.
-    ar_coefs : 1D np.array
+    ar_coefs : 1D xr.DataArray
         The coefficients of the autoregressive process of order 1.
         Must have length equal to the size of `covariance`.
 
     Returns
     -------
-    adjusted_covariance : np.array
+    adjusted_covariance : xr.DataArray
         Adjusted empirical covariance matrix.
 
     Notes
@@ -51,6 +57,12 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
        & Sons, Hoboken, New Jersey, USA, 2011.
     """
 
+    # pass ar_coefs.data - so it will 'just work'
+    return _adjust_ecov_ar1_np(covariance, ar_coefs.data)
+
+
+def _adjust_ecov_ar1_np(covariance, ar_coefs):
+
     if ar_coefs.ndim != 1 or ar_coefs.size != covariance.shape[0]:
         raise ValueError(
             "`ar_coefs` must be 1D and have length equal to the size of `covariance`"
@@ -61,6 +73,82 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
 
     # equivalent to ``diag(reduction_factor) @ covariance @ diag(reduction_factor)``
     return reduction_factor * reduction_factor.T * covariance
+
+
+def find_localized_empirical_covariance(data, weights, localizer, dim, k_folds):
+    """determine localized empirical covariance by cross validation
+
+    Parameters
+    ----------
+    data : 2D array
+        Data array with shape n_samples x n_gridpoints.
+    weights : 1D array
+        Weights for the individual samples.
+    localizer : dict of array-like
+        Dictonary containing the localization radii as keys and the localization matrix
+        as values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
+        Currently only the Gaspari-Cohn localizer is implemented in MESMER.
+    dim : str
+        Dimension along which to calculate the covariance.
+    k_folds : int
+        Number of folds to use for cross validation.
+
+    Returns
+    -------
+    localized_empirical_covariance : xr.Dataset
+        Dataset containing three DataArrays:
+
+    localization_radius : float
+        Selected localization radius.
+    covariance : xr.DataArray
+        Empirical covariance matrix.
+    localized_covariance : xr.DataArray
+        Localized empirical covariance matrix.
+
+    Notes
+    -----
+    Runs a k-fold cross validation if ``k_folds`` is smaller than the number of samples
+    and a leave-one-out cross validation otherwise.
+    """
+
+    _check_dataarray_form(data, name="data", ndim=2)
+
+    # ensure data has the right orientation
+    data = data.transpose(dim, ...)
+    all_dims = data.dims
+
+    (sample_dim,) = set(all_dims) - {dim}
+    out_dims = create_equal_dim_names(sample_dim)
+
+    # TODO: not sure which one is nicer
+    # out = xr.apply_ufunc(
+    #     _find_localized_empirical_covariance_np,
+    #     data,
+    #     weights,
+    #     kwargs={"localizer": localizer, "k_folds": k_folds},
+    #     input_core_dims=[all_dims, [dim]],
+    #     output_core_dims=([], out_dims, out_dims),
+    # )
+    # localization_radius, covariance, localized_covariance = out
+
+    out = _find_localized_empirical_covariance_np(
+        data.data,
+        weights.data,
+        localizer,
+        k_folds
+        )
+    localization_radius, covariance, localized_covariance = out
+
+    covariance = xr.DataArray(covariance, dims=out_dims)
+    localized_covariance = xr.DataArray(localized_covariance, dims=out_dims)
+
+    data_vars = {
+        "localization_radius": localization_radius,
+        "covariance": covariance,
+        "localized_covariance": localized_covariance,
+    }
+
+    return xr.Dataset(data_vars)
 
 
 def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
@@ -95,7 +183,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     """
 
     if not isinstance(k_folds, int) or k_folds <= 1:
-        raise ValueError("'k_folds' must be an integer larger than 1.")
+        raise ValueError(f"'k_folds' must be an integer larger than 1, got {k_folds}.")
 
     if data.shape[0] != weights.size:
         raise ValueError("weights and data have incompatible shape")

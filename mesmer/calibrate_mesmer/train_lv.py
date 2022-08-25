@@ -14,8 +14,8 @@ import xarray as xr
 
 from mesmer.core.auto_regression import _fit_auto_regression_xr
 from mesmer.core.localized_covariance import (
-    _adjust_ecov_ar1_np,
-    _find_localized_empirical_covariance_np,
+    adjust_covariance_ar1,
+    find_localized_empirical_covariance,
 )
 
 from .train_utils import get_scenario_weights, stack_predictors_and_targets
@@ -246,18 +246,21 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         params_lv["AR1_std_innovs"][targ_name] = params_scen.standard_deviation.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
-        (
-            params_lv["L"][targ_name],
-            params_lv["ecov"][targ_name],
-            params_lv["loc_ecov"][targ_name],
-        ) = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
+        res = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
+        params_lv["L"][targ_name] = res.localization_radius.values
+        params_lv["ecov"][targ_name] = res.covariance.values
+        params_lv["loc_ecov"][targ_name] = res.localized_covariance.values
 
-        # compute localized cov matrix of the innovations of the AR(1) process
-        loc_ecov_AR1_innovs = _adjust_ecov_ar1_np(
-            params_lv["loc_ecov"][targ_name], params_lv["AR1_coef"][targ_name]
-        )
+        # adjust localized cov matrix with the coefficients of the AR(1) process
+        loc_cov = params_lv["loc_ecov"][targ_name]
+        loc_cov = xr.DataArray(loc_cov, dims=("cell_i", "cell_j"))
 
-        params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_ecov_AR1_innovs
+        ar_coefs = params_lv["AR1_coef"][targ_name]
+        ar_coefs = xr.DataArray(ar_coefs, dims="cell")
+
+        loc_cov_ar1 = adjust_covariance_ar1(loc_cov, ar_coefs)
+
+        params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_cov_ar1.values
 
     return params_lv
 
@@ -283,12 +286,15 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     Returns
     -------
-    L_sel : numpy.int64
-        selected localization radius
-    ecov : np.ndarray
-        2d empirical covariance matrix array (gp, gp)
-    loc_ecov : np.ndarray
-        2d localized empirical covariance matrix array (gp, gp)
+    localized_empirical_covariance : xr.Dataset
+        Dataset containing three DataArrays:
+
+    localization_radius : float
+        Selected localization radius.
+    covariance : xr.DataArray
+        Empirical covariance matrix.
+    localized_covariance : xr.DataArray
+        Localized empirical covariance matrix.
 
     Notes
     -----
@@ -298,13 +304,15 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     """
 
-    # data = xr.DataArray(y, dims=("sample", "cell"))
-    # weights = xr.DataArray(wgt_scen_eq, "sample")
+    data = xr.DataArray(y, dims=("sample", "cell"))
+    weights = xr.DataArray(wgt_scen_eq, dims="sample")
 
-    # phi_gc = aux["phi_gc"]
-    # dims = ("cell_i", "cell_j")
-    # localizer = {k: xr.DataArray(v, dims=dims) for k, v in phi_gc.items()}
+    phi_gc = aux["phi_gc"]
+    dims = ("cell_i", "cell_j")
+    localizer = {k: xr.DataArray(v, dims=dims) for k, v in phi_gc.items()}
 
-    return _find_localized_empirical_covariance_np(
-        data=y, weights=wgt_scen_eq, localizer=aux["phi_gc"], k_folds=cfg.max_iter_cv
-    )
+    dim = "sample"
+
+    k_folds = cfg.max_iter_cv
+
+    return find_localized_empirical_covariance(data, weights, localizer, dim, k_folds)

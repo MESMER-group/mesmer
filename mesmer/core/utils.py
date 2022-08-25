@@ -4,6 +4,10 @@ from typing import Set, Union
 import numpy as np
 import xarray as xr
 
+# xarray cannot represent two dims with the same name -> need to give them another name
+# TODO: expose this via function argument or config?
+EQUAL_DIM_SUFFIXES = ("i", "j")
+
 
 class OptimizeWarning(UserWarning):
     pass
@@ -11,6 +15,11 @@ class OptimizeWarning(UserWarning):
 
 class LinAlgWarning(UserWarning):
     pass
+
+
+def create_equal_dim_names(dim):
+
+    return [f"{dim}_{suffix}" for suffix in EQUAL_DIM_SUFFIXES]
 
 
 def _minimize_local_discrete(func, sequence, **kwargs):

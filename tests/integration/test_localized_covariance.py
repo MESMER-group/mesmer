@@ -1,13 +1,16 @@
 import numpy as np
 import pytest
+import xarray as xr
 
 from mesmer.core.localized_covariance import (
     _adjust_ecov_ar1_np,
     _ecov_crossvalidation,
     _find_localized_empirical_covariance_np,
     _get_neg_loglikelihood,
+    adjust_covariance_ar1,
+    find_localized_empirical_covariance,
 )
-from mesmer.core.utils import LinAlgWarning
+from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
 
 
 @pytest.fixture
@@ -18,28 +21,84 @@ def random_data_5x3():
     return data
 
 
-def test_find_localized_empirical_covariance_np(random_data_5x3):
+def get_random_data(n_samples, n_gridpoints):
 
-    n_samples = 20
-    n_gridpoints = 3
     np.random.seed(0)
     data = np.random.rand(n_samples, n_gridpoints)
 
+    return xr.DataArray(data, dims=("samples", "cell"))
+
+
+def get_localizer_dict(n_gridpoints, as_dataarray):
+
     localizer = dict()
-    # for i, crosscov in enumerate(np.arange(0, 1.01, 0.01)):
+    dims = ("cell_i", "cell_j")
     for i, crosscov in enumerate(np.arange(0, 1.01, 0.1)):
 
         loc = np.full((n_gridpoints, n_gridpoints), fill_value=crosscov)
         loc[np.diag_indices(n_gridpoints)] = 1
+        loc = xr.DataArray(loc, dims=dims) if as_dataarray else loc
         localizer[i] = loc
 
-    weights = np.full(n_samples, 1)
+    return localizer
 
-    result, __, __ = _find_localized_empirical_covariance_np(
+
+def get_weights(n_samples):
+
+    weights = np.full(n_samples, 1)
+    return xr.DataArray(weights, dims="samples")
+
+
+def test_find_localized_empirical_covariance():
+
+    n_samples = 20
+    n_gridpoints = 3
+
+    data = get_random_data(n_samples, n_gridpoints)
+    localizer = get_localizer_dict(n_gridpoints, as_dataarray=True)
+    weights = get_weights(n_samples)
+
+    required_form = {
+        "ndim": 2,
+        "required_dims": ("cell_i", "cell_j"),
+        "shape": (n_gridpoints, n_gridpoints),
+    }
+
+    result = find_localized_empirical_covariance(
+        data, weights, localizer, dim="samples", k_folds=2
+    )
+
+    assert result.localization_radius == 0
+    _check_dataarray_form(result.covariance, "covariance", **required_form)
+    _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
+
+    # ensure it works if data is transposed
+    result = find_localized_empirical_covariance(
+        data.T, weights, localizer, dim="samples", k_folds=3
+    )
+
+    assert result.localization_radius == 1
+    _check_dataarray_form(result.covariance, "covariance", **required_form)
+    _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
+
+
+def test_find_localized_empirical_covariance_np():
+
+    n_samples = 20
+    n_gridpoints = 3
+
+    data = get_random_data(n_samples, n_gridpoints).values
+    localizer = get_localizer_dict(n_gridpoints, as_dataarray=False)
+    weights = get_weights(n_samples).values
+
+    result, cov, loc_cov = _find_localized_empirical_covariance_np(
         data, weights, localizer, k_folds=2
     )
     expected = 0
     assert result == expected
+    assert cov.shape == (n_gridpoints, n_gridpoints)
+    assert loc_cov.shape == (n_gridpoints, n_gridpoints)
+    np.testing.assert_allclose(np.diag(cov), np.diag(loc_cov))
 
     result, __, __ = _find_localized_empirical_covariance_np(
         data, weights, localizer, k_folds=3
@@ -207,3 +266,25 @@ def test_adjust_ecov_ar1_np(random_data_5x3):
     )
 
     np.testing.assert_allclose(result, expected, atol=1e-6)
+
+
+def test_adjust_covariance_ar1(random_data_5x3):
+
+    ar_coefs = np.random.randn(3)
+    ar_coefs = xr.DataArray(ar_coefs, dims="cell")
+
+    cov = np.cov(random_data_5x3, rowvar=False)
+    cov = xr.DataArray(cov, dims=("cell_i", "cell_j"))
+
+    result = adjust_covariance_ar1(cov, ar_coefs)
+
+    expected = np.array(
+        [
+            [0.005061, -0.00323, -0.010508],
+            [-0.00323, 0.026648, -0.011914],
+            [-0.010508, -0.011914, 0.099646],
+        ]
+    )
+
+    expected = xr.DataArray(expected, dims=("cell_i", "cell_j"))
+    xr.testing.assert_allclose(result, expected, atol=1e-6)
