@@ -7,10 +7,10 @@
 # -- Import packages ---------------------------------------------------------
 
 import datetime
-from importlib.metadata import version
-import sys
-import subprocess
 import os
+import subprocess
+import sys
+from importlib.metadata import version
 
 import mesmer
 
