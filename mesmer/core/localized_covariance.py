@@ -132,11 +132,8 @@ def find_localized_empirical_covariance(data, weights, localizer, dim, k_folds):
     # localization_radius, covariance, localized_covariance = out
 
     out = _find_localized_empirical_covariance_np(
-        data.data,
-        weights.data,
-        localizer,
-        k_folds
-        )
+        data.data, weights.data, localizer, k_folds
+    )
     localization_radius, covariance, localized_covariance = out
 
     covariance = xr.DataArray(covariance, dims=out_dims)
