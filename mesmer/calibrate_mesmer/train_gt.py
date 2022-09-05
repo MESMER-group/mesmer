@@ -12,9 +12,9 @@ import os
 import joblib
 import numpy as np
 import xarray as xr
-from statsmodels.nonparametric.smoothers_lowess import lowess
 
 from mesmer.core.linear_regression import LinearRegression
+from mesmer.core.smoothing import lowess
 from mesmer.io import load_strat_aod
 
 
@@ -163,14 +163,14 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     return params_gt
 
 
-def train_gt_ic_LOWESS(var):
+def train_gt_ic_LOWESS(data):
     """
     Derive smooth global trend of variable from single ESM ic ensemble with LOWESS
     smoother.
 
     Parameters
     ----------
-    var : np.ndarray
+    data : np.ndarray
         2d array (run, time) of globally-averaged time series
 
     Returns
@@ -181,22 +181,21 @@ def train_gt_ic_LOWESS(var):
         fraction of the data used when estimating each y-value
     """
 
-    # number time steps
-    nr_ts = var.shape[1]
+    data = xr.DataArray(data, dims=("ensemble", "time"))
 
     # average across all runs to get a first smoothing
-    av_var = np.mean(var, axis=0)
+    data = data.mean("ensemble")
+
+    dim = "time"
 
     # apply lowess smoother to further smooth the Tglob time series
     # rather arbitrarily chosen value that gives a smooth enough trend,
-    frac_lowess = 50 / nr_ts
+    frac = 50 / data.sizes[dim]
 
     # open to changes but if much smaller, var trend ends up very wiggly
     frac_lowess_name = "50/nr_ts"
 
-    gt_lowess = lowess(
-        av_var, np.arange(nr_ts), return_sorted=False, frac=frac_lowess, it=0
-    )
+    gt_lowess = lowess(data, dim=dim, frac=frac)
 
     return gt_lowess, frac_lowess_name
 
