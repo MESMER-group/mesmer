@@ -80,13 +80,13 @@ def find_localized_empirical_covariance(data, weights, localizer, dim, k_folds):
 
     Parameters
     ----------
-    data : 2D array
-        Data array with shape n_samples x n_gridpoints.
-    weights : 1D array
+    data : xr.DataArray
+        2D DataArray with with n_samples x n_gridpoints.
+    weights : xr.DataArray
         Weights for the individual samples.
-    localizer : dict of array-like
+    localizer : dict of DataArray```
         Dictonary containing the localization radii as keys and the localization matrix
-        as values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
+        as values. The localization must be 2D and of shape n_gridpoints x n_gridpoints.
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
     dim : str
         Dimension along which to calculate the covariance.
