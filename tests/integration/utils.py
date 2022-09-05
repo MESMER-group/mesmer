@@ -38,7 +38,7 @@ def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1):
 
     data = intercept + slope * time + scatter
 
-    return xr.DataArray(data, dims=("time"), coords={"time": time})
+    return xr.DataArray(data, dims=("time"), coords={"time": time}, name="data")
 
 
 def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
@@ -58,7 +58,7 @@ def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=
         "lat": ("cells", LAT.flatten()),
     }
 
-    return xr.DataArray(data, dims=("cells", "time"), coords=coords)
+    return xr.DataArray(data, dims=("cells", "time"), coords=coords, name="data")
 
 
 def trend_data_3D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
