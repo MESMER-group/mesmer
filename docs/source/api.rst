@@ -25,7 +25,7 @@ Statistical core functions
    ~core.auto_regression._select_ar_order_xr
    ~core.auto_regression._fit_auto_regression_xr
    ~core.auto_regression._draw_auto_regression_correlated_np
-   ~core.smooting.lowess
+   ~core.smoothing.lowess
 
 Computation
 -----------
