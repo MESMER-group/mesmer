@@ -26,7 +26,7 @@ New Features
 - Extract function to select the order of the auto regressive model: ``mesmer.core.auto_regression._select_ar_order_xr``
   (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Refactor the LOWESS smooting for xarray objects: :py:func:`mesmer.core.smooting.lowess`.
+- Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.core.smoothing.lowess`.
   (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
