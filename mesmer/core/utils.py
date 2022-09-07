@@ -6,7 +6,7 @@ import xarray as xr
 
 # xarray cannot represent two dims with the same name -> need to give them another name
 # TODO: expose this via function argument or config?
-EQUAL_DIM_SUFFIXES = ("i", "j")
+EQUAL_DIM_SUFFIXES = ("_i", "_j")
 
 
 class OptimizeWarning(UserWarning):
@@ -19,7 +19,7 @@ class LinAlgWarning(UserWarning):
 
 def create_equal_dim_names(dim):
 
-    return [f"{dim}_{suffix}" for suffix in EQUAL_DIM_SUFFIXES]
+    return [f"{dim}{suffix}" for suffix in EQUAL_DIM_SUFFIXES]
 
 
 def _minimize_local_discrete(func, sequence, **kwargs):
