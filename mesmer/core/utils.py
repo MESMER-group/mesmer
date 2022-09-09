@@ -13,6 +13,14 @@ class LinAlgWarning(UserWarning):
     pass
 
 
+def create_equal_dim_names(dim, suffixes):
+
+    if not len(suffixes) == 2:
+        raise ValueError("must provide exactly two suffixes")
+
+    return tuple(f"{dim}{suffix}" for suffix in suffixes)
+
+
 def _minimize_local_discrete(func, sequence, **kwargs):
     """find the local minimum for a function that consumes discrete input
 
