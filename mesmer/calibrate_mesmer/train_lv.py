@@ -7,9 +7,6 @@ Functions to train local variability module of MESMER.
 """
 
 
-import os
-
-import joblib
 import xarray as xr
 
 from mesmer.core.auto_regression import _fit_auto_regression_xr
@@ -17,6 +14,7 @@ from mesmer.core.localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 from .train_utils import get_scenario_weights, stack_predictors_and_targets
 
@@ -138,22 +136,20 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 
     # overwrites lv module if already exists, i.e., assumption: always lt before lv
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_lv):
-            os.makedirs(dir_mesmer_params_lv)
-            print("created dir:", dir_mesmer_params_lv)
-        filename_parts = [
-            "params_lv",
-            method_lv,
-            *preds_lv,
-            *targ_names,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_lv, filename_params_lv)
+        save_mesmer_data(
+            params_lv,
+            cfg.dir_mesmer_params,
+            "local",
+            "local_variability",
+            filename_parts=[
+                "params_lv",
+                method_lv,
+                *preds_lv,
+                *targ_names,
+                esm,
+                *scenarios_tr,
+            ],
+        )
 
     return params_lv
 

@@ -7,12 +7,10 @@ Functions to create global variability emulations with MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
 
 from mesmer.core.auto_regression import _draw_auto_regression_correlated_np
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -56,9 +54,6 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     """
 
     # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_gv["esm"]]
 
@@ -91,21 +86,20 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
 
     # save the global variability emus if requested
     if save_emus:
-        dir_mesmer_emus_gv = dir_mesmer_emus + "global/global_variability/"
-        # check if folder to save emus in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_gv):
-            os.makedirs(dir_mesmer_emus_gv)
-            print("created dir:", dir_mesmer_emus_gv)
-        filename_parts = [
-            "emus_gv",
-            params_gv["method"],
-            *params_gv["preds"],
-            params_gv["targ"],
-            params_gv["esm"],
-            *scens_out,
-        ]
-        filename_emus_gv = dir_mesmer_emus_gv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_gv, filename_emus_gv)
+        save_mesmer_data(
+            emus_gv,
+            cfg.dir_mesmer_emus,
+            "global",
+            "global_variability",
+            filename_parts=[
+                "emus_gv",
+                params_gv["method"],
+                *params_gv["preds"],
+                params_gv["targ"],
+                params_gv["esm"],
+                *scens_out,
+            ],
+        )
 
     return emus_gv
 

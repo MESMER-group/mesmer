@@ -7,10 +7,9 @@ Functions to create local trends emulations with MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
+
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
@@ -67,9 +66,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
           by shape predictors
 
     """
-    # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
 
     # derive necessary scenario names
     pred_names = list(preds_lt.keys())
@@ -125,21 +121,20 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 
     # save the local trends emulation if requested
     if save_emus:
-        dir_mesmer_emus_lt = dir_mesmer_emus + "local/local_trends/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_lt):
-            os.makedirs(dir_mesmer_emus_lt)
-            print("created dir:", dir_mesmer_emus_lt)
-        filename_parts = [
-            "emus_lt",
-            params_lt["method"],
-            *params_lt["preds"],
-            *params_lt["targs"],
-            params_lt["esm"],
-            *scens_out,
-        ]
-        filename_emus_lt = dir_mesmer_emus_lt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_lt, filename_emus_lt)
+        save_mesmer_data(
+            emus_lt,
+            cfg.dir_mesmer_emus,
+            "local",
+            "local_trends",
+            filename_parts=[
+                "emus_lt",
+                params_lt["method"],
+                *params_lt["preds"],
+                *params_lt["targs"],
+                params_lt["esm"],
+                *scens_out,
+            ],
+        )
 
     return emus_lt
 

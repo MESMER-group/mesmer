@@ -7,12 +7,10 @@ Functions to create local variability emulations with MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
 
 from mesmer.core.auto_regression import _draw_auto_regression_correlated_np
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
@@ -66,10 +64,6 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
           others for other methods
     """
 
-    # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-
     pred_names = list(preds_lv.keys())
     scens_out = list(preds_lv[pred_names[0]].keys())
 
@@ -92,21 +86,20 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
 
     # save the local trends emulation if requested
     if save_emus:
-        dir_mesmer_emus_lv = dir_mesmer_emus + "local/local_variability/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_lv):
-            os.makedirs(dir_mesmer_emus_lv)
-            print("created dir:", dir_mesmer_emus_lv)
-        filename_parts = [
-            "emus_lv",
-            submethod,
-            *params_lv["preds"],
-            *params_lv["targs"],
-            params_lv["esm"],
-            *scens_out,
-        ]
-        filename_emus_lv = dir_mesmer_emus_lv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_lv, filename_emus_lv)
+        save_mesmer_data(
+            emus_lv,
+            cfg.dir_mesmer_emus,
+            "local",
+            "local_variability",
+            filename_parts=[
+                "emus_lv",
+                submethod,
+                *params_lv["preds"],
+                *params_lv["targs"],
+                params_lv["esm"],
+                *scens_out,
+            ],
+        )
 
     return emus_lv
 

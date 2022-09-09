@@ -6,10 +6,9 @@
 Functions to create global trend emulations with MESMER.
 """
 
-import os
-
-import joblib
 import numpy as np
+
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 # TODO: rename because there's actually no emulation involved in this process
@@ -93,21 +92,19 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
 
     # save the global trend emulation if requested
     if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-        dir_mesmer_emus_gt = dir_mesmer_emus + "global/global_trend/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_gt):
-            os.makedirs(dir_mesmer_emus_gt)
-            print("created dir:", dir_mesmer_emus_gt)
-        filename_parts = [
-            "emus_gt",
-            params_gt["method"],
-            *params_gt["preds"],
-            params_gt["targ"],
-            params_gt["esm"],
-            *scens_out,
-        ]
-        filename_emus_gt = dir_mesmer_emus_gt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_gt, filename_emus_gt)
+        save_mesmer_data(
+            emus_gt,
+            cfg.dir_mesmer_emus,
+            "global",
+            "global_trend",
+            filename_parts=[
+                "emus_gt",
+                params_gt["method"],
+                *params_gt["preds"],
+                params_gt["targ"],
+                params_gt["esm"],
+                *scens_out,
+            ],
+        )
 
     return emus_gt

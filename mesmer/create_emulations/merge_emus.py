@@ -7,10 +7,9 @@ Functions to merge emulations of different MESMER modules.
 """
 
 
-import os
 import warnings
 
-import joblib
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
@@ -87,27 +86,23 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
     # save the global emus if requested
     if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-        dir_mesmer_emus_g = dir_mesmer_emus + "global/"
-        # check if folder to save emus in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_g):
-            os.makedirs(dir_mesmer_emus_g)
-            print("created dir:", dir_mesmer_emus_g)
-
-        filename_parts = [
-            "emus_g",
-            "gt",
-            params_gt["method"],
-            *params_gt["preds"],
-            "gv",
-            params_gv["method"],
-            *params_gv["preds"],
-            targ,
-            esm,
-            *scenarios_gt,
-        ]
-        filename_emus_g = dir_mesmer_emus_g + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_g, filename_emus_g)
+        save_mesmer_data(
+            emus_g,
+            cfg.dir_mesmer_emus,
+            "global",
+            filename_parts=[
+                "emus_g",
+                "gt",
+                params_gt["method"],
+                *params_gt["preds"],
+                "gv",
+                params_gv["method"],
+                *params_gv["preds"],
+                targ,
+                esm,
+                *scenarios_gt,
+            ],
+        )
 
     return emus_g
 
@@ -158,10 +153,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
     """
 
-    # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-
     scenarios_lt = list(emus_lt.keys())
     scenarios_lv = list(emus_lv.keys())
 
@@ -201,24 +192,22 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
     # save the global emus if requested
     if save_emus:
-        dir_mesmer_emus_l = dir_mesmer_emus + "local/"
-        # check if folder to save emus in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_l):
-            os.makedirs(dir_mesmer_emus_l)
-            print("created dir:", dir_mesmer_emus_l)
-        filename_parts = [
-            "emus_l",
-            "lt",
-            params_lt["method"],
-            *params_lt["preds"],
-            "lv",
-            params_lv["method"],
-            *params_lv["preds"],
-            *targs,
-            esm,
-            *scenarios_lt,
-        ]
-        filename_emus_l = dir_mesmer_emus_l + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_l, filename_emus_l)
+        save_mesmer_data(
+            emus_l,
+            cfg.dir_mesmer_emus,
+            "local",
+            filename_parts=[
+                "emus_l",
+                "lt",
+                params_lt["method"],
+                *params_lt["preds"],
+                "lv",
+                params_lv["method"],
+                *params_lv["preds"],
+                *targs,
+                esm,
+                *scenarios_lt,
+            ],
+        )
 
     return emus_l
