@@ -79,11 +79,20 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
 
-    L_set = np.arange(L_start, L_end + 1, L_interval)
-
     # geodistance for all gps for certain threshold
     geodist_name = f"geodist_landthres_{threshold_land:1.2f}.pkl"
-    if not os.path.exists(dir_aux + geodist_name):
+
+    # gaspari-cohn correlation function phi
+    phi_gc_name = "phi_gaspari-cohn_landthres_{tl:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl".format(
+        tl=threshold_land, L_start=L_start, L_interval=L_interval, L_end=L_end
+    )
+
+    fullname_geodist = os.path.join(dir_aux, geodist_name)
+    fullname_phi_gc = os.path.join(dir_aux, phi_gc_name)
+
+    L_set = np.arange(L_start, L_end + 1, L_interval)
+
+    if not os.path.exists(fullname_geodist):
         # create geodist matrix + save it
         print("compute geographical distance between all land points")
 
@@ -97,18 +106,13 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
         os.makedirs(dir_aux, exist_ok=True)
 
         # save the geodist file
-        joblib.dump(geodist, dir_aux + geodist_name)
+        joblib.dump(geodist, fullname_geodist)
 
     else:
         # load geodist matrix
-        geodist = joblib.load(dir_aux + geodist_name)
+        geodist = joblib.load(fullname_geodist)
 
-    # gaspari-cohn correlation function phi
-    phi_gc_name = "phi_gaspari-cohn_landthres_{tl:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl".format(
-        tl=threshold_land, L_start=L_start, L_interval=L_interval, L_end=L_end
-    )
-
-    if not os.path.exists(dir_aux + phi_gc_name):
+    if not os.path.exists(fullname_phi_gc):
         print("compute Gaspari-Cohn correlation function phi")
 
         phi_gc = {}
@@ -116,10 +120,10 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
             phi_gc[L] = gaspari_cohn(geodist / L)
             print("done with L:", L)
 
-        joblib.dump(phi_gc, dir_aux + phi_gc_name)
+        joblib.dump(phi_gc, fullname_phi_gc)
 
     else:
-        phi_gc = joblib.load(dir_aux + phi_gc_name)
+        phi_gc = joblib.load(fullname_phi_gc)
 
     return phi_gc
 

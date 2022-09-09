@@ -24,7 +24,7 @@ def _get_default_kwargs(
     test_cmip_data_root_dir = os.path.join(
         test_data_root_dir,
         "calibrate-coarse-grid",
-        f"cmip{gen}-ng/",
+        f"cmip{gen}-ng",
     )
 
     # mock cfg class

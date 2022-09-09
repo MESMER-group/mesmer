@@ -2,7 +2,6 @@
 Functions to calibrate all modules of MESMER
 """
 import logging
-import os
 import warnings
 
 from ..create_emulations import create_emus_gt, create_emus_lt, create_emus_lv
@@ -47,10 +46,10 @@ class _Config:
         self.esms = esms
         self.scenarios = scenarios
         self.gen = cmip_generation
-        # TODO: remove need for trailing seperator eventually
-        self.dir_cmipng = f"{cmip_data_root_dir}{os.sep}"
-        self.dir_obs = f"{observations_root_dir}{os.sep}"
-        self.dir_aux = f"{auxiliary_data_dir}{os.sep}"
+
+        self.dir_cmipng = cmip_data_root_dir
+        self.dir_obs = observations_root_dir
+        self.dir_aux = auxiliary_data_dir
         self.ref = {
             "type": reference_period_type,
             "start": reference_period_start_year,
@@ -89,8 +88,7 @@ class _Config:
             raise ValueError("`dir_mesmer_params` required if `save_params` is True")
 
         self.save_params = save_params
-        # TODO: remove need for trailing seperator eventually
-        self.dir_mesmer_params = f"{params_output_dir}{os.sep}"
+        self.dir_mesmer_params = params_output_dir
 
 
 # TODO: remove draw realisations functionality

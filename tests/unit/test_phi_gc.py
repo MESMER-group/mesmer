@@ -7,7 +7,7 @@ from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
 
 class mock_cfg:
     def __init__(self, tmp_path, threshold_land):
-        self.dir_aux = str(tmp_path) + "/"
+        self.dir_aux = str(tmp_path)
         self.threshold_land = threshold_land
 
 
