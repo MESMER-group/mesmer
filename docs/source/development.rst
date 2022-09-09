@@ -27,7 +27,7 @@ As a contributor, please follow a couple of conventions:
 - Create issues in the `MESMER issue tracker`_ for changes and enhancements, this ensures that everyone in the community has a chance to comment
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_
 - Only push to your own branches, this allows people to force push to their own branches as they need without fear or causing others headaches
-- Start all pull requests as draft pull requests and only mark them as ready for review once they've had master merged into them or been rebased onto master, this makes it much simpler for reviewers
+- Start all pull requests as draft pull requests and only mark them as ready for review once they've had main merged into them, this makes it much simpler for reviewers
 - Several small pull requests are preferred over one large PR, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
 
 Development setup
@@ -152,5 +152,5 @@ Why is there a ``Makefile`` in a pure Python repository?
 Whilst it may not be standard practice, a ``Makefile`` is a simple way to automate general setup (environment setup in particular).
 Hence we have one here which basically acts as a notes file for how to do all those little jobs which we often forget e.g. setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxillary bits and pieces.
 
-.. _Sphinx: http://www.sphinx-doc.org/en/master/
+.. _Sphinx: http://www.sphinx-doc.org
 .. _MESMER issue tracker: https://github.com/MESMER-group/mesmer/issues
