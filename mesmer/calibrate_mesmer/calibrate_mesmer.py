@@ -92,6 +92,7 @@ class _Config:
         # TODO: remove need for trailing seperator eventually
         self.dir_mesmer_params = f"{params_output_dir}{os.sep}"
 
+
 # TODO: remove draw realisations functionality
 def _calibrate_and_draw_realisations(
     esms,
