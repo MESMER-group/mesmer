@@ -41,6 +41,8 @@ class _Config:
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
+        save_params=False,
+        params_output_dir=None,
     ):
         self.esms = esms
         self.scenarios = scenarios
@@ -83,6 +85,13 @@ class _Config:
         self.threshold_land = threshold_land
         self.max_iter_cv = cross_validation_max_iterations
 
+        if save_params and not params_output_dir:
+            raise ValueError("`dir_mesmer_params` required if `save_params` is True")
+
+        self.save_params = save_params
+        # TODO: remove need for trailing seperator eventually
+        self.dir_mesmer_params = f"{params_output_dir}{os.sep}"
+
 
 # TODO: remove draw realisations functionality
 def _calibrate_and_draw_realisations(
@@ -111,6 +120,8 @@ def _calibrate_and_draw_realisations(
     nr_emus_v=100,  # TODO: remove when we remove the emulation part
     weight_scenarios_equally=True,
     cross_validation_max_iterations=30,
+    save_params=False,
+    params_output_dir=None,
 ):
     """calibrate mesmer - additional predictors configuration. used for end-to-end test"""
 
@@ -162,6 +173,8 @@ def _calibrate_and_draw_realisations(
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
+        save_params=save_params,
+        params_output_dir=params_output_dir,
     )
 
     for esm in esms:
@@ -216,11 +229,11 @@ def _calibrate_and_draw_realisations(
         # TODO: `target_variable` is used here but not elsewhere (where tas is
         #       basically hard-coded)
         params_gt_T = train_gt(
-            GSAT[esm], target_variable, esm, time[esm], cfg, save_params=False
+            GSAT[esm], target_variable, esm, time[esm], cfg, save_params=cfg.save_params
         )
         # TODO: remove hard-coded hfds
         params_gt_hfds = train_gt(
-            GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=False
+            GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
         )
 
         # From params_gt_T, extract the global-trend so that the global
@@ -260,7 +273,7 @@ def _calibrate_and_draw_realisations(
 
         LOGGER.info("Calibrating global variability module")
         params_gv_T = train_gv(
-            gv_novolc_T_s, target_variable, esm, cfg, save_params=False
+            gv_novolc_T_s, target_variable, esm, cfg, save_params=cfg.save_params
         )
 
         # TODO: remove because time_v is not needed for calibration
@@ -275,7 +288,9 @@ def _calibrate_and_draw_realisations(
             "gvtas": gv_novolc_T_s,
         }
         targs = {"tas": tas_s}
-        params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=False)
+        params_lt, params_lv = train_lt(
+            preds, targs, esm, cfg, save_params=cfg.save_params
+        )
 
         # Create forced local warming samples used for training the local variability
         # module. Samples are cheap to create so not an issue to have here.
@@ -315,7 +330,13 @@ def _calibrate_and_draw_realisations(
         LOGGER.debug("Finalising training of local variability module on derived data")
         targs_res_lv = {"tas": res_lv_s}
         params_lv = train_lv(
-            {}, targs_res_lv, esm, cfg, save_params=False, aux=aux, params_lv=params_lv
+            {},
+            targs_res_lv,
+            esm,
+            cfg,
+            save_params=cfg.save_params,
+            aux=aux,
+            params_lv=params_lv,
         )
 
         save_mesmer_bundle(
