@@ -4,8 +4,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 
 import mesmer.core.smoothing
 from mesmer.core.utils import _check_dataarray_form
-
-from .utils import trend_data_1D, trend_data_2D
+from mesmer.testing import trend_data_1D, trend_data_2D
 
 
 def test_lowess_errors():

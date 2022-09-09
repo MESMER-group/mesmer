@@ -7,8 +7,7 @@ import xarray as xr
 from packaging.version import Version
 
 import mesmer.core.linear_regression
-
-from .utils import trend_data_1D, trend_data_2D
+from mesmer.testing import trend_data_1D, trend_data_2D
 
 
 def LinearRegression_fit_wrapper(*args, **kwargs):
