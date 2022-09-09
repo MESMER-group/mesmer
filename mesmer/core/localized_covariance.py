@@ -75,13 +75,15 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
     return reduction_factor * reduction_factor.T * covariance
 
 
-def find_localized_empirical_covariance(data, weights, localizer, dim, k_folds):
+def find_localized_empirical_covariance(
+    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
+):
     """determine localized empirical covariance by cross validation
 
     Parameters
     ----------
     data : xr.DataArray
-        2D DataArray with with n_samples x n_gridpoints.
+        2D DataArray with with to calculate the covariance for.
     weights : xr.DataArray
         Weights for the individual samples.
     localizer : dict of DataArray```
@@ -92,6 +94,9 @@ def find_localized_empirical_covariance(data, weights, localizer, dim, k_folds):
         Dimension along which to calculate the covariance.
     k_folds : int
         Number of folds to use for cross validation.
+    equal_dim_suffixes : tuple of str
+        Suffixes to add to the the name of ``dim`` for the covariance array (xr.DataArray cannot have two
+        dimensions with the same name).
 
     Returns
     -------
@@ -118,26 +123,17 @@ def find_localized_empirical_covariance(data, weights, localizer, dim, k_folds):
     all_dims = data.dims
 
     (sample_dim,) = set(all_dims) - {dim}
-    out_dims = create_equal_dim_names(sample_dim)
+    out_dims = create_equal_dim_names(sample_dim, equal_dim_suffixes)
 
-    # TODO: not sure which one is nicer
-    # out = xr.apply_ufunc(
-    #     _find_localized_empirical_covariance_np,
-    #     data,
-    #     weights,
-    #     kwargs={"localizer": localizer, "k_folds": k_folds},
-    #     input_core_dims=[all_dims, [dim]],
-    #     output_core_dims=([], out_dims, out_dims),
-    # )
-    # localization_radius, covariance, localized_covariance = out
-
-    out = _find_localized_empirical_covariance_np(
-        data.data, weights.data, localizer, k_folds
+    out = xr.apply_ufunc(
+        _find_localized_empirical_covariance_np,
+        data,
+        weights,
+        kwargs={"localizer": localizer, "k_folds": k_folds},
+        input_core_dims=[all_dims, [dim]],
+        output_core_dims=([], out_dims, out_dims),
     )
     localization_radius, covariance, localized_covariance = out
-
-    covariance = xr.DataArray(covariance, dims=out_dims)
-    localized_covariance = xr.DataArray(localized_covariance, dims=out_dims)
 
     data_vars = {
         "localization_radius": localization_radius,

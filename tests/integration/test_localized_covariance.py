@@ -81,6 +81,22 @@ def test_find_localized_empirical_covariance():
     _check_dataarray_form(result.covariance, "covariance", **required_form)
     _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
 
+    # ensure can pass equal_dim_suffixes
+    result = find_localized_empirical_covariance(
+        data,
+        weights,
+        localizer,
+        dim="samples",
+        k_folds=3,
+        equal_dim_suffixes=(":j", ":i"),
+    )
+
+    required_form["required_dims"] = ("cell:j", "cell:i")
+
+    assert result.localization_radius == 1
+    _check_dataarray_form(result.covariance, "covariance", **required_form)
+    _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
+
 
 def test_find_localized_empirical_covariance_np():
 

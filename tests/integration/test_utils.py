@@ -21,6 +21,15 @@ def test_minimize_local_discrete(values, expected):
     assert result == expected
 
 
+def test_create_equal_dim_names():
+
+    with pytest.raises(ValueError, match="must provide exactly two suffixes"):
+        mesmer.core.utils.create_equal_dim_names("dim", "a")
+
+    result = mesmer.core.utils.create_equal_dim_names("dim", (".1", ".2"))
+    assert result == ("dim.1", "dim.2")
+
+
 def test_minimize_local_discrete_warning():
     def func(i, data_dict):
         return data_dict[i]
