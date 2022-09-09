@@ -8,6 +8,7 @@ Functions to load in cmip5 and cmip6 data from the cmip-ng archive at ETHZ.
 
 import copy as copy
 import glob as glob
+import os
 
 import numpy as np
 import xarray as xr
@@ -88,7 +89,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
 
     # for cmip5-ng
     if gen == 5:
-        dir_name = dir_cmipng + var + "/"
+        dir_name = os.path.join(dir_cmipng, var)
 
         if var == "tas":
             esms_excl = ["GISS-E2-H", "EC-EARTH"]
@@ -103,23 +104,12 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
             runs_excl = []
             print("TO DO: create list of excluded runs / ESMs for this variable")
 
-        path_runs_list = sorted(
-            glob.glob(
-                dir_name
-                + var
-                + "_ann_"
-                + esm
-                + "_"
-                + scenario
-                + "_"
-                + "r*i1p1"
-                + "_g025.nc"
-            )
-        )
+        path = os.path.join(dir_name, f"{var}_ann_{esm}_{scenario}_r*i1p1_g025.nc")
+        path_runs_list = sorted(glob.glob(path))
 
     # for cmip6-ng
     if gen == 6:
-        dir_name = dir_cmipng + var + "/ann/g025/"
+        dir_name = os.path.join(dir_cmipng, var, "ann", "g025")
 
         # TODO: remove hard-coding
         if var == "tas":
@@ -164,31 +154,11 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         # print(
         #   "TO DO: rewrite selection of p2 in way that needs less space for CanESM5 (+ see if other ESMs need p2 too)"
         # )
-        path_runs_list_scen = sorted(
-            glob.glob(
-                dir_name
-                + var
-                + "_ann_"
-                + esm
-                + "_"
-                + scenario
-                + "_"
-                + "r*i1p1f*"
-                + "_g025.nc"
-            )
-        )
+        path = os.path.join(dir_name, f"{var}_ann_{esm}_{scenario}_r*i1p1f*_g025.nc")
+        path_runs_list_scen = sorted(glob.glob(path))
 
-        path_runs_list_hist = sorted(
-            glob.glob(
-                dir_name
-                + var
-                + "_ann_"
-                + esm
-                + "_historical_"
-                + "r*i1p1f*"
-                + "_g025.nc"
-            )
-        )
+        path = os.path.join(dir_name, f"{var}_ann_{esm}_historical_r*i1p1f*_g025.nc")
+        path_runs_list_hist = sorted(glob.glob(path))
 
         # check if both scenario and historical run are available for this realization, if yes add to path_runs_list
         path_runs_list = []

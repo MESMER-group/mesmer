@@ -4,8 +4,7 @@ Configuration file for tests
 """
 import os.path
 
-# path to mesmer root directory can be found in a slightly sneaky way
-# like this
+# path to mesmer root directory can be found in a slightly sneaky way like this
 MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 # using os.path makes the paths platform-portable i.e. this will
@@ -21,21 +20,17 @@ TEST_DATA_ROOT = os.path.join(
 
 # cmip-ng
 gen = 6  # generation
-dir_cmipng = os.path.join(
-    TEST_DATA_ROOT, f"cmip{gen}-ng/"
-)  # TODO: remove need for trailing "/" here
+dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
 
 # observations
-dir_obs = os.path.join(
-    TEST_DATA_ROOT, "observations/"
-)  # TODO: remove need for trailing "/" here
+dir_obs = os.path.join(TEST_DATA_ROOT, "observations")
 
 # auxiliary data
-dir_aux = "auxillary/"
+dir_aux = "auxillary"
 
 # mesmer
-dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters/")
-dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations/")
+dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters")
+dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations")
 
 
 # configs that can be set for every run:

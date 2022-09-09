@@ -6,6 +6,8 @@
 Functions to load in observations which are saved locally.
 """
 
+import os
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -118,16 +120,13 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
 
     """
 
+    path = os.path.join(cfg.dir_obs, "blended_temperatures", prod)
     if prod == "best":
-        path = (
-            cfg.dir_obs + "blended_temperatures/" + prod + "/best_ann_1850-2019_g025.nc"
-        )
+        path = os.path.join(path, "best_ann_1850-2019_g025.nc")
         tblend = xr.open_dataset(path).temperature
         tblend["time"] = np.arange(1850, 2020)
     elif prod == "cw":
-        path = (
-            cfg.dir_obs + "blended_temperatures/" + prod + "/cw_ann_1850-2018_g025.nc"
-        )
+        path = os.path.join(path, "cw_ann_1850-2018_g025.nc")
         tblend = xr.open_dataset(path).temperature_anomaly
         tblend["time"] = np.arange(1850, 2019)
 
@@ -136,7 +135,6 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
         raise ValueError(
             "The grids of the ESM output and the observations do not agree."
         )
-        tblend = []
 
     # extract time
     time = tblend.time.values
@@ -181,7 +179,7 @@ def load_strat_aod(time, dir_obs):
 
     """
 
-    path_file = dir_obs + "aerosols/isaod_gl.dat"
+    path_file = os.path.join(dir_obs, "aerosols", "isaod_gl.dat")
     df = pd.read_csv(
         path_file,
         delim_whitespace=True,
