@@ -7,15 +7,13 @@ Functions to train global variability module of MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
 import statsmodels.api as sm
 import xarray as xr
 from packaging.version import Version
 
 from mesmer.core.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -93,22 +91,20 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
 
     # save the global variability paramters if requested
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_gv = dir_mesmer_params + "global/global_variability/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_gv):
-            os.makedirs(dir_mesmer_params_gv)
-            print("created dir:", dir_mesmer_params_gv)
-        filename_parts = [
-            "params_gv",
-            method_gv,
-            *preds_gv,
-            targ,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_gv = dir_mesmer_params_gv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_gv, filename_params_gv)
+        save_mesmer_data(
+            params_gv,
+            cfg.dir_mesmer_params,
+            "global",
+            "global_variability",
+            filename_parts=[
+                "params_gv",
+                method_gv,
+                *preds_gv,
+                targ,
+                esm,
+                *scenarios_tr,
+            ],
+        )
 
     return params_gv
 

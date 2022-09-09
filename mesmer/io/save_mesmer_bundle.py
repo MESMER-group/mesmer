@@ -3,6 +3,8 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
+import os
+
 import joblib
 import xarray as xr
 
@@ -72,3 +74,32 @@ def save_mesmer_bundle(
         "land_fractions": land_fractions,
     }
     joblib.dump(mesmer_bundle, bundle_file)
+
+
+def save_mesmer_data(params, *folders, filename_parts):
+    """save mesmer data to pickle format
+
+    Parameters
+    ----------
+    params : Any
+        Python object containg the parameters to save (e.g. a dictionary containing
+        numpy arrays etc.)
+    *folders : str
+        Name of the folders where to store the data.
+    filename_parts : iterable of str
+        Parts making up the filename. The parts will be joined by "_"
+
+    """
+
+    folder = os.path.join(*folders)
+
+    # check if folder to save params in exists, if not: make it
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        print(f"created dir: {folder}")
+
+    filename = "_".join(filename_parts) + ".pkl"
+    filename = f"{filename}.pkl"
+
+    fullname = os.path.join(folder, filename)
+    joblib.dump(params, fullname)

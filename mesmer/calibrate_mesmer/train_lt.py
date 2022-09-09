@@ -7,9 +7,6 @@ Functions to train local trends module of MESMER.
 """
 
 
-import os
-
-import joblib
 import xarray as xr
 
 from mesmer.calibrate_mesmer.train_utils import (
@@ -17,6 +14,7 @@ from mesmer.calibrate_mesmer.train_utils import (
     stack_predictors_and_targets,
 )
 from mesmer.core.linear_regression import _fit_linear_regression_xr
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -183,41 +181,38 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # save the local trend paramters if requested
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_lt = dir_mesmer_params + "local/local_trends/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_lt):
-            os.makedirs(dir_mesmer_params_lt)
-            print("created dir:", dir_mesmer_params_lt)
-        filename_parts = [
-            "params_lt",
-            method_lt,
-            *preds_lt,
-            *targ_names,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_lt = dir_mesmer_params_lt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_lt, filename_params_lt)
+        save_mesmer_data(
+            params_lt,
+            cfg.dir_mesmer_params,
+            "local",
+            "local_trends",
+            filename_parts=[
+                "params_lt",
+                method_lt,
+                *preds_lt,
+                *targ_names,
+                esm,
+                *scenarios_tr,
+            ],
+        )
 
         # check if local variability parameters need to be saved too
         # overwrites lv module if already exists, i.e., assumption: lt before lv
         if len(params_lv) > 0:
-            dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
-            # check if folder to save params in exists, if not: make it
-            if not os.path.exists(dir_mesmer_params_lv):
-                os.makedirs(dir_mesmer_params_lv)
-                print("created dir:", dir_mesmer_params_lv)
-        filename_parts = [
-            "params_lv",
-            method_lv,
-            *preds_lv,
-            *targ_names,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_lv, filename_params_lv)
+            save_mesmer_data(
+                params_lv,
+                cfg.dir_mesmer_params,
+                "local",
+                "local_variability",
+                filename_parts=[
+                    "params_lv",
+                    method_lv,
+                    *preds_lv,
+                    *targ_names,
+                    esm,
+                    *scenarios_tr,
+                ],
+            )
 
     if len(params_lv) > 0:
         return params_lt, params_lv

@@ -7,15 +7,13 @@ Functions to train global trend module of MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
 import xarray as xr
 
 from mesmer.core.linear_regression import LinearRegression
 from mesmer.core.smoothing import lowess
 from mesmer.io import load_strat_aod
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def train_gt(var, targ, esm, time, cfg, save_params=True):
@@ -143,22 +141,20 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
     # save the global trend paramters if requested
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_gt = dir_mesmer_params + "global/global_trend/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_gt):
-            os.makedirs(dir_mesmer_params_gt)
-            print("created dir:", dir_mesmer_params_gt)
-        filename_parts = [
-            "params_gt",
-            method_gt,
-            *preds_gt,
-            targ,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_gt = dir_mesmer_params_gt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_gt, filename_params_gt)
+        save_mesmer_data(
+            params_gt,
+            cfg.dir_mesmer_params,
+            "global",
+            "global_trend",
+            filename_parts=(
+                "params_gt",
+                method_gt,
+                *preds_gt,
+                targ,
+                esm,
+                *scenarios_tr,
+            ),
+        )
 
     return params_gt
 
