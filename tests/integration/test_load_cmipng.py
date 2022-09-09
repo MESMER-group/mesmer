@@ -3,10 +3,10 @@ import os
 import numpy as np
 import numpy.testing as npt
 import pytest
-from integration.utils import _check_dict
 
 import mesmer
 from mesmer.io._load_cmipng import _load_cmipng_var
+from mesmer.testing import _check_dict
 
 
 def _get_default_kwargs(

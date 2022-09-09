@@ -6,8 +6,7 @@ import xarray as xr
 
 import mesmer.core.auto_regression
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-
-from .utils import trend_data_1D, trend_data_2D, trend_data_3D
+from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 
 
 def test_select_ar_order_xr_1d():

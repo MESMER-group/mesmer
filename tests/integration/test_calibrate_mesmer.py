@@ -5,8 +5,7 @@ import joblib
 import pytest
 
 from mesmer.calibrate_mesmer import _calibrate_and_draw_realisations
-
-from .utils import _check_dict
+from mesmer.testing import _check_dict
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
