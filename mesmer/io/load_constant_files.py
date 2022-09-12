@@ -15,7 +15,7 @@ import numpy as np
 import regionmask
 from packaging.version import Version
 
-from ..utils.regionmaskcompat import mask_percentage
+from ..utils.regionmaskcompat import mask_3D_frac_approx
 from ..utils.xrcompat import infer_interval_breaks
 
 
@@ -198,7 +198,7 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     reg_dict["abbrevs"] = reg.abbrevs
     reg_dict["names"] = reg.names
     # have fraction of grid cells
-    reg_dict["grids"] = mask_percentage(reg, lon["c"], lat["c"]).values
+    reg_dict["grids"] = mask_3D_frac_approx(reg, lon["c"], lat["c"]).values
     # not sure if needed: "binary" grid with each grid point assigned to single country
     reg_dict["grid_b"] = reg.mask(lon["c"], lat["c"]).values
     # to be used for plotting outlines (mainly useful for srex regs)
@@ -213,7 +213,9 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point
-    ls["grid_raw"] = np.squeeze(mask_percentage(land_110, lon["c"], lat["c"]).values)
+    ls["grid_raw"] = np.squeeze(
+        mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values
+    )
 
     # remove Antarctica
     idx_ANT = np.where(lat["c"] < -60)[0]
