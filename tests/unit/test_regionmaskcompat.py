@@ -1,0 +1,121 @@
+import numpy as np
+import pytest
+import regionmask
+import shapely.geometry
+
+from mesmer.utils.regionmaskcompat import mask_3D_frac_approx, sample_coord
+
+
+def test_sample_coord():
+
+    actual = sample_coord([0, 10])
+    expected = np.arange(-4.5, 14.6, 1)
+    np.testing.assert_allclose(actual, expected)
+
+    actual = sample_coord([0, 1, 2])
+    expected = np.arange(-0.45, 2.46, 0.1)
+    np.testing.assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize("dim", ["lon", "lat"])
+@pytest.mark.parametrize("invalid_coords", ([0, 1, 3], [[0, 1, 2]]))
+def test_mask_percentage_wrong_coords(dim, invalid_coords):
+
+    valid_coords = [0, 1, 2]
+    latlon = {"lon": valid_coords, "lat": valid_coords}
+    # replace one of the coords with invalid values
+    latlon[dim] = invalid_coords
+
+    with pytest.raises(
+        ValueError, match="'lon' and 'lat' must be 1D and equally spaced."
+    ):
+        mask_3D_frac_approx(None, **latlon)
+
+
+@pytest.mark.parametrize("lat", ((-91, 90), (-90, 92), (-91, 92)))
+def test_mask_percentage_lon_beyond_90(lat):
+
+    lat = np.arange(*lat)
+    lon = np.arange(0, 360, 10)
+
+    with pytest.raises(ValueError, match=r"lat must be between \-90 and \+90"):
+        mask_3D_frac_approx(None, lon, lat)
+
+
+def test_mask_percentage_coords():
+    # ensure coords are the same (as they might by averaged)
+
+    lat = np.arange(90, -90, -1)
+    lon = np.arange(0, 360, 1)
+
+    r = shapely.geometry.box(0, -90, 360, 90)
+    r = regionmask.Regions([r])
+
+    result = mask_3D_frac_approx(r, lon, lat)
+
+    np.testing.assert_equal(result.lon.values, lon)
+    np.testing.assert_equal(result.lat.values, lat)
+
+    assert result.abbrevs.item() == "r0"
+    assert result.names.item() == "Region0"
+    assert result.region.item() == 0
+
+
+def test_mask_percentage_poles():
+    # all points should be 1 for a global mask
+
+    lat = np.arange(90, -90, -1)
+    lon = np.arange(0, 360, 1)
+
+    r = shapely.geometry.box(0, -90, 360, 90)
+    r = regionmask.Regions([r])
+
+    result = mask_3D_frac_approx(r, lon, lat)
+    assert (result == 1).all()
+
+
+def test_mask_percentage_southpole():
+    # all at the southpole should be 1 - irrespective of where exactly the southernmost
+    # latitude is
+
+    lon = np.arange(0, 30, 1)
+
+    r = shapely.geometry.box(0, -90, 360, -85)
+    r = regionmask.Regions([r])
+
+    for offset in np.arange(0, 1, 0.02):
+        lat = np.arange(-90, -80, 1) + offset
+        result = mask_3D_frac_approx(r, lon, lat)
+        assert (result.isel(lat=0) == 1).all()
+
+
+def test_mask_percentage_northpole():
+    # all at the southpole should be 1 - irrespective of where exactly the southernmost
+    # latitude is
+
+    lon = np.arange(0, 30, 1)
+
+    r = shapely.geometry.box(0, 85, 360, 90)
+    r = regionmask.Regions([r])
+
+    for offset in np.arange(0, 1, 0.05):
+        lat = np.arange(90, 80, -1) - offset
+        result = mask_3D_frac_approx(r, lon, lat)
+        assert (result.isel(lat=0) == 1).all()
+
+
+def test_mask_percentage():
+
+    lon = np.array([15, 30])
+    lat = np.array([15, 30])
+
+    # the center of the region is at 15°
+    r = shapely.geometry.box(0, 0, 30, 30)
+    r = regionmask.Regions([r])
+
+    result = mask_3D_frac_approx(r, lon, lat)
+
+    expected = [[1, 0.5], [0.5, 0.25]]
+    expected = np.array(expected)
+
+    np.testing.assert_allclose(result.values.squeeze(), expected)

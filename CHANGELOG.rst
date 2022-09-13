@@ -42,6 +42,9 @@ Breaking changes
 - Moved ``gaspari_cohn`` & ``calc_geodist_exact`` from ``io.load_constant_files`` to ``core.computation``
   (`#158 <https://github.com/MESMER-group/mesmer/issues/158>`_).
   By `Yann Quilcaille <https://github.com/yquilcaille>`_.
+ - The function ``mask_percentage`` has been renamed to :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`
+  (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Deprecations
 ^^^^^^^^^^^^
@@ -50,6 +53,10 @@ Deprecations
 Bug fixes
 ^^^^^^^^^
 
+- Fix two issues with :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`. Note that these
+  issues are only relevant if passing xarray objects or masks close to the poles
+  (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Documentation
 ^^^^^^^^^^^^^
