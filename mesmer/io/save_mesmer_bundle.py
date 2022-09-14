@@ -98,7 +98,7 @@ def save_mesmer_data(params, *folders, filename_parts):
         os.makedirs(folder)
         print(f"created dir: {folder}")
 
-    filename = "_".join(filename_parts) + ".pkl"
+    filename = "_".join(filename_parts)
     filename = f"{filename}.pkl"
 
     fullname = os.path.join(folder, filename)
