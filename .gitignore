@@ -2,7 +2,7 @@
 # mesmer specific
 generated
 
-# allow saving mesmer without commiting them to the repo
+# allow saving mesmer params without commiting them to the repo
 tests/test-data/output/*/params
 
 startup

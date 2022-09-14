@@ -16,14 +16,12 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
     ouput_dir = os.path.join(test_data_root_dir, "output", "one_scen_one_ens")
 
     expected_output_file = os.path.join(
-        ouput_dir,
-        "test_make_realisations_expected_output.nc"
+        ouput_dir, "test_make_realisations_expected_output.nc"
     )
 
     tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1000000}}}
 
     bundle_path = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
-
 
     # TODO: split out load_mesmer_bundle function
     mesmer_bundle = joblib.load(bundle_path)
