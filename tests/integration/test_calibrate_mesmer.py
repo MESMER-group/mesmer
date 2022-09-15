@@ -10,7 +10,11 @@ from mesmer.testing import _check_dict
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
 def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
-    expected_output_file = os.path.join(test_data_root_dir, "test-mesmer-bundle.pkl")
+
+    ouput_dir = os.path.join(test_data_root_dir, "output", "one_scen_one_ens")
+
+    expected_output_file = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
+    params_output_dir = os.path.join(ouput_dir, "params")
 
     test_esms = ["IPSL-CM6A-LR"]
     test_scenarios_to_train = ["h-ssp126"]
@@ -48,12 +52,16 @@ def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
         cmip_generation=test_cmip_generation,
         observations_root_dir=test_observations_root_dir,
         auxiliary_data_dir=test_auxiliary_data_dir,
+        # save params as well - they are .gitignored
+        save_params=update_expected_files,
+        params_output_dir=params_output_dir,
     )
 
     res = joblib.load(test_output_file)
 
     if update_expected_files:
         shutil.copyfile(test_output_file, expected_output_file)
+        pytest.skip(f"Updated {expected_output_file}")
     else:
         exp = joblib.load(expected_output_file)
 
