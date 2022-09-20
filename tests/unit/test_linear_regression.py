@@ -188,6 +188,9 @@ def test_linear_regression_errors(lr_method_or_function):
     test_missing_dim(pred0, pred1, tgt.rename(time="t"), weights, name="target")
     test_missing_dim(pred0, pred1, tgt, weights.rename(time="t"), name="weights")
 
+    with pytest.raises(ValueError, match="dim cannot currently be 'predictor'."):
+        lr_method_or_function({"pred0": pred0}, tgt, dim="predictor")
+
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
@@ -288,6 +291,45 @@ def test_linear_regression_two_predictors(lr_method_or_function, intercept, slop
             "intercept": expected_intercept,
             "pred0": expected_pred0,
             "pred1": expected_pred1,
+            "fit_intercept": True,
+        }
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+def test_linear_regression_two_predictors_extra_dim(lr_method_or_function):
+    # add a 0D dimension/ coordinate and ensure it still works
+    # NOTE: requires 3 predictors to trigger the error (might be an xarray issue)
+
+    intercept = 1.25
+    slope = 3.14
+
+    pred0 = trend_data_1D(slope=1, scale=0)
+    # add height coordinate
+    pred0 = pred0.assign_coords(height=2)
+    pred1 = trend_data_1D(slope=1, scale=0)
+
+    tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
+
+    result = lr_method_or_function(
+        {"pred0": pred0, "pred1": pred1, "pred2": pred0}, tgt, "time"
+    )
+
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_pred0 = xr.full_like(template, slope / 3)
+    expected_pred1 = xr.full_like(template, slope / 3)
+    expected_pred2 = xr.full_like(template, slope / 3)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "pred1": expected_pred1,
+            "pred2": expected_pred2,
             "fit_intercept": True,
         }
     )
