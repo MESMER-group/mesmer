@@ -217,11 +217,17 @@ def _fit_linear_regression_xr(
             "A predictor with the name 'weights' or 'intercept' is not allowed"
         )
 
+    if dim == "predictor":
+        raise ValueError("dim cannot currently be 'predictor'.")
+
     for key, pred in predictors.items():
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
 
     predictors_concat = xr.concat(
-        tuple(predictors.values()), dim="predictor", join="exact"
+        tuple(predictors.values()),
+        dim="predictor",
+        join="exact",
+        coords="minimal",
     )
 
     _check_dataarray_form(target, ndim=2, required_dims=dim, name="target")
