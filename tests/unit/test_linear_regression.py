@@ -301,20 +301,20 @@ def test_linear_regression_two_predictors(lr_method_or_function, intercept, slop
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 def test_linear_regression_two_predictors_extra_dim(lr_method_or_function):
     # add a 0D dimension/ coordinate and ensure it still works
-    # NOTE: this requires at least 3 predictors - this might also be a xarray issue
+    # NOTE: requires 3 predictors to trigger the error (might be an xarray issue)
 
     intercept = 1.25
     slope = 3.14
 
     pred0 = trend_data_1D(slope=1, scale=0)
-
+    # add height coordinate
+    pred0 = pred0.assign_coords(height=2)
     pred1 = trend_data_1D(slope=1, scale=0)
-    pred1 = pred1.assign_coords(height=2)
 
     tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
 
     result = lr_method_or_function(
-        {"pred0": pred1, "pred1": pred0, "pred2": pred1}, tgt, "time"
+        {"pred0": pred0, "pred1": pred1, "pred2": pred0}, tgt, "time"
     )
 
     template = tgt.isel(time=0, drop=True)
