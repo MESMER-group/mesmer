@@ -48,6 +48,8 @@ def _stack_target(target):
 
     # loop through scenarios
     for array in target.values():
+        # flatten ensemble members
+        array = array.reshape(1, -1, array.shape[-1])
         out.append(array.squeeze())
 
     return np.concatenate(out)
