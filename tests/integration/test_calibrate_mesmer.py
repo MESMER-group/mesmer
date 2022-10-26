@@ -9,15 +9,24 @@ from mesmer.testing import _check_dict
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
-def test_calibrate_mesmer(test_data_root_dir, tmpdir, update_expected_files):
+@pytest.mark.parametrize(
+    "scenarios, outname",
+    (
+        [["h-ssp126"], "one_scen_one_ens"],
+        [["h-ssp585"], "one_scen_multi_ens"],
+    ),
+)
+def test_calibrate_mesmer(
+    scenarios, outname, test_data_root_dir, tmpdir, update_expected_files
+):
 
-    ouput_dir = os.path.join(test_data_root_dir, "output", "one_scen_one_ens")
+    ouput_dir = os.path.join(test_data_root_dir, "output", outname)
 
     expected_output_file = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
     params_output_dir = os.path.join(ouput_dir, "params")
 
     test_esms = ["IPSL-CM6A-LR"]
-    test_scenarios_to_train = ["h-ssp126"]
+    test_scenarios_to_train = scenarios
     test_target_variable = "tas"
     test_reg_type = "srex"
     test_threshold_land = 1 / 3

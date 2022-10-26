@@ -270,7 +270,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     coef_saod = lr.params["aod_obs"].values
 
     # apply linear regression model to obtain volcanic spikes
-    contrib_volc = lr.predict(predictors={"aod_obs": aod_obs_all})
+    contrib_volc = lr.predict(predictors={"aod_obs": aod_obs})
 
     # merge the lowess trend wit the volc contribution
     gt = gt_lowess + contrib_volc.values.squeeze()

@@ -85,6 +85,11 @@ Internal Changes
 - Use pyproject.toml for the build-system and setuptools_scm for the `__version__`
   (`#188 <https://github.com/MESMER-group/mesmer/pull/188>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
+
+  - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
+
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 
 v0.8.3 - 2021-12-23
