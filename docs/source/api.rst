@@ -103,11 +103,10 @@ Load constant files
    ~io.load_constant_files.infer_interval_breaks
    ~io.load_constant_files.load_phi_gc
    ~io.load_constant_files.load_regs_ls_wgt_lon_lat
-   ~io.load_constant_files.mask_percentage
 
 
-Load constant files
-^^^^^^^^^^^^^^^^^^^
+Load output
+^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated/
@@ -144,3 +143,4 @@ Utils
    ~utils.convert.separate_hist_future
    ~utils.select.extract_land
    ~utils.select.extract_time_period
+   ~utils.regionmaskcompat import mask_3D_frac_approx
