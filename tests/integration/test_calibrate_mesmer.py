@@ -14,6 +14,7 @@ from mesmer.testing import _check_dict
     (
         [["h-ssp126"], "one_scen_one_ens"],
         [["h-ssp585"], "one_scen_multi_ens"],
+        [["h-ssp126", "h-ssp585"], "multi_scen_multi_ens"],
     ),
 )
 def test_calibrate_mesmer(
