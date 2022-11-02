@@ -13,8 +13,8 @@ from mesmer.calibrate_mesmer.train_utils import (
     get_scenario_weights,
     stack_predictors_and_targets,
 )
-from mesmer.core.linear_regression import _fit_linear_regression_xr
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.linear_regression import _fit_linear_regression_xr
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):

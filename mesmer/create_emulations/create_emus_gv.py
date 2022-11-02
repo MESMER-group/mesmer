@@ -9,8 +9,8 @@ Functions to create global variability emulations with MESMER.
 
 import numpy as np
 
-from mesmer.core.auto_regression import _draw_auto_regression_correlated_np
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):

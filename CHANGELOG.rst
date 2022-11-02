@@ -7,26 +7,26 @@ v0.9.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
-- Create :py:class:`mesmer.core.linear_regression.LinearRegression` which encapsulates
+- Create :py:class:`mesmer.stats.linear_regression.LinearRegression` which encapsulates
   ``fit``, ``predict``, etc. methods around linear regression
   (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Add ``mesmer.core._fit_linear_regression_xr``: xarray wrapper for ``mesmer.core._fit_linear_regression_np``.
+- Add ``mesmer.stats._fit_linear_regression_xr``: xarray wrapper for ``mesmer.stats._fit_linear_regression_np``.
   (`#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Add add ``fit_intercept`` argument to the ``linear_regression`` fitting methods and
   functions (`#144 <https://github.com/MESMER-group/mesmer/pull/144>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Add ``mesmer.core.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
+- Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
   auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Add ``mesmer.core.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
+- Add ``mesmer.stats.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
   auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Extract function to select the order of the auto regressive model: ``mesmer.core.auto_regression._select_ar_order_xr``
+- Extract function to select the order of the auto regressive model: ``mesmer.stats.auto_regression._select_ar_order_xr``
   (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.core.smoothing.lowess`.
+- Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
   (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
@@ -72,7 +72,7 @@ Internal Changes
 - Renamed the ``interpolation`` keyword of ``np.quantile`` to ``method`` changed in
   numpy v1.22.0 (`#137 <https://github.com/MESMER-group/mesmer/pull/137>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Make use of :py:class:`mesmer.core.linear_regression.LinearRegression` in
+- Make use of :py:class:`mesmer.stats.linear_regression.LinearRegression` in
   :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
@@ -99,7 +99,7 @@ v0.8.3 - 2021-12-23
 New Features
 ^^^^^^^^^^^^
 
-- Add ``mesmer.core._linear_regression`` (renamed to ``mesmer.core._fit_linear_regression_np``
+- Add ``mesmer.stats._linear_regression`` (renamed to ``mesmer.stats._fit_linear_regression_np``
   in `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_). Starts the process of
   refactoring the codebase (`#116 <https://github.com/MESMER-group/mesmer/pull/116>`_).
   By `Zeb Nicholls <https://github.com/znicholls>`_.

@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.core.localized_covariance import (
+from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
+from mesmer.stats.localized_covariance import (
     _adjust_ecov_ar1_np,
     _ecov_crossvalidation,
     _find_localized_empirical_covariance_np,
@@ -10,7 +11,6 @@ from mesmer.core.localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
-from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
 
 
 @pytest.fixture
