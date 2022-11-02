@@ -10,22 +10,22 @@ This page provides an auto-generated summary of mesmers' API.
 Top-level functions
 ===================
 
-Statistical core functions
---------------------------
+Statistical functions
+---------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~core.linear_regression.LinearRegression
-   ~core.linear_regression.LinearRegression.fit
-   ~core.linear_regression.LinearRegression.predict
-   ~core.linear_regression.LinearRegression.residuals
-   ~core.linear_regression.LinearRegression.to_netcdf
-   ~core.linear_regression.LinearRegression.from_netcdf
-   ~core.auto_regression._select_ar_order_xr
-   ~core.auto_regression._fit_auto_regression_xr
-   ~core.auto_regression._draw_auto_regression_correlated_np
-   ~core.smoothing.lowess
+   ~stats.linear_regression.LinearRegression
+   ~stats.linear_regression.LinearRegression.fit
+   ~stats.linear_regression.LinearRegression.predict
+   ~stats.linear_regression.LinearRegression.residuals
+   ~stats.linear_regression.LinearRegression.to_netcdf
+   ~stats.linear_regression.LinearRegression.from_netcdf
+   ~stats.auto_regression._select_ar_order_xr
+   ~stats.auto_regression._fit_auto_regression_xr
+   ~stats.auto_regression._draw_auto_regression_correlated_np
+   ~stats.smoothing.lowess
 
 Computation
 -----------

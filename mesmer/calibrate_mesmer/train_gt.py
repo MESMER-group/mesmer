@@ -10,10 +10,10 @@ Functions to train global trend module of MESMER.
 import numpy as np
 import xarray as xr
 
-from mesmer.core.linear_regression import LinearRegression
-from mesmer.core.smoothing import lowess
 from mesmer.io import load_strat_aod
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.linear_regression import LinearRegression
+from mesmer.stats.smoothing import lowess
 
 
 def train_gt(var, targ, esm, time, cfg, save_params=True):

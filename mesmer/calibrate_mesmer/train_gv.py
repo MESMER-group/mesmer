@@ -12,8 +12,8 @@ import statsmodels.api as sm
 import xarray as xr
 from packaging.version import Version
 
-from mesmer.core.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):

@@ -3,7 +3,7 @@ from typing import Mapping, Optional
 import numpy as np
 import xarray as xr
 
-from .utils import _check_dataarray_form, _check_dataset_form
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
 
 class LinearRegression:
