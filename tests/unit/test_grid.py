@@ -5,14 +5,16 @@ import xarray as xr
 import mesmer.xarray_utils as mxu
 
 
-def data_1D_dims(as_dataset, x_dim="lon", y_dim="lat", cell_dim="cell"):
+def data_1D_coords(as_dataset, x_dim="lon", y_dim="lat", cell_dim="cell"):
 
     data = np.arange(2 * 3 * 4, dtype=float)
     time = [0, 1]
-    lat = [0, 1, 2]
-    lon = [0, 1, 2, 3]
+    lat, lon = [0, 1, 2], [0, 1, 2, 3]
+    c_lat, c_lon = np.mgrid[:3, :4]
+
     name = "name"
     attrs = {"key": "value"}
+
     da_structured = xr.DataArray(
         data.reshape(2, 3, 4),
         dims=("time", y_dim, x_dim),
@@ -26,8 +28,8 @@ def data_1D_dims(as_dataset, x_dim="lon", y_dim="lat", cell_dim="cell"):
         dims=("time", cell_dim),
         coords={
             "time": time,
-            y_dim: (cell_dim, sorted(4 * lat)),
-            x_dim: (cell_dim, 3 * lon),
+            y_dim: (cell_dim, c_lat.flatten()),
+            x_dim: (cell_dim, c_lon.flatten()),
         },
         name=name,
         attrs=attrs,
@@ -39,16 +41,16 @@ def data_1D_dims(as_dataset, x_dim="lon", y_dim="lat", cell_dim="cell"):
     return da_structured, da_unstructured
 
 
-def data_2D_dims(as_dataset):
+def data_2D_coords(as_dataset):
 
     data = np.arange(2 * 3 * 4, dtype=float)
     time = [0, 1]
-    yc = np.array([[90, 90, 90, 90], [89, 89, 89, 89], [88, 88, 88, 88]])
-    xc = np.array([[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]])
     yc, xc = np.mgrid[90:87:-1, 0:4]
+    y, x = np.mgrid[0:3, 0:4]
 
     name = "name"
     attrs = {"key": "value"}
+
     da_structured = xr.DataArray(
         data.reshape(2, 3, 4),
         dims=("time", "y", "x"),
@@ -56,8 +58,6 @@ def data_2D_dims(as_dataset):
         name=name,
         attrs=attrs,
     )
-
-    y, x = np.mgrid[0:3, 0:4]
 
     da_unstructured = xr.DataArray(
         data.reshape(2, 12),
@@ -81,9 +81,20 @@ def data_2D_dims(as_dataset):
 
 @pytest.mark.parametrize("as_dataset", [True, False])
 def test_to_unstructured_defaults(as_dataset):
-    da, expected = data_1D_dims(as_dataset)
+    da, expected = data_1D_coords(as_dataset)
 
     result = mxu.to_unstructured(da)
+
+    xr.testing.assert_identical(result, expected)
+
+
+@pytest.mark.parametrize("as_dataset", [True, False])
+def test_to_unstructured_multiindex(as_dataset):
+    da, expected = data_1D_coords(as_dataset)
+
+    result = mxu.to_unstructured(da, multiindex=True)
+
+    expected = expected.set_index({"cell": ("lat", "lon")})
 
     xr.testing.assert_identical(result, expected)
 
@@ -93,7 +104,9 @@ def test_to_unstructured_defaults(as_dataset):
 @pytest.mark.parametrize("cell_dim", ["cell", "gridpoint"])
 @pytest.mark.parametrize("as_dataset", [True, False])
 def test_to_unstructured(x_dim, y_dim, cell_dim, as_dataset):
-    da, expected = data_1D_dims(as_dataset, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim)
+    da, expected = data_1D_coords(
+        as_dataset, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim
+    )
 
     result = mxu.to_unstructured(da, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim)
 
@@ -101,21 +114,25 @@ def test_to_unstructured(x_dim, y_dim, cell_dim, as_dataset):
 
 
 @pytest.mark.parametrize("as_dataset", [True, False])
-def test_to_unstructured_2D_dims(as_dataset):
-    da, expected = data_2D_dims(as_dataset)
+def test_to_unstructured_2D_coords(as_dataset):
+    da, expected = data_2D_coords(as_dataset)
 
     result = mxu.to_unstructured(da, x_dim="x", y_dim="y")
-    # to_unstructured adds coordinates for "Dimensions without coordinates"
-    # result = result.drop_vars(("x", "y"))
 
     xr.testing.assert_identical(result, expected)
 
 
 @pytest.mark.parametrize("dropna", [True, False])
+@pytest.mark.parametrize("coords", ["1D", "2D"])
 @pytest.mark.parametrize("time_pos", [0, None])
-def test_to_unstructured_dropna(dropna, time_pos):
+def test_to_unstructured_dropna(dropna, coords, time_pos):
 
-    da, expected = data_1D_dims(as_dataset=False)
+    if coords == "1D":
+        da, expected = data_1D_coords(as_dataset=False)
+        kwargs = {}
+    else:
+        da, expected = data_2D_coords(as_dataset=False)
+        kwargs = {"x_dim": "x", "y_dim": "y"}
 
     da[slice(time_pos), 0, 0] = np.NaN
 
@@ -125,16 +142,40 @@ def test_to_unstructured_dropna(dropna, time_pos):
     if dropna:
         expected = expected.dropna("cell")
 
-    result = mxu.to_unstructured(da, dropna=dropna)
+    result = mxu.to_unstructured(da, dropna=dropna, **kwargs)
+
+    xr.testing.assert_identical(result, expected)
+
+
+@pytest.mark.parametrize("coords", ["1D", "2D"])
+def test_unstructured_roundtrip_dropna_row(coords):
+
+    if coords == "1D":
+        da_structured, __ = data_1D_coords(as_dataset=False)
+        kwargs = {"x_dim": "lon", "y_dim": "lat"}
+    else:
+        da_structured, __ = data_2D_coords(as_dataset=False)
+        kwargs = {"x_dim": "x", "y_dim": "y"}
+
+    coords_orig = da_structured.coords.to_dataset()[list(kwargs.values())]
+
+    da_structured[:, :, 0] = np.NaN
+    expected = da_structured
+
+    da_unstructured = mxu.to_unstructured(da_structured, **kwargs)
+    result = mxu.from_unstructured(da_unstructured, coords_orig, **kwargs)
+
+    # roundtripping adds x & y coords - not sure if there is something to be done about
+    if coords == "2D":
+        result = result.drop_vars(["x", "y"])
 
     xr.testing.assert_identical(result, expected)
 
 
 @pytest.mark.parametrize("as_dataset", [True, False])
 def test_from_unstructured_defaults(as_dataset):
-    expected, da = data_1D_dims(as_dataset)
+    expected, da = data_1D_coords(as_dataset)
 
-    # todo: get only lon & lat without time for DataArray and Dataset
     coords_orig = expected.coords.to_dataset()[["lon", "lat"]]
 
     result = mxu.from_unstructured(da, coords_orig)
@@ -147,8 +188,10 @@ def test_from_unstructured_defaults(as_dataset):
 @pytest.mark.parametrize("cell_dim", ["cell", "gridpoint"])
 @pytest.mark.parametrize("as_dataset", [True, False])
 def test_from_unstructured(x_dim, y_dim, cell_dim, as_dataset):
-    expected, da = data_1D_dims(as_dataset, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim)
-    # todo: get only lon & lat without time for DataArray and Dataset
+    expected, da = data_1D_coords(
+        as_dataset, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim
+    )
+
     coords_orig = expected.coords.to_dataset()[[x_dim, y_dim]]
     result = mxu.from_unstructured(
         da, coords_orig, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim
@@ -158,9 +201,9 @@ def test_from_unstructured(x_dim, y_dim, cell_dim, as_dataset):
 
 
 @pytest.mark.parametrize("as_dataset", [True, False])
-def test_unstructured_roundtrip_1D_dim(as_dataset):
+def test_unstructured_roundtrip_1D_coords(as_dataset):
 
-    da_structured, da_unstructured = data_1D_dims(as_dataset)
+    da_structured, da_unstructured = data_1D_coords(as_dataset)
 
     coords_orig = da_structured.coords.to_dataset()[["lon", "lat"]]
 
@@ -172,9 +215,9 @@ def test_unstructured_roundtrip_1D_dim(as_dataset):
 
 
 @pytest.mark.parametrize("as_dataset", [True, False])
-def test_unstructured_roundtrip_2D_dim(as_dataset):
+def test_unstructured_roundtrip_2D_coords(as_dataset):
 
-    da_structured, da_unstructured = data_2D_dims(as_dataset)
+    da_structured, da_unstructured = data_2D_coords(as_dataset)
 
     dims = {"x_dim": "x", "y_dim": "y"}
 
