@@ -4,7 +4,7 @@ from packaging.version import Version
 
 
 def to_unstructured(
-    obj, x_dim="lon", y_dim="lat", cell_dim="cell", multiindex=False, dropna=True
+    obj, *, x_dim="lon", y_dim="lat", cell_dim="cell", multiindex=False, dropna=True
 ):
     """stack a regular grid to an unstructured grid
 
@@ -47,7 +47,7 @@ def to_unstructured(
     return obj
 
 
-def from_unstructured(obj, coords_orig, x_dim="lon", y_dim="lat", cell_dim="cell"):
+def from_unstructured(obj, coords_orig, *, x_dim="lon", y_dim="lat", cell_dim="cell"):
     """unstack an unstructured grid to a regular grid
 
     Parameters
@@ -84,6 +84,6 @@ def from_unstructured(obj, coords_orig, x_dim="lon", y_dim="lat", cell_dim="cell
     obj = xr.align(obj, coords_orig, join="right")[0]
 
     # make sure non-dimension coords are correct
-    obj = obj.assign_coords(coords_orig)
+    obj = obj.assign_coords(coords_orig.coords)
 
     return obj
