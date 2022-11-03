@@ -36,6 +36,15 @@ Computation
    ~core.computation.calc_geodist_exact
    ~core.computation.gaspari_cohn
 
+Data manipulation
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~xarray_utils.to_unstructured
+   ~xarray_utils.from_unstructured
+
 Train mesmer
 ------------
 
