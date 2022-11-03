@@ -30,14 +30,13 @@ def to_unstructured(
     """
 
     dims = {cell_dim: (y_dim, x_dim)}
-    # dims = {cell_dim: (x_dim, y_dim)}
 
     obj = obj.stack(dims)
 
     if not multiindex:
         # there is a bug in xarray v2022.06 (Index refactor)
-        if Version(xr.__version__) == Version("2022.3"):
-            raise TypeError("There is a bug in xarray v2022.03. Please update xarray.")
+        if Version(xr.__version__) == Version("2022.6"):
+            raise TypeError("There is a bug in xarray v2022.06. Please update xarray.")
 
         obj = obj.reset_index(cell_dim)
 
