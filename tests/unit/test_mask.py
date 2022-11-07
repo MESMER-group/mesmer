@@ -5,7 +5,7 @@ import xarray as xr
 import mesmer.xarray_utils as mxu
 
 
-def data_lon_lat(x_coords="lon", y_coords="lat"):
+def data_lon_lat(as_dataset, x_coords="lon", y_coords="lat"):
 
     lon = np.arange(0.5, 360, 2)
     lat = np.arange(90, -91, -2)
@@ -21,13 +21,15 @@ def data_lon_lat(x_coords="lon", y_coords="lat"):
 
     ds = xr.Dataset(data_vars={"data": da, "scalar": 1}, attrs={"key": "ds_attrs"})
 
-    return ds
+    if as_dataset:
+        return ds
+    return ds.data
 
 
 @pytest.mark.parametrize("threshold", ([0, 1], -0.1, 1.1))
-def test_mask_land_fraction_errors(threshold):
+def test_ocean_land_fraction_errors(threshold):
 
-    data = data_lon_lat()
+    data = data_lon_lat(as_dataset=True)
 
     with pytest.raises(
         ValueError, match="`threshold` must be a scalar between 0 and 1"
@@ -35,7 +37,7 @@ def test_mask_land_fraction_errors(threshold):
         mxu.mask_ocean_fraction(data, threshold=threshold)
 
 
-def test_mask_land_fraction_irregular():
+def test_ocean_land_fraction_irregular():
 
     lon = [0, 1, 3]
     lat = [0, 1, 3]
@@ -49,9 +51,9 @@ def test_mask_land_fraction_irregular():
         mxu.mask_ocean_fraction(data, threshold=0.5)
 
 
-def test_mask_land_fraction_threshold():
+def test_ocean_land_fraction_threshold():
     # check that the threshold has an influence
-    data = data_lon_lat()
+    data = data_lon_lat(as_dataset=True)
 
     result_033 = mxu.mask_ocean_fraction(data, threshold=0.33)
     result_066 = mxu.mask_ocean_fraction(data, threshold=0.66)
@@ -59,59 +61,75 @@ def test_mask_land_fraction_threshold():
     assert not (result_033.data == result_066.data).all()
 
 
-def _test_mask(func, threshold=None, **kwargs):
+def _test_mask(func, as_dataset, threshold=None, **kwargs):
     # not checking the actual mask
 
-    data = data_lon_lat(**kwargs)
+    data = data_lon_lat(as_dataset=as_dataset, **kwargs)
 
     kwargs = kwargs if threshold is None else {"threshold": threshold, **kwargs}
     result = func(data, **kwargs)
 
-    # ensure scalar is not broadcast
-    assert result.scalar.ndim == 0
+    if as_dataset:
+        # ensure scalar is not broadcast
+        assert result.scalar.ndim == 0
+        assert result.attrs == {"key": "ds_attrs"}
 
-    # ensure no nan in data
-    assert result.data.notnull().all()
+        result_da = result.data
+    else:
+        result_da = result
 
     # ensure mask is applied
-    assert result.data.isnull().any()
+    assert result_da.isnull().any()
 
-    assert result.attrs == {"key": "ds_attrs"}
-    assert result.data.attrs == {"key": "da_attrs"}
-
-
-def test_mask_land_fraction_default():
-
-    _test_mask(mxu.mask_ocean_fraction, threshold=0.5)
+    assert result_da.attrs == {"key": "da_attrs"}
 
 
+@pytest.mark.parametrize("as_dataset", (True, False))
+def test_ocean_land_fraction_default(as_dataset):
+
+    _test_mask(mxu.mask_ocean_fraction, as_dataset, threshold=0.5)
+
+
+@pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("x_coords", ("x", "lon"))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
-def test_mask_land_fraction(x_coords, y_coords):
+def test_ocean_land_fraction(as_dataset, x_coords, y_coords):
 
     _test_mask(
-        mxu.mask_ocean_fraction, threshold=0.5, x_coords=x_coords, y_coords=y_coords
+        mxu.mask_ocean_fraction,
+        as_dataset,
+        threshold=0.5,
+        x_coords=x_coords,
+        y_coords=y_coords,
     )
 
 
-def test_mask_land_default():
+@pytest.mark.parametrize("as_dataset", (True, False))
+def test_ocean_land_default(
+    as_dataset,
+):
 
-    _test_mask(mxu.mask_ocean)
+    _test_mask(mxu.mask_ocean, as_dataset)
 
 
+@pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("x_coords", ("x", "lon"))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
-def test_mask_land(x_coords, y_coords):
+def test_mask_land(as_dataset, x_coords, y_coords):
 
-    _test_mask(mxu.mask_ocean, x_coords=x_coords, y_coords=y_coords)
-
-
-def test_mask_antarctiva_default():
-
-    _test_mask(mxu.mask_antarctica)
+    _test_mask(mxu.mask_ocean, as_dataset, x_coords=x_coords, y_coords=y_coords)
 
 
+@pytest.mark.parametrize("as_dataset", (True, False))
+def test_mask_antarctiva_default(
+    as_dataset,
+):
+
+    _test_mask(mxu.mask_antarctica, as_dataset)
+
+
+@pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
-def test_mask_antarctiva(y_coords):
+def test_mask_antarctiva(as_dataset, y_coords):
 
-    _test_mask(mxu.mask_antarctica, y_coords=y_coords)
+    _test_mask(mxu.mask_antarctica, as_dataset, y_coords=y_coords)
