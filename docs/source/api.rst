@@ -36,6 +36,16 @@ Computation
    ~core.computation.calc_geodist_exact
    ~core.computation.gaspari_cohn
 
+Data manipulation
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~xarray_utils.mask_land_fraction
+   ~xarray_utils.mask_land
+   ~xarray_utils.mask_antarctica
+
 Train mesmer
 ------------
 
