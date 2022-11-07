@@ -53,9 +53,9 @@ Deprecations
 Bug fixes
 ^^^^^^^^^
 
-- Fix two issues with :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`. Note that these
-  issues are only relevant if passing xarray objects or masks close to the poles
-  (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_).
+- Fix three issues with :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`. Note that these
+  issues are only relevant if passing xarray objects and/ or masks close to the poles
+  (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_ and `#218 <https://github.com/MESMER-group/mesmer/pull/218>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 Documentation
