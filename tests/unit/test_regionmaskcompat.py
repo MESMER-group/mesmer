@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import regionmask
 import shapely.geometry
+import xarray as xr
 
 from mesmer.utils.regionmaskcompat import mask_3D_frac_approx, sample_coord
 
@@ -115,7 +116,49 @@ def test_mask_percentage():
 
     result = mask_3D_frac_approx(r, lon, lat)
 
-    expected = [[1, 0.5], [0.5, 0.25]]
-    expected = np.array(expected)
+    expected = [[[1, 0.5], [0.5, 0.25]]]
+    expected = xr.DataArray(
+        expected,
+        dims=("region", "lat", "lon"),
+        coords={
+            "lat": lat,
+            "lon": lon,
+            "abbrevs": ("region", ["r0"]),
+            "region": [0],
+            "names": ("region", ["Region0"]),
+        },
+    )
 
-    np.testing.assert_allclose(result.values.squeeze(), expected)
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lat_name", ("lat", "y"))
+@pytest.mark.parametrize("lon_name", ("lon", "x"))
+def test_mask_percentage_coord_names(lat_name, lon_name):
+
+    lon = np.array([15, 30])
+    lat = np.array([15, 30])
+    ds = xr.Dataset(coords={lon_name: lon, lat_name: lat})
+
+    # the center of the region is at 15°
+    r = shapely.geometry.box(0, 0, 30, 30)
+    r = regionmask.Regions([r])
+
+    print(ds)
+
+    result = mask_3D_frac_approx(r, ds[lon_name], ds[lat_name])
+
+    expected = [[[1, 0.5], [0.5, 0.25]]]
+    expected = xr.DataArray(
+        expected,
+        dims=("region", lat_name, lon_name),
+        coords={
+            lat_name: lat,
+            lon_name: lon,
+            "abbrevs": ("region", ["r0"]),
+            "region": [0],
+            "names": ("region", ["Region0"]),
+        },
+    )
+
+    xr.testing.assert_allclose(result, expected)
