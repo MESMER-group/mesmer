@@ -4,7 +4,11 @@ import regionmask
 import shapely.geometry
 import xarray as xr
 
-from mesmer.utils.regionmaskcompat import mask_3D_frac_approx, sample_coord
+from mesmer.utils.regionmaskcompat import (
+    InvalidCoordsError,
+    mask_3D_frac_approx,
+    sample_coord,
+)
 
 
 def test_sample_coord():
@@ -28,7 +32,7 @@ def test_mask_percentage_wrong_coords(dim, invalid_coords):
     latlon[dim] = invalid_coords
 
     with pytest.raises(
-        ValueError, match="'lon' and 'lat' must be 1D and equally spaced."
+        InvalidCoordsError, match="'lon' and 'lat' must be 1D and equally spaced."
     ):
         mask_3D_frac_approx(None, **latlon)
 
@@ -39,7 +43,7 @@ def test_mask_percentage_lon_beyond_90(lat):
     lat = np.arange(*lat)
     lon = np.arange(0, 360, 10)
 
-    with pytest.raises(ValueError, match=r"lat must be between \-90 and \+90"):
+    with pytest.raises(InvalidCoordsError, match=r"lat must be between \-90 and \+90"):
         mask_3D_frac_approx(None, lon, lat)
 
 
