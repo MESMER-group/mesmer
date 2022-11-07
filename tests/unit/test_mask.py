@@ -32,7 +32,7 @@ def test_mask_land_fraction_errors(threshold):
     with pytest.raises(
         ValueError, match="`threshold` must be a scalar between 0 and 1"
     ):
-        mxu.mask_land_fraction(data, threshold=threshold)
+        mxu.mask_ocean_fraction(data, threshold=threshold)
 
 
 def test_mask_land_fraction_irregular():
@@ -46,15 +46,15 @@ def test_mask_land_fraction_irregular():
         ValueError,
         match="Cannot calculate fractional mask for irregularly-spaced coords",
     ):
-        mxu.mask_land_fraction(data, threshold=0.5)
+        mxu.mask_ocean_fraction(data, threshold=0.5)
 
 
 def test_mask_land_fraction_threshold():
     # check that the threshold has an influence
     data = data_lon_lat()
 
-    result_033 = mxu.mask_land_fraction(data, threshold=0.33)
-    result_066 = mxu.mask_land_fraction(data, threshold=0.66)
+    result_033 = mxu.mask_ocean_fraction(data, threshold=0.33)
+    result_066 = mxu.mask_ocean_fraction(data, threshold=0.66)
 
     assert not (result_033.data == result_066.data).all()
 
@@ -82,7 +82,7 @@ def _test_mask(func, threshold=None, **kwargs):
 
 def test_mask_land_fraction_default():
 
-    _test_mask(mxu.mask_land_fraction, threshold=0.5)
+    _test_mask(mxu.mask_ocean_fraction, threshold=0.5)
 
 
 @pytest.mark.parametrize("x_coords", ("x", "lon"))
@@ -90,20 +90,20 @@ def test_mask_land_fraction_default():
 def test_mask_land_fraction(x_coords, y_coords):
 
     _test_mask(
-        mxu.mask_land_fraction, threshold=0.5, x_coords=x_coords, y_coords=y_coords
+        mxu.mask_ocean_fraction, threshold=0.5, x_coords=x_coords, y_coords=y_coords
     )
 
 
 def test_mask_land_default():
 
-    _test_mask(mxu.mask_land)
+    _test_mask(mxu.mask_ocean)
 
 
 @pytest.mark.parametrize("x_coords", ("x", "lon"))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
 def test_mask_land(x_coords, y_coords):
 
-    _test_mask(mxu.mask_land, x_coords=x_coords, y_coords=y_coords)
+    _test_mask(mxu.mask_ocean, x_coords=x_coords, y_coords=y_coords)
 
 
 def test_mask_antarctiva_default():

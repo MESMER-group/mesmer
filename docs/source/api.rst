@@ -42,8 +42,8 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~xarray_utils.mask_land_fraction
-   ~xarray_utils.mask_land
+   ~xarray_utils.mask_ocean_fraction
+   ~xarray_utils.mask_ocean
    ~xarray_utils.mask_antarctica
 
 Train mesmer

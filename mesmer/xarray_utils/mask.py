@@ -21,7 +21,7 @@ def _where_if_dim(obj, cond, dims):
     return obj.where(cond)
 
 
-def mask_land_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
+def mask_ocean_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
     """mask out ocean using fractional overlap
 
     Parameters
@@ -74,7 +74,7 @@ def mask_land_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
     return _where_if_dim(obj, mask_bool, [y_coords, x_coords])
 
 
-def mask_land(obj, *, x_coords="lon", y_coords="lat"):
+def mask_ocean(obj, *, x_coords="lon", y_coords="lat"):
     """mask out ocean
 
     Parameters
