@@ -6,7 +6,7 @@ from packaging.version import Version
 def to_unstructured(
     obj, *, x_dim="lon", y_dim="lat", cell_dim="cell", multiindex=False, dropna=True
 ):
-    """stack a regular grid to an unstructured grid
+    """Stack a lat-lon grid to a 1D grid
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ def to_unstructured(
     multiindex : bool, default: False
         If the new `cell_dim` should be returned as a MultiIndex.
     dropna : bool, default: True
-        Drops each 'cell' if any NA values are present.
+        Drops each 'cell' if any NA values are present at any point in the timeseries.
 
     Returns
     -------
