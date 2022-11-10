@@ -29,7 +29,7 @@ New Features
 - Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
   (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Added functions to convert xarray objects to an unstructured grid and back (`#217
+- Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
   <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser
   <https://github.com/mathause>`_.
 
