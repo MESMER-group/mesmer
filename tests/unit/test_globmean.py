@@ -29,11 +29,11 @@ def data_lon_lat(as_dataset, x_dim="lon", y_dim="lat"):
 
 def test_lat_weights_scalar():
 
-    np.testing.assert_allclose(mxu.lat_weights(90), 0.0, atol=1e-7)
-    np.testing.assert_allclose(mxu.lat_weights(45), np.sqrt(2) / 2)
-    np.testing.assert_allclose(mxu.lat_weights(0), 1.0, atol=1e-7)
-    np.testing.assert_allclose(mxu.lat_weights(-45), np.sqrt(2) / 2)
-    np.testing.assert_allclose(mxu.lat_weights(-90), 0.0, atol=1e-7)
+    np.testing.assert_allclose(mxu.globmean.lat_weights(90), 0.0, atol=1e-7)
+    np.testing.assert_allclose(mxu.globmean.lat_weights(45), np.sqrt(2) / 2)
+    np.testing.assert_allclose(mxu.globmean.lat_weights(0), 1.0, atol=1e-7)
+    np.testing.assert_allclose(mxu.globmean.lat_weights(-45), np.sqrt(2) / 2)
+    np.testing.assert_allclose(mxu.globmean.lat_weights(-90), 0.0, atol=1e-7)
 
 
 def test_lat_weights():
@@ -44,7 +44,7 @@ def test_lat_weights():
     expected = np.cos(np.deg2rad(lat_coords))
     expected = xr.DataArray(expected, dims=("lat"), coords={"lat": lat}, name="lat")
 
-    result = mxu.lat_weights(lat)
+    result = mxu.globmean.lat_weights(lat)
 
     xr.testing.assert_equal(result, expected)
 
@@ -54,14 +54,14 @@ def test_lat_weights_2D_warn_2D():
     lat = np.arange(10).reshape(2, 5)
 
     with pytest.warns(UserWarning, match="non-regular grids"):
-        mxu.lat_weights(lat)
+        mxu.globmean.lat_weights(lat)
 
 
 @pytest.mark.parametrize("lat", [-91, 90.1])
 def test_lat_weights_2D_warn_90(lat):
 
     with pytest.raises(ValueError, match="`lat_coords` must be between -90 and 90"):
-        mxu.lat_weights(lat)
+        mxu.globmean.lat_weights(lat)
 
 
 def _test_calc_globmean(as_dataset, **kwargs):
@@ -70,9 +70,9 @@ def _test_calc_globmean(as_dataset, **kwargs):
     data = data_lon_lat(as_dataset, **kwargs)
 
     y_coords = kwargs.get("y_dim", "lat")
-    weights = mxu.lat_weights(data[y_coords])
+    weights = mxu.globmean.lat_weights(data[y_coords])
 
-    result = mxu.calc_globmean(data, weights=weights, **kwargs)
+    result = mxu.globmean.weighted_mean(data, weights=weights, **kwargs)
 
     if as_dataset:
         # ensure scalar is not broadcast

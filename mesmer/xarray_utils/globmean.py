@@ -34,7 +34,7 @@ def lat_weights(lat_coords):
     return weights
 
 
-def calc_globmean(data, weights, x_dim="lon", y_dim="lat"):
+def weighted_mean(data, weights, x_dim="lon", y_dim="lat"):
     """Calculate the area-weighted global mean
 
     Parameters
