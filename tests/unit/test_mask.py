@@ -34,7 +34,7 @@ def test_ocean_land_fraction_errors(threshold):
     with pytest.raises(
         ValueError, match="`threshold` must be a scalar between 0 and 1"
     ):
-        mxu.mask_ocean_fraction(data, threshold=threshold)
+        mxu.mask.mask_ocean_fraction(data, threshold=threshold)
 
 
 def test_ocean_land_fraction_irregular():
@@ -48,15 +48,15 @@ def test_ocean_land_fraction_irregular():
         ValueError,
         match="Cannot calculate fractional mask for irregularly-spaced coords",
     ):
-        mxu.mask_ocean_fraction(data, threshold=0.5)
+        mxu.mask.mask_ocean_fraction(data, threshold=0.5)
 
 
 def test_ocean_land_fraction_threshold():
     # check that the threshold has an influence
     data = data_lon_lat(as_dataset=True)
 
-    result_033 = mxu.mask_ocean_fraction(data, threshold=0.33)
-    result_066 = mxu.mask_ocean_fraction(data, threshold=0.66)
+    result_033 = mxu.mask.mask_ocean_fraction(data, threshold=0.33)
+    result_066 = mxu.mask.mask_ocean_fraction(data, threshold=0.66)
 
     assert not (result_033.data == result_066.data).all()
 
@@ -87,7 +87,7 @@ def _test_mask(func, as_dataset, threshold=None, **kwargs):
 @pytest.mark.parametrize("as_dataset", (True, False))
 def test_ocean_land_fraction_default(as_dataset):
 
-    _test_mask(mxu.mask_ocean_fraction, as_dataset, threshold=0.5)
+    _test_mask(mxu.mask.mask_ocean_fraction, as_dataset, threshold=0.5)
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
@@ -96,7 +96,7 @@ def test_ocean_land_fraction_default(as_dataset):
 def test_ocean_land_fraction(as_dataset, x_coords, y_coords):
 
     _test_mask(
-        mxu.mask_ocean_fraction,
+        mxu.mask.mask_ocean_fraction,
         as_dataset,
         threshold=0.5,
         x_coords=x_coords,
@@ -109,7 +109,7 @@ def test_ocean_land_default(
     as_dataset,
 ):
 
-    _test_mask(mxu.mask_ocean, as_dataset)
+    _test_mask(mxu.mask.mask_ocean, as_dataset)
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
@@ -117,7 +117,7 @@ def test_ocean_land_default(
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
 def test_mask_land(as_dataset, x_coords, y_coords):
 
-    _test_mask(mxu.mask_ocean, as_dataset, x_coords=x_coords, y_coords=y_coords)
+    _test_mask(mxu.mask.mask_ocean, as_dataset, x_coords=x_coords, y_coords=y_coords)
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
@@ -125,11 +125,11 @@ def test_mask_antarctiva_default(
     as_dataset,
 ):
 
-    _test_mask(mxu.mask_antarctica, as_dataset)
+    _test_mask(mxu.mask.mask_antarctica, as_dataset)
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
 def test_mask_antarctiva(as_dataset, y_coords):
 
-    _test_mask(mxu.mask_antarctica, as_dataset, y_coords=y_coords)
+    _test_mask(mxu.mask.mask_antarctica, as_dataset, y_coords=y_coords)
