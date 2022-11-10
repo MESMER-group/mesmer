@@ -29,6 +29,11 @@ New Features
 - Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
   (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Added functions to calculate the weighted global mean (`#220
+  <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
+  <https://github.com/mathause>`_.
+
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
