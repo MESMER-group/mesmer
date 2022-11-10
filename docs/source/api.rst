@@ -42,8 +42,10 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~xarray_utils.to_unstructured
-   ~xarray_utils.from_unstructured
+   ~xarray_utils.stack_lat_lon
+   ~xarray_utils.unstack_lat_lon_and_align
+   ~xarray_utils.unstack_lat_lon
+   ~xarray_utils.align_to_coords
 
 Train mesmer
 ------------

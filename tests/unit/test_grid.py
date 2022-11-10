@@ -5,7 +5,7 @@ import xarray as xr
 import mesmer.xarray_utils as mxu
 
 
-def data_1D_coords(as_dataset, x_dim="lon", y_dim="lat", cell_dim="cell"):
+def data_1D_coords(as_dataset, x_dim="lon", y_dim="lat", stack_dim="gridcell"):
 
     data = np.arange(2 * 3 * 4, dtype=float)
     time = [0, 1]
@@ -25,11 +25,11 @@ def data_1D_coords(as_dataset, x_dim="lon", y_dim="lat", cell_dim="cell"):
 
     da_unstructured = xr.DataArray(
         data.reshape(2, 12),
-        dims=("time", cell_dim),
+        dims=("time", stack_dim),
         coords={
             "time": time,
-            y_dim: (cell_dim, c_lat.flatten()),
-            x_dim: (cell_dim, c_lon.flatten()),
+            y_dim: (stack_dim, c_lat.flatten()),
+            x_dim: (stack_dim, c_lon.flatten()),
         },
         name=name,
         attrs=attrs,
@@ -61,13 +61,13 @@ def data_2D_coords(as_dataset):
 
     da_unstructured = xr.DataArray(
         data.reshape(2, 12),
-        dims=("time", "cell"),
+        dims=("time", "gridcell"),
         coords={
             "time": time,
-            "yc": ("cell", yc.flatten()),
-            "xc": ("cell", xc.flatten()),
-            "y": ("cell", y.flatten()),
-            "x": ("cell", x.flatten()),
+            "yc": ("gridcell", yc.flatten()),
+            "xc": ("gridcell", xc.flatten()),
+            "y": ("gridcell", y.flatten()),
+            "x": ("gridcell", x.flatten()),
         },
         name=name,
         attrs=attrs,
@@ -83,7 +83,7 @@ def data_2D_coords(as_dataset):
 def test_to_unstructured_defaults(as_dataset):
     da, expected = data_1D_coords(as_dataset)
 
-    result = mxu.to_unstructured(da)
+    result = mxu.stack_lat_lon(da)
 
     xr.testing.assert_identical(result, expected)
 
@@ -92,9 +92,9 @@ def test_to_unstructured_defaults(as_dataset):
 def test_to_unstructured_multiindex(as_dataset):
     da, expected = data_1D_coords(as_dataset)
 
-    result = mxu.to_unstructured(da, multiindex=True)
+    result = mxu.stack_lat_lon(da, multiindex=True)
 
-    expected = expected.set_index({"cell": ("lat", "lon")})
+    expected = expected.set_index({"gridcell": ("lat", "lon")})
 
     xr.testing.assert_identical(result, expected)
 
@@ -105,10 +105,10 @@ def test_to_unstructured_multiindex(as_dataset):
 @pytest.mark.parametrize("as_dataset", [True, False])
 def test_to_unstructured(x_dim, y_dim, cell_dim, as_dataset):
     da, expected = data_1D_coords(
-        as_dataset, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim
+        as_dataset, x_dim=x_dim, y_dim=y_dim, stack_dim=cell_dim
     )
 
-    result = mxu.to_unstructured(da, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim)
+    result = mxu.stack_lat_lon(da, x_dim=x_dim, y_dim=y_dim, stack_dim=cell_dim)
 
     xr.testing.assert_identical(result, expected)
 
@@ -117,7 +117,7 @@ def test_to_unstructured(x_dim, y_dim, cell_dim, as_dataset):
 def test_to_unstructured_2D_coords(as_dataset):
     da, expected = data_2D_coords(as_dataset)
 
-    result = mxu.to_unstructured(da, x_dim="x", y_dim="y")
+    result = mxu.stack_lat_lon(da, x_dim="x", y_dim="y")
 
     xr.testing.assert_identical(result, expected)
 
@@ -140,9 +140,9 @@ def test_to_unstructured_dropna(dropna, coords, time_pos):
     expected[:, 0] = np.NaN
 
     if dropna:
-        expected = expected.dropna("cell")
+        expected = expected.dropna("gridcell")
 
-    result = mxu.to_unstructured(da, dropna=dropna, **kwargs)
+    result = mxu.stack_lat_lon(da, dropna=dropna, **kwargs)
 
     xr.testing.assert_identical(result, expected)
 
@@ -162,8 +162,8 @@ def test_unstructured_roundtrip_dropna_row(coords):
     da_structured[:, :, 0] = np.NaN
     expected = da_structured
 
-    da_unstructured = mxu.to_unstructured(da_structured, **kwargs)
-    result = mxu.from_unstructured(da_unstructured, coords_orig, **kwargs)
+    da_unstructured = mxu.stack_lat_lon(da_structured, **kwargs)
+    result = mxu.unstack_lat_lon_and_align(da_unstructured, coords_orig, **kwargs)
 
     # roundtripping adds x & y coords - not sure if there is something to be done about
     if coords == "2D":
@@ -178,23 +178,23 @@ def test_from_unstructured_defaults(as_dataset):
 
     coords_orig = expected.coords.to_dataset()[["lon", "lat"]]
 
-    result = mxu.from_unstructured(da, coords_orig)
+    result = mxu.unstack_lat_lon_and_align(da, coords_orig)
 
     xr.testing.assert_identical(result, expected)
 
 
 @pytest.mark.parametrize("x_dim", ["lon", "x"])
 @pytest.mark.parametrize("y_dim", ["lat", "y"])
-@pytest.mark.parametrize("cell_dim", ["cell", "gridpoint"])
+@pytest.mark.parametrize("stack_dim", ["cell", "gridpoint"])
 @pytest.mark.parametrize("as_dataset", [True, False])
-def test_from_unstructured(x_dim, y_dim, cell_dim, as_dataset):
+def test_from_unstructured(x_dim, y_dim, stack_dim, as_dataset):
     expected, da = data_1D_coords(
-        as_dataset, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim
+        as_dataset, x_dim=x_dim, y_dim=y_dim, stack_dim=stack_dim
     )
 
     coords_orig = expected.coords.to_dataset()[[x_dim, y_dim]]
-    result = mxu.from_unstructured(
-        da, coords_orig, x_dim=x_dim, y_dim=y_dim, cell_dim=cell_dim
+    result = mxu.unstack_lat_lon_and_align(
+        da, coords_orig, x_dim=x_dim, y_dim=y_dim, stack_dim=stack_dim
     )
 
     xr.testing.assert_identical(result, expected)
@@ -207,10 +207,14 @@ def test_unstructured_roundtrip_1D_coords(as_dataset):
 
     coords_orig = da_structured.coords.to_dataset()[["lon", "lat"]]
 
-    result = mxu.from_unstructured(mxu.to_unstructured(da_structured), coords_orig)
+    result = mxu.unstack_lat_lon_and_align(
+        mxu.stack_lat_lon(da_structured), coords_orig
+    )
     xr.testing.assert_identical(result, da_structured)
 
-    result = mxu.to_unstructured(mxu.from_unstructured(da_unstructured, coords_orig))
+    result = mxu.stack_lat_lon(
+        mxu.unstack_lat_lon_and_align(da_unstructured, coords_orig)
+    )
     xr.testing.assert_identical(result, da_unstructured)
 
 
@@ -224,7 +228,7 @@ def test_unstructured_roundtrip_2D_coords(as_dataset):
     coords_orig = da_structured.coords.to_dataset()[["x", "y"]]
     print(coords_orig)
 
-    result = mxu.to_unstructured(
-        mxu.from_unstructured(da_unstructured, coords_orig, **dims), **dims
+    result = mxu.stack_lat_lon(
+        mxu.unstack_lat_lon_and_align(da_unstructured, coords_orig, **dims), **dims
     )
     xr.testing.assert_identical(result, da_unstructured)
