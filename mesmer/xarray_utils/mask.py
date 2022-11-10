@@ -21,12 +21,12 @@ def _where_if_dim(obj, cond, dims):
     return obj.where(cond)
 
 
-def mask_ocean_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
+def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     """mask out ocean using fractional overlap
 
     Parameters
     ----------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array to mask.
     threshold : float
         Threshold above which land fraction to consider a grid point as a land grid
@@ -38,7 +38,7 @@ def mask_ocean_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array with ocean grid points masked out.
 
     Notes
@@ -57,11 +57,11 @@ def mask_ocean_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
 
     try:
         mask_fraction = mesmer.utils.regionmaskcompat.mask_3D_frac_approx(
-            land_110, obj[x_coords], obj[y_coords]
+            land_110, data[x_coords], data[y_coords]
         )
     except mesmer.utils.regionmaskcompat.InvalidCoordsError as e:
         raise ValueError(
-            "Cannot calculate fractional mask for irregularly-spaced coords - please "
+            "Cannot calculate fractional mask for irregularly-spaced coords - use "
             "``mask_land`` instead."
         ) from e
 
@@ -71,15 +71,15 @@ def mask_ocean_fraction(obj, threshold, *, x_coords="lon", y_coords="lat"):
     mask_bool = mask_fraction > threshold
 
     # only mask data_vars that have the coords
-    return _where_if_dim(obj, mask_bool, [y_coords, x_coords])
+    return _where_if_dim(data, mask_bool, [y_coords, x_coords])
 
 
-def mask_ocean(obj, *, x_coords="lon", y_coords="lat"):
+def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     """mask out ocean
 
     Parameters
     ----------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array to mask.
     x_coords : str, default: "lon"
         Name of the x-coordinates.
@@ -88,7 +88,7 @@ def mask_ocean(obj, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array with ocean grid points masked out.
 
     Notes
@@ -99,27 +99,27 @@ def mask_ocean(obj, *, x_coords="lon", y_coords="lat"):
     # TODO: allow other masks?
     land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
 
-    mask_bool = land_110.mask_3D(obj[x_coords], obj[y_coords])
+    mask_bool = land_110.mask_3D(data[x_coords], data[y_coords])
 
     mask_bool = mask_bool.squeeze(drop=True)
 
     # only mask data_vars that have the coords
-    return _where_if_dim(obj, mask_bool, [y_coords, x_coords])
+    return _where_if_dim(data, mask_bool, [y_coords, x_coords])
 
 
-def mask_antarctica(obj, *, y_coords="lat"):
+def mask_antarctica(data, *, y_coords="lat"):
     """mask out ocean
 
     Parameters
     ----------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array to mask.
     y_coords : str, default: "lat"
         Name of the y-coordinates.
 
     Returns
     -------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array with Antarctic grid points masked out.
 
     Notes
@@ -127,7 +127,7 @@ def mask_antarctica(obj, *, y_coords="lat"):
     - Masks grid points below 60°S.
     """
 
-    mask_bool = obj[y_coords] >= -60
+    mask_bool = data[y_coords] >= -60
 
-    # only mask if obj has y_coords
-    return _where_if_dim(obj, mask_bool, [y_coords])
+    # only mask if data has y_coords
+    return _where_if_dim(data, mask_bool, [y_coords])
