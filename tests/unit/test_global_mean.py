@@ -90,7 +90,7 @@ def _test_weighted_mean(as_dataset, **kwargs):
 
 
 @pytest.mark.parametrize("as_dataset", [True, False])
-def test_calc_globmean_default(as_dataset):
+def test_calc_weighted_mean_default(as_dataset):
 
     _test_weighted_mean(as_dataset)
 
@@ -98,7 +98,7 @@ def test_calc_globmean_default(as_dataset):
 @pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("x_dim", ("x", "lon"))
 @pytest.mark.parametrize("y_dim", ("y", "lat"))
-def test_ocean_land_fraction(as_dataset, x_dim, y_dim):
+def test_calc_weighted_mean(as_dataset, x_dim, y_dim):
 
     _test_weighted_mean(
         as_dataset,
