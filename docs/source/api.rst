@@ -36,6 +36,17 @@ Computation
    ~core.computation.calc_geodist_exact
    ~core.computation.gaspari_cohn
 
+Data manipulation
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~xarray_utils.grid.stack_lat_lon
+   ~xarray_utils.grid.unstack_lat_lon_and_align
+   ~xarray_utils.grid.unstack_lat_lon
+   ~xarray_utils.grid.align_to_coords
+
 Train mesmer
 ------------
 
