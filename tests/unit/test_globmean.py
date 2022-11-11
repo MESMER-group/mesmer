@@ -58,7 +58,7 @@ def test_lat_weights_2D_warn_2D():
 
 
 @pytest.mark.parametrize("lat", [-91, 90.1])
-def test_lat_weights_2D_warn_90(lat):
+def test_lat_weights_2D_error_90(lat):
 
     with pytest.raises(ValueError, match="`lat_coords` must be between -90 and 90"):
         mxu.globmean.lat_weights(lat)
