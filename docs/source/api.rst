@@ -42,6 +42,10 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
+   ~xarray_utils.grid.stack_lat_lon
+   ~xarray_utils.grid.unstack_lat_lon_and_align
+   ~xarray_utils.grid.unstack_lat_lon
+   ~xarray_utils.grid.align_to_coords
    ~xarray_utils.mask_ocean_fraction
    ~xarray_utils.mask_ocean
    ~xarray_utils.mask_antarctica

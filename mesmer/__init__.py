@@ -8,7 +8,7 @@ analyze the results.
 """
 # flake8: noqa
 
-from . import calibrate_mesmer, create_emulations, io, utils
+from . import calibrate_mesmer, create_emulations, io, utils, xarray_utils
 
 try:
     from importlib.metadata import version as _get_version

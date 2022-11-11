@@ -29,10 +29,12 @@ New Features
 - Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
   (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
+  <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser
+  <https://github.com/mathause>`_.
 - Added functions to mask the ocean and Antarctica for xarray objects (`#219
   <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser
   <https://github.com/mathause>`_.
-
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
