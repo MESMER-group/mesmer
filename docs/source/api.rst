@@ -42,8 +42,8 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~xarray_utils.globmean.lat_weights
-   ~xarray_utils.globmean.weighted_mean
+   ~xarray_utils.global_mean.lat_weights
+   ~xarray_utils.global_mean.weighted_mean
 
 Train mesmer
 ------------

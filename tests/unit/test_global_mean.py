@@ -29,11 +29,11 @@ def data_lon_lat(as_dataset, x_dim="lon", y_dim="lat"):
 
 def test_lat_weights_scalar():
 
-    np.testing.assert_allclose(mxu.globmean.lat_weights(90), 0.0, atol=1e-7)
-    np.testing.assert_allclose(mxu.globmean.lat_weights(45), np.sqrt(2) / 2)
-    np.testing.assert_allclose(mxu.globmean.lat_weights(0), 1.0, atol=1e-7)
-    np.testing.assert_allclose(mxu.globmean.lat_weights(-45), np.sqrt(2) / 2)
-    np.testing.assert_allclose(mxu.globmean.lat_weights(-90), 0.0, atol=1e-7)
+    np.testing.assert_allclose(mxu.global_mean.lat_weights(90), 0.0, atol=1e-7)
+    np.testing.assert_allclose(mxu.global_mean.lat_weights(45), np.sqrt(2) / 2)
+    np.testing.assert_allclose(mxu.global_mean.lat_weights(0), 1.0, atol=1e-7)
+    np.testing.assert_allclose(mxu.global_mean.lat_weights(-45), np.sqrt(2) / 2)
+    np.testing.assert_allclose(mxu.global_mean.lat_weights(-90), 0.0, atol=1e-7)
 
 
 def test_lat_weights():
@@ -44,7 +44,7 @@ def test_lat_weights():
     expected = np.cos(np.deg2rad(lat_coords))
     expected = xr.DataArray(expected, dims=("lat"), coords={"lat": lat}, name="lat")
 
-    result = mxu.globmean.lat_weights(lat)
+    result = mxu.global_mean.lat_weights(lat)
 
     xr.testing.assert_equal(result, expected)
 
@@ -54,25 +54,25 @@ def test_lat_weights_2D_warn_2D():
     lat = np.arange(10).reshape(2, 5)
 
     with pytest.warns(UserWarning, match="non-regular grids"):
-        mxu.globmean.lat_weights(lat)
+        mxu.global_mean.lat_weights(lat)
 
 
 @pytest.mark.parametrize("lat", [-91, 90.1])
 def test_lat_weights_2D_error_90(lat):
 
     with pytest.raises(ValueError, match="`lat_coords` must be between -90 and 90"):
-        mxu.globmean.lat_weights(lat)
+        mxu.global_mean.lat_weights(lat)
 
 
-def _test_calc_globmean(as_dataset, **kwargs):
+def _test_weighted_mean(as_dataset, **kwargs):
     # not checking the actual mask
 
     data = data_lon_lat(as_dataset, **kwargs)
 
     y_coords = kwargs.get("y_dim", "lat")
-    weights = mxu.globmean.lat_weights(data[y_coords])
+    weights = mxu.global_mean.lat_weights(data[y_coords])
 
-    result = mxu.globmean.weighted_mean(data, weights=weights, **kwargs)
+    result = mxu.global_mean.weighted_mean(data, weights=weights, **kwargs)
 
     if as_dataset:
         # ensure scalar is not broadcast
@@ -92,7 +92,7 @@ def _test_calc_globmean(as_dataset, **kwargs):
 @pytest.mark.parametrize("as_dataset", [True, False])
 def test_calc_globmean_default(as_dataset):
 
-    _test_calc_globmean(as_dataset)
+    _test_weighted_mean(as_dataset)
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
@@ -100,7 +100,7 @@ def test_calc_globmean_default(as_dataset):
 @pytest.mark.parametrize("y_dim", ("y", "lat"))
 def test_ocean_land_fraction(as_dataset, x_dim, y_dim):
 
-    _test_calc_globmean(
+    _test_weighted_mean(
         as_dataset,
         x_dim=x_dim,
         y_dim=y_dim,
