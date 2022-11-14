@@ -1,3 +1,4 @@
 # flake8: noqa
 
-from mesmer.xarray_utils import grid
+
+from mesmer.xarray_utils import global_mean, grid
