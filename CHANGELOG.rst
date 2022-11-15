@@ -35,6 +35,9 @@ New Features
 - Added functions to mask the ocean and Antarctica for xarray objects (`#219
   <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser
   <https://github.com/mathause>`_.
+- Added functions to calculate the weighted global mean (`#220
+  <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
+  <https://github.com/mathause>`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
