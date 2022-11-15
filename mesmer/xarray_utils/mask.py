@@ -94,6 +94,8 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     Notes
     -----
     - Uses the 1:110m land mask from Natural Earth (http://www.naturalearthdata.com).
+    - Whether a grid cell is in the ocean or on land is based on its center. For
+      regularly spaced coordinates use :py:func:`mesmer.xarray_utils.mask_land_fraction`.
     """
 
     # TODO: allow other masks?
