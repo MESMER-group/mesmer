@@ -46,14 +46,11 @@ Data manipulation
    ~xarray_utils.grid.unstack_lat_lon_and_align
    ~xarray_utils.grid.unstack_lat_lon
    ~xarray_utils.grid.align_to_coords
-<<<<<<< HEAD
    ~xarray_utils.mask.mask_ocean_fraction
    ~xarray_utils.mask.mask_ocean
    ~xarray_utils.mask.mask_antarctica
-=======
    ~xarray_utils.global_mean.lat_weights
    ~xarray_utils.global_mean.weighted_mean
->>>>>>> main
 
 Train mesmer
 ------------
