@@ -230,7 +230,14 @@ def _fit_linear_regression_xr(
         coords="minimal",
     )
 
-    _check_dataarray_form(target, ndim=2, required_dims=dim, name="target")
+    _check_dataarray_form(target, required_dims=dim, name="target")
+
+    if target.ndim == 1:
+        # a 2D target array is required, extra dim is squeezed at the end
+        extra_dim = f"__{dim}__"
+        target = target.expand_dims(extra_dim)
+    elif target.ndim != 2:
+        raise ValueError(f"target should be 1D or 2D, but has {target.ndim}D")
 
     # ensure `dim` is equal
     xr.align(predictors_concat, target, join="exact")
@@ -239,7 +246,7 @@ def _fit_linear_regression_xr(
         _check_dataarray_form(weights, ndim=1, required_dims=dim, name="weights")
         xr.align(weights, target, join="exact")
 
-    target_dim = list(set(target.dims) - {dim})[0]
+    (target_dim,) = list(set(target.dims) - {dim})
 
     out = _fit_linear_regression_np(
         predictors_concat.transpose(dim, "predictor"),
@@ -261,7 +268,7 @@ def _fit_linear_regression_xr(
     if weights is not None:
         out["weights"] = weights
 
-    return out
+    return out.squeeze()
 
 
 def _fit_linear_regression_np(predictors, target, weights=None, fit_intercept=True):

@@ -7,16 +7,21 @@ v0.9.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
-- Create :py:class:`mesmer.stats.linear_regression.LinearRegression` which encapsulates
-  ``fit``, ``predict``, etc. methods around linear regression
-  (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Add ``mesmer.stats._fit_linear_regression_xr``: xarray wrapper for ``mesmer.stats._fit_linear_regression_np``.
-  (`#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Add add ``fit_intercept`` argument to the ``linear_regression`` fitting methods and
-  functions (`#144 <https://github.com/MESMER-group/mesmer/pull/144>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
+- Create statistical functionality for linear regression:
+   - Create :py:class:`mesmer.stats.linear_regression.LinearRegression` which encapsulates
+     ``fit``, ``predict``, etc. methods around linear regression
+     (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - Add ``mesmer.stats._fit_linear_regression_xr``: xarray wrapper for ``mesmer.stats._fit_linear_regression_np``.
+     (`#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - Add add ``fit_intercept`` argument to the ``linear_regression`` fitting methods and
+     functions (`#144 <https://github.com/MESMER-group/mesmer/pull/144>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - Allow to pass 1-dimensional targets to :py:meth:`mesmer.stats.linear_regression.LinearRegression.fit`
+     (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
   auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
