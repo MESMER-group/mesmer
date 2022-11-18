@@ -27,15 +27,19 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
         - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
+
     submethod : str, optional
         determines if only submethod should be used, default = "" indicating using the
         full method
@@ -116,6 +120,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
 
         - [scen] 3d array (emu, time, gp) of local variability from previous submethods
         - empty dict if no previous submethod
+
     params_lv : dict
         dictionary with the trained local variability parameters
 
@@ -125,11 +130,13 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
         - [pred][scen] 1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario
+
     cfg : module
         config file containing metadata
 
@@ -206,6 +213,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 

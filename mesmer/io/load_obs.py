@@ -20,21 +20,27 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     ----------
     targ : str
         target variable (e.g., "tblend")
+
     prod : str
         product (e.g., "best" or "cw")
+
     cfg : module
         config file containing metadata
+
     lon : dict
         longitude dictionary with key
 
         - ["c"] (1d array with longitudes at center of grid cell)
+
     lat : dict
         latitude dictionary with key
 
         - ["c"] (1d array with latitudes at center of grid cell)
+
     sel_ref : str, optional
         selected reference period, (e.g., "native" (original one) or "esm" (the one of
         the esm))
+
     ignore_nans : bool, optional
         if True global average = average across available gp, if False nan value if not
         all gps available
@@ -97,16 +103,20 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     ----------
     prod : str
         product (e.g., "best" or "cw")
+
     lon : dict
         longitude dictionary with key
 
         - ["c"] (1d array with longitudes at center of grid cell)
+
     lat : dict
         latitude dictionary with key
 
         - ["c"] (1d array with latitudes at center of grid cell)
+
     cfg : module
         config file containing metadata
+
     sel_ref : str, optional
         selected reference period, (e.g., "native" (original one) or "esm" (the one of
         the esm))

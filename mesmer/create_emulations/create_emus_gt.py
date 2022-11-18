@@ -31,17 +31,21 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
         - ["time"] (1d array of years, np.ndarray)
         - [xx] (additional keys depend on employed method and are listed in
           train_gt_T_method() function)
+
     preds_gt : dict
         nested dictionary of predictors for global trend with keys
 
         - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     concat_h_f : bool, optional
         determines if historical and future time period is concatenated into a single
         emulation or not, default = False (must be set to false if no historical data
         provided)
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 

@@ -28,16 +28,12 @@ class LinearRegression:
         predictors : dict of xr.DataArray
             A dict of DataArray objects used as predictors. Must be 1D and contain
             `dim`.
-
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
-
         dim : str
             Dimension along which to fit the polynomials.
-
         weights : xr.DataArray, default: None.
             Individual weights for each sample. Must be 1D and contain `dim`.
-
         fit_intercept : bool, default=True
             Whether to calculate the intercept for this model. If set to False, no
             intercept will be used in calculations (i.e. data is expected to be
@@ -99,7 +95,6 @@ class LinearRegression:
         ----------
         predictors : dict of xr.DataArray
             A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
-
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
 
@@ -149,7 +144,7 @@ class LinearRegression:
         ----------
         filename : str
             Name of the netCDF file to open.
-        kwargs : Any
+        **kwargs : Any
             Additional keyword arguments passed to ``xr.open_dataset``
         """
         ds = xr.open_dataset(filename, **kwargs)
@@ -166,7 +161,7 @@ class LinearRegression:
         ----------
         filename : str
             Name of the netCDF file to save.
-        kwargs : Any
+        **kwargs : Any
             Additional keyword arguments passed to ``xr.Dataset.to_netcf``
         """
 
@@ -188,16 +183,12 @@ def _fit_linear_regression_xr(
     ----------
     predictors : dict of xr.DataArray
         A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
-
     target : xr.DataArray
         Target DataArray. Must be 2D and contain `dim`.
-
     dim : str
         Dimension along which to fit the polynomials.
-
     weights : xr.DataArray, default: None.
         Individual weights for each sample. Must be 1D and contain `dim`.
-
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to False, no intercept
         will be used in calculations (i.e. data is expected to be centered).
@@ -279,13 +270,14 @@ def _fit_linear_regression_np(predictors, target, weights=None, fit_intercept=Tr
     ----------
     predictors : array-like of shape (n_samples, n_predictors)
         Array of predictors
-
     target : array-like of shape (n_samples, n_targets)
         Array of targets where each row is a sample and each column is a
         different target i.e. variable to be predicted
-
     weights : array-like of shape (n_samples,)
         Weights for each sample
+    fit_intercept : bool, default=True
+        Whether to calculate the intercept for this model. If set to False, no intercept
+        will be used in calculations (i.e. data is expected to be centered).
 
     Returns
     -------

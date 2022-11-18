@@ -16,7 +16,7 @@ def get_scenario_weights(target):
 
     Parameters
     ----------
-    targs : dict
+    target : dict
         dictionary of targets with key
 
         - [scen] (3d array (run, time, gp) of target for specific scenario)
@@ -87,6 +87,7 @@ def stack_predictors_and_targets(preds, targs):
 
         - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     targs : dict
         nested dictionary of targets with keys
 

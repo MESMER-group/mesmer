@@ -30,7 +30,8 @@ def extract_time_lon_lat_wgt3d(data):
         1d array of years
     lon : dict
         longitude dictionary with key
-     - ["c"] (1d array with longitudes at center of grid cell)
+
+        - ["c"] (1d array with longitudes at center of grid cell)
     lat : dict
         latitude dictionary with key
 

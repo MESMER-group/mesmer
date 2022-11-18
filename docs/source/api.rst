@@ -1,6 +1,5 @@
 .. currentmodule:: mesmer
 
-#############
 API reference
 #############
 
@@ -13,6 +12,10 @@ Top-level functions
 Statistical functions
 ---------------------
 
+
+Linear regression
+^^^^^^^^^^^^^^^^^
+
 .. autosummary::
    :toctree: generated/
 
@@ -22,9 +25,32 @@ Statistical functions
    ~stats.linear_regression.LinearRegression.residuals
    ~stats.linear_regression.LinearRegression.to_netcdf
    ~stats.linear_regression.LinearRegression.from_netcdf
+
+Auto regression
+^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
    ~stats.auto_regression._select_ar_order_xr
    ~stats.auto_regression._fit_auto_regression_xr
    ~stats.auto_regression._draw_auto_regression_correlated_np
+
+Localized covariance
+^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.localized_covariance.adjust_covariance_ar1
+   ~stats.localized_covariance.find_localized_empirical_covariance
+
+Smoothing
+^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
    ~stats.smoothing.lowess
 
 Computation
@@ -51,6 +77,9 @@ Data manipulation
    ~xarray_utils.mask.mask_antarctica
    ~xarray_utils.global_mean.lat_weights
    ~xarray_utils.global_mean.weighted_mean
+
+Legacy functions
+================
 
 Train mesmer
 ------------
