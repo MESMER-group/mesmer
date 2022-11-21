@@ -32,12 +32,14 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
         - ["c"] (1d array with longitudes at center of grid cell)
         - ["e"] (1d array with longitudes at edges of grid cells)
         - ["grid"] (2d array (lat,lon) of longitudes)
+
     lat : dict
         latitude dictionary with key
 
         - ["c"] (1d array with latitudes at center of grid cell)
         - ["e"] (1d array with latitudes at edges of grid cells)
         - ["grid"] (2d array (lat,lon) of latitudes)
+
     ls : dict
         land-sea dictionary with keys
 
@@ -51,12 +53,16 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
           map)
         - ["wgt_gp_l"] (1d array of land area weights, i.e.,
           area weight * land fraction)
+
     cfg : module
         config file containing metadata
+
     L_start : int, optional
         smallest localisation radius which is tested
+
     L_end : int, optional
         largest localisation radius which is tested
+
     L_interval : int, optional
         spacing interval between tested localisation radii
 
@@ -135,10 +141,12 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     ----------
     reg_type : str
         region type ("ar6.land", "countries", "srex")
+
     lon : dict
         longitude dictionary with key
 
         - ["c"] (1d array with longitudes at center of grid cell)
+
     lat : dict
         latitude dictionary with key
 

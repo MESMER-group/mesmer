@@ -215,7 +215,7 @@ def _fit_auto_regression_np(data, lags):
         Intercept of the fitted AR model.
     coeffs : :obj:`np.array`
         Coefficients if the AR model. Will have as many entries as ``lags``.
-    std :obj:`np.array`
+    std : :obj:`np.array`
         Standard deviation of the residuals.
     """
 

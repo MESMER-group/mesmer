@@ -14,7 +14,7 @@ from mesmer.core.utils import (
 
 def adjust_covariance_ar1(covariance, ar_coefs):
     """
-    adjust localized empirical covariance matrix for autoregressive process of order 1
+    adjust localized empirical covariance matrix for autoregressive process of order one
 
     Parameters
     ----------
@@ -34,15 +34,15 @@ def adjust_covariance_ar1(covariance, ar_coefs):
     - Adjusts ``covariance`` for an AR(1) process according to [1]_, eq (8).
 
     - The formula is specific for an AR(1) process, see also `#167 (comment)
-      https://github.com/MESMER-group/mesmer/pull/167#discussion_r912481495`__.
+      <https://github.com/MESMER-group/mesmer/pull/167#discussion_r912481495>`__.
 
     - According to [2]_ "The multiplication with the ``reduction_factor`` scales the
       empirical standard error under the assumption of an autoregressive process of
-      order 1 [3]_. This accounts for the fact that the variance of an autoregressive
+      order one [3]_. This accounts for the fact that the variance of an autoregressive
       process is larger than that of the driving white noise process."
 
     - This formula is wrong in [1]_. However, it is correct in the code. See also [2]_
-       and [3]_.
+      and [3]_.
 
     .. [1] Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system model
        temperatures with MESMER: from global mean temperature trajectories to grid-point-
@@ -102,7 +102,6 @@ def find_localized_empirical_covariance(
     -------
     localized_empirical_covariance : xr.Dataset
         Dataset containing three DataArrays:
-
     localization_radius : float
         Selected localization radius.
     covariance : xr.DataArray

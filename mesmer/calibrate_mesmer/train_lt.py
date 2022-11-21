@@ -29,14 +29,18 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     targs : dict
         nested dictionary of targets with keys
 
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     cfg : module
         config file containing metadata
+
     save_params : bool, optional
         determines if parameters are saved or not, default = True
 

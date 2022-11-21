@@ -26,15 +26,20 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
         Nested global mean variability dictionary with keys
 
         - [scen] (2d array (run, time) of globally-averaged variability time series)
+
     targ : str
         target variable (e.g., "tas")
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     cfg : config module
         config file containing metadata
+
     save_params : bool, optional
         determines if parameters are saved or not, default = True
-    **kwargs:
+
+    **kwargs : Any
         additional arguments, passed through to the training function
 
     Returns
@@ -123,15 +128,18 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, i.e., AR, str)
         - ["scenarios"] (emission scenarios used for training, list of strs)
+
     gv : dict
         nested global mean temperature variability (volcanic influence removed)
         dictionary with keys
 
         - [scen] (2d array (nr_runs, nr_ts) of globally-averaged temperature variability
           time series)
-    max_lag: int
+
+    max_lag : int
         maximum number of lags considered during fitting
-    sel_crit: str
+
+    sel_crit : str
         selection criterion for the AR process order, e.g., 'bic' or 'aic'
 
     Returns

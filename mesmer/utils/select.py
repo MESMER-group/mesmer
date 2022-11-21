@@ -23,6 +23,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
         nested variable dictionary with keys
 
         - [esm][scen] (4d array (run, time, lat, lon) of variable)
+
     reg_dict : dict
         region dictionary with keys
 
@@ -33,13 +34,16 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
         - ["grid_b"] (2d array (lat, lon) of regions with each grid point being assigned
           to a single region ("binary" grid))
         - ["full"] (full Region object (for plotting region outlines))
+
     wgt : np.ndarray
         2d array (lat, lon) of weights to be used for area weighted means
+
     ls : dict
         land sea dictionary with keys
 
         - ["grid_raw"] (2d array (lat, lon) of subsampled land fraction)
         - ["grid_no_ANT"] (grid_raw with Antarctica removed)
+
     threshold_land : float, default=0.25
         threshold above which land fraction to consider a grid point as a land grid
         point
@@ -123,10 +127,13 @@ def extract_time_period(var, time, start, end):
         - (run, time);
         - (run, time, gp_l);
         - (run, time, lat, lon)
+
     time : np.ndarray
         1d array of years
+
     start : str or int
         first year included in extracted time period
+
     end : str or int
         last year included in extracted time period
 

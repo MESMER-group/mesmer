@@ -28,13 +28,16 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
           train_gv_T_method() function)
+
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
         - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 
@@ -125,10 +128,13 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - ["AR_order_sel"] (selected AR order, int)
         - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
+
     nr_emus_v : int
         number of global variability emulations
+
     nr_ts_emus_v : int
         number of time steps in each global variability emulation
+
     seed : int
         esm and scenario specific seed for gv module to ensure reproducability of
         results

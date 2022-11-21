@@ -32,17 +32,21 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
         - [xx] (additional params depend on method employed)
         - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
+
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
         - [pred][scen] (1d/2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     concat_h_f : bool, optional
         determines if historical and future time period is concatenated into a single
         emulation or not, default = False (must be set to False if no historical data
         provided)
+
     save_emus : bool, optional
         determines if parameters are saved or not, default = True
 
@@ -157,11 +161,13 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
         - [xx] (additional params depend on method employed)
         - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
+
     preds_lt : dict
         nested dictionary of predictors for local trends with keys
 
         - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     scen : str
         emulated scenario
 

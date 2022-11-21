@@ -39,7 +39,7 @@ def weighted_mean(data, weights, x_dim="lon", y_dim="lat"):
 
     Parameters
     ----------
-    obj : xr.Dataset | xr.DataArray
+    data : xr.Dataset | xr.DataArray
         Array reduce to the global mean.
     weights : xr.DataArray
         DataArray containing the area of each grid cell (or a measure proportional to

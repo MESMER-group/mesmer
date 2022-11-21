@@ -31,6 +31,7 @@ def make_realisations(
         nested dictionary of predictors for local trends with keys
 
         - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+
     params_lt : dict
         dictionary with the trained local trend parameters
 
@@ -44,6 +45,7 @@ def make_realisations(
         - [xx] (additional params depending on method employed)
         - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
+
     params_lv : dict
         dictionary with the trained local variability parameters
 
@@ -53,8 +55,8 @@ def make_realisations(
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
-    params_gv : dict
 
+    params_gv_T : dict
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
@@ -62,18 +64,20 @@ def make_realisations(
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
           train_gv_T_method() function)
-    time : dict
 
+    time : dict
         - ["scenario"] timepoints (1D np.ndarray) used for training of the scenario
           (note that hist and scenario e.g. ssp126 are kept separate)
+
     n_realisations : int
         Number of realisations to draw
-    seeds : dict
 
+    seeds : dict
         - ["esm"] (dict):
             ["scenario"] (dict):
                 ["gv"] (seed for global variability)
                 ["lv"] (seed for local variability)
+
     land_fractions : xr.DataArray
         Land fractions of each cell. Used to convert the MESMER outputs back onto grids.
     """

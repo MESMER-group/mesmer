@@ -7,7 +7,7 @@ v0.9.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
-- Create statistical functionality for linear regression:
+- Refactored statistical functionality for linear regression:
    - Create :py:class:`mesmer.stats.linear_regression.LinearRegression` which encapsulates
      ``fit``, ``predict``, etc. methods around linear regression
      (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
@@ -22,27 +22,42 @@ New Features
      (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
      By `Mathias Hauser <https://github.com/mathause>`_.
 
-- Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
-  auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Add ``mesmer.stats.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
-  auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Extract function to select the order of the auto regressive model: ``mesmer.stats.auto_regression._select_ar_order_xr``
-  (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Refactor the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
-  (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
-  <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser
-  <https://github.com/mathause>`_.
-- Added functions to mask the ocean and Antarctica for xarray objects (`#219
-  <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser
-  <https://github.com/mathause>`_.
-- Added functions to calculate the weighted global mean (`#220
-  <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
-  <https://github.com/mathause>`_.
+- Refactored statistical functionality for auto regression:
+   - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
+     auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - Add ``mesmer.stats.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
+     auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - Extract function to select the order of the auto regressive model: ``mesmer.stats.auto_regression._select_ar_order_xr``
+     (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+
+- Refactored functions dealing with the spatial covariance and its localization:
+   - Add xarray wrappers :py:func:`mesmer.stats.localized_covariance.adjust_covariance_ar1`
+     and :py:func:`mesmer.stats.localized_covariance.find_localized_empirical_covariance`
+     (`#191 <https://github.com/MESMER-group/mesmer/pull/191>`__).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - Refactor and extract numpy-based functions dealing with the spatial covariance and its localization
+     (`#167 <https://github.com/MESMER-group/mesmer/pull/167>`__ and `#184
+     <https://github.com/MESMER-group/mesmer/pull/184>`__).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+
+- Other refactorings:
+   - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
+     (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+
+- Added helper functions to process xarray-based model data:
+   - Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
+     <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser
+     <https://github.com/mathause>`_.
+   - Added functions to mask the ocean and Antarctica (`#219
+     <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser
+     <https://github.com/mathause>`_.
+   - Added functions to calculate the weighted global mean (`#220
+     <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
+     <https://github.com/mathause>`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -92,9 +107,6 @@ Internal Changes
 - Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Move contents of setup.py to setup.cfg (`#169 <https://github.com/MESMER-group/mesmer/pull/169>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-- Refactored functions dealing with the spatial covariance and its localization (`#167 <https://github.com/MESMER-group/mesmer/pull/167>`__
-  and `#184 <https://github.com/MESMER-group/mesmer/pull/184>`__).
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Use pyproject.toml for the build-system and setuptools_scm for the `__version__`
   (`#188 <https://github.com/MESMER-group/mesmer/pull/188>`_).
