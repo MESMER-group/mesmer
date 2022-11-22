@@ -42,6 +42,9 @@ New Features
      (`#167 <https://github.com/MESMER-group/mesmer/pull/167>`__ and `#184
      <https://github.com/MESMER-group/mesmer/pull/184>`__).
      By `Mathias Hauser <https://github.com/mathause>`_.
+   - Allow to pass 1 x n arrays to :py:func:`mesmer.stats.localized_covariance.adjust_covariance_ar1`
+     (`#224 <https://github.com/MESMER-group/mesmer/pull/224>`__).
+     By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Other refactorings:
    - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
