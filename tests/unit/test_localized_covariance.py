@@ -258,18 +258,19 @@ def test_get_neg_loglikelihood_singular(random_data_5x3):
 def test_adjust_ecov_ar1_np_errors():
 
     cov = np.ones((3, 3))
-    ar_coefs = np.ones((3, 1))
+    ar_coefs = np.ones((3, 2))
     with pytest.raises(ValueError, match="`ar_coefs` must be 1D"):
         _adjust_ecov_ar1_np(cov, ar_coefs)
 
     ar_coefs = np.ones(4)
-    with pytest.raises(ValueError, match="`ar_coefs` must be 1D"):
+    with pytest.raises(ValueError, match=".*have length equal"):
         _adjust_ecov_ar1_np(cov, ar_coefs)
 
 
-def test_adjust_ecov_ar1_np(random_data_5x3):
+@pytest.mark.parametrize("shape", [(3,), (3, 1), (1, 3)])
+def test_adjust_ecov_ar1_np(random_data_5x3, shape):
 
-    ar_coefs = np.random.randn(3)
+    ar_coefs = np.random.randn(*shape)
     cov = np.cov(random_data_5x3, rowvar=False)
     result = _adjust_ecov_ar1_np(cov, ar_coefs)
 
@@ -284,10 +285,14 @@ def test_adjust_ecov_ar1_np(random_data_5x3):
     np.testing.assert_allclose(result, expected, atol=1e-6)
 
 
-def test_adjust_covariance_ar1(random_data_5x3):
+@pytest.mark.parametrize(
+    "shape, dims",
+    [((3,), "cells"), ((3, 1), ("cells", "lags")), ((1, 3), ("lags", "cells"))],
+)
+def test_adjust_covariance_ar1(random_data_5x3, shape, dims):
 
-    ar_coefs = np.random.randn(3)
-    ar_coefs = xr.DataArray(ar_coefs, dims="cell")
+    ar_coefs = np.random.randn(*shape)
+    ar_coefs = xr.DataArray(ar_coefs, dims=dims)
 
     cov = np.cov(random_data_5x3, rowvar=False)
     cov = xr.DataArray(cov, dims=("cell_i", "cell_j"))

@@ -63,6 +63,7 @@ def adjust_covariance_ar1(covariance, ar_coefs):
 
 def _adjust_ecov_ar1_np(covariance, ar_coefs):
 
+    ar_coefs = ar_coefs.squeeze()  # allow n x 1 ar_coeffs
     if ar_coefs.ndim != 1 or ar_coefs.size != covariance.shape[0]:
         raise ValueError(
             "`ar_coefs` must be 1D and have length equal to the size of `covariance`"
