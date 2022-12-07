@@ -12,6 +12,9 @@ TEST_DATA_ROOT = os.path.join(
     MESMER_ROOT, "tests", "test-data", "calibrate-coarse-grid"
 )
 
+# folder for output of example
+EXAMPLE_OUTPUT_ROOT = os.path.join(MESMER_ROOT, "examples", "output")
+
 # ---------------------------------------------------------------------------------
 
 # cmip-ng generation
@@ -25,12 +28,10 @@ dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
 # observations
 dir_obs = os.path.join(TEST_DATA_ROOT, "observations")
 
-# auxiliary data
-dir_aux = "auxillary"
-
 # mesmer output
-dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters")
-dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations")
+dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxillary")
+dir_mesmer_params = os.path.join(EXAMPLE_OUTPUT_ROOT, "calibrated_parameters")
+dir_mesmer_emus = os.path.join(EXAMPLE_OUTPUT_ROOT, "emulations")
 
 # configs that can be set for every run:
 
