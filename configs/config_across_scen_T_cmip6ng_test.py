@@ -4,22 +4,22 @@ Configuration file for tests
 """
 import os.path
 
-# path to mesmer root directory can be found in a slightly sneaky way like this
+# path to mesmer root directory
 MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
 
-# using os.path makes the paths platform-portable i.e. this will
-# still work on windows (hard-coding "/" as file separators does not
-# work on windows)
+# test data for example
 TEST_DATA_ROOT = os.path.join(
     MESMER_ROOT, "tests", "test-data", "calibrate-coarse-grid"
 )
 
 # ---------------------------------------------------------------------------------
 
+# cmip-ng generation
+gen = 6
+
 # directories:
 
 # cmip-ng
-gen = 6  # generation
 dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
 
 # observations
@@ -28,37 +28,51 @@ dir_obs = os.path.join(TEST_DATA_ROOT, "observations")
 # auxiliary data
 dir_aux = "auxillary"
 
-# mesmer
+# mesmer output
 dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters")
 dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations")
 
-
 # configs that can be set for every run:
 
-# esms
+# analysed esms
 esms = ["IPSL-CM6A-LR"]
 
-
-targs = ["tas"]  # emulated variables
+# emulated variables
+targs = ["tas"]
 
 reg_type = "srex"
 
+# reference period
 ref = {}
-ref["type"] = "individ"  # alternatives: "first","all"
-ref["start"] = "1850"  # first included year
-ref["end"] = "1900"  # last included year
+
+# alternatives: "first","all"
+ref["type"] = "individ"
+# first included year
+ref["start"] = "1850"
+# last included year
+ref["end"] = "1900"
 
 threshold_land = 1 / 3
 
-wgt_scen_tr_eq = True  # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
+# if True weigh each scenario equally (ie less weight to individ runs of scens with more
+# members)
+wgt_scen_tr_eq = True
 
-nr_emus_v = 5  # tmp made smaller for testing purposes. Normally larger.
-scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
-max_iter_cv = 15  # max. nr of iterations in cross validation, small for testing purpose
+# number of created emulations (small number for testing purposes)
+nr_emus_v = 5
+
+# seed offset for scenarios (0 meaning same emulations drawn for each scen, other
+# numbers will have different ones for each scen)
+scen_seed_offset_v = 0
+
+# max. nr of iterations in cross validation (small for testing purposes)
+max_iter_cv = 15
 
 # predictors (for global module)
 preds = {}
-preds["tas"] = {}  # predictors for the target variable tas
+
+# predictors for the target variable tas
+preds["tas"] = {}
 preds["hfds"] = {}
 preds["tas"]["gt"] = ["saod"]
 preds["hfds"]["gt"] = []
@@ -67,14 +81,25 @@ preds["tas"]["g_all"] = preds["tas"]["gt"] + preds["tas"]["gv"]
 
 # methods (for all modules)
 methods = {}
-methods["tas"] = {}  # methods for the target variable tas
+
+# methods for tas
+methods["tas"] = {}
+
+# global trend emulation method
+methods["tas"]["gt"] = "LOWESS_OLSVOLC"
+# global variability emulation method
+methods["tas"]["gv"] = "AR"
+# local trends emulation method
+methods["tas"]["lt"] = "OLS"
+# method local trends applied to each gp separately
+method_lt_each_gp_sep = True
+# local variability emulation method
+methods["tas"]["lv"] = "OLS_AR1_sci"
+
+# methods for hfds
 methods["hfds"] = {}
-methods["tas"]["gt"] = "LOWESS_OLSVOLC"  # global trend emulation method
 methods["hfds"]["gt"] = "LOWESS"
-methods["tas"]["gv"] = "AR"  # global variability emulation method
-methods["tas"]["lt"] = "OLS"  # local trends emulation method
-method_lt_each_gp_sep = True  # method local trends applied to each gp separately
-methods["tas"]["lv"] = "OLS_AR1_sci"  # local variability emulation method
+
 
 # ---------------------------------------------------------------------------------
 
@@ -144,7 +169,7 @@ for esm in all_esms:
     for scen in scenarios_emus_v:
         seed[esm][scen] = {}
         seed[esm][scen]["gv"] = i + j * scen_seed_offset_v
-        seed[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1000000
+        seed[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1_000_000
         j += 1
     i += 1
 
@@ -154,6 +179,11 @@ for esm in all_esms:
 # information about loaded data:
 
 # cmip-ng
-# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
-# assumes folder structure / file name as in cmip-ng archives at ETHZ -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
-# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
+# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-
+# processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
+# assumes folder structure / file name as in cmip-ng archives at ETHZ
+# -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
+
+# global mean stratospheric AOD
+# downloaded from KNMI climate explorer in August 2020, no pre-processing, monthly data,
+# 1850-"2020" (0 after 2012)
