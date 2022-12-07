@@ -84,9 +84,8 @@ test-install: $(VENV_DIR)  ## test whether installing locally in a fresh env wor
 .PHONY: conda-environment
 conda-environment:  $(VENV_DIR)  ## make virtual environment for development
 $(VENV_DIR): $(CONDA_ENV_YML) setup.py
-	$(MAMBA_OR_CONDA) config --add channels conda-forge
-	$(MAMBA_OR_CONDA) install -y --file $(CONDA_ENV_YML)
+	$(MAMBA_OR_CONDA) env update --file $(CONDA_ENV_YML)
 	# Install the remainder of the dependencies using pip
-	$(VENV_DIR)/bin/pip install --upgrade pip wheel
-	$(VENV_DIR)/bin/pip install -e .[dev]
+	$(PYTHON) -m pip install --upgrade pip wheel
+	$(PYTHON) -m pip install -e .[dev]
 	touch $(VENV_DIR)
