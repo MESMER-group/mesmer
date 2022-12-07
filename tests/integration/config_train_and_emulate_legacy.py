@@ -1,11 +1,10 @@
 """
-Configuration file for examples
-
+configuration file for test_train_and_emulate_legacy.py
 """
 import os.path
 
 # path to mesmer root directory
-MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
+MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 
 # test data for example
 TEST_DATA_ROOT = os.path.join(
