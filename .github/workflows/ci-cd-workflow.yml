@@ -79,6 +79,7 @@ jobs:
     - name: Create conda environment
       uses: mamba-org/provision-with-micromamba@v14
       with:
+        environment-name: mesmer-tests
         cache-downloads: true
         cache-downloads-key: "${{runner.os}}-${{runner.arch}}-py${{matrix.python-version}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
         micromamba-version: 'latest'
