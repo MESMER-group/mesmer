@@ -1,9 +1,5 @@
 import warnings
 
-
-# load in configurations used in this script
-from . import config_train_and_emulate_legacy
-
 # import MESMER tools
 from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
@@ -16,6 +12,10 @@ from mesmer.create_emulations import (
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
+
+# load in configurations used in this script
+from . import config_train_and_emulate_legacy
+
 
 def train_and_emulate_legacy(cfg):
 
@@ -39,7 +39,6 @@ def train_and_emulate_legacy(cfg):
 
     print("Loading data")
     print("============")
-
 
     for esm in esms:
         print(f"- {esm}")
@@ -129,14 +128,20 @@ def train_and_emulate_legacy(cfg):
         params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=True)
 
         preds_lt = {"gttas": gt_T_s}
-        lt_s = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True)
-        emus_lt = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True)
+        lt_s = create_emus_lt(
+            params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True
+        )
+        emus_lt = create_emus_lt(
+            params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True
+        )
 
         print("- Start with local variability module")
 
         # derive variability part induced by gv
         preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
-        lv_gv_s = create_emus_lv(params_lv, preds_lv, cfg, save_emus=False, submethod="OLS")
+        lv_gv_s = create_emus_lv(
+            params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
+        )
 
         # derive residual variability i.e. what remains of tas once lt + gv removed
         res_lv_s = {}  # residual local variability
@@ -161,11 +166,14 @@ def train_and_emulate_legacy(cfg):
 
         # create full emulations
         print("- Merge the local trends and the local variability.")
-        emus_l = create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
+        emus_l = create_emus_l(
+            emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True
+        )
+
+        # make flake8 happy
+        return emus_g, emus_l
+
 
 def test_train_and_emulate_legacy():
 
     train_and_emulate_legacy(cfg=config_train_and_emulate_legacy)
-
-
-
