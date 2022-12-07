@@ -196,7 +196,7 @@ def train_gt_ic_LOWESS(data):
     # open to changes but if much smaller, var trend ends up very wiggly
     frac_lowess_name = "50/nr_ts"
 
-    gt_lowess = lowess(data, dim=dim, frac=frac)
+    gt_lowess = lowess(data, dim=dim, frac=frac).values
 
     return gt_lowess, frac_lowess_name
 

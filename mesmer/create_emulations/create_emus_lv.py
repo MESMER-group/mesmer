@@ -238,7 +238,6 @@ def create_emus_lv_OLS(params_lv, preds_lv):
         - OLS coefs are the same for each scenario
     """
 
-    print("Start with OLS")
     pred_names = list(preds_lv.keys())
     if pred_names != params_lv["preds"]:
         raise ValueError("Wrong list of predictors was passed.")
