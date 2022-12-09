@@ -5,7 +5,7 @@ import joblib
 import pytest
 
 from mesmer.calibrate_mesmer import _calibrate_and_draw_realisations
-from mesmer.testing import _check_dict
+from mesmer.testing import assert_dict_allclose
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -80,6 +80,6 @@ def test_calibrate_mesmer(
         assert res.keys() == exp.keys()
 
         # check all keys of res match exp
-        _check_dict(res, exp, "result", "expected")
+        assert_dict_allclose(res, exp, "result", "expected")
         # check all keys of exp match res
-        _check_dict(exp, res, "expected", "result")
+        assert_dict_allclose(exp, res, "expected", "result")
