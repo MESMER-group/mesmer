@@ -12,6 +12,42 @@ from .create_emus_lv import create_emus_lv
 from .merge_emus import create_emus_l
 
 
+def create_seed_dict(esms, scenarios, scen_seed_offset=0):
+    """define seeds for drawing emulations
+
+    Parameters
+    ----------
+    esms : list of str
+        Earth system models for which to create the seeds.
+    scenarios : list of str
+        Scenarios for which to create the seeds
+    scen_seed_offset : int, default 0
+        Defines if different scenarios have different seeds.
+
+    Returns
+    -------
+    seeds : dict
+
+    """
+
+    if scen_seed_offset == 0:
+        scenarios_emus_v = ["all"]
+    else:
+        scenarios_emus_v = scenarios
+
+    seed = {}
+    i = 0
+    for esm in esms:
+        seed[esm] = {}
+        for j, scen in enumerate(scenarios_emus_v):
+            seed[esm][scen] = {}
+            seed[esm][scen]["gv"] = i + j * scen_seed_offset
+            seed[esm][scen]["lv"] = i + j * scen_seed_offset + 1_000_000
+        i += 1
+
+    return seed
+
+
 def make_realisations(
     preds_lt,
     params_lt,

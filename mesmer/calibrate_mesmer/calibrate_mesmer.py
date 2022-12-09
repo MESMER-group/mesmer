@@ -36,7 +36,6 @@ class _Config:
         tas_local_variability_method,
         method_lt_each_gp_sep,
         nr_emus_v,  # TODO: remove when we remove the emulation part
-        seeds,  # TODO: remove when we remove the emulation part
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
@@ -79,7 +78,6 @@ class _Config:
         self.preds["tas"]["g_all"] = self.preds["tas"]["gt"] + self.preds["tas"]["gv"]
 
         self.nr_emus_v = nr_emus_v
-        self.seed = seeds
         self.wgt_scen_tr_eq = weight_scenarios_equally
         self.threshold_land = threshold_land
         self.max_iter_cv = cross_validation_max_iterations
@@ -131,25 +129,6 @@ def _calibrate_and_draw_realisations(
     GHFDS = {}
     time = {}
 
-    # TODO: decide if we want this functionality and, if we do, test what
-    #       happens if scen_seed_offset_v != 0
-    if scen_seed_offset_v == 0:
-        scenarios_emus_v = ["all"]
-    else:
-        scenarios_emus_v = scenarios_to_train
-
-    seeds = {}
-    i = 0
-    for esm in esms:
-        seeds[esm] = {}
-        j = 0
-        for scen in scenarios_emus_v:
-            seeds[esm][scen] = {}
-            seeds[esm][scen]["gv"] = i + j * scen_seed_offset_v
-            seeds[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1000000
-            j += 1
-        i += 1
-
     cfg = _Config(
         esms,
         scenarios_to_train,
@@ -167,7 +146,6 @@ def _calibrate_and_draw_realisations(
         tas_local_variability_method,
         method_lt_each_gp_sep,
         nr_emus_v,
-        seeds,
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
