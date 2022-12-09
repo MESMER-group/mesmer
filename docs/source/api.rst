@@ -105,6 +105,7 @@ Create emulations
    ~create_emulations.create_emus_g
    ~create_emulations.create_emus_l
    ~create_emulations.make_realisations
+   ~create_emulations.create_seed_dict
 
 
 Individual methods and utils
