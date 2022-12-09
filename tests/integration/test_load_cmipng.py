@@ -6,7 +6,7 @@ import pytest
 
 import mesmer
 from mesmer.io._load_cmipng import _load_cmipng_var
-from mesmer.testing import _check_dict
+from mesmer.testing import assert_dict_allclose
 
 
 def _get_default_kwargs(
@@ -114,8 +114,8 @@ def test_load_cmimpng_vs_load_var(test_data_root_dir, varn):
         **_get_default_kwargs(test_data_root_dir)
     )
 
-    _check_dict(dta_d, dta_i, "direct", "indirect")
-    _check_dict(dta_global_d, dta_global_i, "direct", "indirect")
-    _check_dict(lon_d, lon_i, "direct", "indirect")
-    _check_dict(lat_d, lat_i, "direct", "indirect")
+    assert_dict_allclose(dta_d, dta_i, "direct", "indirect")
+    assert_dict_allclose(dta_global_d, dta_global_i, "direct", "indirect")
+    assert_dict_allclose(lon_d, lon_i, "direct", "indirect")
+    assert_dict_allclose(lat_d, lat_i, "direct", "indirect")
     npt.assert_allclose(time_d, time_i)
