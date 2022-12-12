@@ -77,7 +77,7 @@ Breaking changes
 - The function ``mask_percentage`` has been renamed to :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`
   (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Removed the :py:func:`mesmer.io.load_constant_files.infer_interval_breaks` and the edges
+- Removed :py:func:`mesmer.io.load_constant_files.infer_interval_breaks` and the edges
   from the `lat` and `lon` dictionaries i.e., ``lon["e"]`` and ``lat["e"]``
   (`#233 <https://github.com/MESMER-group/mesmer/pull/233>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
