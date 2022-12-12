@@ -16,7 +16,6 @@ import regionmask
 from packaging.version import Version
 
 from ..utils.regionmaskcompat import mask_3D_frac_approx
-from ..utils.xrcompat import infer_interval_breaks
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
@@ -233,8 +232,5 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     # derive the weights
     lon["grid"], lat["grid"] = np.meshgrid(lon["c"], lat["c"])
     wgt = np.cos(np.deg2rad(lat["grid"]))
-
-    # derive longitude / latitude of edges of grid cells for plotting with pcolormesh
-    lon["e"], lat["e"] = infer_interval_breaks(lon["c"], lat["c"])
 
     return reg_dict, ls, wgt, lon, lat
