@@ -146,7 +146,6 @@ Load constant files
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_constant_files.infer_interval_breaks
    ~io.load_constant_files.load_phi_gc
    ~io.load_constant_files.load_regs_ls_wgt_lon_lat
 
