@@ -3,6 +3,8 @@ configuration file for test_train_and_emulate_legacy.py
 """
 import os.path
 
+from mesmer.create_emulations.make_realisations import create_seed_dict
+
 # path to mesmer root directory
 MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 
@@ -154,24 +156,7 @@ scenarios = [
     # "h-ssp119",
 ]
 
-if scen_seed_offset_v == 0:
-    scenarios_emus_v = ["all"]
-else:
-    scenarios_emus_v = scenarios
-
-nr_emus = {}
-nr_ts_emus_v = {}
-seed = {}
-i = 0
-for esm in all_esms:
-    seed[esm] = {}
-    j = 0
-    for scen in scenarios_emus_v:
-        seed[esm][scen] = {}
-        seed[esm][scen]["gv"] = i + j * scen_seed_offset_v
-        seed[esm][scen]["lv"] = i + j * scen_seed_offset_v + 1_000_000
-        j += 1
-    i += 1
+seed = create_seed_dict(all_esms, scenarios, scen_seed_offset_v)
 
 
 # ---------------------------------------------------------------------------------
