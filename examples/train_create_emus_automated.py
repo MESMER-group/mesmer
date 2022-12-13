@@ -65,12 +65,10 @@ for esm in esms:
     GSAT[esm] = convert_dict_to_arr(GSAT_dict[esm])
 
 # load in the constant files
-reg_dict, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(cfg.reg_type, lon, lat)
+ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
 # extract land
-tas, reg_dict, ls = extract_land(
-    tas_g, reg_dict, wgt_g, ls, threshold_land=cfg.threshold_land
-)
+tas, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=cfg.threshold_land)
 
 print()
 
