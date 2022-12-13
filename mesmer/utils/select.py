@@ -70,7 +70,7 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
     if reg_dict is not None:
         warnings.warn(
             "Passing `reg_dict` no longer has an effect. When passing `None` this "
-            "function will only returns two parameters.",
+            "function will only return two parameters.",
             FutureWarning,
         )
 

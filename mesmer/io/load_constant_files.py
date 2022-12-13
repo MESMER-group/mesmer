@@ -141,7 +141,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     ----------
     reg_type : str, optional, default: None
         Deprecated. No longer has an effect, if None is passed this
-        function will only returns four parameters.
+        function will only return four parameters.
 
     lon : dict
         longitude dictionary with key
@@ -187,7 +187,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     if reg_type is not None:
         warnings.warn(
             "``reg_type`` no longer has any effect. When passing `None` this "
-            "function will only returns four parameters.",
+            "function will only return four parameters.",
             FutureWarning,
         )
 
