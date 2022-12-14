@@ -81,6 +81,11 @@ Breaking changes
   from the `lat` and `lon` dictionaries i.e., ``lon["e"]`` and ``lat["e"]``
   (`#233 <https://github.com/MESMER-group/mesmer/pull/233>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Deprecated the ``reg_type`` argument to :py:func:`mesmer.io.load_constant_files.load_regs_ls_wgt_lon_lat`
+  and the ``reg_dict`` argument to :py:func:`mesmer.utils.select.extract_land`. These arguments
+  no longer have any affect (`#235 <https://github.com/MESMER-group/mesmer/pull/235>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
 
 Deprecations
 ^^^^^^^^^^^^

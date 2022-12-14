@@ -29,7 +29,7 @@ def test_calibrate_mesmer(
     test_esms = ["IPSL-CM6A-LR"]
     test_scenarios_to_train = scenarios
     test_target_variable = "tas"
-    test_reg_type = "srex"
+    test_reg_type = None
     test_threshold_land = 1 / 3
     test_output_file = os.path.join(tmpdir, "test_calibrate_mesmer_output.pkl")
     test_scen_seed_offset_v = 0

@@ -43,8 +43,6 @@ esms = ["IPSL-CM6A-LR"]
 # emulated variables
 targs = ["tas"]
 
-reg_type = "srex"
-
 # reference period
 ref = {}
 
