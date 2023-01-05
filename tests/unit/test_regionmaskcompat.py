@@ -148,8 +148,6 @@ def test_mask_percentage_coord_names(lat_name, lon_name):
     r = shapely.geometry.box(0, 0, 30, 30)
     r = regionmask.Regions([r])
 
-    print(ds)
-
     result = mask_3D_frac_approx(r, ds[lon_name], ds[lat_name])
 
     expected = [[[1, 0.5], [0.5, 0.25]]]
