@@ -9,6 +9,8 @@ Functions to create local trends emulations with MESMER.
 
 import numpy as np
 
+import mesmer.stats
+from mesmer.create_emulations.utils import _gather_params, _gather_predictors
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
@@ -108,6 +110,9 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 
     create_emus_method_lt = create_emus_method_func_mapping[method_lt]
 
+    # print(f"{scens_out=}")
+    # print(f"{scens_out_f=}")
+
     # create emulations
     emus_lt = {}
     if concat_h_f:
@@ -185,21 +190,17 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
 
     """
 
-    pred_names = list(preds_lt.keys())
-    nr_ts = len(
-        preds_lt[pred_names[0]][scen]
-    )  # nr_ts could vary for different scenarios but is the same for all predictors
-
     emus_lt = {}
     for targ in params_lt["targs"]:
-        nr_gps = len(params_lt["intercept"][targ])
-        emus_lt[targ] = np.zeros([nr_ts, nr_gps])
-        for gp in np.arange(nr_gps):
-            pred_vals = [
-                params_lt["coef_" + pred][targ][gp] * preds_lt[pred][scen]
-                for pred in params_lt["preds"]
-            ]
 
-            emus_lt[targ][:, gp] = sum(pred_vals) + params_lt["intercept"][targ][gp]
+        params = _gather_params(params_lt, targ, dims="cell")
+        predictors = _gather_predictors(preds_lt, params_lt["preds"], scen, dims="time")
+
+        lr = mesmer.stats.linear_regression.LinearRegression()
+        lr.params = params
+
+        prediction = lr.predict(predictors=predictors)
+
+        emus_lt[targ] = prediction.values.T
 
     return emus_lt
