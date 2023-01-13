@@ -110,8 +110,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
 
     create_emus_method_lt = create_emus_method_func_mapping[method_lt]
 
-    # print(f"{scens_out=}")
-    # print(f"{scens_out_f=}")
 
     # create emulations
     emus_lt = {}
