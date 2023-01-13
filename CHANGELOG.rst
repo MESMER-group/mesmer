@@ -116,10 +116,10 @@ Internal Changes
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Make use of :py:class:`mesmer.stats.linear_regression.LinearRegression` in
-  - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
-    By `Mathias Hauser <https://github.com/mathause>`_.
-  - :py:func:`mesmer.create_emulations.create_emus_lv_OLS` and :py:func:`mesmer.create_emulations.create_emus_OLS_each_gp_sep`
-    (`#240 <https://github.com/MESMER-group/mesmer/pull/240>`_).By `Mathias Hauser <https://github.com/mathause>`_.
+   - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - :py:func:`mesmer.create_emulations.create_emus_lv_OLS` and :py:func:`mesmer.create_emulations.create_emus_OLS_each_gp_sep`
+     (`#240 <https://github.com/MESMER-group/mesmer/pull/240>`_).By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
@@ -132,8 +132,8 @@ Internal Changes
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
-  - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
-  - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
+   - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
+   - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
 
   By `Mathias Hauser <https://github.com/mathause>`_.
 
