@@ -1,7 +1,7 @@
 import xarray as xr
 
 
-def _gather_predictors(preds_dict, predictor_names, scen, dims):
+def _gather_preds(preds_dict, predictor_names, scen, dims):
     """gather predictors for linear regression from legacy data structures
 
     Parameters

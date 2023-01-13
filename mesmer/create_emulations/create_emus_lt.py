@@ -10,7 +10,7 @@ Functions to create local trends emulations with MESMER.
 import numpy as np
 
 import mesmer.stats
-from mesmer.create_emulations.utils import _gather_params, _gather_predictors
+from mesmer.create_emulations.utils import _gather_params, _gather_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
@@ -192,7 +192,7 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     for targ in params_lt["targs"]:
 
         params = _gather_params(params_lt, targ, dims="cell")
-        predictors = _gather_predictors(preds_lt, params_lt["preds"], scen, dims="time")
+        predictors = _gather_preds(preds_lt, params_lt["preds"], scen, dims="time")
 
         lr = mesmer.stats.linear_regression.LinearRegression()
         lr.params = params
