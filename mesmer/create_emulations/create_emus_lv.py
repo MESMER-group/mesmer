@@ -9,6 +9,8 @@ Functions to create local variability emulations with MESMER.
 
 import numpy as np
 
+import mesmer.stats
+from mesmer.create_emulations.utils import _gather_params, _gather_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
 
@@ -247,14 +249,16 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     for scen in scens_OLS:
         emus_lv[scen] = {}
 
+        preds = _gather_preds(preds_lv, params_lv["preds"], scen, dims=("scen", "time"))
+
         for targ in params_lv["targs"]:
-            nr_emus_v, nr_ts_emus_v = preds_lv[pred_names[0]][scen].shape
-            nr_gps = len(params_lv["coef_" + params_lv["preds"][0]][targ])
-            emus_lv[scen][targ] = np.zeros([nr_emus_v, nr_ts_emus_v, nr_gps])
-            for run in np.arange(nr_emus_v):
-                for gp in np.arange(nr_gps):
-                    emus_lv[scen][targ][run, :, gp] = sum(
-                        params_lv["coef_" + pred][targ][gp] * preds_lv[pred][scen][run]
-                        for pred in params_lv["preds"]
-                    )
+
+            params = _gather_params(params_lv, targ, dims="gridpoint")
+
+            lr = mesmer.stats.linear_regression.LinearRegression()
+            lr.params = params
+            prediction = lr.predict(predictors=preds)
+
+            emus_lv[scen][targ] = prediction.values
+
     return emus_lv
