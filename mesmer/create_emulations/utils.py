@@ -1,4 +1,54 @@
+import numpy as np
 import xarray as xr
+
+
+def _concatenate_hist_future(data):
+    """concatenate hist and future data
+
+    Parameters
+    ----------
+    data : dict
+        Possibly nested dictionary containing arrays to concatenate. The keys of data
+        must correspond to the scenarios to use. The values can either be numpy arrays
+        or dicts of numpy arrays.
+
+    Returns
+    -------
+    concatenated : dict
+        Possibly nested dictionary with concatenated arrays.
+    """
+
+    scens_in = list(data.keys())
+
+    if "hist" not in scens_in[0]:
+        raise ValueError("data does not contain 'hist' scenario")
+
+    scens_in.remove("hist")
+    scens_out = [f"h-{scen}" for scen in scens_in]
+
+    concatenated = {}
+
+    hist = data.pop("hist")
+
+    # data is a nested dict
+    if isinstance(hist, dict):
+
+        for scen_out, scen_in in zip(scens_out, scens_in):
+            concatenated[scen_out] = {}
+
+            for targ in data[scen_in].keys():
+                concatenated[scen_out][targ] = np.concatenate(
+                    [hist[targ], data[scen_in][targ]]
+                )
+
+    # data is not a nested dict
+    else:
+
+        for scen_out, scen_in in zip(scens_out, scens_in):
+
+            concatenated[scen_out] = np.concatenate([hist, data[scen_in]])
+
+    return concatenated
 
 
 def _gather_preds(preds_dict, predictor_names, scen, dims):
