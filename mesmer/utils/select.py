@@ -140,8 +140,8 @@ def extract_time_period(data, time, start, end):
     """
 
     warnings.warn(
-        "`extract_time_period` is deprecated. Please raise an issue if you still use"
-        "this function.",
+        "`extract_time_period` is deprecated in v0.9.0 and will be remove in a future "
+        "version. Please raise an issue if you still use this function.",
         FutureWarning,
     )
 

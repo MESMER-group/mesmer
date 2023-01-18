@@ -90,9 +90,10 @@ Breaking changes
 Deprecations
 ^^^^^^^^^^^^
 
-- The function `mesmer.utils.select.extract_time_period` is now deprecated. Please raise
-  an issue if you use this function (`#243 <https://github.com/MESMER-group/mesmer/pull/243>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
+- The function `mesmer.utils.select.extract_time_period` is now deprecated and will be
+  removed in a future version. Please raise an issue if you use this function (`#243
+  <https://github.com/MESMER-group/mesmer/pull/243>`_). By `Mathias Hauser
+  <https://github.com/mathause>`_.
 
 Bug fixes
 ^^^^^^^^^
