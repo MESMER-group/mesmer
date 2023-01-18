@@ -3,7 +3,7 @@ import xarray as xr
 
 
 def _concatenate_hist_future(data):
-    """concatenate hist and future data
+    """concatenate historical and future data
 
     Parameters
     ----------
@@ -20,7 +20,7 @@ def _concatenate_hist_future(data):
 
     scens_in = list(data.keys())
 
-    if "hist" not in scens_in[0]:
+    if "hist" not in scens_in:
         raise ValueError("data does not contain 'hist' scenario")
 
     scens_in.remove("hist")
@@ -35,7 +35,6 @@ def _concatenate_hist_future(data):
 
         for scen_out, scen_in in zip(scens_out, scens_in):
             concatenated[scen_out] = {}
-
             for targ in data[scen_in].keys():
                 concatenated[scen_out][targ] = np.concatenate(
                     [hist[targ], data[scen_in][targ]]
@@ -45,7 +44,6 @@ def _concatenate_hist_future(data):
     else:
 
         for scen_out, scen_in in zip(scens_out, scens_in):
-
             concatenated[scen_out] = np.concatenate([hist, data[scen_in]])
 
     return concatenated
