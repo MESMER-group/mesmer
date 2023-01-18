@@ -104,12 +104,12 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
     return var_l, {}, ls
 
 
-def extract_time_period(var, time, start, end):
+def extract_time_period(data, time, start, end):
     """Extract selected time period.
 
     Parameters
     ----------
-    var : np.ndarray
+    data : np.ndarray
         variable in 1-4d array
 
         - (time);
@@ -139,17 +139,15 @@ def extract_time_period(var, time, start, end):
 
     """
 
-    # find index of start and end of time period
-    idx_start = np.where(time == int(start))[0][0]
-    idx_end = np.where(time == int(end))[0][0] + 1  # to include the end year
+    warnings.warn(
+        "`extract_time_period` is deprecated. Please raise an issue if you still use"
+        "this function.",
+        FutureWarning,
+    )
 
-    # extract time period from variable dictionary
-    if len(var.shape) > 1:
-        var_tp = var[:, idx_start:idx_end]
-    else:
-        var_tp = var[idx_start:idx_end]
+    sel = (time >= start) & (time <= end)
 
-    # extract time period from time vector
-    time_tp = time[idx_start:idx_end]
+    time = time[sel]
+    data = data[:, sel, ...] if data.ndim > 1 else data[sel]
 
-    return var_tp, time_tp
+    return data, time
