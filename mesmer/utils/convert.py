@@ -96,27 +96,18 @@ def separate_hist_future(var_c, time_c, cfg):
 
     idx_start_fut = np.where(time == end_year_hist)[0][0] + 1
 
-    time_s = {}
-    time_s["hist"] = time[:idx_start_fut]
+    var_s, time_s = {}, {}
 
-    var_s = {}
-    # insert hist here to preserve the order
-    var_s["hist"] = None
-
-    hist = list()
-
-    for scen_f, scen_c in zip(scens_f, scens_c):
-
-        # gather hist
-        hist.append(var_c[scen_c][:, :idx_start_fut])
-
-        # gather proj
-        var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
-        time_s[scen_f] = time_c[scen_c][idx_start_fut:]
-
-    hist = np.vstack(hist)
+    # gather hist
+    hist = [var_c[scen_c][:, :idx_start_fut] for scen_c in scens_c]
 
     # exclude duplicate historical runs that are available in several scenarios
-    var_s["hist"] = np.unique(hist, axis=0)
+    var_s["hist"] = np.unique(np.vstack(hist), axis=0)
+    time_s["hist"] = time[:idx_start_fut]
+
+    # gather proj
+    for scen_f, scen_c in zip(scens_f, scens_c):
+        var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
+        time_s[scen_f] = time_c[scen_c][idx_start_fut:]
 
     return var_s, time_s
