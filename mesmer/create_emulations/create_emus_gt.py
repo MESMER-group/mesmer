@@ -6,8 +6,8 @@
 Functions to create global trend emulations with MESMER.
 """
 
-import numpy as np
 
+from mesmer.create_emulations.utils import _concatenate_hist_future
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
@@ -67,32 +67,21 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     pred_names = list(preds_gt.keys())
     scenarios_emus = list(preds_gt[pred_names[0]].keys())
 
-    scens_out_f = list(map(lambda x: x.replace("h-", ""), scenarios_emus))
-    # does nothing in case 'h-' not actually included
+    if "h-" in scenarios_emus[0]:
+        scenarios_emus = ["hist"] + [scen.replace("h-", "") for scen in scenarios_emus]
 
-    if concat_h_f:
-        scens_out = scenarios_emus
-    else:
-        if "h-" in scenarios_emus[0]:
-            scens_out = ["hist"] + scens_out_f
-        else:
-            scens_out = scens_out_f
-
-    # initialize global trend emulations dictionary with scenarios as keys
     emus_gt = {}
 
     # apply the chosen method
     if "LOWESS" in params_gt["method"]:
-        if concat_h_f:
-            for scen_out, scen_out_f in zip(scens_out, scens_out_f):
-                emus_gt[scen_out] = np.concatenate(
-                    [params_gt["hist"], params_gt[scen_out_f]]
-                )
-        else:
-            for scen_out in scens_out:
-                emus_gt[scen_out] = params_gt[scen_out]
+        for scen in scenarios_emus:
+            emus_gt[scen] = params_gt[scen]
     else:
         raise ValueError("The chosen method is currently not implemented.")
+
+    if concat_h_f:
+        emus_gt = _concatenate_hist_future(emus_gt)
+        scenarios_emus = list(emus_gt.keys())
 
     # save the global trend emulation if requested
     if save_emus:
@@ -107,7 +96,7 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
                 *params_gt["preds"],
                 params_gt["targ"],
                 params_gt["esm"],
-                *scens_out,
+                *scenarios_emus,
             ],
         )
 
