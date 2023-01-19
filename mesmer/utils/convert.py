@@ -100,6 +100,9 @@ def separate_hist_future(var_c, time_c, cfg):
     time_s["hist"] = time[:idx_start_fut]
 
     var_s = {}
+    # insert hist here to preserve the order
+    var_s["hist"] = None
+
     hist = list()
 
     for scen_f, scen_c in zip(scens_f, scens_c):
