@@ -29,11 +29,9 @@ def convert_dict_to_arr(var_dict):
 
     """
 
-    scenarios = list(var_dict.keys())
-
     var_arr = {}
 
-    for scen in scenarios:
+    for scen in var_dict:
         runs = list(var_dict[scen])
         shape_run = list(var_dict[scen][runs[0]].shape)
         var_arr[scen] = np.zeros([len(runs)] + shape_run)

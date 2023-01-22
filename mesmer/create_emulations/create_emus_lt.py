@@ -69,10 +69,6 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
           key
         - if historical time period was included in training, it has its own scenario
         - either historical period is included for every scenario or for no scenario
-    - Potential TODO:
-        - evaluate if really need / want concat_h_f or if I want output to be determined
-          by shape predictors
-
     """
 
     # derive necessary scenario names
