@@ -14,7 +14,9 @@ from mesmer.io.save_mesmer_bundle import save_mesmer_data
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """see docstring of `gather_gt_data`"""
 
-    warnings.warn("'create_emus_gt' has been renamed to `gather_gt_data`")
+    warnings.warn(
+        "'create_emus_gt' has been renamed to `gather_gt_data`", FutureWarning
+    )
 
     return gather_gt_data(
         params_gt, preds_gt, cfg, concat_h_f=concat_h_f, save_emus=save_emus
