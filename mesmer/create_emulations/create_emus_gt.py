@@ -5,15 +5,25 @@
 """
 Functions to create global trend emulations with MESMER.
 """
-
+import warnings
 
 from mesmer.create_emulations.utils import _concatenate_hist_future
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
-# TODO: rename because there's actually no emulation involved in this process
-# (global trends always come from an external source)
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
+    """see docstring of `gather_gt_data`"""
+
+    warnings.warn(
+        "'create_emus_gt' has been renamed to `gather_gt_data`", FutureWarning
+    )
+
+    return gather_gt_data(
+        params_gt, preds_gt, cfg, concat_h_f=concat_h_f, save_emus=save_emus
+    )
+
+
+def gather_gt_data(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """
     Create global trend (emissions + volcanoes) emulations for specified ensemble type
     and method.
