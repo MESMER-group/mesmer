@@ -152,8 +152,7 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
             runs_excl = []
             print("TO DO: create list of excluded runs / ESMs for this variable")
 
-        # print(
-        #   "TO DO: rewrite selection of p2 in way that needs less space for CanESM5 (+ see if other ESMs need p2 too)"
+        #  TODO: how to handle p2?
         # )
         path = os.path.join(dir_name, f"{var}_ann_{esm}_{scenario}_r*i1p1f*_g025.nc")
         path_runs_list_scen = sorted(glob.glob(path))
@@ -161,44 +160,25 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         path = os.path.join(dir_name, f"{var}_ann_{esm}_historical_r*i1p1f*_g025.nc")
         path_runs_list_hist = sorted(glob.glob(path))
 
-        # check if both scenario and historical run are available for this realization, if yes add to path_runs_list
+        # check if both scenario and historical run are available for this realization,
+        # if yes add to path_runs_list
         path_runs_list = []
         for run in path_runs_list_scen:
             run_hist = run.replace(scenario, "historical")
             if run_hist in path_runs_list_hist:
                 path_runs_list.append(run)
 
-        # TODO: redecide if I am fine with CanESM5 p2 but not all scenarios or if I prefer the worse p1 which has all scenarios
-        # code below = old version when used p2 instead
-        # if esm != "CanESM5":
-        #    path_runs_list = sorted(
-        #       glob.glob(
-        #   dir_name
-        #  + var
-        # + "_ann_"
-        # + esm
-        # + "_"
-        #      + scenario
-        #     + "_"
-        #    + "r*i1p1f*"
-        #   + "_g025.nc"
-        #   )
-        # )
-
+        # TODO: redecide if I am fine with CanESM5 p2 but not all scenarios or if I
+        # prefer the worse p1 which has all scenarios code below = old version when used
+        #  p2 instead
+        # if esm == "CanESM5":
+        #     variant = "r*i1p2f*"
         # else:
-        #   path_runs_list = sorted(
-        #      glob.glob(
-        #         dir_name
-        #        + var
-        #       + "_ann_"
-        #      + esm
-        #     + "_"
-        #    + scenario
-        #   + "_"
-        #  + "r*i1p2f*"
-        # + "_g025.nc"
-        #    )
-        # )
+        #     variant = "r*i1p1f*"
+
+        # path = os.path.join(dir_name, f"{var}_ann_{esm}_{scenario}_{variant}_g025.nc")
+        # path_runs_list = sorted(glob.glob(path))
+
     if len(path_runs_list) == 0:  # if no entries found, return the empty list
         return path_runs_list
 
@@ -266,8 +246,9 @@ def load_cmipng(targ, esm, scen, cfg):
             "No version without historical time period is currently implemented."
         )
 
+    # once start working with other vars, extend dict eg {"pr": load_cmipng_pr,
+    # "hfds": load_cmipng_hfds, "tas": load_cmipng_tas}
     targ_func_mapping = {"hfds": load_cmipng_hfds, "tas": load_cmipng_tas}
-    # once start working with other vars, extend dict eg {"pr": load_cmipng_pr, "hfds": load_cmipng_hfds, "tas": load_cmipng_tas}
 
     load_targ = targ_func_mapping[targ]
 
@@ -420,6 +401,9 @@ def _load_cmipng_var(esm, scen, cfg, varn):
     ref = cfg.ref
     dir_cmipng = cfg.dir_cmipng
 
+    if ref["type"] == "first":
+        raise ValueError("reference type 'first' is no longer supported")
+
     # find the files which fulfill the specifications
     path_runs_list = find_files_cmipng(gen, esm, varn, scen, dir_cmipng)
 
@@ -468,17 +452,7 @@ def _load_cmipng_var(esm, scen, cfg, varn):
             )
             dta[run] -= dta_ref  # compute anomalies
 
-        # TODO: remove "first" (used for Leas first paper but does not really make sense)
-        if ref["type"] == "first" and run == "1":
-            # TO CHECK
-            dta_ref = (
-                data[varn]
-                .sel(time=slice(ref["start"], ref["end"]))
-                .mean(dim="time")
-                .values
-            )
-
-    if ref["type"] == "all" or ref["type"] == "first":
+    if ref["type"] == "all":
         for run_path in path_runs_list:
             run = run_nrs[run_path]
             dta[run] -= dta_ref  # compute anomalies
