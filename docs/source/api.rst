@@ -98,7 +98,7 @@ Create emulations
 .. autosummary::
    :toctree: generated/
 
-   ~create_emulations.create_emus_gt
+   ~create_emulations.gather_gt_data
    ~create_emulations.create_emus_gv
    ~create_emulations.create_emus_lt
    ~create_emulations.create_emus_lv

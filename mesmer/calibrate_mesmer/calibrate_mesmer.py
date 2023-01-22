@@ -4,7 +4,7 @@ Functions to calibrate all modules of MESMER
 import logging
 import warnings
 
-from ..create_emulations import create_emus_gt, create_emus_lt, create_emus_lv
+from ..create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
 from ..io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
 from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
 from .train_gt import train_gt
@@ -220,11 +220,10 @@ def _calibrate_and_draw_realisations(
         LOGGER.info("Creating global-trend emulations")
         preds_gt = {"time": time[esm]}
 
-        # TODO: remove use of emus_gt from this script.
-        emus_gt_T = create_emus_gt(
+        emus_gt_T = gather_gt_data(
             params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=False
         )
-        gt_T_s = create_emus_gt(
+        gt_T_s = gather_gt_data(
             params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
 
@@ -236,7 +235,7 @@ def _calibrate_and_draw_realisations(
         for scen in gt_T_s.keys():
             gt_T2_s[scen] = gt_T_s[scen] ** 2
 
-        gt_hfds_s = create_emus_gt(
+        gt_hfds_s = gather_gt_data(
             params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
 

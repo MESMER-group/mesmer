@@ -11,11 +11,11 @@ import configs.config_across_scen_T_cmip6ng_test as cfg
 from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
     create_emus_g,
-    create_emus_gt,
     create_emus_gv,
     create_emus_l,
     create_emus_lt,
     create_emus_lv,
+    gather_gt_data,
 )
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
@@ -81,10 +81,10 @@ for esm in esms:
     params_gt_T = train_gt(GSAT[esm], targ, esm, time[esm], cfg, save_params=True)
 
     preds_gt = {"time": time[esm]}
-    gt_T_s = create_emus_gt(
+    gt_T_s = gather_gt_data(
         params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
     )
-    emus_gt_T = create_emus_gt(
+    emus_gt_T = gather_gt_data(
         params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=True
     )
 
