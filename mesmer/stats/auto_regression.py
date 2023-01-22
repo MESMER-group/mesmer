@@ -130,7 +130,7 @@ def _draw_auto_regression_correlated_np(
     # coeffs assumed to be ar_order x n_coefs
     ar_order, n_coefs = coefs.shape
 
-    # TODO: allow arbitrary lags? (e.g., [1, 12]) -> need to pass `ar_lags` (see #164)
+    # arbitrary lags? see https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
     # ensure reproducibility (TODO: clarify approach to this, see #35)

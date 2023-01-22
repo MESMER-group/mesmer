@@ -35,13 +35,17 @@ class _Config:
         tas_local_trend_method,
         tas_local_variability_method,
         method_lt_each_gp_sep,
-        nr_emus_v,  # TODO: remove when we remove the emulation part
+        nr_emus_v,  # TODO: should not have any effect: to remove
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
         save_params=False,
         params_output_dir=None,
     ):
+
+        if nr_emus_v is not None:
+            warnings.warn("Passing 'nr_emus_v' has no effect.", FutureWarning)
+
         self.esms = esms
         self.scenarios = scenarios
         self.gen = cmip_generation
@@ -77,7 +81,6 @@ class _Config:
         }
         self.preds["tas"]["g_all"] = self.preds["tas"]["gt"] + self.preds["tas"]["gv"]
 
-        self.nr_emus_v = nr_emus_v
         self.wgt_scen_tr_eq = weight_scenarios_equally
         self.threshold_land = threshold_land
         self.max_iter_cv = cross_validation_max_iterations
@@ -97,10 +100,10 @@ def _calibrate_and_draw_realisations(
     reg_type,
     threshold_land,
     output_file,
-    scen_seed_offset_v,  # TODO: remove when we remove the emulation part
-    cmip_data_root_dir,
-    observations_root_dir,
-    auxiliary_data_dir,
+    scen_seed_offset_v,  # TODO: should not have any effect: to remove
+    cmip_data_root_dir=None,
+    observations_root_dir=None,
+    auxiliary_data_dir=None,
     cmip_generation=6,
     reference_period_type="individ",
     reference_period_start_year="1850",
@@ -113,7 +116,7 @@ def _calibrate_and_draw_realisations(
     # specify if the local trends method is applied to each grid point separately.
     # Currently it must be set to True
     method_lt_each_gp_sep=True,
-    nr_emus_v=100,  # TODO: remove when we remove the emulation part
+    nr_emus_v=None,  # TODO: should not have any effect: to remove
     weight_scenarios_equally=True,
     cross_validation_max_iterations=30,
     save_params=False,
@@ -130,28 +133,31 @@ def _calibrate_and_draw_realisations(
     time = {}
 
     cfg = _Config(
-        esms,
-        scenarios_to_train,
-        cmip_generation,
-        cmip_data_root_dir,
-        observations_root_dir,
-        auxiliary_data_dir,
-        reference_period_type,
-        reference_period_start_year,
-        reference_period_end_year,
-        tas_global_trend_method,
-        hfds_global_trend_method,
-        tas_global_variability_method,
-        tas_local_trend_method,
-        tas_local_variability_method,
-        method_lt_each_gp_sep,
-        nr_emus_v,
-        weight_scenarios_equally,
-        threshold_land,
-        cross_validation_max_iterations,
+        esms=esms,
+        scenarios=scenarios_to_train,
+        cmip_generation=cmip_generation,
+        cmip_data_root_dir=cmip_data_root_dir,
+        observations_root_dir=observations_root_dir,
+        auxiliary_data_dir=auxiliary_data_dir,
+        reference_period_type=reference_period_type,
+        reference_period_start_year=reference_period_start_year,
+        reference_period_end_year=reference_period_end_year,
+        tas_global_trend_method=tas_global_trend_method,
+        hfds_global_trend_method=hfds_global_trend_method,
+        tas_global_variability_method=tas_global_variability_method,
+        tas_local_trend_method=tas_local_trend_method,
+        tas_local_variability_method=tas_local_variability_method,
+        method_lt_each_gp_sep=method_lt_each_gp_sep,
+        nr_emus_v=nr_emus_v,
+        weight_scenarios_equally=weight_scenarios_equally,
+        threshold_land=threshold_land,
+        cross_validation_max_iterations=cross_validation_max_iterations,
         save_params=save_params,
         params_output_dir=params_output_dir,
     )
+
+    if scen_seed_offset_v is not None:
+        warnings.warn("`scen_seed_offset_v` has no effect here.")
 
     for esm in esms:
         LOGGER.info("Loading data for %s", esm)
@@ -252,10 +258,6 @@ def _calibrate_and_draw_realisations(
             gv_novolc_T_s, target_variable, esm, cfg, save_params=cfg.save_params
         )
 
-        # TODO: remove because time_v is not needed for calibration
-        time_v = {}
-        time_v["all"] = time[esm][scen]
-
         LOGGER.info("Calibrating local trends module")
         preds = {
             "gttas": gt_T_s,
@@ -281,8 +283,7 @@ def _calibrate_and_draw_realisations(
         preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
 
         # Create local variability due to global variability warming samples
-        # used for training the local variability module. Samples are cheap to create so
-        # not an issue to have here.
+        # required to find the local residuals
         lv_gv_s = create_emus_lv(
             params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
         )
