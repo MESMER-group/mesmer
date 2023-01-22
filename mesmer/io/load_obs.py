@@ -184,9 +184,6 @@ def load_strat_aod(time, dir_obs):
     -----
     - Assumption: time covers max full extend historical period (i.e., 1850 - 2014 for
       cimp6, 1850 - 2005 for cmip5)
-    - potentially TODO: check if want to integrate it into load_obs() fct somehow, but
-      likely not as it is quite different from other obs
-
     """
 
     path_file = os.path.join(dir_obs, "aerosols", "isaod_gl.dat")

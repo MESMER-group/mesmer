@@ -32,7 +32,7 @@ def test_calibrate_mesmer(
     test_reg_type = None
     test_threshold_land = 1 / 3
     test_output_file = os.path.join(tmpdir, "test_calibrate_mesmer_output.pkl")
-    test_scen_seed_offset_v = 0
+    test_scen_seed_offset_v = None
     test_cmip_generation = 6
     test_cmip_data_root_dir = os.path.join(
         test_data_root_dir,

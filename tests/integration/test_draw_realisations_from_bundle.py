@@ -81,7 +81,8 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
             differing_spots = np.sum(
                 ~np.isclose(result[v].values, exp[v].values, rtol=rtol)
             )
-            assert differing_spots / np.product(result[v].values.shape) < wrong_tol
+            frac_differing = differing_spots / result[v].values.size
+            assert frac_differing < wrong_tol
 
         # # Ideally we would use the below, but we can't because of numpy's
         # # random seed issue (see comment above).
@@ -89,10 +90,6 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
-        assert set(exp_reshaped.dims) == {
-            "scenario",
-            "realisation",
-            "lon",
-            "lat",
-            "year",
-        }
+        expected_dims = {"scenario", "realisation", "lon", "lat", "year"}
+
+        assert set(exp_reshaped.dims) == expected_dims
