@@ -26,7 +26,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Create conda environment
-      uses: mamba-org/provision-with-micromamba@v14
+      uses: mamba-org/provision-with-micromamba@v15
       with:
         environment-name: mesmer-linting
         micromamba-version: 'latest'
@@ -80,7 +80,7 @@ jobs:
         echo "PYTHON_VERSION=${{ matrix.python-version }}" >> $GITHUB_ENV
 
     - name: Create conda environment
-      uses: mamba-org/provision-with-micromamba@v14
+      uses: mamba-org/provision-with-micromamba@v15
       with:
         environment-name: mesmer-tests
         cache-downloads: true
