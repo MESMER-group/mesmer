@@ -235,8 +235,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         params_scen = list()
         for scen, data in targ.items():
 
-            nr_runs, nr_ts, nr_gps = data.shape
-
             # create temporary DataArray
             data = xr.DataArray(data, dims=("run", "time", "cell"))
 
