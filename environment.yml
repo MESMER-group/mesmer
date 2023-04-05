@@ -11,14 +11,14 @@ dependencies:
  - netcdf4
  - numpy
  - packaging
- - pandas
+ - pandas<2.0
  - regionmask>=0.8
  - scikit-learn
  - sphinx
  - statsmodels
  - xarray
 # for testing
- - black
+ - black<23.1
  - flake8
  - isort
  - pytest
