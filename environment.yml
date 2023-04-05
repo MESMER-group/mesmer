@@ -18,7 +18,7 @@ dependencies:
  - statsmodels
  - xarray
 # for testing
- - black
+ - black<23.1
  - flake8
  - isort
  - pytest
