@@ -100,7 +100,6 @@ def test_load_cmipng_ref_two_ens_all(test_data_root_dir, varn, start, end):
     # test individual gridpoints are 0 (over reference period)
     result = np.mean(dta_arr[sel, :, :], axis=(0, -1))
 
-    print(result.shape)
     expected = np.zeros_like(result)
     expected[np.isnan(result)] = np.NaN
     np.testing.assert_allclose(expected, result, atol=1e-6)
