@@ -51,9 +51,7 @@ def extract_time_lon_lat_wgt3d(data):
 
     lons, lats = np.meshgrid(lon["c"], lat["c"])
     wgt2d = np.cos(np.deg2rad(lats))
-    wgt3d = np.tile(wgt2d, [len(time), 1]).reshape(
-        [len(time), wgt2d.shape[0], wgt2d.shape[1]]
-    )
+    wgt3d = np.tile(wgt2d, (time.size, 1, 1))
 
     return time, lon, lat, wgt3d
 
