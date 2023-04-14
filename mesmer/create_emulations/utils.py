@@ -49,7 +49,7 @@ def _concatenate_hist_future(data):
     return concatenated
 
 
-def _gather_preds(preds_dict, predictor_names, scen, dims):
+def _gather_lr_preds(preds_dict, predictor_names, scen, dims):
     """gather predictors for linear regression from legacy data structures
 
     Parameters
@@ -80,7 +80,7 @@ def _gather_preds(preds_dict, predictor_names, scen, dims):
     return predictors
 
 
-def _gather_params(params_dict, targ, dims):
+def _gather_lr_params(params_dict, targ, dims):
     """gather parameters for linear regression from legacy data structures
 
     Parameters

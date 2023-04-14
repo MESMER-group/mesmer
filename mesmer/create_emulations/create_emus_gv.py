@@ -60,8 +60,8 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_gv["esm"]]
 
-    pred_names = list(preds_gv.keys())
-    scens_out = list(preds_gv[pred_names[0]].keys())
+    pred_name = list(preds_gv.keys())[0]
+    scens_out = list(preds_gv[pred_name].keys())
 
     if scens_out != list(seed_all_scens.keys()):
         raise ValueError(
@@ -73,10 +73,10 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     emus_gv = {}
 
     for scen in scens_out:
-        if len(preds_gv[pred_names[0]][scen].shape) > 1:
-            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[1]
-        else:
-            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[0]
+
+        time_axis = 1 if preds_gv[pred_name][scen].ndim > 1 else 0
+
+        nr_ts_emus_v = preds_gv[pred_name][scen].shape[time_axis]
 
         # apply the chosen method
         if params_gv["method"] == "AR":

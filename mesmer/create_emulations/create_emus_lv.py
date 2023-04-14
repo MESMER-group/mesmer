@@ -10,7 +10,7 @@ Functions to create local variability emulations with MESMER.
 import numpy as np
 
 import mesmer.stats
-from mesmer.create_emulations.utils import _gather_params, _gather_preds
+from mesmer.create_emulations.utils import _gather_lr_params, _gather_lr_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
 
@@ -161,17 +161,16 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     """
 
     print("Start with AR(1) with spatially correlated innovations.")
-    pred_names = list(preds_lv.keys())
-    scens_out = list(preds_lv[pred_names[0]].keys())
+    pred_name = list(preds_lv.keys())[0]
+    scens_out = list(preds_lv[pred_name].keys())
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_lv["esm"]]
 
     for scen in scens_out:
-        # if 1-d array, time = 1st dim, else time = 2nd dim
-        if len(preds_lv[pred_names[0]][scen].shape) > 1:
-            nr_ts_emus_stoch_v = preds_lv[pred_names[0]][scen].shape[1]
-        else:
-            nr_ts_emus_stoch_v = preds_lv[pred_names[0]][scen].shape[0]
+
+        time_axis = 1 if preds_lv[pred_name][scen].ndim > 1 else 0
+
+        nr_ts_emus_stoch_v = preds_lv[pred_name][scen].shape[time_axis]
 
         if scen not in emus_lv:
             emus_lv[scen] = {}
@@ -179,12 +178,11 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
         for targ in params_lv["targs"]:
 
             seed = seed_all_scens[scen]["lv"]
-            nr_gps = len(params_lv["AR1_int"][targ])
 
             # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on
             # existing one
             if len(emus_lv[scen]) == 0:
-                emus_lv[scen][targ] = np.zeros(nr_emus_v, nr_ts_emus_stoch_v, nr_gps)
+                emus_lv[scen][targ] = 0
 
             emus_ar = _draw_auto_regression_correlated_np(
                 intercept=params_lv["AR1_int"][targ],
@@ -249,11 +247,13 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     for scen in scens_OLS:
         emus_lv[scen] = {}
 
-        preds = _gather_preds(preds_lv, params_lv["preds"], scen, dims=("scen", "time"))
+        preds = _gather_lr_preds(
+            preds_lv, params_lv["preds"], scen, dims=("scen", "time")
+        )
 
         for targ in params_lv["targs"]:
 
-            params = _gather_params(params_lv, targ, dims="gridpoint")
+            params = _gather_lr_params(params_lv, targ, dims="gridpoint")
 
             lr = mesmer.stats.linear_regression.LinearRegression()
             lr.params = params
