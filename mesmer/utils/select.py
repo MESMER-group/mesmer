@@ -68,11 +68,7 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
     """
 
     if reg_dict is not None:
-        warnings.warn(
-            "Passing `reg_dict` no longer has an effect. When passing `None` this "
-            "function will only return two parameters.",
-            FutureWarning,
-        )
+        warnings.warn("Passing `reg_dict` no longer has an effect.", FutureWarning)
 
     # determine which grid points count as land grid points
     idx_l = ls["grid_no_ANT"] > threshold_land
@@ -97,9 +93,6 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
         for scen in var[esm].keys():
             # run is the first axis, followed by time
             var_l[esm][scen] = var[esm][scen][:, :, idx_l]
-
-    if reg_dict is None:
-        return var_l, ls
 
     return var_l, {}, ls
 

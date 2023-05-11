@@ -200,10 +200,10 @@ def _calibrate_and_draw_realisations(
         warnings.warn("Passing ``reg_type`` no longer has any effect.", FutureWarning)
 
     # load in the constant files
-    ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
+    _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
     # extract land
-    tas, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=threshold_land)
+    tas, _, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=threshold_land)
 
     for esm in esms:
         LOGGER.info("Calibrating %s", esm)

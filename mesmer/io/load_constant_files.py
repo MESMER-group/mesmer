@@ -185,11 +185,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     """
 
     if reg_type is not None:
-        warnings.warn(
-            "``reg_type`` no longer has any effect. When passing `None` this "
-            "function will only return four parameters.",
-            FutureWarning,
-        )
+        warnings.warn("``reg_type`` no longer has any effect.", FutureWarning)
 
     # obtain a (subsampled) land-sea mask
     ls = {}
@@ -212,8 +208,5 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     # derive the weights
     lon["grid"], lat["grid"] = np.meshgrid(lon["c"], lat["c"])
     wgt = np.cos(np.deg2rad(lat["grid"]))
-
-    if reg_type is None:
-        return ls, wgt, lon, lat
 
     return {}, ls, wgt, lon, lat
