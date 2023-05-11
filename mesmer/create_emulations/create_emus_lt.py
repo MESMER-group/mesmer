@@ -9,9 +9,9 @@ Functions to create local trends emulations with MESMER.
 
 import mesmer.stats
 from mesmer.create_emulations.utils import (
-    _concatenate_hist_future,
     _gather_lr_params,
     _gather_lr_preds,
+    concatenate_hist_future,
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
@@ -105,7 +105,7 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
         emus_lt[scen] = create_emus_method_lt(params_lt, preds_lt, scen)
 
     if concat_h_f:
-        emus_lt = _concatenate_hist_future(emus_lt)
+        emus_lt = concatenate_hist_future(emus_lt)
         scenarios_emus = list(emus_lt.keys())
 
     # save the local trends emulation if requested

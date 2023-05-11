@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 
 
-def _concatenate_hist_future(data):
+def concatenate_hist_future(data):
     """concatenate historical and future data
 
     Parameters
@@ -28,23 +28,25 @@ def _concatenate_hist_future(data):
 
     concatenated = {}
 
-    hist = data.pop("hist")
-
-    # data is a nested dict
-    if isinstance(hist, dict):
-
-        for scen_out, scen_in in zip(scens_out, scens_in):
-            concatenated[scen_out] = {}
-            for targ in data[scen_in].keys():
-                concatenated[scen_out][targ] = np.concatenate(
-                    [hist[targ], data[scen_in][targ]]
-                )
+    hist = data.get("hist")
 
     # data is not a nested dict
-    else:
+    if not isinstance(hist, dict):
 
         for scen_out, scen_in in zip(scens_out, scens_in):
             concatenated[scen_out] = np.concatenate([hist, data[scen_in]])
+
+        return concatenated
+
+    # data is a nested dict
+    for scen_out, scen_in in zip(scens_out, scens_in):
+
+        concatenated[scen_out] = {}
+
+        for targ in data[scen_in].keys():
+            concatenated[scen_out][targ] = np.concatenate(
+                [hist[targ], data[scen_in][targ]]
+            )
 
     return concatenated
 
