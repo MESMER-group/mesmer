@@ -6,8 +6,6 @@ sys.path.append("../")
 
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
-
-# import MESMER tools
 from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
     create_emus_g,
@@ -16,6 +14,9 @@ from mesmer.create_emulations import (
     create_emus_lt,
     create_emus_lv,
     gather_gt_data,
+)
+
+# import MESMER tools
 from mesmer.create_emulations.utils import concatenate_hist_future
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
