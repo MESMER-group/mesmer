@@ -4,6 +4,8 @@ Functions to calibrate all modules of MESMER
 import logging
 import warnings
 
+from mesmer.create_emulations.utils import concatenate_hist_future
+
 from ..create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
 from ..io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
 from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
@@ -124,12 +126,9 @@ def _calibrate_and_draw_realisations(
 ):
     """calibrate mesmer - additional predictors configuration. used for end-to-end test"""
 
-    tas_g_dict = {}  # tas with global coverage
-    GSAT_dict = {}  # global mean tas
-    GHFDS_dict = {}  # global mean hfds (needed as predictor)
-    tas_g = {}
-    GSAT = {}
-    GHFDS = {}
+    tas_g = {}  # tas with global coverage
+    gsat = {}  # global mean tas
+    ghfds = {}  # global mean hfds (needed as predictor)
     time = {}
 
     cfg = _Config(
@@ -161,40 +160,27 @@ def _calibrate_and_draw_realisations(
 
     for esm in esms:
         LOGGER.info("Loading data for %s", esm)
-        tas_g_dict[esm] = {}
-        GSAT_dict[esm] = {}
-        GHFDS_dict[esm] = {}
+
         time[esm] = {}
 
+        # temporary dicts to gather data over scenarios
+        tas_temp, gsat_temp, ghfds_temp = {}, {}, {}
         for scen in scenarios_to_train:
-            # TODO: rename tas_g_tmp to target_variable_g_tmp or simply
-            #       hard-code tas as always being the target variable
-            tas_g_tmp, GSAT_tmp, lon_tmp, lat_tmp, time_tmp = load_cmipng(
-                target_variable, esm, scen, cfg
-            )
 
-            if tas_g_tmp is None:
-                # should this be an error?
+            out = load_cmipng(target_variable, esm, scen, cfg)
+
+            if out[0] is None:
                 warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
-            else:  # if scen exists: save fields + load hfds fields for it too
-                (
-                    tas_g_dict[esm][scen],
-                    GSAT_dict[esm][scen],
-                    lon,
-                    lat,
-                    time[esm][scen],
-                ) = (
-                    tas_g_tmp,
-                    GSAT_tmp,
-                    lon_tmp,
-                    lat_tmp,
-                    time_tmp,
-                )
-                _, GHFDS_dict[esm][scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
+                continue
 
-        tas_g[esm] = convert_dict_to_arr(tas_g_dict[esm])
-        GSAT[esm] = convert_dict_to_arr(GSAT_dict[esm])
-        GHFDS[esm] = convert_dict_to_arr(GHFDS_dict[esm])
+            # unpack data
+            tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
+
+            _, ghfds_temp[scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
+
+        tas_g[esm] = convert_dict_to_arr(tas_temp)
+        gsat[esm] = convert_dict_to_arr(gsat_temp)
+        ghfds[esm] = convert_dict_to_arr(ghfds_temp)
 
     if reg_type is not None:
         warnings.warn("Passing ``reg_type`` no longer has any effect.", FutureWarning)
@@ -209,61 +195,53 @@ def _calibrate_and_draw_realisations(
         LOGGER.info("Calibrating %s", esm)
 
         LOGGER.info("Calibrating global trend module")
-        # TODO: `target_variable` is used here but not elsewhere (where tas is
-        #       basically hard-coded)
-        params_gt_T = train_gt(
-            GSAT[esm], target_variable, esm, time[esm], cfg, save_params=cfg.save_params
+        # TODO: `target_variable` not used elsewhere (where tas is basically hard-coded)
+        params_gt_tas = train_gt(
+            gsat[esm], target_variable, esm, time[esm], cfg, save_params=cfg.save_params
         )
         # TODO: remove hard-coded hfds
         params_gt_hfds = train_gt(
-            GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
+            ghfds[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
         )
 
-        # From params_gt_T, extract the global-trend so that the global
-        # variability, local trends, and local variability modules can be
-        # trained.
+        # From params_gt_T, extract the global-trend so that the global variability,
+        # local trends, and local variability modules can be trained.
         # In this case we're not actually creating emulations
         LOGGER.info("Creating global-trend emulations")
         preds_gt = {"time": time[esm]}
 
-        emus_gt_T = gather_gt_data(
-            params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=False
+        gt_tas_s = gather_gt_data(
+            params_gt_tas, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
-        gt_T_s = gather_gt_data(
-            params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
-        )
+        gt_tas = concatenate_hist_future(gt_tas_s)
 
         LOGGER.info(
-            "Preparing predictors for global variability, local trends, and "
-            "local variability"
+            "Prepare predictors for global variability, local trends variability"
         )
-        gt_T2_s = {}
-        for scen in gt_T_s.keys():
-            gt_T2_s[scen] = gt_T_s[scen] ** 2
+        gt_tas2_s = {scen: tas**2 for scen, tas in gt_tas_s.items()}
 
         gt_hfds_s = gather_gt_data(
             params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
 
-        gv_novolc_T = {}
-        for scen in emus_gt_T.keys():
-            gv_novolc_T[scen] = GSAT[esm][scen] - emus_gt_T[scen]
+        # calculate tas residuals
+        gv_novolc_tas = {scen: gsat[esm][scen] - gt_tas[scen] for scen in gt_tas}
 
-        gv_novolc_T_s, time_s = separate_hist_future(gv_novolc_T, time[esm], cfg)
+        gv_novolc_tas_s, _ = separate_hist_future(gv_novolc_tas, time[esm], cfg)
 
-        tas_s, time_s = separate_hist_future(tas[esm], time[esm], cfg)
+        tas_s, _ = separate_hist_future(tas[esm], time[esm], cfg)
 
         LOGGER.info("Calibrating global variability module")
-        params_gv_T = train_gv(
-            gv_novolc_T_s, target_variable, esm, cfg, save_params=cfg.save_params
+        params_gv_tas = train_gv(
+            gv_novolc_tas_s, target_variable, esm, cfg, save_params=cfg.save_params
         )
 
         LOGGER.info("Calibrating local trends module")
         preds = {
-            "gttas": gt_T_s,
-            "gttas2": gt_T2_s,
+            "gttas": gt_tas_s,
+            "gttas2": gt_tas2_s,
             "gthfds": gt_hfds_s,
-            "gvtas": gv_novolc_T_s,
+            "gvtas": gv_novolc_tas_s,
         }
         targs = {"tas": tas_s}
         params_lt, params_lv = train_lt(
@@ -273,14 +251,14 @@ def _calibrate_and_draw_realisations(
         # Create forced local warming samples used for training the local variability
         # module. Samples are cheap to create so not an issue to have here.
         LOGGER.info("Creating local trends emulations")
-        preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
+        preds_lt = {"gttas": gt_tas_s, "gttas2": gt_tas2_s, "gthfds": gt_hfds_s}
         lt_s = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False
         )
 
         LOGGER.info("Calibrating local variability module")
         # derive variability part induced by gv
-        preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
+        preds_lv = {"gvtas": gv_novolc_tas_s}  # predictors_list
 
         # Create local variability due to global variability warming samples
         # required to find the local residuals
@@ -320,7 +298,7 @@ def _calibrate_and_draw_realisations(
             output_file,
             params_lt,
             params_lv,
-            params_gv_T,
+            params_gv_tas,
             land_fractions=ls["grid_l_m"],
             lat=lat["c"],
             lon=lon["c"],

@@ -29,15 +29,9 @@ def convert_dict_to_arr(var_dict):
 
     """
 
-    var_arr = {}
-
-    for scen in var_dict:
-        runs = list(var_dict[scen])
-        shape_run = list(var_dict[scen][runs[0]].shape)
-        var_arr[scen] = np.zeros([len(runs)] + shape_run)
-
-        for i in np.arange(len(runs)):
-            var_arr[scen][i] = var_dict[scen][runs[i]]
+    var_arr = {
+        scen: np.stack(list(run_dict.values())) for scen, run_dict in var_dict.items()
+    }
 
     return var_arr
 

@@ -6,8 +6,6 @@ sys.path.append("../")
 
 # load in configurations used in this script
 import configs.config_across_scen_T_cmip6ng_test as cfg
-
-# import MESMER tools
 from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
     create_emus_g,
@@ -17,6 +15,9 @@ from mesmer.create_emulations import (
     create_emus_lv,
     gather_gt_data,
 )
+
+# import MESMER tools
+from mesmer.create_emulations.utils import concatenate_hist_future
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
@@ -30,10 +31,9 @@ print(f"Analysed esms: {esms}")
 print()
 
 # load in tas with global coverage
-tas_g_dict = {}  # tas with global coverage
-GSAT_dict = {}  # global mean tas
-tas_g = {}
-GSAT = {}
+
+tas_g = {}  # tas with global coverage
+gsat = {}  # global mean tas
 time = {}
 
 print("Loading data")
@@ -42,29 +42,27 @@ print("============")
 
 for esm in esms:
     print(f"- {esm}")
-    tas_g_dict[esm] = {}
-    GSAT_dict[esm] = {}
+
     time[esm] = {}
 
+    # temporary dicts to gather data over scenarios
+    tas_temp, gsat_temp = {}, {}
     for scen in cfg.scenarios:
 
-        tas_g_tmp, GSAT_tmp, lon_tmp, lat_tmp, time_tmp = load_cmipng(
-            targ, esm, scen, cfg
-        )
+        out = load_cmipng(targ, esm, scen, cfg)
 
-        if tas_g_tmp is None:
+        # skip if no data found
+        if out[0] is None:
             warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
-        else:  # if scen exists: save fields
-            tas_g_dict[esm][scen] = tas_g_tmp
-            GSAT_dict[esm][scen] = GSAT_tmp
-            lon = lon_tmp
-            lat = lat_tmp
-            time[esm][scen] = time_tmp
+            continue
 
-    tas_g[esm] = convert_dict_to_arr(tas_g_dict[esm])
-    GSAT[esm] = convert_dict_to_arr(GSAT_dict[esm])
+        # unpack data
+        tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
 
-# load in the constant files
+    tas_g[esm] = convert_dict_to_arr(tas_temp[esm])
+    gsat[esm] = convert_dict_to_arr(gsat_temp[esm])
+
+# load the constant files
 _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
 # extract land
@@ -78,61 +76,56 @@ for esm in esms:
 
     print("- Start with global trend module")
 
-    params_gt_T = train_gt(GSAT[esm], targ, esm, time[esm], cfg, save_params=True)
+    params_gt_tas = train_gt(gsat[esm], targ, esm, time[esm], cfg, save_params=True)
 
     preds_gt = {"time": time[esm]}
-    gt_T_s = gather_gt_data(
-        params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
+    gt_tas_s = gather_gt_data(
+        params_gt_tas, preds_gt, cfg, concat_h_f=False, save_emus=False
     )
-    emus_gt_T = gather_gt_data(
-        params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=True
-    )
+    gt_tas = concatenate_hist_future(gt_tas_s)
 
-    print(
-        "- Start preparing predictors for global variability, "
-        "local trends, and local variability",
-    )
+    print("- Prepare predictors for global variability, local trends and variability")
 
-    GSAT_s, time_s = separate_hist_future(GSAT[esm], time[esm], cfg)
-    gv_novolc_T_s = {}
-    for scen in gt_T_s.keys():
-        gv_novolc_T_s[scen] = GSAT_s[scen] - gt_T_s[scen]
+    GSAT_s, time_s = separate_hist_future(gsat[esm], time[esm], cfg)
+    gv_novolc_tas_s = {}
+    for scen in gt_tas_s.keys():
+        gv_novolc_tas_s[scen] = GSAT_s[scen] - gt_tas_s[scen]
 
     tas_s, time_s = separate_hist_future(tas[esm], time[esm], cfg)
 
     print("- Start with global variability module")
 
-    params_gv_T = train_gv(gv_novolc_T_s, targ, esm, cfg, save_params=True)
+    params_gv_tas = train_gv(gv_novolc_tas_s, targ, esm, cfg, save_params=True)
 
     time_v = {}
-    scen = list(emus_gt_T.keys())[0]
+    scen = list(gt_tas.keys())[0]
     time_v["all"] = time[esm][scen]
     preds_gv = {"time": time_v}
-    emus_gv_T = create_emus_gv(params_gv_T, preds_gv, cfg, save_emus=True)
+    emus_gv_T = create_emus_gv(params_gv_tas, preds_gv, cfg, save_emus=True)
 
     # create full global emulations
     print("- Merge the global trend and the global variability.")
     emus_g = create_emus_g(
-        emus_gt_T, emus_gv_T, params_gt_T, params_gv_T, cfg, save_emus=True
+        gt_tas, emus_gv_T, params_gt_tas, params_gv_tas, cfg, save_emus=True
     )
 
     print("- Start with local trends module")
 
     preds = {
-        "gttas": gt_T_s,
-        "gvtas": gv_novolc_T_s,
+        "gttas": gt_tas_s,
+        "gvtas": gv_novolc_tas_s,
     }
     targs = {"tas": tas_s}
     params_lt, params_lv = train_lt(preds, targs, esm, cfg, save_params=True)
 
-    preds_lt = {"gttas": gt_T_s}
+    preds_lt = {"gttas": gt_tas_s}
     lt_s = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True)
     emus_lt = create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True)
 
     print("- Start with local variability module")
 
     # derive variability part induced by gv
-    preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
+    preds_lv = {"gvtas": gv_novolc_tas_s}  # predictors_list
     lv_gv_s = create_emus_lv(params_lv, preds_lv, cfg, save_emus=False, submethod="OLS")
 
     # derive residual variability i.e. what remains of tas once lt + gv removed

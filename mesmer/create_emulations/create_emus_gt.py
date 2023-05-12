@@ -7,7 +7,7 @@ Functions to create global trend emulations with MESMER.
 """
 import warnings
 
-from mesmer.create_emulations.utils import _concatenate_hist_future
+from mesmer.create_emulations.utils import concatenate_hist_future
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
@@ -90,7 +90,7 @@ def gather_gt_data(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
         raise ValueError("The chosen method is currently not implemented.")
 
     if concat_h_f:
-        emus_gt = _concatenate_hist_future(emus_gt)
+        emus_gt = concatenate_hist_future(emus_gt)
         scenarios_emus = list(emus_gt.keys())
 
     # save the global trend emulation if requested
