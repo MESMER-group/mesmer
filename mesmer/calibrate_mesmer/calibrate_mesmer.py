@@ -96,13 +96,11 @@ class _Config:
 
 # TODO: remove draw realisations functionality
 def _calibrate_and_draw_realisations(
+    *args,
     esms,
     scenarios_to_train,
-    target_variable,
-    reg_type,
     threshold_land,
     output_file,
-    scen_seed_offset_v,  # TODO: should not have any effect: to remove
     cmip_data_root_dir=None,
     observations_root_dir=None,
     auxiliary_data_dir=None,
@@ -123,8 +121,17 @@ def _calibrate_and_draw_realisations(
     cross_validation_max_iterations=30,
     save_params=False,
     params_output_dir=None,
+    **kwargs,
 ):
-    """calibrate mesmer - additional predictors configuration. used for end-to-end test"""
+    """
+    calibrate mesmer - additional predictors configuration. used for end-to-end test
+    """
+
+    if args:
+        raise ValueError("All params are now keyword-only")
+
+    for key in kwargs:
+        warnings.warn(f"{key} has been deprecated and has no effect", FutureWarning)
 
     tas_g = {}  # tas with global coverage
     gsat = {}  # global mean tas
@@ -155,9 +162,6 @@ def _calibrate_and_draw_realisations(
         params_output_dir=params_output_dir,
     )
 
-    if scen_seed_offset_v is not None:
-        warnings.warn("`scen_seed_offset_v` has no effect here.")
-
     for esm in esms:
         LOGGER.info("Loading data for %s", esm)
 
@@ -166,8 +170,7 @@ def _calibrate_and_draw_realisations(
         # temporary dicts to gather data over scenarios
         tas_temp, gsat_temp, ghfds_temp = {}, {}, {}
         for scen in scenarios_to_train:
-
-            out = load_cmipng(target_variable, esm, scen, cfg)
+            out = load_cmipng("tas", esm, scen, cfg)
 
             if out[0] is None:
                 warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
@@ -182,9 +185,6 @@ def _calibrate_and_draw_realisations(
         gsat[esm] = convert_dict_to_arr(gsat_temp)
         ghfds[esm] = convert_dict_to_arr(ghfds_temp)
 
-    if reg_type is not None:
-        warnings.warn("Passing ``reg_type`` no longer has any effect.", FutureWarning)
-
     # load in the constant files
     _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
@@ -195,9 +195,9 @@ def _calibrate_and_draw_realisations(
         LOGGER.info("Calibrating %s", esm)
 
         LOGGER.info("Calibrating global trend module")
-        # TODO: `target_variable` not used elsewhere (where tas is basically hard-coded)
+
         params_gt_tas = train_gt(
-            gsat[esm], target_variable, esm, time[esm], cfg, save_params=cfg.save_params
+            gsat[esm], "tas", esm, time[esm], cfg, save_params=cfg.save_params
         )
         # TODO: remove hard-coded hfds
         params_gt_hfds = train_gt(
@@ -233,7 +233,7 @@ def _calibrate_and_draw_realisations(
 
         LOGGER.info("Calibrating global variability module")
         params_gv_tas = train_gv(
-            gv_novolc_tas_s, target_variable, esm, cfg, save_params=cfg.save_params
+            gv_novolc_tas_s, "tas", esm, cfg, save_params=cfg.save_params
         )
 
         LOGGER.info("Calibrating local trends module")
