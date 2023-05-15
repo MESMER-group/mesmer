@@ -59,8 +59,8 @@ for esm in esms:
         # unpack data
         tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
 
-    tas_g[esm] = convert_dict_to_arr(tas_temp[esm])
-    gsat[esm] = convert_dict_to_arr(gsat_temp[esm])
+    tas_g[esm] = convert_dict_to_arr(tas_temp)
+    gsat[esm] = convert_dict_to_arr(gsat_temp)
 
 # load the constant files
 _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
