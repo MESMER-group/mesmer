@@ -22,6 +22,7 @@ class _Config:
 
     def __init__(
         self,
+        *args,
         esms,
         scenarios,
         cmip_generation,
@@ -37,16 +38,19 @@ class _Config:
         tas_local_trend_method,
         tas_local_variability_method,
         method_lt_each_gp_sep,
-        nr_emus_v,  # TODO: should not have any effect: to remove
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
         save_params=False,
         params_output_dir=None,
+        **kwargs,
     ):
 
-        if nr_emus_v is not None:
-            warnings.warn("Passing 'nr_emus_v' has no effect.", FutureWarning)
+        if args:
+            raise ValueError("All params are now keyword-only")
+
+        for key in kwargs:
+            warnings.warn(f"{key} has been deprecated and has no effect", FutureWarning)
 
         self.esms = esms
         self.scenarios = scenarios
@@ -116,7 +120,6 @@ def _calibrate_and_draw_realisations(
     # specify if the local trends method is applied to each grid point separately.
     # Currently it must be set to True
     method_lt_each_gp_sep=True,
-    nr_emus_v=None,  # TODO: should not have any effect: to remove
     weight_scenarios_equally=True,
     cross_validation_max_iterations=30,
     save_params=False,
@@ -154,7 +157,6 @@ def _calibrate_and_draw_realisations(
         tas_local_trend_method=tas_local_trend_method,
         tas_local_variability_method=tas_local_variability_method,
         method_lt_each_gp_sep=method_lt_each_gp_sep,
-        nr_emus_v=nr_emus_v,
         weight_scenarios_equally=weight_scenarios_equally,
         threshold_land=threshold_land,
         cross_validation_max_iterations=cross_validation_max_iterations,
