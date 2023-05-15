@@ -46,7 +46,7 @@ targs = ["tas"]
 # reference period
 ref = {}
 
-# alternatives: "first","all"
+# alternative: "all"
 ref["type"] = "individ"
 # first included year
 ref["start"] = "1850"

@@ -156,8 +156,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     Returns
     -------
     reg_dict : dict
-        Optional output (empty dict). Only returned when the input ``reg_type`` is not
-        ``None``.
+        Deprecated (empty dict).
 
     ls : dict
         land-sea dictionary with keys
@@ -177,11 +176,6 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
         - ["e"] (1d array with latitudes at edges of grid cells)
         - ["grid"] (2d array (lat,lon) of latitudes)
 
-    Notes
-    -----
-    - If additional region types are added in this function,
-      mesmer.utils.select.extract_land() needs to be adapted too
-
     """
 
     if reg_type is not None:
@@ -196,9 +190,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point
-    ls["grid_raw"] = np.squeeze(
-        mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values
-    )
+    ls["grid_raw"] = mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values.squeeze()
 
     # remove Antarctica
     idx_ANT = lat["c"] < -60
