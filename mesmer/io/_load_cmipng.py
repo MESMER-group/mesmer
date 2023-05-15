@@ -6,8 +6,7 @@
 Functions to load in cmip5 and cmip6 data from the cmip-ng archive at ETHZ.
 """
 
-import copy as copy
-import glob as glob
+import glob
 import os
 
 import numpy as np
@@ -49,7 +48,7 @@ def extract_time_lon_lat_wgt3d(data):
     lon["c"] = data.lon.values  # longitude at center (c) of grid cell
     lat["c"] = data.lat.values
 
-    lons, lats = np.meshgrid(lon["c"], lat["c"])
+    _, lats = np.meshgrid(lon["c"], lat["c"])
     wgt2d = np.cos(np.deg2rad(lats))
     wgt3d = np.tile(wgt2d, (time.size, 1, 1))
 
@@ -186,9 +185,9 @@ def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
         if "r1i1" in s:
             index_first = i
             # if r1i1 run exists, move it to front; else leave first run at front
-    path_runs_list.insert(
-        0, path_runs_list.pop(index_first)
-    )  # move first run to begin of list
+
+    # move first run to begin of list
+    path_runs_list.insert(0, path_runs_list.pop(index_first))
 
     # exclude faulty runs in archive
     if esm in esms_excl:
@@ -277,19 +276,21 @@ def load_cmipng_file(run_path, gen, scen):
 
     # account for difference in naming convention in cmipx-ng archives
     if gen == 5:
-        data = (
-            xr.open_dataset(run_path, use_cftime=True)
-            .rename({"year": "time"})
-            .roll(lon=72, roll_coords=True)
-        )
+
         # use_cftime because of employed calendar,
-        # rename to time for consistency with cmip6, roll so land in center
-        data = data.assign_coords(
-            lon=(((data.lon + 180) % 360) - 180)
-        )  # assign_coords so that labels = reasonable
-        run = int(
-            data.attrs["source_ensemble"].split("r")[1].split("i")[0]
-        )  # extract ens member
+        data = xr.open_dataset(run_path, use_cftime=True)
+
+        # rename to time for consistency with cmip6
+        data = data.rename({"year": "time"})
+
+        # roll so land in center
+        data = data.roll(lon=72, roll_coords=True)
+
+        # assign_coords so that labels = reasonable
+        data = data.assign_coords(lon=(((data.lon + 180) % 360) - 180))
+
+        # extract ens member
+        run = int(data.attrs["source_ensemble"].split("r")[1].split("i")[0])
 
     if gen == 6:
         if "ssp534-over" in run_path:
@@ -306,10 +307,11 @@ def load_cmipng_file(run_path, gen, scen):
             run_path_hist = run_path.replace(scen, "historical")
             data = xr.open_mfdataset([run_path_hist, run_path_ssp], combine="by_coords")
 
-        data = data.roll(lon=72, roll_coords=True)  # roll so land in center
-        data = data.assign_coords(
-            lon=(((data.lon + 180) % 360) - 180)
-        )  # assign_coords so that labels = reasonable
+        # roll so land in center
+        data = data.roll(lon=72, roll_coords=True)
+
+        # assign_coords so that labels = reasonable
+        data = data.assign_coords(lon=(((data.lon + 180) % 360) - 180))
         data = data.sortby(["lat", "lon"])
         run = data.attrs["realization_index"]
 
@@ -407,71 +409,54 @@ def _load_cmipng_var(esm, scen, cfg, varn):
 
     # exit function in case path_runs_list is empty (i.e. no files found)
     if len(path_runs_list) == 0:
-        dta = dta_global = lon = lat = time = None
-        return dta, dta_global, lon, lat, time
+        dta = dta_globmean = lon = lat = time = None
+        return dta, dta_globmean, lon, lat, time
 
     # load data on global grid and compute anomalies
     dta = {}
-    run_nrs = {}
+    dta_ref = {}
 
+    reference_period = slice(ref["start"], ref["end"])
+
+    # load data
     for run_path in path_runs_list:
+
         # account for difference in naming convention in cmipx-ng archives
-        data, run = load_cmipng_file(run_path, gen, scen)
+        ds, run = load_cmipng_file(run_path, gen, scen)
 
-        run_nrs[run_path] = run  # tmp saved this way for deriving anomalies later
-        dta[run] = copy.deepcopy(data[varn].values)
+        dta[run] = ds[varn].values
+        dta_ref[run] = ds[varn].sel(time=reference_period).mean(dim="time")
 
-        if ref["type"] == "all":
-            if run_path == path_runs_list[0]:  # for the first run need to initialize
-                dta_ref = (
-                    data[varn]
-                    .sel(time=slice(ref["start"], ref["end"]))
-                    .mean(dim="time")
-                    .values
-                    * 1.0
-                    / len(path_runs_list)
-                )
-            else:
-                dta_ref += (
-                    data[varn]
-                    .sel(time=slice(ref["start"], ref["end"]))
-                    .mean(dim="time")
-                    .values
-                    * 1.0
-                    / len(path_runs_list)
-                )  # sum up all ref climates
-
-        if ref["type"] == "individ":
-            dta_ref = (
-                data[varn]
-                .sel(time=slice(ref["start"], ref["end"]))
-                .mean(dim="time")
-                .values
-            )
-            dta[run] -= dta_ref  # compute anomalies
-
+    # compute anomalies
     if ref["type"] == "all":
-        for run_path in path_runs_list:
-            run = run_nrs[run_path]
-            dta[run] -= dta_ref  # compute anomalies
+
+        # mean over all runs
+        dta_ref = xr.concat(list(dta_ref.values()), dim="run").mean("run").values
+
+        for run in dta:
+            dta[run] -= dta_ref
+
+    elif ref["type"] == "individ":
+
+        for run in dta:
+            dta[run] -= dta_ref[run].values
 
     # extract time, longitude, latitude, and 3d weights from data
-    time, lon, lat, wgt3d = extract_time_lon_lat_wgt3d(data)
+    time, lon, lat, wgt3d = extract_time_lon_lat_wgt3d(ds)
 
     # compute area-weighted mean
     # ATTENTION: does not account for land fraction within grid cells. i.e., coastal
     # grid cells count as full ocean grid cells. Expected to have negligible impact on
     # global mean.
 
-    dta_global = {}
-    for run_path in path_runs_list:
-        run = run_nrs[run_path]
+    dta_globmean = {}
+    for run in dta:
         # account for missing values over land
         dta_masked = np.ma.masked_array(dta[run], np.isnan(dta[run]))
         # no need to keep mask since False everywhere
-        dta_global[run] = np.average(dta_masked, axis=(1, 2), weights=wgt3d).data
+        dta_globmean[run] = np.average(dta_masked, axis=(1, 2), weights=wgt3d).data
 
-    return dta, dta_global, lon, lat, time
+    return dta, dta_globmean, lon, lat, time
 
 
 def preprocess_ssp534over(ds):
