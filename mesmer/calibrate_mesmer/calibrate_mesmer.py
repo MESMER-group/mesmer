@@ -103,7 +103,7 @@ def _calibrate_and_draw_realisations(*args, **kwargs):
     warnings.warn(
         "``_calibrate_and_draw_realisations`` has been renamed to ``_calibrate_tas``",
         FutureWarning,
-        )
+    )
 
     return _calibrate_tas(*args, **kwargs)
 
