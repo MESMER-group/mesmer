@@ -100,9 +100,7 @@ def save_mesmer_data(params, *folders, filename_parts):
     folder = os.path.join(*folders)
 
     # check if folder to save params in exists, if not: make it
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-        print(f"created dir: {folder}")
+    os.makedirs(folder, exist_ok=True)
 
     filename = "_".join(filename_parts)
     filename = f"{filename}.pkl"

@@ -136,9 +136,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 
         params_lv = train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg)
     else:
-        raise ValueError(
-            "The chosen method and / or weighting approach is not implemented."
-        )
+        raise ValueError("No such method and / or weighting approach.")
 
     # overwrites lv module if already exists, i.e., assumption: always lt before lv
     if save_params:
@@ -234,8 +232,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
         params_scen = list()
         for scen, data in targ.items():
-
-            nr_runs, nr_ts, nr_gps = data.shape
 
             # create temporary DataArray
             data = xr.DataArray(data, dims=("run", "time", "cell"))

@@ -77,10 +77,29 @@ Breaking changes
 - The function ``mask_percentage`` has been renamed to :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`
   (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Removed :py:func:`mesmer.io.load_constant_files.infer_interval_breaks` and the edges
+  from the `lat` and `lon` dictionaries i.e., ``lon["e"]`` and ``lat["e"]``
+  (`#233 <https://github.com/MESMER-group/mesmer/pull/233>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Deprecated the ``reg_type`` argument to :py:func:`mesmer.io.load_constant_files.load_regs_ls_wgt_lon_lat`
+  and the ``reg_dict`` argument to :py:func:`mesmer.utils.select.extract_land`. These arguments
+  no longer have any affect (`#235 <https://github.com/MESMER-group/mesmer/pull/235>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+- Removed ``ref["type"] == "first"``, i.e., caculating the anomaly w.r.t. the first
+  ensemble member (`#247 <https://github.com/MESMER-group/mesmer/pull/247>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Deprecations
 ^^^^^^^^^^^^
 
+- The function ``mesmer.create_emulations.create_emus_gt`` has been renamed to
+  :py:func:`create_emulations.gather_gt_data` (`#246 <https://github.com/MESMER-group/mesmer/pull/246>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
+- The function ``mesmer.utils.select.extract_time_period`` is now deprecated and will be
+  removed in a future version. Please raise an issue if you use this function (`#243
+  <https://github.com/MESMER-group/mesmer/pull/243>`_). By `Mathias Hauser
+  <https://github.com/mathause>`_.
 
 Bug fixes
 ^^^^^^^^^
@@ -101,23 +120,30 @@ Internal Changes
 
 - Restore compatibility with regionmask v0.9.0 (`#136 <https://github.com/MESMER-group/mesmer/pull/136>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Renamed the ``interpolation`` keyword of ``np.quantile`` to ``method`` changed in
   numpy v1.22.0 (`#137 <https://github.com/MESMER-group/mesmer/pull/137>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Make use of :py:class:`mesmer.stats.linear_regression.LinearRegression` in
-  :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
+   - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
+     By `Mathias Hauser <https://github.com/mathause>`_.
+   - :py:func:`mesmer.create_emulations.create_emus_lv_OLS` and :py:func:`mesmer.create_emulations.create_emus_OLS_each_gp_sep`
+     (`#240 <https://github.com/MESMER-group/mesmer/pull/240>`_).By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Move contents of setup.py to setup.cfg (`#169 <https://github.com/MESMER-group/mesmer/pull/169>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Use pyproject.toml for the build-system and setuptools_scm for the `__version__`
   (`#188 <https://github.com/MESMER-group/mesmer/pull/188>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
-- Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
 
-  - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
-  - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
+- Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
+   - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
+   - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
 
   By `Mathias Hauser <https://github.com/mathause>`_.
 

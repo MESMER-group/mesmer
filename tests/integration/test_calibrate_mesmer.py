@@ -28,11 +28,8 @@ def test_calibrate_mesmer(
 
     test_esms = ["IPSL-CM6A-LR"]
     test_scenarios_to_train = scenarios
-    test_target_variable = "tas"
-    test_reg_type = "srex"
     test_threshold_land = 1 / 3
     test_output_file = os.path.join(tmpdir, "test_calibrate_mesmer_output.pkl")
-    test_scen_seed_offset_v = 0
     test_cmip_generation = 6
     test_cmip_data_root_dir = os.path.join(
         test_data_root_dir,
@@ -53,11 +50,8 @@ def test_calibrate_mesmer(
     _calibrate_and_draw_realisations(
         esms=test_esms,
         scenarios_to_train=test_scenarios_to_train,
-        target_variable=test_target_variable,
-        reg_type=test_reg_type,
         threshold_land=test_threshold_land,
         output_file=test_output_file,
-        scen_seed_offset_v=test_scen_seed_offset_v,
         cmip_data_root_dir=test_cmip_data_root_dir,
         cmip_generation=test_cmip_generation,
         observations_root_dir=test_observations_root_dir,

@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - python=3.9
-  - black
+  - black<23.1
   - cartopy
   - cython
   - dask[complete]
@@ -15,7 +15,7 @@ dependencies:
   - isort
   - netcdf4
   - numpy
-  - pandas
+  - pandas<2.0
   - pytest
   - pytest-cov
   - pytest-xdist

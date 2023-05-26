@@ -26,17 +26,12 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Create conda environment
-      uses: mamba-org/provision-with-micromamba@v14
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-name: mesmer-linting
-        micromamba-version: 'latest'
         environment-file: environment.yml
-        extra-specs: |
+        create-args: >-
           python=${{ matrix.python-version }}
-          black
-          isort
-          flake8
-        channels: conda-forge
 
     - name: Install mesmer
       run: |
@@ -80,14 +75,14 @@ jobs:
         echo "PYTHON_VERSION=${{ matrix.python-version }}" >> $GITHUB_ENV
 
     - name: Create conda environment
-      uses: mamba-org/provision-with-micromamba@v14
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-name: mesmer-tests
         cache-downloads: true
-        cache-downloads-key: "${{runner.os}}-${{runner.arch}}-py${{matrix.python-version}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
+        cache-downloads-key: "${{runner.os}}-${{runner.arch}}-py${{matrix.python-version}}"
         micromamba-version: 'latest'
         environment-file: ${{ env.CONDA_ENV_FILE }}
-        extra-specs: |
+        create-args: >-
           python=${{ matrix.python-version }}
 
     - name: Install mesmer

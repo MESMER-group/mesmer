@@ -17,8 +17,7 @@ def test_phi_gc_end_to_end(tmp_path):
     lon = dict(c=np.arange(5, 21, 10.0))
 
     # prepare the necessary data
-    # TODO: potentially simplify - test all points that are passed
-    reg_dict, ls, wgt, lon, lat = load_regs_ls_wgt_lon_lat("srex", lon, lat)
+    _, ls, __, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
     threshold = 0.6
     cfg = mock_cfg(tmp_path, threshold)

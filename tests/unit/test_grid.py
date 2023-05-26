@@ -226,7 +226,6 @@ def test_unstructured_roundtrip_2D_coords(as_dataset):
     dims = {"x_dim": "x", "y_dim": "y"}
 
     coords_orig = da_structured.coords.to_dataset()[["x", "y"]]
-    print(coords_orig)
 
     result = mxu.grid.stack_lat_lon(
         mxu.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig, **dims), **dims

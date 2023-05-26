@@ -91,8 +91,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
 
         params_gv = train_gv_AR(params_gv, gv, kwargs["max_lag"], kwargs["sel_crit"])
     else:
-        msg = "The chosen method and / or weighting approach is currently not implemented."
-        raise ValueError(msg)
+        raise ValueError("No such method and/ or weighting approach.")
 
     # save the global variability paramters if requested
     if save_params:
@@ -194,7 +193,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
 
     # determine the AR params for the selected AR order
     params_scen = list()
-    for scen_idx, scen in enumerate(gv.keys()):
+    for scen in gv.keys():
         data = gv[scen]
 
         # create temporary DataArray

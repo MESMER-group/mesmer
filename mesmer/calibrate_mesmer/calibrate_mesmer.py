@@ -4,7 +4,9 @@ Functions to calibrate all modules of MESMER
 import logging
 import warnings
 
-from ..create_emulations import create_emus_gt, create_emus_lt, create_emus_lv
+from mesmer.create_emulations.utils import concatenate_hist_future
+
+from ..create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
 from ..io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
 from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
 from .train_gt import train_gt
@@ -20,6 +22,7 @@ class _Config:
 
     def __init__(
         self,
+        *args,
         esms,
         scenarios,
         cmip_generation,
@@ -35,13 +38,20 @@ class _Config:
         tas_local_trend_method,
         tas_local_variability_method,
         method_lt_each_gp_sep,
-        nr_emus_v,  # TODO: remove when we remove the emulation part
         weight_scenarios_equally,
         threshold_land,
         cross_validation_max_iterations,
         save_params=False,
         params_output_dir=None,
+        **kwargs,
     ):
+
+        if args:
+            raise ValueError("All params are now keyword-only")
+
+        for key in kwargs:
+            warnings.warn(f"{key} has been deprecated and has no effect", FutureWarning)
+
         self.esms = esms
         self.scenarios = scenarios
         self.gen = cmip_generation
@@ -77,7 +87,6 @@ class _Config:
         }
         self.preds["tas"]["g_all"] = self.preds["tas"]["gt"] + self.preds["tas"]["gv"]
 
-        self.nr_emus_v = nr_emus_v
         self.wgt_scen_tr_eq = weight_scenarios_equally
         self.threshold_land = threshold_land
         self.max_iter_cv = cross_validation_max_iterations
@@ -91,16 +100,14 @@ class _Config:
 
 # TODO: remove draw realisations functionality
 def _calibrate_and_draw_realisations(
+    *args,
     esms,
     scenarios_to_train,
-    target_variable,
-    reg_type,
     threshold_land,
     output_file,
-    scen_seed_offset_v,  # TODO: remove when we remove the emulation part
-    cmip_data_root_dir,
-    observations_root_dir,
-    auxiliary_data_dir,
+    cmip_data_root_dir=None,
+    observations_root_dir=None,
+    auxiliary_data_dir=None,
     cmip_generation=6,
     reference_period_type="individ",
     reference_period_start_year="1850",
@@ -113,155 +120,130 @@ def _calibrate_and_draw_realisations(
     # specify if the local trends method is applied to each grid point separately.
     # Currently it must be set to True
     method_lt_each_gp_sep=True,
-    nr_emus_v=100,  # TODO: remove when we remove the emulation part
     weight_scenarios_equally=True,
     cross_validation_max_iterations=30,
     save_params=False,
     params_output_dir=None,
+    **kwargs,
 ):
-    """calibrate mesmer - additional predictors configuration. used for end-to-end test"""
+    """
+    calibrate mesmer - additional predictors configuration. used for end-to-end test
+    """
 
-    tas_g_dict = {}  # tas with global coverage
-    GSAT_dict = {}  # global mean tas
-    GHFDS_dict = {}  # global mean hfds (needed as predictor)
-    tas_g = {}
-    GSAT = {}
-    GHFDS = {}
+    if args:
+        raise ValueError("All params are now keyword-only")
+
+    for key in kwargs:
+        warnings.warn(f"{key} has been deprecated and has no effect", FutureWarning)
+
+    tas_g = {}  # tas with global coverage
+    gsat = {}  # global mean tas
+    ghfds = {}  # global mean hfds (needed as predictor)
     time = {}
 
     cfg = _Config(
-        esms,
-        scenarios_to_train,
-        cmip_generation,
-        cmip_data_root_dir,
-        observations_root_dir,
-        auxiliary_data_dir,
-        reference_period_type,
-        reference_period_start_year,
-        reference_period_end_year,
-        tas_global_trend_method,
-        hfds_global_trend_method,
-        tas_global_variability_method,
-        tas_local_trend_method,
-        tas_local_variability_method,
-        method_lt_each_gp_sep,
-        nr_emus_v,
-        weight_scenarios_equally,
-        threshold_land,
-        cross_validation_max_iterations,
+        esms=esms,
+        scenarios=scenarios_to_train,
+        cmip_generation=cmip_generation,
+        cmip_data_root_dir=cmip_data_root_dir,
+        observations_root_dir=observations_root_dir,
+        auxiliary_data_dir=auxiliary_data_dir,
+        reference_period_type=reference_period_type,
+        reference_period_start_year=reference_period_start_year,
+        reference_period_end_year=reference_period_end_year,
+        tas_global_trend_method=tas_global_trend_method,
+        hfds_global_trend_method=hfds_global_trend_method,
+        tas_global_variability_method=tas_global_variability_method,
+        tas_local_trend_method=tas_local_trend_method,
+        tas_local_variability_method=tas_local_variability_method,
+        method_lt_each_gp_sep=method_lt_each_gp_sep,
+        weight_scenarios_equally=weight_scenarios_equally,
+        threshold_land=threshold_land,
+        cross_validation_max_iterations=cross_validation_max_iterations,
         save_params=save_params,
         params_output_dir=params_output_dir,
     )
 
     for esm in esms:
         LOGGER.info("Loading data for %s", esm)
-        tas_g_dict[esm] = {}
-        GSAT_dict[esm] = {}
-        GHFDS_dict[esm] = {}
+
         time[esm] = {}
 
+        # temporary dicts to gather data over scenarios
+        tas_temp, gsat_temp, ghfds_temp = {}, {}, {}
         for scen in scenarios_to_train:
-            # TODO: rename tas_g_tmp to target_variable_g_tmp or simply
-            #       hard-code tas as always being the target variable
-            tas_g_tmp, GSAT_tmp, lon_tmp, lat_tmp, time_tmp = load_cmipng(
-                target_variable, esm, scen, cfg
-            )
+            out = load_cmipng("tas", esm, scen, cfg)
 
-            if tas_g_tmp is None:
-                # should this be an error?
+            if out[0] is None:
                 warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
-            else:  # if scen exists: save fields + load hfds fields for it too
-                (
-                    tas_g_dict[esm][scen],
-                    GSAT_dict[esm][scen],
-                    lon,
-                    lat,
-                    time[esm][scen],
-                ) = (
-                    tas_g_tmp,
-                    GSAT_tmp,
-                    lon_tmp,
-                    lat_tmp,
-                    time_tmp,
-                )
-                _, GHFDS_dict[esm][scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
+                continue
 
-        tas_g[esm] = convert_dict_to_arr(tas_g_dict[esm])
-        GSAT[esm] = convert_dict_to_arr(GSAT_dict[esm])
-        GHFDS[esm] = convert_dict_to_arr(GHFDS_dict[esm])
+            # unpack data
+            tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
+
+            _, ghfds_temp[scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
+
+        tas_g[esm] = convert_dict_to_arr(tas_temp)
+        gsat[esm] = convert_dict_to_arr(gsat_temp)
+        ghfds[esm] = convert_dict_to_arr(ghfds_temp)
 
     # load in the constant files
-    reg_dict, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(reg_type, lon, lat)
+    _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
     # extract land
-    tas, reg_dict, ls = extract_land(
-        tas_g, reg_dict, wgt_g, ls, threshold_land=threshold_land
-    )
+    tas, _, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=threshold_land)
 
     for esm in esms:
         LOGGER.info("Calibrating %s", esm)
 
         LOGGER.info("Calibrating global trend module")
-        # TODO: `target_variable` is used here but not elsewhere (where tas is
-        #       basically hard-coded)
-        params_gt_T = train_gt(
-            GSAT[esm], target_variable, esm, time[esm], cfg, save_params=cfg.save_params
+
+        params_gt_tas = train_gt(
+            gsat[esm], "tas", esm, time[esm], cfg, save_params=cfg.save_params
         )
         # TODO: remove hard-coded hfds
         params_gt_hfds = train_gt(
-            GHFDS[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
+            ghfds[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
         )
 
-        # From params_gt_T, extract the global-trend so that the global
-        # variability, local trends, and local variability modules can be
-        # trained.
+        # From params_gt_T, extract the global-trend so that the global variability,
+        # local trends, and local variability modules can be trained.
         # In this case we're not actually creating emulations
         LOGGER.info("Creating global-trend emulations")
         preds_gt = {"time": time[esm]}
 
-        # TODO: remove use of emus_gt from this script.
-        emus_gt_T = create_emus_gt(
-            params_gt_T, preds_gt, cfg, concat_h_f=True, save_emus=False
+        gt_tas_s = gather_gt_data(
+            params_gt_tas, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
-        gt_T_s = create_emus_gt(
-            params_gt_T, preds_gt, cfg, concat_h_f=False, save_emus=False
-        )
+        gt_tas = concatenate_hist_future(gt_tas_s)
 
         LOGGER.info(
-            "Preparing predictors for global variability, local trends, and "
-            "local variability"
+            "Prepare predictors for global variability, local trends variability"
         )
-        gt_T2_s = {}
-        for scen in gt_T_s.keys():
-            gt_T2_s[scen] = gt_T_s[scen] ** 2
+        gt_tas2_s = {scen: tas**2 for scen, tas in gt_tas_s.items()}
 
-        gt_hfds_s = create_emus_gt(
+        gt_hfds_s = gather_gt_data(
             params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
 
-        gv_novolc_T = {}
-        for scen in emus_gt_T.keys():
-            gv_novolc_T[scen] = GSAT[esm][scen] - emus_gt_T[scen]
+        # calculate tas residuals
+        gv_novolc_tas = {scen: gsat[esm][scen] - gt_tas[scen] for scen in gt_tas}
 
-        gv_novolc_T_s, time_s = separate_hist_future(gv_novolc_T, time[esm], cfg)
+        gv_novolc_tas_s, _ = separate_hist_future(gv_novolc_tas, time[esm], cfg)
 
-        tas_s, time_s = separate_hist_future(tas[esm], time[esm], cfg)
+        tas_s, _ = separate_hist_future(tas[esm], time[esm], cfg)
 
         LOGGER.info("Calibrating global variability module")
-        params_gv_T = train_gv(
-            gv_novolc_T_s, target_variable, esm, cfg, save_params=cfg.save_params
+        params_gv_tas = train_gv(
+            gv_novolc_tas_s, "tas", esm, cfg, save_params=cfg.save_params
         )
-
-        # TODO: remove because time_v is not needed for calibration
-        time_v = {}
-        time_v["all"] = time[esm][scen]
 
         LOGGER.info("Calibrating local trends module")
         preds = {
-            "gttas": gt_T_s,
-            "gttas2": gt_T2_s,
+            "gttas": gt_tas_s,
+            "gttas2": gt_tas2_s,
             "gthfds": gt_hfds_s,
-            "gvtas": gv_novolc_T_s,
+            "gvtas": gv_novolc_tas_s,
         }
         targs = {"tas": tas_s}
         params_lt, params_lv = train_lt(
@@ -271,18 +253,17 @@ def _calibrate_and_draw_realisations(
         # Create forced local warming samples used for training the local variability
         # module. Samples are cheap to create so not an issue to have here.
         LOGGER.info("Creating local trends emulations")
-        preds_lt = {"gttas": gt_T_s, "gttas2": gt_T2_s, "gthfds": gt_hfds_s}
+        preds_lt = {"gttas": gt_tas_s, "gttas2": gt_tas2_s, "gthfds": gt_hfds_s}
         lt_s = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False
         )
 
         LOGGER.info("Calibrating local variability module")
         # derive variability part induced by gv
-        preds_lv = {"gvtas": gv_novolc_T_s}  # predictors_list
+        preds_lv = {"gvtas": gv_novolc_tas_s}  # predictors_list
 
         # Create local variability due to global variability warming samples
-        # used for training the local variability module. Samples are cheap to create so
-        # not an issue to have here.
+        # required to find the local residuals
         lv_gv_s = create_emus_lv(
             params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
         )
@@ -319,7 +300,7 @@ def _calibrate_and_draw_realisations(
             output_file,
             params_lt,
             params_lv,
-            params_gv_T,
+            params_gv_tas,
             land_fractions=ls["grid_l_m"],
             lat=lat["c"],
             lon=lon["c"],

@@ -73,9 +73,7 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     # compute global average
     lons, lats = np.meshgrid(lon["c"], lat["c"])
     wgt_2d = np.cos(np.deg2rad(lats))
-    wgt_3d = np.tile(wgt_2d, [len(time), 1]).reshape(
-        [len(time), wgt_2d.shape[0], wgt_2d.shape[1]]
-    )
+    wgt_3d = np.tile(wgt_2d, (time.size, 1, 1))
 
     # grid points with nans are left aside (ie global mean is global mean of non nan gp)
     if ignore_nans:
@@ -184,9 +182,6 @@ def load_strat_aod(time, dir_obs):
     -----
     - Assumption: time covers max full extend historical period (i.e., 1850 - 2014 for
       cimp6, 1850 - 2005 for cmip5)
-    - potentially TODO: check if want to integrate it into load_obs() fct somehow, but
-      likely not as it is quite different from other obs
-
     """
 
     path_file = os.path.join(dir_obs, "aerosols", "isaod_gl.dat")

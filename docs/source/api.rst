@@ -98,7 +98,7 @@ Create emulations
 .. autosummary::
    :toctree: generated/
 
-   ~create_emulations.create_emus_gt
+   ~create_emulations.gather_gt_data
    ~create_emulations.create_emus_gv
    ~create_emulations.create_emus_lt
    ~create_emulations.create_emus_lv
@@ -146,7 +146,6 @@ Load constant files
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_constant_files.infer_interval_breaks
    ~io.load_constant_files.load_phi_gc
    ~io.load_constant_files.load_regs_ls_wgt_lon_lat
 
