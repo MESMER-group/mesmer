@@ -15,10 +15,7 @@ from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
 
-def main():
-
-    # load in configurations used in this script
-    import config_across_scen_T_cmip6ng_test as cfg
+def main(cfg):
 
     # specify the target variable
     targ = cfg.targs[0]
@@ -88,12 +85,12 @@ def main():
             "- Prepare predictors for global variability, local trends and variability"
         )
 
-        GSAT_s, time_s = separate_hist_future(gsat[esm], time[esm], cfg)
+        GSAT_s, _ = separate_hist_future(gsat[esm], time[esm], cfg)
         gv_novolc_tas_s = {}
         for scen in gt_tas_s.keys():
             gv_novolc_tas_s[scen] = GSAT_s[scen] - gt_tas_s[scen]
 
-        tas_s, time_s = separate_hist_future(tas[esm], time[esm], cfg)
+        tas_s, _ = separate_hist_future(tas[esm], time[esm], cfg)
 
         print("- Start with global variability module")
 
@@ -163,4 +160,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    # load in configurations used in this script
+    import config_across_scen_T_cmip6ng_test as cfg
+
+    main(cfg)
