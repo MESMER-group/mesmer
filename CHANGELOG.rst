@@ -88,6 +88,9 @@ Breaking changes
 - Removed ``ref["type"] == "first"``, i.e., caculating the anomaly w.r.t. the first
   ensemble member (`#247 <https://github.com/MESMER-group/mesmer/pull/247>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- Renamed ``mesmer.calibrate_mesmer._calibrate_and_draw_realisations`` to ``mesmer.calibrate_mesmer._calibrate_tas``
+  (`#66 <https://github.com/MESMER-group/mesmer/issues/66>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Deprecations
 ^^^^^^^^^^^^
