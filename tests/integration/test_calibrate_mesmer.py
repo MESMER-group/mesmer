@@ -4,7 +4,7 @@ import shutil
 import joblib
 import pytest
 
-from mesmer.calibrate_mesmer import _calibrate_and_draw_realisations
+from mesmer.calibrate_mesmer import _calibrate_tas
 from mesmer.testing import assert_dict_allclose
 
 
@@ -47,7 +47,7 @@ def test_calibrate_mesmer(
         "auxiliary",
     )
 
-    _calibrate_and_draw_realisations(
+    _calibrate_tas(
         esms=test_esms,
         scenarios_to_train=test_scenarios_to_train,
         threshold_land=test_threshold_land,

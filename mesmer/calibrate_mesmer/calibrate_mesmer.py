@@ -98,8 +98,17 @@ class _Config:
         self.dir_mesmer_params = params_output_dir
 
 
-# TODO: remove draw realisations functionality
-def _calibrate_and_draw_realisations(
+def _calibrate_and_draw_realisations(*args, **kwargs):
+
+    warnings.warn(
+        "``_calibrate_and_draw_realisations`` has been renamed to ``_calibrate_tas``",
+        FutureWarning,
+        )
+
+    return _calibrate_tas(*args, **kwargs)
+
+
+def _calibrate_tas(
     *args,
     esms,
     scenarios_to_train,
