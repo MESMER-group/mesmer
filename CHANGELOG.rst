@@ -62,6 +62,11 @@ New Features
      <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
      <https://github.com/mathause>`_.
 
+- The aerosol data is now automatically downloaded using `pooch <https://www.fatiando.org/pooch/latest/>`__.
+  (`#267 <https://github.com/MESMER-group/mesmer/pull/267>`_). By `Mathias Hauser
+  <https://github.com/mathause>`_.
+
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
