@@ -39,8 +39,8 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     time : np.ndarray
         [scen] (1d array of years)
 
-    cfg : None
-        Passing cfg is no longer required.
+    cfg : module
+        config file containing metadata
 
     save_params : bool, default True
         determines if parameters are saved or not, default = True
@@ -215,8 +215,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
         1d array of smooth global trend of variable
     time : np.ndarray
         1d array of years
-    cfg : module
-        config file containing metadata needed to load in stratospheric AOD time series
+    cfg : None
+        Passing cfg is no longer required.
 
     Returns
     -------
