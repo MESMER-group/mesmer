@@ -12,6 +12,7 @@ dependencies:
  - numpy
  - packaging
  - pandas<2.0
+ - pooch
  - regionmask>=0.8
  - scikit-learn
  - sphinx
