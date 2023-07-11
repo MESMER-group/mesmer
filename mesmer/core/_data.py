@@ -15,7 +15,7 @@ def fetch_remote_data(name):
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
         registry={
-            "isaod_gl_2022.dat": "c83881a18e74912385ad578282de721cc8e866b62cbbc75446e52e7041c81cff",
+            "isaod_gl_2022.dat": "3d26e78bf0ee96a02c99e2a7a448dafda0ac847a5c914a75c7d9745e95fe68ee",
         },
         version=f"v{mesmer.__version__}",
         version_dev="main",
