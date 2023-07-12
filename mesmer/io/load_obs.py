@@ -7,10 +7,13 @@ Functions to load in observations which are saved locally.
 """
 
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from mesmer.core._data import fetch_remote_data
 
 
 def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
@@ -163,15 +166,15 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     return tblend, time
 
 
-def load_strat_aod(time, dir_obs):
+def load_strat_aod(time, dir_obs=None):
     """Load observed global stratospheric aerosol optical depth time series.
 
     Parameters
     ----------
     time : np.ndarray
         1d array of years the AOD time series is required for
-    dir_obs : str
-        pathway to observations
+    dir_obs : None
+        Deprecated.
 
     Returns
     -------
@@ -184,9 +187,16 @@ def load_strat_aod(time, dir_obs):
       cimp6, 1850 - 2005 for cmip5)
     """
 
-    path_file = os.path.join(dir_obs, "aerosols", "isaod_gl.dat")
+    if dir_obs is not None:
+        warnings.warn(
+            "The aerosol data is now shipped with mesmer. Passing `dir_obs` to "
+            "``load_strat_aod`` is no longer necessary",
+            FutureWarning,
+        )
+
+    filename = fetch_remote_data("isaod_gl_2022.dat")
     df = pd.read_csv(
-        path_file,
+        filename,
         delim_whitespace=True,
         skiprows=11,
         names=("year", "month", "AOD"),
