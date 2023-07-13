@@ -9,12 +9,12 @@ Functions to train local variability module of MESMER.
 
 import xarray as xr
 
-from mesmer.core.auto_regression import _fit_auto_regression_xr
-from mesmer.core.localized_covariance import (
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _fit_auto_regression_xr
+from mesmer.stats.localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
-from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 from .train_utils import get_scenario_weights, stack_predictors_and_targets
 
@@ -29,20 +29,26 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 
         - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     targs : dict
         nested dictionary of targets with keys
 
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     cfg : module
         config file containing metadata
+
     save_params : bool, optional
         determines if parameters are saved or not, default = True
+
     aux : dict, optional
         provides auxiliary variables needed for lv method at hand
 
         - [var] (Xd arrays of auxiliary variable)
+
     params_lv : dict, optional
         pass the params_lv dict, if it already exists so that builds upon that one
 
@@ -130,9 +136,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
 
         params_lv = train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg)
     else:
-        raise ValueError(
-            "The chosen method and / or weighting approach is not implemented."
-        )
+        raise ValueError("No such method and / or weighting approach.")
 
     # overwrites lv module if already exists, i.e., assumption: always lt before lv
     if save_params:
@@ -168,18 +172,23 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     targs : dict
         nested dictionary of targets with keys
 
         - [targ][scen] with 3d arrays (run, time, gp)
+
     y : np.ndarray
         3d array (sample, gp, targ) of targets
+
     wgt_scen_eq : np.ndarray
         1d array (sample) of sample weights
+
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
         - ["phi_gc"] (Xd arrays of auxiliary variable)
+
     cfg : module
         config file containing metadata
 
@@ -223,8 +232,6 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
         params_scen = list()
         for scen, data in targ.items():
-
-            nr_runs, nr_ts, nr_gps = data.shape
 
             # create temporary DataArray
             data = xr.DataArray(data, dims=("run", "time", "cell"))
@@ -270,13 +277,16 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     ----------
     y : np.ndarray
         2d array (sample, gp) of specific target
+
     wgt_scen_eq : np.ndarray
         1d array (sample) of sample weights
+
     aux : dict
         provides auxiliary variables needed for lv method at hand
 
         - ["phi_gc"] (dict with localisation radii as keys and each containing a 2d
           array (gp, gp) of of Gaspari-Cohn correlation matrix
+
     cfg : module
         config file containing metadata
 
@@ -284,7 +294,6 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     -------
     localized_empirical_covariance : xr.Dataset
         Dataset containing three DataArrays:
-
     localization_radius : float
         Selected localization radius.
     covariance : xr.DataArray

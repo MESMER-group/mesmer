@@ -17,18 +17,21 @@ import mesmer
 # -- Display version info ----------------------------------------------------
 # for debugging on RTD
 
-print("python exec:", sys.executable)
-print("sys.path:", sys.path)
-print("os.getcwd():", os.getcwd())
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
+if on_rtd:
 
-if "CONDA_DEFAULT_ENV" in os.environ or "conda" in sys.executable:
-    print("conda environment:")
-    subprocess.run([os.environ.get("CONDA_EXE", "conda"), "list"])
-else:
-    print("pip environment:")
-    subprocess.run([sys.executable, "-m", "pip", "list"])
+    print("python exec:", sys.executable)
+    print("sys.path:", sys.path)
+    print("os.getcwd():", os.getcwd())
 
-print(f"mesmer: {mesmer.__version__=}, {mesmer.__file__=}")
+    if "CONDA_DEFAULT_ENV" in os.environ or "conda" in sys.executable:
+        print("conda environment:")
+        subprocess.run([os.environ.get("CONDA_EXE", "conda"), "list"])
+    else:
+        print("pip environment:")
+        subprocess.run([sys.executable, "-m", "pip", "list"])
+
+    print(f"mesmer: {mesmer.__version__=}, {mesmer.__file__=}")
 
 
 # -- Project information -----------------------------------------------------

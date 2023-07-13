@@ -12,8 +12,8 @@ import statsmodels.api as sm
 import xarray as xr
 from packaging.version import Version
 
-from mesmer.core.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -26,15 +26,20 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
         Nested global mean variability dictionary with keys
 
         - [scen] (2d array (run, time) of globally-averaged variability time series)
+
     targ : str
         target variable (e.g., "tas")
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     cfg : config module
         config file containing metadata
+
     save_params : bool, optional
         determines if parameters are saved or not, default = True
-    **kwargs:
+
+    **kwargs : Any
         additional arguments, passed through to the training function
 
     Returns
@@ -86,8 +91,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
 
         params_gv = train_gv_AR(params_gv, gv, kwargs["max_lag"], kwargs["sel_crit"])
     else:
-        msg = "The chosen method and / or weighting approach is currently not implemented."
-        raise ValueError(msg)
+        raise ValueError("No such method and/ or weighting approach.")
 
     # save the global variability paramters if requested
     if save_params:
@@ -123,15 +127,18 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, i.e., AR, str)
         - ["scenarios"] (emission scenarios used for training, list of strs)
+
     gv : dict
         nested global mean temperature variability (volcanic influence removed)
         dictionary with keys
 
         - [scen] (2d array (nr_runs, nr_ts) of globally-averaged temperature variability
           time series)
-    max_lag: int
+
+    max_lag : int
         maximum number of lags considered during fitting
-    sel_crit: str
+
+    sel_crit : str
         selection criterion for the AR process order, e.g., 'bic' or 'aic'
 
     Returns
@@ -186,7 +193,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
 
     # determine the AR params for the selected AR order
     params_scen = list()
-    for scen_idx, scen in enumerate(gv.keys()):
+    for scen in gv.keys():
         data = gv[scen]
 
         # create temporary DataArray

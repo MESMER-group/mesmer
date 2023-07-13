@@ -3,7 +3,7 @@ from typing import Mapping, Optional
 import numpy as np
 import xarray as xr
 
-from .utils import _check_dataarray_form, _check_dataset_form
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
 
 class LinearRegression:
@@ -28,16 +28,12 @@ class LinearRegression:
         predictors : dict of xr.DataArray
             A dict of DataArray objects used as predictors. Must be 1D and contain
             `dim`.
-
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
-
         dim : str
             Dimension along which to fit the polynomials.
-
         weights : xr.DataArray, default: None.
             Individual weights for each sample. Must be 1D and contain `dim`.
-
         fit_intercept : bool, default=True
             Whether to calculate the intercept for this model. If set to False, no
             intercept will be used in calculations (i.e. data is expected to be
@@ -99,7 +95,6 @@ class LinearRegression:
         ----------
         predictors : dict of xr.DataArray
             A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
-
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
 
@@ -149,7 +144,7 @@ class LinearRegression:
         ----------
         filename : str
             Name of the netCDF file to open.
-        kwargs : Any
+        **kwargs : Any
             Additional keyword arguments passed to ``xr.open_dataset``
         """
         ds = xr.open_dataset(filename, **kwargs)
@@ -166,7 +161,7 @@ class LinearRegression:
         ----------
         filename : str
             Name of the netCDF file to save.
-        kwargs : Any
+        **kwargs : Any
             Additional keyword arguments passed to ``xr.Dataset.to_netcf``
         """
 
@@ -188,16 +183,12 @@ def _fit_linear_regression_xr(
     ----------
     predictors : dict of xr.DataArray
         A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
-
     target : xr.DataArray
         Target DataArray. Must be 2D and contain `dim`.
-
     dim : str
         Dimension along which to fit the polynomials.
-
     weights : xr.DataArray, default: None.
         Individual weights for each sample. Must be 1D and contain `dim`.
-
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to False, no intercept
         will be used in calculations (i.e. data is expected to be centered).
@@ -217,14 +208,27 @@ def _fit_linear_regression_xr(
             "A predictor with the name 'weights' or 'intercept' is not allowed"
         )
 
+    if dim == "predictor":
+        raise ValueError("dim cannot currently be 'predictor'.")
+
     for key, pred in predictors.items():
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
 
     predictors_concat = xr.concat(
-        tuple(predictors.values()), dim="predictor", join="exact"
+        tuple(predictors.values()),
+        dim="predictor",
+        join="exact",
+        coords="minimal",
     )
 
-    _check_dataarray_form(target, ndim=2, required_dims=dim, name="target")
+    _check_dataarray_form(target, required_dims=dim, name="target")
+
+    if target.ndim == 1:
+        # a 2D target array is required, extra dim is squeezed at the end
+        extra_dim = f"__{dim}__"
+        target = target.expand_dims(extra_dim)
+    elif target.ndim != 2:
+        raise ValueError(f"target should be 1D or 2D, but has {target.ndim}D")
 
     # ensure `dim` is equal
     xr.align(predictors_concat, target, join="exact")
@@ -233,7 +237,7 @@ def _fit_linear_regression_xr(
         _check_dataarray_form(weights, ndim=1, required_dims=dim, name="weights")
         xr.align(weights, target, join="exact")
 
-    target_dim = list(set(target.dims) - {dim})[0]
+    (target_dim,) = list(set(target.dims) - {dim})
 
     out = _fit_linear_regression_np(
         predictors_concat.transpose(dim, "predictor"),
@@ -255,7 +259,7 @@ def _fit_linear_regression_xr(
     if weights is not None:
         out["weights"] = weights
 
-    return out
+    return out.squeeze()
 
 
 def _fit_linear_regression_np(predictors, target, weights=None, fit_intercept=True):
@@ -266,13 +270,14 @@ def _fit_linear_regression_np(predictors, target, weights=None, fit_intercept=Tr
     ----------
     predictors : array-like of shape (n_samples, n_predictors)
         Array of predictors
-
     target : array-like of shape (n_samples, n_targets)
         Array of targets where each row is a sample and each column is a
         different target i.e. variable to be predicted
-
     weights : array-like of shape (n_samples,)
         Weights for each sample
+    fit_intercept : bool, default=True
+        Whether to calculate the intercept for this model. If set to False, no intercept
+        will be used in calculations (i.e. data is expected to be centered).
 
     Returns
     -------

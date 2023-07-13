@@ -4,24 +4,35 @@ import xarray as xr
 import xarray.testing as xrt
 
 
-def _check_dict(first, second, first_name="left", second_name="right"):
-    for key in first:
-        first_val = first[key]
-        try:
-            second_val = second[key]
-        except KeyError:
-            raise AssertionError(
-                f"Key `{key}` is in '{first_name}' but is not in '{second_name}'"
-            )
+def assert_dict_allclose(first, second, first_name="left", second_name="right"):
 
-        type_first = type_second = type(first_val), type(second_val)
-        assert type_first == type_second, f"{key}: {type_first} != {type_second}"
+    if not isinstance(first, dict) or not isinstance(second, dict):
+        raise AssertionError(f"must be dicts, got {type(first)} and {type(second)}")
+
+    extra_first = first.keys() - second.keys()
+    if extra_first:
+        raise AssertionError(f"'{first_name}' has extra keys: '{extra_first}'")
+
+    extra_second = second.keys() - first.keys()
+    if extra_second:
+        raise AssertionError(f"'{second_name}' has extra keys: '{extra_second}'")
+
+    for key, first_val in first.items():
+
+        second_val = second[key]
+
+        # allow mixing arrays and scalars
+        if not (
+            isinstance(first_val, np.ndarray) or isinstance(second_val, np.ndarray)
+        ):
+            type_first, type_second = type(first_val), type(second_val)
+            assert type_first == type_second, f"{key}: {type_first} != {type_second}"
 
         if isinstance(first_val, dict):
-            _check_dict(first_val, second_val, first_name, second_name)
+            assert_dict_allclose(first_val, second_val, first_name, second_name)
         elif isinstance(first_val, np.ndarray):
             npt.assert_allclose(first_val, second_val)
-        elif isinstance(first_val, xr.DataArray):
+        elif isinstance(first_val, (xr.DataArray, xr.Dataset)):
             xrt.assert_allclose(first_val, second_val)
         elif np.issubdtype(np.array(first_val).dtype, np.number):
             npt.assert_allclose(first_val, second_val)

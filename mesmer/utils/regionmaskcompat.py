@@ -8,6 +8,10 @@ import regionmask
 import xarray as xr
 
 
+class InvalidCoordsError(ValueError):
+    pass
+
+
 def mask_percentage(regions, lon, lat, **kwargs):
 
     warnings.warn(
@@ -30,10 +34,10 @@ def mask_3D_frac_approx(regions, lon, lat, **kwargs):
 
     backend = regionmask.core.mask._determine_method(lon, lat)
     if "rasterize" not in backend:
-        raise ValueError("'lon' and 'lat' must be 1D and equally spaced.")
+        raise InvalidCoordsError("'lon' and 'lat' must be 1D and equally spaced.")
 
     if np.min(lat) < -90 or np.max(lat) > 90:
-        raise ValueError("lat must be between -90 and +90")
+        raise InvalidCoordsError("lat must be between -90 and +90")
 
     lon_name = getattr(lon, "name", "lon")
     lat_name = getattr(lat, "name", "lat")
@@ -41,9 +45,11 @@ def mask_3D_frac_approx(regions, lon, lat, **kwargs):
     lon_sampled = sample_coord(lon)
     lat_sampled = sample_coord(lat)
 
-    mask = regions.mask(lon_sampled, lat_sampled, **kwargs)
+    ds = xr.Dataset(coords={lon_name: lon_sampled, lat_name: lat_sampled})
 
-    sel = (mask.lat >= -90) & (mask.lat <= 90)
+    mask = regions.mask(ds[lon_name], ds[lat_name], **kwargs)
+
+    sel = (mask[lat_name] >= -90) & (mask[lat_name] <= 90)
 
     isnan = np.isnan(mask.values)
 
@@ -56,7 +62,7 @@ def mask_3D_frac_approx(regions, lon, lat, **kwargs):
         mask_coarse = mask == num
         # set points beyond 90° to NaN so we get the correct fraction
         mask_coarse = mask_coarse.where(sel)
-        mask_coarse = mask_coarse.coarsen(lat=10, lon=10).mean()
+        mask_coarse = mask_coarse.coarsen({lat_name: 10, lon_name: 10}).mean()
         mask_sampled.append(mask_coarse)
 
     mask_sampled = xr.concat(

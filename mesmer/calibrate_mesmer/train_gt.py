@@ -6,14 +6,15 @@
 Functions to train global trend module of MESMER.
 """
 
+import warnings
 
 import numpy as np
 import xarray as xr
 
-from mesmer.core.linear_regression import LinearRegression
-from mesmer.core.smoothing import lowess
 from mesmer.io import load_strat_aod
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.linear_regression import LinearRegression
+from mesmer.stats.smoothing import lowess
 
 
 def train_gt(var, targ, esm, time, cfg, save_params=True):
@@ -28,14 +29,19 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         training
 
         - [scen] (2d array (run, time) of globally-averaged variable time series)
+
     targ : str
         target variable (e.g., "tas")
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     time : np.ndarray
         [scen] (1d array of years)
+
     cfg : module
         config file containing metadata
+
     save_params : bool, default True
         determines if parameters are saved or not, default = True
 
@@ -121,7 +127,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
                 var_all = np.unique(var_all, axis=0)
 
             params_gt["saod"], params_gt["hist"] = train_gt_ic_OLSVOLC(
-                var_all, gt_lowess_hist, params_gt["time"]["hist"], cfg
+                var_all, gt_lowess_hist, params_gt["time"]["hist"]
             )
         elif params_gt["method"] == "LOWESS":
             params_gt["hist"] = gt_lowess_hist
@@ -191,12 +197,12 @@ def train_gt_ic_LOWESS(data):
     # open to changes but if much smaller, var trend ends up very wiggly
     frac_lowess_name = "50/nr_ts"
 
-    gt_lowess = lowess(data, dim=dim, frac=frac)
+    gt_lowess = lowess(data, dim=dim, frac=frac).values
 
     return gt_lowess, frac_lowess_name
 
 
-def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
+def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     """
     Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble
     by adding volcanic spikes to LOWESS trend.
@@ -209,8 +215,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
         1d array of smooth global trend of variable
     time : np.ndarray
         1d array of years
-    cfg : module
-        config file containing metadata needed to load in stratospheric AOD time series
+    cfg : None
+        Passing cfg is no longer required.
 
     Returns
     -------
@@ -226,14 +232,17 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
 
     """
 
-    # specify necessary variables from cfg file
-    dir_obs = cfg.dir_obs
+    if cfg is not None:
+        warnings.warn(
+            "Passing ``cfg`` to ``train_gt_ic_OLSVOLC`` is no longer necessary",
+            FutureWarning,
+        )
 
     nr_runs, nr_ts = var.shape
 
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
-    aod_obs = load_strat_aod(time, dir_obs)
+    aod_obs = load_strat_aod(time)
     # drop "year" coords - aod_obs does not have coords (currently)
     aod_obs = aod_obs.drop_vars("year")
 
@@ -270,7 +279,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
     coef_saod = lr.params["aod_obs"].values
 
     # apply linear regression model to obtain volcanic spikes
-    contrib_volc = lr.predict(predictors={"aod_obs": aod_obs_all})
+    contrib_volc = lr.predict(predictors={"aod_obs": aod_obs})
 
     # merge the lowess trend wit the volc contribution
     gt = gt_lowess + contrib_volc.values.squeeze()

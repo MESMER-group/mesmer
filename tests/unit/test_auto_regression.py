@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-import mesmer.core.auto_regression
+import mesmer.stats.auto_regression
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 
@@ -13,7 +13,7 @@ def test_select_ar_order_xr_1d():
 
     data = trend_data_1D()
 
-    result = mesmer.core.auto_regression._select_ar_order_xr(data, "time", 4)
+    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "time", 4)
 
     _check_dataarray_form(result, "selected_ar_order", ndim=0, shape=())
 
@@ -24,7 +24,7 @@ def test_select_ar_order_xr_3d(n_lon, n_lat):
 
     data = trend_data_3D(n_lat=n_lat, n_lon=n_lon)
 
-    result = mesmer.core.auto_regression._select_ar_order_xr(data, "time", 1)
+    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "time", 1)
 
     _check_dataarray_form(
         result,
@@ -38,7 +38,7 @@ def test_select_ar_order_xr_3d(n_lon, n_lat):
 def test_select_ar_order_xr_dim():
 
     data = trend_data_3D(n_timesteps=4, n_lon=5)
-    result = mesmer.core.auto_regression._select_ar_order_xr(data, "lon", 1)
+    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "lon", 1)
 
     _check_dataarray_form(
         result, "selected_ar_order", ndim=2, required_dims={"time", "lat"}, shape=(4, 3)
@@ -49,7 +49,7 @@ def test_select_ar_order_xr():
 
     data = trend_data_2D()
 
-    result = mesmer.core.auto_regression._select_ar_order_xr(data, "time", 4)
+    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "time", 4)
 
     coords = data.drop_vars("time").coords
 
@@ -63,14 +63,14 @@ def test_select_ar_order_np():
     rng = np.random.default_rng(seed=0)
     data = rng.normal(size=100)
 
-    result = mesmer.core.auto_regression._select_ar_order_np(data, 2)
+    result = mesmer.stats.auto_regression._select_ar_order_np(data, 2)
     assert np.isnan(result)
 
-    result = mesmer.core.auto_regression._select_ar_order_np(data[:10], 2)
+    result = mesmer.stats.auto_regression._select_ar_order_np(data[:10], 2)
     assert result == 2
 
     with pytest.raises(ValueError):
-        mesmer.core.auto_regression._select_ar_order_np(data[:6], 5)
+        mesmer.stats.auto_regression._select_ar_order_np(data[:6], 5)
 
 
 @pytest.mark.parametrize("ar_order", [1, 8])
@@ -83,7 +83,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
     coefs = np.ones((ar_order, n_cells))
     covariance = np.ones((n_cells, n_cells))
 
-    result = mesmer.core.auto_regression._draw_auto_regression_correlated_np(
+    result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
         coefs=coefs,
         covariance=covariance,
@@ -101,7 +101,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 @pytest.mark.parametrize("intercept", [0, 1, 3.14])
 def test_draw_auto_regression_deterministic_intercept(intercept):
 
-    result = mesmer.core.auto_regression._draw_auto_regression_correlated_np(
+    result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
         coefs=np.array([[0]]),
         covariance=[0],
@@ -115,7 +115,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
     np.testing.assert_equal(result, expected)
 
-    result = mesmer.core.auto_regression._draw_auto_regression_correlated_np(
+    result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=np.array([[0, intercept]]),
         coefs=np.array([[0, 0]]),
         covariance=np.zeros((2, 2)),
@@ -132,7 +132,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
 def test_draw_auto_regression_deterministic_coefs_buffer():
 
-    result = mesmer.core.auto_regression._draw_auto_regression_correlated_np(
+    result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
         coefs=np.array([[1]]),
         covariance=[0],
@@ -149,7 +149,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
     expected = np.array([0, 1, 1.5, 1.75, 1.875]).reshape(1, -1, 1)
 
     for i, buffer in enumerate([1, 2]):
-        result = mesmer.core.auto_regression._draw_auto_regression_correlated_np(
+        result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
             intercept=1,
             coefs=np.array([[0.5]]),
             covariance=[0],
@@ -164,7 +164,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
 
 def test_draw_auto_regression_random():
 
-    result = mesmer.core.auto_regression._draw_auto_regression_correlated_np(
+    result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
         coefs=np.array([[0.375], [0.125]]),
         covariance=0.5,
@@ -184,7 +184,7 @@ def test_draw_auto_regression_random():
 def test_fit_auto_regression_xr_errors(obj):
 
     with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
-        mesmer.core.auto_regression._fit_auto_regression_xr(obj, "dim", lags=1)
+        mesmer.stats.auto_regression._fit_auto_regression_xr(obj, "dim", lags=1)
 
 
 def test_fit_auto_regression_xr_1D_values():
@@ -192,7 +192,7 @@ def test_fit_auto_regression_xr_1D_values():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=1)
+    result = mesmer.stats.auto_regression._fit_auto_regression_xr(data, "time", lags=1)
 
     expected = xr.Dataset(
         {
@@ -211,7 +211,9 @@ def test_fit_auto_regression_xr_1D_values_lags():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=[2])
+    result = mesmer.stats.auto_regression._fit_auto_regression_xr(
+        data, "time", lags=[2]
+    )
 
     expected = xr.Dataset(
         {
@@ -229,7 +231,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
 def test_fit_auto_regression_xr_1D(lags):
 
     data = trend_data_1D()
-    res = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
+    res = mesmer.stats.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
 
     lags = lags if not np.ndim(lags) == 0 else np.arange(lags) + 1
 
@@ -256,7 +258,7 @@ def test_fit_auto_regression_xr_1D(lags):
 def test_fit_auto_regression_xr_2D(lags):
 
     data = trend_data_2D()
-    res = mesmer.core.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
+    res = mesmer.stats.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
 
     (n_cells,) = data.cells.shape
 
@@ -297,7 +299,7 @@ def test_fit_auto_regression_np(lags):
         mocked_auto_regression.return_value = mocked_auto_regression_result
         mocked_auto_regression_result.return_value = mock_auto_regressor
 
-        mesmer.core.auto_regression._fit_auto_regression_np(data, lags=lags)
+        mesmer.stats.auto_regression._fit_auto_regression_np(data, lags=lags)
 
         mocked_auto_regression.assert_called_once()
         mocked_auto_regression.assert_called_with(data, lags=lags, old_names=False)

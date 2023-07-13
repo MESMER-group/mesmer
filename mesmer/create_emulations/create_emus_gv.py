@@ -9,8 +9,8 @@ Functions to create global variability emulations with MESMER.
 
 import numpy as np
 
-from mesmer.core.auto_regression import _draw_auto_regression_correlated_np
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -28,13 +28,16 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
           train_gv_T_method() function)
+
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
         - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 
@@ -57,8 +60,8 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_gv["esm"]]
 
-    pred_names = list(preds_gv.keys())
-    scens_out = list(preds_gv[pred_names[0]].keys())
+    pred_name = list(preds_gv.keys())[0]
+    scens_out = list(preds_gv[pred_name].keys())
 
     if scens_out != list(seed_all_scens.keys()):
         raise ValueError(
@@ -70,10 +73,10 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     emus_gv = {}
 
     for scen in scens_out:
-        if len(preds_gv[pred_names[0]][scen].shape) > 1:
-            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[1]
-        else:
-            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[0]
+
+        time_axis = 1 if preds_gv[pred_name][scen].ndim > 1 else 0
+
+        nr_ts_emus_v = preds_gv[pred_name][scen].shape[time_axis]
 
         # apply the chosen method
         if params_gv["method"] == "AR":
@@ -125,10 +128,13 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - ["AR_order_sel"] (selected AR order, int)
         - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
+
     nr_emus_v : int
         number of global variability emulations
+
     nr_ts_emus_v : int
         number of time steps in each global variability emulation
+
     seed : int
         esm and scenario specific seed for gv module to ensure reproducability of
         results

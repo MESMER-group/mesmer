@@ -5,6 +5,9 @@ generated
 # allow saving mesmer params without commiting them to the repo
 tests/test-data/output/*/params
 
+# output folder of examples/train_create_emus_automated.py
+examples/output
+
 startup
 tmp/
 #*.ipynb #if want to ignore ipython notebooks

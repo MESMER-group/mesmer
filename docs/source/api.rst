@@ -1,6 +1,5 @@
 .. currentmodule:: mesmer
 
-#############
 API reference
 #############
 
@@ -10,22 +9,49 @@ This page provides an auto-generated summary of mesmers' API.
 Top-level functions
 ===================
 
-Statistical core functions
---------------------------
+Statistical functions
+---------------------
+
+
+Linear regression
+^^^^^^^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated/
 
-   ~core.linear_regression.LinearRegression
-   ~core.linear_regression.LinearRegression.fit
-   ~core.linear_regression.LinearRegression.predict
-   ~core.linear_regression.LinearRegression.residuals
-   ~core.linear_regression.LinearRegression.to_netcdf
-   ~core.linear_regression.LinearRegression.from_netcdf
-   ~core.auto_regression._select_ar_order_xr
-   ~core.auto_regression._fit_auto_regression_xr
-   ~core.auto_regression._draw_auto_regression_correlated_np
-   ~core.smoothing.lowess
+   ~stats.linear_regression.LinearRegression
+   ~stats.linear_regression.LinearRegression.fit
+   ~stats.linear_regression.LinearRegression.predict
+   ~stats.linear_regression.LinearRegression.residuals
+   ~stats.linear_regression.LinearRegression.to_netcdf
+   ~stats.linear_regression.LinearRegression.from_netcdf
+
+Auto regression
+^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.auto_regression._select_ar_order_xr
+   ~stats.auto_regression._fit_auto_regression_xr
+   ~stats.auto_regression._draw_auto_regression_correlated_np
+
+Localized covariance
+^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.localized_covariance.adjust_covariance_ar1
+   ~stats.localized_covariance.find_localized_empirical_covariance
+
+Smoothing
+^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.smoothing.lowess
 
 Computation
 -----------
@@ -35,6 +61,25 @@ Computation
 
    ~core.computation.calc_geodist_exact
    ~core.computation.gaspari_cohn
+
+Data manipulation
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~xarray_utils.grid.stack_lat_lon
+   ~xarray_utils.grid.unstack_lat_lon_and_align
+   ~xarray_utils.grid.unstack_lat_lon
+   ~xarray_utils.grid.align_to_coords
+   ~xarray_utils.mask.mask_ocean_fraction
+   ~xarray_utils.mask.mask_ocean
+   ~xarray_utils.mask.mask_antarctica
+   ~xarray_utils.global_mean.lat_weights
+   ~xarray_utils.global_mean.weighted_mean
+
+Legacy functions
+================
 
 Train mesmer
 ------------
@@ -53,13 +98,14 @@ Create emulations
 .. autosummary::
    :toctree: generated/
 
-   ~create_emulations.create_emus_gt
+   ~create_emulations.gather_gt_data
    ~create_emulations.create_emus_gv
    ~create_emulations.create_emus_lt
    ~create_emulations.create_emus_lv
    ~create_emulations.create_emus_g
    ~create_emulations.create_emus_l
    ~create_emulations.make_realisations
+   ~create_emulations.create_seed_dict
 
 
 Individual methods and utils
@@ -100,14 +146,12 @@ Load constant files
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_constant_files.infer_interval_breaks
    ~io.load_constant_files.load_phi_gc
    ~io.load_constant_files.load_regs_ls_wgt_lon_lat
-   ~io.load_constant_files.mask_percentage
 
 
-Load constant files
-^^^^^^^^^^^^^^^^^^^
+Load output
+^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated/
@@ -144,3 +188,4 @@ Utils
    ~utils.convert.separate_hist_future
    ~utils.select.extract_land
    ~utils.select.extract_time_period
+   ~utils.regionmaskcompat import mask_3D_frac_approx
