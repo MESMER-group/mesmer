@@ -34,7 +34,7 @@ global mean emulator, the following publication should additionally be cited:
   Beusch, L., Nicholls, Z., Gudmundsson, L., Hauser, M., Meinshausen, M., and Seneviratne,
   S. I.: From emission scenarios to spatially resolved projections with a chain of
   computationally efficient emulators: coupling of MAGICC (v7.5.1) and MESMER (v0.8.3),
-  Geosci. Model Dev., 15, 2085–2103, https://doi.org/10.5194/gmd-15-2085-2022, 2022. 
+  Geosci. Model Dev., 15, 2085–2103, https://doi.org/10.5194/gmd-15-2085-2022, 2022.
 
 License
 -------
