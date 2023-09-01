@@ -68,6 +68,8 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
+   ~xarray_utils.grid.wrap_to_180
+   ~xarray_utils.grid.wrap_to_360
    ~xarray_utils.grid.stack_lat_lon
    ~xarray_utils.grid.unstack_lat_lon_and_align
    ~xarray_utils.grid.unstack_lat_lon

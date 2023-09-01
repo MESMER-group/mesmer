@@ -61,6 +61,9 @@ New Features
    - Added functions to calculate the weighted global mean (`#220
      <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
      <https://github.com/mathause>`_.
+   - Added functions to wrap arrays to [-180, 180) and [0, 360), respectively (`#270
+     <https://github.com/MESMER-group/mesmer/pull/270>`_). By `Mathias Hauser
+     <https://github.com/mathause>`_.
 
 - The aerosol data is now automatically downloaded using `pooch <https://www.fatiando.org/pooch/latest/>`__.
   (`#267 <https://github.com/MESMER-group/mesmer/pull/267>`_). By `Mathias Hauser

@@ -3,6 +3,76 @@ import xarray as xr
 from packaging.version import Version
 
 
+def _lon_to_180(lon):
+
+    with xr.set_options(keep_attrs=True):
+        lon = ((lon + 180) % 360) - 180
+
+    if isinstance(lon, xr.DataArray):
+        lon = lon.assign_coords({lon.name: lon})
+
+    return lon
+
+
+def _lon_to_360(lon):
+
+    with xr.set_options(keep_attrs=True):
+        lon = lon % 360
+
+    if isinstance(lon, xr.DataArray):
+        lon = lon.assign_coords({lon.name: lon})
+
+    return lon
+
+
+def wrap_to_180(obj, lon_name="lon"):
+    """
+    wrap longitude coordinates to [-180..180)
+
+    Parameters
+    ----------
+    obj : xr.Dataset or xr.DataArray
+        object with longitude coordinates
+    lon : str, default: "lon"
+        name of the longitude ('lon', 'longitude', ...)
+
+    Returns
+    -------
+    wrapped : Dataset
+        Another dataset array wrapped around.
+    """
+
+    new_lon = _lon_to_180(obj[lon_name])
+
+    obj = obj.assign_coords(**{lon_name: new_lon})
+    obj = obj.sortby(lon_name)
+
+    return obj
+
+
+def wrap_to_360(obj, lon_name="lon"):
+    """
+    wrap longitude coordinates to [0..360)
+    Parameters
+    ----------
+    obj : xr.Dataset or xr.DataArray
+        object with longitude coordinates
+    lon : str, default: "lon"
+        name of the longitude ('lon', 'longitude', ...)
+    Returns
+    -------
+    wrapped : Dataset
+        Another dataset array wrapped around.
+    """
+
+    new_lon = _lon_to_360(obj[lon_name])
+
+    obj = obj.assign_coords(**{lon_name: new_lon})
+    obj = obj.sortby(lon_name)
+
+    return obj
+
+
 def stack_lat_lon(
     data,
     *,
