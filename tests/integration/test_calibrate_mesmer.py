@@ -70,7 +70,7 @@ def test_calibrate_mesmer(
         exp = joblib.load(expected_output_file)
 
         assert isinstance(res, dict)
-        assert type(res) == type(exp)
+        assert type(res) == type(exp)  # noqa: E721
         assert res.keys() == exp.keys()
 
         # check all keys of res match exp
