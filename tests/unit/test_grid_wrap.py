@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer import xarray_utils as xru
+import mesmer
 
 
 def test_lon_to_180():
@@ -11,7 +11,7 @@ def test_lon_to_180():
 
     expected = np.array([179.9, -180, -1, 0, 179.99, -180, 179])
 
-    result = xru.grid._lon_to_180(arr)
+    result = mesmer.grid._lon_to_180(arr)
     np.testing.assert_allclose(result, expected)
 
     # ensure arr is not updated in-place
@@ -23,7 +23,7 @@ def test_lon_to_180():
         expected, dims="lon", coords={"lon": expected}, attrs=attrs, name="lon"
     )
 
-    result = xru.grid._lon_to_180(da)
+    result = mesmer.grid._lon_to_180(da)
 
     xr.testing.assert_allclose(result, expected)
 
@@ -36,7 +36,7 @@ def test_lon_to_360():
 
     expected = np.array([179.9, 180, 359, 0, 179.99, 180, 179, 259.9, 0])
 
-    result = xru.grid._lon_to_360(arr)
+    result = mesmer.grid._lon_to_360(arr)
     np.testing.assert_allclose(result, expected)
 
     # ensure arr is not updated in-place
@@ -48,7 +48,7 @@ def test_lon_to_360():
         expected, dims="lon", coords={"lon": expected}, attrs=attrs, name="lon"
     )
 
-    result = xru.grid._lon_to_360(da)
+    result = mesmer.grid._lon_to_360(da)
 
     xr.testing.assert_allclose(result, expected)
 
@@ -80,12 +80,12 @@ def test_wrap_to_180(as_dataset):
         obj = obj.to_dataset()
         expected = expected.to_dataset()
 
-    result = xru.grid.wrap_to_180(obj)
+    result = mesmer.grid.wrap_to_180(obj)
 
     obj = obj.rename(lon="longitude")
     expected = expected.rename(lon="longitude")
 
-    result = xru.grid.wrap_to_180(obj, lon_name="longitude")
+    result = mesmer.grid.wrap_to_180(obj, lon_name="longitude")
 
     xr.testing.assert_identical(result, expected)
 
@@ -115,12 +115,12 @@ def test_wrap_to_360(as_dataset):
         obj = obj.to_dataset()
         expected = expected.to_dataset()
 
-    result = xru.grid.wrap_to_360(obj)
+    result = mesmer.grid.wrap_to_360(obj)
 
     obj = obj.rename(lon="longitude")
     expected = expected.rename(lon="longitude")
 
-    result = xru.grid.wrap_to_360(obj, lon_name="longitude")
+    result = mesmer.grid.wrap_to_360(obj, lon_name="longitude")
 
     xr.testing.assert_identical(result, expected)
 
@@ -152,8 +152,8 @@ def test_wrap_to_360_roundtrip(as_dataset):
 
     orig = _get_test_data_grid(lon, as_dataset)
 
-    wrapped = xru.grid.wrap_to_360(orig)
-    roundtripped = xru.grid.wrap_to_180(wrapped)
+    wrapped = mesmer.grid.wrap_to_360(orig)
+    roundtripped = mesmer.grid.wrap_to_180(wrapped)
 
     xr.testing.assert_identical(orig, roundtripped)
 
@@ -165,7 +165,7 @@ def test_wrap_to_180_roundtrip(as_dataset):
 
     orig = _get_test_data_grid(lon, as_dataset)
 
-    wrapped = xru.grid.wrap_to_180(orig)
-    roundtripped = xru.grid.wrap_to_360(wrapped)
+    wrapped = mesmer.grid.wrap_to_180(orig)
+    roundtripped = mesmer.grid.wrap_to_360(wrapped)
 
     xr.testing.assert_identical(orig, roundtripped)
