@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-import mesmer.xarray_utils as mxu
+import mesmer
 
 
 def data_lon_lat(as_dataset, x_dim="lon", y_dim="lat"):
@@ -29,11 +29,11 @@ def data_lon_lat(as_dataset, x_dim="lon", y_dim="lat"):
 
 def test_lat_weights_scalar():
 
-    np.testing.assert_allclose(mxu.global_mean.lat_weights(90), 0.0, atol=1e-7)
-    np.testing.assert_allclose(mxu.global_mean.lat_weights(45), np.sqrt(2) / 2)
-    np.testing.assert_allclose(mxu.global_mean.lat_weights(0), 1.0, atol=1e-7)
-    np.testing.assert_allclose(mxu.global_mean.lat_weights(-45), np.sqrt(2) / 2)
-    np.testing.assert_allclose(mxu.global_mean.lat_weights(-90), 0.0, atol=1e-7)
+    np.testing.assert_allclose(mesmer.globmean.lat_weights(90), 0.0, atol=1e-7)
+    np.testing.assert_allclose(mesmer.globmean.lat_weights(45), np.sqrt(2) / 2)
+    np.testing.assert_allclose(mesmer.globmean.lat_weights(0), 1.0, atol=1e-7)
+    np.testing.assert_allclose(mesmer.globmean.lat_weights(-45), np.sqrt(2) / 2)
+    np.testing.assert_allclose(mesmer.globmean.lat_weights(-90), 0.0, atol=1e-7)
 
 
 def test_lat_weights():
@@ -44,7 +44,7 @@ def test_lat_weights():
     expected = np.cos(np.deg2rad(lat_coords))
     expected = xr.DataArray(expected, dims=("lat"), coords={"lat": lat}, name="lat")
 
-    result = mxu.global_mean.lat_weights(lat)
+    result = mesmer.globmean.lat_weights(lat)
 
     xr.testing.assert_equal(result, expected)
 
@@ -54,14 +54,14 @@ def test_lat_weights_2D_warn_2D():
     lat = np.arange(10).reshape(2, 5)
 
     with pytest.warns(UserWarning, match="non-regular grids"):
-        mxu.global_mean.lat_weights(lat)
+        mesmer.globmean.lat_weights(lat)
 
 
 @pytest.mark.parametrize("lat", [-91, 90.1])
 def test_lat_weights_2D_error_90(lat):
 
     with pytest.raises(ValueError, match="`lat_coords` must be between -90 and 90"):
-        mxu.global_mean.lat_weights(lat)
+        mesmer.globmean.lat_weights(lat)
 
 
 def _test_weighted_mean(as_dataset, **kwargs):
@@ -70,9 +70,9 @@ def _test_weighted_mean(as_dataset, **kwargs):
     data = data_lon_lat(as_dataset, **kwargs)
 
     y_coords = kwargs.get("y_dim", "lat")
-    weights = mxu.global_mean.lat_weights(data[y_coords])
+    weights = mesmer.globmean.lat_weights(data[y_coords])
 
-    result = mxu.global_mean.weighted_mean(data, weights=weights, **kwargs)
+    result = mesmer.globmean.weighted_mean(data, weights=weights, **kwargs)
 
     if as_dataset:
         # ensure scalar is not broadcast

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-import mesmer.xarray_utils as mxu
+import mesmer
 
 
 def data_1D_coords(as_dataset, x_dim="lon", y_dim="lat", stack_dim="gridcell"):
@@ -83,7 +83,7 @@ def data_2D_coords(as_dataset):
 def test_to_unstructured_defaults(as_dataset):
     da, expected = data_1D_coords(as_dataset)
 
-    result = mxu.grid.stack_lat_lon(da)
+    result = mesmer.grid.stack_lat_lon(da)
 
     xr.testing.assert_identical(result, expected)
 
@@ -92,7 +92,7 @@ def test_to_unstructured_defaults(as_dataset):
 def test_to_unstructured_multiindex(as_dataset):
     da, expected = data_1D_coords(as_dataset)
 
-    result = mxu.grid.stack_lat_lon(da, multiindex=True)
+    result = mesmer.grid.stack_lat_lon(da, multiindex=True)
 
     expected = expected.set_index({"gridcell": ("lat", "lon")})
 
@@ -108,7 +108,7 @@ def test_to_unstructured(x_dim, y_dim, cell_dim, as_dataset):
         as_dataset, x_dim=x_dim, y_dim=y_dim, stack_dim=cell_dim
     )
 
-    result = mxu.grid.stack_lat_lon(da, x_dim=x_dim, y_dim=y_dim, stack_dim=cell_dim)
+    result = mesmer.grid.stack_lat_lon(da, x_dim=x_dim, y_dim=y_dim, stack_dim=cell_dim)
 
     xr.testing.assert_identical(result, expected)
 
@@ -117,7 +117,7 @@ def test_to_unstructured(x_dim, y_dim, cell_dim, as_dataset):
 def test_to_unstructured_2D_coords(as_dataset):
     da, expected = data_2D_coords(as_dataset)
 
-    result = mxu.grid.stack_lat_lon(da, x_dim="x", y_dim="y")
+    result = mesmer.grid.stack_lat_lon(da, x_dim="x", y_dim="y")
 
     xr.testing.assert_identical(result, expected)
 
@@ -142,7 +142,7 @@ def test_to_unstructured_dropna(dropna, coords, time_pos):
     if dropna:
         expected = expected.dropna("gridcell")
 
-    result = mxu.grid.stack_lat_lon(da, dropna=dropna, **kwargs)
+    result = mesmer.grid.stack_lat_lon(da, dropna=dropna, **kwargs)
 
     xr.testing.assert_identical(result, expected)
 
@@ -162,8 +162,10 @@ def test_unstructured_roundtrip_dropna_row(coords):
     da_structured[:, :, 0] = np.NaN
     expected = da_structured
 
-    da_unstructured = mxu.grid.stack_lat_lon(da_structured, **kwargs)
-    result = mxu.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig, **kwargs)
+    da_unstructured = mesmer.grid.stack_lat_lon(da_structured, **kwargs)
+    result = mesmer.grid.unstack_lat_lon_and_align(
+        da_unstructured, coords_orig, **kwargs
+    )
 
     # roundtripping adds x & y coords - not sure if there is something to be done about
     if coords == "2D":
@@ -178,7 +180,7 @@ def test_from_unstructured_defaults(as_dataset):
 
     coords_orig = expected.coords.to_dataset()[["lon", "lat"]]
 
-    result = mxu.grid.unstack_lat_lon_and_align(da, coords_orig)
+    result = mesmer.grid.unstack_lat_lon_and_align(da, coords_orig)
 
     xr.testing.assert_identical(result, expected)
 
@@ -193,7 +195,7 @@ def test_from_unstructured(x_dim, y_dim, stack_dim, as_dataset):
     )
 
     coords_orig = expected.coords.to_dataset()[[x_dim, y_dim]]
-    result = mxu.grid.unstack_lat_lon_and_align(
+    result = mesmer.grid.unstack_lat_lon_and_align(
         da, coords_orig, x_dim=x_dim, y_dim=y_dim, stack_dim=stack_dim
     )
 
@@ -207,13 +209,13 @@ def test_unstructured_roundtrip_1D_coords(as_dataset):
 
     coords_orig = da_structured.coords.to_dataset()[["lon", "lat"]]
 
-    result = mxu.grid.unstack_lat_lon_and_align(
-        mxu.grid.stack_lat_lon(da_structured), coords_orig
+    result = mesmer.grid.unstack_lat_lon_and_align(
+        mesmer.grid.stack_lat_lon(da_structured), coords_orig
     )
     xr.testing.assert_identical(result, da_structured)
 
-    result = mxu.grid.stack_lat_lon(
-        mxu.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig)
+    result = mesmer.grid.stack_lat_lon(
+        mesmer.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig)
     )
     xr.testing.assert_identical(result, da_unstructured)
 
@@ -227,7 +229,8 @@ def test_unstructured_roundtrip_2D_coords(as_dataset):
 
     coords_orig = da_structured.coords.to_dataset()[["x", "y"]]
 
-    result = mxu.grid.stack_lat_lon(
-        mxu.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig, **dims), **dims
+    result = mesmer.grid.stack_lat_lon(
+        mesmer.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig, **dims),
+        **dims
     )
     xr.testing.assert_identical(result, da_unstructured)

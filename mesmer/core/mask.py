@@ -46,7 +46,7 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     - Uses the 1:110m land mask from Natural Earth (http://www.naturalearthdata.com).
     - The fractional overlap of individual grid points and the land mask can only be
       computed for regularly-spaced 1D x- and y-coordinates. For irregularly spaced
-      coordinates use :py:func:`mesmer.xarray_utils.mask_land`.
+      coordinates use :py:func:`mesmer.mask.mask_land`.
     """
 
     if np.ndim(threshold) != 0 or (threshold < 0) or (threshold > 1):
@@ -95,7 +95,7 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     -----
     - Uses the 1:110m land mask from Natural Earth (http://www.naturalearthdata.com).
     - Whether a grid cell is in the ocean or on land is based on its center. For
-      regularly spaced coordinates use :py:func:`mesmer.xarray_utils.mask_land_fraction`.
+      regularly spaced coordinates use :py:func:`mesmer.mask.mask_land_fraction`.
     """
 
     # TODO: allow other masks?
