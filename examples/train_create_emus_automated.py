@@ -85,10 +85,10 @@ def main(cfg):
             "- Prepare predictors for global variability, local trends and variability"
         )
 
-        GSAT_s, _ = separate_hist_future(gsat[esm], time[esm], cfg)
+        gsat_s, _ = separate_hist_future(gsat[esm], time[esm], cfg)
         gv_novolc_tas_s = {}
         for scen in gt_tas_s.keys():
-            gv_novolc_tas_s[scen] = GSAT_s[scen] - gt_tas_s[scen]
+            gv_novolc_tas_s[scen] = gsat_s[scen] - gt_tas_s[scen]
 
         tas_s, _ = separate_hist_future(tas[esm], time[esm], cfg)
 
@@ -100,12 +100,12 @@ def main(cfg):
         scen = list(gt_tas.keys())[0]
         time_v["all"] = time[esm][scen]
         preds_gv = {"time": time_v}
-        emus_gv_T = create_emus_gv(params_gv_tas, preds_gv, cfg, save_emus=True)
+        emus_gv_tas = create_emus_gv(params_gv_tas, preds_gv, cfg, save_emus=True)
 
         # create and save full global emulations
         print("- Merge the global trend and the global variability.")
         create_emus_g(
-            gt_tas, emus_gv_T, params_gt_tas, params_gv_tas, cfg, save_emus=True
+            gt_tas, emus_gv_tas, params_gt_tas, params_gv_tas, cfg, save_emus=True
         )
 
         print("- Start with local trends module")
@@ -151,7 +151,7 @@ def main(cfg):
         )
 
         # create full lv emulations
-        preds_lv = {"gvtas": emus_gv_T}  # predictors_list
+        preds_lv = {"gvtas": emus_gv_tas}  # predictors_list
         emus_lv = create_emus_lv(params_lv, preds_lv, cfg, save_emus=True)
 
         # create and save full emulations
@@ -162,6 +162,6 @@ def main(cfg):
 if __name__ == "__main__":
 
     # load in configurations used in this script
-    import config_across_scen_T_cmip6ng_test as cfg
+    import config_tas_cmip6ng_example as cfg
 
     main(cfg)
