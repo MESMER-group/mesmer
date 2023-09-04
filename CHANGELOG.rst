@@ -159,6 +159,8 @@ Internal Changes
 
   By `Mathias Hauser <https://github.com/mathause>`_.
 
+- Moved the climate model data manipulation functions (`#237 <https://github.com/MESMER-group/mesmer/issues/237>`_).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 v0.8.3 - 2021-12-23
 -------------------
