@@ -16,7 +16,7 @@ import numpy as np
 import regionmask
 from packaging.version import Version
 
-from ..utils.regionmaskcompat import mask_3D_frac_approx
+from ..core.regionmaskcompat import mask_3D_frac_approx
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
