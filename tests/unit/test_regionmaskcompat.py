@@ -4,7 +4,7 @@ import regionmask
 import shapely.geometry
 import xarray as xr
 
-from mesmer.utils.regionmaskcompat import (
+from mesmer.core.regionmaskcompat import (
     InvalidCoordsError,
     mask_3D_frac_approx,
     sample_coord,

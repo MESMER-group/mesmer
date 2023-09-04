@@ -6,9 +6,20 @@
 The mesmer package provides tools to train the MESMER emulator, create emulations, and
 analyze the results.
 """
-# flake8: noqa
 
-from . import calibrate_mesmer, create_emulations, io, utils, xarray_utils
+from . import calibrate_mesmer, core, create_emulations, io, utils
+from .core import globmean, grid, mask
+
+__all__ = [
+    "calibrate_mesmer",
+    "core",
+    "create_emulations",
+    "grid",
+    "io",
+    "mask",
+    "utils",
+    "globmean",
+]
 
 try:
     from importlib.metadata import version as _get_version

@@ -68,15 +68,17 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~xarray_utils.grid.stack_lat_lon
-   ~xarray_utils.grid.unstack_lat_lon_and_align
-   ~xarray_utils.grid.unstack_lat_lon
-   ~xarray_utils.grid.align_to_coords
-   ~xarray_utils.mask.mask_ocean_fraction
-   ~xarray_utils.mask.mask_ocean
-   ~xarray_utils.mask.mask_antarctica
-   ~xarray_utils.global_mean.lat_weights
-   ~xarray_utils.global_mean.weighted_mean
+   ~grid.wrap_to_180
+   ~grid.wrap_to_360
+   ~grid.stack_lat_lon
+   ~grid.unstack_lat_lon_and_align
+   ~grid.unstack_lat_lon
+   ~grid.align_to_coords
+   ~mask.mask_ocean_fraction
+   ~mask.mask_ocean
+   ~mask.mask_antarctica
+   ~globmean.lat_weights
+   ~globmean.weighted_mean
 
 Legacy functions
 ================

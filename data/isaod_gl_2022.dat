@@ -1,4 +1,4 @@
-# scripturl01 :: https://climexp.knmi.nl/getindices.cgi?STATION=stratospheric_AOD&TYPE=i&WMO=NASAData/saod_gl&id=$id
+# scripturl01 :: http://climexp.knmi.nl/getindices.cgi?STATION=stratospheric_AOD&TYPE=i&WMO=NASAData/saod_gl&id=id
 # global Optical Thickness at 550 nm
 # from <a href="http://data.giss.nasa.gov/modelforce/strataer/">NASA/GISS</a>
 # AOD [1] stratospheric aerosol optical depth
@@ -7,7 +7,7 @@
 # contact :: https://www.giss.nasa.gov/staff/makiko_sato.html
 # references :: Bourassa, A.E., A. Robock, et al. 2012: Large volcanic aerosol load in the stratosphere linked to Asian monsoon transport. Science 337, 78-81, doi:10.1126/science.1219371
 # source_url :: https://data.giss.nasa.gov/modelforce/strataer/
-# history :: retrieved and converted 2020-08-14 17:12:30
+# history :: retrieved and converted 2023-07-10 21:49:40
 # climexp_url :: https://climexp.knmi.nl/getindices.cgi?NASAData/saod_gl
 1850  1 0.004
 1850  2 0.004
@@ -2056,4 +2056,32 @@
 2020  5 0.000
 2020  6 0.000
 2020  7 0.000
-
+2020  8 0.000
+2020  9 0.000
+2020 10 0.000
+2020 11 0.000
+2020 12 0.000
+2021  1 0.000
+2021  2 0.000
+2021  3 0.000
+2021  4 0.000
+2021  5 0.000
+2021  6 0.000
+2021  7 0.000
+2021  8 0.000
+2021  9 0.000
+2021 10 0.000
+2021 11 0.000
+2021 12 0.000
+2022  1 0.000
+2022  2 0.000
+2022  3 0.000
+2022  4 0.000
+2022  5 0.000
+2022  6 0.000
+2022  7 0.000
+2022  8 0.000
+2022  9 0.000
+2022 10 0.000
+2022 11 0.000
+2022 12 0.000
