@@ -229,7 +229,7 @@ def _calibrate_tas(
         LOGGER.info(
             "Prepare predictors for global variability, local trends variability"
         )
-        gt_tas2_s = {scen: tas**2 for scen, tas in gt_tas_s.items()}
+        gt_tas2_s = {scen: gt_tas_scen**2 for scen, gt_tas_scen in gt_tas_s.items()}
 
         gt_hfds_s = gather_gt_data(
             params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
