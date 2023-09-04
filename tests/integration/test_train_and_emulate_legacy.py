@@ -12,7 +12,7 @@ sys.path.append(EXAMPLE_PATH)
 def test_train_and_emulate_legacy():
 
     # load in configurations used in this script
-    import config_across_scen_T_cmip6ng_test as cfg
+    import config_tas_cmip6ng_example as cfg
     from train_create_emus_automated import main
 
     # TODO: update paths
