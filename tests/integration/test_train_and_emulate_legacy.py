@@ -17,7 +17,6 @@ def test_train_and_emulate_legacy():
 
     # TODO: update paths
     # cfg.EXAMPLE_OUTPUT_ROOT = os.path.join(cfg.MESMER_ROOT, "examples", "output")
-
     # cfg.dir_aux = os.path.join(cfg.EXAMPLE_OUTPUT_ROOT, "auxillary")
     # cfg.dir_mesmer_params = os.path.join(cfg.EXAMPLE_OUTPUT_ROOT, "calibrated_parameters")
     # cfg.dir_mesmer_emus = os.path.join(cfg.EXAMPLE_OUTPUT_ROOT, "emulations")
