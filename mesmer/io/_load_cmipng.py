@@ -12,6 +12,8 @@ import os
 import numpy as np
 import xarray as xr
 
+import mesmer
+
 
 def extract_time_lon_lat_wgt3d(data):
     """
@@ -283,37 +285,27 @@ def load_cmipng_file(run_path, gen, scen):
         # rename to time for consistency with cmip6
         data = data.rename({"year": "time"})
 
-        # roll so land in center
-        data = data.roll(lon=72, roll_coords=True)
-
-        # assign_coords so that labels = reasonable
-        data = data.assign_coords(lon=(((data.lon + 180) % 360) - 180))
-
         # extract ens member
         run = int(data.attrs["source_ensemble"].split("r")[1].split("i")[0])
 
     if gen == 6:
+
+        run_path_hist = run_path.replace(scen, "historical")
+        paths = [run_path_hist, run_path]
+        preprocess = None
+
         if "ssp534-over" in run_path:
-            run_path_ssp_534over = run_path
             run_path_ssp_585 = run_path.replace(scen, "ssp585")
-            run_path_hist = run_path.replace(scen, "historical")
-            data = xr.open_mfdataset(
-                [run_path_hist, run_path_ssp_585, run_path_ssp_534over],
-                combine="by_coords",
-                preprocess=preprocess_ssp534over,
-            )
-        else:  # for every other scenario
-            run_path_ssp = run_path
-            run_path_hist = run_path.replace(scen, "historical")
-            data = xr.open_mfdataset([run_path_hist, run_path_ssp], combine="by_coords")
 
-        # roll so land in center
-        data = data.roll(lon=72, roll_coords=True)
+            paths.append(run_path_ssp_585)
+            preprocess = preprocess_ssp534over
 
-        # assign_coords so that labels = reasonable
-        data = data.assign_coords(lon=(((data.lon + 180) % 360) - 180))
-        data = data.sortby(["lat", "lon"])
+        data = xr.open_mfdataset(paths, combine="by_coords", preprocess=preprocess)
+
         run = data.attrs["realization_index"]
+
+        # wrap data to [-180, 180)
+        data = mesmer.xarray_utils.grid.wrap_to_180(data)
 
     return data, run
 
