@@ -305,7 +305,7 @@ def load_cmipng_file(run_path, gen, scen):
         run = data.attrs["realization_index"]
 
         # wrap data to [-180, 180)
-        data = mesmer.xarray_utils.grid.wrap_to_360(data)
+        data = mesmer.xarray_utils.grid.wrap_to_180(data)
 
     return data, run
 
