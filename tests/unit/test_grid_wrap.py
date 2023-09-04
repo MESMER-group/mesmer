@@ -56,7 +56,7 @@ def test_lon_to_360():
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
-def test_wrap180(as_dataset):
+def test_wrap_to_180(as_dataset):
 
     attrs = {"name": "test"}
     obj = xr.DataArray(
@@ -91,7 +91,7 @@ def test_wrap180(as_dataset):
 
 
 @pytest.mark.parametrize("as_dataset", (True, False))
-def test_wrap360(as_dataset):
+def test_wrap_to_360(as_dataset):
 
     attrs = {"name": "test"}
     obj = xr.DataArray(
@@ -123,3 +123,49 @@ def test_wrap360(as_dataset):
     result = xru.grid.wrap_to_360(obj, lon_name="longitude")
 
     xr.testing.assert_identical(result, expected)
+
+
+def _get_test_data_grid(lon, as_dataset):
+    lat = np.arange(90, -91, -10)
+
+    data = np.random.randn(lat.size, lon.size)
+
+    attrs = {"name": "test"}
+    orig = xr.DataArray(
+        data,
+        dims=("lat", "lon"),
+        coords={"lat": lat, "lon": lon},
+        name="data",
+        attrs=attrs,
+    )
+
+    if as_dataset:
+        orig = orig.to_dataset()
+
+    return orig
+
+
+@pytest.mark.parametrize("as_dataset", (True, False))
+def test_wrap_to_360_roundtrip(as_dataset):
+
+    lon = np.arange(-180, 180)
+
+    orig = _get_test_data_grid(lon, as_dataset)
+
+    wrapped = xru.grid.wrap_to_360(orig)
+    roundtripped = xru.grid.wrap_to_180(wrapped)
+
+    xr.testing.assert_identical(orig, roundtripped)
+
+
+@pytest.mark.parametrize("as_dataset", (True, False))
+def test_wrap_to_180_roundtrip(as_dataset):
+
+    lon = np.arange(0, 360)
+
+    orig = _get_test_data_grid(lon, as_dataset)
+
+    wrapped = xru.grid.wrap_to_180(orig)
+    roundtripped = xru.grid.wrap_to_360(wrapped)
+
+    xr.testing.assert_identical(orig, roundtripped)
