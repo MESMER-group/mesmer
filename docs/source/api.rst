@@ -68,17 +68,18 @@ Data manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~grid.wrap_to_180
-   ~grid.wrap_to_360
-   ~grid.stack_lat_lon
-   ~grid.unstack_lat_lon_and_align
-   ~grid.unstack_lat_lon
-   ~grid.align_to_coords
-   ~mask.mask_ocean_fraction
-   ~mask.mask_ocean
-   ~mask.mask_antarctica
-   ~globmean.lat_weights
-   ~globmean.weighted_mean
+   ~core.grid.wrap_to_180
+   ~core.grid.wrap_to_360
+   ~core.grid.stack_lat_lon
+   ~core.grid.unstack_lat_lon_and_align
+   ~core.grid.unstack_lat_lon
+   ~core.grid.align_to_coords
+   ~core.mask.mask_ocean_fraction
+   ~core.mask.mask_ocean
+   ~core.mask.mask_antarctica
+   ~core.globmean.lat_weights
+   ~core.globmean.weighted_mean
+   ~utils.regionmaskcompat.mask_3D_frac_approx
 
 Legacy functions
 ================
@@ -190,4 +191,4 @@ Utils
    ~utils.convert.separate_hist_future
    ~utils.select.extract_land
    ~utils.select.extract_time_period
-   ~utils.regionmaskcompat import mask_3D_frac_approx
+
