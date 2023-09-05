@@ -103,7 +103,6 @@ def _gather_lr_params(params_dict, targ, dims):
     -----
     This function should become obsolete once switching to the newer data structures.
 
-
     """
 
     params = {}

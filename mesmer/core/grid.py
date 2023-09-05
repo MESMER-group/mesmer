@@ -33,7 +33,7 @@ def wrap_to_180(obj, lon_name="lon"):
     ----------
     obj : xr.Dataset or xr.DataArray
         object with longitude coordinates
-    lon : str, default: "lon"
+    lon_name : str, default: "lon"
         name of the longitude ('lon', 'longitude', ...)
 
     Returns
@@ -58,7 +58,7 @@ def wrap_to_360(obj, lon_name="lon"):
     ----------
     obj : xr.Dataset or xr.DataArray
         object with longitude coordinates
-    lon : str, default: "lon"
+    lon_name : str, default: "lon"
         name of the longitude ('lon', 'longitude', ...)
 
     Returns

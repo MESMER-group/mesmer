@@ -6,15 +6,11 @@ API reference
 This page provides an auto-generated summary of mesmers' API.
 
 
-Top-level functions
-===================
-
 Statistical functions
----------------------
-
+=====================
 
 Linear regression
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. autosummary::
    :toctree: generated/
@@ -27,7 +23,7 @@ Linear regression
    ~stats.linear_regression.LinearRegression.from_netcdf
 
 Auto regression
-^^^^^^^^^^^^^^^
+---------------
 
 .. autosummary::
    :toctree: generated/
@@ -37,7 +33,7 @@ Auto regression
    ~stats.auto_regression._draw_auto_regression_correlated_np
 
 Localized covariance
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -46,14 +42,14 @@ Localized covariance
    ~stats.localized_covariance.find_localized_empirical_covariance
 
 Smoothing
-^^^^^^^^^
+---------
 
 .. autosummary::
    :toctree: generated/
 
    ~stats.smoothing.lowess
 
-Computation
+Geo-spatial
 -----------
 
 .. autosummary::
@@ -62,8 +58,8 @@ Computation
    ~core.computation.calc_geodist_exact
    ~core.computation.gaspari_cohn
 
-Data manipulation
------------------
+Data handling
+=============
 
 .. autosummary::
    :toctree: generated/
@@ -79,7 +75,7 @@ Data manipulation
    ~core.mask.mask_antarctica
    ~core.globmean.lat_weights
    ~core.globmean.weighted_mean
-   ~utils.regionmaskcompat.mask_3D_frac_approx
+   ~core.regionmaskcompat.mask_3D_frac_approx
 
 Legacy functions
 ================

@@ -48,11 +48,9 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
         nested variable at land grid points dictionary with keys
 
         - [esm] (3d array (run, time, gp_l) of variable at land grid points)
-
     reg_dict : dict
         Optional output (empty dict). Only returned when the input ``reg_dict`` is not
         ``None``.
-
     ls : dict
         land sea dictionary with added keys
 
