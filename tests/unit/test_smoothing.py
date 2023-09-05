@@ -50,6 +50,27 @@ def test_lowess_dataset():
     xr.testing.assert_allclose(result, expected)
 
 
+def test_lowess_dataset_missing_core_dims():
+
+    data = trend_data_1D()
+    da1 = xr.DataArray(1, name="extra1")
+    da2 = xr.DataArray([3, 2, 1], dims="y", name="perpendicular")
+
+    ds = xr.merge([data, da1, da2])
+
+    result = mesmer.stats.smoothing.lowess(ds, "time", frac=0.3)
+
+    expected = lowess(
+        data.values, data.time.values, frac=0.3, it=0, return_sorted=False
+    )
+    expected = xr.DataArray(
+        expected, dims="time", coords={"time": data.time}, name="data"
+    )
+    expected = xr.merge([expected, da1, da2])
+
+    xr.testing.assert_allclose(result, expected)
+
+
 def test_lowess_2D():
     data = trend_data_2D()
 
