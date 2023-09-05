@@ -50,7 +50,7 @@ def test_lowess_dataset():
     xr.testing.assert_allclose(result, expected)
 
 
-def test_lowess_dataset_extra_data_vars():
+def test_lowess_dataset_missing_core_dims():
 
     data = trend_data_1D()
     da1 = xr.DataArray(1, name="extra1")

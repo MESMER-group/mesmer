@@ -16,7 +16,7 @@ def lowess(data, dim, *, frac, use_coords_as_x=False, it=0):
     frac : float
         Between 0 and 1. The fraction of the data used when estimating each y-value.
     use_coords_as_x : boolean, default: False
-        If True uses ``data[dim]`` as x-values else uses ``np.arange(data[dim.size])``
+        If True uses ``data[dim]`` as x-values else uses ``np.arange(data[dim].size)``
         (useful if ``dim`` are time coordinates).
     it : int, default: 0
         The number of residual-based re-weightings to perform.
