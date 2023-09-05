@@ -188,7 +188,7 @@ Utils
    :toctree: generated/
 
    ~utils.convert.convert_dict_to_arr
-   ~utils.convert.separate_hist_future
+   ~utils.separate_hist_future
    ~utils.select.extract_land
    ~utils.select.extract_time_period
 

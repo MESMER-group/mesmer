@@ -130,6 +130,13 @@ Documentation
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
+- Refactor the mesmer internals to use the new statistical core, employ helper functions
+  etc.:
+
+  - Use :py:func:`mesmer.utils.separate_hist_future` in :py:func:`mesmer.calibrate_mesmer.train_gt` (`#281 <https://github.com/MESMER-group/mesmer/pull/281>`_).
+
+  By `Mathias Hauser <https://github.com/mathause>`_.
+
 - Restore compatibility with regionmask v0.9.0 (`#136 <https://github.com/MESMER-group/mesmer/pull/136>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
