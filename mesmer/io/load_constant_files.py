@@ -157,7 +157,6 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     -------
     reg_dict : dict
         Deprecated (empty dict).
-
     ls : dict
         land-sea dictionary with keys
 

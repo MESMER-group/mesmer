@@ -70,6 +70,12 @@ New Features
   (`#267 <https://github.com/MESMER-group/mesmer/pull/267>`_). By `Mathias Hauser
   <https://github.com/mathause>`_.
 
+- Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
+   - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
+   - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
+
+   By `Mathias Hauser <https://github.com/mathause>`_.
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -83,7 +89,7 @@ Breaking changes
 - Moved ``gaspari_cohn`` & ``calc_geodist_exact`` from ``io.load_constant_files`` to ``core.computation``
   (`#158 <https://github.com/MESMER-group/mesmer/issues/158>`_).
   By `Yann Quilcaille <https://github.com/yquilcaille>`_.
-- The function ``mask_percentage`` has been renamed to :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`
+- The function ``mask_percentage`` has been renamed to :py:func:`core.regionmaskcompat.mask_3D_frac_approx`
   (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 - Removed :py:func:`mesmer.io.load_constant_files.infer_interval_breaks` and the edges
@@ -116,7 +122,7 @@ Deprecations
 Bug fixes
 ^^^^^^^^^
 
-- Fix three issues with :py:func:`utils.regionmaskcompat.mask_3D_frac_approx`. Note that these
+- Fix three issues with :py:func:`core.regionmaskcompat.mask_3D_frac_approx`. Note that these
   issues are only relevant if passing xarray objects and/ or masks close to the poles
   (`#202 <https://github.com/MESMER-group/mesmer/pull/202>`_ and `#218 <https://github.com/MESMER-group/mesmer/pull/218>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
@@ -130,10 +136,13 @@ Documentation
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
-- Refactor the mesmer internals to use the new statistical core, employ helper functions
-  etc.:
+- Refactor the mesmer internals to use the new statistical core, employ helper functions etc.:
+   - Use :py:func:`mesmer.utils.separate_hist_future` in :py:func:`mesmer.calibrate_mesmer.train_gt` (`#281 <https://github.com/MESMER-group/mesmer/pull/281>`_).
+   - Use of :py:class:`mesmer.stats.linear_regression.LinearRegression` in
 
-  - Use :py:func:`mesmer.utils.separate_hist_future` in :py:func:`mesmer.calibrate_mesmer.train_gt` (`#281 <https://github.com/MESMER-group/mesmer/pull/281>`_).
+     - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
+     - :py:func:`mesmer.create_emulations.create_emus_lv_OLS` and :py:func:`mesmer.create_emulations.create_emus_OLS_each_gp_sep`
+       (`#240 <https://github.com/MESMER-group/mesmer/pull/240>`_).
 
   By `Mathias Hauser <https://github.com/mathause>`_.
 
@@ -144,12 +153,6 @@ Internal Changes
   numpy v1.22.0 (`#137 <https://github.com/MESMER-group/mesmer/pull/137>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
-- Make use of :py:class:`mesmer.stats.linear_regression.LinearRegression` in
-   - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
-     By `Mathias Hauser <https://github.com/mathause>`_.
-   - :py:func:`mesmer.create_emulations.create_emus_lv_OLS` and :py:func:`mesmer.create_emulations.create_emus_OLS_each_gp_sep`
-     (`#240 <https://github.com/MESMER-group/mesmer/pull/240>`_).By `Mathias Hauser <https://github.com/mathause>`_.
-
 - Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
@@ -158,12 +161,6 @@ Internal Changes
 
 - Use pyproject.toml for the build-system and setuptools_scm for the `__version__`
   (`#188 <https://github.com/MESMER-group/mesmer/pull/188>`_).
-  By `Mathias Hauser <https://github.com/mathause>`_.
-
-- Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
-   - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
-   - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
-
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Moved the climate model data manipulation functions (`#237 <https://github.com/MESMER-group/mesmer/issues/237>`_).
