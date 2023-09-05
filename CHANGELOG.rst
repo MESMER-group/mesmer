@@ -153,7 +153,9 @@ Internal Changes
   numpy v1.22.0 (`#137 <https://github.com/MESMER-group/mesmer/pull/137>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
-- Add python 3.10 to list of supported versions (`#162 <https://github.com/MESMER-group/mesmer/pull/162>`_).
+- Add python 3.10 and python 3.11 to list of supported versions (`#162
+  <https://github.com/MESMER-group/mesmer/pull/162>`_ and `#284
+  <https://github.com/MESMER-group/mesmer/pull/284>`_).
   By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Move contents of setup.py to setup.cfg (`#169 <https://github.com/MESMER-group/mesmer/pull/169>`_).
