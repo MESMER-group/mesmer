@@ -1,5 +1,7 @@
+import pandas as pd
 import pytest
 import xarray as xr
+from packaging.version import Version
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 import mesmer.stats.smoothing
@@ -26,18 +28,21 @@ def test_lowess_errors():
         mesmer.stats.smoothing.lowess(data.to_dataset(), "lat", n_steps=40)
 
     # numpy datetime
-    time = xr.date_range("2000-01-01", periods=30)
+    time = pd.date_range("2000-01-01", periods=30)
     data = data.assign_coords(time=time)
 
     with pytest.raises(TypeError, match="Cannot convert coords"):
         mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.5)
 
-    # cftime datetime
-    time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
-    data = data.assign_coords(time=time)
+    # TODO: remove check once we drop python 3.7
+    if Version(xr.__version__) >= Version("21.0"):
 
-    with pytest.raises(TypeError, match="Cannot convert coords"):
-        mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.5)
+        # cftime datetime
+        time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
+        data = data.assign_coords(time=time)
+
+        with pytest.raises(TypeError, match="Cannot convert coords"):
+            mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.5)
 
 
 @pytest.mark.parametrize("it", [0, 3])
