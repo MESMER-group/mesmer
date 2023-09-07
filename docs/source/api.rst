@@ -61,6 +61,9 @@ Geo-spatial
 Data handling
 =============
 
+Grid manipulation
+-----------------
+
 .. autosummary::
    :toctree: generated/
 
@@ -70,12 +73,21 @@ Data handling
    ~core.grid.unstack_lat_lon_and_align
    ~core.grid.unstack_lat_lon
    ~core.grid.align_to_coords
+
+Masking regions
+---------------
+
    ~core.mask.mask_ocean_fraction
    ~core.mask.mask_ocean
    ~core.mask.mask_antarctica
-   ~core.globmean.lat_weights
-   ~core.globmean.weighted_mean
    ~core.regionmaskcompat.mask_3D_frac_approx
+
+Weighted operarions: calculate global mean
+------------------------------------------
+
+   ~core.weighted.global_mean
+   ~core.weighted.lat_weights
+   ~core.weighted.weighted_mean
 
 Legacy functions
 ================

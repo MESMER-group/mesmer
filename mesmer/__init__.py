@@ -8,7 +8,7 @@ analyze the results.
 """
 
 from . import calibrate_mesmer, core, create_emulations, io, utils
-from .core import globmean, grid, mask
+from .core import grid, mask, weighted
 
 __all__ = [
     "calibrate_mesmer",
@@ -18,7 +18,7 @@ __all__ = [
     "io",
     "mask",
     "utils",
-    "globmean",
+    "weighted",
 ]
 
 try:
