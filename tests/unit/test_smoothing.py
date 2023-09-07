@@ -76,7 +76,6 @@ def test_lowess_use_coords():
     time[-1] = time[-1] + 10
     data = data.assign_coords(time=time)
 
-
     result = mesmer.stats.smoothing.lowess(data, "time", frac=0.1)
 
     # time is not equally spaced: we do NOT want the same result as for use_coords=False
