@@ -33,7 +33,7 @@ def test_lowess_errors():
         mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.5)
 
     # cftime datetime
-    time = xr.date_range("2000-01-01", periods=30, calendar="noloeap")
+    time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
     data = data.assign_coords(time=time)
 
     with pytest.raises(TypeError, match="Cannot convert coords"):
