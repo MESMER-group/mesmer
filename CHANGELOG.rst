@@ -7,7 +7,7 @@ v0.9.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
-- Refactored statistical functionality for linear regression:
+- Extracted statistical functionality for linear regression:
    - Create :py:class:`mesmer.stats.linear_regression.LinearRegression` which encapsulates
      ``fit``, ``predict``, etc. methods around linear regression
      (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
@@ -22,7 +22,7 @@ New Features
      (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
      By `Mathias Hauser <https://github.com/mathause>`_.
 
-- Refactored statistical functionality for auto regression:
+- Extracted statistical functionality for auto regression:
    - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
      auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
      By `Mathias Hauser <https://github.com/mathause>`_.
@@ -33,7 +33,7 @@ New Features
      (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
      By `Mathias Hauser <https://github.com/mathause>`_.
 
-- Refactored functions dealing with the spatial covariance and its localization:
+- Extracted functions dealing with the spatial covariance and its localization:
    - Add xarray wrappers :py:func:`mesmer.stats.localized_covariance.adjust_covariance_ar1`
      and :py:func:`mesmer.stats.localized_covariance.find_localized_empirical_covariance`
      (`#191 <https://github.com/MESMER-group/mesmer/pull/191>`__).
@@ -60,8 +60,9 @@ New Features
    - Added functions to mask the ocean and Antarctica (`#219
      <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser
      <https://github.com/mathause>`_.
-   - Added functions to calculate the weighted global mean (`#220
-     <https://github.com/MESMER-group/mesmer/pull/220>`_). By `Mathias Hauser
+   - Added functions to calculate the weighted global mean (
+    `#220 <https://github.com/MESMER-group/mesmer/pull/220>`_
+    `#287 <https://github.com/MESMER-group/mesmer/pull/287>`_). By `Mathias Hauser
      <https://github.com/mathause>`_.
    - Added functions to wrap arrays to [-180, 180) and [0, 360), respectively (`#270
      <https://github.com/MESMER-group/mesmer/pull/270>`_ and `#273
