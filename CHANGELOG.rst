@@ -48,8 +48,9 @@ New Features
 
 - Other refactorings:
    - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
-     (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_ and `#283
-     <https://github.com/MESMER-group/mesmer/pull/283>`_).
+     (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_,
+     `#283 <https://github.com/MESMER-group/mesmer/pull/283>`_, and
+     `#285 <https://github.com/MESMER-group/mesmer/pull/285>`_).
      By `Mathias Hauser <https://github.com/mathause>`_.
 
 - Added helper functions to process xarray-based model data:
