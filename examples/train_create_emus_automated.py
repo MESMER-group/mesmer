@@ -57,7 +57,7 @@ def main(cfg):
         tas_g[esm] = convert_dict_to_arr(tas_temp)
         gsat[esm] = convert_dict_to_arr(gsat_temp)
 
-    # load the constant files
+    # load grid info
     _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
 
     # extract land
@@ -71,42 +71,34 @@ def main(cfg):
         print(f"{esm}")
         print("=" * len(esm))
 
+        print("Calibration")
+        print("-----------")
+
         print("- Start with global trend module")
 
+        # get smooth gsat and estimate volcanic influence
         params_gt_tas = train_gt(gsat[esm], targ, esm, time[esm], cfg, save_params=True)
 
         preds_gt = {"time": time[esm]}
         gt_tas_s = gather_gt_data(
             params_gt_tas, preds_gt, cfg, concat_h_f=False, save_emus=False
         )
-        gt_tas = concatenate_hist_future(gt_tas_s)
 
         print(
             "- Prepare predictors for global variability, local trends and variability"
         )
 
+        tas_s, _ = separate_hist_future(tas[esm], time[esm], cfg)
+
+        # calculate gsat residuals
         gsat_s, _ = separate_hist_future(gsat[esm], time[esm], cfg)
         gv_novolc_tas_s = {}
         for scen in gt_tas_s.keys():
             gv_novolc_tas_s[scen] = gsat_s[scen] - gt_tas_s[scen]
 
-        tas_s, _ = separate_hist_future(tas[esm], time[esm], cfg)
-
         print("- Start with global variability module")
 
         params_gv_tas = train_gv(gv_novolc_tas_s, targ, esm, cfg, save_params=True)
-
-        time_v = {}
-        scen = list(gt_tas.keys())[0]
-        time_v["all"] = time[esm][scen]
-        preds_gv = {"time": time_v}
-        emus_gv_tas = create_emus_gv(params_gv_tas, preds_gv, cfg, save_emus=True)
-
-        # create and save full global emulations
-        print("- Merge the global trend and the global variability.")
-        create_emus_g(
-            gt_tas, emus_gv_tas, params_gt_tas, params_gv_tas, cfg, save_emus=True
-        )
 
         print("- Start with local trends module")
 
@@ -121,14 +113,11 @@ def main(cfg):
         lt_s = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True
         )
-        emus_lt = create_emus_lt(
-            params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True
-        )
 
         print("- Start with local variability module")
 
-        # derive variability part induced by gv
-        preds_lv = {"gvtas": gv_novolc_tas_s}  # predictors_list
+        # derive variability part induced by gv (deterministic part only)
+        preds_lv = {"gvtas": gv_novolc_tas_s}
         lv_gv_s = create_emus_lv(
             params_lv, preds_lv, cfg, save_emus=False, submethod="OLS"
         )
@@ -138,7 +127,7 @@ def main(cfg):
         for scen in tas_s.keys():
             res_lv_s[scen] = tas_s[scen] - lt_s[scen]["tas"] - lv_gv_s[scen]["tas"]
 
-        # load in the auxiliary files
+        # load in Gaspari-Cohn correlation function
         aux = {}
         aux["phi_gc"] = load_phi_gc(
             lon, lat, ls, cfg, L_start=1500, L_end=2000, L_interval=250
@@ -150,7 +139,36 @@ def main(cfg):
             {}, targs_res_lv, esm, cfg, save_params=True, aux=aux, params_lv=params_lv
         )
 
-        # create full lv emulations
+        print("Emulation")
+        print("---------")
+
+        # for this example we use the model's own smoothed gsat as predictor
+        gt_tas = concatenate_hist_future(gt_tas_s)
+
+        scen = list(gt_tas.keys())[0]
+
+        time_v = {}
+        time_v["all"] = time[esm][scen]
+
+        print("- Create global variability emulations")
+
+        preds_gv = {"time": time_v}
+        emus_gv_tas = create_emus_gv(params_gv_tas, preds_gv, cfg, save_emus=True)
+
+        print("- Merge the global trend and the global variability.")
+
+        create_emus_g(
+            gt_tas, emus_gv_tas, params_gt_tas, params_gv_tas, cfg, save_emus=True
+        )
+
+        print("- Create local trend emulations")
+
+        emus_lt = create_emus_lt(
+            params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True
+        )
+
+        print("- Create local variability emulations")
+
         preds_lv = {"gvtas": emus_gv_tas}  # predictors_list
         emus_lv = create_emus_lv(params_lv, preds_lv, cfg, save_emus=True)
 
