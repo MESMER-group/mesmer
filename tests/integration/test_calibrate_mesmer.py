@@ -10,15 +10,24 @@ from mesmer.testing import assert_dict_allclose
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
 @pytest.mark.parametrize(
-    "scenarios, outname",
+    "scenarios, use_tas2, use_hfds, outname",
     (
-        [["h-ssp126"], "one_scen_one_ens"],
-        [["h-ssp585"], "one_scen_multi_ens"],
-        [["h-ssp126", "h-ssp585"], "multi_scen_multi_ens"],
+        [["h-ssp126"], True, True, "tas_tas2_hfds/one_scen_one_ens"],
+        [["h-ssp585"], True, True, "tas_tas2_hfds/one_scen_multi_ens"],
+        [["h-ssp126", "h-ssp585"], True, True, "tas_tas2_hfds/multi_scen_multi_ens"],
+        [["h-ssp126"], True, False, "tas_tas2/one_scen_one_ens"],
+        [["h-ssp126"], False, True, "tas_hfds/one_scen_one_ens"],
+        [["h-ssp126"], False, False, "tas/one_scen_one_ens"],
     ),
 )
 def test_calibrate_mesmer(
-    scenarios, outname, test_data_root_dir, tmpdir, update_expected_files
+    scenarios,
+    use_tas2,
+    use_hfds,
+    outname,
+    test_data_root_dir,
+    tmpdir,
+    update_expected_files,
 ):
 
     ouput_dir = os.path.join(test_data_root_dir, "output", outname)
@@ -56,6 +65,8 @@ def test_calibrate_mesmer(
         cmip_generation=test_cmip_generation,
         observations_root_dir=test_observations_root_dir,
         auxiliary_data_dir=test_auxiliary_data_dir,
+        use_tas2=use_tas2,
+        use_hfds=use_hfds,
         # save params as well - they are .gitignored
         save_params=update_expected_files,
         params_output_dir=params_output_dir,
