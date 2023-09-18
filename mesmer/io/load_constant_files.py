@@ -140,8 +140,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     Parameters
     ----------
     reg_type : str, optional, default: None
-        Deprecated. No longer has an effect, if None is passed this
-        function will only return four parameters.
+        Deprecated, no longer has an effect.
 
     lon : dict
         longitude dictionary with key
