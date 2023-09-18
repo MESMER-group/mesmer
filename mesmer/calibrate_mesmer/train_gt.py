@@ -18,14 +18,14 @@ from mesmer.stats.smoothing import lowess
 from mesmer.utils import separate_hist_future
 
 
-def train_gt(var, targ, esm, time, cfg, save_params=True):
+def train_gt(data, targ, esm, time, cfg, save_params=True):
     """
     Derive global trend (emissions + volcanoes) parameters from specified ensemble type
     with specified method.
 
     Parameters
     ----------
-    var : dict
+    data : dict
         nested global mean variable dictionary with keys for each scenario employed for
         training
 
@@ -75,7 +75,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     method_gt = cfg.methods[targ]["gt"]
     preds_gt = cfg.preds[targ]["gt"]
 
-    scenarios = list(var.keys())
+    scenarios = list(data.keys())
 
     # initialize param dict and fill in the metadata which does not depend on the method
     params_gt = {}
@@ -90,7 +90,7 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
     if "LOWESS" in params_gt["method"]:
         # derive gt for each scen individually
         for scen in scenarios:
-            gt[scen], frac_lowess = train_gt_ic_LOWESS(var[scen])
+            gt[scen], frac_lowess = train_gt_ic_LOWESS(data[scen])
         params_gt["frac_lowess"] = frac_lowess
     else:
         raise ValueError("No alternative method to LOWESS is implemented for now.")
@@ -101,16 +101,20 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
         gt_s, time_s = separate_hist_future(gt, time, cfg)
 
         # compute median LOWESS estimate of historical part across all scenarios
-        gt_lowess_hist_all_new = gt_s.pop("hist")
+        gt_hist_all = gt_s.pop("hist")
 
-        gt_hist_median = np.median(gt_lowess_hist_all_new, axis=0)
+        gt_hist_median = np.median(gt_hist_all, axis=0)
 
         if params_gt["method"] == "LOWESS_OLSVOLC":
-            var_s, time_s = separate_hist_future(var, time, cfg)
+            data_s, time_s = separate_hist_future(data, time, cfg)
 
-            params_gt["saod"], params_gt["hist"] = train_gt_ic_OLSVOLC(
-                var_s["hist"], gt_hist_median, time_s["hist"]
+            # estimate volcanic influence and add to smooth time series
+            coef_saod, gt_hist_olsvolc = train_gt_ic_OLSVOLC(
+                data_s["hist"], gt_hist_median, time_s["hist"]
             )
+
+            params_gt["saod"] = coef_saod
+            params_gt["hist"] = gt_hist_olsvolc
 
         elif params_gt["method"] == "LOWESS":
             params_gt["hist"] = gt_hist_median
@@ -226,15 +230,15 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     # drop "year" coords - aod_obs does not have coords (currently)
     aod_obs = aod_obs.drop_vars("year")
 
-    # repeat aod time series as many times as runs available
-    aod_obs_all = xr.concat([aod_obs] * nr_runs, dim="year")
-
     nr_aod_obs = aod_obs.shape[0]
     if nr_ts != nr_aod_obs:
         raise ValueError(
             f"The number of time steps of the variable ({nr_ts}) and the saod "
             f"({nr_aod_obs}) do not match."
         )
+
+    # repeat aod time series as many times as runs available
+    aod_obs_all = xr.concat([aod_obs] * nr_runs, dim="year")
 
     # extract global variability (which still includes volc eruptions) by removing
     # smooth trend from Tglob in historic period

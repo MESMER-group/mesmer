@@ -26,8 +26,7 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
         - [esm][scen] (4d array (run, time, lat, lon) of variable)
 
     reg_dict : dict | None
-        Deprecated. No longer has an effect (except changing the number of output
-        params).
+        Deprecated. No longer has an effect.
 
     wgt : np.ndarray
         2d array (lat, lon) of weights to be used for area weighted means
@@ -49,8 +48,7 @@ def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
 
         - [esm] (3d array (run, time, gp_l) of variable at land grid points)
     reg_dict : dict
-        Optional output (empty dict). Only returned when the input ``reg_dict`` is not
-        ``None``.
+        Deprecated (empty dict).
     ls : dict
         land sea dictionary with added keys
 
@@ -131,7 +129,7 @@ def extract_time_period(data, time, start, end):
     """
 
     warnings.warn(
-        "`extract_time_period` is deprecated in v0.9.0 and will be remove in a future "
+        "`extract_time_period` is deprecated in v0.9.0 and will be removed in a future "
         "version. Please raise an issue if you still use this function.",
         FutureWarning,
     )
