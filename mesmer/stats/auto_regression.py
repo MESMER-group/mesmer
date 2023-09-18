@@ -175,6 +175,14 @@ def _fit_auto_regression_xr(data, dim, lags):
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
+    from statsmodels.tsa.deterministic import DeterministicProcess, TimeTrend
+
+    index = np.arange(data[dim].size)
+    terms = [TimeTrend.from_string("c")]
+
+    deterministic = DeterministicProcess(index, additional_terms=terms)
+    deterministic.in_sample()
+
     intercept, coeffs, std = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
@@ -182,7 +190,7 @@ def _fit_auto_regression_xr(data, dim, lags):
         output_core_dims=((), ("lags",), ()),
         vectorize=True,
         output_dtypes=[float, float, float],
-        kwargs={"lags": lags},
+        kwargs={"lags": lags, "deterministic": deterministic},
     )
 
     if np.ndim(lags) == 0:
@@ -198,7 +206,7 @@ def _fit_auto_regression_xr(data, dim, lags):
     return xr.Dataset(data_vars)
 
 
-def _fit_auto_regression_np(data, lags):
+def _fit_auto_regression_np(data, lags, deterministic):
     """
     fit an auto regression - numpy wrapper
 
@@ -221,7 +229,7 @@ def _fit_auto_regression_np(data, lags):
 
     from statsmodels.tsa.ar_model import AutoReg
 
-    AR_model = AutoReg(data, lags=lags, old_names=False)
+    AR_model = AutoReg(data, lags=lags, deterministic=deterministic, old_names=False)
     AR_result = AR_model.fit()
 
     intercept = AR_result.params[0]
