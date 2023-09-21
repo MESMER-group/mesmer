@@ -7,6 +7,8 @@ import numpy as np
 import pyproj
 import xarray as xr
 
+from .utils import create_equal_dim_names
+
 
 def gaspari_cohn(r):
     """smooth, exponentially decaying Gaspari-Cohn correlation function
@@ -89,7 +91,7 @@ def _gaspari_cohn_np(r):
     return out
 
 
-def calc_geodist_exact(lon, lat):
+def calc_geodist_exact(lon, lat, equal_dim_suffixes=("_i", "_j")):
     """exact great circle distance based on WSG 84
 
     Parameters
@@ -105,14 +107,40 @@ def calc_geodist_exact(lon, lat):
         2D array of great circle distances.
     """
 
+    if isinstance(lon, xr.Dataset) or isinstance(lat, xr.Dataset):
+        raise TypeError("Dataset is not supported, please pass a DataArray")
+
+    # make it work for numpy arrays
+    if not isinstance(lon, xr.DataArray) or not isinstance(lat, xr.DataArray):
+        return _calc_geodist_exact(np.asarray(lon), np.asarray(lat))
+
+    # TODO: allow differently named lon and lat coords?
+    if lon.dims != lat.dims:
+        raise AssertionError(
+            f"lon and lat have different dims: {lon.dims} vs. {lat.dims}. Expected "
+            "equally named dimensions from a stacked array"
+        )
+
+    geodist = _calc_geodist_exact(lon.values, lat.values)
+
+    (dim,) = lon.dims
+    dims = create_equal_dim_names(dim, equal_dim_suffixes)
+
+    # TODO: assign coords?
+    geodist = xr.DataArray(geodist, dims=dims)
+
+    return geodist
+
+
+def _calc_geodist_exact(lon, lat):
+
     # ensure correct shape
-    lon, lat = np.asarray(lon), np.asarray(lat)
     if lon.shape != lat.shape or lon.ndim != 1:
-        raise ValueError("lon and lat need to be 1D arrays of the same shape")
+        raise ValueError("lon and lat must be 1D arrays of the same shape")
 
     geod = pyproj.Geod(ellps="WGS84")
 
-    n_points = len(lon)
+    n_points = lon.size
 
     geodist = np.zeros([n_points, n_points])
 
@@ -120,8 +148,8 @@ def calc_geodist_exact(lon, lat):
     for i in range(n_points):
 
         # need to duplicate gridpoint (required by geod.inv)
-        lt = np.tile(lat[i], n_points - (i + 1))
-        ln = np.tile(lon[i], n_points - (i + 1))
+        lt = np.repeat(lat[i : i + 1], n_points - (i + 1))
+        ln = np.repeat(lon[i : i + 1], n_points - (i + 1))
 
         geodist[i, i + 1 :] = geod.inv(ln, lt, lon[i + 1 :], lat[i + 1 :])[2]
 

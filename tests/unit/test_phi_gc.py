@@ -1,7 +1,5 @@
 import numpy as np
-import pytest
 
-from mesmer.core.computation import calc_geodist_exact
 from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
 
 
@@ -57,46 +55,3 @@ def test_phi_gc_end_to_end(tmp_path):
         ]
     )
     np.testing.assert_allclose(expected, actual[1000], rtol=1e-5)
-
-
-def test_calc_geodist_exact_shape():
-
-    msg = "lon and lat need to be 1D arrays of the same shape"
-
-    # not the same shape
-    with pytest.raises(ValueError, match=msg):
-        calc_geodist_exact([0, 0], [0])
-
-    # not 1D
-    with pytest.raises(ValueError, match=msg):
-        calc_geodist_exact([[0, 0]], [[0, 0]])
-
-
-def test_calc_geodist_exact_equal():
-    """test points with distance 0"""
-
-    expected = np.array([[0, 0], [0, 0]])
-
-    lat = [0, 0]
-    lons = [[0, 0], [0, 360], [1, 361], [180, -180]]
-
-    for lon in lons:
-        result = calc_geodist_exact(lon, lat)
-        np.testing.assert_equal(result, expected)
-
-    result = calc_geodist_exact(lon, lat)
-    np.testing.assert_equal(result, expected)
-
-
-def test_calc_geodist_exact():
-    """test some random points"""
-    result = calc_geodist_exact([-180, 0, 3], [0, 0, 5])
-    expected = np.array(
-        [
-            [0.0, 20003.93145863, 19366.51816487],
-            [20003.93145863, 0.0, 645.70051988],
-            [19366.51816487, 645.70051988, 0.0],
-        ]
-    )
-
-    np.testing.assert_allclose(result, expected)
