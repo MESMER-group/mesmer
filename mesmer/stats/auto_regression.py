@@ -25,7 +25,7 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
     Notes
     -----
     Thin wrapper around ``statsmodels.tsa.ar_model.ar_select_order``. Only full models
-    can be selected along one dimension.
+    can be selected.
     """
 
     selected_ar_order = xr.apply_ufunc(
