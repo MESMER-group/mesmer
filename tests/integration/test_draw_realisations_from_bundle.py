@@ -1,5 +1,6 @@
 import os.path
 
+import joblib
 import numpy as np
 import pytest
 import xarray as xr
@@ -10,21 +11,25 @@ import mesmer.create_emulations
 # - write test of what happens if you pass in a time dictionary of the wrong length
 
 
-def test_make_realisations(
-    test_data_root_dir, test_mesmer_bundle, update_expected_files
-):
+def test_make_realisations(test_data_root_dir, update_expected_files):
+
+    ouput_dir = os.path.join(test_data_root_dir, "output", "one_scen_one_ens")
+
     expected_output_file = os.path.join(
-        test_data_root_dir,
-        "test_make_realisations_expected_output.nc",
+        ouput_dir, "test_make_realisations_expected_output.nc"
     )
 
     tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1000000}}}
 
+    bundle_path = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
+
     # TODO: split out load_mesmer_bundle function
-    params_lt = test_mesmer_bundle["params_lt"]
-    params_lv = test_mesmer_bundle["params_lv"]
-    params_gv_T = test_mesmer_bundle["params_gv"]
-    land_fractions = test_mesmer_bundle["land_fractions"]
+    mesmer_bundle = joblib.load(bundle_path)
+
+    params_lt = mesmer_bundle["params_lt"]
+    params_lv = mesmer_bundle["params_lv"]
+    params_gv_T = mesmer_bundle["params_gv"]
+    land_fractions = mesmer_bundle["land_fractions"]
 
     # TODO: split out function to format e.g. ScmRun correctly (put in
     # mesmer-magicc repo, not here)
@@ -44,7 +49,7 @@ def test_make_realisations(
 
     preds_lt = {
         "gttas": {"hist": hist_tas, scenario: scen_tas},
-        "gttas2": {"hist": hist_tas ** 2, scenario: scen_tas ** 2},
+        "gttas2": {"hist": hist_tas**2, scenario: scen_tas**2},
         "gthfds": {"hist": hist_hfds, scenario: scen_hfds},
     }
 
@@ -76,7 +81,8 @@ def test_make_realisations(
             differing_spots = np.sum(
                 ~np.isclose(result[v].values, exp[v].values, rtol=rtol)
             )
-            assert differing_spots / np.product(result[v].values.shape) < wrong_tol
+            frac_differing = differing_spots / result[v].values.size
+            assert frac_differing < wrong_tol
 
         # # Ideally we would use the below, but we can't because of numpy's
         # # random seed issue (see comment above).
@@ -84,10 +90,6 @@ def test_make_realisations(
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
-        assert set(exp_reshaped.dims) == {
-            "scenario",
-            "realisation",
-            "lon",
-            "lat",
-            "year",
-        }
+        expected_dims = {"scenario", "realisation", "lon", "lat", "year"}
+
+        assert set(exp_reshaped.dims) == expected_dims

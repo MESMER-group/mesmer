@@ -7,10 +7,12 @@ Functions to create local variability emulations with MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
+
+import mesmer.stats
+from mesmer.create_emulations.utils import _gather_lr_params, _gather_lr_preds
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
 
 
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
@@ -27,15 +29,19 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
         - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
+
     submethod : str, optional
         determines if only submethod should be used, default = "" indicating using the
         full method
@@ -64,10 +70,6 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
           others for other methods
     """
 
-    # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-
     pred_names = list(preds_lv.keys())
     scens_out = list(preds_lv[pred_names[0]].keys())
 
@@ -90,21 +92,20 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
 
     # save the local trends emulation if requested
     if save_emus:
-        dir_mesmer_emus_lv = dir_mesmer_emus + "local/local_variability/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_lv):
-            os.makedirs(dir_mesmer_emus_lv)
-            print("created dir:", dir_mesmer_emus_lv)
-        filename_parts = [
-            "emus_lv",
-            submethod,
-            *params_lv["preds"],
-            *params_lv["targs"],
-            params_lv["esm"],
-            *scens_out,
-        ]
-        filename_emus_lv = dir_mesmer_emus_lv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_lv, filename_emus_lv)
+        save_mesmer_data(
+            emus_lv,
+            cfg.dir_mesmer_emus,
+            "local",
+            "local_variability",
+            filename_parts=[
+                "emus_lv",
+                submethod,
+                *params_lv["preds"],
+                *params_lv["targs"],
+                params_lv["esm"],
+                *scens_out,
+            ],
+        )
 
     return emus_lv
 
@@ -121,6 +122,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
 
         - [scen] 3d array (emu, time, gp) of local variability from previous submethods
         - empty dict if no previous submethod
+
     params_lv : dict
         dictionary with the trained local variability parameters
 
@@ -130,11 +132,13 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
         - [pred][scen] 1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario
+
     cfg : module
         config file containing metadata
 
@@ -157,17 +161,16 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     """
 
     print("Start with AR(1) with spatially correlated innovations.")
-    pred_names = list(preds_lv.keys())
-    scens_out = list(preds_lv[pred_names[0]].keys())
+    pred_name = list(preds_lv.keys())[0]
+    scens_out = list(preds_lv[pred_name].keys())
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_lv["esm"]]
 
     for scen in scens_out:
-        # if 1-d array, time = 1st dim, else time = 2nd dim
-        if len(preds_lv[pred_names[0]][scen].shape) > 1:
-            nr_ts_emus_stoch_v = preds_lv[pred_names[0]][scen].shape[1]
-        else:
-            nr_ts_emus_stoch_v = preds_lv[pred_names[0]][scen].shape[0]
+
+        time_axis = 1 if preds_lv[pred_name][scen].ndim > 1 else 0
+
+        nr_ts_emus_stoch_v = preds_lv[pred_name][scen].shape[time_axis]
 
         if scen not in emus_lv:
             emus_lv[scen] = {}
@@ -175,44 +178,24 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
         for targ in params_lv["targs"]:
 
             seed = seed_all_scens[scen]["lv"]
-            nr_gps = len(params_lv["AR1_int"][targ])
 
             # in case no emus_lv[scen] exist yet, initialize it. Otherwise build up on
             # existing one
             if len(emus_lv[scen]) == 0:
+                emus_lv[scen][targ] = 0
 
-                emus_lv[scen][targ] = np.zeros(nr_emus_v, nr_ts_emus_stoch_v, nr_gps)
-
-            # ensure reproducibility
-            np.random.seed(seed)
-
-            # buffer so that initial start at 0 does not influence overall result
-            buffer = 20
-
-            print("Draw the innovations")
-            # draw the innovations
-            innovs = np.random.multivariate_normal(
-                np.zeros(nr_gps),
-                params_lv["loc_ecov_AR1_innovs"][targ],
-                size=[nr_emus_v, nr_ts_emus_stoch_v + buffer],
+            emus_ar = _draw_auto_regression_correlated_np(
+                intercept=params_lv["AR1_int"][targ],
+                # reshape to n_coefs x n_cells
+                coefs=params_lv["AR1_coef"][targ][np.newaxis, :],
+                covariance=params_lv["loc_ecov_AR1_innovs"][targ],
+                n_samples=nr_emus_v,
+                n_ts=nr_ts_emus_stoch_v,
+                seed=seed,
+                buffer=20,
             )
 
-            print(
-                "Compute the contribution to emus_lv by the AR(1) process with the "
-                "spatially correlated innovations"
-            )
-            emus_lv_tmp = np.zeros([nr_emus_v, nr_ts_emus_stoch_v + buffer, nr_gps])
-            for t in np.arange(1, nr_ts_emus_stoch_v + buffer):
-                emus_lv_tmp[:, t, :] = (
-                    params_lv["AR1_int"][targ]
-                    + params_lv["AR1_coef"][targ] * emus_lv_tmp[:, t - 1, :]
-                    + innovs[:, t, :]
-                )
-            emus_lv_tmp = emus_lv_tmp[:, buffer:, :]
-
-            print("Create the full local variability emulations")
-            emus_lv[scen][targ] += emus_lv_tmp
-
+            emus_lv[scen][targ] += emus_ar.squeeze()
     return emus_lv
 
 
@@ -230,6 +213,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
+
     preds_lv : dict
         nested dictionary of predictors for local variability with keys
 
@@ -254,7 +238,6 @@ def create_emus_lv_OLS(params_lv, preds_lv):
         - OLS coefs are the same for each scenario
     """
 
-    print("Start with OLS")
     pred_names = list(preds_lv.keys())
     if pred_names != params_lv["preds"]:
         raise ValueError("Wrong list of predictors was passed.")
@@ -264,14 +247,18 @@ def create_emus_lv_OLS(params_lv, preds_lv):
     for scen in scens_OLS:
         emus_lv[scen] = {}
 
+        preds = _gather_lr_preds(
+            preds_lv, params_lv["preds"], scen, dims=("scen", "time")
+        )
+
         for targ in params_lv["targs"]:
-            nr_emus_v, nr_ts_emus_v = preds_lv[pred_names[0]][scen].shape
-            nr_gps = len(params_lv["coef_" + params_lv["preds"][0]][targ])
-            emus_lv[scen][targ] = np.zeros([nr_emus_v, nr_ts_emus_v, nr_gps])
-            for run in np.arange(nr_emus_v):
-                for gp in np.arange(nr_gps):
-                    emus_lv[scen][targ][run, :, gp] = sum(
-                        params_lv["coef_" + pred][targ][gp] * preds_lv[pred][scen][run]
-                        for pred in params_lv["preds"]
-                    )
+
+            params = _gather_lr_params(params_lv, targ, dims="gridpoint")
+
+            lr = mesmer.stats.linear_regression.LinearRegression()
+            lr.params = params
+            prediction = lr.predict(predictors=preds)
+
+            emus_lv[scen][targ] = prediction.values
+
     return emus_lv

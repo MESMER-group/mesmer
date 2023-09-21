@@ -7,10 +7,10 @@ Functions to create global variability emulations with MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
+
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -28,13 +28,16 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
           train_gv_T_method() function)
+
     preds_gv : dict
         nested dictionary of predictors for global variability with keys
 
         - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 
@@ -54,14 +57,11 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     """
 
     # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-
     nr_emus_v = cfg.nr_emus_v
     seed_all_scens = cfg.seed[params_gv["esm"]]
 
-    pred_names = list(preds_gv.keys())
-    scens_out = list(preds_gv[pred_names[0]].keys())
+    pred_name = list(preds_gv.keys())[0]
+    scens_out = list(preds_gv[pred_name].keys())
 
     if scens_out != list(seed_all_scens.keys()):
         raise ValueError(
@@ -73,10 +73,10 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     emus_gv = {}
 
     for scen in scens_out:
-        if len(preds_gv[pred_names[0]][scen].shape) > 1:
-            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[1]
-        else:
-            nr_ts_emus_v = preds_gv[pred_names[0]][scen].shape[0]
+
+        time_axis = 1 if preds_gv[pred_name][scen].ndim > 1 else 0
+
+        nr_ts_emus_v = preds_gv[pred_name][scen].shape[time_axis]
 
         # apply the chosen method
         if params_gv["method"] == "AR":
@@ -89,21 +89,20 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
 
     # save the global variability emus if requested
     if save_emus:
-        dir_mesmer_emus_gv = dir_mesmer_emus + "global/global_variability/"
-        # check if folder to save emus in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_gv):
-            os.makedirs(dir_mesmer_emus_gv)
-            print("created dir:", dir_mesmer_emus_gv)
-        filename_parts = [
-            "emus_gv",
-            params_gv["method"],
-            *params_gv["preds"],
-            params_gv["targ"],
-            params_gv["esm"],
-            *scens_out,
-        ]
-        filename_emus_gv = dir_mesmer_emus_gv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_gv, filename_emus_gv)
+        save_mesmer_data(
+            emus_gv,
+            cfg.dir_mesmer_emus,
+            "global",
+            "global_variability",
+            filename_parts=[
+                "emus_gv",
+                params_gv["method"],
+                *params_gv["preds"],
+                params_gv["targ"],
+                params_gv["esm"],
+                *scens_out,
+            ],
+        )
 
     return emus_gv
 
@@ -129,10 +128,13 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - ["AR_order_sel"] (selected AR order, int)
         - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
+
     nr_emus_v : int
         number of global variability emulations
+
     nr_ts_emus_v : int
         number of time steps in each global variability emulation
+
     seed : int
         esm and scenario specific seed for gv module to ensure reproducability of
         results
@@ -155,35 +157,27 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     # re-name params for easier reading of code below
     ar_int = params_gv["AR_int"]
     ar_coefs = params_gv["AR_coefs"]
-    ar_lags = np.arange(1, params_gv["AR_order_sel"] + 1, dtype=int)
+    AR_order_sel = params_gv["AR_order_sel"]
+    AR_std_innovs = params_gv["AR_std_innovs"]
 
     # if AR(0) process chosen, no AR_coefs are available -> to have code run
     # nevertheless ar_coefs and ar_lags are set to 0 (-> emus are created with
     # ar_int + innovs)
     if len(ar_coefs) == 0:
         ar_coefs = [0]
-        ar_lags = [0]
 
-    innovs_emus_gv = np.random.normal(
-        loc=0, scale=params_gv["AR_std_innovs"], size=(nr_emus_v, nr_ts_emus_v + buffer)
+    # only use the selected coeffs
+    ar_coefs = ar_coefs[:AR_order_sel]
+
+    emus_gv = _draw_auto_regression_correlated_np(
+        intercept=ar_int,
+        # reshape to n_coefs x n_cells
+        coefs=ar_coefs[:, np.newaxis],
+        covariance=AR_std_innovs**2,  # pass the (co-)variance!
+        n_samples=nr_emus_v,
+        n_ts=nr_ts_emus_v,
+        seed=seed,
+        buffer=buffer,
     )
 
-    # initialize global variability emulations (dim array: nr_emus x nr_ts)
-    emus_gv = np.zeros([nr_emus_v, nr_ts_emus_v + buffer])
-
-    for i in np.arange(nr_emus_v):
-        # simulate from AR process
-        for t in np.arange(ar_lags[-1], len(emus_gv[i])):  # avoid misleading indices
-            emus_gv[i, t] = (
-                ar_int
-                # could probably be replaced with ArmaProcess.generate_samples
-                + sum(
-                    ar_coefs[k] * emus_gv[i, t - ar_lags[k]]
-                    for k in np.arange(len(ar_lags))
-                )
-                + innovs_emus_gv[i, t]
-            )
-    # remove buffer
-    emus_gv = emus_gv[:, buffer:]
-
-    return emus_gv
+    return emus_gv.squeeze()

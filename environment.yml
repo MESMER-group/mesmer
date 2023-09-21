@@ -1,18 +1,26 @@
-python>=3.7
-black
-cartopy
-cython
-dask[complete]
-flake8
-gdal
-isort
-netcdf4
-numpy
-pandas
-pytest
-pytest-cov
-pytest-xdist
-scikit-learn
-statsmodels
-regionmask
-xarray<=0.18.0
+name: mesmer-tests
+
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+ - cartopy
+ - dask[complete]
+ - gdal
+ - netcdf4
+ - numpy
+ - packaging
+ - pandas<2.0
+ - pooch
+ - regionmask>=0.8
+ - scikit-learn
+ - sphinx
+ - statsmodels
+ - xarray
+# for testing
+ - black<23.1
+ - flake8
+ - isort
+ - pytest
+ - pytest-cov

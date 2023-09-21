@@ -3,6 +3,8 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
+import os
+
 import joblib
 import xarray as xr
 
@@ -23,6 +25,7 @@ def save_mesmer_bundle(
     ----------
     bundle_file : str
         file in which to save the bundle
+
     params_lt : dict
         dictionary containing the calibrated parameters for the local trends emulations,
         keys relevant here:
@@ -31,6 +34,7 @@ def save_mesmer_bundle(
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
+
     params_lv : dict
         dictionary containing the calibrated parameters for the local variability
         emulations, keys relevant here
@@ -39,6 +43,7 @@ def save_mesmer_bundle(
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
         - [xx] (additional keys depending on employed method)
+
     params_gv : dict
         dictionary containing the calibrated parameters for the global variability
         emulations, keys relevant here
@@ -49,11 +54,14 @@ def save_mesmer_bundle(
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depending on employed method)
+
     land_fractions : np.MaskedArray
         data containing land fractions (also used for helping generate output on lat-lon
         grids)
+
     lat : np.ndarray
         grid latitudes (used to check land_fractions shape)
+
     lon : np.ndarray
         grid longitudes (used to check land_fractions shape)
     """
@@ -72,3 +80,30 @@ def save_mesmer_bundle(
         "land_fractions": land_fractions,
     }
     joblib.dump(mesmer_bundle, bundle_file)
+
+
+def save_mesmer_data(params, *folders, filename_parts):
+    """save mesmer data to pickle format
+
+    Parameters
+    ----------
+    params : Any
+        Python object containg the parameters to save (e.g. a dictionary containing
+        numpy arrays etc.)
+    *folders : str
+        Name of the folders where to store the data.
+    filename_parts : iterable of str
+        Parts making up the filename. The parts will be joined by "_"
+
+    """
+
+    folder = os.path.join(*folders)
+
+    # check if folder to save params in exists, if not: make it
+    os.makedirs(folder, exist_ok=True)
+
+    filename = "_".join(filename_parts)
+    filename = f"{filename}.pkl"
+
+    fullname = os.path.join(folder, filename)
+    joblib.dump(params, fullname)

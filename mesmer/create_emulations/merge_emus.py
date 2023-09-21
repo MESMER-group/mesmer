@@ -7,10 +7,9 @@ Functions to merge emulations of different MESMER modules.
 """
 
 
-import os
 import warnings
 
-import joblib
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
 def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
@@ -22,10 +21,12 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         global trend emulations dictionary with keys
 
         - [scen] (1d array of global trend emulation time series)
+
     emus_gv : dict
         global variability emulations dictionary with keys
 
         - [scen] (2d array  (emus, time) of global variability emulation time series)
+
     params_gt : dict
         dictionary containing the calibrated parameters for the global trend emulations,
         keys relevant here:
@@ -33,6 +34,7 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         - ["targ"] (emulated variable, str)
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
+
     params_gv : dict
         dictionary containing the calibrated parameters for the global variability
         emulations, keys relevant here:
@@ -40,8 +42,10 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 
@@ -87,27 +91,23 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
 
     # save the global emus if requested
     if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-        dir_mesmer_emus_g = dir_mesmer_emus + "global/"
-        # check if folder to save emus in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_g):
-            os.makedirs(dir_mesmer_emus_g)
-            print("created dir:", dir_mesmer_emus_g)
-
-        filename_parts = [
-            "emus_g",
-            "gt",
-            params_gt["method"],
-            *params_gt["preds"],
-            "gv",
-            params_gv["method"],
-            *params_gv["preds"],
-            targ,
-            esm,
-            *scenarios_gt,
-        ]
-        filename_emus_g = dir_mesmer_emus_g + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_g, filename_emus_g)
+        save_mesmer_data(
+            emus_g,
+            cfg.dir_mesmer_emus,
+            "global",
+            filename_parts=[
+                "emus_g",
+                "gt",
+                params_gt["method"],
+                *params_gt["preds"],
+                "gv",
+                params_gv["method"],
+                *params_gv["preds"],
+                targ,
+                esm,
+                *scenarios_gt,
+            ],
+        )
 
     return emus_g
 
@@ -124,11 +124,13 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
         - [scen][targ] (2d array (time x grid points) of local trends emulation time
           series)
+
     emus_lv : dict
         local variability emulations dictionary with keys
 
         - [scen][targ] (3d array  (emus x time x grid points) of local varaibility
           emulation time series)
+
     params_lt : dict
         dictionary containing the calibrated parameters for the local trends emulations,
         keys relevant here
@@ -136,6 +138,7 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
         - ["targs"] (list of emulated variables, list of strs)
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
+
     params_lv : dict
         dictionary containing the calibrated parameters for the local variability
         emulations, keys relevant here
@@ -143,8 +146,10 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
         - ["targs"] (list of variables which are emulated, list of strs)
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
+
     cfg : module
         config file containing metadata
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 
@@ -157,10 +162,6 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
           series)
 
     """
-
-    # specify necessary variables from config file
-    if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
 
     scenarios_lt = list(emus_lt.keys())
     scenarios_lv = list(emus_lv.keys())
@@ -201,24 +202,22 @@ def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
 
     # save the global emus if requested
     if save_emus:
-        dir_mesmer_emus_l = dir_mesmer_emus + "local/"
-        # check if folder to save emus in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_l):
-            os.makedirs(dir_mesmer_emus_l)
-            print("created dir:", dir_mesmer_emus_l)
-        filename_parts = [
-            "emus_l",
-            "lt",
-            params_lt["method"],
-            *params_lt["preds"],
-            "lv",
-            params_lv["method"],
-            *params_lv["preds"],
-            *targs,
-            esm,
-            *scenarios_lt,
-        ]
-        filename_emus_l = dir_mesmer_emus_l + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_l, filename_emus_l)
+        save_mesmer_data(
+            emus_l,
+            cfg.dir_mesmer_emus,
+            "local",
+            filename_parts=[
+                "emus_l",
+                "lt",
+                params_lt["method"],
+                *params_lt["preds"],
+                "lv",
+                params_lv["method"],
+                *params_lv["preds"],
+                *targs,
+                esm,
+                *scenarios_lt,
+            ],
+        )
 
     return emus_l

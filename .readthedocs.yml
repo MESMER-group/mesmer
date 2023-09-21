@@ -1,19 +1,15 @@
-# .readthedocs.yaml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
 version: 2
-
-# Build documentation in the docs/ directory with Sphinx
+build:
+  os: ubuntu-20.04
+  jobs:
+    pre_install:
+        # see https://github.com/readthedocs/readthedocs.org/issues/8201
+      - git update-index --assume-unchanged docs/environment.yml docs/source/conf.py
+      # install mesmer, needs to be editable
+      - python -m pip install -e .
+  tools:
+    python: mambaforge-4.10
 sphinx:
-   configuration: docs/source/conf.py
-
+  configuration: docs/source/conf.py
 conda:
   environment: docs/environment.yml
-
-python:
-    version: 3.7
-    install:
-      - method: setuptools
-        path: .

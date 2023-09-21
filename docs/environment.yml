@@ -5,8 +5,8 @@ channels:
   - nodefaults
 
 dependencies:
-  - python>=3.7
-  - black
+  - python=3.9
+  - black<23.1
   - cartopy
   - cython
   - dask[complete]
@@ -15,14 +15,14 @@ dependencies:
   - isort
   - netcdf4
   - numpy
-  - pandas
+  - pandas<2.0
   - pytest
   - pytest-cov
   - pytest-xdist
   - scikit-learn
   - statsmodels
-  - regionmask
-  - xarray<=0.18.0
+  - regionmask>=0.8
+  - xarray
 # required for docs
   - sphinx-book-theme
   - numpydoc

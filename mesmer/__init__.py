@@ -6,17 +6,32 @@
 The mesmer package provides tools to train the MESMER emulator, create emulations, and
 analyze the results.
 """
-from ._version import get_versions
 
-__version__ = get_versions()["version"]
-del get_versions
+from . import calibrate_mesmer, core, create_emulations, io, utils
+from .core import grid, mask, weighted
 
-# flake8: noqa
+__all__ = [
+    "calibrate_mesmer",
+    "core",
+    "create_emulations",
+    "grid",
+    "io",
+    "mask",
+    "utils",
+    "weighted",
+]
 
-# import subpackages (so that if I import mesmer, I can directly access e.g., io content
-# by calling e.g., mesmer.io.load_const())
-from . import calibrate_mesmer, create_emulations, io, utils
+try:
+    from importlib.metadata import version as _get_version
+except ImportError:
+    # importlib.metadata not available in python 3.7
+    import pkg_resources
 
-# like this could directly access all functions (i.e., if I import mesmer, I can
-# directly access fcts, e.g., mesmer.load_const() decided against it for now to keep the
-# package structure more visible) from .io import *
+    _get_version = lambda pkg: pkg_resources.get_distribution(pkg).version
+
+try:
+    __version__ = _get_version("mesmer-emulator")
+except Exception:
+    # Local copy or not installed with setuptools.
+    # Disable minimum version checks on downstream libraries.
+    __version__ = "999"

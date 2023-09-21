@@ -7,12 +7,13 @@ Functions to train global variability module of MESMER.
 """
 
 
-import os
-
-import joblib
 import numpy as np
 import statsmodels.api as sm
-from statsmodels.tsa.ar_model import AutoReg, ar_select_order
+import xarray as xr
+from packaging.version import Version
+
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -25,15 +26,20 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
         Nested global mean variability dictionary with keys
 
         - [scen] (2d array (run, time) of globally-averaged variability time series)
+
     targ : str
         target variable (e.g., "tas")
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     cfg : config module
         config file containing metadata
+
     save_params : bool, optional
         determines if parameters are saved or not, default = True
-    **kwargs:
+
+    **kwargs : Any
         additional arguments, passed through to the training function
 
     Returns
@@ -79,33 +85,30 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     # apply the chosen method
     if params_gv["method"] == "AR" and wgt_scen_tr_eq:
         # specifiy parameters employed for AR process fitting
-        if "max_lag" not in kwargs:
-            kwargs["max_lag"] = 12
-        if "sel_crit" not in kwargs:
-            kwargs["sel_crit"] = "bic"
+
+        kwargs["max_lag"] = kwargs.get("max_lag", 12)
+        kwargs["sel_crit"] = kwargs.get("sel_crit", "bic")
+
         params_gv = train_gv_AR(params_gv, gv, kwargs["max_lag"], kwargs["sel_crit"])
     else:
-        msg = "The chosen method and / or weighting approach is currently not implemented."
-        raise ValueError(msg)
+        raise ValueError("No such method and/ or weighting approach.")
 
     # save the global variability paramters if requested
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_gv = dir_mesmer_params + "global/global_variability/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_gv):
-            os.makedirs(dir_mesmer_params_gv)
-            print("created dir:", dir_mesmer_params_gv)
-        filename_parts = [
-            "params_gv",
-            method_gv,
-            *preds_gv,
-            targ,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_gv = dir_mesmer_params_gv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_gv, filename_params_gv)
+        save_mesmer_data(
+            params_gv,
+            cfg.dir_mesmer_params,
+            "global",
+            "global_variability",
+            filename_parts=[
+                "params_gv",
+                method_gv,
+                *preds_gv,
+                targ,
+                esm,
+                *scenarios_tr,
+            ],
+        )
 
     return params_gv
 
@@ -124,15 +127,18 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, i.e., AR, str)
         - ["scenarios"] (emission scenarios used for training, list of strs)
+
     gv : dict
         nested global mean temperature variability (volcanic influence removed)
         dictionary with keys
 
         - [scen] (2d array (nr_runs, nr_ts) of globally-averaged temperature variability
           time series)
-    max_lag: int
+
+    max_lag : int
         maximum number of lags considered during fitting
-    sel_crit: str
+
+    sel_crit : str
         selection criterion for the AR process order, e.g., 'bic' or 'aic'
 
     Returns
@@ -163,56 +169,49 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     params_gv["max_lag"] = max_lag
     params_gv["sel_crit"] = sel_crit
 
+    if Version(xr.__version__) >= Version("2022.03.0"):
+        method = "method"
+    else:
+        method = "interpolation"
+
     # select the AR Order
-    nr_scens = len(gv.keys())
-    AR_order_scens_tmp = np.zeros(nr_scens)
+    AR_order_scen = list()
+    for scen in gv.keys():
 
-    for scen_idx, scen in enumerate(gv.keys()):
-        nr_runs = gv[scen].shape[0]
-        AR_order_runs_tmp = np.zeros(nr_runs)
+        # create temporary DataArray
+        data = xr.DataArray(gv[scen], dims=["run", "time"])
 
-        for run in np.arange(nr_runs):
-            run_ar_lags = ar_select_order(
-                gv[scen][run], maxlag=max_lag, ic=sel_crit, old_names=False
-            ).ar_lags
-            # if order > 0 is selected,add selected order to vector
-            if run_ar_lags is not None:
-                AR_order_runs_tmp[run] = run_ar_lags[-1]
+        AR_order = _select_ar_order_xr(data, dim="time", maxlag=max_lag, ic=sel_crit)
 
-        AR_order_scens_tmp[scen_idx] = np.percentile(
-            AR_order_runs_tmp, q=50, interpolation="nearest"
-        )
-        # interpolation is not a good way to go here because it could lead to an AR
-        # order that wasn't chosen by run -> avoid it by just taking nearest
+        # median over all ensemble members ("nearest" ensures an 'existing' lag is selected)
+        AR_order = AR_order.quantile(q=0.5, **{method: "nearest"})
+        AR_order_scen.append(AR_order)
 
-    AR_order_sel = int(np.percentile(AR_order_scens_tmp, q=50, interpolation="nearest"))
+    # median over all scenarios
+    AR_order_scen = xr.concat(AR_order_scen, dim="scen")
+    AR_order_sel = int(AR_order.quantile(q=0.5, **{method: "nearest"}).item())
 
     # determine the AR params for the selected AR order
-    params_gv["AR_int"] = 0
-    params_gv["AR_coefs"] = np.zeros(AR_order_sel)
+    params_scen = list()
+    for scen in gv.keys():
+        data = gv[scen]
+
+        # create temporary DataArray
+        data = xr.DataArray(data, dims=("run", "time"))
+
+        params = _fit_auto_regression_xr(data, dim="time", lags=AR_order_sel)
+        params = params.mean("run")
+
+        params_scen.append(params)
+
+    params_scen = xr.concat(params_scen, dim="scen")
+    params_scen = params_scen.mean("scen")
+
+    # TODO: remove np.float64(...) (only here so the tests pass)
     params_gv["AR_order_sel"] = AR_order_sel
-    params_gv["AR_std_innovs"] = 0
-
-    for scen_idx, scen in enumerate(gv.keys()):
-        nr_runs = gv[scen].shape[0]
-        AR_order_runs_tmp = np.zeros(nr_runs)
-        AR_int_tmp = 0
-        AR_coefs_tmp = np.zeros(AR_order_sel)
-        AR_std_innovs_tmp = 0
-
-        for run in np.arange(nr_runs):
-            # AR parameters for scenario are average of runs
-            AR_model_tmp = AutoReg(
-                gv[scen][run], lags=AR_order_sel, old_names=False
-            ).fit()
-            AR_int_tmp += AR_model_tmp.params[0] / nr_runs
-            AR_coefs_tmp += AR_model_tmp.params[1:] / nr_runs
-            AR_std_innovs_tmp += np.sqrt(AR_model_tmp.sigma2) / nr_runs
-
-        # AR parameters are average over scenarios
-        params_gv["AR_int"] += AR_int_tmp / nr_scens
-        params_gv["AR_coefs"] += AR_coefs_tmp / nr_scens
-        params_gv["AR_std_innovs"] += AR_std_innovs_tmp / nr_scens
+    params_gv["AR_int"] = np.float64(params_scen.intercept.values)
+    params_gv["AR_coefs"] = params_scen.coeffs.values.squeeze()
+    params_gv["AR_std_innovs"] = np.float64(params_scen.standard_deviation.values)
 
     # check if fitted AR process is stationary
     # (highly unlikely this test will ever fail but better safe than sorry)

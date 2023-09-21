@@ -1,6 +1,5 @@
 import os.path
 
-import joblib
 import pytest
 
 TEST_DATA_ROOT_DIR = os.path.join(
@@ -13,11 +12,6 @@ def test_data_root_dir():
     if not os.path.isdir(TEST_DATA_ROOT_DIR):
         pytest.skip("test data required")
     return TEST_DATA_ROOT_DIR
-
-
-@pytest.fixture()
-def test_mesmer_bundle(test_data_root_dir):
-    return joblib.load(os.path.join(test_data_root_dir, "test-mesmer-bundle.pkl"))
 
 
 def pytest_addoption(parser):

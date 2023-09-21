@@ -94,13 +94,9 @@ def load_mesmer_output(
     if esm_str != "_":
         esm_str = esm_str + "_"
 
-    path_list = glob.glob(
-        os.path.join(
-            dir_mesmer,
-            mid_path,
-            f"{name}*{method_str}*{preds_str}*{targs_str}*{esm_str}*{scen_str}*.pkl",
-        )
-    )
+    filename = f"{name}*{method_str}*{preds_str}*{targs_str}*{esm_str}*{scen_str}*.pkl"
+    fullname = os.path.join(dir_mesmer, mid_path, filename)
+    path_list = glob.glob(fullname)
 
     # load the requested output dictionary
     if len(path_list) == 1:

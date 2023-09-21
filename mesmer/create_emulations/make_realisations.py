@@ -12,6 +12,42 @@ from .create_emus_lv import create_emus_lv
 from .merge_emus import create_emus_l
 
 
+def create_seed_dict(esms, scenarios, scen_seed_offset=0):
+    """define seeds for drawing emulations
+
+    Parameters
+    ----------
+    esms : list of str
+        Earth system models for which to create the seeds.
+    scenarios : list of str
+        Scenarios for which to create the seeds
+    scen_seed_offset : int, default 0
+        Defines if different scenarios have different seeds.
+
+    Returns
+    -------
+    seeds : dict
+
+    """
+
+    if scen_seed_offset == 0:
+        scenarios_emus_v = ["all"]
+    else:
+        scenarios_emus_v = scenarios
+
+    seed = {}
+    i = 0
+    for esm in esms:
+        seed[esm] = {}
+        for j, scen in enumerate(scenarios_emus_v):
+            seed[esm][scen] = {}
+            seed[esm][scen]["gv"] = i + j * scen_seed_offset
+            seed[esm][scen]["lv"] = i + j * scen_seed_offset + 1_000_000
+        i += 1
+
+    return seed
+
+
 def make_realisations(
     preds_lt,
     params_lt,
@@ -31,6 +67,7 @@ def make_realisations(
         nested dictionary of predictors for local trends with keys
 
         - [pred][scen] (1d/ 2d arrays (time)/(run, time) of predictor for specific scenario)
+
     params_lt : dict
         dictionary with the trained local trend parameters
 
@@ -44,6 +81,7 @@ def make_realisations(
         - [xx] (additional params depending on method employed)
         - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
+
     params_lv : dict
         dictionary with the trained local variability parameters
 
@@ -53,8 +91,8 @@ def make_realisations(
         - ["preds"] (predictors, list of strs)
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method)
-    params_gv : dict
 
+    params_gv_T : dict
         - ["targ"] (variable which is emulated, str)
         - ["esm"] (Earth System Model, str)
         - ["method"] (applied method, str)
@@ -62,18 +100,20 @@ def make_realisations(
         - ["scenarios"] (scenarios which are used for training, list of strs)
         - [xx] (additional keys depend on employed method and are listed in
           train_gv_T_method() function)
-    time : dict
 
+    time : dict
         - ["scenario"] timepoints (1D np.ndarray) used for training of the scenario
           (note that hist and scenario e.g. ssp126 are kept separate)
+
     n_realisations : int
         Number of realisations to draw
-    seeds : dict
 
+    seeds : dict
         - ["esm"] (dict):
             ["scenario"] (dict):
                 ["gv"] (seed for global variability)
                 ["lv"] (seed for local variability)
+
     land_fractions : xr.DataArray
         Land fractions of each cell. Used to convert the MESMER outputs back onto grids.
     """

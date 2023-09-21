@@ -6,37 +6,43 @@
 Functions to train global trend module of MESMER.
 """
 
+import warnings
 
-import os
-
-import joblib
 import numpy as np
-from sklearn.linear_model import LinearRegression
-from statsmodels.nonparametric.smoothers_lowess import lowess
+import xarray as xr
 
 from mesmer.io import load_strat_aod
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.linear_regression import LinearRegression
+from mesmer.stats.smoothing import lowess
+from mesmer.utils import separate_hist_future
 
 
-def train_gt(var, targ, esm, time, cfg, save_params=True):
+def train_gt(data, targ, esm, time, cfg, save_params=True):
     """
     Derive global trend (emissions + volcanoes) parameters from specified ensemble type
     with specified method.
 
     Parameters
     ----------
-    var : dict
+    data : dict
         nested global mean variable dictionary with keys for each scenario employed for
         training
 
         - [scen] (2d array (run, time) of globally-averaged variable time series)
+
     targ : str
         target variable (e.g., "tas")
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     time : np.ndarray
         [scen] (1d array of years)
+
     cfg : module
         config file containing metadata
+
     save_params : bool, default True
         determines if parameters are saved or not, default = True
 
@@ -65,111 +71,92 @@ def train_gt(var, targ, esm, time, cfg, save_params=True):
 
     """
 
-    # specify necessary variables from config file
-    gen = cfg.gen
+    # specify necessary variables from config
     method_gt = cfg.methods[targ]["gt"]
     preds_gt = cfg.preds[targ]["gt"]
 
-    scenarios_tr = list(var.keys())
+    scenarios = list(data.keys())
 
-    # initialize parameters dictionary and fill in the metadata which does not depend on
-    # the applied method
+    # initialize param dict and fill in the metadata which does not depend on the method
     params_gt = {}
     params_gt["targ"] = targ
     params_gt["esm"] = esm
     params_gt["method"] = method_gt
     params_gt["preds"] = preds_gt
-    params_gt["scenarios"] = scenarios_tr  # single entry in case of ic ensemble
+    params_gt["scenarios"] = scenarios  # single entry in case of ic ensemble
 
     # apply the chosen method to the type of ensenble
     gt = {}
     if "LOWESS" in params_gt["method"]:
-        # i.e. derive gt for each scen individually
-        for scen in scenarios_tr:
-            gt[scen], frac_lowess_name = train_gt_ic_LOWESS(var[scen])
-        params_gt["frac_lowess"] = frac_lowess_name
+        # derive gt for each scen individually
+        for scen in scenarios:
+            gt[scen], frac_lowess = train_gt_ic_LOWESS(data[scen])
+        params_gt["frac_lowess"] = frac_lowess
     else:
         raise ValueError("No alternative method to LOWESS is implemented for now.")
 
-    params_gt["time"] = {}
+    # if hist included
+    if scenarios[0].startswith("h-"):
 
-    # i.e. if hist included
-    if scenarios_tr[0][:2] == "h-":
-
-        if gen == 5:
-            start_year_fut = 2005
-        elif gen == 6:
-            start_year_fut = 2014
-
-        idx_start_year_fut = np.where(time[scen] == start_year_fut)[0][0] + 1
-
-        params_gt["time"]["hist"] = time[scen][:idx_start_year_fut]
+        gt_s, time_s = separate_hist_future(gt, time, cfg)
 
         # compute median LOWESS estimate of historical part across all scenarios
-        gt_lowess_hist_all = np.zeros([len(gt.keys()), len(params_gt["time"]["hist"])])
-        for i, scen in enumerate(gt.keys()):
-            gt_lowess_hist_all[i] = gt[scen][:idx_start_year_fut]
-        gt_lowess_hist = np.median(gt_lowess_hist_all, axis=0)
+        gt_hist_all = gt_s.pop("hist")
+
+        gt_hist_median = np.median(gt_hist_all, axis=0)
 
         if params_gt["method"] == "LOWESS_OLSVOLC":
-            scen = scenarios_tr[0]
-            var_all = var[scen][:, :idx_start_year_fut]
-            for scen in scenarios_tr[1:]:
-                var_tmp = var[scen][:, :idx_start_year_fut]
-                var_all = np.vstack([var_all, var_tmp])
+            data_s, time_s = separate_hist_future(data, time, cfg)
 
-                # check for duplicates & exclude those runs
-                var_all = np.unique(var_all, axis=0)
-
-            params_gt["saod"], params_gt["hist"] = train_gt_ic_OLSVOLC(
-                var_all, gt_lowess_hist, params_gt["time"]["hist"], cfg
+            # estimate volcanic influence and add to smooth time series
+            coef_saod, gt_hist_olsvolc = train_gt_ic_OLSVOLC(
+                data_s["hist"], gt_hist_median, time_s["hist"]
             )
-        elif params_gt["method"] == "LOWESS":
-            params_gt["hist"] = gt_lowess_hist
 
-        # isolate future scen names
-        scenarios_tr_f = [scen.replace("h-", "") for scen in scenarios_tr]
+            params_gt["saod"] = coef_saod
+            params_gt["hist"] = gt_hist_olsvolc
+
+        elif params_gt["method"] == "LOWESS":
+            params_gt["hist"] = gt_hist_median
+
+        gt_to_distribute = gt_s
+        params_gt["time"] = time_s
 
     else:
-        # because first year would be already in future
-        idx_start_year_fut = 0
-        # because only future covered anyways
-        scenarios_tr_f = scenarios_tr
+        gt_to_distribute = gt
+        params_gt["time"] = time
 
-    for scen_f, scen in zip(scenarios_tr_f, scenarios_tr):
-        params_gt["time"][scen_f] = time[scen][idx_start_year_fut:]
-        params_gt[scen_f] = gt[scen][idx_start_year_fut:]
+    for scen, data in gt_to_distribute.items():
+        params_gt[scen] = data.squeeze()
 
     # save the global trend paramters if requested
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_gt = dir_mesmer_params + "global/global_trend/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_gt):
-            os.makedirs(dir_mesmer_params_gt)
-            print("created dir:", dir_mesmer_params_gt)
-        filename_parts = [
-            "params_gt",
-            method_gt,
-            *preds_gt,
-            targ,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_gt = dir_mesmer_params_gt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_gt, filename_params_gt)
+        save_mesmer_data(
+            params_gt,
+            cfg.dir_mesmer_params,
+            "global",
+            "global_trend",
+            filename_parts=(
+                "params_gt",
+                method_gt,
+                *preds_gt,
+                targ,
+                esm,
+                *scenarios,
+            ),
+        )
 
     return params_gt
 
 
-def train_gt_ic_LOWESS(var):
+def train_gt_ic_LOWESS(data):
     """
     Derive smooth global trend of variable from single ESM ic ensemble with LOWESS
     smoother.
 
     Parameters
     ----------
-    var : np.ndarray
+    data : np.ndarray
         2d array (run, time) of globally-averaged time series
 
     Returns
@@ -180,27 +167,26 @@ def train_gt_ic_LOWESS(var):
         fraction of the data used when estimating each y-value
     """
 
-    # number time steps
-    nr_ts = var.shape[1]
+    data = xr.DataArray(data, dims=("ensemble", "time"))
 
     # average across all runs to get a first smoothing
-    av_var = np.mean(var, axis=0)
+    data = data.mean("ensemble")
+
+    dim = "time"
 
     # apply lowess smoother to further smooth the Tglob time series
     # rather arbitrarily chosen value that gives a smooth enough trend,
-    frac_lowess = 50 / nr_ts
+    frac = 50 / data.sizes[dim]
 
     # open to changes but if much smaller, var trend ends up very wiggly
     frac_lowess_name = "50/nr_ts"
 
-    gt_lowess = lowess(
-        av_var, np.arange(nr_ts), return_sorted=False, frac=frac_lowess, it=0
-    )
+    gt_lowess = lowess(data, dim=dim, frac=frac).values
 
     return gt_lowess, frac_lowess_name
 
 
-def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
+def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     """
     Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble
     by adding volcanic spikes to LOWESS trend.
@@ -213,8 +199,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
         1d array of smooth global trend of variable
     time : np.ndarray
         1d array of years
-    cfg : module
-        config file containing metadata needed to load in stratospheric AOD time series
+    cfg : None
+        Passing cfg is no longer required.
 
     Returns
     -------
@@ -230,48 +216,56 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg):
 
     """
 
-    # specify necessary variables from cfg file
-    dir_obs = cfg.dir_obs
+    if cfg is not None:
+        warnings.warn(
+            "Passing ``cfg`` to ``train_gt_ic_OLSVOLC`` is no longer necessary",
+            FutureWarning,
+        )
 
     nr_runs, nr_ts = var.shape
 
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
-    aod_obs = load_strat_aod(time, dir_obs).reshape(
-        -1, 1
-    )  # bring in correct format for sklearn linear regression
-    aod_obs_all = np.tile(
-        aod_obs, (nr_runs, 1)
-    )  # repeat aod time series as many times as runs available
-    nr_aod_obs = len(aod_obs)
+    aod_obs = load_strat_aod(time)
+    # drop "year" coords - aod_obs does not have coords (currently)
+    aod_obs = aod_obs.drop_vars("year")
 
+    nr_aod_obs = aod_obs.shape[0]
     if nr_ts != nr_aod_obs:
         raise ValueError(
             f"The number of time steps of the variable ({nr_ts}) and the saod "
-            "({nr_aod_obs}) do not match."
+            f"({nr_aod_obs}) do not match."
         )
+
+    # repeat aod time series as many times as runs available
+    aod_obs_all = xr.concat([aod_obs] * nr_runs, dim="year")
 
     # extract global variability (which still includes volc eruptions) by removing
     # smooth trend from Tglob in historic period
-    gv_all_for_aod = np.zeros(nr_runs * nr_aod_obs)
-    i = 0
-    for run in np.arange(nr_runs):
-        gv_all_for_aod[i : i + nr_aod_obs] = var[run] - gt_lowess
-        i += nr_aod_obs
-    # fit linear regression of gv to aod (because some ESMs react very strongly to
+    # (should broadcast, and flatten the correct way - hopefully)
+    gv_all_for_aod = (var - gt_lowess).ravel()
+
+    gv_all_for_aod = xr.DataArray(gv_all_for_aod, dims="year").expand_dims("x")
+
+    lr = LinearRegression()
+
+    # fit linear regression of gt to aod (because some ESMs react very strongly to
     # volcanoes)
     # no intercept to not artifically move the ts
-    linreg_gv_volc = LinearRegression(fit_intercept=False).fit(
-        aod_obs_all, gv_all_for_aod
+    lr.fit(
+        predictors={"aod_obs": aod_obs_all},
+        target=gv_all_for_aod,
+        dim="year",
+        fit_intercept=False,
     )
 
     # extract the saod coefficient
-    coef_saod = linreg_gv_volc.coef_[0]
+    coef_saod = lr.params["aod_obs"].values
 
     # apply linear regression model to obtain volcanic spikes
-    contrib_volc = linreg_gv_volc.predict(aod_obs)
+    contrib_volc = lr.predict(predictors={"aod_obs": aod_obs})
 
     # merge the lowess trend wit the volc contribution
-    gt = gt_lowess + contrib_volc
+    gt = gt_lowess + contrib_volc.values.squeeze()
 
     return coef_saod, gt

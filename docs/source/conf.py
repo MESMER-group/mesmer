@@ -4,26 +4,52 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+# -- Import packages ---------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
+import datetime
+import os
+import subprocess
+import sys
+from importlib.metadata import version
 
-# import sys
-# sys.path.insert(0, os.path.abspath("."))
+import mesmer
+
+# -- Display version info ----------------------------------------------------
+# for debugging on RTD
+
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
+if on_rtd:
+
+    print("python exec:", sys.executable)
+    print("sys.path:", sys.path)
+    print("os.getcwd():", os.getcwd())
+
+    if "CONDA_DEFAULT_ENV" in os.environ or "conda" in sys.executable:
+        print("conda environment:")
+        subprocess.run([os.environ.get("CONDA_EXE", "conda"), "list"])
+    else:
+        print("pip environment:")
+        subprocess.run([sys.executable, "-m", "pip", "list"])
+
+    print(f"mesmer: {mesmer.__version__=}, {mesmer.__file__=}")
 
 
 # -- Project information -----------------------------------------------------
 
 project = "mesmer"
-copyright = "(c) 2021 ETH Zurich (Land-climate dynamics group, Prof. S.I. Seneviratne)"
-author = "Lea Beusch, Zebedee Nicholls, Mathias Hauser"
+copyright_year = datetime.date.today().year
+copyright = (
+    f"(c) 2021-{copyright_year} ETH Zurich (Land-climate dynamics group, Prof. S.I. "
+    "Seneviratne), MESMER contributors listed in AUTHORS"
+)
+
+authors = "Authors, see AUTHORS"
+author = authors
 
 # The full version, including alpha/beta/rc tags
-release = "dev"
+release = version("mesmer-emulator")
+# The short X.Y version
+version = ".".join(release.split(".")[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,18 +58,11 @@ release = "dev"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.extlinks",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "numpydoc",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
-
-extlinks = {
-    "issue": ("https://github.com/mesmer-group/mesmer/issues/%s", "GH"),
-    "pull": ("https://github.com/mesmer-group/mesmer/pull/%s", "PR"),
-}
 
 autosummary_generate = True
 
@@ -57,6 +76,8 @@ napoleon_use_rtype = False
 
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
+
+autodoc_typehints = "none"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -73,7 +94,6 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 
-html_theme = "sphinx_rtd_theme"
 html_theme = "sphinx_book_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,

@@ -7,112 +7,16 @@ Functions to load in constant files such as region information, land-sea mask, a
 weights, longitude and latitude information.
 """
 
-import copy as copy
+import copy
 import os
+import warnings
 
 import joblib
 import numpy as np
-import pyproj
-import regionmask as regionmask
+import regionmask
+from packaging.version import Version
 
-from ..utils.regionmaskcompat import mask_percentage
-from ..utils.xrcompat import infer_interval_breaks
-
-
-def gaspari_cohn(r):
-    """
-    smooth, exponentially decaying Gaspari-Cohn correlation function
-
-    Parameters
-    ----------
-    r : np.ndarray
-        d/L with d = geographical distance in km, L = localisation radius in km
-
-    Returns
-    -------
-    y : np.ndarray
-        Gaspari-Cohn correlation function value for given r
-
-    Notes
-    -----
-    - Smooth exponentially decaying correlation function which mimics a Gaussian
-      distribution but vanishes at r=2, i.e., 2 x the localisation radius (L)
-    - based on Gaspari-Cohn 1999, QJR (as taken from Carrassi et al 2018, Wiley
-      Interdiscip. Rev. Clim. Change)
-
-    """
-    r = np.abs(r)
-    shape = r.shape
-    # flatten the array
-    r = r.ravel()
-
-    y = np.zeros(r.shape)
-
-    # subset the data
-    sel = (r >= 0) & (r < 1)
-    r_s = r[sel]
-    y[sel] = (
-        1 - 5 / 3 * r_s ** 2 + 5 / 8 * r_s ** 3 + 1 / 2 * r_s ** 4 - 1 / 4 * r_s ** 5
-    )
-
-    sel = (r >= 1) & (r < 2)
-    r_s = r[sel]
-
-    y[sel] = (
-        4
-        - 5 * r_s
-        + 5 / 3 * r_s ** 2
-        + 5 / 8 * r_s ** 3
-        - 1 / 2 * r_s ** 4
-        + 1 / 12 * r_s ** 5
-        - 2 / (3 * r_s)
-    )
-
-    return y.reshape(shape)
-
-
-def calc_geodist_exact(lon, lat):
-    """exact great circle distance based on WSG 84
-
-    Parameters
-    ----------
-    lon : array-like
-        1D array of longitudes
-    lat : array-like
-        1D array of latitudes
-
-    Returns
-    -------
-    geodist : np.array
-        2D array of great circle distances.
-    """
-
-    # ensure correct shape
-    lon, lat = np.asarray(lon), np.asarray(lat)
-    if lon.shape != lat.shape or lon.ndim != 1:
-        raise ValueError("lon and lat need to be 1D arrays of the same shape")
-
-    geod = pyproj.Geod(ellps="WGS84")
-
-    n_points = len(lon)
-
-    geodist = np.zeros([n_points, n_points])
-
-    # calculate only the upper right half of the triangle
-    for i in range(n_points):
-
-        # need to duplicate gridpoint (required by geod.inv)
-        lt = np.tile(lat[i], n_points - (i + 1))
-        ln = np.tile(lon[i], n_points - (i + 1))
-
-        geodist[i, i + 1 :] = geod.inv(ln, lt, lon[i + 1 :], lat[i + 1 :])[2]
-
-    # convert m to km
-    geodist /= 1000
-    # fill the lower left half of the triangle (in-place)
-    geodist += np.transpose(geodist)
-
-    return geodist
+from ..core.regionmaskcompat import mask_3D_frac_approx
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
@@ -128,12 +32,14 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
         - ["c"] (1d array with longitudes at center of grid cell)
         - ["e"] (1d array with longitudes at edges of grid cells)
         - ["grid"] (2d array (lat,lon) of longitudes)
+
     lat : dict
         latitude dictionary with key
 
         - ["c"] (1d array with latitudes at center of grid cell)
         - ["e"] (1d array with latitudes at edges of grid cells)
         - ["grid"] (2d array (lat,lon) of latitudes)
+
     ls : dict
         land-sea dictionary with keys
 
@@ -147,12 +53,16 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
           map)
         - ["wgt_gp_l"] (1d array of land area weights, i.e.,
           area weight * land fraction)
+
     cfg : module
         config file containing metadata
+
     L_start : int, optional
         smallest localisation radius which is tested
+
     L_end : int, optional
         largest localisation radius which is tested
+
     L_interval : int, optional
         spacing interval between tested localisation radii
 
@@ -170,14 +80,25 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
       matrix must be positive semidefinite in train_lv())
     """
 
+    from mesmer.core.computation import calc_geodist_exact, gaspari_cohn
+
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
 
+    # geodistance for all gps for certain threshold
+    geodist_name = f"geodist_landthres_{threshold_land:1.2f}.pkl"
+
+    # gaspari-cohn correlation function phi
+    phi_gc_name = "phi_gaspari-cohn_landthres_{tl:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl".format(
+        tl=threshold_land, L_start=L_start, L_interval=L_interval, L_end=L_end
+    )
+
+    fullname_geodist = os.path.join(dir_aux, geodist_name)
+    fullname_phi_gc = os.path.join(dir_aux, phi_gc_name)
+
     L_set = np.arange(L_start, L_end + 1, L_interval)
 
-    # geodistance for all gps for certain threshold
-    geodist_name = "geodist_landthres_{tl:1.2f}.pkl".format(tl=threshold_land)
-    if not os.path.exists(dir_aux + geodist_name):
+    if not os.path.exists(fullname_geodist):
         # create geodist matrix + save it
         print("compute geographical distance between all land points")
 
@@ -191,18 +112,13 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
         os.makedirs(dir_aux, exist_ok=True)
 
         # save the geodist file
-        joblib.dump(geodist, dir_aux + geodist_name)
+        joblib.dump(geodist, fullname_geodist)
 
     else:
         # load geodist matrix
-        geodist = joblib.load(dir_aux + geodist_name)
+        geodist = joblib.load(fullname_geodist)
 
-    # gaspari-cohn correlation function phi
-    phi_gc_name = "phi_gaspari-cohn_landthres_{tl:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl".format(
-        tl=threshold_land, L_start=L_start, L_interval=L_interval, L_end=L_end
-    )
-
-    if not os.path.exists(dir_aux + phi_gc_name):
+    if not os.path.exists(fullname_phi_gc):
         print("compute Gaspari-Cohn correlation function phi")
 
         phi_gc = {}
@@ -210,25 +126,27 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
             phi_gc[L] = gaspari_cohn(geodist / L)
             print("done with L:", L)
 
-        joblib.dump(phi_gc, dir_aux + phi_gc_name)
+        joblib.dump(phi_gc, fullname_phi_gc)
 
     else:
-        phi_gc = joblib.load(dir_aux + phi_gc_name)
+        phi_gc = joblib.load(fullname_phi_gc)
 
     return phi_gc
 
 
-def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
+def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     """Load constant files.
 
     Parameters
     ----------
-    reg_type : str
-        region type ("ar6.land", "countries", "srex")
+    reg_type : str, optional, default: None
+        Deprecated, no longer has an effect.
+
     lon : dict
         longitude dictionary with key
 
         - ["c"] (1d array with longitudes at center of grid cell)
+
     lat : dict
         latitude dictionary with key
 
@@ -237,15 +155,7 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     Returns
     -------
     reg_dict : dict
-        region dictionary with keys
-
-        - ["type"] (region type)
-        - ["abbrevs"] (abbreviations for regions)
-        - ["names"] (full names of regions)
-        - ["grids"] (3d array (region, lat, lon) of subsampled region fraction)
-        - ["grid_b"] (2d array (lat, lon) of regions with each grid point being assigned
-          to a single region ("binary" grid))
-        - ["full"] (full Region object (for plotting region outlines))
+        Deprecated (empty dict).
     ls : dict
         land-sea dictionary with keys
 
@@ -264,43 +174,24 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
         - ["e"] (1d array with latitudes at edges of grid cells)
         - ["grid"] (2d array (lat,lon) of latitudes)
 
-    Notes
-    -----
-    - If additional region types are added in this function,
-      mesmer.utils.select.extract_land() needs to be adapted too
-
     """
 
-    # choose the Regions object depending on the region type
-    if reg_type == "countries":
-        reg = regionmask.defined_regions.natural_earth.countries_110
-    elif reg_type == "srex":
-        reg = regionmask.defined_regions.srex
-    elif reg_type == "ar6.land":
-        reg = regionmask.defined_regions.ar6.land
-
-    # extract all the desired information from the Regions object
-    reg_dict = {}
-    reg_dict["type"] = reg_type
-    reg_dict["abbrevs"] = reg.abbrevs
-    reg_dict["names"] = reg.names
-    # have fraction of grid cells
-    reg_dict["grids"] = mask_percentage(reg, lon["c"], lat["c"]).values
-    # not sure if needed: "binary" grid with each grid point assigned to single country
-    reg_dict["grid_b"] = reg.mask(lon["c"], lat["c"]).values
-    # to be used for plotting outlines (mainly useful for srex regs)
-    reg_dict["full"] = reg
+    if reg_type is not None:
+        warnings.warn("``reg_type`` no longer has any effect.", FutureWarning)
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    land_110 = regionmask.defined_regions.natural_earth.land_110
+    if Version(regionmask.__version__) >= Version("0.9.0"):
+        land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
+    else:
+        land_110 = regionmask.defined_regions.natural_earth.land_110
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point
-    ls["grid_raw"] = np.squeeze(mask_percentage(land_110, lon["c"], lat["c"]).values)
+    ls["grid_raw"] = mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values.squeeze()
 
     # remove Antarctica
-    idx_ANT = np.where(lat["c"] < -60)[0]
+    idx_ANT = lat["c"] < -60
     ls["grid_no_ANT"] = copy.deepcopy(ls["grid_raw"])
     ls["grid_no_ANT"][idx_ANT] = 0
 
@@ -308,7 +199,4 @@ def load_regs_ls_wgt_lon_lat(reg_type, lon, lat):
     lon["grid"], lat["grid"] = np.meshgrid(lon["c"], lat["c"])
     wgt = np.cos(np.deg2rad(lat["grid"]))
 
-    # derive longitude / latitude of edges of grid cells for plotting with pcolormesh
-    lon["e"], lat["e"] = infer_interval_breaks(lon["c"], lat["c"])
-
-    return reg_dict, ls, wgt, lon, lat
+    return {}, ls, wgt, lon, lat

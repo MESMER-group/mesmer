@@ -7,13 +7,14 @@ Functions to train local trends module of MESMER.
 """
 
 
-import os
+import xarray as xr
 
-import joblib
-import numpy as np
-from sklearn.linear_model import LinearRegression
-
-from mesmer.calibrate_mesmer.train_utils import train_l_prepare_X_y_wgteq
+from mesmer.calibrate_mesmer.train_utils import (
+    get_scenario_weights,
+    stack_predictors_and_targets,
+)
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats.linear_regression import _fit_linear_regression_xr
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -28,14 +29,18 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         - [pred][scen]  (1d/ 2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     targs : dict
         nested dictionary of targets with keys
 
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
+
     esm : str
         associated Earth System Model (e.g., "CanESM2" or "CanESM5")
+
     cfg : module
         config file containing metadata
+
     save_params : bool, optional
         determines if parameters are saved or not, default = True
 
@@ -137,7 +142,14 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # prepare predictors and targets such that they can be ingested into the training
     # function
-    X, y, wgt_scen_eq = train_l_prepare_X_y_wgteq(preds, targs)
+    X, y = stack_predictors_and_targets(preds, targs)
+    # TODO: use DataArray objects throughout the code
+    X = {key: xr.DataArray(value, dims="sample") for key, value in X.items()}
+    y = {key: xr.DataArray(value, dims=("sample", "cell")) for key, value in y.items()}
+
+    wgt_scen_eq = get_scenario_weights(targs[targ_name])
+    # TODO: use DataArray objects throughout the code
+    wgt_scen_eq = xr.DataArray(wgt_scen_eq, dims="sample")
 
     # prepare weights for individual runs
     if wgt_scen_tr_eq is False:
@@ -146,82 +158,68 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # train the full model + save it (may also contain lv module parts)
     if method_lt_each_gp_sep and method_lt == "OLS":
-        nr_gps = y.shape[1]
 
         # initialize the regression coefficient dictionaries
         params_lt["intercept"] = {}
-        for targ in params_lt["targs"]:
-            params_lt["intercept"][targ] = np.zeros(nr_gps)
         for pred in params_lt["preds"]:
-            params_lt["coef_" + pred] = {}
-            for targ in params_lt["targs"]:
-                params_lt["coef_" + pred][targ] = np.zeros(nr_gps)
-        if len(params_lv) > 0:
+            params_lt[f"coef_{pred}"] = {}
+        for pred in params_lv["preds"]:
+            params_lv[f"coef_{pred}"] = {}
+
+        # NOTE: atm only one target can be and is present
+        for targ in params_lt["targs"]:
+            reg_xr = _fit_linear_regression_xr(
+                predictors=X,
+                target=y[targ],
+                dim="sample",
+                weights=wgt_scen_eq,
+            )
+
+            params_lt["intercept"][targ] = reg_xr.intercept.values
+
+            for pred in params_lt["preds"]:
+                params_lt[f"coef_{pred}"][targ] = reg_xr[pred].values
+
             for pred in params_lv["preds"]:
-                params_lv["coef_" + pred] = {}
-                for targ in params_lt["targs"]:
-                    params_lv["coef_" + pred][targ] = np.zeros(nr_gps)
-
-        # derive the OLS parameters for each gp
-        for gp in np.arange(nr_gps):
-            reg = LinearRegression().fit(X, y[:, gp, :], wgt_scen_eq)
-
-            for targ_idx, targ in enumerate(params_lt["targs"]):
-                params_lt["intercept"][targ][gp] = reg.intercept_[targ_idx]
-
-                coef_idx = 0  # coefficient index
-                for pred in params_lt["preds"]:
-                    params_lt["coef_" + pred][targ][gp] = reg.coef_[targ_idx, coef_idx]
-                    coef_idx += 1
-
-                # assumption: coefs of lv are behind coefs of lt
-                if len(preds_lv) > 0:
-                    for pred in params_lv["preds"]:
-                        params_lv["coef_" + pred][targ][gp] = reg.coef_[
-                            targ_idx, coef_idx
-                        ]
-                        coef_idx += 1
+                params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
 
     else:
         raise NotImplementedError()
 
     # save the local trend paramters if requested
     if save_params:
-        dir_mesmer_params = cfg.dir_mesmer_params
-        dir_mesmer_params_lt = dir_mesmer_params + "local/local_trends/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_params_lt):
-            os.makedirs(dir_mesmer_params_lt)
-            print("created dir:", dir_mesmer_params_lt)
-        filename_parts = [
-            "params_lt",
-            method_lt,
-            *preds_lt,
-            *targ_names,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_lt = dir_mesmer_params_lt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_lt, filename_params_lt)
+        save_mesmer_data(
+            params_lt,
+            cfg.dir_mesmer_params,
+            "local",
+            "local_trends",
+            filename_parts=[
+                "params_lt",
+                method_lt,
+                *preds_lt,
+                *targ_names,
+                esm,
+                *scenarios_tr,
+            ],
+        )
 
         # check if local variability parameters need to be saved too
         # overwrites lv module if already exists, i.e., assumption: lt before lv
         if len(params_lv) > 0:
-            dir_mesmer_params_lv = dir_mesmer_params + "local/local_variability/"
-            # check if folder to save params in exists, if not: make it
-            if not os.path.exists(dir_mesmer_params_lv):
-                os.makedirs(dir_mesmer_params_lv)
-                print("created dir:", dir_mesmer_params_lv)
-        filename_parts = [
-            "params_lv",
-            method_lv,
-            *preds_lv,
-            *targ_names,
-            esm,
-            *scenarios_tr,
-        ]
-        filename_params_lv = dir_mesmer_params_lv + "_".join(filename_parts) + ".pkl"
-        joblib.dump(params_lv, filename_params_lv)
+            save_mesmer_data(
+                params_lv,
+                cfg.dir_mesmer_params,
+                "local",
+                "local_variability",
+                filename_parts=[
+                    "params_lv",
+                    method_lv,
+                    *preds_lv,
+                    *targ_names,
+                    esm,
+                    *scenarios_tr,
+                ],
+            )
 
     if len(params_lv) > 0:
         return params_lt, params_lv

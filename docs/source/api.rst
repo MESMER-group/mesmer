@@ -1,15 +1,96 @@
 .. currentmodule:: mesmer
 
-#############
 API reference
 #############
 
 This page provides an auto-generated summary of mesmers' API.
 
 
-Top-level functions
-===================
+Statistical functions
+=====================
 
+Linear regression
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.linear_regression.LinearRegression
+   ~stats.linear_regression.LinearRegression.fit
+   ~stats.linear_regression.LinearRegression.predict
+   ~stats.linear_regression.LinearRegression.residuals
+   ~stats.linear_regression.LinearRegression.to_netcdf
+   ~stats.linear_regression.LinearRegression.from_netcdf
+
+Auto regression
+---------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.auto_regression._select_ar_order_xr
+   ~stats.auto_regression._fit_auto_regression_xr
+   ~stats.auto_regression._draw_auto_regression_correlated_np
+
+Localized covariance
+--------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.localized_covariance.adjust_covariance_ar1
+   ~stats.localized_covariance.find_localized_empirical_covariance
+
+Smoothing
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.smoothing.lowess
+
+Geo-spatial
+-----------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.computation.calc_geodist_exact
+   ~core.computation.gaspari_cohn
+
+Data handling
+=============
+
+Grid manipulation
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.grid.wrap_to_180
+   ~core.grid.wrap_to_360
+   ~core.grid.stack_lat_lon
+   ~core.grid.unstack_lat_lon_and_align
+   ~core.grid.unstack_lat_lon
+   ~core.grid.align_to_coords
+
+Masking regions
+---------------
+
+   ~core.mask.mask_ocean_fraction
+   ~core.mask.mask_ocean
+   ~core.mask.mask_antarctica
+   ~core.regionmaskcompat.mask_3D_frac_approx
+
+Weighted operarions: calculate global mean
+------------------------------------------
+
+   ~core.weighted.global_mean
+   ~core.weighted.lat_weights
+   ~core.weighted.weighted_mean
+
+Legacy functions
+================
 
 Train mesmer
 ------------
@@ -28,13 +109,14 @@ Create emulations
 .. autosummary::
    :toctree: generated/
 
-   ~create_emulations.create_emus_gt
+   ~create_emulations.gather_gt_data
    ~create_emulations.create_emus_gv
    ~create_emulations.create_emus_lt
    ~create_emulations.create_emus_lv
    ~create_emulations.create_emus_g
    ~create_emulations.create_emus_l
    ~create_emulations.make_realisations
+   ~create_emulations.create_seed_dict
 
 
 Individual methods and utils
@@ -51,7 +133,8 @@ Train mesmer
    ~calibrate_mesmer.train_gt_ic_OLSVOLC
    ~calibrate_mesmer.train_lv_AR1_sci
    ~calibrate_mesmer.train_lv_find_localized_ecov
-   ~calibrate_mesmer.train_l_prepare_X_y_wgteq
+   ~calibrate_mesmer.get_scenario_weights
+   ~calibrate_mesmer.stack_predictors_and_targets
 
 Create emulations
 ^^^^^^^^^^^^^^^^^
@@ -68,36 +151,18 @@ Create emulations
 IO
 --
 
-Load CMIP-ng data
-^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_cmipng.extract_time_lon_lat_wgt3d
-   ~io.load_cmipng.find_files_cmipng
-   ~io.load_cmipng.load_cmipng
-   ~io.load_cmipng.load_cmipng_file
-   ~io.load_cmipng.load_cmipng_hfds
-   ~io.load_cmipng.load_cmipng_tas
-   ~io.load_cmipng.preprocess_ssp534over
-
-
 Load constant files
 ^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_constant_files.gaspari_cohn
-   ~io.load_constant_files.infer_interval_breaks
    ~io.load_constant_files.load_phi_gc
    ~io.load_constant_files.load_regs_ls_wgt_lon_lat
-   ~io.load_constant_files.mask_percentage
 
 
-Load constant files
-^^^^^^^^^^^^^^^^^^^
+Load output
+^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated/
@@ -131,6 +196,7 @@ Utils
    :toctree: generated/
 
    ~utils.convert.convert_dict_to_arr
-   ~utils.convert.separate_hist_future
+   ~utils.separate_hist_future
    ~utils.select.extract_land
    ~utils.select.extract_time_period
+

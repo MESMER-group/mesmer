@@ -8,11 +8,12 @@ Functions to extract regions or time period of interest.
 
 
 import copy as copy
+import warnings
 
 import numpy as np
 
 
-def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
+def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
     """
     Extract all land grid points and area weights in regions and in land-sea mask for
     given threshold.
@@ -23,23 +24,19 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
         nested variable dictionary with keys
 
         - [esm][scen] (4d array (run, time, lat, lon) of variable)
-    reg_dict : dict
-        region dictionary with keys
 
-        - ["type"] (region type)
-        - ["abbrevs"] (abbreviations for regions)
-        - ["names"] (full names of regions)
-        - ["grids"] (3d array (regions, lat, lon) of subsampled region fraction)
-        - ["grid_b"] (2d array (lat, lon) of regions with each grid point being assigned
-          to a single region ("binary" grid))
-        - ["full"] (full Region object (for plotting region outlines))
+    reg_dict : dict | None
+        Deprecated. No longer has an effect.
+
     wgt : np.ndarray
         2d array (lat, lon) of weights to be used for area weighted means
+
     ls : dict
         land sea dictionary with keys
 
         - ["grid_raw"] (2d array (lat, lon) of subsampled land fraction)
         - ["grid_no_ANT"] (grid_raw with Antarctica removed)
+
     threshold_land : float, default=0.25
         threshold above which land fraction to consider a grid point as a land grid
         point
@@ -51,12 +48,7 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
 
         - [esm] (3d array (run, time, gp_l) of variable at land grid points)
     reg_dict : dict
-        region dictionary with added keys
-
-        - ["gps_l"] (2d array (region, gp_l) of region fraction at land grid points)
-        - ["wgt_gps_l"] (2d array (region, gp_l) of area weights for each region on land)
-        - ["gp_b_l"] (1d array of region index at land grid points with each grid point
-          being assigned to a single region)
+        Deprecated (empty dict).
     ls : dict
         land sea dictionary with added keys
 
@@ -70,6 +62,9 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
           fraction)
 
     """
+
+    if reg_dict is not None:
+        warnings.warn("Passing `reg_dict` no longer has an effect.", FutureWarning)
 
     # determine which grid points count as land grid points
     idx_l = ls["grid_no_ANT"] > threshold_land
@@ -87,19 +82,6 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
     # weights for land points: multiply weight by land fraction
     ls["wgt_gp_l"] = wgt[idx_l] * ls["gp_l"]
 
-    # extract the land points + weights from the region grids
-    reg_dict["gps_l"] = reg_dict["grids"][:, idx_l]  # country is the first axis
-    # weights for regions (1st axis): region fraction * area weights
-    reg_dict["wgt_gps_l"] = wgt[idx_l] * reg_dict["gps_l"]
-
-    if reg_dict["type"] in ["srex", "ar6.land"]:
-        # multiply by land fraction to account for coastal cells
-        # because SREX / ar6.land regions include ocean
-        reg_dict["wgt_gps_l"] = reg_dict["wgt_gps_l"] * ls["gp_l"]
-
-    # not sure if needed; extracts land from the "binary" mask
-    reg_dict["gp_b_l"] = reg_dict["grid_b"][idx_l]
-
     # extract the land points of the variable of interest
     var_l = {}
     for esm in var.keys():
@@ -108,25 +90,28 @@ def extract_land(var, reg_dict, wgt, ls, threshold_land=0.25):
             # run is the first axis, followed by time
             var_l[esm][scen] = var[esm][scen][:, :, idx_l]
 
-    return var_l, reg_dict, ls
+    return var_l, {}, ls
 
 
-def extract_time_period(var, time, start, end):
+def extract_time_period(data, time, start, end):
     """Extract selected time period.
 
     Parameters
     ----------
-    var : np.ndarray
+    data : np.ndarray
         variable in 1-4d array
 
         - (time);
         - (run, time);
         - (run, time, gp_l);
         - (run, time, lat, lon)
+
     time : np.ndarray
         1d array of years
+
     start : str or int
         first year included in extracted time period
+
     end : str or int
         last year included in extracted time period
 
@@ -143,17 +128,15 @@ def extract_time_period(var, time, start, end):
 
     """
 
-    # find index of start and end of time period
-    idx_start = np.where(time == int(start))[0][0]
-    idx_end = np.where(time == int(end))[0][0] + 1  # to include the end year
+    warnings.warn(
+        "`extract_time_period` is deprecated in v0.9.0 and will be removed in a future "
+        "version. Please raise an issue if you still use this function.",
+        FutureWarning,
+    )
 
-    # extract time period from variable dictionary
-    if len(var.shape) > 1:
-        var_tp = var[:, idx_start:idx_end]
-    else:
-        var_tp = var[idx_start:idx_end]
+    sel = (time >= start) & (time <= end)
 
-    # extract time period from time vector
-    time_tp = time[idx_start:idx_end]
+    time = time[sel]
+    data = data[:, sel, ...] if data.ndim > 1 else data[sel]
 
-    return var_tp, time_tp
+    return data, time

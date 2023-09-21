@@ -5,16 +5,25 @@
 """
 Functions to create global trend emulations with MESMER.
 """
+import warnings
 
-import os
-
-import joblib
-import numpy as np
+from mesmer.create_emulations.utils import concatenate_hist_future
+from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
-# TODO: rename because there's actually no emulation involved in this process
-# (global trends always come from an external source)
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
+    """see docstring of `gather_gt_data`"""
+
+    warnings.warn(
+        "'create_emus_gt' has been renamed to `gather_gt_data`", FutureWarning
+    )
+
+    return gather_gt_data(
+        params_gt, preds_gt, cfg, concat_h_f=concat_h_f, save_emus=save_emus
+    )
+
+
+def gather_gt_data(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """
     Create global trend (emissions + volcanoes) emulations for specified ensemble type
     and method.
@@ -32,17 +41,21 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
         - ["time"] (1d array of years, np.ndarray)
         - [xx] (additional keys depend on employed method and are listed in
           train_gt_T_method() function)
+
     preds_gt : dict
         nested dictionary of predictors for global trend with keys
 
         - [pred][scen]  (1d/2d arrays (time)/(run, time) of predictor for specific
           scenario)
+
     cfg : module
         config file containing metadata
+
     concat_h_f : bool, optional
         determines if historical and future time period is concatenated into a single
         emulation or not, default = False (must be set to false if no historical data
         provided)
+
     save_emus : bool, optional
         determines if emulation is saved or not, default = True
 
@@ -64,50 +77,37 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     pred_names = list(preds_gt.keys())
     scenarios_emus = list(preds_gt[pred_names[0]].keys())
 
-    scens_out_f = list(map(lambda x: x.replace("h-", ""), scenarios_emus))
-    # does nothing in case 'h-' not actually included
+    if "h-" in scenarios_emus[0]:
+        scenarios_emus = ["hist"] + [scen.replace("h-", "") for scen in scenarios_emus]
 
-    if concat_h_f:
-        scens_out = scenarios_emus
-    else:
-        if "h-" in scenarios_emus[0]:
-            scens_out = ["hist"] + scens_out_f
-        else:
-            scens_out = scens_out_f
-
-    # initialize global trend emulations dictionary with scenarios as keys
     emus_gt = {}
 
-    # apply the chosen method
+    # gather data
     if "LOWESS" in params_gt["method"]:
-        if concat_h_f:
-            for scen_out, scen_out_f in zip(scens_out, scens_out_f):
-                emus_gt[scen_out] = np.concatenate(
-                    [params_gt["hist"], params_gt[scen_out_f]]
-                )
-        else:
-            for scen_out in scens_out:
-                emus_gt[scen_out] = params_gt[scen_out]
+        for scen in scenarios_emus:
+            emus_gt[scen] = params_gt[scen]
     else:
         raise ValueError("The chosen method is currently not implemented.")
 
+    if concat_h_f:
+        emus_gt = concatenate_hist_future(emus_gt)
+        scenarios_emus = list(emus_gt.keys())
+
     # save the global trend emulation if requested
     if save_emus:
-        dir_mesmer_emus = cfg.dir_mesmer_emus
-        dir_mesmer_emus_gt = dir_mesmer_emus + "global/global_trend/"
-        # check if folder to save params in exists, if not: make it
-        if not os.path.exists(dir_mesmer_emus_gt):
-            os.makedirs(dir_mesmer_emus_gt)
-            print("created dir:", dir_mesmer_emus_gt)
-        filename_parts = [
-            "emus_gt",
-            params_gt["method"],
-            *params_gt["preds"],
-            params_gt["targ"],
-            params_gt["esm"],
-            *scens_out,
-        ]
-        filename_emus_gt = dir_mesmer_emus_gt + "_".join(filename_parts) + ".pkl"
-        joblib.dump(emus_gt, filename_emus_gt)
+        save_mesmer_data(
+            emus_gt,
+            cfg.dir_mesmer_emus,
+            "global",
+            "global_trend",
+            filename_parts=[
+                "emus_gt",
+                params_gt["method"],
+                *params_gt["preds"],
+                params_gt["targ"],
+                params_gt["esm"],
+                *scenarios_emus,
+            ],
+        )
 
     return emus_gt

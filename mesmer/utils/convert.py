@@ -29,17 +29,9 @@ def convert_dict_to_arr(var_dict):
 
     """
 
-    scenarios = list(var_dict.keys())
-
-    var_arr = {}
-
-    for scen in scenarios:
-        runs = list(var_dict[scen])
-        shape_run = list(var_dict[scen][runs[0]].shape)
-        var_arr[scen] = np.zeros([len(runs)] + shape_run)
-
-        for i in np.arange(len(runs)):
-            var_arr[scen][i] = var_dict[scen][runs[i]]
+    var_arr = {
+        scen: np.stack(list(run_dict.values())) for scen, run_dict in var_dict.items()
+    }
 
     return var_arr
 
@@ -53,10 +45,12 @@ def separate_hist_future(var_c, time_c, cfg):
         variable dictionary with concatenated historical and future scenarios as keys
 
         - ["h-scen_f"] (xd array of variable (run, time, x), np.ndarray)
+
     time_c : dict
         time dictionary with concatenated historical and future scenarios as keys
 
         - ["h-scen_f"] (1d array of years, np.ndarray)
+
     cfg : module
         config file containing metadata
 
@@ -89,24 +83,24 @@ def separate_hist_future(var_c, time_c, cfg):
     if gen == 6:
         end_year_hist = 2014
 
-    scen_c = scens_c[0]
-    scen_f = scens_f[0]
-    idx_start_fut = np.where(time_c[scen_c] == end_year_hist)[0][0] + 1
+    # assuming all time vectors are the same
+    time = time_c[scens_c[0]]
 
-    time_s = {}
-    time_s["hist"] = time_c[scen_c][:idx_start_fut]
+    idx_start_fut = np.where(time == end_year_hist)[0][0] + 1
 
-    var_s = {}
-    var_s["hist"] = var_c[scen_c][:, :idx_start_fut]
-    var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
-    time_s[scen_f] = time_c[scen_c][idx_start_fut:]
-    for scen_f, scen_c in zip(scens_f[1:], scens_c[1:]):
-        # stack all available historical runs
-        var_s["hist"] = np.vstack([var_s["hist"], var_c[scen_c][:, :idx_start_fut]])
-        var_s[scen_f] = var_c[scen_c][:, idx_start_fut:]
-        time_s[scen_f] = time_c[scen_c][idx_start_fut:]
+    var_s, time_s = {}, {}
+
+    # gather hist
+    hist = [np.atleast_2d(var_c[scen_c])[:, :idx_start_fut] for scen_c in scens_c]
+    hist = np.vstack(hist)
 
     # exclude duplicate historical runs that are available in several scenarios
-    var_s["hist"] = np.unique(var_s["hist"], axis=0)
+    var_s["hist"] = np.unique(hist, axis=0)
+    time_s["hist"] = time[:idx_start_fut]
+
+    # gather proj
+    for scen_f, scen_c in zip(scens_f, scens_c):
+        var_s[scen_f] = np.atleast_2d(var_c[scen_c])[:, idx_start_fut:]
+        time_s[scen_f] = time_c[scen_c][idx_start_fut:]
 
     return var_s, time_s
