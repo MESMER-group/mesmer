@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mesmer.core.computation import calc_geodist_exact, gaspari_cohn
+from mesmer.core.computation import calc_geodist_exact
 from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
 
 
@@ -57,26 +57,6 @@ def test_phi_gc_end_to_end(tmp_path):
         ]
     )
     np.testing.assert_allclose(expected, actual[1000], rtol=1e-5)
-
-
-def test_gaspari_cohn():
-
-    assert gaspari_cohn(0) == 1
-    assert gaspari_cohn(2) == 0
-
-    values = np.arange(0, 2.1, 0.5)
-    expected = np.array([1.0, 0.68489583, 0.20833333, 0.01649306, 0.0])
-
-    actual = gaspari_cohn(values)
-    np.testing.assert_allclose(expected, actual, rtol=1e-6)
-
-    # the function is symmetric around 0
-    actual = gaspari_cohn(-values)
-    np.testing.assert_allclose(expected, actual, rtol=1e-6)
-
-    # make sure shape is conserved
-    values = np.arange(9).reshape(3, 3)
-    assert gaspari_cohn(values).shape == (3, 3)
 
 
 def test_calc_geodist_exact_shape():
