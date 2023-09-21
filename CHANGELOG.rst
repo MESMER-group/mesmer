@@ -74,9 +74,10 @@ New Features
 
    By `Mathias Hauser`_.
 
-- Allow passing `xr.DataArray` to ``gaspari_cohn`` (`#298 <https://github.com/MESMER-group/mesmer/issues/298>`__).
+- Allow passing `xr.DataArray` to ``gaspari_cohn`` (`#298 <https://github.com/MESMER-group/mesmer/pull/298>`__).
   By `Mathias Hauser`_.
-
+- Allow passing `xr.DataArray` to ``calc_geodist_exact`` (`#299 <https://github.com/MESMER-group/mesmer/pull/299>`__).
+  By `Zeb Nicholls`_ and `Mathias Hauser`_.
 
 
 Breaking changes
