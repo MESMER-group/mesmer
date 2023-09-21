@@ -74,6 +74,14 @@ New Features
 
    By `Mathias Hauser`_.
 
+- Allow passing `xr.DataArray` to ``gaspari_cohn`` (`#298 <https://github.com/MESMER-group/mesmer/pull/298>`__).
+  By `Mathias Hauser`_.
+- Allow passing `xr.DataArray` to ``calc_geodist_exact`` (`#299 <https://github.com/MESMER-group/mesmer/pull/299>`__).
+  By `Zeb Nicholls`_ and `Mathias Hauser`_.
+- Add ``calc_gaspari_cohn_correlation_matrices`` a function to calculate Gaspari-Cohn correlation
+  matrices for a range of localisation radii (`#300 <https://github.com/MESMER-group/mesmer/pull/300>`__).
+  By `Zeb Nicholls`_ and `Mathias Hauser`_.
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

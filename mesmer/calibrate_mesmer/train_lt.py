@@ -182,6 +182,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
             for pred in params_lv["preds"]:
                 params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
+    else:
+        raise NotImplementedError()
 
     else:
         raise NotImplementedError()
