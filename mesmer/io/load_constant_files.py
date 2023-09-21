@@ -80,7 +80,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
       matrix must be positive semidefinite in train_lv())
     """
 
-    from mesmer.core.computation import gaspari_cohn, calc_geodist_exact
+    from mesmer.core.computation import calc_geodist_exact, gaspari_cohn
 
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
