@@ -15,13 +15,13 @@ def gaspari_cohn(r):
 
     Parameters
     ----------
-    r : xr.DataArray, np.array
+    r : xr.DataArray, np.ndarray
         Values for which to calculate the value of the Gaspari-Cohn correlation function
         (e.g. normalised geographical distances)
 
     Returns
     -------
-    out : xr.DataArray, , np.array
+    out : xr.DataArray, , np.ndarray
         Gaspari-Cohn correlation function
 
     Notes
@@ -96,14 +96,17 @@ def calc_geodist_exact(lon, lat, equal_dim_suffixes=("_i", "_j")):
 
     Parameters
     ----------
-    lon : array-like
+    lon : xr.DataArray, np.ndarray
         1D array of longitudes
-    lat : array-like
+    lat : xr.DataArray, np.ndarray
         1D array of latitudes
+    equal_dim_suffixes : tuple of str, default: ("_i", "_j")
+        Suffixes to add to the the name of ``dim`` for the geodist array (xr.DataArray
+        cannot have two dimensions with the same name).
 
     Returns
     -------
-    geodist : np.array
+    geodist : xr.DataArray, np.ndarray
         2D array of great circle distances.
     """
 
