@@ -110,14 +110,15 @@ def calc_geodist_exact(lon, lat, equal_dim_suffixes=("_i", "_j")):
         2D array of great circle distances.
     """
 
+    TODO: allow Dataset (e.g. using cf_xarray)
     if isinstance(lon, xr.Dataset) or isinstance(lat, xr.Dataset):
         raise TypeError("Dataset is not supported, please pass a DataArray")
 
-    # make it work for numpy arrays
+    # handle numpy arrays
     if not isinstance(lon, xr.DataArray) or not isinstance(lat, xr.DataArray):
         return _calc_geodist_exact(np.asarray(lon), np.asarray(lat))
 
-    # TODO: allow differently named lon and lat coords?
+    # TODO: allow differently named lon and lat dims?
     if lon.dims != lat.dims:
         raise AssertionError(
             f"lon and lat have different dims: {lon.dims} vs. {lat.dims}. Expected "
