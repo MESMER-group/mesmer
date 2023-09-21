@@ -445,13 +445,8 @@ def test_prototype_train_lv():
         localisation_radii,
     )
 
-    for key, comparison in (
-        (
-            "localised_empirical_covariance_matrix_with_ar1_errors",
-            res_legacy["loc_ecov_AR1_innovs"]["tas"],
-        ),
-    ):
-        npt.assert_allclose(res_updated[key], comparison)
+    # check localised_empirical_covariance_matrix_with_ar1_errors
+    npt.assert_allclose(res_updated, res_legacy["loc_ecov_AR1_innovs"]["tas"])
 
 
 # things that aren't tested well:
