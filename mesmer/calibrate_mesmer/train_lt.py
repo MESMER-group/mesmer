@@ -89,6 +89,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
           assumption is fulfilled or rewrite code such that no longer necessary)
 
     """
+
     targ_names = list(targs.keys())
     targ_name = targ_names[0]  # because same approach for each targ
     pred_names = list(preds.keys())
@@ -185,9 +186,6 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     else:
         raise NotImplementedError()
 
-    else:
-        raise NotImplementedError()
-
     # save the local trend paramters if requested
     if save_params:
         save_mesmer_data(
@@ -225,5 +223,5 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     if len(params_lv) > 0:
         return params_lt, params_lv
-
-    raise NotImplementedError("This path is never used")
+    else:
+        return params_lt
