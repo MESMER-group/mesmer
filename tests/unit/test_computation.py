@@ -2,7 +2,12 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.core.computation import calc_geodist_exact, gaspari_cohn
+from mesmer.core.computation import (
+    calc_gaspari_cohn_correlation_matrices,
+    calc_geodist_exact,
+    gaspari_cohn,
+)
+from mesmer.testing import assert_dict_allclose
 
 
 def test_gaspari_cohn_error():
@@ -147,3 +152,25 @@ def test_calc_geodist_exact(as_dataarray):
     else:
 
         np.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("localisation_radii", [[1000, 2000], range(5000, 5001)])
+@pytest.mark.parametrize("as_dataarray", [True, False])
+def test_gaspari_cohn_correlation_matrices(localisation_radii, as_dataarray):
+
+    lon = np.arange(0, 31, 5)
+    lat = np.arange(-45, 46, 30)
+    lat, lon = np.meshgrid(lat, lon)
+    lon, lat = lon.flatten(), lat.flatten()
+
+    if as_dataarray:
+        lon = xr.DataArray(lon, dims="gridpoint")
+        lat = xr.DataArray(lat, dims="gridpoint")
+
+    geodist = calc_geodist_exact(lon, lat)
+
+    result = calc_gaspari_cohn_correlation_matrices(geodist, localisation_radii)
+
+    expected = {lr: gaspari_cohn(geodist / lr) for lr in localisation_radii}
+
+    assert_dict_allclose(expected, result)

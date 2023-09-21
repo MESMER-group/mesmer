@@ -10,6 +10,37 @@ import xarray as xr
 from .utils import create_equal_dim_names
 
 
+def calc_gaspari_cohn_correlation_matrices(geodist, localisation_radii):
+    """Gaspari-Cohn correlation matrices for a range of localisation radii
+
+    Parameters
+    ----------
+    geodist : xr.DataArray, np.ndarray
+        2D array of great circle distances. Calculated from e.g. ``calc_geodist_exact``.
+    localisation_radii : iterable of float
+        Localisation radii to test (in km)
+
+    Returns
+    -------
+    gaspari_cohn_correlation_matrices: dict[float : :obj:`xr.DataArray`, :obj:`np.ndarray`]
+        Gaspari-Cohn correlation matrix (values) for each localisation radius (keys)
+
+    Notes
+    -----
+    Values in ``localisation_radii`` should not exceed 10'000 km by much because
+    it can lead to correlation matrices which are not positive semidefinite.
+
+    See Also
+    --------
+    gaspari_cohn, calc_geodist_exact
+
+    """
+
+    out = {lr: gaspari_cohn(geodist / lr) for lr in localisation_radii}
+
+    return out
+
+
 def gaspari_cohn(r):
     """smooth, exponentially decaying Gaspari-Cohn correlation function
 
