@@ -22,13 +22,18 @@ def calc_gaspari_cohn_correlation_matrices(geodist, localisation_radii):
 
     Returns
     -------
-    gaspari_cohn_correlation_matrices: dict[float: :obj:`xr.DataArray`]
+    gaspari_cohn_correlation_matrices: dict[float : :obj:`xr.DataArray`, :obj:`np.ndarray`]
         Gaspari-Cohn correlation matrix (values) for each localisation radius (keys)
 
     Notes
     -----
     Values in ``localisation_radii`` should not exceed 10'000 km by much because
     it can lead to correlation matrices which are not positive semidefinite.
+
+    See Also
+    --------
+    gaspari_cohn, calc_geodist_exact
+
     """
 
     out = {lr: gaspari_cohn(geodist / lr) for lr in localisation_radii}
