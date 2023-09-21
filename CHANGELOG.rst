@@ -247,5 +247,5 @@ v0.8.0 - 2021-07-13
 
 .. _`Jonas Schwaab`: https://github.com/jschwaab
 .. _`Mathias Hauser`: https://github.com/mathause
-.. _`Yann Quilcaille`:
+.. _`Yann Quilcaille`: https://github.com/yquilcaille
 .. _`Zeb Nicholls`: https://github.com/znicholls
