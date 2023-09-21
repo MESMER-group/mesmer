@@ -110,7 +110,7 @@ def calc_geodist_exact(lon, lat, equal_dim_suffixes=("_i", "_j")):
         2D array of great circle distances.
     """
 
-    TODO: allow Dataset (e.g. using cf_xarray)
+    # TODO: allow Dataset (e.g. using cf_xarray)
     if isinstance(lon, xr.Dataset) or isinstance(lat, xr.Dataset):
         raise TypeError("Dataset is not supported, please pass a DataArray")
 
