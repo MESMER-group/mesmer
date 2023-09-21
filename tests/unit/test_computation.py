@@ -27,11 +27,9 @@ def test_gaspari_cohn():
 
     expected = np.array([0.68489583, 1.0, 0.68489583, 0.20833333, 0.01649306, 0.0])
     expected = expected.reshape(2, 3)
-
     expected = xr.DataArray(expected, dims=dims, coords=coords, attrs=attrs)
 
     xr.testing.assert_allclose(expected, result, rtol=1e-6)
-
     assert result.attrs == attrs
 
 
