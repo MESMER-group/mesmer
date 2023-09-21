@@ -3,7 +3,7 @@ import pandas as pd
 import scipy.stats
 import xarray as xr
 
-from .calibrate import AutoRegression1DOrderSelection, AutoRegression1D
+from .calibrate import AutoRegression1D, AutoRegression1DOrderSelection
 from .utils import calculate_gaspari_cohn_correlation_matrices
 
 
@@ -37,9 +37,7 @@ def _check_coords_match(obj, obj_other, check_coord):
 
 def _flatten(inp, dims_to_flatten):
     stack_coord_name = _get_stack_coord_name(inp)
-    inp_flat = inp.stack({stack_coord_name: dims_to_flatten}).dropna(
-        stack_coord_name
-    )
+    inp_flat = inp.stack({stack_coord_name: dims_to_flatten}).dropna(stack_coord_name)
 
     return inp_flat, stack_coord_name
 
@@ -193,20 +191,23 @@ def calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_
         localisation_radii,
     )
 
-    localised_empirical_covariance_matrix = _calculate_localised_empirical_covariance_matrix(
-        target,
-        localisation_radii,
-        gaspari_cohn_correlation_matrices,
-        max_cross_validation_iterations,
-        gridpoint_dim_name=gridpoint_dim_name,
+    localised_empirical_covariance_matrix = (
+        _calculate_localised_empirical_covariance_matrix(
+            target,
+            localisation_radii,
+            gaspari_cohn_correlation_matrices,
+            max_cross_validation_iterations,
+            gridpoint_dim_name=gridpoint_dim_name,
+        )
     )
 
-    gridpoint_autoregression_coeffcients = np.hstack([v["lag_coefficients"] for v in gridpoint_autoregression_parameters.values()])
+    gridpoint_autoregression_coeffcients = np.hstack(
+        [v["lag_coefficients"] for v in gridpoint_autoregression_parameters.values()]
+    )
 
     localised_empirical_covariance_matrix_with_ar1_errors = (
-        (1 - gridpoint_autoregression_coeffcients ** 2)
-        * localised_empirical_covariance_matrix
-    )
+        1 - gridpoint_autoregression_coeffcients**2
+    ) * localised_empirical_covariance_matrix
 
     return localised_empirical_covariance_matrix_with_ar1_errors
 
@@ -226,7 +227,9 @@ def _calculate_localised_empirical_covariance_matrix(
     number_iterations = min([number_samples, max_cross_validation_iterations])
 
     # setup cross-validation stuff
-    index_cross_validation_out = np.zeros([number_iterations, number_samples], dtype=bool)
+    index_cross_validation_out = np.zeros(
+        [number_iterations, number_samples], dtype=bool
+    )
 
     for i in range(number_iterations):
         index_cross_validation_out[i, i::max_cross_validation_iterations] = True
@@ -239,32 +242,50 @@ def _calculate_localised_empirical_covariance_matrix(
 
         for i in range(number_iterations):
             # extract folds (no idea why these are called folds)
-            target_estimator = target_flattened.isel(**{stack_coord_name: ~index_cross_validation_out[i]}).values
-            target_cross_validation = target_flattened.isel(**{stack_coord_name: index_cross_validation_out[i]}).values
+            target_estimator = target_flattened.isel(
+                **{stack_coord_name: ~index_cross_validation_out[i]}
+            ).values
+            target_cross_validation = target_flattened.isel(
+                **{stack_coord_name: index_cross_validation_out[i]}
+            ).values
             # selecting relevant weights goes in here
 
             empirical_covariance = np.cov(target_estimator, rowvar=False)
             # must be a better way to handle ensuring that the dimensions line up correctly (rather than
             # just cheating by using `.values`)
-            empirical_covariance_localised = empirical_covariance * gaspari_cohn_correlation_matrices[lr].values
+            empirical_covariance_localised = (
+                empirical_covariance * gaspari_cohn_correlation_matrices[lr].values
+            )
 
             # calculate likelihood of cross validation samples
-            log_likelihood_cross_validation_samples = scipy.stats.multivariate_normal.logpdf(
-                target_cross_validation,
-                mean=np.zeros(gaspari_cohn_correlation_matrices[lr].shape[0]),
-                cov=empirical_covariance_localised,
-                allow_singular=True,
+            log_likelihood_cross_validation_samples = (
+                scipy.stats.multivariate_normal.logpdf(
+                    target_cross_validation,
+                    mean=np.zeros(gaspari_cohn_correlation_matrices[lr].shape[0]),
+                    cov=empirical_covariance_localised,
+                    allow_singular=True,
+                )
             )
-            log_likelihood_cross_validation_samples_weighted_sum = np.average(
-                log_likelihood_cross_validation_samples,
-                # weights=wgt_scen_eq_cv # TODO: weights handling
-            ) * log_likelihood_cross_validation_samples.shape[0]
+            log_likelihood_cross_validation_samples_weighted_sum = (
+                np.average(
+                    log_likelihood_cross_validation_samples,
+                    # weights=wgt_scen_eq_cv # TODO: weights handling
+                )
+                * log_likelihood_cross_validation_samples.shape[0]
+            )
 
             # add to full sum over all folds
-            log_likelihood_cross_validation_sum += log_likelihood_cross_validation_samples_weighted_sum
+            log_likelihood_cross_validation_sum += (
+                log_likelihood_cross_validation_samples_weighted_sum
+            )
 
-        if log_likelihood_cross_validation_sum > log_likelihood_cross_validation_sum_max:
-            log_likelihood_cross_validation_sum_max = log_likelihood_cross_validation_sum
+        if (
+            log_likelihood_cross_validation_sum
+            > log_likelihood_cross_validation_sum_max
+        ):
+            log_likelihood_cross_validation_sum_max = (
+                log_likelihood_cross_validation_sum
+            )
         else:
             # experience tells us that once we start selecting large localisation radii, performance
             # will not improve ==> break (reduces computational effort and number of singular matrices
@@ -275,6 +296,8 @@ def _calculate_localised_empirical_covariance_matrix(
     print(f"Selected localisation radius: {lr}")
 
     empirical_covariance = np.cov(target_flattened.values, rowvar=False)
-    empirical_covariance_localised = empirical_covariance * gaspari_cohn_correlation_matrices[lr].values
+    empirical_covariance_localised = (
+        empirical_covariance * gaspari_cohn_correlation_matrices[lr].values
+    )
 
     return empirical_covariance_localised

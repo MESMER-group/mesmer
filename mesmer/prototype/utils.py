@@ -37,8 +37,7 @@ def calculate_gaspari_cohn_correlation_matrices(
     geodistance = calculate_geodistance_exact(latitudes, longitudes)
 
     gaspari_cohn_correlation_matrices = {
-        lr : calculate_gaspari_cohn_values(geodistance / lr)
-        for lr in localisation_radii
+        lr: calculate_gaspari_cohn_values(geodistance / lr) for lr in localisation_radii
     }
 
     return gaspari_cohn_correlation_matrices
@@ -78,7 +77,9 @@ def calculate_geodistance_exact(latitudes, longitudes):
         lat = np.tile(latitudes[i], n_points - (i + 1))
         lon = np.tile(longitudes[i], n_points - (i + 1))
 
-        geodistance[i, i + 1 :] = geod.inv(lon, lat, longitudes.values[i + 1 :], latitudes.values[i + 1 :])[2]
+        geodistance[i, i + 1 :] = geod.inv(
+            lon, lat, longitudes.values[i + 1 :], latitudes.values[i + 1 :]
+        )[2]
 
     # convert m to km
     geodistance /= 1000
@@ -87,9 +88,13 @@ def calculate_geodistance_exact(latitudes, longitudes):
     geodistance += np.transpose(geodistance)
 
     if latitudes.dims != longitudes.dims:
-        raise AssertionError(f"latitudes and longitudes have different dims: {latitudes.dims} vs. {longitudes.dims}")
+        raise AssertionError(
+            f"latitudes and longitudes have different dims: {latitudes.dims} vs. {longitudes.dims}"
+        )
 
-    geodistance = xr.DataArray(geodistance, dims=list(latitudes.dims) * 2, coords=latitudes.coords)
+    geodistance = xr.DataArray(
+        geodistance, dims=list(latitudes.dims) * 2, coords=latitudes.coords
+    )
 
     return geodistance
 
@@ -115,7 +120,7 @@ def calculate_gaspari_cohn_values(inputs):
     sel_zero_to_one = (inputs_abs.values >= 0) & (inputs_abs.values < 1)
     r_s = inputs_abs.values[sel_zero_to_one]
     out[sel_zero_to_one] = (
-        1 - 5 / 3 * r_s ** 2 + 5 / 8 * r_s ** 3 + 1 / 2 * r_s ** 4 - 1 / 4 * r_s ** 5
+        1 - 5 / 3 * r_s**2 + 5 / 8 * r_s**3 + 1 / 2 * r_s**4 - 1 / 4 * r_s**5
     )
 
     sel_one_to_two = (inputs_abs.values >= 1) & (inputs_abs.values < 2)
@@ -124,10 +129,10 @@ def calculate_gaspari_cohn_values(inputs):
     out[sel_one_to_two] = (
         4
         - 5 * r_s
-        + 5 / 3 * r_s ** 2
-        + 5 / 8 * r_s ** 3
-        - 1 / 2 * r_s ** 4
-        + 1 / 12 * r_s ** 5
+        + 5 / 3 * r_s**2
+        + 5 / 8 * r_s**3
+        - 1 / 2 * r_s**4
+        + 1 / 12 * r_s**5
         - 2 / (3 * r_s)
     )
 

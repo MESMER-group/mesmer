@@ -4,9 +4,9 @@ import pytest
 import xarray as xr
 from statsmodels.tsa.arima_process import ArmaProcess
 
+from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.calibrate_mesmer.train_lt import train_lt
 from mesmer.calibrate_mesmer.train_lv import train_lv
-from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.prototype.calibrate import LinearRegression
 from mesmer.prototype.calibrate_multiple import (
     calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
@@ -110,7 +110,7 @@ def test_prototype_train_lt():
         dims=pred_dims,
         coords=pred_coords,
     )
-    emulator_tas_squared = emulator_tas ** 2
+    emulator_tas_squared = emulator_tas**2
     global_variability = xr.DataArray(
         np.array(
             [
@@ -320,7 +320,9 @@ def _do_legacy_run_train_lv(
     targs_legacy = {"tas": {}}
     for scenario, vals_scen in esm_tas_residual_local_variability.groupby("scenario"):
         targs_legacy["tas"][scenario] = (
-            vals_scen.T.dropna(dim="time").transpose("ensemble_member", "time", "gridpoint").values
+            vals_scen.T.dropna(dim="time")
+            .transpose("ensemble_member", "time", "gridpoint")
+            .values
         )
 
     gaspari_cohn_correlation_matrices = calculate_gaspari_cohn_correlation_matrices(
@@ -390,9 +392,7 @@ def test_prototype_train_lv():
     def _get_history_sample():
         return np.concatenate(
             [
-                ArmaProcess(ar, magnitude).generate_sample(
-                    nsample=len(time_history)
-                ),
+                ArmaProcess(ar, magnitude).generate_sample(nsample=len(time_history)),
                 np.nan * np.zeros(len(time_scenario)),
             ]
         )
@@ -401,9 +401,7 @@ def test_prototype_train_lv():
         return np.concatenate(
             [
                 np.nan * np.zeros(len(time_history)),
-                ArmaProcess(ar, magnitude).generate_sample(
-                    nsample=len(time_scenario)
-                ),
+                ArmaProcess(ar, magnitude).generate_sample(nsample=len(time_scenario)),
             ]
         )
 
@@ -418,7 +416,7 @@ def test_prototype_train_lv():
                     [
                         _get_history_sample(),
                         _get_history_sample(),
-                    ]
+                    ],
                 ],
                 [
                     [
@@ -442,17 +440,19 @@ def test_prototype_train_lv():
         cfg=_MockConfig(),
     )
 
-    res_updated = (
-        calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_scenarios_and_ensemble_members(
-            esm_tas_residual_local_variability,
-            localisation_radii,
-        )
+    res_updated = calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_scenarios_and_ensemble_members(
+        esm_tas_residual_local_variability,
+        localisation_radii,
     )
 
     for key, comparison in (
-        ("localised_empirical_covariance_matrix_with_ar1_errors", res_legacy["loc_ecov_AR1_innovs"]["tas"]),
+        (
+            "localised_empirical_covariance_matrix_with_ar1_errors",
+            res_legacy["loc_ecov_AR1_innovs"]["tas"],
+        ),
     ):
         npt.assert_allclose(res_updated[key], comparison)
+
 
 # things that aren't tested well:
 # - what happens if ensemble member and scenario don't actually make a coherent set
