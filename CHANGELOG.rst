@@ -244,7 +244,6 @@ v0.8.0 - 2021-07-13
 - First release on PyPI and conda
   (`#79 <https://github.com/MESMER-group/mesmer/pull/79>`_).
 
-
 .. _`Jonas Schwaab`: https://github.com/jschwaab
 .. _`Mathias Hauser`: https://github.com/mathause
 .. _`Yann Quilcaille`: https://github.com/yquilcaille
