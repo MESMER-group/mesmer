@@ -7,13 +7,16 @@ from statsmodels.tsa.arima_process import ArmaProcess
 from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.calibrate_mesmer.train_lt import train_lt
 from mesmer.calibrate_mesmer.train_lv import train_lv
+from mesmer.core.computation import (
+    calc_gaspari_cohn_correlation_matrices,
+    calc_geodist_exact,
+)
 from mesmer.prototype.calibrate import LinearRegression
 from mesmer.prototype.calibrate_multiple import (
     calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
     calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_scenarios_and_ensemble_members,
     flatten_predictors_and_target,
 )
-from mesmer.prototype.utils import calculate_gaspari_cohn_correlation_matrices
 
 
 class _MockConfig:
@@ -325,11 +328,13 @@ def _do_legacy_run_train_lv(
             .values
         )
 
-    gaspari_cohn_correlation_matrices = calculate_gaspari_cohn_correlation_matrices(
-        latitudes=esm_tas_residual_local_variability.lat,
-        longitudes=esm_tas_residual_local_variability.lon,
-        localisation_radii=localisation_radii,
+    geodist = calc_geodist_exact(
+        esm_tas_residual_local_variability.lon, esm_tas_residual_local_variability.lat
     )
+    gaspari_cohn_correlation_matrices = calc_gaspari_cohn_correlation_matrices(
+        geodist, localisation_radii
+    )
+
     gaspari_cohn_correlation_matrices = {
         k: v.values for k, v in gaspari_cohn_correlation_matrices.items()
     }

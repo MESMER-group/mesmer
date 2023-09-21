@@ -3,8 +3,11 @@ import pandas as pd
 import scipy.stats
 import xarray as xr
 
+from ..core.computation import (
+    calc_gaspari_cohn_correlation_matrices,
+    calc_geodist_exact,
+)
 from .calibrate import AutoRegression1D, AutoRegression1DOrderSelection
-from .utils import calculate_gaspari_cohn_correlation_matrices
 
 
 def _get_predictor_dims(predictors):
@@ -185,10 +188,9 @@ def calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_
         for gridpoint, gridpoint_vals in target.groupby("gridpoint")
     }
 
-    gaspari_cohn_correlation_matrices = calculate_gaspari_cohn_correlation_matrices(
-        target.lat,
-        target.lon,
-        localisation_radii,
+    geodist = calc_geodist_exact(target.lon, target.lat)
+    gaspari_cohn_correlation_matrices = calc_gaspari_cohn_correlation_matrices(
+        geodist, localisation_radii
     )
 
     localised_empirical_covariance_matrix = (
