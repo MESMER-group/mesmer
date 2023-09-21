@@ -19,7 +19,7 @@ def gaspari_cohn(r):
 
     Returns
     -------
-    out : xr.DataArray
+    out : xr.DataArray, , np.array
         Gaspari-Cohn correlation function
 
     Notes
@@ -49,7 +49,6 @@ def gaspari_cohn(r):
         return _gaspari_cohn_np(r)
 
     out = _gaspari_cohn_np(r.values)
-
     out = xr.DataArray(out, dims=r.dims, coords=r.coords, attrs=r.attrs)
 
     return out
