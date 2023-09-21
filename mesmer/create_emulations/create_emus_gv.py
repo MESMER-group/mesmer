@@ -151,6 +151,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     np.random.seed(seed)
 
     # buffer so that initial start at 0 does not influence overall result
+    # Should this buffer be based on the length of ar_lags instead of hard-coded?
     buffer = 50
 
     # re-name params for easier reading of code below
