@@ -1,7 +1,16 @@
 import numpy as np
+import pytest
 import xarray as xr
 
 from mesmer.core.computation import gaspari_cohn
+
+
+def test_gaspari_cohn_error():
+
+    ds = xr.Dataset()
+
+    with pytest.raises(TypeError, match="Dataset is not supported"):
+        gaspari_cohn(ds)
 
 
 def test_gaspari_cohn():

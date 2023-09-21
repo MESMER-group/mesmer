@@ -41,6 +41,9 @@ def gaspari_cohn(r):
 
     """
 
+    if isinstance(r, xr.Dataset):
+        raise TypeError("Dataset is not supported, please pass a DataArray")
+
     # make it work for numpy arrays
     if not isinstance(r, xr.DataArray):
         return _gaspari_cohn_np(r)
@@ -52,30 +55,36 @@ def gaspari_cohn(r):
     return out
 
 
-def _gaspari_cohn_np(arr):
+def _gaspari_cohn_np(r):
 
-    arr = np.abs(arr)
+    r = np.abs(r)
 
-    out = np.zeros(arr.shape)
+    out = np.zeros(r.shape)
 
-    # subset the data
-    sel = (arr >= 0) & (arr < 1)
-    r_s = arr[sel]
+    # compute for 0 <= r < 1
+    sel = (r >= 0) & (r < 1)
+    r_sel = r[sel]
+
     out[sel] = (
-        1 - 5 / 3 * r_s**2 + 5 / 8 * r_s**3 + 1 / 2 * r_s**4 - 1 / 4 * r_s**5
+        1
+        - 5 / 3 * r_sel**2
+        + 5 / 8 * r_sel**3
+        + 1 / 2 * r_sel**4
+        - 1 / 4 * r_sel**5
     )
 
-    sel = (arr >= 1) & (arr < 2)
-    r_s = arr[sel]
+    # compute for 1 <= r < 2
+    sel = (r >= 1) & (r < 2)
+    r_sel = r[sel]
 
     out[sel] = (
         4
-        - 5 * r_s
-        + 5 / 3 * r_s**2
-        + 5 / 8 * r_s**3
-        - 1 / 2 * r_s**4
-        + 1 / 12 * r_s**5
-        - 2 / (3 * r_s)
+        - 5 * r_sel
+        + 5 / 3 * r_sel**2
+        + 5 / 8 * r_sel**3
+        - 1 / 2 * r_sel**4
+        + 1 / 12 * r_sel**5
+        - 2 / (3 * r_sel)
     )
 
     return out
