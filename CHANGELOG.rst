@@ -74,7 +74,7 @@ New Features
 
    By `Mathias Hauser`_.
 
-- Allow passing `xr.DataArray` to ``gaspari_cohn``(`#298 <https://github.com/MESMER-group/mesmer/issues/298>`__).
+- Allow passing `xr.DataArray` to ``gaspari_cohn`` (`#298 <https://github.com/MESMER-group/mesmer/issues/298>`__).
   By `Mathias Hauser`_.
 
 
