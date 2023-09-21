@@ -3,9 +3,9 @@ import pytest
 import xarray as xr
 
 from mesmer.core.computation import (
+    calc_gaspari_cohn_correlation_matrices,
     calc_geodist_exact,
     gaspari_cohn,
-    calc_gaspari_cohn_correlation_matrices,
 )
 from mesmer.testing import assert_dict_allclose
 
