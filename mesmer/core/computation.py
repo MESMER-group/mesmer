@@ -5,48 +5,70 @@
 
 import numpy as np
 import pyproj
+import xarray as xr
 
 
 def gaspari_cohn(r):
-    """
-    smooth, exponentially decaying Gaspari-Cohn correlation function
+    """smooth, exponentially decaying Gaspari-Cohn correlation function
 
     Parameters
     ----------
-    r : np.ndarray
-        d/L with d = geographical distance in km, L = localisation radius in km
+    r : xr.DataArray, np.array
+        Values for which to calculate the value of the Gaspari-Cohn correlation function
+        (e.g. normalised geographical distances)
 
     Returns
     -------
-    y : np.ndarray
-        Gaspari-Cohn correlation function value for given r
+    out : xr.DataArray
+        Gaspari-Cohn correlation function
 
     Notes
     -----
     - Smooth exponentially decaying correlation function which mimics a Gaussian
-      distribution but vanishes at r=2, i.e., 2 x the localisation radius (L)
-    - based on Gaspari-Cohn 1999, QJR (as taken from Carrassi et al 2018, Wiley
-      Interdiscip. Rev. Clim. Change)
+      distribution but vanishes at r = 2, i.e., 2 x the localisation radius (L)
+
+    - based on Gaspari-Cohn 1999 [1]_ (as taken from Carrassi et al., 2018 [2]_)
+
+    - r = d / L, with d = geographical distance in km, L = localisation radius in km
+
+    .. [1] Gaspari, G. and Cohn, S.E. (1999), Construction of correlation functions in
+       two and three dimensions. Q.J.R. Meteorol. Soc., 125: 723-757.
+       https://doi.org/10.1002/qj.49712555417
+
+    .. [2] Carrassi, A, Bocquet, M, Bertino, L, Evensen, G. Data assimilation in the
+       geosciences: An overview of methods, issues, and perspectives. WIREs Clim Change.
+       2018; 9:e535. https://doi.org/10.1002/wcc.535
 
     """
-    r = np.abs(r)
-    shape = r.shape
-    # flatten the array
-    r = r.ravel()
 
-    y = np.zeros(r.shape)
+    # make it work for numpy arrays
+    if not isinstance(r, xr.DataArray):
+        return _gaspari_cohn_np(r)
+
+    out = _gaspari_cohn_np(r.values)
+
+    out = xr.DataArray(out, dims=r.dims, coords=r.coords, attrs=r.attrs)
+
+    return out
+
+
+def _gaspari_cohn_np(arr):
+
+    arr = np.abs(arr)
+
+    out = np.zeros(arr.shape)
 
     # subset the data
-    sel = (r >= 0) & (r < 1)
-    r_s = r[sel]
-    y[sel] = (
+    sel = (arr >= 0) & (arr < 1)
+    r_s = arr[sel]
+    out[sel] = (
         1 - 5 / 3 * r_s**2 + 5 / 8 * r_s**3 + 1 / 2 * r_s**4 - 1 / 4 * r_s**5
     )
 
-    sel = (r >= 1) & (r < 2)
-    r_s = r[sel]
+    sel = (arr >= 1) & (arr < 2)
+    r_s = arr[sel]
 
-    y[sel] = (
+    out[sel] = (
         4
         - 5 * r_s
         + 5 / 3 * r_s**2
@@ -56,7 +78,7 @@ def gaspari_cohn(r):
         - 2 / (3 * r_s)
     )
 
-    return y.reshape(shape)
+    return out
 
 
 def calc_geodist_exact(lon, lat):
