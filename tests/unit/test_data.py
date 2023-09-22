@@ -14,6 +14,7 @@ def test_load_stratospheric_aerosol_optical_depth_data():
     xr.testing.assert_equal(aod.time, time)
 
     np.testing.assert_allclose(0.0035, aod[0])
+    np.testing.assert_allclose(0.0, aod[-1])
 
 
 def test_load_stratospheric_aerosol_optical_depth_data_no_resample():
@@ -26,3 +27,4 @@ def test_load_stratospheric_aerosol_optical_depth_data_no_resample():
     xr.testing.assert_equal(aod.time, time)
 
     np.testing.assert_allclose(0.004, aod[0])
+    np.testing.assert_allclose(0.0, aod[-1])
