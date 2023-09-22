@@ -1,0 +1,28 @@
+import numpy as np
+import xarray as xr
+
+from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
+
+
+def test_load_stratospheric_aerosol_optical_depth_data():
+
+    aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True)
+
+    time = xr.date_range("1850", "2023", freq="A")
+    time = xr.DataArray(time, dims="time", coords={"time": time})
+
+    xr.testing.assert_equal(aod.time, time)
+
+    np.testing.assert_allclose(0.0035, aod[0])
+
+
+def test_load_stratospheric_aerosol_optical_depth_data_no_resample():
+
+    aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=False)
+
+    time = xr.date_range("1850", "2022-12", freq="MS")
+    time = xr.DataArray(time, dims="time", coords={"time": time})
+
+    xr.testing.assert_equal(aod.time, time)
+
+    np.testing.assert_allclose(0.004, aod[0])
