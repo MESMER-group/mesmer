@@ -12,7 +12,7 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core._data import load_stratospheric_aerosol_optical_depth_data
+from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 
 
 def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
@@ -193,7 +193,7 @@ def load_strat_aod(time, dir_obs=None):
             FutureWarning,
         )
 
-    aod_obs = load_stratospheric_aerosol_optical_depth_data(
+    aod_obs = load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 

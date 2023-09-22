@@ -6,8 +6,7 @@ import pooch
 import mesmer
 
 
-@cache
-def load_stratospheric_aerosol_optical_depth_data(version="2022", resample=True):
+def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
     """load stratospheric aerosol optical depth data - a proxy for volcanic activity
 
     Parameters
@@ -17,7 +16,23 @@ def load_stratospheric_aerosol_optical_depth_data(version="2022", resample=True)
     resample : bool, default: True
         Whether to resample the data to annual resolution.
 
+    Returns
+    -------
+    stratospheric_aerosol_optical_depth_obs : xr.DataArray
+        DataArray of stratospheric aerosol optical depth observations.
     """
+
+    aod = _load_aod_obs(version=version)
+
+    if resample:
+        aod = aod.resample(time="A").mean()
+
+    return aod
+
+
+# use an inner function as @cache does not nicely preserve the signature
+@cache
+def _load_aod_obs(version="2022"):
 
     filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
 
@@ -31,9 +46,6 @@ def load_stratospheric_aerosol_optical_depth_data(version="2022", resample=True)
     )
 
     aod = df.to_xarray().rename(year_month="time").aod
-
-    if resample:
-        aod = aod.resample(time="A").mean()
 
     return aod
 
