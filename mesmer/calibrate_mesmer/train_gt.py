@@ -227,8 +227,8 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     # account for volcanic eruptions in historical time period
     # load in observed stratospheric aerosol optical depth
     aod_obs = load_strat_aod(time)
-    # drop "year" coords - aod_obs does not have coords (currently)
-    aod_obs = aod_obs.drop_vars("year")
+    # drop "time" coords
+    aod_obs = aod_obs.drop_vars("time")
 
     nr_aod_obs = aod_obs.shape[0]
     if nr_ts != nr_aod_obs:
@@ -238,14 +238,14 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
         )
 
     # repeat aod time series as many times as runs available
-    aod_obs_all = xr.concat([aod_obs] * nr_runs, dim="year")
+    aod_obs_all = xr.concat([aod_obs] * nr_runs, dim="time")
 
     # extract global variability (which still includes volc eruptions) by removing
     # smooth trend from Tglob in historic period
     # (should broadcast, and flatten the correct way - hopefully)
     gv_all_for_aod = (var - gt_lowess).ravel()
 
-    gv_all_for_aod = xr.DataArray(gv_all_for_aod, dims="year").expand_dims("x")
+    gv_all_for_aod = xr.DataArray(gv_all_for_aod, dims="time").expand_dims("x")
 
     lr = LinearRegression()
 
@@ -255,7 +255,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     lr.fit(
         predictors={"aod_obs": aod_obs_all},
         target=gv_all_for_aod,
-        dim="year",
+        dim="time",
         fit_intercept=False,
     )
 

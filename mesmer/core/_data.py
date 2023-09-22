@@ -1,9 +1,44 @@
+from functools import cache
+
+import pandas as pd
 import pooch
 
 import mesmer
 
 
-def fetch_remote_data(name):
+@cache
+def load_stratospheric_aerosol_optical_depth_data(version="2022", resample=True):
+    """load stratospheric aerosol optical depth data - a proxy for volcanic activity
+
+    Parameters
+    ----------
+    version : str, default: "2022"
+        Which version of the dataset to load. Currently only "2022" is available.
+    resample : bool, default: True
+        Whether to resample the data to annual resolution.
+
+    """
+
+    filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
+
+    df = pd.read_csv(
+        filename,
+        delim_whitespace=True,
+        skiprows=11,
+        names=("year", "month", "aod"),
+        parse_dates=[["year", "month"]],
+        index_col="year_month",
+    )
+
+    aod = df.to_xarray().rename(year_month="time").aod
+
+    if resample:
+        aod = aod.resample(time="A").mean()
+
+    return aod
+
+
+def _fetch_remote_data(name):
     """
     uses pooch to cache files
     """
