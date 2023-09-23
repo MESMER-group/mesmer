@@ -8,7 +8,7 @@ def test_load_stratospheric_aerosol_optical_depth_data():
 
     aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True)
 
-    time = xr.date_range("1850", "2023", freq="A")
+    time = pd.date_range("1850", "2023", freq="A")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     xr.testing.assert_equal(aod.time, time)
@@ -21,7 +21,7 @@ def test_load_stratospheric_aerosol_optical_depth_data_no_resample():
 
     aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=False)
 
-    time = xr.date_range("1850", "2022-12", freq="MS")
+    time = pd.date_range("1850", "2022-12", freq="MS")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     xr.testing.assert_equal(aod.time, time)
