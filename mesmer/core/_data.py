@@ -1,9 +1,13 @@
-from functools import cache
-
 import pandas as pd
 import pooch
 
 import mesmer
+
+# TODO: only import cache once requiring python 3.8+
+try:
+    from functools import cache
+except ImportError:
+    from functools import lru_cache as cache
 
 
 def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
@@ -22,17 +26,14 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
         DataArray of stratospheric aerosol optical depth observations.
     """
 
-    aod = _load_aod_obs(version=version)
-
-    if resample:
-        aod = aod.resample(time="A").mean()
+    aod = _load_aod_obs(version=version, resample=resample)
 
     return aod
 
 
 # use an inner function as @cache does not nicely preserve the signature
 @cache
-def _load_aod_obs(version="2022"):
+def _load_aod_obs(*, version, resample):
 
     filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
 
@@ -46,6 +47,9 @@ def _load_aod_obs(version="2022"):
     )
 
     aod = df.to_xarray().rename(year_month="time").aod
+
+    if resample:
+        aod = aod.resample(time="A").mean()
 
     return aod
 
