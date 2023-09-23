@@ -1,13 +1,10 @@
+# TODO: use cache instead of lru_cache once requiring python 3.9+
+from functools import lru_cache
+
 import pandas as pd
 import pooch
 
 import mesmer
-
-# TODO: only import cache once requiring python 3.8+
-try:
-    from functools import cache
-except ImportError:
-    from functools import lru_cache as cache
 
 
 def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
@@ -32,7 +29,7 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 
 
 # use an inner function as @cache does not nicely preserve the signature
-@cache
+@lru_cache(None)
 def _load_aod_obs(*, version, resample):
 
     filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
