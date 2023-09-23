@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
