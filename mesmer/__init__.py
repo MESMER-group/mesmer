@@ -19,7 +19,7 @@ __all__ = [
     "utils",
 ]
 
-# "new" modules
+# "new" "modules"
 __all__ += [
     "core",
     "data",
