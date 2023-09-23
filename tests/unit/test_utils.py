@@ -187,7 +187,7 @@ def test_check_dataarray_form_shape():
 def _get_time(*args, **kwargs):
     # TODO: use xr.date_range once requiring xarray >= v0.21
 
-    if Version(xr.__version__) >= Version(0.21):
+    if Version(xr.__version__) >= Version("0.21"):
         time = xr.date_range(*args, **kwargs)
     else:
 
