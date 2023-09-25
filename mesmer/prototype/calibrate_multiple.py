@@ -117,7 +117,10 @@ def _select_auto_regressive_process_order(
         orders = AutoRegression1DOrderSelection().calibrate(
             values, maxlag=maxlag, ic=ic
         )
-        keep_order = 0 if orders is None else orders[-1]
+
+        # orders can be None
+        keep_order = np.nan if orders is None else orders[-1]
+
         store.append(
             {
                 "scenario": scenario,
