@@ -102,6 +102,7 @@ jobs:
     - name: Run tests
       run: python -u -m pytest
        -r a -v
+       --all
        --cov=mesmer
        --cov-report=xml
 
