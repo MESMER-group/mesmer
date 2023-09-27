@@ -201,6 +201,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
 
         params = _fit_auto_regression_xr(data, dim="time", lags=AR_order_sel)
         # BUG/ TODO: we wrongfully average over the standard_deviation
+        # see https://github.com/MESMER-group/mesmer/issues/307
         params["standard_deviation"] = np.sqrt(params.covariance)
         params = params.mean("run")
 
