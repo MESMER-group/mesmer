@@ -177,7 +177,8 @@ def _fit_auto_regression_xr(data, dim, lags):
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
-    intercept, coeffs, std = xr.apply_ufunc(
+    # NOTE: this is slowish, see https://github.com/MESMER-group/mesmer/pull/290
+    intercept, coeffs, covariance = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
         input_core_dims=[[dim]],
@@ -193,7 +194,7 @@ def _fit_auto_regression_xr(data, dim, lags):
     data_vars = {
         "intercept": intercept,
         "coeffs": coeffs,
-        "standard_deviation": std,
+        "covariance": covariance,
         "lags": lags,
     }
 
@@ -229,7 +230,7 @@ def _fit_auto_regression_np(data, lags):
     intercept = AR_result.params[0]
     coeffs = AR_result.params[1:]
 
-    # standard deviation of the residuals
-    std = np.sqrt(AR_result.sigma2)
+    # covariance of the residuals
+    covariance = AR_result.sigma2
 
-    return intercept, coeffs, std
+    return intercept, coeffs, covariance
