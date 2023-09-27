@@ -8,17 +8,24 @@ analyze the results.
 """
 
 from . import calibrate_mesmer, core, create_emulations, io, utils
-from .core import globmean, grid, mask
+from .core import _data as data
+from .core import grid, mask, weighted
 
+# "legacy" modules
 __all__ = [
     "calibrate_mesmer",
-    "core",
     "create_emulations",
-    "grid",
     "io",
-    "mask",
     "utils",
-    "globmean",
+]
+
+# "new" "modules"
+__all__ += [
+    "core",
+    "data",
+    "grid",
+    "mask",
+    "weighted",
 ]
 
 try:

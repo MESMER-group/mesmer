@@ -1,7 +1,5 @@
 import numpy as np
-import numpy.testing as npt
 import xarray as xr
-import xarray.testing as xrt
 
 
 def assert_dict_allclose(first, second, first_name="left", second_name="right"):
@@ -31,11 +29,11 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
         if isinstance(first_val, dict):
             assert_dict_allclose(first_val, second_val, first_name, second_name)
         elif isinstance(first_val, np.ndarray):
-            npt.assert_allclose(first_val, second_val)
+            np.testing.assert_allclose(first_val, second_val, err_msg=key)
         elif isinstance(first_val, (xr.DataArray, xr.Dataset)):
-            xrt.assert_allclose(first_val, second_val)
+            xr.testing.assert_allclose(first_val, second_val)
         elif np.issubdtype(np.array(first_val).dtype, np.number):
-            npt.assert_allclose(first_val, second_val)
+            np.testing.assert_allclose(first_val, second_val, err_msg=key)
         else:
             assert first_val == second_val, key
 

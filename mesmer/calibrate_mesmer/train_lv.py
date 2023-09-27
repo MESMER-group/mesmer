@@ -6,7 +6,7 @@
 Functions to train local variability module of MESMER.
 """
 
-
+import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
@@ -237,6 +237,9 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             data = xr.DataArray(data, dims=("run", "time", "cell"))
 
             params = _fit_auto_regression_xr(data, dim="time", lags=1)
+            # BUG/ TODO: we wrongfully average over the standard_deviation
+            # see https://github.com/MESMER-group/mesmer/issues/307
+            params["standard_deviation"] = np.sqrt(params.covariance)
             params = params.mean("run")
 
             params_scen.append(params)
@@ -249,6 +252,12 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         params_lv["AR1_std_innovs"][targ_name] = params_scen.standard_deviation.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
+
+        # y.dims = (sample, gridpoint)
+        # wgt_scen_eq.dims = (sample,)
+        # aux["phi_gc"].dims = (gridpoint, gripoint)
+        # where sample = is a stacked "time, scenario, ensmember"
+
         res = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
         params_lv["L"][targ_name] = res.localization_radius.values
         params_lv["ecov"][targ_name] = res.covariance.values

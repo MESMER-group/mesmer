@@ -24,7 +24,8 @@ def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
 
     Notes
     -----
-    Only full models can be selected along one dimension.
+    Thin wrapper around ``statsmodels.tsa.ar_model.ar_select_order``. Only full models
+    can be selected.
     """
 
     selected_ar_order = xr.apply_ufunc(
@@ -96,7 +97,7 @@ def _draw_auto_regression_correlated_np(
         Intercept of the model.
     coefs : ndarray of shape ar_order x n_coefs
         The coefficients of the autoregressive process. Must be a 2D array with the
-        autoregressive coefficients along axis=0, while axis=1 contains all idependent
+        autoregressive coefficients along axis=0, while axis=1 contains all independent
         coefficients.
     covariance : float or ndarray of shape n_coefs x n_coefs
         The (co-)variance array. Must be symmetric and positive-semidefinite.
@@ -124,7 +125,7 @@ def _draw_auto_regression_correlated_np(
     an autoregressive process does not include the innovations and therefore asymptotes
     towards a certain value (in contrast to this function).
     """
-    intercept = np.array(intercept)
+    intercept = np.asarray(intercept)
     covariance = np.atleast_2d(covariance)
 
     # coeffs assumed to be ar_order x n_coefs
@@ -136,6 +137,7 @@ def _draw_auto_regression_correlated_np(
     # ensure reproducibility (TODO: clarify approach to this, see #35)
     np.random.seed(seed)
 
+    # innovations has shape (n_samples, n_ts + buffer, n_coefs)
     innovations = np.random.multivariate_normal(
         mean=np.zeros(n_coefs),
         cov=covariance,
@@ -175,7 +177,8 @@ def _fit_auto_regression_xr(data, dim, lags):
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
-    intercept, coeffs, std = xr.apply_ufunc(
+    # NOTE: this is slowish, see https://github.com/MESMER-group/mesmer/pull/290
+    intercept, coeffs, covariance = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
         input_core_dims=[[dim]],
@@ -191,7 +194,7 @@ def _fit_auto_regression_xr(data, dim, lags):
     data_vars = {
         "intercept": intercept,
         "coeffs": coeffs,
-        "standard_deviation": std,
+        "covariance": covariance,
         "lags": lags,
     }
 
@@ -227,7 +230,7 @@ def _fit_auto_regression_np(data, lags):
     intercept = AR_result.params[0]
     coeffs = AR_result.params[1:]
 
-    # standard deviation of the residuals
-    std = np.sqrt(AR_result.sigma2)
+    # covariance of the residuals
+    covariance = AR_result.sigma2
 
-    return intercept, coeffs, std
+    return intercept, coeffs, covariance

@@ -95,9 +95,9 @@ def find_localized_empirical_covariance(
         Dimension along which to calculate the covariance.
     k_folds : int
         Number of folds to use for cross validation.
-    equal_dim_suffixes : tuple of str
-        Suffixes to add to the the name of ``dim`` for the covariance array (xr.DataArray cannot have two
-        dimensions with the same name).
+    equal_dim_suffixes : tuple of str, default: ("_i", "_j")
+        Suffixes to add to the the name of ``dim`` for the covariance array
+        (xr.DataArray cannot have two dimensions with the same name).
 
     Returns
     -------

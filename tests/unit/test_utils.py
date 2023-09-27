@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 import mesmer.core.utils
 
@@ -180,3 +182,53 @@ def test_check_dataarray_form_shape():
 
     # no error
     mesmer.core.utils._check_dataarray_form(da, shape=(2, 2))
+
+
+def _get_time(*args, **kwargs):
+    # TODO: use xr.date_range once requiring xarray >= v0.21
+
+    if Version(xr.__version__) >= Version("0.21"):
+        time = xr.date_range(*args, **kwargs)
+    else:
+
+        calendar = kwargs.pop("calendar", "standard")
+
+        if calendar == "standard":
+            time = pd.date_range(*args, **kwargs)
+        else:
+            time = xr.cftime_range(*args, **kwargs)
+
+    return xr.DataArray(time, dims="time")
+
+
+@pytest.mark.parametrize(
+    "calendar", ["standard", "gregorian", "proleptic_gregorian", "365_day", "julian"]
+)
+def test_assert_annual_data(calendar):
+
+    time = _get_time("2000", "2005", freq="A", calendar=calendar)
+
+    # no error
+    mesmer.core.utils._assert_annual_data(time)
+
+
+@pytest.mark.parametrize("calendar", ["standard", "gregorian", "365_day"])
+@pytest.mark.parametrize("freq", ["2A", "M"])
+def test_assert_annual_data_wrong_freq(calendar, freq):
+
+    time = _get_time("2000", periods=5, freq=freq, calendar=calendar)
+
+    with pytest.raises(
+        ValueError, match="Annual data is required but data with frequency"
+    ):
+        mesmer.core.utils._assert_annual_data(time)
+
+
+def test_assert_annual_data_unkown_freq():
+
+    time1 = _get_time("2000", periods=2, freq="A")
+    time2 = _get_time("2002", periods=3, freq="M")
+    time = xr.concat([time1, time2], dim="time")
+
+    with pytest.raises(ValueError, match="Annual data is required but data of unknown"):
+        mesmer.core.utils._assert_annual_data(time)

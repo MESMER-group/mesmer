@@ -6,15 +6,11 @@ API reference
 This page provides an auto-generated summary of mesmers' API.
 
 
-Top-level functions
-===================
-
 Statistical functions
----------------------
-
+=====================
 
 Linear regression
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. autosummary::
    :toctree: generated/
@@ -27,7 +23,7 @@ Linear regression
    ~stats.linear_regression.LinearRegression.from_netcdf
 
 Auto regression
-^^^^^^^^^^^^^^^
+---------------
 
 .. autosummary::
    :toctree: generated/
@@ -37,7 +33,7 @@ Auto regression
    ~stats.auto_regression._draw_auto_regression_correlated_np
 
 Localized covariance
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -46,14 +42,14 @@ Localized covariance
    ~stats.localized_covariance.find_localized_empirical_covariance
 
 Smoothing
-^^^^^^^^^
+---------
 
 .. autosummary::
    :toctree: generated/
 
    ~stats.smoothing.lowess
 
-Computation
+Geo-spatial
 -----------
 
 .. autosummary::
@@ -62,23 +58,36 @@ Computation
    ~core.computation.calc_geodist_exact
    ~core.computation.gaspari_cohn
 
-Data manipulation
+Data handling
+=============
+
+Grid manipulation
 -----------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~grid.wrap_to_180
-   ~grid.wrap_to_360
-   ~grid.stack_lat_lon
-   ~grid.unstack_lat_lon_and_align
-   ~grid.unstack_lat_lon
-   ~grid.align_to_coords
-   ~mask.mask_ocean_fraction
-   ~mask.mask_ocean
-   ~mask.mask_antarctica
-   ~globmean.lat_weights
-   ~globmean.weighted_mean
+   ~core.grid.wrap_to_180
+   ~core.grid.wrap_to_360
+   ~core.grid.stack_lat_lon
+   ~core.grid.unstack_lat_lon_and_align
+   ~core.grid.unstack_lat_lon
+   ~core.grid.align_to_coords
+
+Masking regions
+---------------
+
+   ~core.mask.mask_ocean_fraction
+   ~core.mask.mask_ocean
+   ~core.mask.mask_antarctica
+   ~core.regionmaskcompat.mask_3D_frac_approx
+
+Weighted operarions: calculate global mean
+------------------------------------------
+
+   ~core.weighted.global_mean
+   ~core.weighted.lat_weights
+   ~core.weighted.weighted_mean
 
 Legacy functions
 ================
@@ -187,7 +196,7 @@ Utils
    :toctree: generated/
 
    ~utils.convert.convert_dict_to_arr
-   ~utils.convert.separate_hist_future
+   ~utils.separate_hist_future
    ~utils.select.extract_land
    ~utils.select.extract_time_period
-   ~utils.regionmaskcompat import mask_3D_frac_approx
+

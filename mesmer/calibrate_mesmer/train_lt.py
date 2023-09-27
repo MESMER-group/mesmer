@@ -96,6 +96,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # specify necessary variables from config file
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
+    # This code will ever only work with a single target variable
     method_lt = cfg.methods[targ_name]["lt"]
     method_lv = cfg.methods[targ_name]["lv"]
     method_lt_each_gp_sep = cfg.method_lt_each_gp_sep
@@ -182,6 +183,8 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
             for pred in params_lv["preds"]:
                 params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
+    else:
+        raise NotImplementedError()
 
     # save the local trend paramters if requested
     if save_params:

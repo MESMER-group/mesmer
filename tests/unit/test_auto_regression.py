@@ -198,7 +198,7 @@ def test_fit_auto_regression_xr_1D_values():
         {
             "intercept": 1.04728995,
             "coeffs": ("lags", [0.99682459]),
-            "standard_deviation": 1.02655342,
+            "covariance": 1.05381192,
             "lags": [1],
         }
     )
@@ -219,7 +219,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
         {
             "intercept": 2.08295035,
             "coeffs": ("lags", [0.99318256]),
-            "standard_deviation": 1.08955374,
+            "covariance": 1.18712735,
             "lags": [2],
         }
     )
@@ -238,16 +238,14 @@ def test_fit_auto_regression_xr_1D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "standard_deviation"],
+        required_vars=["intercept", "coeffs", "covariance"],
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=0, shape=())
     _check_dataarray_form(
         res.coeffs, "coeffs", ndim=1, required_dims={"lags"}, shape=(len(lags),)
     )
-    _check_dataarray_form(
-        res.standard_deviation, "standard_deviation", ndim=0, shape=()
-    )
+    _check_dataarray_form(res.covariance, "covariance", ndim=0, shape=())
 
     expected = xr.DataArray(lags, coords={"lags": lags})
 
@@ -265,7 +263,7 @@ def test_fit_auto_regression_xr_2D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "standard_deviation"],
+        required_vars=["intercept", "coeffs", "covariance"],
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=1, shape=(n_cells,))
@@ -276,9 +274,7 @@ def test_fit_auto_regression_xr_2D(lags):
         required_dims={"cells", "lags"},
         shape=(n_cells, lags),
     )
-    _check_dataarray_form(
-        res.standard_deviation, "standard_deviation", ndim=1, shape=(n_cells,)
-    )
+    _check_dataarray_form(res.covariance, "covariance", ndim=1, shape=(n_cells,))
 
 
 @pytest.mark.parametrize("lags", [1, 2])

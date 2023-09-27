@@ -13,7 +13,9 @@ import mesmer.create_emulations
 
 def test_make_realisations(test_data_root_dir, update_expected_files):
 
-    ouput_dir = os.path.join(test_data_root_dir, "output", "one_scen_one_ens")
+    ouput_dir = os.path.join(
+        test_data_root_dir, "output", "tas_tas2_hfds", "one_scen_one_ens"
+    )
 
     expected_output_file = os.path.join(
         ouput_dir, "test_make_realisations_expected_output.nc"
