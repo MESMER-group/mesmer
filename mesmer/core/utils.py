@@ -86,6 +86,22 @@ def _to_set(arg):
     return arg
 
 
+def _assert_annual_data(time):
+    """assert time coords has annual frequency"""
+
+    freq = xr.infer_freq(time)
+
+    if freq is None:
+        raise ValueError(
+            "Annual data is required but data of unknown frequency was passed"
+        )
+
+    if not freq.startswith("A"):
+        raise ValueError(
+            f"Annual data is required but data with frequency {freq} was passed"
+        )
+
+
 def _check_dataset_form(
     obj,
     name: str = "obj",

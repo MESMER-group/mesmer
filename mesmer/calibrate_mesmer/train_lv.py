@@ -249,6 +249,12 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         params_lv["AR1_std_innovs"][targ_name] = params_scen.standard_deviation.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
+
+        # y.dims = (sample, gridpoint)
+        # wgt_scen_eq.dims = (sample,)
+        # aux["phi_gc"].dims = (gridpoint, gripoint)
+        # where sample = is a stacked "time, scenario, ensmember"
+
         res = train_lv_find_localized_ecov(y[targ_name], wgt_scen_eq, aux, cfg)
         params_lv["L"][targ_name] = res.localization_radius.values
         params_lv["ecov"][targ_name] = res.covariance.values
