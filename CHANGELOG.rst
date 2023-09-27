@@ -71,6 +71,7 @@ New Features
 - Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
    - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
    - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
+   - different selection of predictor variables (tas**2 and hfds) for different scenarios (`#291 <https://github.com/MESMER-group/mesmer/pull/291>`_)
 
    By `Mathias Hauser`_.
 
