@@ -79,6 +79,7 @@ def test_load_cmipng(test_data_root_dir, varn):
     np.testing.assert_allclose(time, time_expected)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("varn", ["tas", "hfds"])
 @pytest.mark.parametrize("start, end", [("1850", "1900"), ("1850", "1860")])
 def test_load_cmipng_ref_two_ens_all(test_data_root_dir, varn, start, end):
@@ -108,6 +109,7 @@ def test_load_cmipng_ref_two_ens_all(test_data_root_dir, varn, start, end):
     np.testing.assert_allclose(0, np.mean(dta_global_arr[sel]), atol=1e-6)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("varn", ["tas", "hfds"])
 @pytest.mark.parametrize("start, end", [("1850", "1900"), ("1850", "1860")])
 def test_load_cmipng_ref_two_ens_indiv(test_data_root_dir, varn, start, end):
@@ -160,6 +162,7 @@ def test_load_cmipng_ref(test_data_root_dir, varn, start, end):
     np.testing.assert_allclose(0, np.mean(dta_global[1][sel]), atol=1e-6)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("varn", ["tas", "hfds"])
 def test_load_cmimpng_vs_load_var(test_data_root_dir, varn):
     # compare data loaded with mesmer.io._load_cmipng._load_cmipng_var to
