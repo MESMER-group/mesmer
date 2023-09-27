@@ -26,6 +26,9 @@ New Features
    - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
      auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
      By `Mathias Hauser`_.
+   - Have ``mesmer.stats.auto_regression._fit_auto_regression_xr`` return the covariance instead
+     of the standard deviation (`#306 <https://github.com/MESMER-group/mesmer/issues/306>`_).
+     By `Mathias Hauser`_.
    - Add ``mesmer.stats.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
      auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
      By `Mathias Hauser`_.
