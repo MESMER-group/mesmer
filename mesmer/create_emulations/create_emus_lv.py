@@ -187,7 +187,8 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             emus_ar = _draw_auto_regression_correlated_np(
                 intercept=params_lv["AR1_int"][targ],
                 # reshape to n_coefs x n_cells
-                coefs=params_lv["AR1_coef"][targ][np.newaxis, :],
+                # (coeffs was squeezed in train_lv.train_lv_AR1_sci)
+                coeffs=params_lv["AR1_coef"][targ][np.newaxis, :],
                 covariance=params_lv["loc_ecov_AR1_innovs"][targ],
                 n_samples=nr_emus_v,
                 n_ts=nr_ts_emus_stoch_v,
