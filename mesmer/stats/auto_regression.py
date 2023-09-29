@@ -80,26 +80,26 @@ def _select_ar_order_np(data, maxlag, ic="bic"):
 
 
 def _draw_auto_regression_correlated_np(
-    *, intercept, coefs, covariance, n_samples, n_ts, seed, buffer
+    *, intercept, coeffs, covariance, n_samples, n_ts, seed, buffer
 ):
     """
     Draw time series of an auto regression process with possibly spatially-correlated
     innovations
 
     Creates `n_samples` auto-correlated time series of order `ar_order` and length
-    `n_ts` for each set of `n_coefs` coefficients (typically one set for each grid
-    point), the resulting array has shape n_samples x n_ts x n_coefs. The innovations
+    `n_ts` for each set of `n_coeffs` coefficients (typically one set for each grid
+    point), the resulting array has shape n_samples x n_ts x n_coeffs. The innovations
     can be spatially correlated.
 
     Parameters
     ----------
-    intercept : float or ndarray of length n_coefs
+    intercept : float or ndarray of length n_coeffs
         Intercept of the model.
-    coefs : ndarray of shape ar_order x n_coefs
+    coeffs : ndarray of shape ar_order x n_coeffs
         The coefficients of the autoregressive process. Must be a 2D array with the
         autoregressive coefficients along axis=0, while axis=1 contains all independent
         coefficients.
-    covariance : float or ndarray of shape n_coefs x n_coefs
+    covariance : float or ndarray of shape n_coeffs x n_coeffs
         The (co-)variance array. Must be symmetric and positive-semidefinite.
     n_samples : int
         Number of samples to draw for each set of coefficients.
@@ -115,7 +115,7 @@ def _draw_auto_regression_correlated_np(
     -------
     out : ndarray
         Drawn realizations of the specified autoregressive process. The array has shape
-        n_samples x n_ts x n_coefs.
+        n_samples x n_ts x n_coeffs.
 
     Notes
     -----
@@ -128,26 +128,26 @@ def _draw_auto_regression_correlated_np(
     intercept = np.asarray(intercept)
     covariance = np.atleast_2d(covariance)
 
-    # coeffs assumed to be ar_order x n_coefs
-    ar_order, n_coefs = coefs.shape
+    # coeffs assumed to be ar_order x n_coeffs
+    ar_order, n_coeffs = coeffs.shape
 
-    # arbitrary lags? see https://github.com/MESMER-group/mesmer/issues/164
+    # arbitrary lags? no, see: https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
     # ensure reproducibility (TODO: clarify approach to this, see #35)
     np.random.seed(seed)
 
-    # innovations has shape (n_samples, n_ts + buffer, n_coefs)
+    # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
     innovations = np.random.multivariate_normal(
-        mean=np.zeros(n_coefs),
+        mean=np.zeros(n_coeffs),
         cov=covariance,
         size=[n_samples, n_ts + buffer],
     )
 
-    out = np.zeros([n_samples, n_ts + buffer, n_coefs])
+    out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
     for t in range(ar_order + 1, n_ts + buffer):
 
-        ar = np.sum(coefs * out[:, t - ar_lags, :], axis=1)
+        ar = np.sum(coeffs * out[:, t - ar_lags, :], axis=1)
 
         out[:, t, :] = intercept + ar + innovations[:, t, :]
 

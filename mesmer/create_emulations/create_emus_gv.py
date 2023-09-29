@@ -147,9 +147,6 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - [scen] (2d array  (emus, time) of global variability emulation time series)
     """
 
-    # ensure reproducibility
-    np.random.seed(seed)
-
     # buffer so that initial start at 0 does not influence overall result
     # Should this buffer be based on the length of ar_lags instead of hard-coded?
     buffer = 50
@@ -171,8 +168,8 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
 
     emus_gv = _draw_auto_regression_correlated_np(
         intercept=ar_int,
-        # reshape to n_coefs x n_cells
-        coefs=ar_coefs[:, np.newaxis],
+        # reshape to n_coefs x n_cells (cell was squeezed in train_gv.train_gv_AR)
+        coeffs=ar_coefs[:, np.newaxis],
         covariance=AR_std_innovs**2,  # pass the (co-)variance!
         n_samples=nr_emus_v,
         n_ts=nr_ts_emus_v,

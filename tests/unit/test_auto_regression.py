@@ -85,7 +85,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 
     result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
-        coefs=coefs,
+        coeffs=coefs,
         covariance=covariance,
         n_samples=n_samples,
         n_ts=n_ts,
@@ -103,7 +103,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
     result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
-        coefs=np.array([[0]]),
+        coeffs=np.array([[0]]),
         covariance=[0],
         n_samples=1,
         n_ts=3,
@@ -117,7 +117,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
     result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=np.array([[0, intercept]]),
-        coefs=np.array([[0, 0]]),
+        coeffs=np.array([[0, 0]]),
         covariance=np.zeros((2, 2)),
         n_samples=1,
         n_ts=1,
@@ -134,7 +134,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
 
     result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
-        coefs=np.array([[1]]),
+        coeffs=np.array([[1]]),
         covariance=[0],
         n_samples=1,
         n_ts=4,
@@ -151,7 +151,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
     for i, buffer in enumerate([1, 2]):
         result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
             intercept=1,
-            coefs=np.array([[0.5]]),
+            coeffs=np.array([[0.5]]),
             covariance=[0],
             n_samples=1,
             n_ts=4,
@@ -166,7 +166,7 @@ def test_draw_auto_regression_random():
 
     result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
-        coefs=np.array([[0.375], [0.125]]),
+        coeffs=np.array([[0.375], [0.125]]),
         covariance=0.5,
         n_samples=1,
         n_ts=4,
