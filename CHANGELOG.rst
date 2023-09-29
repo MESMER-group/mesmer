@@ -60,7 +60,9 @@ New Features
    - Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
      <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser`_.
    - Added functions to mask the ocean and Antarctica (`#219
-     <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser`_.
+   - Added functions to mask the ocean and Antarctica (
+     `#219 <https://github.com/MESMER-group/mesmer/pull/219>`_ and
+     `#314 <https://github.com/MESMER-group/mesmer/pull/314>`_). By `Mathias Hauser`_.
    - Added functions to calculate the weighted global mean
      (`#220 <https://github.com/MESMER-group/mesmer/pull/220>`_ and
      `#287 <https://github.com/MESMER-group/mesmer/pull/287>`_). By `Mathias Hauser`_.
