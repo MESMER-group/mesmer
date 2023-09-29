@@ -133,3 +133,27 @@ def test_mask_antarctiva_default(
 def test_mask_antarctiva(as_dataset, y_coords):
 
     _test_mask(mesmer.mask.mask_antarctica, as_dataset, y_coords=y_coords)
+
+
+def test_mask_ocean_2D_grid():
+
+    lon = lat = np.arange(0, 30)
+    LON, LAT = np.meshgrid(lon, lat)
+
+    dims = ("rlat", "rlon")
+
+    data = np.random.randn(*LON.shape)
+
+    data_2D_grid = xr.Dataset(
+        {"data": (dims, data)}, coords={"lon": (dims, LON), "lat": (dims, LAT)}
+    )
+
+    data_1D_grid = xr.Dataset(
+        {"data": (("lat", "lon"), data)}, coords={"lon": lon, "lat": lat}
+    )
+
+    result = mesmer.mask.mask_ocean(data_2D_grid)
+    expected = mesmer.mask.mask_ocean(data_1D_grid)
+
+    # the Datasets don't have equal coords but their arrays should be the same
+    np.testing.assert_equal(result.data.values, expected.data.values)

@@ -11,7 +11,7 @@ def _where_if_dim(obj, cond, dims):
     # dimensions - we don't want that https://github.com/pydata/xarray/issues/7027
 
     def _where(da):
-        if all(dim in da.dims for dim in dims):
+        if all(dim in da.coords for dim in dims):
             return da.where(cond)
         return da
 
