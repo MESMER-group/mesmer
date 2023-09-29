@@ -1,8 +1,6 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-
 
 def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
     """Select the order of an autoregressive process - xarray wrapper
