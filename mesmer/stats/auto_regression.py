@@ -119,8 +119,6 @@ def _draw_auto_regression_correlated_np(
 
     Notes
     -----
-    The 'innovations' is the error or noise term.
-
     As this is not a deterministic function it is not called `predict`. "Predicting"
     an autoregressive process does not include the innovations and therefore asymptotes
     towards a certain value (in contrast to this function).
@@ -137,6 +135,7 @@ def _draw_auto_regression_correlated_np(
     # ensure reproducibility (TODO: clarify approach to this, see #35)
     np.random.seed(seed)
 
+    # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
     innovations = np.random.multivariate_normal(
         mean=np.zeros(n_coeffs),
@@ -170,15 +169,15 @@ def _fit_auto_regression_xr(data, dim, lags):
     Returns
     -------
     :obj:`xr.Dataset`
-        Dataset containing the estimated parameters of the ``intercept``, the AR ``coeffs``
-        and the ``standard_deviation`` of the residuals.
+        Dataset containing the estimated parameters of the ``intercept``, the AR
+        ``coeffs`` and the ``variance`` of the residuals.
     """
 
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
     # NOTE: this is slowish, see https://github.com/MESMER-group/mesmer/pull/290
-    intercept, coeffs, covariance = xr.apply_ufunc(
+    intercept, coeffs, variance = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
         input_core_dims=[[dim]],
@@ -194,7 +193,7 @@ def _fit_auto_regression_xr(data, dim, lags):
     data_vars = {
         "intercept": intercept,
         "coeffs": coeffs,
-        "covariance": covariance,
+        "variance": variance,
         "lags": lags,
     }
 
@@ -230,7 +229,7 @@ def _fit_auto_regression_np(data, lags):
     intercept = AR_result.params[0]
     coeffs = AR_result.params[1:]
 
-    # covariance of the residuals
-    covariance = AR_result.sigma2
+    # variance of the residuals
+    variance = AR_result.sigma2
 
-    return intercept, coeffs, covariance
+    return intercept, coeffs, variance
