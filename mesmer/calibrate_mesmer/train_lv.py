@@ -239,7 +239,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             params = _fit_auto_regression_xr(data, dim="time", lags=1)
             # BUG/ TODO: we wrongfully average over the standard deviation
             # see https://github.com/MESMER-group/mesmer/issues/307
-            params["standard_deviation"] = np.sqrt(params.covariance)
+            params["standard_deviation"] = np.sqrt(params.variance)
             params = params.mean("run")
 
             params_scen.append(params)
