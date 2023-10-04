@@ -81,12 +81,12 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 
     intercept = np.zeros(n_cells)
     coefs = np.ones((ar_order, n_cells))
-    covariance = np.ones((n_cells, n_cells))
+    variance = np.ones((n_cells, n_cells))
 
     result = mesmer.stats.auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
         coeffs=coefs,
-        covariance=covariance,
+        covariance=variance,
         n_samples=n_samples,
         n_ts=n_ts,
         seed=0,
@@ -198,7 +198,7 @@ def test_fit_auto_regression_xr_1D_values():
         {
             "intercept": 1.04728995,
             "coeffs": ("lags", [0.99682459]),
-            "covariance": 1.05381192,
+            "variance": 1.05381192,
             "lags": [1],
         }
     )
@@ -219,7 +219,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
         {
             "intercept": 2.08295035,
             "coeffs": ("lags", [0.99318256]),
-            "covariance": 1.18712735,
+            "variance": 1.18712735,
             "lags": [2],
         }
     )
@@ -238,14 +238,14 @@ def test_fit_auto_regression_xr_1D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "covariance"],
+        required_vars=["intercept", "coeffs", "variance"],
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=0, shape=())
     _check_dataarray_form(
         res.coeffs, "coeffs", ndim=1, required_dims={"lags"}, shape=(len(lags),)
     )
-    _check_dataarray_form(res.covariance, "covariance", ndim=0, shape=())
+    _check_dataarray_form(res.variance, "variance", ndim=0, shape=())
 
     expected = xr.DataArray(lags, coords={"lags": lags})
 
@@ -263,7 +263,7 @@ def test_fit_auto_regression_xr_2D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "covariance"],
+        required_vars=["intercept", "coeffs", "variance"],
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=1, shape=(n_cells,))
@@ -274,7 +274,7 @@ def test_fit_auto_regression_xr_2D(lags):
         required_dims={"cells", "lags"},
         shape=(n_cells, lags),
     )
-    _check_dataarray_form(res.covariance, "covariance", ndim=1, shape=(n_cells,))
+    _check_dataarray_form(res.variance, "variance", ndim=1, shape=(n_cells,))
 
 
 @pytest.mark.parametrize("lags", [1, 2])
