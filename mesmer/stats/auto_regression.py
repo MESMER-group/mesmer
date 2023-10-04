@@ -1,5 +1,8 @@
 import numpy as np
+import pandas as pd
 import xarray as xr
+
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
 
 def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
@@ -79,6 +82,238 @@ def _select_ar_order_np(data, maxlag, ic="bic"):
     return selected_ar_order
 
 
+def _get_size_and_coord_dict(coords_or_size, dim, name):
+
+    if isinstance(coords_or_size, int):
+        size, coord_dict = coords_or_size, {}
+
+        return size, coord_dict
+
+    if not isinstance(coords_or_size, (xr.DataArray, xr.Index, pd.Index)):
+        raise TypeError(
+            f"expected '{name}' to be an `int`, pandas or xarray Index or a `DataArray`"
+            f"got {type(coords_or_size)}"
+        )
+
+    if coords_or_size.ndim != 1:
+        raise ValueError(f"Coords must be 1D but has {coords_or_size.ndim} dimensions")
+
+    size = coords_or_size.size
+    coord_dict = {dim: coords_or_size}
+
+    return size, coord_dict
+
+
+def _draw_auto_regression_uncorrelated(
+    ar_params,
+    *,
+    time,
+    realisation,
+    seed,
+    buffer,
+    time_dim="time",
+    realisation_dim="realisation",
+):
+
+    """draw time series of an auto regression process
+
+    Parameters
+    ----------
+    ar_params : Dataset
+        Dataset containing the estimated parameters of the AR process. Must contain the
+        following DataArray objects:
+
+        - intercept
+        - coeffs
+        - variance
+
+    time : int | DataArray | Index
+        Defines the number of auto-correlated samples to draw and possibly its coordinates.
+
+        - ``int``: defines the number of time steps to draw
+        - ``DataArray`` or ``Index``: defines the coordinates and its length the number
+          of samples along the time dimension to draw.
+
+    realisation : int | DataArray
+        Defines the number of uncorrelated samples to draw and possibly its coordinates.
+        See ``time`` for details.
+
+    seed : int
+        Seed used to initialize the pseudo-random number generator.
+
+    buffer : int
+        Buffer to initialize the autoregressive process (ensures that start at 0 does
+        not influence overall result).
+
+    Returns
+    -------
+    out : DataArray
+        Drawn realizations of the specified autoregressive process. The array has shape
+        n_ts x n_coeffs x n_realisations.
+
+    """
+
+    # check the input
+    _check_dataset_form(
+        ar_params, "ar_params", required_vars=("intercept", "coeffs", "variance")
+    )
+
+    if (
+        ar_params.intercept.ndim != 0
+        or ar_params.coeffs.ndim != 1
+        or ar_params.variance.ndim != 0
+    ):
+        raise ValueError(
+            "``_draw_auto_regression_uncorrelated`` can currently only handle single points"
+        )
+
+    # _draw_ar_corr_xr_internal expects 2D arrays
+    ar_params = ar_params.expand_dims("__gridpoint__")
+
+    result = _draw_ar_corr_xr_internal(
+        intercept=ar_params.intercept,
+        coeffs=ar_params.coeffs,
+        covariance=ar_params.variance,
+        time=time,
+        realisation=realisation,
+        seed=seed,
+        buffer=buffer,
+        time_dim=time_dim,
+        realisation_dim=realisation_dim,
+    )
+
+    # remove the "__gridpoint__" dim again
+    result = result.squeeze(dim="__gridpoint__", drop=True)
+
+    return result
+
+
+def _draw_auto_regression_correlated(
+    ar_params,
+    covariance,
+    *,
+    time,
+    realisation,
+    seed,
+    buffer,
+    time_dim="time",
+    realisation_dim="realisation",
+):
+    """
+    draw time series of an auto regression process with spatially-correlated innovations
+
+    Parameters
+    ----------
+    ar_params : Dataset
+        Dataset containing the estimated parameters of the AR process. Must contain the
+        following DataArray objects:
+
+        - intercept
+        - coeffs
+
+    covariance : DataArray
+        The (co-)variance array. Must be symmetric and positive-semidefinite.
+
+    time : int | DataArray | Index
+        Defines the number of auto-correlated samples to draw and possibly its coordinates.
+
+        - ``int``: defines the number of time steps to draw
+        - ``DataArray`` or ``Index``: defines the coordinates and its length the number
+          of samples along the time dimension to draw.
+
+    realisation : int | DataArray
+        Defines the number of uncorrelated samples to draw and possibly its coordinates.
+        See ``time`` for details.
+
+    seed : int
+        Seed used to initialize the pseudo-random number generator.
+
+    buffer : int
+        Buffer to initialize the autoregressive process (ensures that start at 0 does
+        not influence overall result).
+
+    Returns
+    -------
+    out : DataArray
+        Drawn realizations of the specified autoregressive process. The array has shape
+        n_ts x n_coeffs x n_realisations.
+
+    """
+
+    # check the input
+    _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "coeffs"))
+    _check_dataarray_form(ar_params.intercept, "intercept", ndim=1)
+    (dim,) = ar_params.intercept.dims
+    size = ar_params.intercept.size
+
+    _check_dataarray_form(
+        ar_params.coeffs, "coeffs", ndim=2, required_dims=("lags", dim)
+    )
+    _check_dataarray_form(covariance, "covariance", ndim=2, shape=(size, size))
+
+    result = _draw_ar_corr_xr_internal(
+        intercept=ar_params.intercept,
+        coeffs=ar_params.coeffs,
+        covariance=covariance,
+        time=time,
+        realisation=realisation,
+        seed=seed,
+        buffer=buffer,
+        time_dim=time_dim,
+        realisation_dim=realisation_dim,
+    )
+
+    return result
+
+
+def _draw_ar_corr_xr_internal(
+    intercept,
+    coeffs,
+    covariance,
+    *,
+    time,
+    realisation,
+    seed,
+    buffer,
+    time_dim="time",
+    realisation_dim="realisation",
+):
+
+    # get the size and coords of the new dimensions
+    n_ts, time_coords = _get_size_and_coord_dict(time, time_dim, "time")
+    n_realisations, realisation_coords = _get_size_and_coord_dict(
+        realisation, realisation_dim, "realisation"
+    )
+
+    # the dimension name of the gridpoints
+    (gridpoint_dim,) = set(intercept.dims)
+    # make sure non-dimension coords are properly caught
+    gridpoint_coords = dict(coeffs[gridpoint_dim].coords)
+
+    out = _draw_auto_regression_correlated_np(
+        intercept=intercept.values,
+        coeffs=coeffs.transpose(..., gridpoint_dim).values,
+        covariance=covariance.values,
+        n_samples=n_realisations,
+        n_ts=n_ts,
+        seed=seed,
+        buffer=buffer,
+    )
+
+    dims = (realisation_dim, time_dim, gridpoint_dim)
+
+    # TODO: use dict union once requiring py3.9+
+    # coords = gridpoint_coords | time_coords | realisation_coords
+    coords = {**time_coords, **realisation_coords, **gridpoint_coords}
+
+    out = xr.DataArray(out, dims=dims, coords=coords)
+
+    # for consistency we transpose to time x gridpoint x realisation
+    out = out.transpose(time_dim, gridpoint_dim, realisation_dim)
+
+    return out
+
+
 def _draw_auto_regression_correlated_np(
     *, intercept, coeffs, covariance, n_samples, n_ts, seed, buffer
 ):
@@ -132,7 +367,7 @@ def _draw_auto_regression_correlated_np(
     # arbitrary lags? no, see: https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
-    # ensure reproducibility (TODO: clarify approach to this, see #35)
+    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     np.random.seed(seed)
 
     # NOTE: 'innovations' is the error or noise term.
