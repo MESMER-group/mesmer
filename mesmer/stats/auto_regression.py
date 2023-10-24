@@ -99,7 +99,7 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
         )
 
     if coords_or_size.ndim != 1:
-        raise ValueError(f"Coords must be 1D but has {coords_or_size.ndim} dimensions")
+        raise ValueError(f"Coords must be 1D but have {coords_or_size.ndim} dimensions")
 
     size = coords_or_size.size
     coord_dict = {dim: np.asarray(coords_or_size)}

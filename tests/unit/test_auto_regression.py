@@ -194,6 +194,22 @@ def test_draw_auto_regression_uncorrelated_wrong_coords(
 
 
 @pytest.mark.parametrize("dim", ("time", "realisation"))
+def test_draw_auto_regression_uncorrelated_wrong_coords_2D(ar_params_1D, dim):
+
+    coords = {"time": 2, "realisation": 3}
+
+    coords[dim] = xr.DataArray([[1, 2]])
+
+    with pytest.raises(ValueError, match="Coords must be 1D but have 2 dimensions"):
+        mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+            ar_params_1D,
+            **coords,
+            seed=0,
+            buffer=0,
+        )
+
+
+@pytest.mark.parametrize("dim", ("time", "realisation"))
 @pytest.mark.parametrize("coords", (xr.DataArray([3, 5]), pd.Index([1, 2, 3])))
 def test_draw_auto_regression_uncorrelated_coords(ar_params_1D, dim, coords):
 
@@ -275,6 +291,23 @@ def test_draw_auto_regression_correlated_wrong_coords(
         TypeError,
         match=f"expected '{dim}' to be an `int`, pandas or xarray Index or a `DataArray`",
     ):
+        mesmer.stats.auto_regression._draw_auto_regression_correlated(
+            ar_params_2D,
+            covariance,
+            **coords,
+            seed=0,
+            buffer=0,
+        )
+
+
+@pytest.mark.parametrize("dim", ("time", "realisation"))
+def test_draw_auto_regression_correlated_wrong_coords_2D(ar_params_2D, covariance, dim):
+
+    coords = {"time": 2, "realisation": 3}
+
+    coords[dim] = xr.DataArray([[1, 2]])
+
+    with pytest.raises(ValueError, match="Coords must be 1D but have 2 dimensions"):
         mesmer.stats.auto_regression._draw_auto_regression_correlated(
             ar_params_2D,
             covariance,
