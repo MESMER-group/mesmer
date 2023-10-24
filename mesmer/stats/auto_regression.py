@@ -92,14 +92,14 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
     if not isinstance(coords_or_size, (xr.DataArray, xr.Index, pd.Index)):
         raise TypeError(
             f"expected '{name}' to be an `int`, pandas or xarray Index or a `DataArray`"
-            f"got {type(coords_or_size)}"
+            f" got {type(coords_or_size)}"
         )
 
     if coords_or_size.ndim != 1:
         raise ValueError(f"Coords must be 1D but has {coords_or_size.ndim} dimensions")
 
     size = coords_or_size.size
-    coord_dict = {dim: coords_or_size}
+    coord_dict = {dim: np.asarray(coords_or_size)}
 
     return size, coord_dict
 
@@ -149,7 +149,13 @@ def _draw_auto_regression_uncorrelated(
     -------
     out : DataArray
         Drawn realizations of the specified autoregressive process. The array has shape
-        n_ts x n_coeffs x n_realisations.
+        n_time x n_coeffs x n_realisations.
+
+    Notes
+    -----
+    The number of (spatially-)correlated samples is defined by the size of ``ar_params``
+    (``n_coeffs``, i.e. the number of gridpoints) and ``covariance`` (which must be
+    equal).
 
     """
 
@@ -236,16 +242,21 @@ def _draw_auto_regression_correlated(
     -------
     out : DataArray
         Drawn realizations of the specified autoregressive process. The array has shape
-        n_ts x n_coeffs x n_realisations.
+        n_time x n_coeffs x n_realisations.
+
+    Notes
+    -----
+    The number of (spatially-)correlated samples is defined by the size of ``ar_params``
+    (``n_coeffs``, i.e. the number of gridpoints) and ``covariance`` (which must be
+    equal).
 
     """
 
     # check the input
     _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "coeffs"))
     _check_dataarray_form(ar_params.intercept, "intercept", ndim=1)
-    (dim,) = ar_params.intercept.dims
-    size = ar_params.intercept.size
 
+    (dim,), size = ar_params.intercept.dims, ar_params.intercept.size
     _check_dataarray_form(
         ar_params.coeffs, "coeffs", ndim=2, required_dims=("lags", dim)
     )
