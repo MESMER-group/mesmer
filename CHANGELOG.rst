@@ -30,7 +30,7 @@ New Features
      of the standard deviation (
      `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_
      `#318 <https://github.com/MESMER-group/mesmer/pull/318>`_). By `Mathias Hauser`_.
-   - Add ``_draw_auto_regression_correlated`` and ``_draw_auto_regression_correlated``: to draw samples of a
+   - Add ``_draw_auto_regression_correlated`` and ``_draw_auto_regression_uncorrelated``: to draw samples of a
      (spatially-)correlated and uncorrelated auto regression model (
      `#322 <https://github.com/MESMER-group/mesmer/pull/322>`_,
      `#161 <https://github.com/MESMER-group/mesmer/pull/161>`_ and

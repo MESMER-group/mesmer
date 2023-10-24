@@ -154,12 +154,6 @@ def _draw_auto_regression_uncorrelated(
         Drawn realizations of the specified autoregressive process. The array has shape
         n_time x n_coeffs x n_realisations.
 
-    Notes
-    -----
-    The number of (spatially-)correlated samples is defined by the size of ``ar_params``
-    (``n_coeffs``, i.e. the number of gridpoints) and ``covariance`` (which must be
-    equal).
-
     """
 
     # check the input
