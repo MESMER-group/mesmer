@@ -89,7 +89,7 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
 
         return size, coord_dict
 
-    # TODO: use public xr.Index when the minimum xarray version is v2023.08.0~26
+    # TODO: use public xr.Index when the minimum xarray version is v2023.08.0
     xr_Index = xr.core.indexes.Index
 
     if not isinstance(coords_or_size, (xr.DataArray, xr_Index, pd.Index)):
@@ -117,7 +117,6 @@ def _draw_auto_regression_uncorrelated(
     time_dim="time",
     realisation_dim="realisation",
 ):
-
     """draw time series of an auto regression process
 
     Parameters
