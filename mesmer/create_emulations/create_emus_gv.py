@@ -6,11 +6,10 @@
 Functions to create global variability emulations with MESMER.
 """
 
-
-import numpy as np
+import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
+from mesmer.stats.auto_regression import _draw_auto_regression_uncorrelated
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -166,15 +165,25 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     # only use the selected coeffs
     ar_coefs = ar_coefs[:AR_order_sel]
 
-    emus_gv = _draw_auto_regression_correlated_np(
-        intercept=ar_int,
-        # reshape to n_coefs x n_cells (cell was squeezed in train_gv.train_gv_AR)
-        coeffs=ar_coefs[:, np.newaxis],
-        covariance=AR_std_innovs**2,  # pass the (co-)variance!
-        n_samples=nr_emus_v,
-        n_ts=nr_ts_emus_v,
+    # create intermediate ar_params Dataset
+    # the variables are 1D (except coeffs)
+    intercept = xr.DataArray(ar_int)
+    coeffs = xr.DataArray(ar_coefs, dims="lags")
+    variance = xr.DataArray(AR_std_innovs**2)
+
+    ar_params = xr.Dataset(
+        {"intercept": intercept, "coeffs": coeffs, "variance": variance}
+    )
+
+    emus_gv = _draw_auto_regression_uncorrelated(
+        ar_params,
+        time=nr_ts_emus_v,
+        realisation=nr_emus_v,
         seed=seed,
         buffer=buffer,
     )
 
-    return emus_gv.squeeze()
+    # get back the old order of the emus
+    emus_gv = emus_gv.values.transpose()
+
+    return emus_gv

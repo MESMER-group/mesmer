@@ -30,12 +30,14 @@ New Features
      of the standard deviation (
      `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_
      `#318 <https://github.com/MESMER-group/mesmer/pull/318>`_). By `Mathias Hauser`_.
-   - Add ``mesmer.stats.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
-     auto regression model (
+   - Add ``_draw_auto_regression_correlated`` and ``_draw_auto_regression_uncorrelated``: to draw samples of a
+     (spatially-)correlated and uncorrelated auto regression model (
+     `#322 <https://github.com/MESMER-group/mesmer/pull/322>`_,
      `#161 <https://github.com/MESMER-group/mesmer/pull/161>`_ and
      `#313 <https://github.com/MESMER-group/mesmer/pull/313>`_).
      By `Mathias Hauser`_.
-   - Extract function to select the order of the auto regressive model: ``mesmer.stats.auto_regression._select_ar_order_xr``
+   - Add ``mesmer.stats.auto_regression._select_ar_order_xr`` to select the order of an
+     auto regressive model
      (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
      By `Mathias Hauser`_.
 
