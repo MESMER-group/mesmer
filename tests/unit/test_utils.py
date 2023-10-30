@@ -47,7 +47,7 @@ def test_minimize_local_discrete_warning():
 
     data_dict = {key: value for key, value in enumerate((5, np.inf, 3))}
 
-    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` retured `inf`"):
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` returned `inf`"):
         result = mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )

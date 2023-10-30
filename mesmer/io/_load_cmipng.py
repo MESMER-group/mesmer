@@ -58,7 +58,7 @@ def extract_time_lon_lat_wgt3d(data):
 
 
 def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
-    """Find filname in ETHZ cmip-ng archive.
+    """Find filename in ETHZ cmip-ng archive.
 
     Parameters
     ----------

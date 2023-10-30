@@ -24,7 +24,7 @@ There are two levels of internal data structures used within MESMER: (i) an arra
 
 MESMER currently uses [numpy](https://numpy.org/) to represent its array data structure.
 While numpy is the de-facto standard of array computing today, MESMER can profit from labels which encode information about how the array values map to locations in space, time, etc..
-For example a 3 dimensional array can be augmented with named dimensons (`time`, `latitude`, `longitude`) and these dimensions can be augmented with coordinates (e.g. the first time step corresponds to 1850).
+For example a 3 dimensional array can be augmented with named dimensions (`time`, `latitude`, `longitude`) and these dimensions can be augmented with coordinates (e.g. the first time step corresponds to 1850).
 Such data structures are provided by the well established [xarray](http://xarray.pydata.org/en/stable/) library, which adds named dimensions, coordinates and attributes on top of raw numpy-like arrays and is particularly tailored to working with netCDF files.
 We therefore plan to replace the array data structure with xarray data structures.
 
@@ -43,7 +43,7 @@ Specific tasks
 
 ### Disentangle the data handling from the statistical functions
 
-Currently, most functions in MESMER combine data handling (e.g. splitting historical data and projections), statistical calibration (e.g. estimating linear regression coefficients), and saving the estimated parameters. These three steps should be split into individual functions, which will offer several benefits: (i) It should become easier to understand what happens in each step of the calibration/ emulation pipeline. (ii) The individual code parts become easier to re-use and update. (iii) Each part can be tested individually.
+Currently, most functions in MESMER combine data handling (e.g. splitting historical data and projections), statistical calibration (e.g. estimating linear regression coefficients), and saving the estimated parameters. These three steps should be split into individual functions, which will offer several benefits: (i) It should become easier to understand what happens in each step of the calibration/ emulation pipeline. (ii) The individual code parts become easier to reuse and update. (iii) Each part can be tested individually.
 
 Specific tasks
 - Extract common data handling tasks and write individual functions for each of them ([#109](https://github.com/MESMER-group/mesmer/pull/109)).

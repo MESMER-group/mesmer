@@ -75,7 +75,7 @@ class LinearRegression:
         available_predictors = set(predictors.keys())
 
         if required_predictors != available_predictors:
-            raise ValueError("Missing or superflous predictors.")
+            raise ValueError("Missing or superfluous predictors.")
 
         prediction = params.intercept
         for key in required_predictors:

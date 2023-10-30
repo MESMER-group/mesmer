@@ -117,7 +117,7 @@ Breaking changes
   and the ``reg_dict`` argument to :py:func:`mesmer.utils.select.extract_land`. These arguments
   no longer have any affect (`#235 <https://github.com/MESMER-group/mesmer/pull/235>`_).
   By `Mathias Hauser`_.
-- Removed ``ref["type"] == "first"``, i.e., caculating the anomaly w.r.t. the first
+- Removed ``ref["type"] == "first"``, i.e., calculating the anomaly w.r.t. the first
   ensemble member (`#247 <https://github.com/MESMER-group/mesmer/pull/247>`_).
   By `Mathias Hauser`_.
 - Renamed ``mesmer.calibrate_mesmer._calibrate_and_draw_realisations`` to ``mesmer.calibrate_mesmer._calibrate_tas``

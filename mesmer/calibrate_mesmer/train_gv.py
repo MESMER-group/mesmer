@@ -84,7 +84,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
 
     # apply the chosen method
     if params_gv["method"] == "AR" and wgt_scen_tr_eq:
-        # specifiy parameters employed for AR process fitting
+        # specify parameters employed for AR process fitting
 
         kwargs["max_lag"] = kwargs.get("max_lag", 12)
         kwargs["sel_crit"] = kwargs.get("sel_crit", "bic")
@@ -93,7 +93,7 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     else:
         raise ValueError("No such method and/ or weighting approach.")
 
-    # save the global variability paramters if requested
+    # save the global variability parameters if requested
     if save_params:
         save_mesmer_data(
             params_gv,
