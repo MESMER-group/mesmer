@@ -136,7 +136,7 @@ def test_to_unstructured_dropna(dropna, coords, time_pos):
 
     da[slice(time_pos), 0, 0] = np.NaN
 
-    # the gridpoint is droped if ANY time step is NaN
+    # the gridpoint is dropped if ANY time step is NaN
     expected[:, 0] = np.NaN
 
     if dropna:

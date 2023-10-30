@@ -60,7 +60,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
     params_lv : dict, optional
-        dictionary of local variability paramters which are derived together with the
+        dictionary of local variability parameters which are derived together with the
         local trend parameters
 
         - ["targs"] (emulated variables, str)
@@ -186,7 +186,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
     else:
         raise NotImplementedError()
 
-    # save the local trend paramters if requested
+    # save the local trend parameters if requested
     if save_params:
         save_mesmer_data(
             params_lt,

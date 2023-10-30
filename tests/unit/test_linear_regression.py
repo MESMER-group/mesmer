@@ -88,10 +88,10 @@ def test_LR_predict(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    with pytest.raises(ValueError, match="Missing or superflous predictors"):
+    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
         lr.predict({})
 
-    with pytest.raises(ValueError, match="Missing or superflous predictors"):
+    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
         lr.predict({"tas": None, "something else": None})
 
     tas = xr.DataArray([0, 1, 2], dims="time")

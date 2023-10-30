@@ -30,7 +30,7 @@ dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
 dir_obs = os.path.join(TEST_DATA_ROOT, "observations")
 
 # mesmer output
-dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxillary")
+dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxiliary")
 dir_mesmer_params = os.path.join(EXAMPLE_OUTPUT_ROOT, "calibrated_parameters")
 dir_mesmer_emus = os.path.join(EXAMPLE_OUTPUT_ROOT, "emulations")
 

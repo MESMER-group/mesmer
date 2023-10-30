@@ -135,7 +135,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         number of time steps in each global variability emulation
 
     seed : int
-        esm and scenario specific seed for gv module to ensure reproducability of
+        esm and scenario specific seed for gv module to ensure reproducibility of
         results
 
     Returns

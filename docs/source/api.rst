@@ -82,7 +82,7 @@ Masking regions
    ~core.mask.mask_antarctica
    ~core.regionmaskcompat.mask_3D_frac_approx
 
-Weighted operarions: calculate global mean
+Weighted operations: calculate global mean
 ------------------------------------------
 
    ~core.weighted.global_mean

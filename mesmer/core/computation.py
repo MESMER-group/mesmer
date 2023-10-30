@@ -180,7 +180,7 @@ def _calc_geodist_exact(lon, lat):
     geodist = np.zeros([n_points, n_points])
 
     # calculate only the upper right half of the triangle
-    for i in range(n_points):
+    for i in range(n_points - 1):
 
         # need to duplicate gridpoint (required by geod.inv)
         lt = np.repeat(lat[i : i + 1], n_points - (i + 1))

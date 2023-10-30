@@ -40,7 +40,7 @@ def load_mesmer_output(
         target variables (e.g., "tas")
     esm_str : str, optional
         Earth System Model (e.g., "CanESM2", "CanESM5")
-    scen_str : str, otional
+    scen_str : str, optional
         scenario (e.g., "rcp85", "ssp585", "h-ssp585")
     mid_path : str, optional
         middle part of pathway depending on what exactly want to load (e.g.,
@@ -106,7 +106,7 @@ def load_mesmer_output(
         dict_out = {}
     elif len(path_list) > 1:
         warnings.warn(
-            "More than 1 file exists for these critera. "
+            "More than 1 file exists for these criteria. "
             "Please be more concrete in your selection."
             " An empty dictionary will be returned.",
         )

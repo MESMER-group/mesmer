@@ -19,7 +19,7 @@ def main(cfg):
 
     # specify the target variable
     targ = cfg.targs[0]
-    print(f"Target variables: {targ}")
+    print(f"Target variable: {targ}")
 
     # load in the ESM runs
     esms = cfg.esms

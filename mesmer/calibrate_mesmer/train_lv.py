@@ -55,7 +55,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     Returns
     -------
     params_lv : dict
-        dictionary of local variability paramters
+        dictionary of local variability parameters
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
