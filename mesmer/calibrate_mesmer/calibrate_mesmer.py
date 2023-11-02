@@ -27,7 +27,6 @@ class _Config:
         scenarios,
         cmip_generation,
         cmip_data_root_dir,
-        observations_root_dir,
         auxiliary_data_dir,
         reference_period_type,
         reference_period_start_year,
@@ -58,7 +57,6 @@ class _Config:
         self.gen = cmip_generation
 
         self.dir_cmipng = cmip_data_root_dir
-        self.dir_obs = observations_root_dir
         self.dir_aux = auxiliary_data_dir
         self.ref = {
             "type": reference_period_type,
@@ -122,7 +120,6 @@ def _calibrate_tas(
     threshold_land,
     output_file,
     cmip_data_root_dir=None,
-    observations_root_dir=None,
     auxiliary_data_dir=None,
     cmip_generation=6,
     reference_period_type="individ",
@@ -164,7 +161,6 @@ def _calibrate_tas(
         scenarios=scenarios_to_train,
         cmip_generation=cmip_generation,
         cmip_data_root_dir=cmip_data_root_dir,
-        observations_root_dir=observations_root_dir,
         auxiliary_data_dir=auxiliary_data_dir,
         reference_period_type=reference_period_type,
         reference_period_start_year=reference_period_start_year,

@@ -26,9 +26,6 @@ gen = 6
 # cmip-ng
 dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
 
-# observations
-dir_obs = os.path.join(TEST_DATA_ROOT, "observations")
-
 # mesmer output
 dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxiliary")
 dir_mesmer_params = os.path.join(EXAMPLE_OUTPUT_ROOT, "calibrated_parameters")
