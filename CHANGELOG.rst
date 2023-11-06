@@ -92,7 +92,9 @@ New Features
 - Add ``calc_gaspari_cohn_correlation_matrices`` a function to calculate Gaspari-Cohn correlation
   matrices for a range of localisation radii (`#300 <https://github.com/MESMER-group/mesmer/pull/300>`__).
   By `Zeb Nicholls`_ and `Mathias Hauser`_.
-
+- Add a helper function to load tas (and potentially) hfds for several ESMs from cmip-ng
+  archive at ETHZ (`#326 <https://github.com/MESMER-group/mesmer/pull/326>`__).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
