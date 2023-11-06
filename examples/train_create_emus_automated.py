@@ -1,16 +1,15 @@
 import warnings
 
+import xarray as xr
+
 # import MESMER tools
 from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
 from mesmer.create_emulations import (
-    create_emus_g,
-    create_emus_gv,
-    create_emus_l,
     create_emus_lt,
     create_emus_lv,
     gather_gt_data,
+    make_realisations,
 )
-from mesmer.create_emulations.utils import concatenate_hist_future
 from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
 
@@ -71,7 +70,7 @@ def main(cfg):
         print(f"{esm}")
         print("=" * len(esm))
 
-        print("Calibration")
+        print("\nCalibration")
         print("-----------")
 
         print("- Start with global trend module")
@@ -139,42 +138,33 @@ def main(cfg):
             {}, targs_res_lv, esm, cfg, save_params=True, aux=aux, params_lv=params_lv
         )
 
-        print("Emulation")
+        print("\nEmulation")
         print("---------")
-
         # for this example we use the model's own smoothed gsat as predictor
-        gt_tas = concatenate_hist_future(gt_tas_s)
 
-        scen = list(gt_tas.keys())[0]
-
-        time_v = {}
-        time_v["all"] = time[esm][scen]
-
-        print("- Create global variability emulations")
-
-        preds_gv = {"time": time_v}
-        emus_gv_tas = create_emus_gv(params_gv_tas, preds_gv, cfg, save_emus=True)
-
-        print("- Merge the global trend and the global variability.")
-
-        create_emus_g(
-            gt_tas, emus_gv_tas, params_gt_tas, params_gv_tas, cfg, save_emus=True
+        # create a land_fraction DataArray, so we can determine the grid coordinates
+        land_fractions = xr.DataArray(
+            ls["grid_l_m"],
+            dims=["lat", "lon"],
+            coords={"lat": lat["c"], "lon": lon["c"]},
         )
 
-        print("- Create local trend emulations")
-
-        emus_lt = create_emus_lt(
-            params_lt, preds_lt, cfg, concat_h_f=True, save_emus=True
+        realisations = make_realisations(
+            # preds_lt=gt_tas,
+            preds_lt=preds_lt,
+            params_lt=params_lt,
+            params_lv=params_lv,
+            params_gv_T=params_gv_tas,
+            time=time[esm],
+            n_realisations=cfg.nr_emus_v,
+            seeds=cfg.seed,
+            land_fractions=land_fractions,
         )
 
-        print("- Create local variability emulations")
+        print("\nCreated emulations")
+        print("------------------")
 
-        preds_lv = {"gvtas": emus_gv_tas}  # predictors_list
-        emus_lv = create_emus_lv(params_lv, preds_lv, cfg, save_emus=True)
-
-        # create and save full emulations
-        print("- Merge the local trends and the local variability.")
-        create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True)
+        print(realisations)
 
 
 if __name__ == "__main__":

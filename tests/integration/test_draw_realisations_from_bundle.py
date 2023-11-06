@@ -21,7 +21,7 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
         ouput_dir, "test_make_realisations_expected_output.nc"
     )
 
-    tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1000000}}}
+    tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1_000_000}}}
 
     bundle_path = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
 
