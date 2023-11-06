@@ -21,7 +21,7 @@ from ..utils import convert_dict_to_arr, extract_land
 
 
 def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
-    """Load tas (and potentially) hfds for several ESMs from cmip-ng archive at ETHZ
+    """Load tas and (potentially) hfds for several ESMs from cmip-ng archive at ETHZ
 
     Parameters
     ----------
