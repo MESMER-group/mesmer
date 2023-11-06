@@ -8,11 +8,87 @@ Functions to load in cmip5 and cmip6 data from the cmip-ng archive at ETHZ.
 
 import glob
 import os
+import warnings
 
 import numpy as np
 import xarray as xr
 
 import mesmer
+
+from ..io.load_constant_files import load_regs_ls_wgt_lon_lat
+from ..utils import convert_dict_to_arr, extract_land
+
+
+def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
+    """Load tas and (potentially) hfds for several ESMs from cmip-ng archive at ETHZ
+
+    Parameters
+    ----------
+    esms : list of str
+        List of esms to load the data for
+    scenarios : list of str
+        List of scenarios to load the data for
+    threshold_land : float
+        Minimum land fraction so a grid point is considered.
+    use_hfds : bool
+        Whether to load hfds data.
+    cfc : configuration
+        Configuration values. Required are ``cfg.gen``, ``cfg.ref``, and
+        ``cfg.dir_cmipng``.
+
+    Returns
+    -------
+    time, lon, lat, ls, tas, gsat, ghfds
+
+    Note
+    ----
+    ghfds is None if ``use_hfds`` is set to False
+    """
+
+    # tas with global coverage
+    tas_g = {}
+
+    # global mean tas
+    gsat = {}
+
+    # global mean hfds (needed as predictor)
+    ghfds = {} if use_hfds else None
+
+    time = {}
+
+    for esm in esms:
+        print(f"- loading data for {esm}")
+
+        time[esm] = {}
+
+        # temporary dicts to gather data over scenarios
+        tas_temp, gsat_temp, ghfds_temp = {}, {}, {}
+        for scen in scenarios:
+            out = load_cmipng("tas", esm, scen, cfg)
+
+            if out[0] is None:
+                warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
+                continue
+
+            # unpack data
+            tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
+
+            if use_hfds:
+                _, ghfds_temp[scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
+
+        tas_g[esm] = convert_dict_to_arr(tas_temp)
+        gsat[esm] = convert_dict_to_arr(gsat_temp)
+
+        if use_hfds:
+            ghfds[esm] = convert_dict_to_arr(ghfds_temp)
+
+    # load in the constant files
+    _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
+
+    # extract land
+    tas, _, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=threshold_land)
+
+    return time, lon, lat, ls, tas, gsat, ghfds
 
 
 def extract_time_lon_lat_wgt3d(data):
@@ -57,7 +133,7 @@ def extract_time_lon_lat_wgt3d(data):
     return time, lon, lat, wgt3d
 
 
-def find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
+def _find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     """Find filename in ETHZ cmip-ng archive.
 
     Parameters
@@ -256,7 +332,7 @@ def load_cmipng(targ, esm, scen, cfg):
     return targ, GTARG, lon, lat, time
 
 
-def load_cmipng_file(run_path, gen, scen):
+def _load_cmipng_file(run_path, gen, scen):
     """Load file in ETHZ cmip-ng archive.
 
     Parameters
@@ -298,7 +374,7 @@ def load_cmipng_file(run_path, gen, scen):
             run_path_ssp_585 = run_path.replace(scen, "ssp585")
 
             paths.append(run_path_ssp_585)
-            preprocess = preprocess_ssp534over
+            preprocess = _preprocess_ssp534over
 
         data = xr.open_mfdataset(paths, combine="by_coords", preprocess=preprocess)
 
@@ -397,7 +473,7 @@ def _load_cmipng_var(esm, scen, cfg, varn):
         raise ValueError("reference type 'first' is no longer supported")
 
     # find the files which fulfill the specifications
-    path_runs_list = find_files_cmipng(gen, esm, varn, scen, dir_cmipng)
+    path_runs_list = _find_files_cmipng(gen, esm, varn, scen, dir_cmipng)
 
     # exit function in case path_runs_list is empty (i.e. no files found)
     if len(path_runs_list) == 0:
@@ -414,7 +490,7 @@ def _load_cmipng_var(esm, scen, cfg, varn):
     for run_path in path_runs_list:
 
         # account for difference in naming convention in cmipx-ng archives
-        ds, run = load_cmipng_file(run_path, gen, scen)
+        ds, run = _load_cmipng_file(run_path, gen, scen)
 
         dta[run] = ds[varn].values
         dta_ref[run] = ds[varn].sel(time=reference_period).mean(dim="time")
@@ -451,7 +527,7 @@ def _load_cmipng_var(esm, scen, cfg, varn):
     return dta, dta_globmean, lon, lat, time
 
 
-def preprocess_ssp534over(ds):
+def _preprocess_ssp534over(ds):
     """
     Preprocess datasets to manage to combine historical, ssp585, and ssp534-over into
     single time series.

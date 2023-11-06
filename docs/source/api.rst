@@ -151,6 +151,18 @@ Create emulations
 IO
 --
 
+Load cmip data
+^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
+   ~io.load_cmip_data_all_esms
+   ~io.load_cmipng
+   ~io.load_cmipng_hfds
+   ~io.load_cmipng_tas
+
+
 Load constant files
 ^^^^^^^^^^^^^^^^^^^
 

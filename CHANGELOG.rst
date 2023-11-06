@@ -64,7 +64,6 @@ New Features
 - Added helper functions to process xarray-based model data:
    - Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
      <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser`_.
-   - Added functions to mask the ocean and Antarctica (`#219
    - Added functions to mask the ocean and Antarctica (
      `#219 <https://github.com/MESMER-group/mesmer/pull/219>`_ and
      `#314 <https://github.com/MESMER-group/mesmer/pull/314>`_). By `Mathias Hauser`_.
@@ -92,7 +91,9 @@ New Features
 - Add ``calc_gaspari_cohn_correlation_matrices`` a function to calculate Gaspari-Cohn correlation
   matrices for a range of localisation radii (`#300 <https://github.com/MESMER-group/mesmer/pull/300>`__).
   By `Zeb Nicholls`_ and `Mathias Hauser`_.
-
+- Add a helper function to load tas and (potentially) hfds for several ESMs from cmip-ng
+  archive at ETHZ (`#326 <https://github.com/MESMER-group/mesmer/pull/326>`__).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

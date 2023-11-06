@@ -130,7 +130,7 @@ This restriction is made to ensure that you don't format code without being able
 
 
 Building the docs
-----------------
+-----------------
 
 After setting yourself up (see `Development setup`_), building the docs is as simple as running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date').
 This will build the docs for you.
