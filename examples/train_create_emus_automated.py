@@ -1,5 +1,3 @@
-import warnings
-
 import xarray as xr
 
 # import MESMER tools
@@ -10,8 +8,8 @@ from mesmer.create_emulations import (
     gather_gt_data,
     make_realisations,
 )
-from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
-from mesmer.utils import convert_dict_to_arr, extract_land, separate_hist_future
+from mesmer.io import load_cmip_data_all_esms, load_phi_gc
+from mesmer.utils import separate_hist_future
 
 
 def main(cfg):
@@ -25,43 +23,15 @@ def main(cfg):
     print(f"Analysed esms: {esms}")
     print()
 
-    # load in tas with global coverage
-
-    tas_g = {}  # tas with global coverage
-    gsat = {}  # global mean tas
-    time = {}
-
     print("Loading data")
     print("============")
 
-    for esm in esms:
-        print(f"- {esm}")
-
-        time[esm] = {}
-
-        # temporary dicts to gather data over scenarios
-        tas_temp, gsat_temp = {}, {}
-        for scen in cfg.scenarios:
-
-            out = load_cmipng(targ, esm, scen, cfg)
-
-            # skip if no data found
-            if out[0] is None:
-                warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
-                continue
-
-            # unpack data
-            tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
-
-        tas_g[esm] = convert_dict_to_arr(tas_temp)
-        gsat[esm] = convert_dict_to_arr(gsat_temp)
-
-    # load grid info
-    _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
-
-    # extract land
-    tas, _, ls = extract_land(
-        tas_g, wgt=wgt_g, ls=ls, threshold_land=cfg.threshold_land
+    time, lon, lat, ls, tas, gsat, __ = load_cmip_data_all_esms(
+        esms,
+        scenarios=cfg.scenarios,
+        threshold_land=cfg.threshold_land,
+        use_hfds=False,
+        cfg=cfg,
     )
 
     print()
