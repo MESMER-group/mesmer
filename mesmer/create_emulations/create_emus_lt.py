@@ -82,6 +82,8 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     if pred_names != params_lt["preds"]:
         raise ValueError(
             "Wrong predictors were passed. The emulations cannot be created."
+            f"\n- pred_names         = {pred_names}"
+            f"\n- params_lt['preds'] = {params_lt['preds']}"
         )
 
     # select the method from a dict of fcts

@@ -6,6 +6,7 @@
 Functions to create global variability emulations with MESMER.
 """
 
+import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
@@ -156,10 +157,13 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     AR_order_sel = params_gv["AR_order_sel"]
     AR_std_innovs = params_gv["AR_std_innovs"]
 
+    # ensure ar_coefs are not a scalar
+    ar_coefs = np.atleast_1d(ar_coefs)
+
     # if AR(0) process chosen, no AR_coefs are available -> to have code run
     # nevertheless ar_coefs and ar_lags are set to 0 (-> emus are created with
     # ar_int + innovs)
-    if len(ar_coefs) == 0:
+    if ar_coefs.size == 0:
         ar_coefs = [0]
 
     # only use the selected coeffs

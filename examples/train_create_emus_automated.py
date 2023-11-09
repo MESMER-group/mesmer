@@ -120,7 +120,6 @@ def main(cfg):
         )
 
         realisations = make_realisations(
-            # preds_lt=gt_tas,
             preds_lt=preds_lt,
             params_lt=params_lt,
             params_lv=params_lv,
