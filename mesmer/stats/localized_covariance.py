@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import xarray as xr
-from scipy.stats import multivariate_normal
 
 from mesmer.core.utils import (
     LinAlgWarning,
@@ -266,6 +265,8 @@ def _get_neg_loglikelihood(data, covariance, weights):
     -----
     The mean is assumed to be zero for all points.
     """
+
+    from scipy.stats import multivariate_normal
 
     # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
     # optimizing the rest
