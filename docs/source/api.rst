@@ -77,6 +77,9 @@ Grid manipulation
 Masking regions
 ---------------
 
+.. autosummary::
+   :toctree: generated/
+
    ~core.mask.mask_ocean_fraction
    ~core.mask.mask_ocean
    ~core.mask.mask_antarctica
@@ -84,6 +87,9 @@ Masking regions
 
 Weighted operations: calculate global mean
 ------------------------------------------
+
+.. autosummary::
+   :toctree: generated/
 
    ~core.weighted.global_mean
    ~core.weighted.lat_weights
