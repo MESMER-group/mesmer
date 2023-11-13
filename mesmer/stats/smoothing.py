@@ -4,7 +4,9 @@ import xarray as xr
 from mesmer.core.utils import _check_dataarray_form
 
 
-def lowess(data, dim, *, n_steps=None, frac=None, use_coords=True, it=0):
+def lowess(
+    data, dim, *, combine_dim=None, n_steps=None, frac=None, use_coords=True, it=0
+):
     """LOWESS (Locally Weighted Scatterplot Smoothing) for xarray objects
 
     Parameters
@@ -13,6 +15,9 @@ def lowess(data, dim, *, n_steps=None, frac=None, use_coords=True, it=0):
         Data to smooth (y-values).
     dim : str
         Dimension along which to smooth (x-dimension)
+    combine_dim : str, default: None
+        Dimension along which to pool the data. This will stack the data and estimate
+        the smoothing on the stacked data.
     n_steps : int
         The number of data points used to estimate each y-value, must be between 0 and
         the length of dim. If given used to calculate ``frac``. Exactly one of
@@ -34,6 +39,14 @@ def lowess(data, dim, *, n_steps=None, frac=None, use_coords=True, it=0):
     See Also
     --------
     statsmodels.nonparametric.smoothers_lowess.lowess
+
+    Notes
+    -----
+    For ``it=0``, the following three options are equivalent::
+
+        mesmer.stats.smoothing.lowess(data.mean("cells"), "time", frac=0.3)
+        mesmer.stats.smoothing.lowess(data, "time", combine_dim="cells", frac=0.3)
+        mesmer.stats.smoothing.lowess(data, "time", frac=0.3).mean("cells")
     """
 
     from statsmodels.nonparametric.smoothers_lowess import lowess
@@ -62,7 +75,7 @@ def lowess(data, dim, *, n_steps=None, frac=None, use_coords=True, it=0):
         try:
             # test if coords can be cast to float (required by statsmodels..lowess)
             # use safe casting so we don't convert np datetime to float
-            # while this technically works the x values are then too large such that
+            # while this technically works, the x values are then too large such that
             # a missing year is no longer detected...
             x = coords.astype(float, casting="safe")
         except TypeError as e:
@@ -75,6 +88,19 @@ def lowess(data, dim, *, n_steps=None, frac=None, use_coords=True, it=0):
     else:
         x = xr.ones_like(coords)
         x.data = np.arange(coords.size)
+
+    if combine_dim is not None:
+        # remove non-dimension coords along combine_dims
+
+        print(data[combine_dim].coords.keys())
+
+        data = data.drop_vars(data[combine_dim].coords.keys())
+
+        # need to broadcast and stack due to the datetime shenanigans above
+        __, x = xr.broadcast(data, x)
+        data = data.stack(__sample__=(dim, combine_dim))
+        x = x.stack(__sample__=(dim, combine_dim))
+        dim = "__sample__"
 
     def _lowess(da: xr.DataArray) -> xr.DataArray:
 
@@ -94,7 +120,12 @@ def lowess(data, dim, *, n_steps=None, frac=None, use_coords=True, it=0):
 
         return out
 
-    if isinstance(data, xr.Dataset):
-        return data.map(_lowess)
+    result = data.map(_lowess) if isinstance(data, xr.Dataset) else _lowess(data)
 
-    return _lowess(data)
+    if combine_dim is not None:
+        result = result.unstack()
+        # all the estimates are the same, so we can use the first
+        result = result.isel({combine_dim: 0}, drop=True)
+        return result
+
+    return result
