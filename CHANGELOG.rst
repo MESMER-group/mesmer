@@ -54,11 +54,14 @@ New Features
      (`#224 <https://github.com/MESMER-group/mesmer/pull/224>`__).
      By `Mathias Hauser`_.
 
-- Other refactorings:
+- Update LOWESS smoothing:
    - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
      (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_,
      `#283 <https://github.com/MESMER-group/mesmer/pull/283>`_, and
      `#285 <https://github.com/MESMER-group/mesmer/pull/285>`_).
+     By `Mathias Hauser`_.
+   - Allow to pool data along a dimension to estimate the LOWESS smoothing.
+     (`#331 <https://github.com/MESMER-group/mesmer/pull/331>`_).
      By `Mathias Hauser`_.
 
 - Added helper functions to process xarray-based model data:
