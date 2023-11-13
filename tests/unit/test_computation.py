@@ -2,11 +2,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.core.geospatial import (
-    calc_gaspari_cohn_correlation_matrices,
-    geodist_exact,
-    gaspari_cohn,
-)
+from mesmer.core.geospatial import geodist_exact
+from mesmer.stats.gaspari_cohn import gaspari_cohn, gaspari_cohn_correlation_matrices
 from mesmer.testing import assert_dict_allclose
 
 
@@ -169,7 +166,7 @@ def test_gaspari_cohn_correlation_matrices(localisation_radii, as_dataarray):
 
     geodist = geodist_exact(lon, lat)
 
-    result = calc_gaspari_cohn_correlation_matrices(geodist, localisation_radii)
+    result = gaspari_cohn_correlation_matrices(geodist, localisation_radii)
 
     expected = {lr: gaspari_cohn(geodist / lr) for lr in localisation_radii}
 
