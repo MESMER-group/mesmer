@@ -91,9 +91,6 @@ def lowess(
 
     if combine_dim is not None:
         # remove non-dimension coords along combine_dims
-
-        print(data[combine_dim].coords.keys())
-
         data = data.drop_vars(data[combine_dim].coords.keys())
 
         # need to broadcast and stack due to the datetime shenanigans above
