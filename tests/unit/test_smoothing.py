@@ -16,7 +16,7 @@ def test_lowess_errors():
     with pytest.raises(ValueError, match="Can only pass a single dimension."):
         mesmer.stats.smoothing.lowess(data, ("lat", "lon"), frac=0.3)
 
-    with pytest.raises(ValueError, match="data should be 1-dimensional"):
+    with pytest.raises(ValueError, match="data should be 1D"):
         mesmer.stats.smoothing.lowess(data.to_dataset(), "data", frac=0.3)
 
     with pytest.raises(ValueError, match="Exactly one of ``n_steps`` and ``frac``"):
