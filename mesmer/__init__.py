@@ -9,7 +9,7 @@ analyze the results.
 
 from . import calibrate_mesmer, core, create_emulations, io, utils
 from .core import _data as data
-from .core import grid, mask, weighted
+from .core import geospatial, grid, mask, weighted
 
 # "legacy" modules
 __all__ = [
@@ -23,6 +23,7 @@ __all__ = [
 __all__ += [
     "core",
     "data",
+    "geospatial",
     "grid",
     "mask",
     "weighted",
