@@ -222,11 +222,58 @@ def test_linear_regression_one_predictor(
 ):
 
     pred0 = trend_data_1D(slope=1, scale=0)
-    trend_data_1D_or_2D
+
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
 
     result = lr_method_or_function({"pred0": pred0}, tgt, "time")
 
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_pred0 = xr.full_like(template, slope)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "fit_intercept": True,
+        }
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_linear_regression_predictor_named_like_dim(lr_method_or_function, as_2D):
+
+    slope, intercept = 0.3, 0.2
+    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
+
+    result = lr_method_or_function({"time": tgt.time}, tgt, "time")
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_time = xr.full_like(template, slope)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "time": expected_time,
+            "fit_intercept": True,
+        }
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_linear_regression_predictor_has_non_dim_coors(lr_method_or_function, as_2D):
+
+    slope, intercept = 0.3, 0.2
+    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
+    tgt = tgt.assign_coords(year=("time", tgt.time.values + 1850))
+
+    result = lr_method_or_function({"pred0": tgt.time}, tgt, "time")
     template = tgt.isel(time=0, drop=True)
 
     expected_intercept = xr.full_like(template, intercept)

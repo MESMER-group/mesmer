@@ -21,6 +21,11 @@ New Features
    - Allow to pass 1-dimensional targets to :py:meth:`mesmer.stats.linear_regression.LinearRegression.fit`
      (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
      By `Mathias Hauser`_.
+   - Fixed two bugs related to (non-dimension) coordinates (
+     `#332 <https://github.com/MESMER-group/mesmer/issues/332>`_,
+     `#333 <https://github.com/MESMER-group/mesmer/issues/333>`_ and
+     `#334 <https://github.com/MESMER-group/mesmer/pull/313>`_).
+     By `Mathias Hauser`_.
 
 - Extracted statistical functionality for auto regression:
    - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
