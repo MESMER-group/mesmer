@@ -170,7 +170,7 @@ def test_linear_regression_errors(lr_method_or_function):
     test_wrong_type(pred0, pred1, tgt, xr.Dataset(), name="weights")
 
     def test_wrong_shape(pred0, pred1, tgt, weights, name, ndim):
-        with pytest.raises(ValueError, match=f"{name} should be {ndim}-dimensional"):
+        with pytest.raises(ValueError, match=f"{name} should be {ndim}D"):
             lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )

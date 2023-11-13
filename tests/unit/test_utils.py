@@ -139,14 +139,25 @@ def test_check_dataarray_form_ndim(ndim):
 
     da = xr.DataArray(np.ones((2, 2)))
 
-    with pytest.raises(ValueError, match=f"obj should be {ndim}-dimensional"):
+    with pytest.raises(ValueError, match=f"obj should be {ndim}D"):
         mesmer.core.utils._check_dataarray_form(da, ndim=ndim)
 
-    with pytest.raises(ValueError, match=f"test should be {ndim}-dimensional"):
+    with pytest.raises(ValueError, match=f"test should be {ndim}D"):
         mesmer.core.utils._check_dataarray_form(da, ndim=ndim, name="test")
 
     # no error
     mesmer.core.utils._check_dataarray_form(da, ndim=2)
+
+
+def test_check_dataarray_form_ndim_several():
+
+    da = xr.DataArray(np.ones((2, 2)))
+
+    with pytest.raises(ValueError, match="obj should be 1D or 3D"):
+        mesmer.core.utils._check_dataarray_form(da, ndim=(1, 3))
+
+    with pytest.raises(ValueError, match="test should be 0D, 1D or 3D"):
+        mesmer.core.utils._check_dataarray_form(da, ndim=(0, 1, 3), name="test")
 
 
 @pytest.mark.parametrize("required_dims", ("foo", ["foo"], ["foo", "bar"]))
