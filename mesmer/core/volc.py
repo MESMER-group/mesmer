@@ -90,8 +90,8 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
         dims = tas_residuals.dims
 
-        tas_residuals = tas_residuals.stack(__sample__=dims, create_index=False)
-        aod = aod.stack(__sample__=dims, create_index=False)
+        tas_residuals = tas_residuals.stack(__sample__=dims)
+        aod = aod.stack(__sample__=dims)
         dim = "__sample__"
 
     lr = LinearRegression()
@@ -108,11 +108,10 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
     params.attrs["version"] = version
 
-    name = "aod"
-    if params[name] >= 0:
+    if params["aod"] >= 0:
         warnings.warn(
-            f"The slope of '{name}' is positive ({params[name]:0.2f}) but is expected "
-            "to be negative - did you pass the residuals?"
+            f"The slope of 'aod' is positive ({params['aod'].values:0.2f}) but is "
+            "expected to be negative - did you pass the residuals?"
         )
 
     return params
