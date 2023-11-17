@@ -18,6 +18,20 @@ def test_load_stratospheric_aerosol_optical_depth_data():
     np.testing.assert_allclose(0.0, aod[-1])
 
 
+def test_load_stratospheric_aerosol_optical_depth_data_not_changed_inplace():
+
+    aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True)
+
+    aod.loc[{"time": slice("1900", "2000")}] = 0.25
+
+    aod_orig = load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    assert aod is not aod_orig
+    assert not aod.equals(aod_orig)
+
+
 def test_load_stratospheric_aerosol_optical_depth_data_no_resample():
 
     aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=False)
