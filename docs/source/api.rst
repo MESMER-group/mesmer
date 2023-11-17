@@ -94,3 +94,16 @@ Weighted operations: calculate global mean
    ~core.weighted.global_mean
    ~core.weighted.lat_weights
    ~core.weighted.weighted_mean
+
+
+Emulator functions
+==================
+
+Volcanic influence
+------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.volc.fit_volcanic_influence
+   ~core.volc.superimpose_volcanic_influence
