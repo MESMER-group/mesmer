@@ -25,7 +25,7 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 
     aod = _load_aod_obs(version=version, resample=resample)
 
-    return aod
+    return aod.copy()
 
 
 # use an inner function as @cache does not nicely preserve the signature
