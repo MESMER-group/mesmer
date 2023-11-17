@@ -85,6 +85,9 @@ New Features
 - The aerosol data is now automatically downloaded using `pooch <https://www.fatiando.org/pooch/latest/>`__.
   (`#267 <https://github.com/MESMER-group/mesmer/pull/267>`_). By `Mathias Hauser`_.
 
+- Added helper functions to estimate and superimpose volcanic influence
+  (`#336 <https://github.com/MESMER-group/mesmer/pull/336>`_). By `Mathias Hauser`_.
+
 - Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
    - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
    - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
