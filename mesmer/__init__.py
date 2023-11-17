@@ -7,9 +7,9 @@ The mesmer package provides tools to train the MESMER emulator, create emulation
 analyze the results.
 """
 
-from . import calibrate_mesmer, core, create_emulations, io, utils
+from . import calibrate_mesmer, core, create_emulations, io, testing, utils
 from .core import _data as data
-from .core import grid, mask, weighted
+from .core import grid, mask, volc, weighted
 
 # "legacy" modules
 __all__ = [
@@ -25,6 +25,8 @@ __all__ += [
     "data",
     "grid",
     "mask",
+    "testing",
+    "volc",
     "weighted",
 ]
 
