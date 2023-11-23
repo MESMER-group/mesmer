@@ -216,8 +216,7 @@ def _get_time(*args, **kwargs):
     else:
 
         if calendar == "standard":
-
-            time = pd.date_range(*args, calendar=calendar, freq=freq, **kwargs)
+            time = pd.date_range(*args, freq=freq, **kwargs)
         else:
             time = xr.cftime_range(*args, calendar=calendar, freq=freq, **kwargs)
 
