@@ -10,22 +10,22 @@ from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 
 
-def test_select_ar_order_xr_1d():
+def test_select_ar_order_1d():
 
     data = trend_data_1D()
 
-    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "time", 4)
+    result = mesmer.stats.auto_regression.select_ar_order(data, "time", 4)
 
     _check_dataarray_form(result, "selected_ar_order", ndim=0, shape=())
 
 
 @pytest.mark.parametrize("n_lon", [1, 2])
 @pytest.mark.parametrize("n_lat", [3, 4])
-def test_select_ar_order_xr_3d(n_lon, n_lat):
+def test_select_ar_order_3d(n_lon, n_lat):
 
     data = trend_data_3D(n_lat=n_lat, n_lon=n_lon)
 
-    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "time", 1)
+    result = mesmer.stats.auto_regression.select_ar_order(data, "time", 1)
 
     _check_dataarray_form(
         result,
@@ -36,21 +36,21 @@ def test_select_ar_order_xr_3d(n_lon, n_lat):
     )
 
 
-def test_select_ar_order_xr_dim():
+def test_select_ar_order_dim():
 
     data = trend_data_3D(n_timesteps=4, n_lon=5)
-    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "lon", 1)
+    result = mesmer.stats.auto_regression.select_ar_order(data, "lon", 1)
 
     _check_dataarray_form(
         result, "selected_ar_order", ndim=2, required_dims={"time", "lat"}, shape=(4, 3)
     )
 
 
-def test_select_ar_order_xr():
+def test_select_ar_order():
 
     data = trend_data_2D()
 
-    result = mesmer.stats.auto_regression._select_ar_order_xr(data, "time", 4)
+    result = mesmer.stats.auto_regression.select_ar_order(data, "time", 4)
 
     coords = data.drop_vars("time").coords
 
@@ -119,7 +119,7 @@ def test_draw_auto_regression_uncorrelated_wrong_input(ar_params_1D, drop):
         ValueError, match=f"ar_params is missing the required data_vars: {drop}"
     ):
 
-        mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+        mesmer.stats.auto_regression.draw_auto_regression_uncorrelated(
             ar_params,
             time=1,
             realisation=1,
@@ -135,7 +135,7 @@ def test_draw_auto_regression_uncorrelated_2D_errors(ar_params_2D):
         match="``_draw_auto_regression_uncorrelated`` can currently only handle single points",
     ):
 
-        mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+        mesmer.stats.auto_regression.draw_auto_regression_uncorrelated(
             ar_params_2D,
             time=1,
             realisation=1,
@@ -152,7 +152,7 @@ def test_draw_auto_regression_uncorrelated(
     ar_params_1D, time, realization, time_dim, realization_dim
 ):
 
-    result = mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+    result = mesmer.stats.auto_regression.draw_auto_regression_uncorrelated(
         ar_params_1D,
         time=time,
         realisation=realization,
@@ -185,7 +185,7 @@ def test_draw_auto_regression_uncorrelated_wrong_coords(
         TypeError,
         match=f"expected '{dim}' to be an `int`, pandas or xarray Index or a `DataArray`",
     ):
-        mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+        mesmer.stats.auto_regression.draw_auto_regression_uncorrelated(
             ar_params_1D,
             **coords,
             seed=0,
@@ -201,7 +201,7 @@ def test_draw_auto_regression_uncorrelated_wrong_coords_2D(ar_params_1D, dim):
     coords[dim] = xr.DataArray([[1, 2]])
 
     with pytest.raises(ValueError, match="Coords must be 1D but have 2 dimensions"):
-        mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+        mesmer.stats.auto_regression.draw_auto_regression_uncorrelated(
             ar_params_1D,
             **coords,
             seed=0,
@@ -217,7 +217,7 @@ def test_draw_auto_regression_uncorrelated_coords(ar_params_1D, dim, coords):
 
     coords_[dim] = coords
 
-    result = mesmer.stats.auto_regression._draw_auto_regression_uncorrelated(
+    result = mesmer.stats.auto_regression.draw_auto_regression_uncorrelated(
         ar_params_1D,
         **coords_,
         seed=0,
@@ -237,7 +237,7 @@ def test_draw_auto_regression_correlated_wrong_input(ar_params_2D, covariance, d
         ValueError, match=f"ar_params is missing the required data_vars: {drop}"
     ):
 
-        mesmer.stats.auto_regression._draw_auto_regression_correlated(
+        mesmer.stats.auto_regression.draw_auto_regression_correlated(
             ar_params,
             covariance,
             time=1,
@@ -255,7 +255,7 @@ def test_draw_auto_regression_correlated(
     ar_params_2D, covariance, time, realization, time_dim, realization_dim
 ):
 
-    result = mesmer.stats.auto_regression._draw_auto_regression_correlated(
+    result = mesmer.stats.auto_regression.draw_auto_regression_correlated(
         ar_params_2D,
         covariance,
         time=time,
@@ -291,7 +291,7 @@ def test_draw_auto_regression_correlated_wrong_coords(
         TypeError,
         match=f"expected '{dim}' to be an `int`, pandas or xarray Index or a `DataArray`",
     ):
-        mesmer.stats.auto_regression._draw_auto_regression_correlated(
+        mesmer.stats.auto_regression.draw_auto_regression_correlated(
             ar_params_2D,
             covariance,
             **coords,
@@ -308,7 +308,7 @@ def test_draw_auto_regression_correlated_wrong_coords_2D(ar_params_2D, covarianc
     coords[dim] = xr.DataArray([[1, 2]])
 
     with pytest.raises(ValueError, match="Coords must be 1D but have 2 dimensions"):
-        mesmer.stats.auto_regression._draw_auto_regression_correlated(
+        mesmer.stats.auto_regression.draw_auto_regression_correlated(
             ar_params_2D,
             covariance,
             **coords,
@@ -325,7 +325,7 @@ def test_draw_auto_regression_correlated_coords(ar_params_2D, covariance, dim, c
 
     coords_[dim] = coords
 
-    result = mesmer.stats.auto_regression._draw_auto_regression_correlated(
+    result = mesmer.stats.auto_regression.draw_auto_regression_correlated(
         ar_params_2D,
         covariance,
         **coords_,
@@ -448,7 +448,7 @@ def test_draw_auto_regression_random():
 def test_fit_auto_regression_xr_errors(obj):
 
     with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
-        mesmer.stats.auto_regression._fit_auto_regression_xr(obj, "dim", lags=1)
+        mesmer.stats.auto_regression.fit_auto_regression(obj, "dim", lags=1)
 
 
 def test_fit_auto_regression_xr_1D_values():
@@ -456,7 +456,7 @@ def test_fit_auto_regression_xr_1D_values():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.stats.auto_regression._fit_auto_regression_xr(data, "time", lags=1)
+    result = mesmer.stats.auto_regression.fit_auto_regression(data, "time", lags=1)
 
     expected = xr.Dataset(
         {
@@ -475,9 +475,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.stats.auto_regression._fit_auto_regression_xr(
-        data, "time", lags=[2]
-    )
+    result = mesmer.stats.auto_regression.fit_auto_regression(data, "time", lags=[2])
 
     expected = xr.Dataset(
         {
@@ -495,7 +493,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
 def test_fit_auto_regression_xr_1D(lags):
 
     data = trend_data_1D()
-    res = mesmer.stats.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
+    res = mesmer.stats.auto_regression.fit_auto_regression(data, "time", lags=lags)
 
     lags = lags if not np.ndim(lags) == 0 else np.arange(lags) + 1
 
@@ -520,7 +518,7 @@ def test_fit_auto_regression_xr_1D(lags):
 def test_fit_auto_regression_xr_2D(lags):
 
     data = trend_data_2D()
-    res = mesmer.stats.auto_regression._fit_auto_regression_xr(data, "time", lags=lags)
+    res = mesmer.stats.auto_regression.fit_auto_regression(data, "time", lags=lags)
 
     (n_cells,) = data.cells.shape
 
