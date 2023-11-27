@@ -5,7 +5,7 @@ import xarray as xr
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
 
-def _select_ar_order_xr(data, dim, maxlag, ic="bic"):
+def select_ar_order(data, dim, maxlag, ic="bic"):
     """Select the order of an autoregressive process - xarray wrapper
 
     Parameters
@@ -107,7 +107,7 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
     return size, coord_dict
 
 
-def _draw_auto_regression_uncorrelated(
+def draw_auto_regression_uncorrelated(
     ar_params,
     *,
     time,
@@ -190,7 +190,7 @@ def _draw_auto_regression_uncorrelated(
     return result
 
 
-def _draw_auto_regression_correlated(
+def draw_auto_regression_correlated(
     ar_params,
     covariance,
     *,
@@ -395,7 +395,7 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
-def _fit_auto_regression_xr(data, dim, lags):
+def fit_auto_regression(data, dim, lags):
     """
     fit an auto regression - xarray wrapper
 

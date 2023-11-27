@@ -28,9 +28,10 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats.auto_regression._select_ar_order_xr
-   ~stats.auto_regression._fit_auto_regression_xr
-   ~stats.auto_regression._draw_auto_regression_correlated_np
+   ~stats.auto_regression.select_ar_order
+   ~stats.auto_regression.fit_auto_regression
+   ~stats.auto_regression.draw_auto_regression_uncorrelated
+   ~stats.auto_regression.draw_auto_regression_correlated
 
 Localized covariance
 --------------------

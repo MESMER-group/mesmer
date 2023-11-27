@@ -13,7 +13,7 @@ import xarray as xr
 import mesmer.stats
 from mesmer.create_emulations.utils import _gather_lr_params, _gather_lr_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _draw_auto_regression_correlated
+from mesmer.stats.auto_regression import draw_auto_regression_correlated
 
 
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
@@ -196,7 +196,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             dims = ("gridpoint_i", "gridpoint_j")
             covariance = xr.DataArray(params_lv["loc_ecov_AR1_innovs"][targ], dims=dims)
 
-            emus_ar = _draw_auto_regression_correlated(
+            emus_ar = draw_auto_regression_correlated(
                 ar_params,
                 covariance,
                 time=nr_ts_emus_stoch_v,
