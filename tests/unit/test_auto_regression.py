@@ -475,9 +475,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.stats.auto_regression.fit_auto_regression(
-        data, "time", lags=[2]
-    )
+    result = mesmer.stats.auto_regression.fit_auto_regression(data, "time", lags=[2])
 
     expected = xr.Dataset(
         {
