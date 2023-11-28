@@ -139,14 +139,25 @@ def test_check_dataarray_form_ndim(ndim):
 
     da = xr.DataArray(np.ones((2, 2)))
 
-    with pytest.raises(ValueError, match=f"obj should be {ndim}-dimensional"):
+    with pytest.raises(ValueError, match=f"obj should be {ndim}D"):
         mesmer.core.utils._check_dataarray_form(da, ndim=ndim)
 
-    with pytest.raises(ValueError, match=f"test should be {ndim}-dimensional"):
+    with pytest.raises(ValueError, match=f"test should be {ndim}D"):
         mesmer.core.utils._check_dataarray_form(da, ndim=ndim, name="test")
 
     # no error
     mesmer.core.utils._check_dataarray_form(da, ndim=2)
+
+
+def test_check_dataarray_form_ndim_several():
+
+    da = xr.DataArray(np.ones((2, 2)))
+
+    with pytest.raises(ValueError, match="obj should be 1D or 3D"):
+        mesmer.core.utils._check_dataarray_form(da, ndim=(1, 3))
+
+    with pytest.raises(ValueError, match="test should be 0D, 1D or 3D"):
+        mesmer.core.utils._check_dataarray_form(da, ndim=(0, 1, 3), name="test")
 
 
 @pytest.mark.parametrize("required_dims", ("foo", ["foo"], ["foo", "bar"]))
@@ -187,16 +198,27 @@ def test_check_dataarray_form_shape():
 def _get_time(*args, **kwargs):
     # TODO: use xr.date_range once requiring xarray >= v0.21
 
+    calendar = kwargs.pop("calendar", "standard")
+    freq = kwargs.pop("freq", None)
+
+    # translate freq strings
+    pandas_calendars = ["standard", "gregorian"]
+    if freq:
+        if calendar not in pandas_calendars and Version(xr.__version__) < Version(
+            "2023.11"
+        ):
+            freq = freq.replace("Y", "A").replace("ME", "M")
+        if calendar in pandas_calendars and Version(pd.__version__) < Version("2.2"):
+            freq = freq.replace("Y", "A").replace("ME", "M")
+
     if Version(xr.__version__) >= Version("0.21"):
-        time = xr.date_range(*args, **kwargs)
+        time = xr.date_range(*args, calendar=calendar, freq=freq, **kwargs)
     else:
 
-        calendar = kwargs.pop("calendar", "standard")
-
         if calendar == "standard":
-            time = pd.date_range(*args, **kwargs)
+            time = pd.date_range(*args, freq=freq, **kwargs)
         else:
-            time = xr.cftime_range(*args, **kwargs)
+            time = xr.cftime_range(*args, calendar=calendar, freq=freq, **kwargs)
 
     return xr.DataArray(time, dims="time")
 
@@ -206,14 +228,14 @@ def _get_time(*args, **kwargs):
 )
 def test_assert_annual_data(calendar):
 
-    time = _get_time("2000", "2005", freq="A", calendar=calendar)
+    time = _get_time("2000", "2005", freq="Y", calendar=calendar)
 
     # no error
     mesmer.core.utils._assert_annual_data(time)
 
 
 @pytest.mark.parametrize("calendar", ["standard", "gregorian", "365_day"])
-@pytest.mark.parametrize("freq", ["2A", "M"])
+@pytest.mark.parametrize("freq", ["2Y", "ME"])
 def test_assert_annual_data_wrong_freq(calendar, freq):
 
     time = _get_time("2000", periods=5, freq=freq, calendar=calendar)
@@ -226,8 +248,8 @@ def test_assert_annual_data_wrong_freq(calendar, freq):
 
 def test_assert_annual_data_unkown_freq():
 
-    time1 = _get_time("2000", periods=2, freq="A")
-    time2 = _get_time("2002", periods=3, freq="M")
+    time1 = _get_time("2000", periods=2, freq="Y")
+    time2 = _get_time("2002", periods=3, freq="ME")
     time = xr.concat([time1, time2], dim="time")
 
     with pytest.raises(ValueError, match="Annual data is required but data of unknown"):

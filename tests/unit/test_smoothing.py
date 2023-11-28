@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
@@ -15,7 +16,7 @@ def test_lowess_errors():
     with pytest.raises(ValueError, match="Can only pass a single dimension."):
         mesmer.stats.smoothing.lowess(data, ("lat", "lon"), frac=0.3)
 
-    with pytest.raises(ValueError, match="data should be 1-dimensional"):
+    with pytest.raises(ValueError, match="data should be 1D"):
         mesmer.stats.smoothing.lowess(data.to_dataset(), "data", frac=0.3)
 
     with pytest.raises(ValueError, match="Exactly one of ``n_steps`` and ``frac``"):
@@ -145,3 +146,56 @@ def test_lowess_2D():
     _check_dataarray_form(
         result, "result", ndim=2, required_dims=("time", "cells"), shape=data.shape
     )
+
+
+def test_lowess_2D_combine_dim():
+
+    data = trend_data_2D()
+
+    arr = np.concatenate(np.vsplit(data.values, 6), 1).squeeze()
+    x = np.concatenate([data.time.values.tolist()] * 6)
+
+    expected = lowess(arr, x, xvals=data.time.values, frac=0.3, it=0)
+    expected = xr.DataArray(expected, coords={"time": data.time.values})
+
+    result = mesmer.stats.smoothing.lowess(data, "time", combine_dim="cells", frac=0.3)
+
+    xr.testing.assert_allclose(expected, result)
+
+    # numpy datetime
+    time = pd.date_range("2000-01-01", periods=30)
+    data = data.assign_coords(time=time)
+
+    result = mesmer.stats.smoothing.lowess(
+        data, "time", combine_dim="cells", frac=0.3, use_coords=False
+    )
+    expected = expected.assign_coords(time=time)
+
+    xr.testing.assert_allclose(expected, result)
+
+    # TODO: remove check once we drop python 3.7
+    if Version(xr.__version__) >= Version("21.0"):
+
+        # cftime datetime
+        time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
+        data = data.assign_coords(time=time)
+
+        result = mesmer.stats.smoothing.lowess(
+            data, "time", combine_dim="cells", frac=0.3, use_coords=False
+        )
+        expected = expected.assign_coords(time=time)
+
+        xr.testing.assert_allclose(expected, result)
+
+
+def test_lowess_2D_combine_dim_it():
+    # interestingly, the result is the same for it=0
+
+    data = trend_data_2D()
+
+    r1 = mesmer.stats.smoothing.lowess(data.mean("cells"), "time", frac=0.3)
+    r2 = mesmer.stats.smoothing.lowess(data, "time", combine_dim="cells", frac=0.3)
+    r3 = mesmer.stats.smoothing.lowess(data, "time", frac=0.3).mean("cells")
+
+    xr.testing.assert_allclose(r1, r2)
+    xr.testing.assert_allclose(r1, r3)

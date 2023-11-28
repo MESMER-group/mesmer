@@ -10,7 +10,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _fit_auto_regression_xr
+from mesmer.stats.auto_regression import fit_auto_regression
 from mesmer.stats.localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
@@ -236,7 +236,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
             # create temporary DataArray
             data = xr.DataArray(data, dims=("run", "time", "cell"))
 
-            params = _fit_auto_regression_xr(data, dim="time", lags=1)
+            params = fit_auto_regression(data, dim="time", lags=1)
             # BUG/ TODO: we wrongfully average over the standard deviation
             # see https://github.com/MESMER-group/mesmer/issues/307
             params["standard_deviation"] = np.sqrt(params.variance)

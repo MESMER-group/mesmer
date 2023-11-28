@@ -12,7 +12,7 @@ import xarray as xr
 from packaging.version import Version
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _fit_auto_regression_xr, _select_ar_order_xr
+from mesmer.stats.auto_regression import fit_auto_regression, select_ar_order
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -182,7 +182,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         # create temporary DataArray
         data = xr.DataArray(gv[scen], dims=["run", "time"])
 
-        AR_order = _select_ar_order_xr(data, dim="time", maxlag=max_lag, ic=sel_crit)
+        AR_order = select_ar_order(data, dim="time", maxlag=max_lag, ic=sel_crit)
 
         # median over all ensemble members ("nearest" ensures an 'existing' lag is selected)
         AR_order = AR_order.quantile(q=0.5, **{method: "nearest"})
@@ -200,7 +200,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
         # create temporary DataArray
         data = xr.DataArray(data, dims=("run", "time"))
 
-        params = _fit_auto_regression_xr(data, dim="time", lags=AR_order_sel)
+        params = fit_auto_regression(data, dim="time", lags=AR_order_sel)
         # BUG/ TODO: we wrongfully average over the standard deviation
         # see https://github.com/MESMER-group/mesmer/issues/307
         params["standard_deviation"] = np.sqrt(params.variance)

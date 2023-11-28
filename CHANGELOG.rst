@@ -21,22 +21,27 @@ New Features
    - Allow to pass 1-dimensional targets to :py:meth:`mesmer.stats.linear_regression.LinearRegression.fit`
      (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
      By `Mathias Hauser`_.
+   - Fixed two bugs related to (non-dimension) coordinates (
+     `#332 <https://github.com/MESMER-group/mesmer/issues/332>`_,
+     `#333 <https://github.com/MESMER-group/mesmer/issues/333>`_ and
+     `#334 <https://github.com/MESMER-group/mesmer/pull/313>`_).
+     By `Mathias Hauser`_.
 
 - Extracted statistical functionality for auto regression:
-   - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
+   - Add ``mesmer.stats.auto_regression.fit_auto_regression``: xarray wrapper to fit an
      auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
      By `Mathias Hauser`_.
-   - Have ``mesmer.stats.auto_regression._fit_auto_regression_xr`` return the variance instead
+   - Have ``mesmer.stats.auto_regression.fit_auto_regression`` return the variance instead
      of the standard deviation (
      `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_
      `#318 <https://github.com/MESMER-group/mesmer/pull/318>`_). By `Mathias Hauser`_.
-   - Add ``_draw_auto_regression_correlated`` and ``_draw_auto_regression_uncorrelated``: to draw samples of a
+   - Add ``draw_auto_regression_correlated`` and ``draw_auto_regression_uncorrelated``: to draw samples of a
      (spatially-)correlated and uncorrelated auto regression model (
      `#322 <https://github.com/MESMER-group/mesmer/pull/322>`_,
      `#161 <https://github.com/MESMER-group/mesmer/pull/161>`_ and
      `#313 <https://github.com/MESMER-group/mesmer/pull/313>`_).
      By `Mathias Hauser`_.
-   - Add ``mesmer.stats.auto_regression._select_ar_order_xr`` to select the order of an
+   - Add ``mesmer.stats.auto_regression.select_ar_order`` to select the order of an
      auto regressive model
      (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
      By `Mathias Hauser`_.
@@ -54,11 +59,14 @@ New Features
      (`#224 <https://github.com/MESMER-group/mesmer/pull/224>`__).
      By `Mathias Hauser`_.
 
-- Other refactorings:
+- Update LOWESS smoothing:
    - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
      (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_,
      `#283 <https://github.com/MESMER-group/mesmer/pull/283>`_, and
      `#285 <https://github.com/MESMER-group/mesmer/pull/285>`_).
+     By `Mathias Hauser`_.
+   - Allow to pool data along a dimension to estimate the LOWESS smoothing.
+     (`#331 <https://github.com/MESMER-group/mesmer/pull/331>`_).
      By `Mathias Hauser`_.
 
 - Added helper functions to process xarray-based model data:
@@ -76,6 +84,9 @@ New Features
 
 - The aerosol data is now automatically downloaded using `pooch <https://www.fatiando.org/pooch/latest/>`__.
   (`#267 <https://github.com/MESMER-group/mesmer/pull/267>`_). By `Mathias Hauser`_.
+
+- Added helper functions to estimate and superimpose volcanic influence
+  (`#336 <https://github.com/MESMER-group/mesmer/pull/336>`_). By `Mathias Hauser`_.
 
 - Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
    - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
