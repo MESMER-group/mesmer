@@ -1,12 +1,118 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
+from packaging.version import Version
 
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
 
+def _select_ar_order_scen_ens(*objs, dim, ens_dim, maxlag, ic="bic"):
+    """
+    Select the order of an autoregressive process and potentially calculate the median
+    over ensemble members and scenarios
+
+    Parameters
+    ----------
+    objs : iterable of DataArray
+        A list of ``xr.DataArray`` to estimate the auto regression order over.
+    dim : str
+        Dimension along which to determine the order.
+    ens_dim : str
+        Dimension name of the ensemble members.
+    maxlag : int
+        The maximum lag to consider.
+    ic : {'aic', 'hqic', 'bic'}, default 'bic'
+        The information criterion to use in the selection.
+
+    Returns
+    -------
+    selected_ar_order : DataArray
+        Array indicating the selected order with the same size as the input but ``dim``
+        removed.
+
+    Notes
+    -----
+    Calculates the median auto regression order, first over the ensemble members,
+    then over all scenarios.
+    """
+
+    if Version(xr.__version__) >= Version("2022.03.0"):
+        method = "method"
+    else:
+        method = "interpolation"
+
+    ar_order_scen = list()
+    for obj in objs:
+        res = select_ar_order(obj, dim=dim, maxlag=maxlag, ic=ic)
+
+        if ens_dim in res.dims:
+            res = res.quantile(dim=ens_dim, q=0.5, **{method: "nearest"})
+
+        ar_order_scen.append(res)
+
+    ar_order_scen = xr.concat(ar_order_scen, dim="scen")
+
+    ar_order = ar_order_scen.quantile(0.5, dim="scen", **{method: "nearest"})
+
+    if not np.isnan(ar_order).any():
+        ar_order = ar_order.astype(int)
+
+    return ar_order
+
+
+def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
+    """
+    fit an auto regression and potentially calculate the mean over ensemble members
+    and scenarios
+
+    Parameters
+    ----------
+    objs : iterable of DataArray
+        A list of ``xr.DataArray`` to estimate the auto regression over.
+    dim : str
+        Dimension along which to fit the auto regression.
+    ens_dim : str
+        Dimension name of the ensemble members.
+    lags : int
+        The number of lags to include in the model.
+
+    Returns
+    -------
+    :obj:`xr.Dataset`
+        Dataset containing the estimated parameters of the ``intercept``, the AR
+        ``coeffs`` and the ``variance`` of the residuals.
+
+    Notes
+    -----
+    Calculates the mean auto regression, first over the ensemble members, then over all
+    scenarios.
+    """
+
+    ar_params_scen = list()
+    for obj in objs:
+        ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
+
+        # BUG/ TODO: fix for v1, see https://github.com/MESMER-group/mesmer/issues/307
+        ar_params["standard_deviation"] = np.sqrt(ar_params.variance)
+
+        if ens_dim in ar_params.dims:
+            ar_params = ar_params.mean(ens_dim)
+
+        ar_params_scen.append(ar_params)
+
+    ar_params_scen = xr.concat(ar_params_scen, dim="scen")
+
+    # return the mean over all scenarios
+    ar_params = ar_params_scen.mean("scen")
+
+    return ar_params
+
+
+# ======================================================================================
+
+
 def select_ar_order(data, dim, maxlag, ic="bic"):
-    """Select the order of an autoregressive process - xarray wrapper
+    """Select the order of an autoregressive process
 
     Parameters
     ----------
@@ -396,15 +502,14 @@ def _draw_auto_regression_correlated_np(
 
 
 def fit_auto_regression(data, dim, lags):
-    """
-    fit an auto regression - xarray wrapper
+    """fit an auto regression
 
     Parameters
     ----------
     data : xr.DataArray
         A ``xr.DataArray`` to estimate the auto regression over.
     dim : str
-        Dimension along which to fit the auto regression over.
+        Dimension along which to fit the auto regression.
     lags : int
         The number of lags to include in the model.
 

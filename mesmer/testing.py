@@ -38,11 +38,11 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
             assert first_val == second_val, key
 
 
-def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1):
+def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1, seed=0):
 
     time = np.arange(n_timesteps)
 
-    rng = np.random.default_rng(0)
+    rng = np.random.default_rng(seed)
     scatter = rng.normal(scale=scale, size=n_timesteps)
 
     data = intercept + slope * time + scatter
@@ -50,12 +50,14 @@ def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1):
     return xr.DataArray(data, dims=("time"), coords={"time": time}, name="data")
 
 
-def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
+def trend_data_2D(
+    n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1, seed=0
+):
 
     n_cells = n_lat * n_lon
     time = np.arange(n_timesteps)
 
-    rng = np.random.default_rng(0)
+    rng = np.random.default_rng(seed)
     scatter = rng.normal(scale=scale, size=(n_timesteps, n_cells)).T
 
     data = intercept + slope * time + scatter
@@ -70,7 +72,9 @@ def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=
     return xr.DataArray(data, dims=("cells", "time"), coords=coords, name="data")
 
 
-def trend_data_3D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
+def trend_data_3D(
+    n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1, seed=0
+):
 
     data = trend_data_2D(
         n_timesteps=n_timesteps,
@@ -79,6 +83,7 @@ def trend_data_3D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=
         intercept=intercept,
         slope=slope,
         scale=scale,
+        seed=seed,
     )
 
     # reshape to 3D (time x lat x lon)
