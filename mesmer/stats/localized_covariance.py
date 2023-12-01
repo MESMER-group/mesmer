@@ -208,7 +208,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
     n_samples, __ = data.shape
     n_iterations = min(n_samples, k_folds)
 
-    nll = 0 # negative log likelihood
+    nll = 0  # negative log likelihood
 
     for it in range(n_iterations):
 
@@ -279,6 +279,6 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     # weighted sum for each cv sample
     # equals `log_likelihood @ weights * weights.size / weights.sum()`
-    weighted_nll = - np.average(log_likelihood, weights=weights) * weights.size
+    weighted_nll = -np.average(log_likelihood, weights=weights) * weights.size
 
     return weighted_nll
