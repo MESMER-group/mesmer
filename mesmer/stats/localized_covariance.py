@@ -279,6 +279,6 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     # weighted sum for each cv sample
     # equals `log_likelihood @ weights * weights.size / weights.sum()`
-    weighted_llh = np.average(log_likelihood, weights=weights) * weights.size
+    weighted_nll = - np.average(log_likelihood, weights=weights) * weights.size
 
-    return -weighted_llh
+    return weighted_nll
