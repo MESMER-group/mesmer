@@ -208,7 +208,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
     n_samples, __ = data.shape
     n_iterations = min(n_samples, k_folds)
 
-    log_likelihood = 0
+    nll = 0  # negative log likelihood
 
     for it in range(n_iterations):
 
@@ -228,7 +228,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
 
         try:
             # sum log likelihood of all crossvalidation folds
-            log_likelihood += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
+            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
         except np.linalg.LinAlgError:
             warnings.warn(
                 f"Singular matrix for localization_radius of {localization_radius}."
@@ -237,7 +237,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
             )
             return float("inf")
 
-    return log_likelihood
+    return nll
 
 
 def _get_neg_loglikelihood(data, covariance, weights):
@@ -254,7 +254,8 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     Returns
     -------
-    weighted_log_likelihood : float
+    weighted_nll : float
+        Weighted negative log likelihood
 
     Raises
     ------
@@ -278,6 +279,6 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     # weighted sum for each cv sample
     # equals `log_likelihood @ weights * weights.size / weights.sum()`
-    weighted_llh = np.average(log_likelihood, weights=weights) * weights.size
+    weighted_nll = -np.average(log_likelihood, weights=weights) * weights.size
 
-    return -weighted_llh
+    return weighted_nll
