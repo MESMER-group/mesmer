@@ -50,14 +50,15 @@ Smoothing
 
    ~stats.smoothing.lowess
 
-Geo-spatial
------------
+
+Gaspari-Cohn correlation matrix
+-------------------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~core.computation.calc_geodist_exact
-   ~core.computation.gaspari_cohn
+   ~stats.gaspari_cohn.gaspari_cohn_correlation_matrices
+   ~stats.gaspari_cohn.gaspari_cohn
 
 Data handling
 =============
@@ -95,6 +96,14 @@ Weighted operations: calculate global mean
    ~core.weighted.global_mean
    ~core.weighted.lat_weights
    ~core.weighted.weighted_mean
+
+Geospatial
+----------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.geospatial.geodist_exact
 
 
 Emulator functions
