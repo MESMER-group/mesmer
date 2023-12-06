@@ -57,8 +57,8 @@ Gaspari-Cohn correlation matrix
 .. autosummary::
    :toctree: generated/
 
-   ~core.stats.gaspari_cohn.gaspari_cohn_correlation_matrices
-   ~core.stats.gaspari_cohn.gaspari_cohn
+   ~stats.gaspari_cohn.gaspari_cohn_correlation_matrices
+   ~stats.gaspari_cohn.gaspari_cohn
 
 Data handling
 =============
