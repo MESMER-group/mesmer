@@ -16,7 +16,7 @@ import numpy as np
 import regionmask
 from packaging.version import Version
 
-import mesmer
+from mesmer.stats import gaspari_cohn
 
 from ..core.regionmaskcompat import mask_3D_frac_approx
 
@@ -125,7 +125,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
 
         phi_gc = {}
         for L in L_set:
-            phi_gc[L] = mesmer.stats.gaspari_cohn(geodist / L)
+            phi_gc[L] = gaspari_cohn(geodist / L)
             print("done with L:", L)
 
         joblib.dump(phi_gc, fullname_phi_gc)

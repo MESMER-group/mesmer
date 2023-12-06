@@ -10,8 +10,8 @@ Functions to train global variability module of MESMER.
 import numpy as np
 import xarray as xr
 
-import mesmer
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats import _fit_auto_regression_scen_ens, _select_ar_order_scen_ens
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
@@ -172,10 +172,10 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     # create temporary DataArray objects
     data = [xr.DataArray(data, dims=["run", "time"]) for data in gv.values()]
 
-    AR_order = mesmer.stats._select_ar_order_scen_ens(
+    AR_order = _select_ar_order_scen_ens(
         *data, dim="time", ens_dim="run", maxlag=max_lag, ic=sel_crit
     )
-    params = mesmer.stats._fit_auto_regression_scen_ens(
+    params = _fit_auto_regression_scen_ens(
         *data, dim="time", ens_dim="run", lags=AR_order
     )
 

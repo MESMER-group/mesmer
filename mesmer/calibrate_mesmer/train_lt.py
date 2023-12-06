@@ -9,12 +9,12 @@ Functions to train local trends module of MESMER.
 
 import xarray as xr
 
-import mesmer
 from mesmer.calibrate_mesmer.train_utils import (
     get_scenario_weights,
     stack_predictors_and_targets,
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats import LinearRegression
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -169,7 +169,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         # NOTE: atm only one target can be and is present
         for targ in params_lt["targs"]:
-            lr = mesmer.stats.LinearRegression()
+            lr = LinearRegression()
             lr.fit(predictors=X, target=y[targ], dim="sample", weights=wgt_scen_eq)
             params = lr.params
 
