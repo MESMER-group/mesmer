@@ -8,12 +8,8 @@ Functions to train local variability module of MESMER.
 
 import xarray as xr
 
+import mesmer
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _fit_auto_regression_scen_ens
-from mesmer.stats.localized_covariance import (
-    adjust_covariance_ar1,
-    find_localized_empirical_covariance,
-)
 
 from .train_utils import get_scenario_weights, stack_predictors_and_targets
 
@@ -233,7 +229,9 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         dims = ("run", "time", "cell")
         data = [xr.DataArray(data, dims=dims) for data in targ.values()]
 
-        params = _fit_auto_regression_scen_ens(*data, dim="time", ens_dim="run", lags=1)
+        params = mesmer.stats._fit_auto_regression_scen_ens(
+            *data, dim="time", ens_dim="run", lags=1
+        )
 
         params_lv["AR1_int"][targ_name] = params.intercept.values
         params_lv["AR1_coef"][targ_name] = params.coeffs.values.squeeze()
@@ -252,7 +250,9 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         params_lv["loc_ecov"][targ_name] = res.localized_covariance.values
 
         # adjust localized cov matrix with the coefficients of the AR(1) process
-        loc_cov_ar1 = adjust_covariance_ar1(res.localized_covariance, params.coeffs)
+        loc_cov_ar1 = mesmer.stats.adjust_covariance_ar1(
+            res.localized_covariance, params.coeffs
+        )
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_cov_ar1.values
 
@@ -311,4 +311,6 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     k_folds = cfg.max_iter_cv
 
-    return find_localized_empirical_covariance(data, weights, localizer, dim, k_folds)
+    return mesmer.stats.find_localized_empirical_covariance(
+        data, weights, localizer, dim, k_folds
+    )

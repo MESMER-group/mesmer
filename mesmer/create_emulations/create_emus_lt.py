@@ -178,7 +178,7 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
         params = _gather_lr_params(params_lt, targ, dims="cell")
         predictors = _gather_lr_preds(preds_lt, params_lt["preds"], scen, dims="time")
 
-        lr = mesmer.stats.linear_regression.LinearRegression()
+        lr = mesmer.stats.LinearRegression()
         lr.params = params
 
         prediction = lr.predict(predictors=predictors)

@@ -15,12 +15,12 @@ Linear regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats.linear_regression.LinearRegression
-   ~stats.linear_regression.LinearRegression.fit
-   ~stats.linear_regression.LinearRegression.predict
-   ~stats.linear_regression.LinearRegression.residuals
-   ~stats.linear_regression.LinearRegression.to_netcdf
-   ~stats.linear_regression.LinearRegression.from_netcdf
+   ~stats.LinearRegression
+   ~stats.LinearRegression.fit
+   ~stats.LinearRegression.predict
+   ~stats.LinearRegression.residuals
+   ~stats.LinearRegression.to_netcdf
+   ~stats.LinearRegression.from_netcdf
 
 Auto regression
 ---------------
@@ -28,10 +28,10 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats.auto_regression.select_ar_order
-   ~stats.auto_regression.fit_auto_regression
-   ~stats.auto_regression.draw_auto_regression_uncorrelated
-   ~stats.auto_regression.draw_auto_regression_correlated
+   ~stats.select_ar_order
+   ~stats.fit_auto_regression
+   ~stats.draw_auto_regression_uncorrelated
+   ~stats.draw_auto_regression_correlated
 
 Localized covariance
 --------------------
@@ -39,8 +39,8 @@ Localized covariance
 .. autosummary::
    :toctree: generated/
 
-   ~stats.localized_covariance.adjust_covariance_ar1
-   ~stats.localized_covariance.find_localized_empirical_covariance
+   ~stats.adjust_covariance_ar1
+   ~stats.find_localized_empirical_covariance
 
 Smoothing
 ---------
@@ -48,7 +48,7 @@ Smoothing
 .. autosummary::
    :toctree: generated/
 
-   ~stats.smoothing.lowess
+   ~stats.lowess
 
 
 Gaspari-Cohn correlation matrix
@@ -57,8 +57,8 @@ Gaspari-Cohn correlation matrix
 .. autosummary::
    :toctree: generated/
 
-   ~stats.gaspari_cohn.gaspari_cohn_correlation_matrices
-   ~stats.gaspari_cohn.gaspari_cohn
+   ~stats.gaspari_cohn_correlation_matrices
+   ~stats.gaspari_cohn
 
 Data handling
 =============

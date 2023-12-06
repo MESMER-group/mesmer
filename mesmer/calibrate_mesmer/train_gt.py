@@ -11,10 +11,9 @@ import warnings
 import numpy as np
 import xarray as xr
 
+import mesmer
 from mesmer.io import load_strat_aod
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.linear_regression import LinearRegression
-from mesmer.stats.smoothing import lowess
 from mesmer.utils import separate_hist_future
 
 
@@ -181,7 +180,7 @@ def train_gt_ic_LOWESS(data):
     # open to changes but if much smaller, var trend ends up very wiggly
     frac_lowess_name = "50/nr_ts"
 
-    gt_lowess = lowess(data, dim=dim, frac=frac).values
+    gt_lowess = mesmer.stats.lowess(data, dim=dim, frac=frac).values
 
     return gt_lowess, frac_lowess_name
 
@@ -247,7 +246,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
 
     gv_all_for_aod = xr.DataArray(gv_all_for_aod, dims="time").expand_dims("x")
 
-    lr = LinearRegression()
+    lr = mesmer.stats.LinearRegression()
 
     # fit linear regression of gt to aod (because some ESMs react very strongly to
     # volcanoes)

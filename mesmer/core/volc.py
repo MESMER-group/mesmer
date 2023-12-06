@@ -2,9 +2,9 @@ import warnings
 
 import xarray as xr
 
+import mesmer
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 from mesmer.core.utils import _check_dataarray_form
-from mesmer.stats.linear_regression import LinearRegression
 
 
 def _load_and_align_strat_aod_obs(data, hist_period, dim="time", version="2022"):
@@ -94,7 +94,7 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
         aod = aod.stack(__sample__=dims)
         dim = "__sample__"
 
-    lr = LinearRegression()
+    lr = mesmer.stats.LinearRegression()
 
     # TODO: name of 'aod'
     lr.fit(
@@ -129,7 +129,7 @@ def _predict_volcanic_contribution(
     )
 
     # set up linear regression model
-    lr = LinearRegression()
+    lr = mesmer.stats.LinearRegression()
     lr.params = params
 
     # estimate volcanic contribution

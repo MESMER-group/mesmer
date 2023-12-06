@@ -9,12 +9,12 @@ Functions to train local trends module of MESMER.
 
 import xarray as xr
 
+import mesmer
 from mesmer.calibrate_mesmer.train_utils import (
     get_scenario_weights,
     stack_predictors_and_targets,
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.linear_regression import _fit_linear_regression_xr
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -169,20 +169,17 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         # NOTE: atm only one target can be and is present
         for targ in params_lt["targs"]:
-            reg_xr = _fit_linear_regression_xr(
-                predictors=X,
-                target=y[targ],
-                dim="sample",
-                weights=wgt_scen_eq,
-            )
+            lr = mesmer.stats.LinearRegression()
+            lr.fit(predictors=X, target=y[targ], dim="sample", weights=wgt_scen_eq)
+            params = lr.params
 
-            params_lt["intercept"][targ] = reg_xr.intercept.values
+            params_lt["intercept"][targ] = params.intercept.values
 
             for pred in params_lt["preds"]:
-                params_lt[f"coef_{pred}"][targ] = reg_xr[pred].values
+                params_lt[f"coef_{pred}"][targ] = params[pred].values
 
             for pred in params_lv["preds"]:
-                params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
+                params_lv[f"coef_{pred}"][targ] = params[pred].values
     else:
         raise NotImplementedError()
 
