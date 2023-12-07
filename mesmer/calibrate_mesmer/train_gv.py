@@ -11,10 +11,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import (
-    _fit_auto_regression_scen_ens,
-    _select_ar_order_scen_ens,
-)
+from mesmer.stats import _fit_auto_regression_scen_ens, _select_ar_order_scen_ens
 
 
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):

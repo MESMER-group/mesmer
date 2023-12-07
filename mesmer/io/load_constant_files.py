@@ -16,6 +16,8 @@ import numpy as np
 import regionmask
 from packaging.version import Version
 
+from mesmer.stats import gaspari_cohn
+
 from ..core.regionmaskcompat import mask_3D_frac_approx
 
 
@@ -81,7 +83,6 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     """
 
     from mesmer.core.geospatial import geodist_exact
-    from mesmer.stats.gaspari_cohn import gaspari_cohn
 
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land

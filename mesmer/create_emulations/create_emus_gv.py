@@ -10,7 +10,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import draw_auto_regression_uncorrelated
+from mesmer.stats import draw_auto_regression_uncorrelated
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):

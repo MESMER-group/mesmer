@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 from statsmodels.tsa.arima_process import ArmaProcess
 
-import mesmer.stats.auto_regression
+import mesmer
 
 
 def generate_ar_samples(ar, n_timesteps=100, n_ens=4):
@@ -22,7 +22,7 @@ def test_select_ar_order_scen_ens_one_scen():
 
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
-    result = mesmer.stats.auto_regression._select_ar_order_scen_ens(
+    result = mesmer.stats._select_ar_order_scen_ens(
         da, dim="time", ens_dim="ens", maxlag=5
     )
 
@@ -36,7 +36,7 @@ def test_select_ar_order_scen_ens_multi_scen():
     da1 = generate_ar_samples([1, 0.5, 0.3], n_timesteps=100, n_ens=4)
     da2 = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
-    result = mesmer.stats.auto_regression._select_ar_order_scen_ens(
+    result = mesmer.stats._select_ar_order_scen_ens(
         da1, da2, dim="time", ens_dim="ens", maxlag=5
     )
 
@@ -49,7 +49,7 @@ def test_select_ar_order_scen_ens_no_ens_dim():
 
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
-    result = mesmer.stats.auto_regression._select_ar_order_scen_ens(
+    result = mesmer.stats._select_ar_order_scen_ens(
         da, dim="time", ens_dim=None, maxlag=5
     )
 
@@ -65,11 +65,11 @@ def test_fit_auto_regression_scen_ens_one_scen():
 
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
-    result = mesmer.stats.auto_regression._fit_auto_regression_scen_ens(
+    result = mesmer.stats._fit_auto_regression_scen_ens(
         da, dim="time", ens_dim="ens", lags=3
     )
 
-    expected = mesmer.stats.auto_regression.fit_auto_regression(da, dim="time", lags=3)
+    expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
     expected["standard_deviation"] = np.sqrt(expected.variance)
     expected = expected.mean("ens")
 
@@ -81,13 +81,13 @@ def test_fit_auto_regression_scen_ens_multi_scen():
     da1 = generate_ar_samples([1, 0.5, 0.3], n_timesteps=100, n_ens=4)
     da2 = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=5)
 
-    result = mesmer.stats.auto_regression._fit_auto_regression_scen_ens(
+    result = mesmer.stats._fit_auto_regression_scen_ens(
         da1, da2, dim="time", ens_dim="ens", lags=3
     )
 
     da = xr.concat([da1, da2], dim="scen")
     da = da.stack(scen_ens=("scen", "ens")).dropna("scen_ens")
-    expected = mesmer.stats.auto_regression.fit_auto_regression(da, dim="time", lags=3)
+    expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
     expected = expected.unstack()
     expected["standard_deviation"] = np.sqrt(expected.variance)
     expected = expected.mean("ens").mean("scen")
@@ -99,11 +99,11 @@ def test_fit_auto_regression_scen_ens_no_ens_dim():
 
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
-    result = mesmer.stats.auto_regression._fit_auto_regression_scen_ens(
+    result = mesmer.stats._fit_auto_regression_scen_ens(
         da, dim="time", ens_dim=None, lags=3
     )
 
-    expected = mesmer.stats.auto_regression.fit_auto_regression(da, dim="time", lags=3)
+    expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
 
     expected["standard_deviation"] = np.sqrt(expected.variance)
 

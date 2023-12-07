@@ -4,7 +4,7 @@ import xarray as xr
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 from mesmer.core.utils import _check_dataarray_form
-from mesmer.stats.linear_regression import LinearRegression
+from mesmer.stats import LinearRegression
 
 
 def _load_and_align_strat_aod_obs(data, hist_period, dim="time", version="2022"):

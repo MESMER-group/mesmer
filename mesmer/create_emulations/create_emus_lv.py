@@ -10,10 +10,9 @@ Functions to create local variability emulations with MESMER.
 import numpy as np
 import xarray as xr
 
-import mesmer.stats
 from mesmer.create_emulations.utils import _gather_lr_params, _gather_lr_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import draw_auto_regression_correlated
+from mesmer.stats import LinearRegression, draw_auto_regression_correlated
 
 
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
@@ -268,7 +267,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
 
             params = _gather_lr_params(params_lv, targ, dims="gridpoint")
 
-            lr = mesmer.stats.linear_regression.LinearRegression()
+            lr = LinearRegression()
             lr.params = params
             prediction = lr.predict(predictors=preds)
 

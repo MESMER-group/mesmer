@@ -9,8 +9,8 @@ Functions to train local variability module of MESMER.
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _fit_auto_regression_scen_ens
-from mesmer.stats.localized_covariance import (
+from mesmer.stats import (
+    _fit_auto_regression_scen_ens,
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
