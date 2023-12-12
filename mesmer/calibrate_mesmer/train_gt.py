@@ -13,8 +13,7 @@ import xarray as xr
 
 from mesmer.io import load_strat_aod
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.linear_regression import LinearRegression
-from mesmer.stats.smoothing import lowess
+from mesmer.stats import LinearRegression, lowess
 from mesmer.utils import separate_hist_future
 
 
@@ -129,7 +128,7 @@ def train_gt(data, targ, esm, time, cfg, save_params=True):
     for scen, data in gt_to_distribute.items():
         params_gt[scen] = data.squeeze()
 
-    # save the global trend paramters if requested
+    # save the global trend parameters if requested
     if save_params:
         save_mesmer_data(
             params_gt,
@@ -251,7 +250,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
 
     # fit linear regression of gt to aod (because some ESMs react very strongly to
     # volcanoes)
-    # no intercept to not artifically move the ts
+    # no intercept to not artificially move the ts
     lr.fit(
         predictors={"aod_obs": aod_obs_all},
         target=gv_all_for_aod,
@@ -265,7 +264,7 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     # apply linear regression model to obtain volcanic spikes
     contrib_volc = lr.predict(predictors={"aod_obs": aod_obs})
 
-    # merge the lowess trend wit the volc contribution
+    # merge the lowess trend with the volc contribution
     gt = gt_lowess + contrib_volc.values.squeeze()
 
     return coef_saod, gt

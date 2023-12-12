@@ -7,8 +7,8 @@ import warnings
 from mesmer.create_emulations.utils import concatenate_hist_future
 
 from ..create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
-from ..io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
-from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
+from ..io import load_cmip_data_all_esms, load_phi_gc, save_mesmer_bundle
+from ..utils import separate_hist_future
 from .train_gt import train_gt
 from .train_gv import train_gv
 from .train_lt import train_lt
@@ -27,7 +27,6 @@ class _Config:
         scenarios,
         cmip_generation,
         cmip_data_root_dir,
-        observations_root_dir,
         auxiliary_data_dir,
         reference_period_type,
         reference_period_start_year,
@@ -43,6 +42,7 @@ class _Config:
         cross_validation_max_iterations,
         save_params=False,
         params_output_dir=None,
+        use_hfds=True,
         **kwargs,
     ):
 
@@ -57,7 +57,6 @@ class _Config:
         self.gen = cmip_generation
 
         self.dir_cmipng = cmip_data_root_dir
-        self.dir_obs = observations_root_dir
         self.dir_aux = auxiliary_data_dir
         self.ref = {
             "type": reference_period_type,
@@ -71,8 +70,11 @@ class _Config:
                 "lt": tas_local_trend_method,
                 "lv": tas_local_variability_method,
             },
-            "hfds": {"gt": hfds_global_trend_method},
         }
+
+        if use_hfds:
+            self.methods["hfds"] = {"gt": hfds_global_trend_method}
+
         self.method_lt_each_gp_sep = method_lt_each_gp_sep
 
         # Essentially metadata about predictors used. Maybe used for naming etc.
@@ -83,8 +85,11 @@ class _Config:
                 "gt": ["saod"],
                 "gv": [],
             },
-            "hfds": {"gt": []},
         }
+
+        if use_hfds:
+            self.preds["hfds"] = {"gt": []}
+
         self.preds["tas"]["g_all"] = self.preds["tas"]["gt"] + self.preds["tas"]["gv"]
 
         self.wgt_scen_tr_eq = weight_scenarios_equally
@@ -115,7 +120,6 @@ def _calibrate_tas(
     threshold_land,
     output_file,
     cmip_data_root_dir=None,
-    observations_root_dir=None,
     auxiliary_data_dir=None,
     cmip_generation=6,
     reference_period_type="individ",
@@ -133,6 +137,8 @@ def _calibrate_tas(
     cross_validation_max_iterations=30,
     save_params=False,
     params_output_dir=None,
+    use_tas2=True,
+    use_hfds=True,
     **kwargs,
 ):
     """
@@ -145,17 +151,11 @@ def _calibrate_tas(
     for key in kwargs:
         warnings.warn(f"{key} has been deprecated and has no effect", FutureWarning)
 
-    tas_g = {}  # tas with global coverage
-    gsat = {}  # global mean tas
-    ghfds = {}  # global mean hfds (needed as predictor)
-    time = {}
-
     cfg = _Config(
         esms=esms,
         scenarios=scenarios_to_train,
         cmip_generation=cmip_generation,
         cmip_data_root_dir=cmip_data_root_dir,
-        observations_root_dir=observations_root_dir,
         auxiliary_data_dir=auxiliary_data_dir,
         reference_period_type=reference_period_type,
         reference_period_start_year=reference_period_start_year,
@@ -171,36 +171,16 @@ def _calibrate_tas(
         cross_validation_max_iterations=cross_validation_max_iterations,
         save_params=save_params,
         params_output_dir=params_output_dir,
+        use_hfds=use_hfds,
     )
 
-    for esm in esms:
-        LOGGER.info("Loading data for %s", esm)
-
-        time[esm] = {}
-
-        # temporary dicts to gather data over scenarios
-        tas_temp, gsat_temp, ghfds_temp = {}, {}, {}
-        for scen in scenarios_to_train:
-            out = load_cmipng("tas", esm, scen, cfg)
-
-            if out[0] is None:
-                warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
-                continue
-
-            # unpack data
-            tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
-
-            _, ghfds_temp[scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
-
-        tas_g[esm] = convert_dict_to_arr(tas_temp)
-        gsat[esm] = convert_dict_to_arr(gsat_temp)
-        ghfds[esm] = convert_dict_to_arr(ghfds_temp)
-
-    # load in the constant files
-    _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
-
-    # extract land
-    tas, _, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=threshold_land)
+    time, lon, lat, ls, tas, gsat, ghfds = load_cmip_data_all_esms(
+        esms,
+        scenarios=scenarios_to_train,
+        threshold_land=threshold_land,
+        use_hfds=use_hfds,
+        cfg=cfg,
+    )
 
     for esm in esms:
         LOGGER.info("Calibrating %s", esm)
@@ -210,10 +190,11 @@ def _calibrate_tas(
         params_gt_tas = train_gt(
             gsat[esm], "tas", esm, time[esm], cfg, save_params=cfg.save_params
         )
-        # TODO: remove hard-coded hfds
-        params_gt_hfds = train_gt(
-            ghfds[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
-        )
+
+        if use_hfds:
+            params_gt_hfds = train_gt(
+                ghfds[esm], "hfds", esm, time[esm], cfg, save_params=cfg.save_params
+            )
 
         # From params_gt_T, extract the global-trend so that the global variability,
         # local trends, and local variability modules can be trained.
@@ -229,11 +210,16 @@ def _calibrate_tas(
         LOGGER.info(
             "Prepare predictors for global variability, local trends variability"
         )
-        gt_tas2_s = {scen: gt_tas_scen**2 for scen, gt_tas_scen in gt_tas_s.items()}
 
-        gt_hfds_s = gather_gt_data(
-            params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
-        )
+        if use_tas2:
+            gt_tas2_s = {
+                scen: gt_tas_scen**2 for scen, gt_tas_scen in gt_tas_s.items()
+            }
+
+        if use_hfds:
+            gt_hfds_s = gather_gt_data(
+                params_gt_hfds, preds_gt, cfg, concat_h_f=False, save_emus=False
+            )
 
         # calculate tas residuals
         gv_novolc_tas = {scen: gsat[esm][scen] - gt_tas[scen] for scen in gt_tas}
@@ -248,12 +234,18 @@ def _calibrate_tas(
         )
 
         LOGGER.info("Calibrating local trends module")
-        preds = {
-            "gttas": gt_tas_s,
-            "gttas2": gt_tas2_s,
-            "gthfds": gt_hfds_s,
-            "gvtas": gv_novolc_tas_s,
-        }
+        preds = {}
+
+        preds["gttas"] = gt_tas_s
+
+        if use_tas2:
+            preds["gttas2"] = gt_tas2_s
+
+        if use_hfds:
+            preds["gthfds"] = gt_hfds_s
+
+        preds["gvtas"] = gv_novolc_tas_s
+
         targs = {"tas": tas_s}
         params_lt, params_lv = train_lt(
             preds, targs, esm, cfg, save_params=cfg.save_params
@@ -262,7 +254,14 @@ def _calibrate_tas(
         # Create forced local warming samples used for training the local variability
         # module. Samples are cheap to create so not an issue to have here.
         LOGGER.info("Creating local trends emulations")
-        preds_lt = {"gttas": gt_tas_s, "gttas2": gt_tas2_s, "gthfds": gt_hfds_s}
+        preds_lt = {"gttas": gt_tas_s}
+
+        if use_tas2:
+            preds_lt["gttas2"] = gt_tas2_s
+
+        if use_hfds:
+            preds_lt["gthfds"] = gt_hfds_s
+
         lt_s = create_emus_lt(
             params_lt, preds_lt, cfg, concat_h_f=False, save_emus=False
         )

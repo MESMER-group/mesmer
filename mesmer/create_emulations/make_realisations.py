@@ -130,7 +130,12 @@ def make_realisations(
     # TODO: add better checks for what happens if scenarios have different
     # time axis etc.
     a_scenario_key = [k for k in time.keys() if k != "hist"][0]
-    time_all = np.concatenate([time["hist"], time[a_scenario_key]])
+
+    if "hist" in time:
+        time_all = np.concatenate([time["hist"], time[a_scenario_key]])
+    else:
+        assert a_scenario_key.startswith("h-")
+        time_all = time[a_scenario_key]
     esm_gv_T = params_gv_T["esm"]
     time_seeds = seeds[esm_gv_T].keys()
     preds_gv = {"time": {k: time_all for k in time_seeds}}
@@ -154,9 +159,13 @@ def _convert_raw_mesmer_to_xarray(emulations, land_fractions, time):
     tmp = []
     for scenario, outputs in emulations.items():
         for variable, values in outputs.items():
-            time = np.concatenate([time["hist"], time[scenario.replace("h-", "")]])
+            if "hist" in time:
+                time_ = np.concatenate([time["hist"], time[scenario.replace("h-", "")]])
+            else:
+                time_ = time[scenario]
+
             variable_out = (
-                land_fractions_stacked.expand_dims({"year": time})
+                land_fractions_stacked.expand_dims({"year": time_})
                 .expand_dims({"realisation": range(values.shape[0])})
                 .copy()
             )

@@ -6,12 +6,11 @@
 Functions to train local variability module of MESMER.
 """
 
-
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _fit_auto_regression_xr
-from mesmer.stats.localized_covariance import (
+from mesmer.stats import (
+    _fit_auto_regression_scen_ens,
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
@@ -55,7 +54,7 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     Returns
     -------
     params_lv : dict
-        dictionary of local variability paramters
+        dictionary of local variability parameters
 
         - ["targs"] (emulated variables, str)
         - ["esm"] (Earth System Model, str)
@@ -230,23 +229,15 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     # fit parameters for each target individually
     for targ_name, targ in targs.items():
 
-        params_scen = list()
-        for scen, data in targ.items():
+        # create temporary DataArray
+        dims = ("run", "time", "cell")
+        data = [xr.DataArray(data, dims=dims) for data in targ.values()]
 
-            # create temporary DataArray
-            data = xr.DataArray(data, dims=("run", "time", "cell"))
+        params = _fit_auto_regression_scen_ens(*data, dim="time", ens_dim="run", lags=1)
 
-            params = _fit_auto_regression_xr(data, dim="time", lags=1)
-            params = params.mean("run")
-
-            params_scen.append(params)
-
-        params_scen = xr.concat(params_scen, dim="scen")
-        params_scen = params_scen.mean("scen")
-
-        params_lv["AR1_int"][targ_name] = params_scen.intercept.values
-        params_lv["AR1_coef"][targ_name] = params_scen.coeffs.values.squeeze()
-        params_lv["AR1_std_innovs"][targ_name] = params_scen.standard_deviation.values
+        params_lv["AR1_int"][targ_name] = params.intercept.values
+        params_lv["AR1_coef"][targ_name] = params.coeffs.values.squeeze()
+        params_lv["AR1_std_innovs"][targ_name] = params.standard_deviation.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
 
@@ -261,13 +252,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         params_lv["loc_ecov"][targ_name] = res.localized_covariance.values
 
         # adjust localized cov matrix with the coefficients of the AR(1) process
-        loc_cov = params_lv["loc_ecov"][targ_name]
-        loc_cov = xr.DataArray(loc_cov, dims=("cell_i", "cell_j"))
-
-        ar_coefs = params_lv["AR1_coef"][targ_name]
-        ar_coefs = xr.DataArray(ar_coefs, dims="cell")
-
-        loc_cov_ar1 = adjust_covariance_ar1(loc_cov, ar_coefs)
+        loc_cov_ar1 = adjust_covariance_ar1(res.localized_covariance, params.coeffs)
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_cov_ar1.values
 

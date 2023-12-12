@@ -75,7 +75,7 @@ class LinearRegression:
         available_predictors = set(predictors.keys())
 
         if required_predictors != available_predictors:
-            raise ValueError("Missing or superflous predictors.")
+            raise ValueError("Missing or superfluous predictors.")
 
         prediction = params.intercept
         for key in required_predictors:
@@ -246,15 +246,15 @@ def _fit_linear_regression_xr(
         fit_intercept,
     )
 
+    # remove (non-dimension) coords from target (#332, #333)
+    target = target.drop_vars(target[dim].coords)
+
     # split `out` into individual DataArrays
     keys = ["intercept"] + list(predictors)
-    dataarrays = {key: (target_dim, out[:, i]) for i, key in enumerate(keys)}
-    out = xr.Dataset(dataarrays, coords=target.coords)
+    data_vars = {key: (target_dim, out[:, i]) for i, key in enumerate(keys)}
+    out = xr.Dataset(data_vars, coords=target.coords)
 
     out["fit_intercept"] = fit_intercept
-
-    if dim in out.coords:
-        out = out.drop_vars(dim)
 
     if weights is not None:
         out["weights"] = weights

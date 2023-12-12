@@ -5,13 +5,13 @@ import xarray as xr
 import mesmer
 
 
-def _where_if_dim(obj, cond, dims):
+def _where_if_coords(obj, cond, coords):
 
     # xarray applies where to all data_vars - even if they do not have the corresponding
     # dimensions - we don't want that https://github.com/pydata/xarray/issues/7027
 
     def _where(da):
-        if all(dim in da.dims for dim in dims):
+        if all(coord in da.coords for coord in coords):
             return da.where(cond)
         return da
 
@@ -71,7 +71,7 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     mask_bool = mask_fraction > threshold
 
     # only mask data_vars that have the coords
-    return _where_if_dim(data, mask_bool, [y_coords, x_coords])
+    return _where_if_coords(data, mask_bool, [y_coords, x_coords])
 
 
 def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
@@ -106,7 +106,7 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     mask_bool = mask_bool.squeeze(drop=True)
 
     # only mask data_vars that have the coords
-    return _where_if_dim(data, mask_bool, [y_coords, x_coords])
+    return _where_if_coords(data, mask_bool, [y_coords, x_coords])
 
 
 def mask_antarctica(data, *, y_coords="lat"):
@@ -132,4 +132,4 @@ def mask_antarctica(data, *, y_coords="lat"):
     mask_bool = data[y_coords] >= -60
 
     # only mask if data has y_coords
-    return _where_if_dim(data, mask_bool, [y_coords])
+    return _where_if_coords(data, mask_bool, [y_coords])

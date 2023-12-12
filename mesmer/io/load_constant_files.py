@@ -16,6 +16,8 @@ import numpy as np
 import regionmask
 from packaging.version import Version
 
+from mesmer.stats import gaspari_cohn
+
 from ..core.regionmaskcompat import mask_3D_frac_approx
 
 
@@ -80,7 +82,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
       matrix must be positive semidefinite in train_lv())
     """
 
-    from mesmer.core.computation import calc_geodist_exact, gaspari_cohn
+    from mesmer.core.geospatial import geodist_exact
 
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
@@ -106,7 +108,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
         lon_l_vec = lon["grid"][ls["idx_grid_l"]]
         lat_l_vec = lat["grid"][ls["idx_grid_l"]]
 
-        geodist = calc_geodist_exact(lon_l_vec, lat_l_vec)
+        geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
         # create auxiliary directory if does not exist already
         os.makedirs(dir_aux, exist_ok=True)

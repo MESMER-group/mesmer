@@ -8,8 +8,8 @@ New Features
 ^^^^^^^^^^^^
 
 - Extracted statistical functionality for linear regression:
-   - Create :py:class:`mesmer.stats.linear_regression.LinearRegression` which encapsulates
-     ``fit``, ``predict``, etc. methods around linear regression
+   - Create :py:class:`mesmer.stats.LinearRegression` which encapsulates ``fit``, ``predict``,
+     etc. methods around linear regression
      (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
      By `Mathias Hauser`_.
    - Add ``mesmer.stats._fit_linear_regression_xr``: xarray wrapper for ``mesmer.stats._fit_linear_regression_np``
@@ -18,46 +18,61 @@ New Features
    - Add add ``fit_intercept`` argument to the ``linear_regression`` fitting methods and
      functions (`#144 <https://github.com/MESMER-group/mesmer/pull/144>`_).
      By `Mathias Hauser`_.
-   - Allow to pass 1-dimensional targets to :py:meth:`mesmer.stats.linear_regression.LinearRegression.fit`
+   - Allow to pass 1-dimensional targets to :py:meth:`mesmer.stats.LinearRegression.fit`
      (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
+     By `Mathias Hauser`_.
+   - Fixed two bugs related to (non-dimension) coordinates (
+     `#332 <https://github.com/MESMER-group/mesmer/issues/332>`_,
+     `#333 <https://github.com/MESMER-group/mesmer/issues/333>`_ and
+     `#334 <https://github.com/MESMER-group/mesmer/pull/313>`_).
      By `Mathias Hauser`_.
 
 - Extracted statistical functionality for auto regression:
-   - Add ``mesmer.stats.auto_regression._fit_auto_regression_xr``: xarray wrapper to fit an
-     auto regression model (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
+   - Add ``mesmer.stats.fit_auto_regression``: xarray wrapper to fit an auto regression model
+     (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
      By `Mathias Hauser`_.
-   - Add ``mesmer.stats.auto_regression._draw_auto_regression_correlated_np``: to draw samples of an
-     auto regression model (`#161 <https://github.com/MESMER-group/mesmer/pull/161>`_).
+   - Have ``mesmer.stats.fit_auto_regression`` return the variance instead of the standard deviation (
+     `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_
+     `#318 <https://github.com/MESMER-group/mesmer/pull/318>`_). By `Mathias Hauser`_.
+   - Add ``draw_auto_regression_correlated`` and ``draw_auto_regression_uncorrelated``: to draw samples of a
+     (spatially-)correlated and uncorrelated auto regression model (
+     `#322 <https://github.com/MESMER-group/mesmer/pull/322>`_,
+     `#161 <https://github.com/MESMER-group/mesmer/pull/161>`_ and
+     `#313 <https://github.com/MESMER-group/mesmer/pull/313>`_).
      By `Mathias Hauser`_.
-   - Extract function to select the order of the auto regressive model: ``mesmer.stats.auto_regression._select_ar_order_xr``
+   - Add ``mesmer.stats.select_ar_order`` to select the order of an auto regressive model
      (`#176 <https://github.com/MESMER-group/mesmer/pull/176>`_).
      By `Mathias Hauser`_.
 
 - Extracted functions dealing with the spatial covariance and its localization:
-   - Add xarray wrappers :py:func:`mesmer.stats.localized_covariance.adjust_covariance_ar1`
-     and :py:func:`mesmer.stats.localized_covariance.find_localized_empirical_covariance`
+   - Add xarray wrappers :py:func:`mesmer.stats.adjust_covariance_ar1`
+     and :py:func:`mesmer.stats.find_localized_empirical_covariance`
      (`#191 <https://github.com/MESMER-group/mesmer/pull/191>`__).
      By `Mathias Hauser`_.
    - Refactor and extract numpy-based functions dealing with the spatial covariance and its localization
      (`#167 <https://github.com/MESMER-group/mesmer/pull/167>`__ and `#184
      <https://github.com/MESMER-group/mesmer/pull/184>`__).
      By `Mathias Hauser`_.
-   - Allow to pass `1 x n` arrays to :py:func:`mesmer.stats.localized_covariance.adjust_covariance_ar1`
+   - Allow to pass `1 x n` arrays to :py:func:`mesmer.stats.adjust_covariance_ar1`
      (`#224 <https://github.com/MESMER-group/mesmer/pull/224>`__).
      By `Mathias Hauser`_.
 
-- Other refactorings:
-   - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.smoothing.lowess`.
+- Update LOWESS smoothing:
+   - Extract the LOWESS smoothing for xarray objects: :py:func:`mesmer.stats.lowess`.
      (`#193 <https://github.com/MESMER-group/mesmer/pull/193>`_,
      `#283 <https://github.com/MESMER-group/mesmer/pull/283>`_, and
      `#285 <https://github.com/MESMER-group/mesmer/pull/285>`_).
+     By `Mathias Hauser`_.
+   - Allow to pool data along a dimension to estimate the LOWESS smoothing.
+     (`#331 <https://github.com/MESMER-group/mesmer/pull/331>`_).
      By `Mathias Hauser`_.
 
 - Added helper functions to process xarray-based model data:
    - Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
      <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser`_.
-   - Added functions to mask the ocean and Antarctica (`#219
-     <https://github.com/MESMER-group/mesmer/pull/219>`_). By `Mathias Hauser`_.
+   - Added functions to mask the ocean and Antarctica (
+     `#219 <https://github.com/MESMER-group/mesmer/pull/219>`_ and
+     `#314 <https://github.com/MESMER-group/mesmer/pull/314>`_). By `Mathias Hauser`_.
    - Added functions to calculate the weighted global mean
      (`#220 <https://github.com/MESMER-group/mesmer/pull/220>`_ and
      `#287 <https://github.com/MESMER-group/mesmer/pull/287>`_). By `Mathias Hauser`_.
@@ -68,20 +83,26 @@ New Features
 - The aerosol data is now automatically downloaded using `pooch <https://www.fatiando.org/pooch/latest/>`__.
   (`#267 <https://github.com/MESMER-group/mesmer/pull/267>`_). By `Mathias Hauser`_.
 
+- Added helper functions to estimate and superimpose volcanic influence
+  (`#336 <https://github.com/MESMER-group/mesmer/pull/336>`_). By `Mathias Hauser`_.
+
 - Added additional tests for the calibration step (`#209 <https://github.com/MESMER-group/mesmer/issues/209>`_):
    - one scenario (SSP5-8.5) and two ensemble members (`#211 <https://github.com/MESMER-group/mesmer/pull/211>`_)
    - two scenarios (SSP1-2.6 and SSP5-8.5) with one and two ensemble members, respectively (`#214 <https://github.com/MESMER-group/mesmer/pull/214>`_)
+   - different selection of predictor variables (tas**2 and hfds) for different scenarios (`#291 <https://github.com/MESMER-group/mesmer/pull/291>`_)
 
    By `Mathias Hauser`_.
 
 - Allow passing `xr.DataArray` to ``gaspari_cohn`` (`#298 <https://github.com/MESMER-group/mesmer/pull/298>`__).
   By `Mathias Hauser`_.
-- Allow passing `xr.DataArray` to ``calc_geodist_exact`` (`#299 <https://github.com/MESMER-group/mesmer/pull/299>`__).
+- Allow passing `xr.DataArray` to ``geodist_exact`` (`#299 <https://github.com/MESMER-group/mesmer/pull/299>`__).
   By `Zeb Nicholls`_ and `Mathias Hauser`_.
 - Add ``calc_gaspari_cohn_correlation_matrices`` a function to calculate Gaspari-Cohn correlation
   matrices for a range of localisation radii (`#300 <https://github.com/MESMER-group/mesmer/pull/300>`__).
   By `Zeb Nicholls`_ and `Mathias Hauser`_.
-
+- Add a helper function to load tas and (potentially) hfds for several ESMs from cmip-ng
+  archive at ETHZ (`#326 <https://github.com/MESMER-group/mesmer/pull/326>`__).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -106,7 +127,7 @@ Breaking changes
   and the ``reg_dict`` argument to :py:func:`mesmer.utils.select.extract_land`. These arguments
   no longer have any affect (`#235 <https://github.com/MESMER-group/mesmer/pull/235>`_).
   By `Mathias Hauser`_.
-- Removed ``ref["type"] == "first"``, i.e., caculating the anomaly w.r.t. the first
+- Removed ``ref["type"] == "first"``, i.e., calculating the anomaly w.r.t. the first
   ensemble member (`#247 <https://github.com/MESMER-group/mesmer/pull/247>`_).
   By `Mathias Hauser`_.
 - Renamed ``mesmer.calibrate_mesmer._calibrate_and_draw_realisations`` to ``mesmer.calibrate_mesmer._calibrate_tas``
@@ -143,7 +164,7 @@ Internal Changes
 
 - Refactor the mesmer internals to use the new statistical core, employ helper functions etc.:
    - Use :py:func:`mesmer.utils.separate_hist_future` in :py:func:`mesmer.calibrate_mesmer.train_gt` (`#281 <https://github.com/MESMER-group/mesmer/pull/281>`_).
-   - Use of :py:class:`mesmer.stats.linear_regression.LinearRegression` in
+   - Use of :py:class:`mesmer.stats.LinearRegression` in
 
      - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
      - :py:func:`mesmer.create_emulations.create_emus_lv_OLS` and :py:func:`mesmer.create_emulations.create_emus_OLS_each_gp_sep`

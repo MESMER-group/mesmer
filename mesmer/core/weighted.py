@@ -35,7 +35,7 @@ def lat_weights(lat_coords):
 
 
 def weighted_mean(data, weights, dims=None):
-    """weighted mean - convinience function which ignores data_vars missing dims
+    """weighted mean - convenience function which ignores data_vars missing dims
 
     Parameters
     ----------

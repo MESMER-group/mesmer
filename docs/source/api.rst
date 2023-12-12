@@ -15,12 +15,12 @@ Linear regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats.linear_regression.LinearRegression
-   ~stats.linear_regression.LinearRegression.fit
-   ~stats.linear_regression.LinearRegression.predict
-   ~stats.linear_regression.LinearRegression.residuals
-   ~stats.linear_regression.LinearRegression.to_netcdf
-   ~stats.linear_regression.LinearRegression.from_netcdf
+   ~stats.LinearRegression
+   ~stats.LinearRegression.fit
+   ~stats.LinearRegression.predict
+   ~stats.LinearRegression.residuals
+   ~stats.LinearRegression.to_netcdf
+   ~stats.LinearRegression.from_netcdf
 
 Auto regression
 ---------------
@@ -28,9 +28,10 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats.auto_regression._select_ar_order_xr
-   ~stats.auto_regression._fit_auto_regression_xr
-   ~stats.auto_regression._draw_auto_regression_correlated_np
+   ~stats.select_ar_order
+   ~stats.fit_auto_regression
+   ~stats.draw_auto_regression_uncorrelated
+   ~stats.draw_auto_regression_correlated
 
 Localized covariance
 --------------------
@@ -38,8 +39,8 @@ Localized covariance
 .. autosummary::
    :toctree: generated/
 
-   ~stats.localized_covariance.adjust_covariance_ar1
-   ~stats.localized_covariance.find_localized_empirical_covariance
+   ~stats.adjust_covariance_ar1
+   ~stats.find_localized_empirical_covariance
 
 Smoothing
 ---------
@@ -47,16 +48,17 @@ Smoothing
 .. autosummary::
    :toctree: generated/
 
-   ~stats.smoothing.lowess
+   ~stats.lowess
 
-Geo-spatial
------------
+
+Gaspari-Cohn correlation matrix
+-------------------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~core.computation.calc_geodist_exact
-   ~core.computation.gaspari_cohn
+   ~stats.gaspari_cohn_correlation_matrices
+   ~stats.gaspari_cohn
 
 Data handling
 =============
@@ -77,126 +79,41 @@ Grid manipulation
 Masking regions
 ---------------
 
+.. autosummary::
+   :toctree: generated/
+
    ~core.mask.mask_ocean_fraction
    ~core.mask.mask_ocean
    ~core.mask.mask_antarctica
    ~core.regionmaskcompat.mask_3D_frac_approx
 
-Weighted operarions: calculate global mean
+Weighted operations: calculate global mean
 ------------------------------------------
+
+.. autosummary::
+   :toctree: generated/
 
    ~core.weighted.global_mean
    ~core.weighted.lat_weights
    ~core.weighted.weighted_mean
 
-Legacy functions
-================
-
-Train mesmer
-------------
+Geospatial
+----------
 
 .. autosummary::
    :toctree: generated/
 
-   ~calibrate_mesmer.train_gt
-   ~calibrate_mesmer.train_gv
-   ~calibrate_mesmer.train_lt
-   ~calibrate_mesmer.train_lv
-
-Create emulations
------------------
-
-.. autosummary::
-   :toctree: generated/
-
-   ~create_emulations.gather_gt_data
-   ~create_emulations.create_emus_gv
-   ~create_emulations.create_emus_lt
-   ~create_emulations.create_emus_lv
-   ~create_emulations.create_emus_g
-   ~create_emulations.create_emus_l
-   ~create_emulations.make_realisations
-   ~create_emulations.create_seed_dict
+   ~core.geospatial.geodist_exact
 
 
-Individual methods and utils
-----------------------------
+Emulator functions
+==================
 
-Train mesmer
-^^^^^^^^^^^^
+Volcanic influence
+------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~calibrate_mesmer.train_gv_AR
-   ~calibrate_mesmer.train_gt_ic_LOWESS
-   ~calibrate_mesmer.train_gt_ic_OLSVOLC
-   ~calibrate_mesmer.train_lv_AR1_sci
-   ~calibrate_mesmer.train_lv_find_localized_ecov
-   ~calibrate_mesmer.get_scenario_weights
-   ~calibrate_mesmer.stack_predictors_and_targets
-
-Create emulations
-^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~create_emulations.create_emus_gv_AR
-   ~create_emulations.create_emus_OLS_each_gp_sep
-   ~create_emulations.create_emus_lv_AR1_sci
-   ~create_emulations.create_emus_lv_OLS
-
-
-IO
---
-
-Load constant files
-^^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_constant_files.load_phi_gc
-   ~io.load_constant_files.load_regs_ls_wgt_lon_lat
-
-
-Load output
-^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_mesmer.load_mesmer_output
-
-
-Load observations
-^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_obs.load_obs
-   ~io.load_obs.load_obs_tblend
-   ~io.load_obs.load_strat_aod
-
-Save mesmer bundle
-^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.save_mesmer_bundle.save_mesmer_bundle
-
-
-Utils
------
-
-.. autosummary::
-   :toctree: generated/
-
-   ~utils.convert.convert_dict_to_arr
-   ~utils.separate_hist_future
-   ~utils.select.extract_land
-   ~utils.select.extract_time_period
-
+   ~core.volc.fit_volcanic_influence
+   ~core.volc.superimpose_volcanic_influence

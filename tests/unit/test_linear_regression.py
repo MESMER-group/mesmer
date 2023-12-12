@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 from packaging.version import Version
 
-import mesmer.stats.linear_regression
+import mesmer
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -22,14 +22,14 @@ def LinearRegression_fit_wrapper(*args, **kwargs):
     # -> no: a class method should either change state or have a return value, it's a
     # bit awkward for testing but better overall
 
-    lr = mesmer.stats.linear_regression.LinearRegression()
+    lr = mesmer.stats.LinearRegression()
 
     lr.fit(*args, **kwargs)
     return lr.params
 
 
 LR_METHOD_OR_FUNCTION = [
-    mesmer.stats.linear_regression._fit_linear_regression_xr,
+    mesmer.stats._linear_regression._fit_linear_regression_xr,
     LinearRegression_fit_wrapper,
 ]
 
@@ -38,7 +38,7 @@ LR_METHOD_OR_FUNCTION = [
 
 def test_LR_params():
 
-    lr = mesmer.stats.linear_regression.LinearRegression()
+    lr = mesmer.stats.LinearRegression()
 
     with pytest.raises(ValueError, match="'params' not set"):
         lr.params
@@ -81,17 +81,17 @@ def test_LR_params():
 
 @pytest.mark.parametrize("as_2D", [True, False])
 def test_LR_predict(as_2D):
-    lr = mesmer.stats.linear_regression.LinearRegression()
+    lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
         data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [3])}
     )
     lr.params = params if as_2D else params.squeeze()
 
-    with pytest.raises(ValueError, match="Missing or superflous predictors"):
+    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
         lr.predict({})
 
-    with pytest.raises(ValueError, match="Missing or superflous predictors"):
+    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
         lr.predict({"tas": None, "something else": None})
 
     tas = xr.DataArray([0, 1, 2], dims="time")
@@ -106,7 +106,7 @@ def test_LR_predict(as_2D):
 @pytest.mark.parametrize("as_2D", [True, False])
 def test_LR_residuals(as_2D):
 
-    lr = mesmer.stats.linear_regression.LinearRegression()
+    lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
         data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [0])}
@@ -170,7 +170,7 @@ def test_linear_regression_errors(lr_method_or_function):
     test_wrong_type(pred0, pred1, tgt, xr.Dataset(), name="weights")
 
     def test_wrong_shape(pred0, pred1, tgt, weights, name, ndim):
-        with pytest.raises(ValueError, match=f"{name} should be {ndim}-dimensional"):
+        with pytest.raises(ValueError, match=f"{name} should be {ndim}D"):
             lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
@@ -222,11 +222,58 @@ def test_linear_regression_one_predictor(
 ):
 
     pred0 = trend_data_1D(slope=1, scale=0)
-    trend_data_1D_or_2D
+
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
 
     result = lr_method_or_function({"pred0": pred0}, tgt, "time")
 
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_pred0 = xr.full_like(template, slope)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "fit_intercept": True,
+        }
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_linear_regression_predictor_named_like_dim(lr_method_or_function, as_2D):
+
+    slope, intercept = 0.3, 0.2
+    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
+
+    result = lr_method_or_function({"time": tgt.time}, tgt, "time")
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_time = xr.full_like(template, slope)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "time": expected_time,
+            "fit_intercept": True,
+        }
+    )
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_linear_regression_predictor_has_non_dim_coors(lr_method_or_function, as_2D):
+
+    slope, intercept = 0.3, 0.2
+    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
+    tgt = tgt.assign_coords(year=("time", tgt.time.values + 1850))
+
+    result = lr_method_or_function({"pred0": tgt.time}, tgt, "time")
     template = tgt.isel(time=0, drop=True)
 
     expected_intercept = xr.full_like(template, intercept)
@@ -408,7 +455,7 @@ def test_linear_regression_weights(lr_method_or_function, intercept):
 )
 def test_bad_shape(predictors, target):
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
-        mesmer.stats.linear_regression._fit_linear_regression_np(predictors, target)
+        mesmer.stats._linear_regression._fit_linear_regression_np(predictors, target)
 
 
 @pytest.mark.parametrize(
@@ -420,13 +467,13 @@ def test_bad_shape(predictors, target):
 )
 def test_bad_shape_weights(predictors, target, weight):
     with pytest.raises(ValueError, match="sample_weight.shape.*expected"):
-        mesmer.stats.linear_regression._fit_linear_regression_np(
+        mesmer.stats._linear_regression._fit_linear_regression_np(
             predictors, target, weight
         )
 
 
 def test_basic_regression():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0], [1], [2]], [0, 2, 4]
     )
 
@@ -434,7 +481,7 @@ def test_basic_regression():
 
 
 def test_basic_regression_two_targets():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0], [1], [2]], [[0, 1], [2, 3], [4, 5]]
     )
 
@@ -442,7 +489,7 @@ def test_basic_regression_two_targets():
 
 
 def test_basic_regression_three_targets():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0], [1], [2]], [[0, 1, 2], [2, 3, 7], [4, 5, 12]]
     )
 
@@ -451,7 +498,7 @@ def test_basic_regression_three_targets():
 
 
 def test_basic_regression_with_weights():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0], [1], [2], [3]], [0, 2, 4, 5], [10, 10, 10, 0.1]
     )
 
@@ -459,7 +506,7 @@ def test_basic_regression_with_weights():
 
 
 def test_basic_regression_multidimensional():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0, 1], [1, 3], [2, 4]], [2, 7, 8]
     )
 
@@ -469,7 +516,7 @@ def test_basic_regression_multidimensional():
 
 
 def test_basic_regression_multidimensional_multitarget():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0, 1], [1, 3], [2, 4]], [[2, 0], [7, 0], [8, 5]]
     )
 
@@ -479,7 +526,7 @@ def test_basic_regression_multidimensional_multitarget():
 
 
 def test_regression_with_weights_multidimensional_multitarget():
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(
         [[0, 1], [1, 3], [2, 4], [3, 5]],
         [[2, 0], [7, 0], [8, 5], [11, 11]],
         # extra point with low weight alters results in a minor way
@@ -495,9 +542,9 @@ def test_regression_order():
     x = np.array([[0, 1], [1, 3], [2, 4]])
     y = np.array([2, 7, 10])
 
-    res_original = mesmer.stats.linear_regression._fit_linear_regression_np(x, y)
+    res_original = mesmer.stats._linear_regression._fit_linear_regression_np(x, y)
 
-    res_reversed = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res_reversed = mesmer.stats._linear_regression._fit_linear_regression_np(
         np.flip(x, axis=1), y
     )
 
@@ -510,10 +557,10 @@ def test_regression_order_with_weights():
     y = np.array([2, 7, 8, 0])
     weights = [10, 10, 10, 0.1]
 
-    res_original = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res_original = mesmer.stats._linear_regression._fit_linear_regression_np(
         x, y, weights=weights
     )
-    res_reversed = mesmer.stats.linear_regression._fit_linear_regression_np(
+    res_reversed = mesmer.stats._linear_regression._fit_linear_regression_np(
         np.flip(x, axis=1), y, weights=weights
     )
 
@@ -540,7 +587,7 @@ def test_linear_regression_np_output_shape(x_shape, y_shape, exp_output_shape):
     x = np.random.randn(*x_shape)
     y = np.random.randn(*y_shape)
 
-    res = mesmer.stats.linear_regression._fit_linear_regression_np(x, y)
+    res = mesmer.stats._linear_regression._fit_linear_regression_np(x, y)
 
     assert res.shape == exp_output_shape
 
@@ -576,14 +623,14 @@ def test_linear_regression_np(predictors, target, weight, fit_intercept):
             # check that the default behaviour is to pass None to `fit`
             # internally
             expected_weights = None
-            res = mesmer.stats.linear_regression._fit_linear_regression_np(
+            res = mesmer.stats._linear_regression._fit_linear_regression_np(
                 predictors, target, fit_intercept=fit_intercept
             )
         else:
             # check that the intended weights are indeed passed to `fit`
             # internally
             expected_weights = weight
-            res = mesmer.stats.linear_regression._fit_linear_regression_np(
+            res = mesmer.stats._linear_regression._fit_linear_regression_np(
                 predictors, target, weight, fit_intercept=fit_intercept
             )
 
