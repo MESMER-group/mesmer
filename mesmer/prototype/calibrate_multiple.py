@@ -3,10 +3,8 @@ import pandas as pd
 import scipy.stats
 import xarray as xr
 
-from ..core.computation import (
-    calc_gaspari_cohn_correlation_matrices,
-    calc_geodist_exact,
-)
+import mesmer
+
 from .calibrate import AutoRegression1D, AutoRegression1DOrderSelection
 
 
@@ -191,8 +189,8 @@ def calibrate_auto_regressive_process_with_spatially_correlated_errors_multiple_
         for gridpoint, gridpoint_vals in target.groupby("gridpoint")
     }
 
-    geodist = calc_geodist_exact(target.lon, target.lat)
-    gaspari_cohn_correlation_matrices = calc_gaspari_cohn_correlation_matrices(
+    geodist = mesmer.geospatial.geodist_exact(target.lon, target.lat)
+    gaspari_cohn_correlation_matrices = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii
     )
 

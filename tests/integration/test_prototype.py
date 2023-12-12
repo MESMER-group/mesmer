@@ -4,13 +4,10 @@ import pytest
 import xarray as xr
 from statsmodels.tsa.arima_process import ArmaProcess
 
+import mesmer
 from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.calibrate_mesmer.train_lt import train_lt
 from mesmer.calibrate_mesmer.train_lv import train_lv
-from mesmer.core.computation import (
-    calc_gaspari_cohn_correlation_matrices,
-    calc_geodist_exact,
-)
 from mesmer.prototype.calibrate import LinearRegression
 from mesmer.prototype.calibrate_multiple import (
     calibrate_auto_regressive_process_multiple_scenarios_and_ensemble_members,
@@ -328,10 +325,10 @@ def _do_legacy_run_train_lv(
             .values
         )
 
-    geodist = calc_geodist_exact(
+    geodist = mesmer.geospatial.geodist_exact(
         esm_tas_residual_local_variability.lon, esm_tas_residual_local_variability.lat
     )
-    gaspari_cohn_correlation_matrices = calc_gaspari_cohn_correlation_matrices(
+    gaspari_cohn_correlation_matrices = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii
     )
 
