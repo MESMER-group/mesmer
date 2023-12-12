@@ -13,16 +13,62 @@ from mesmer.testing import assert_dict_allclose
     "scenarios, use_tas2, use_hfds, outname",
     (
         # tas
-        [["h-ssp126"], False, False, "tas/one_scen_one_ens"],
-        [["h-ssp126", "h-ssp585"], False, False, "tas/multi_scen_multi_ens"],
+        pytest.param(
+            ["h-ssp126"],
+            False,
+            False,
+            "tas/one_scen_one_ens",
+        ),
+        pytest.param(
+            ["h-ssp585"],
+            False,
+            False,
+            "tas/one_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["h-ssp126", "h-ssp585"],
+            False,
+            False,
+            "tas/multi_scen_multi_ens",
+        ),
         # tas and tas**2
-        [["h-ssp126"], True, False, "tas_tas2/one_scen_one_ens"],
+        pytest.param(
+            ["h-ssp126"],
+            True,
+            False,
+            "tas_tas2/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
         # tas and hfds
-        [["h-ssp126"], False, True, "tas_hfds/one_scen_one_ens"],
+        pytest.param(
+            ["h-ssp126"],
+            False,
+            True,
+            "tas_hfds/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
         # tas, tas**2, and hfds
-        [["h-ssp126"], True, True, "tas_tas2_hfds/one_scen_one_ens"],
-        [["h-ssp585"], True, True, "tas_tas2_hfds/one_scen_multi_ens"],
-        [["h-ssp126", "h-ssp585"], True, True, "tas_tas2_hfds/multi_scen_multi_ens"],
+        pytest.param(
+            ["h-ssp126"],
+            True,
+            True,
+            "tas_tas2_hfds/one_scen_one_ens",
+        ),
+        pytest.param(
+            ["h-ssp585"],
+            True,
+            True,
+            "tas_tas2_hfds/one_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["h-ssp126", "h-ssp585"],
+            True,
+            True,
+            "tas_tas2_hfds/multi_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
     ),
 )
 def test_calibrate_mesmer(
@@ -50,11 +96,6 @@ def test_calibrate_mesmer(
         "calibrate-coarse-grid",
         f"cmip{test_cmip_generation}-ng",
     )
-    test_observations_root_dir = os.path.join(
-        test_data_root_dir,
-        "calibrate-coarse-grid",
-        "observations",
-    )
     test_auxiliary_data_dir = os.path.join(
         test_data_root_dir,
         "calibrate-coarse-grid",
@@ -68,7 +109,6 @@ def test_calibrate_mesmer(
         output_file=test_output_file,
         cmip_data_root_dir=test_cmip_data_root_dir,
         cmip_generation=test_cmip_generation,
-        observations_root_dir=test_observations_root_dir,
         auxiliary_data_dir=test_auxiliary_data_dir,
         use_tas2=use_tas2,
         use_hfds=use_hfds,

@@ -7,13 +7,13 @@ Functions to create local trends emulations with MESMER.
 """
 
 
-import mesmer.stats
 from mesmer.create_emulations.utils import (
     _gather_lr_params,
     _gather_lr_preds,
     concatenate_hist_future,
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
+from mesmer.stats import LinearRegression
 
 
 def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
@@ -82,6 +82,8 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     if pred_names != params_lt["preds"]:
         raise ValueError(
             "Wrong predictors were passed. The emulations cannot be created."
+            f"\n- pred_names         = {pred_names}"
+            f"\n- params_lt['preds'] = {params_lt['preds']}"
         )
 
     # select the method from a dict of fcts
@@ -176,7 +178,7 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
         params = _gather_lr_params(params_lt, targ, dims="cell")
         predictors = _gather_lr_preds(preds_lt, params_lt["preds"], scen, dims="time")
 
-        lr = mesmer.stats.linear_regression.LinearRegression()
+        lr = LinearRegression()
         lr.params = params
 
         prediction = lr.predict(predictors=predictors)

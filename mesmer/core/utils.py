@@ -61,7 +61,7 @@ def _minimize_local_discrete(func, sequence, **kwargs):
             raise ValueError("`fun` returned `-inf`")
         # skip element if inf is returned - not sure about this?
         elif np.isinf(res):
-            warnings.warn("`fun` retured `inf`", OptimizeWarning)
+            warnings.warn("`fun` returned `inf`", OptimizeWarning)
 
         if res < current_min:
             current_min = res
@@ -95,8 +95,8 @@ def _assert_annual_data(time):
         raise ValueError(
             "Annual data is required but data of unknown frequency was passed"
         )
-
-    if not freq.startswith("A"):
+    # pandas v2.2 and xarray v2023.11.0 changed the time freq string for year
+    if not (freq.startswith("A") or freq.startswith("Y")):
         raise ValueError(
             f"Annual data is required but data with frequency {freq} was passed"
         )
@@ -166,7 +166,7 @@ def _check_dataarray_form(
     name : str, default: 'obj'
         Name to use in error messages.
     ndim, int, optional
-        Number of required dimensions
+        Number of required dimensions, can be a tuple of int if several are possible.
     required_dims: str, set of str, optional
         Names of dims that are required for obj
     shape : tuple of ints, default: None
@@ -184,8 +184,11 @@ def _check_dataarray_form(
     if not isinstance(obj, xr.DataArray):
         raise TypeError(f"Expected {name} to be an xr.DataArray, got {type(obj)}")
 
-    if ndim is not None and ndim != obj.ndim:
-        raise ValueError(f"{name} should be {ndim}-dimensional, but is {obj.ndim}D")
+    ndim = (ndim,) if np.isscalar(ndim) else ndim
+    if ndim is not None and obj.ndim not in ndim:
+        *a, b = map(lambda x: f"{x}D", ndim)
+        ndim = (a and ", ".join(a) + " or " or "") + b
+        raise ValueError(f"{name} should be {ndim}, but is {obj.ndim}D")
 
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))

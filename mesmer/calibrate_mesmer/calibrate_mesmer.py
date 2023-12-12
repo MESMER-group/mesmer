@@ -7,8 +7,8 @@ import warnings
 from mesmer.create_emulations.utils import concatenate_hist_future
 
 from ..create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
-from ..io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat, save_mesmer_bundle
-from ..utils import convert_dict_to_arr, extract_land, separate_hist_future
+from ..io import load_cmip_data_all_esms, load_phi_gc, save_mesmer_bundle
+from ..utils import separate_hist_future
 from .train_gt import train_gt
 from .train_gv import train_gv
 from .train_lt import train_lt
@@ -27,7 +27,6 @@ class _Config:
         scenarios,
         cmip_generation,
         cmip_data_root_dir,
-        observations_root_dir,
         auxiliary_data_dir,
         reference_period_type,
         reference_period_start_year,
@@ -58,7 +57,6 @@ class _Config:
         self.gen = cmip_generation
 
         self.dir_cmipng = cmip_data_root_dir
-        self.dir_obs = observations_root_dir
         self.dir_aux = auxiliary_data_dir
         self.ref = {
             "type": reference_period_type,
@@ -122,7 +120,6 @@ def _calibrate_tas(
     threshold_land,
     output_file,
     cmip_data_root_dir=None,
-    observations_root_dir=None,
     auxiliary_data_dir=None,
     cmip_generation=6,
     reference_period_type="individ",
@@ -154,17 +151,11 @@ def _calibrate_tas(
     for key in kwargs:
         warnings.warn(f"{key} has been deprecated and has no effect", FutureWarning)
 
-    tas_g = {}  # tas with global coverage
-    gsat = {}  # global mean tas
-    ghfds = {}  # global mean hfds (needed as predictor)
-    time = {}
-
     cfg = _Config(
         esms=esms,
         scenarios=scenarios_to_train,
         cmip_generation=cmip_generation,
         cmip_data_root_dir=cmip_data_root_dir,
-        observations_root_dir=observations_root_dir,
         auxiliary_data_dir=auxiliary_data_dir,
         reference_period_type=reference_period_type,
         reference_period_start_year=reference_period_start_year,
@@ -183,37 +174,13 @@ def _calibrate_tas(
         use_hfds=use_hfds,
     )
 
-    for esm in esms:
-        LOGGER.info("Loading data for %s", esm)
-
-        time[esm] = {}
-
-        # temporary dicts to gather data over scenarios
-        tas_temp, gsat_temp, ghfds_temp = {}, {}, {}
-        for scen in scenarios_to_train:
-            out = load_cmipng("tas", esm, scen, cfg)
-
-            if out[0] is None:
-                warnings.warn(f"Scenario {scen} does not exist for tas for ESM {esm}")
-                continue
-
-            # unpack data
-            tas_temp[scen], gsat_temp[scen], lon, lat, time[esm][scen] = out
-
-            if use_hfds:
-                _, ghfds_temp[scen], _, _, _ = load_cmipng("hfds", esm, scen, cfg)
-
-        tas_g[esm] = convert_dict_to_arr(tas_temp)
-        gsat[esm] = convert_dict_to_arr(gsat_temp)
-
-        if use_hfds:
-            ghfds[esm] = convert_dict_to_arr(ghfds_temp)
-
-    # load in the constant files
-    _, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(lon=lon, lat=lat)
-
-    # extract land
-    tas, _, ls = extract_land(tas_g, wgt=wgt_g, ls=ls, threshold_land=threshold_land)
+    time, lon, lat, ls, tas, gsat, ghfds = load_cmip_data_all_esms(
+        esms,
+        scenarios=scenarios_to_train,
+        threshold_land=threshold_land,
+        use_hfds=use_hfds,
+        cfg=cfg,
+    )
 
     for esm in esms:
         LOGGER.info("Calibrating %s", esm)

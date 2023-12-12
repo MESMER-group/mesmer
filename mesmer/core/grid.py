@@ -127,7 +127,7 @@ def stack_lat_lon(
 def unstack_lat_lon_and_align(
     data, coords_orig, *, x_dim="lon", y_dim="lat", stack_dim="gridcell"
 ):
-    """unstack an 1D grid to a regular lat-lon grid and align with orignal coords
+    """unstack an 1D grid to a regular lat-lon grid and align with original coords
 
     Parameters
     ----------
@@ -184,7 +184,7 @@ def unstack_lat_lon(data, *, x_dim="lon", y_dim="lat", stack_dim="gridcell"):
 
 
 def align_to_coords(data, coords_orig):
-    """align an unstacked lat-lon grid with its orignal coords
+    """align an unstacked lat-lon grid with its original coords
 
     Parameters
     ----------
