@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.testing as npt
 import pytest
 import xarray as xr
 from statsmodels.tsa.arima_process import ArmaProcess
@@ -196,7 +195,7 @@ def test_prototype_train_lt():
         ("global_variability", res_legacy[1]["coef_gvtas"]["tas"]),
         ("intercept", res_legacy[0]["intercept"]["tas"]),
     ):
-        npt.assert_allclose(res_updated.sel(predictor=updated_name), legacy_vals)
+        np.testing.assert_allclose(res_updated.sel(predictor=updated_name), legacy_vals)
 
 
 def _do_legacy_run_train_gv(
@@ -233,9 +232,9 @@ def _do_legacy_run_train_gv(
     ),
 )
 def test_prototype_train_gv(ar):
-    time_history = range(1850, 2014 + 1)
-    time_scenario = range(2015, 2100 + 1)
-    time = list(time_history) + list(time_scenario)
+    time_history = np.arange(1850, 2014 + 1)
+    time_scenario = np.arange(2015, 2100 + 1)
+    time = np.concatenate((time_history, time_scenario))
 
     magnitude = np.array([0.1])
 
@@ -247,47 +246,38 @@ def test_prototype_train_gv(ar):
         scenario=scenarios,
         ensemble_member=["r1i1p1f1", "r2i1p1f1"],
     )
-    esm_tas_global_variability = xr.DataArray(
-        np.array(
+
+    def _get_history_sample():
+        return np.concatenate(
             [
-                [
-                    np.concatenate(
-                        [
-                            ArmaProcess(ar, magnitude).generate_sample(
-                                nsample=len(time_history)
-                            ),
-                            np.nan * np.zeros(len(time_scenario)),
-                        ]
-                    ),
-                    np.concatenate(
-                        [
-                            ArmaProcess(ar, magnitude).generate_sample(
-                                nsample=len(time_history)
-                            ),
-                            np.nan * np.zeros(len(time_scenario)),
-                        ]
-                    ),
-                ],
-                [
-                    np.concatenate(
-                        [
-                            np.nan * np.zeros(len(time_history)),
-                            ArmaProcess(ar, magnitude).generate_sample(
-                                nsample=len(time_scenario)
-                            ),
-                        ]
-                    ),
-                    np.concatenate(
-                        [
-                            np.nan * np.zeros(len(time_history)),
-                            ArmaProcess(ar, magnitude).generate_sample(
-                                nsample=len(time_scenario)
-                            ),
-                        ]
-                    ),
-                ],
+                ArmaProcess(ar, magnitude).generate_sample(nsample=time_history.size),
+                np.full(time_scenario.size, np.nan),
             ]
-        ),
+        )
+
+    def _get_scenario_sample():
+        return np.concatenate(
+            [
+                np.full(time_history.size, np.nan),
+                ArmaProcess(ar, magnitude).generate_sample(nsample=len(time_scenario)),
+            ]
+        )
+
+    data = np.array(
+        [
+            [
+                _get_history_sample(),
+                _get_history_sample(),
+            ],
+            [
+                _get_scenario_sample(),
+                _get_scenario_sample(),
+            ],
+        ],
+    )
+
+    esm_tas_global_variability = xr.DataArray(
+        data,
         dims=targ_dims,
         coords=targ_coords,
     )
@@ -309,7 +299,7 @@ def test_prototype_train_gv(ar):
         ("lag_coefficients", res_legacy["AR_coefs"]),
         ("standard_innovations", res_legacy["AR_std_innovs"]),
     ):
-        npt.assert_allclose(res_updated[key], comparison)
+        np.testing.assert_allclose(res_updated[key], comparison)
 
 
 def _do_legacy_run_train_lv(
@@ -371,9 +361,9 @@ def test_prototype_train_lv():
     localisation_radii = np.arange(700, 2000, 1000)
 
     # see how much code I can reuse for the AR1 calibration
-    time_history = range(1850, 2014 + 1)
-    time_scenario = range(2015, 2100 + 1)
-    time = list(time_history) + list(time_scenario)
+    time_history = np.arange(1850, 2014 + 1)
+    time_scenario = np.arange(2015, 2100 + 1)
+    time = np.concatenate((time_history, time_scenario))
     scenarios = ["hist", "ssp126"]
 
     # we wouldn't actually start like this, but we'd write a utils function
@@ -394,15 +384,15 @@ def test_prototype_train_lv():
     def _get_history_sample():
         return np.concatenate(
             [
-                ArmaProcess(ar, magnitude).generate_sample(nsample=len(time_history)),
-                np.nan * np.zeros(len(time_scenario)),
+                ArmaProcess(ar, magnitude).generate_sample(nsample=time_history.size),
+                np.full(time_scenario.size, np.nan),
             ]
         )
 
     def _get_scenario_sample():
         return np.concatenate(
             [
-                np.nan * np.zeros(len(time_history)),
+                np.full(time_history.size, np.nan),
                 ArmaProcess(ar, magnitude).generate_sample(nsample=len(time_scenario)),
             ]
         )
@@ -448,7 +438,7 @@ def test_prototype_train_lv():
     )
 
     # check localised_empirical_covariance_matrix_with_ar1_errors
-    npt.assert_allclose(res_updated, res_legacy["loc_ecov_AR1_innovs"]["tas"])
+    np.testing.assert_allclose(res_updated, res_legacy["loc_ecov_AR1_innovs"]["tas"])
 
 
 # things that aren't tested well:
