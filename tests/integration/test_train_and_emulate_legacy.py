@@ -1,12 +1,10 @@
-import os
+import importlib
 import sys
 
-EXAMPLE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "..", "examples"
-)
+EXAMPLE_PATH = importlib.resources.files("mesmer").parent / "examples"
 
 
-sys.path.append(EXAMPLE_PATH)
+sys.path.append(str(EXAMPLE_PATH))
 
 
 def test_train_and_emulate_legacy():
