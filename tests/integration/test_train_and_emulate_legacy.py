@@ -1,4 +1,4 @@
-import importlib
+import importlib.resources
 import sys
 
 EXAMPLE_PATH = importlib.resources.files("mesmer").parent / "examples"
