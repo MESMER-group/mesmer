@@ -525,7 +525,7 @@ def fit_auto_regression(data, dim, lags):
 
     from statsmodels.tsa.deterministic import DeterministicProcess, TimeTrend
 
-    # NOTE: implementation details dependent speed up;
+    # NOTE: implementation-detail-dependent speed up;
     # see https://github.com/MESMER-group/mesmer/pull/290
     index = np.arange(data[dim].size)
     terms = [TimeTrend.from_string("c")]
