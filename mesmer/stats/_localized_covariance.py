@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import xarray as xr
-from scipy.stats import multivariate_normal
 
 from mesmer.core.utils import (
     LinAlgWarning,
@@ -88,16 +87,16 @@ def find_localized_empirical_covariance(
     weights : xr.DataArray
         Weights for the individual samples.
     localizer : dict of DataArray```
-        Dictonary containing the localization radii as keys and the localization matrix
+        Dictionary containing the localization radii as keys and the localization matrix
         as values. The localization must be 2D and of shape n_gridpoints x n_gridpoints.
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
     dim : str
         Dimension along which to calculate the covariance.
     k_folds : int
         Number of folds to use for cross validation.
-    equal_dim_suffixes : tuple of str
-        Suffixes to add to the the name of ``dim`` for the covariance array (xr.DataArray cannot have two
-        dimensions with the same name).
+    equal_dim_suffixes : tuple of str, default: ("_i", "_j")
+        Suffixes to add to the the name of ``dim`` for the covariance array
+        (xr.DataArray cannot have two dimensions with the same name).
 
     Returns
     -------
@@ -154,7 +153,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     weights : 1D array
         Weights for the individual samples.
     localizer : dict of array-like
-        Dictonary containing the localization radii as keys and the localization matrix
+        Dictionary containing the localization radii as keys and the localization matrix
         as values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
     k_folds : int
@@ -209,7 +208,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
     n_samples, __ = data.shape
     n_iterations = min(n_samples, k_folds)
 
-    log_likelihood = 0
+    nll = 0  # negative log likelihood
 
     for it in range(n_iterations):
 
@@ -229,7 +228,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
 
         try:
             # sum log likelihood of all crossvalidation folds
-            log_likelihood += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
+            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
         except np.linalg.LinAlgError:
             warnings.warn(
                 f"Singular matrix for localization_radius of {localization_radius}."
@@ -238,7 +237,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
             )
             return float("inf")
 
-    return log_likelihood
+    return nll
 
 
 def _get_neg_loglikelihood(data, covariance, weights):
@@ -255,7 +254,8 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     Returns
     -------
-    weighted_log_likelihood : float
+    weighted_nll : float
+        Weighted negative log likelihood
 
     Raises
     ------
@@ -267,6 +267,8 @@ def _get_neg_loglikelihood(data, covariance, weights):
     The mean is assumed to be zero for all points.
     """
 
+    from scipy.stats import multivariate_normal
+
     # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
     # optimizing the rest
 
@@ -277,6 +279,6 @@ def _get_neg_loglikelihood(data, covariance, weights):
 
     # weighted sum for each cv sample
     # equals `log_likelihood @ weights * weights.size / weights.sum()`
-    weighted_llh = np.average(log_likelihood, weights=weights) * weights.size
+    weighted_nll = -np.average(log_likelihood, weights=weights) * weights.size
 
-    return -weighted_llh
+    return weighted_nll

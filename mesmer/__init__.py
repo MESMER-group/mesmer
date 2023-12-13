@@ -7,17 +7,28 @@ The mesmer package provides tools to train the MESMER emulator, create emulation
 analyze the results.
 """
 
-from . import calibrate_mesmer, core, create_emulations, io, utils
-from .core import grid, mask, weighted
+from . import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
+from .core import _data as data
+from .core import geospatial, grid, mask, volc, weighted
 
+# "legacy" modules
 __all__ = [
     "calibrate_mesmer",
-    "core",
     "create_emulations",
-    "grid",
     "io",
-    "mask",
     "utils",
+]
+
+# "new" "modules"
+__all__ += [
+    "core",
+    "data",
+    "geospatial",
+    "grid",
+    "mask",
+    "stats",
+    "testing",
+    "volc",
     "weighted",
 ]
 

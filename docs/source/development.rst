@@ -101,7 +101,7 @@ Testing philosophy
 ------------------
 
 When writing tests, we try to put them in one of two categories: integration and regression.
-Integration tests run bits of the code and assert the correct behaviour was achived.
+Integration tests run bits of the code and assert the correct behaviour was achieved.
 Some of the integration tests might run fairly big bits of code, others will be more targeted.
 Try to keep integration test files targeted and fairly small.
 We can always create `fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`__ to aid code reuse.
@@ -129,8 +129,8 @@ Note that ``make format`` can only be run if you have committed all your work i.
 This restriction is made to ensure that you don't format code without being able to undo it, just in case something goes wrong.
 
 
-Buiding the docs
-----------------
+Building the docs
+-----------------
 
 After setting yourself up (see `Development setup`_), building the docs is as simple as running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date').
 This will build the docs for you.
@@ -150,7 +150,7 @@ Why is there a ``Makefile`` in a pure Python repository?
 --------------------------------------------------------
 
 Whilst it may not be standard practice, a ``Makefile`` is a simple way to automate general setup (environment setup in particular).
-Hence we have one here which basically acts as a notes file for how to do all those little jobs which we often forget e.g. setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxillary bits and pieces.
+Hence we have one here which basically acts as a notes file for how to do all those little jobs which we often forget e.g. setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxiliary bits and pieces.
 
 .. _Sphinx: http://www.sphinx-doc.org
 .. _MESMER issue tracker: https://github.com/MESMER-group/mesmer/issues

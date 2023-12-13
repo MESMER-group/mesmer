@@ -10,16 +10,44 @@ import mesmer.create_emulations
 # TODO:
 # - write test of what happens if you pass in a time dictionary of the wrong length
 
+# NOTE: the scenario only changes the params - so we only do "one_scen_one_ens"
 
-def test_make_realisations(test_data_root_dir, update_expected_files):
 
-    ouput_dir = os.path.join(test_data_root_dir, "output", "one_scen_one_ens")
+@pytest.mark.parametrize(
+    "use_tas2, use_hfds, n_realisations, outname",
+    (
+        # tas
+        pytest.param(
+            False,
+            False,
+            1,
+            "tas/one_scen_one_ens",
+        ),
+        # tas, tas**2, and hfds
+        pytest.param(
+            True,
+            True,
+            30,
+            "tas_tas2_hfds/one_scen_one_ens",
+        ),
+    ),
+)
+def test_make_realisations(
+    use_tas2,
+    use_hfds,
+    n_realisations,
+    outname,
+    test_data_root_dir,
+    update_expected_files,
+):
+
+    ouput_dir = os.path.join(test_data_root_dir, "output", outname)
 
     expected_output_file = os.path.join(
         ouput_dir, "test_make_realisations_expected_output.nc"
     )
 
-    tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1000000}}}
+    tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1_000_000}}}
 
     bundle_path = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
 
@@ -44,21 +72,24 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
 
     hist_tas = np.linspace(0, 1, hist_length)
     scen_tas = np.linspace(1, 2, scen_length)
-    hist_hfds = np.linspace(0, 2, hist_length)
-    scen_hfds = np.linspace(2, 3, scen_length)
 
-    preds_lt = {
-        "gttas": {"hist": hist_tas, scenario: scen_tas},
-        "gttas2": {"hist": hist_tas**2, scenario: scen_tas**2},
-        "gthfds": {"hist": hist_hfds, scenario: scen_hfds},
-    }
+    preds_lt = {"gttas": {"hist": hist_tas, scenario: scen_tas}}
+
+    if use_tas2:
+        preds_lt["gttas2"] = {"hist": hist_tas**2, scenario: scen_tas**2}
+
+    if use_hfds:
+        hist_hfds = np.linspace(0, 2, hist_length)
+        scen_hfds = np.linspace(2, 3, scen_length)
+
+        preds_lt["gthfds"] = {"hist": hist_hfds, scenario: scen_hfds}
 
     result = mesmer.create_emulations.make_realisations(
         preds_lt,
         params_lt,
         params_lv,
         params_gv_T,
-        n_realisations=30,
+        n_realisations=n_realisations,
         land_fractions=land_fractions,
         seeds=tseeds,
         time=ttime,
@@ -71,18 +102,11 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
     else:
         exp = xr.open_dataset(expected_output_file)
 
-        rtol = 1e-4
-        wrong_tol = 0.1
-        for v in exp.data_vars:
-            # check that less than 10% of output differs. Something weird is
-            # happening with numpy's random seed (we get different values
-            # depending on the operating system) so we currently can't do any
-            # better than this.
-            differing_spots = np.sum(
-                ~np.isclose(result[v].values, exp[v].values, rtol=rtol)
-            )
-            frac_differing = differing_spots / result[v].values.size
-            assert frac_differing < wrong_tol
+        # check that less than 10% of output differs. Something weird is
+        # happening with numpy's random seed (we get different values
+        # depending on the operating system) so we currently can't do any
+        # better than this.
+        _assert_frac_allclose(result, exp, rtol=1e-4, wrong_tol=0.1)
 
         # # Ideally we would use the below, but we can't because of numpy's
         # # random seed issue (see comment above).
@@ -93,3 +117,14 @@ def test_make_realisations(test_data_root_dir, update_expected_files):
         expected_dims = {"scenario", "realisation", "lon", "lat", "year"}
 
         assert set(exp_reshaped.dims) == expected_dims
+
+
+def _assert_frac_allclose(result, expected, rtol, wrong_tol):
+    # check that less than wrong_tol of output differs
+
+    for v in expected.data_vars:
+
+        differing_spots = ~np.isclose(result[v].values, expected[v].values, rtol=rtol)
+
+        frac_differing = differing_spots.sum() / result[v].values.size
+        assert frac_differing < wrong_tol, v
