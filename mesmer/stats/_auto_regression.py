@@ -556,7 +556,7 @@ def fit_auto_regression(data, dim, lags):
     return xr.Dataset(data_vars)
 
 
-def _fit_auto_regression_np(data, lags, deterministic):
+def _fit_auto_regression_np(data, lags, deterministic=None):
     """
     fit an auto regression - numpy wrapper
 
