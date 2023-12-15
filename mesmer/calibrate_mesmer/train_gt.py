@@ -13,8 +13,7 @@ import xarray as xr
 
 from mesmer.io import load_strat_aod
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.linear_regression import LinearRegression
-from mesmer.stats.smoothing import lowess
+from mesmer.stats import LinearRegression, lowess
 from mesmer.utils import separate_hist_future
 
 

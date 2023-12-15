@@ -44,9 +44,9 @@ def lowess(
     -----
     For ``it=0``, the following three options are equivalent::
 
-        mesmer.stats.smoothing.lowess(data.mean("cells"), "time", frac=0.3)
-        mesmer.stats.smoothing.lowess(data, "time", combine_dim="cells", frac=0.3)
-        mesmer.stats.smoothing.lowess(data, "time", frac=0.3).mean("cells")
+        mesmer.stats.lowess(data.mean("cells"), "time", frac=0.3)
+        mesmer.stats.lowess(data, "time", combine_dim="cells", frac=0.3)
+        mesmer.stats.lowess(data, "time", frac=0.3).mean("cells")
     """
 
     from statsmodels.nonparametric.smoothers_lowess import lowess

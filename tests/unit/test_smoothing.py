@@ -5,7 +5,7 @@ import xarray as xr
 from packaging.version import Version
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
-import mesmer.stats.smoothing
+import mesmer
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -14,26 +14,26 @@ def test_lowess_errors():
     data = trend_data_2D()
 
     with pytest.raises(ValueError, match="Can only pass a single dimension."):
-        mesmer.stats.smoothing.lowess(data, ("lat", "lon"), frac=0.3)
+        mesmer.stats.lowess(data, ("lat", "lon"), frac=0.3)
 
     with pytest.raises(ValueError, match="data should be 1D"):
-        mesmer.stats.smoothing.lowess(data.to_dataset(), "data", frac=0.3)
+        mesmer.stats.lowess(data.to_dataset(), "data", frac=0.3)
 
     with pytest.raises(ValueError, match="Exactly one of ``n_steps`` and ``frac``"):
-        mesmer.stats.smoothing.lowess(data.to_dataset(), "lat")
+        mesmer.stats.lowess(data.to_dataset(), "lat")
 
     with pytest.raises(ValueError, match="Exactly one of ``n_steps`` and ``frac``"):
-        mesmer.stats.smoothing.lowess(data.to_dataset(), "lat", frac=0.5, n_steps=10)
+        mesmer.stats.lowess(data.to_dataset(), "lat", frac=0.5, n_steps=10)
 
     with pytest.raises(ValueError, match=r"``n_steps`` \(40\) cannot be be larger"):
-        mesmer.stats.smoothing.lowess(data.to_dataset(), "lat", n_steps=40)
+        mesmer.stats.lowess(data.to_dataset(), "lat", n_steps=40)
 
     # numpy datetime
     time = pd.date_range("2000-01-01", periods=30)
     data = data.assign_coords(time=time)
 
     with pytest.raises(TypeError, match="Cannot convert coords"):
-        mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.5)
+        mesmer.stats.lowess(data.to_dataset(), "time", frac=0.5)
 
     # TODO: remove check once we drop python 3.7
     if Version(xr.__version__) >= Version("21.0"):
@@ -43,7 +43,7 @@ def test_lowess_errors():
         data = data.assign_coords(time=time)
 
         with pytest.raises(TypeError, match="Cannot convert coords"):
-            mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.5)
+            mesmer.stats.lowess(data.to_dataset(), "time", frac=0.5)
 
 
 @pytest.mark.parametrize("it", [0, 3])
@@ -52,7 +52,7 @@ def test_lowess(it, frac):
 
     data = trend_data_1D()
 
-    result = mesmer.stats.smoothing.lowess(data, "time", frac=frac, it=it)
+    result = mesmer.stats.lowess(data, "time", frac=frac, it=it)
 
     expected = lowess(
         data.values, data.time.values, frac=frac, it=it, return_sorted=False
@@ -67,10 +67,10 @@ def test_lowess_n_steps(n_steps):
 
     data = trend_data_1D()
 
-    result = mesmer.stats.smoothing.lowess(data, "time", n_steps=n_steps)
+    result = mesmer.stats.lowess(data, "time", n_steps=n_steps)
 
     frac = n_steps / 30
-    expected = mesmer.stats.smoothing.lowess(data, "time", frac=frac)
+    expected = mesmer.stats.lowess(data, "time", frac=frac)
 
     xr.testing.assert_allclose(result, expected)
 
@@ -82,12 +82,10 @@ def test_lowess_use_coords():
     time[-1] = time[-1] + 10
     data = data.assign_coords(time=time)
 
-    result = mesmer.stats.smoothing.lowess(data, "time", frac=0.1)
+    result = mesmer.stats.lowess(data, "time", frac=0.1)
 
     # time is not equally spaced: we do NOT want the same result as for use_coords=False
-    not_expected = mesmer.stats.smoothing.lowess(
-        data, "time", frac=0.1, use_coords=False
-    )
+    not_expected = mesmer.stats.lowess(data, "time", frac=0.1, use_coords=False)
 
     # ensure it makes a difference
     assert not result.equals(not_expected)
@@ -104,7 +102,7 @@ def test_lowess_dataset():
 
     data = trend_data_1D()
 
-    result = mesmer.stats.smoothing.lowess(data.to_dataset(), "time", frac=0.3)
+    result = mesmer.stats.lowess(data.to_dataset(), "time", frac=0.3)
 
     expected = lowess(
         data.values, data.time.values, frac=0.3, it=0, return_sorted=False
@@ -125,7 +123,7 @@ def test_lowess_dataset_missing_core_dims():
 
     ds = xr.merge([data, da1, da2])
 
-    result = mesmer.stats.smoothing.lowess(ds, "time", frac=0.3)
+    result = mesmer.stats.lowess(ds, "time", frac=0.3)
 
     expected = lowess(
         data.values, data.time.values, frac=0.3, it=0, return_sorted=False
@@ -141,7 +139,7 @@ def test_lowess_dataset_missing_core_dims():
 def test_lowess_2D():
     data = trend_data_2D()
 
-    result = mesmer.stats.smoothing.lowess(data, "time", frac=0.3)
+    result = mesmer.stats.lowess(data, "time", frac=0.3)
 
     _check_dataarray_form(
         result, "result", ndim=2, required_dims=("time", "cells"), shape=data.shape
@@ -158,7 +156,7 @@ def test_lowess_2D_combine_dim():
     expected = lowess(arr, x, xvals=data.time.values, frac=0.3, it=0)
     expected = xr.DataArray(expected, coords={"time": data.time.values})
 
-    result = mesmer.stats.smoothing.lowess(data, "time", combine_dim="cells", frac=0.3)
+    result = mesmer.stats.lowess(data, "time", combine_dim="cells", frac=0.3)
 
     xr.testing.assert_allclose(expected, result)
 
@@ -166,7 +164,7 @@ def test_lowess_2D_combine_dim():
     time = pd.date_range("2000-01-01", periods=30)
     data = data.assign_coords(time=time)
 
-    result = mesmer.stats.smoothing.lowess(
+    result = mesmer.stats.lowess(
         data, "time", combine_dim="cells", frac=0.3, use_coords=False
     )
     expected = expected.assign_coords(time=time)
@@ -180,7 +178,7 @@ def test_lowess_2D_combine_dim():
         time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
         data = data.assign_coords(time=time)
 
-        result = mesmer.stats.smoothing.lowess(
+        result = mesmer.stats.lowess(
             data, "time", combine_dim="cells", frac=0.3, use_coords=False
         )
         expected = expected.assign_coords(time=time)
@@ -193,9 +191,9 @@ def test_lowess_2D_combine_dim_it():
 
     data = trend_data_2D()
 
-    r1 = mesmer.stats.smoothing.lowess(data.mean("cells"), "time", frac=0.3)
-    r2 = mesmer.stats.smoothing.lowess(data, "time", combine_dim="cells", frac=0.3)
-    r3 = mesmer.stats.smoothing.lowess(data, "time", frac=0.3).mean("cells")
+    r1 = mesmer.stats.lowess(data.mean("cells"), "time", frac=0.3)
+    r2 = mesmer.stats.lowess(data, "time", combine_dim="cells", frac=0.3)
+    r3 = mesmer.stats.lowess(data, "time", frac=0.3).mean("cells")
 
     xr.testing.assert_allclose(r1, r2)
     xr.testing.assert_allclose(r1, r3)

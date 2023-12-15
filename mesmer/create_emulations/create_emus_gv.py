@@ -10,7 +10,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _draw_auto_regression_uncorrelated
+from mesmer.stats import draw_auto_regression_uncorrelated
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -179,7 +179,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         {"intercept": intercept, "coeffs": coeffs, "variance": variance}
     )
 
-    emus_gv = _draw_auto_regression_uncorrelated(
+    emus_gv = draw_auto_regression_uncorrelated(
         ar_params,
         time=nr_ts_emus_v,
         realisation=nr_emus_v,
