@@ -104,6 +104,44 @@ def test_LR_predict(as_2D):
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
+def test_lr_predict_exclude(as_2D):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time")
+
+    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
+        lr.predict({"tas": tas})
+
+    result = lr.predict({"tas": tas}, exclude="tas2")
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict({"tas": tas}, exclude={"tas2"})
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict({}, exclude={"tas", "tas2"})
+    expected = xr.DataArray([5], dims="x")
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("as_2D", [True, False])
 def test_LR_residuals(as_2D):
 
     lr = mesmer.stats.LinearRegression()

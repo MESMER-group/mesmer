@@ -3,7 +3,7 @@ from typing import Mapping, Optional
 import numpy as np
 import xarray as xr
 
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form, _to_set
 
 
 class LinearRegression:
@@ -53,6 +53,7 @@ class LinearRegression:
     def predict(
         self,
         predictors: Mapping[str, xr.DataArray],
+        exclude=None,
     ):
         """
         Predict using the linear model.
@@ -61,6 +62,8 @@ class LinearRegression:
         ----------
         predictors : dict of xr.DataArray
             A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+        exclude : str or set of str, default: None
+            Set of variables to exclude in the prediction.
 
         Returns
         -------
@@ -70,8 +73,10 @@ class LinearRegression:
 
         params = self.params
 
+        exclude = _to_set(exclude)
+
         non_predictor_vars = {"intercept", "weights", "fit_intercept"}
-        required_predictors = set(params.data_vars) - non_predictor_vars
+        required_predictors = set(params.data_vars) - non_predictor_vars - exclude
         available_predictors = set(predictors.keys())
 
         if required_predictors != available_predictors:
