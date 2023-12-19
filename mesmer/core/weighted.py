@@ -22,6 +22,19 @@ def _weighted_if_dim(obj, weights, dims):
 
 
 def lat_weights(lat_coords):
+    """area weights based on the cosine of the latitude
+
+    Parameters
+    ----------
+    lat_coords : xr.DataArray
+        Latitude coordinates.
+
+    Returns
+    -------
+    weights : xr.DataArray
+        Cosine weights of ``lat_coords``.
+
+    """
 
     if np.ndim(lat_coords) > 1:
         warnings.warn("cos(lat) is not a good approximation for non-regular grids")

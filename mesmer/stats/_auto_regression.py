@@ -13,7 +13,7 @@ def _select_ar_order_scen_ens(*objs, dim, ens_dim, maxlag, ic="bic"):
 
     Parameters
     ----------
-    objs : iterable of DataArray
+    *objs : iterable of DataArray
         A list of ``xr.DataArray`` to estimate the auto regression order over.
     dim : str
         Dimension along which to determine the order.
@@ -67,7 +67,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
 
     Parameters
     ----------
-    objs : iterable of DataArray
+    *objs : iterable of DataArray
         A list of ``xr.DataArray`` to estimate the auto regression over.
     dim : str
         Dimension along which to fit the auto regression.

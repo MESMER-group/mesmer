@@ -28,6 +28,8 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
+   ~stats._select_ar_order_scen_ens
+   ~stats._fit_auto_regression_scen_ens
    ~stats.select_ar_order
    ~stats.fit_auto_regression
    ~stats.draw_auto_regression_uncorrelated
