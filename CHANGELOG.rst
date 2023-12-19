@@ -22,6 +22,9 @@ New Features
    - Allow to pass 1-dimensional targets to :py:meth:`mesmer.stats.LinearRegression.fit`
      (`#221 <https://github.com/MESMER-group/mesmer/pull/221>`_).
      By `Mathias Hauser`_.
+   - Allow to `exclude` predictor variables in :py:meth:`mesmer.stats.LinearRegression.predict`
+     (`#354 <https://github.com/MESMER-group/mesmer/pull/354>`_).
+     By `Mathias Hauser`_.
    - Fixed two bugs related to (non-dimension) coordinates (
      `#332 <https://github.com/MESMER-group/mesmer/issues/332>`_,
      `#333 <https://github.com/MESMER-group/mesmer/issues/333>`_ and
