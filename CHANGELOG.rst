@@ -1,8 +1,30 @@
 Changelog
 =========
 
-v0.9.0 - unreleased
+v0.9.0 - 2023.12.19
 -------------------
+
+version 0.9.0 is a big step towards rewriting mesmer. All statistical functionality was
+extracted and works for xarray data objects. It also contains data handling functions to
+prepare climate model data using xarray.
+
+- The restructered code is fully functional, and can be used to calibrate and emulate
+  temperature. However, it is still missing wrappers to which encapsulates the full
+  chain and helpers to simplify calibrating several scenarios and ensemble members.
+
+- This version still contains the legacy routines to train and emulate temperature. It
+  should have no numerical changes, only minimal changes in usage and offers speed gains
+  compared to v0.8.3.
+
+
+Known bugs
+^^^^^^^^^^
+
+For the legacy training, the influence of the global variability is underestimated,
+because the historical ensemble members are shuffled "randomly". This is kept in v0.9.0
+for backward compatibility and will be fixed in a follow-up bug fix release. For details
+see `#338 <https://github.com/MESMER-group/mesmer/issues/338>`_.
+
 
 New Features
 ^^^^^^^^^^^^
