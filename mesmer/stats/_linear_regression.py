@@ -63,7 +63,8 @@ class LinearRegression:
         predictors : dict of xr.DataArray
             A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
         exclude : str or set of str, default: None
-            Set of variables to exclude in the prediction.
+            Set of variables to exclude in the prediction. May include ``"intercept"``
+            to initialize the prediction with 0.
 
         Returns
         -------
@@ -82,7 +83,11 @@ class LinearRegression:
         if required_predictors != available_predictors:
             raise ValueError("Missing or superfluous predictors.")
 
-        prediction = params.intercept
+        if "intercept" in exclude:
+            prediction = xr.zeros_like(params.intercept)
+        else:
+            prediction = params.intercept
+
         for key in required_predictors:
             prediction = prediction + predictors[key] * params[key]
 
