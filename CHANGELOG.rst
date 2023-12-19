@@ -1,8 +1,11 @@
 Changelog
 =========
 
-v0.9.1 - unreleased
+v0.9.1 - 2023.12.20
 -------------------
+
+version 0.9.1 fixes a bug in the legacy calibration which makes it not numerically
+backward compatible.
 
 Bug fixes
 ^^^^^^^^^
