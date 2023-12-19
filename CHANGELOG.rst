@@ -10,7 +10,7 @@ prepare climate model data using xarray.
 
 - The restructered code is fully functional, and can be used to calibrate and emulate
   temperature. However, it is still missing wrappers to which encapsulates the full
-  chain and helpers to simplify calibrate several scenarios and ensemble members.
+  chain and helpers to simplify calibrating several scenarios and ensemble members.
 
 - This version still contains the legacy routines to train and emulate temperature. It
   should have no numerical changes, only minimal changes in usage and offers speed gains
