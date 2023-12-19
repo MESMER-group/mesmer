@@ -36,7 +36,7 @@ LR_METHOD_OR_FUNCTION = [
 # TEST LinearRegression class
 
 
-def test_LR_params():
+def test_lr_params():
 
     lr = mesmer.stats.LinearRegression()
 
@@ -80,7 +80,7 @@ def test_LR_params():
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_LR_predict(as_2D):
+def test_lr_predict(as_2D):
     lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
@@ -88,16 +88,99 @@ def test_LR_predict(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
-        lr.predict({})
-
-    with pytest.raises(ValueError, match="Missing or superfluous predictors"):
-        lr.predict({"tas": None, "something else": None})
-
     tas = xr.DataArray([0, 1, 2], dims="time")
 
     result = lr.predict({"tas": tas})
     expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_lr_predict_missing_superfluous():
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params
+
+    with pytest.raises(ValueError, match="Missing predictors: 'tas', 'tas2'"):
+        lr.predict({})
+
+    with pytest.raises(ValueError, match="Missing predictors: 'tas'"):
+        lr.predict({"tas2": None})
+
+    with pytest.raises(ValueError, match="Superfluous predictors: 'something else'"):
+        lr.predict({"tas": None, "tas2": None, "something else": None})
+
+    with pytest.raises(ValueError, match="Superfluous predictors: 'bar', 'foo'"):
+        lr.predict({"tas": None, "tas2": None, "foo": None, "bar": None})
+
+
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_lr_predict_exclude(as_2D):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time")
+
+    result = lr.predict({"tas": tas}, exclude="tas2")
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict({"tas": tas}, exclude={"tas2"})
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict({}, exclude={"tas", "tas2"})
+    expected = xr.DataArray([5], dims="x")
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_lr_predict_exclude_intercept(as_2D):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time")
+
+    result = lr.predict({"tas": tas}, exclude="intercept")
+    expected = xr.DataArray([[0, 3, 6]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict({}, exclude={"tas", "intercept"})
+    expected = xr.DataArray([0], dims="x")
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
