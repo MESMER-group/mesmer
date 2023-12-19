@@ -95,7 +95,10 @@ def separate_hist_future(var_c, time_c, cfg):
     hist = np.vstack(hist)
 
     # exclude duplicate historical runs that are available in several scenarios
-    var_s["hist"] = np.unique(hist, axis=0)
+    __, idx = np.unique(hist, axis=0, return_index=True)
+    # ensure hist is not re-ordered
+    var_s["hist"] = np.take(hist, indices=np.sort(idx), axis=0)
+
     time_s["hist"] = time[:idx_start_fut]
 
     # gather proj

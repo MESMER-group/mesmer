@@ -4,23 +4,14 @@ Changelog
 v0.9.1 - unreleased
 -------------------
 
-New Features
-^^^^^^^^^^^^
-
-Breaking changes
-^^^^^^^^^^^^^^^^
-
-Deprecations
-^^^^^^^^^^^^
-
 Bug fixes
 ^^^^^^^^^
 
-Documentation
-^^^^^^^^^^^^^
-
-Internal Changes
-^^^^^^^^^^^^^^^^
+Ensure de-duplicating the historical ensemble members conserves their order. Previously,
+the legacy calibration routines used `np.unique`, which shuffles them. See `#338
+<https://github.com/MESMER-group/mesmer/issues/338>`_ for details.
+(`#339 <https://github.com/MESMER-group/mesmer/pull/339>`_).
+By `Mathias Hauser`_.
 
 
 v0.9.0 - 2023.12.19
