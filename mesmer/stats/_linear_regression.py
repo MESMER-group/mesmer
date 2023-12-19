@@ -80,8 +80,15 @@ class LinearRegression:
         required_predictors = set(params.data_vars) - non_predictor_vars - exclude
         available_predictors = set(predictors.keys())
 
-        if required_predictors != available_predictors:
-            raise ValueError("Missing or superfluous predictors.")
+        if required_predictors - available_predictors:
+            missing = sorted(required_predictors - available_predictors)
+            missing = "', '".join(missing)
+            raise ValueError(f"Missing predictors: '{missing}'")
+
+        if available_predictors - required_predictors:
+            superfluous = sorted(available_predictors - required_predictors)
+            superfluous = "', '".join(superfluous)
+            raise ValueError(f"Superfluous predictors: '{superfluous}'")
 
         if "intercept" in exclude:
             prediction = xr.zeros_like(params.intercept)
