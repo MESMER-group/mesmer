@@ -1,6 +1,28 @@
 Changelog
 =========
 
+v0.9.1 - unreleased
+-------------------
+
+New Features
+^^^^^^^^^^^^
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+Deprecations
+^^^^^^^^^^^^
+
+Bug fixes
+^^^^^^^^^
+
+Documentation
+^^^^^^^^^^^^^
+
+Internal Changes
+^^^^^^^^^^^^^^^^
+
+
 v0.9.0 - 2023.12.19
 -------------------
 
