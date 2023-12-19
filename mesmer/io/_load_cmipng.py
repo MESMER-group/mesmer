@@ -32,7 +32,7 @@ def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
         Minimum land fraction so a grid point is considered.
     use_hfds : bool
         Whether to load hfds data.
-    cfc : configuration
+    cfg : configuration
         Configuration values. Required are ``cfg.gen``, ``cfg.ref``, and
         ``cfg.dir_cmipng``.
 
@@ -40,8 +40,8 @@ def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
     -------
     time, lon, lat, ls, tas, gsat, ghfds
 
-    Note
-    ----
+    Notes
+    -----
     ghfds is None if ``use_hfds`` is set to False
     """
 

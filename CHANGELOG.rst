@@ -12,8 +12,9 @@ New Features
      etc. methods around linear regression
      (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
      By `Mathias Hauser`_.
-   - Add ``mesmer.stats._fit_linear_regression_xr``: xarray wrapper for ``mesmer.stats._fit_linear_regression_np``
-     (`#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
+   - Add xarray wrapper for fitting a linear regression (
+     `#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and
+     `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
      By `Mathias Hauser`_.
    - Add add ``fit_intercept`` argument to the ``linear_regression`` fitting methods and
      functions (`#144 <https://github.com/MESMER-group/mesmer/pull/144>`_).
@@ -32,7 +33,7 @@ New Features
      (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
      By `Mathias Hauser`_.
    - Have ``mesmer.stats.fit_auto_regression`` return the variance instead of the standard deviation (
-     `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_
+     `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_, and
      `#318 <https://github.com/MESMER-group/mesmer/pull/318>`_). By `Mathias Hauser`_.
    - Add ``draw_auto_regression_correlated`` and ``draw_auto_regression_uncorrelated``: to draw samples of a
      (spatially-)correlated and uncorrelated auto regression model (
@@ -163,7 +164,8 @@ Internal Changes
 ^^^^^^^^^^^^^^^^
 
 - Refactor the mesmer internals to use the new statistical core, employ helper functions etc.:
-   - Use :py:func:`mesmer.utils.separate_hist_future` in :py:func:`mesmer.calibrate_mesmer.train_gt` (`#281 <https://github.com/MESMER-group/mesmer/pull/281>`_).
+   - Use :py:func:`mesmer.utils.separate_hist_future` in :py:func:`mesmer.calibrate_mesmer.train_gt`
+     (`#281 <https://github.com/MESMER-group/mesmer/pull/281>`_).
    - Use of :py:class:`mesmer.stats.LinearRegression` in
 
      - :py:func:`mesmer.calibrate_mesmer.train_gt_ic_OLSVOLC` (`#145 <https://github.com/MESMER-group/mesmer/pull/145>`_).
