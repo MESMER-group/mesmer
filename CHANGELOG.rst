@@ -24,7 +24,7 @@ version 0.9.0 is a big step towards rewriting mesmer. All statistical functional
 extracted and works for xarray data objects. It also contains data handling functions to
 prepare climate model data using xarray.
 
-- The restructered code is fully functional, and can be used to calibrate and emulate
+- The restructured code is fully functional and can be used to calibrate and emulate
   temperature. However, it is still missing wrappers to which encapsulates the full
   chain and helpers to simplify calibrating several scenarios and ensemble members.
 
