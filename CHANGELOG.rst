@@ -19,6 +19,12 @@ Breaking changes
 - Removed support for Python 3.7 (`#163 <https://github.com/MESMER-group/mesmer/issues/163>`_.).
   By `Mathias Hauser`_.
 
+New Features
+^^^^^^^^^^^^
+
+- Add python 3.12 to list of supported versions (`#368 <https://github.com/MESMER-group/mesmer/pull/368>`_).
+  By `Mathias Hauser`_.
+
 v0.9.0 - 2023.12.19
 -------------------
 
