@@ -7,6 +7,8 @@ The mesmer package provides tools to train the MESMER emulator, create emulation
 analyze the results.
 """
 
+from importlib.metadata import version as _get_version
+
 from . import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
 from .core import _data as data
 from .core import geospatial, grid, mask, volc, weighted
@@ -32,13 +34,6 @@ __all__ += [
     "weighted",
 ]
 
-try:
-    from importlib.metadata import version as _get_version
-except ImportError:
-    # importlib.metadata not available in python 3.7
-    import pkg_resources
-
-    _get_version = lambda pkg: pkg_resources.get_distribution(pkg).version
 
 try:
     __version__ = _get_version("mesmer-emulator")
