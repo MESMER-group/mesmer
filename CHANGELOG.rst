@@ -13,6 +13,11 @@ the legacy calibration routines used `np.unique`, which shuffles them. See `#338
 (`#339 <https://github.com/MESMER-group/mesmer/pull/339>`_).
 By `Mathias Hauser`_.
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+- Removed support for Python 3.7 (`#163 <https://github.com/MESMER-group/mesmer/issues/163>`_.).
+  By `Mathias Hauser`_.
 
 v0.9.0 - 2023.12.19
 -------------------
