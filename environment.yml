@@ -11,7 +11,7 @@ dependencies:
  - netcdf4
  - numpy
  - packaging
- - pandas<2.0
+ - pandas>=2.0
  - pooch
  - regionmask>=0.8
  - scikit-learn
