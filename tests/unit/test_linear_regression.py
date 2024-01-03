@@ -110,17 +110,25 @@ def test_lr_predict_missing_superfluous():
     )
     lr.params = params
 
+    da = xr.DataArray([0, 1, 2], dims="time")
+
     with pytest.raises(ValueError, match="Missing predictors: 'tas', 'tas2'"):
         lr.predict({})
 
     with pytest.raises(ValueError, match="Missing predictors: 'tas'"):
         lr.predict({"tas2": None})
 
-    with pytest.raises(ValueError, match="Superfluous predictors: 'something else'"):
-        lr.predict({"tas": None, "tas2": None, "something else": None})
+    with pytest.warns(UserWarning, match="Superfluous predictors: 'something else'"):
+        result = lr.predict({"tas": da, "tas2": da, "something else": None})
 
-    with pytest.raises(ValueError, match="Superfluous predictors: 'bar', 'foo'"):
-        lr.predict({"tas": None, "tas2": None, "foo": None, "bar": None})
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"))
+    xr.testing.assert_equal(result, expected)
+
+    with pytest.warns(UserWarning, match="Superfluous predictors: 'bar', 'foo'"):
+        result = lr.predict({"tas": da, "tas2": da, "foo": None, "bar": None})
+
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"))
+    xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.parametrize("as_2D", [True, False])

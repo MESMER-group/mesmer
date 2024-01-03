@@ -1,3 +1,4 @@
+import warnings
 from typing import Mapping, Optional
 
 import numpy as np
@@ -88,7 +89,7 @@ class LinearRegression:
         if available_predictors - required_predictors:
             superfluous = sorted(available_predictors - required_predictors)
             superfluous = "', '".join(superfluous)
-            raise ValueError(f"Superfluous predictors: '{superfluous}'")
+            warnings.warn(f"Superfluous predictors: '{superfluous}'")
 
         if "intercept" in exclude:
             prediction = xr.zeros_like(params.intercept)
