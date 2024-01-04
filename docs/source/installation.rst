@@ -4,7 +4,7 @@ Installation
 Required dependencies
 ---------------------
 
-- Python (3.8 or later)
+- Python (3.9 or later)
 - `dask <https://dask.org/>`__
 - `numpy <http://www.numpy.org/>`__
 - `pandas <https://pandas.pydata.org/>`__
