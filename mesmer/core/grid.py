@@ -82,7 +82,7 @@ def stack_lat_lon(
     y_dim="lat",
     stack_dim="gridcell",
     multiindex=False,
-    dropna=True
+    dropna=True,
 ):
     """Stack a regular lat-lon grid to a 1D (unstructured) grid
 
