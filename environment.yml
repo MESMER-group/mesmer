@@ -17,7 +17,7 @@ dependencies:
  - scikit-learn
  - sphinx
  - statsmodels
- - xarray
+ - xarray>=2023.04 # because pandas 2 is required
 # for testing
  - black<23.1
  - flake8
