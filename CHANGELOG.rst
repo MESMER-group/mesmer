@@ -31,6 +31,12 @@ Breaking changes
   xarray       not specified >=2023.04
   ============ ============= =========
 
+New Features
+^^^^^^^^^^^^
+
+- Add python 3.12 to list of supported versions (`#368 <https://github.com/MESMER-group/mesmer/pull/368>`_).
+  By `Mathias Hauser`_.
+
 v0.9.0 - 2023.12.19
 -------------------
 
