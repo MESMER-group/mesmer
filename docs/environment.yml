@@ -5,20 +5,12 @@ channels:
   - nodefaults
 
 dependencies:
-  - python=3.9
-  - black<23.1
+  - python=3.11
   - cartopy
-  - cython
   - dask[complete]
-  - flake8
-  - gdal
-  - isort
   - netcdf4
   - numpy
   - pandas>=2.0
-  - pytest
-  - pytest-cov
-  - pytest-xdist
   - scikit-learn
   - statsmodels
   - regionmask>=0.8
