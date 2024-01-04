@@ -1,11 +1,13 @@
 Changelog
 =========
 
-v0.9.1 - 2023.12.20
--------------------
+v0.10.0 - 2024.01.04
+--------------------
 
-version 0.9.1 fixes a bug in the legacy calibration which makes it not numerically
-backward compatible.
+version 0.10.0 fixes the bug in the legacy calibration and is thus not numerically
+backward compatible. It also updated the supported python, pandas and xarray versions.
+Updating the pandas version will create an error when trying to load pickled mesmer
+bundles, requiring to use mesmer version v0.9.0 for this.
 
 Bug fixes
 ^^^^^^^^^
@@ -19,7 +21,7 @@ By `Mathias Hauser`_.
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
-- Removed support for python 3.7 and python 3.8 and updated the code base (
+- Removed support for python 3.7 and python 3.8 (
   `#163 <https://github.com/MESMER-group/mesmer/issues/163>`_,
   `#365 <https://github.com/MESMER-group/mesmer/pull/365>`_,
   `#367 <https://github.com/MESMER-group/mesmer/pull/367>`_, and
@@ -48,12 +50,12 @@ extracted and works for xarray data objects. It also contains data handling func
 prepare climate model data using xarray.
 
 - The restructured code is fully functional and can be used to calibrate and emulate
-  temperature. However, it is still missing wrappers to which encapsulates the full
+  temperature. However, it is still missing wrappers which encapsulate the full
   chain and helpers to simplify calibrating several scenarios and ensemble members.
 
 - This version still contains the legacy routines to train and emulate temperature. It
-  should have no numerical changes, only minimal changes in usage and offers speed gains
-  compared to v0.8.3.
+  should have no numerical changes, only minimal changes in usage, and offers speed gains
+  over v0.8.3.
 
 
 Known bugs
