@@ -40,6 +40,7 @@ def _load_aod_obs(*, version, resample):
         skiprows=11,
         names=("year", "month", "aod"),
         parse_dates=[["year", "month"]],
+        date_format={"year_month": "%Y %m"},
         index_col="year_month",
     )
 

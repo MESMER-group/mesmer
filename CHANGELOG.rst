@@ -16,6 +16,29 @@ the legacy calibration routines used `np.unique`, which shuffles them. See `#338
 (`#339 <https://github.com/MESMER-group/mesmer/pull/339>`_).
 By `Mathias Hauser`_.
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+- Removed support for python 3.7 and python 3.8 and updated the code base (
+  `#163 <https://github.com/MESMER-group/mesmer/issues/163>`_,
+  `#365 <https://github.com/MESMER-group/mesmer/pull/365>`_,
+  `#367 <https://github.com/MESMER-group/mesmer/pull/367>`_, and
+  `#371 <https://github.com/MESMER-group/mesmer/pull/371>`_).
+  By `Mathias Hauser`_.
+- The supported versions of some dependencies were changed (`#369 <https://github.com/MESMER-group/mesmer/pull/369>`_):
+
+  ============ ============= =========
+  Package      Old           New
+  ============ ============= =========
+  pandas       <2.0          >=2.0
+  xarray       not specified >=2023.04
+  ============ ============= =========
+
+New Features
+^^^^^^^^^^^^
+
+- Add python 3.12 to list of supported versions (`#368 <https://github.com/MESMER-group/mesmer/pull/368>`_).
+  By `Mathias Hauser`_.
 
 v0.9.0 - 2023.12.19
 -------------------

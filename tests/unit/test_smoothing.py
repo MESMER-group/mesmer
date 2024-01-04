@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 import mesmer
@@ -35,15 +34,12 @@ def test_lowess_errors():
     with pytest.raises(TypeError, match="Cannot convert coords"):
         mesmer.stats.lowess(data.to_dataset(), "time", frac=0.5)
 
-    # TODO: remove check once we drop python 3.7
-    if Version(xr.__version__) >= Version("21.0"):
+    # cftime datetime
+    time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
+    data = data.assign_coords(time=time)
 
-        # cftime datetime
-        time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
-        data = data.assign_coords(time=time)
-
-        with pytest.raises(TypeError, match="Cannot convert coords"):
-            mesmer.stats.lowess(data.to_dataset(), "time", frac=0.5)
+    with pytest.raises(TypeError, match="Cannot convert coords"):
+        mesmer.stats.lowess(data.to_dataset(), "time", frac=0.5)
 
 
 @pytest.mark.parametrize("it", [0, 3])
@@ -171,19 +167,16 @@ def test_lowess_2D_combine_dim():
 
     xr.testing.assert_allclose(expected, result)
 
-    # TODO: remove check once we drop python 3.7
-    if Version(xr.__version__) >= Version("21.0"):
+    # cftime datetime
+    time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
+    data = data.assign_coords(time=time)
 
-        # cftime datetime
-        time = xr.date_range("2000-01-01", periods=30, calendar="noleap")
-        data = data.assign_coords(time=time)
+    result = mesmer.stats.lowess(
+        data, "time", combine_dim="cells", frac=0.3, use_coords=False
+    )
+    expected = expected.assign_coords(time=time)
 
-        result = mesmer.stats.lowess(
-            data, "time", combine_dim="cells", frac=0.3, use_coords=False
-        )
-        expected = expected.assign_coords(time=time)
-
-        xr.testing.assert_allclose(expected, result)
+    xr.testing.assert_allclose(expected, result)
 
 
 def test_lowess_2D_combine_dim_it():

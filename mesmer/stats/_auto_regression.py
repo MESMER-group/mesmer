@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
-from packaging.version import Version
 
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
@@ -36,23 +35,18 @@ def _select_ar_order_scen_ens(*objs, dim, ens_dim, maxlag, ic="bic"):
     then over all scenarios.
     """
 
-    if Version(xr.__version__) >= Version("2022.03.0"):
-        method = "method"
-    else:
-        method = "interpolation"
-
     ar_order_scen = list()
     for obj in objs:
         res = select_ar_order(obj, dim=dim, maxlag=maxlag, ic=ic)
 
         if ens_dim in res.dims:
-            res = res.quantile(dim=ens_dim, q=0.5, **{method: "nearest"})
+            res = res.quantile(dim=ens_dim, q=0.5, method="nearest")
 
         ar_order_scen.append(res)
 
     ar_order_scen = xr.concat(ar_order_scen, dim="scen")
 
-    ar_order = ar_order_scen.quantile(0.5, dim="scen", **{method: "nearest"})
+    ar_order = ar_order_scen.quantile(0.5, dim="scen", method="nearest")
 
     if not np.isnan(ar_order).any():
         ar_order = ar_order.astype(int)
