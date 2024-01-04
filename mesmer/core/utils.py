@@ -1,5 +1,5 @@
 import warnings
-from typing import Set, Union
+from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -106,8 +106,8 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: Union[str, Set[str]] = set(),
-    optional_vars: Union[str, Set[str]] = set(),
+    required_vars: Union[str, set[str]] = set(),
+    optional_vars: Union[str, set[str]] = set(),
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
@@ -156,7 +156,7 @@ def _check_dataarray_form(
     name: str = "obj",
     *,
     ndim: int = None,
-    required_dims: Union[str, Set[str]] = set(),
+    required_dims: Union[str, set[str]] = set(),
     shape=None,
 ):
     """check if a dataset conforms to some conditions
