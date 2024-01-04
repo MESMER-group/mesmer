@@ -1,5 +1,5 @@
-from typing import Optional
 from collections.abc import Mapping
+from typing import Optional
 
 import numpy as np
 import xarray as xr
