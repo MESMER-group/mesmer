@@ -5,7 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
-  - python=3.11
+  - python=3.9
   - cartopy
   - dask[complete]
   - netcdf4
