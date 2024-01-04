@@ -22,6 +22,14 @@ Breaking changes
   `#367 <https://github.com/MESMER-group/mesmer/pull/367>`_, and
   `#371 <https://github.com/MESMER-group/mesmer/pull/371>`_).
   By `Mathias Hauser`_.
+- The supported versions of some dependencies were changed (`#369 <https://github.com/MESMER-group/mesmer/pull/369>`_):
+
+  ============ ============= =========
+  Package      Old           New
+  ============ ============= =========
+  pandas       <2.0          >=2.0
+  xarray       not specified >=2023.04
+  ============ ============= =========
 
 v0.9.0 - 2023.12.19
 -------------------
