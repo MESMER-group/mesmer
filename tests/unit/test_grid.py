@@ -231,6 +231,6 @@ def test_unstructured_roundtrip_2D_coords(as_dataset):
 
     result = mesmer.grid.stack_lat_lon(
         mesmer.grid.unstack_lat_lon_and_align(da_unstructured, coords_orig, **dims),
-        **dims
+        **dims,
     )
     xr.testing.assert_identical(result, da_unstructured)
