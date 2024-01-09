@@ -6,11 +6,11 @@
 Functions to create global variability emulations with MESMER.
 """
 
-
 import numpy as np
+import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
+from mesmer.stats import draw_auto_regression_uncorrelated
 
 
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
@@ -136,7 +136,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         number of time steps in each global variability emulation
 
     seed : int
-        esm and scenario specific seed for gv module to ensure reproducability of
+        esm and scenario specific seed for gv module to ensure reproducibility of
         results
 
     Returns
@@ -147,10 +147,8 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - [scen] (2d array  (emus, time) of global variability emulation time series)
     """
 
-    # ensure reproducibility
-    np.random.seed(seed)
-
     # buffer so that initial start at 0 does not influence overall result
+    # Should this buffer be based on the length of ar_lags instead of hard-coded?
     buffer = 50
 
     # re-name params for easier reading of code below
@@ -159,24 +157,37 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     AR_order_sel = params_gv["AR_order_sel"]
     AR_std_innovs = params_gv["AR_std_innovs"]
 
+    # ensure ar_coefs are not a scalar
+    ar_coefs = np.atleast_1d(ar_coefs)
+
     # if AR(0) process chosen, no AR_coefs are available -> to have code run
     # nevertheless ar_coefs and ar_lags are set to 0 (-> emus are created with
     # ar_int + innovs)
-    if len(ar_coefs) == 0:
+    if ar_coefs.size == 0:
         ar_coefs = [0]
 
     # only use the selected coeffs
     ar_coefs = ar_coefs[:AR_order_sel]
 
-    emus_gv = _draw_auto_regression_correlated_np(
-        intercept=ar_int,
-        # reshape to n_coefs x n_cells
-        coefs=ar_coefs[:, np.newaxis],
-        covariance=AR_std_innovs**2,  # pass the (co-)variance!
-        n_samples=nr_emus_v,
-        n_ts=nr_ts_emus_v,
+    # create intermediate ar_params Dataset
+    # the variables are 1D (except coeffs)
+    intercept = xr.DataArray(ar_int)
+    coeffs = xr.DataArray(ar_coefs, dims="lags")
+    variance = xr.DataArray(AR_std_innovs**2)
+
+    ar_params = xr.Dataset(
+        {"intercept": intercept, "coeffs": coeffs, "variance": variance}
+    )
+
+    emus_gv = draw_auto_regression_uncorrelated(
+        ar_params,
+        time=nr_ts_emus_v,
+        realisation=nr_emus_v,
         seed=seed,
         buffer=buffer,
     )
 
-    return emus_gv.squeeze()
+    # get back the old order of the emus
+    emus_gv = emus_gv.values.transpose()
+
+    return emus_gv

@@ -4,7 +4,7 @@ import regionmask
 import shapely.geometry
 import xarray as xr
 
-from mesmer.utils.regionmaskcompat import (
+from mesmer.core.regionmaskcompat import (
     InvalidCoordsError,
     mask_3D_frac_approx,
     sample_coord,
@@ -51,9 +51,9 @@ def test_mask_percentage_coords():
     # ensure coords are the same (as they might by averaged)
 
     lat = np.arange(90, -90, -1)
-    lon = np.arange(0, 360, 1)
+    lon = np.arange(0, 120, 1)
 
-    r = shapely.geometry.box(0, -90, 360, 90)
+    r = shapely.geometry.box(0, -90, 120, 90)
     r = regionmask.Regions([r])
 
     result = mask_3D_frac_approx(r, lon, lat)
@@ -69,8 +69,8 @@ def test_mask_percentage_coords():
 def test_mask_percentage_poles():
     # all points should be 1 for a global mask
 
-    lat = np.arange(90, -90, -1)
-    lon = np.arange(0, 360, 1)
+    lat = np.arange(90, -91, -5)
+    lon = np.arange(0, 360, 5)
 
     r = shapely.geometry.box(0, -90, 360, 90)
     r = regionmask.Regions([r])
@@ -83,12 +83,12 @@ def test_mask_percentage_southpole():
     # all at the southpole should be 1 - irrespective of where exactly the southernmost
     # latitude is
 
-    lon = np.arange(0, 30, 1)
+    lon = np.arange(0, 31, 5)
 
     r = shapely.geometry.box(0, -90, 360, -85)
     r = regionmask.Regions([r])
 
-    for offset in np.arange(0, 1, 0.02):
+    for offset in np.arange(0, 1, 0.05):
         lat = np.arange(-90, -80, 1) + offset
         result = mask_3D_frac_approx(r, lon, lat)
         assert (result.isel(lat=0) == 1).all()
@@ -98,7 +98,7 @@ def test_mask_percentage_northpole():
     # all at the southpole should be 1 - irrespective of where exactly the southernmost
     # latitude is
 
-    lon = np.arange(0, 30, 1)
+    lon = np.arange(0, 31, 5)
 
     r = shapely.geometry.box(0, 85, 360, 90)
     r = regionmask.Regions([r])

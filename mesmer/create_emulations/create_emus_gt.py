@@ -82,7 +82,7 @@ def gather_gt_data(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
 
     emus_gt = {}
 
-    # apply the chosen method
+    # gather data
     if "LOWESS" in params_gt["method"]:
         for scen in scenarios_emus:
             emus_gt[scen] = params_gt[scen]

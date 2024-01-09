@@ -8,11 +8,11 @@ Functions to create local variability emulations with MESMER.
 
 
 import numpy as np
+import xarray as xr
 
-import mesmer.stats
 from mesmer.create_emulations.utils import _gather_lr_params, _gather_lr_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.auto_regression import _draw_auto_regression_correlated_np
+from mesmer.stats import LinearRegression, draw_auto_regression_correlated
 
 
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
@@ -184,16 +184,28 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             if len(emus_lv[scen]) == 0:
                 emus_lv[scen][targ] = 0
 
-            emus_ar = _draw_auto_regression_correlated_np(
-                intercept=params_lv["AR1_int"][targ],
-                # reshape to n_coefs x n_cells
-                coefs=params_lv["AR1_coef"][targ][np.newaxis, :],
-                covariance=params_lv["loc_ecov_AR1_innovs"][targ],
-                n_samples=nr_emus_v,
-                n_ts=nr_ts_emus_stoch_v,
+            # create intermediate ar_params & covariance Dataset / DataArray
+            intercept = xr.DataArray(params_lv["AR1_int"][targ], dims="gridpoint")
+
+            dims = ("lags", "gridpoint")
+            coeffs = xr.DataArray(params_lv["AR1_coef"][targ][np.newaxis, :], dims=dims)
+
+            ar_params = xr.Dataset({"intercept": intercept, "coeffs": coeffs})
+
+            dims = ("gridpoint_i", "gridpoint_j")
+            covariance = xr.DataArray(params_lv["loc_ecov_AR1_innovs"][targ], dims=dims)
+
+            emus_ar = draw_auto_regression_correlated(
+                ar_params,
+                covariance,
+                time=nr_ts_emus_stoch_v,
+                realisation=nr_emus_v,
                 seed=seed,
                 buffer=20,
             )
+
+            # get back the old order of the emus
+            emus_ar = emus_ar.values.transpose((2, 0, 1))
 
             emus_lv[scen][targ] += emus_ar.squeeze()
     return emus_lv
@@ -255,7 +267,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
 
             params = _gather_lr_params(params_lv, targ, dims="gridpoint")
 
-            lr = mesmer.stats.linear_regression.LinearRegression()
+            lr = LinearRegression()
             lr.params = params
             prediction = lr.predict(predictors=preds)
 

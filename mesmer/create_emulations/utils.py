@@ -57,7 +57,7 @@ def _gather_lr_preds(preds_dict, predictor_names, scen, dims):
     Parameters
     ----------
     preds_dict : dict
-        Dictonary containg all predictors.
+        Dictionary containing all predictors.
     predictor_names : list of str
         List of all predictors to gather from ``preds_dict``.
     scen : str
@@ -68,7 +68,7 @@ def _gather_lr_preds(preds_dict, predictor_names, scen, dims):
     Returns
     -------
     predictors : dict
-        Dictonary of gathered predictors.
+        Dictionary of gathered predictors.
 
     Notes
     -----
@@ -88,7 +88,7 @@ def _gather_lr_params(params_dict, targ, dims):
     Parameters
     ----------
     params_dict : dict
-        Dictonary containg all parameters.
+        Dictionary containing all parameters.
     targ : str
         Name of target variable for which to read the parameters.
     dims : str, tuple of str
@@ -102,7 +102,6 @@ def _gather_lr_params(params_dict, targ, dims):
     Notes
     -----
     This function should become obsolete once switching to the newer data structures.
-
 
     """
 

@@ -1,6 +1,5 @@
 """
-Configuration file for tests
-
+Example configuration file
 """
 import os.path
 
@@ -27,11 +26,8 @@ gen = 6
 # cmip-ng
 dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
 
-# observations
-dir_obs = os.path.join(TEST_DATA_ROOT, "observations")
-
 # mesmer output
-dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxillary")
+dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxiliary")
 dir_mesmer_params = os.path.join(EXAMPLE_OUTPUT_ROOT, "calibrated_parameters")
 dir_mesmer_emus = os.path.join(EXAMPLE_OUTPUT_ROOT, "emulations")
 
@@ -59,14 +55,14 @@ threshold_land = 1 / 3
 # members)
 wgt_scen_tr_eq = True
 
-# number of created emulations (small number for testing purposes)
+# number of created emulations (small number for example)
 nr_emus_v = 5
 
 # seed offset for scenarios (0 meaning same emulations drawn for each scen, other
 # numbers will have different ones for each scen)
 scen_seed_offset_v = 0
 
-# max. nr of iterations in cross validation (small for testing purposes)
+# max. nr of iterations in cross validation (small for example)
 max_iter_cv = 15
 
 # predictors (for global module)

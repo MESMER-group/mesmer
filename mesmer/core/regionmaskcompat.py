@@ -21,7 +21,23 @@ def mask_percentage(regions, lon, lat, **kwargs):
 
 
 def mask_3D_frac_approx(regions, lon, lat, **kwargs):
-    """Sample with 10 times higher resolution.
+    """3D mask of the fractional overlap of a set of regions for the given lat/ lon grid
+
+    Parameters
+    ----------
+    regions : regionmask.Regions
+        Region definitions.
+    lon : array
+        Array of longitude coordinates.
+    lat : array
+        Array of latitude coordinates.
+    **kwargs : keyword arguments
+        Passed to regions.mask
+
+    Returns
+    -------
+    mask_3D : boolean xarray.DataArray
+        3D mask with fractional overlap
 
     Notes
     -----

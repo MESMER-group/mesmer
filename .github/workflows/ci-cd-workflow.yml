@@ -23,7 +23,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Create conda environment
       uses: mamba-org/setup-micromamba@v1
@@ -60,14 +60,14 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.7", "3.9", "3.10"]
+        python-version: ["3.9", "3.11", "3.12"]
     defaults:
       run:
         shell: bash -l {0}
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set environment variables
       run: |
@@ -102,6 +102,7 @@ jobs:
     - name: Run tests
       run: python -u -m pytest
        -r a -v
+       --all
        --cov=mesmer
        --cov-report=xml
 
@@ -127,9 +128,9 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
