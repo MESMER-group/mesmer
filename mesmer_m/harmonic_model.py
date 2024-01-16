@@ -88,12 +88,10 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     else:
         x_train = x
 
-    mon_train = np.tile(
-        np.arange(1, 13), int(x_train.shape[0] / 12)
-    )  # also get monthly values
-    mon_train = (
-        np.pi * (mon_train % 12 + 1)
-    ) / 6  # for simplicity's sake we take month values in there harmonic form
+    # also get monthly values
+    mon_train = np.tile(np.arange(1, 13), int(x_train.shape[0] / 12))
+    # for simplicity's sake we take month values in there harmonic form
+    mon_train = (np.pi * (mon_train % 12 + 1)) / 6
 
     # construct predictor matrix
 
@@ -114,8 +112,7 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     # )
 
     def fun(x, n, x_train, mon_train, y):
-        """loss function for fitting fourier series in scipy.optimize.least_squares
-        """
+        """loss function for fitting fourier series in scipy.optimize.least_squares"""
         loss = np.mean((generate_fourier_series_np(x, n, x_train, mon_train) - y) ** 2)
 
         return loss
@@ -125,11 +122,13 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     x0[2] = 1
     x0[3] = 0
 
+    # NOTE: this seems to select less 'orders' than the scipy one
+    # np.linalg.lstsq(A, y)[0]
+
     coeffs = optimize.least_squares(
         fun, x0, args=(n, x_train, mon_train, y), loss="cauchy"
-    ).x  # np.linalg.lstsq(A, y)[0]
+    ).x
 
-    # print(coeffs.shape)
     y_pred = generate_fourier_series_np(coeffs, n, x_train, mon_train)
 
     return coeffs, y_pred
