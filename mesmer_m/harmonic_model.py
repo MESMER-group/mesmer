@@ -40,20 +40,16 @@ def generate_fourier_series_np(coeffs, n, x, mon):
 
     """
 
-    return sum(
-        [
-            (coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
-            + (coeffs[idx + 2] * x + coeffs[idx + 3])
-            * np.cos(np.pi * i * (mon % 12 + 1) / 6)
-            for i, idx in enumerate(np.arange(n * 4, step=4))
-        ]
+    return np.sum(
+        [coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
+        + (coeffs[idx + 2] * x + coeffs[idx + 3])
+        * np.cos(np.pi * i * (mon % 12 + 1) / 6)
+        for i, idx in enumerate(range(0, n * 4, 4)]
     )
 
 
 def fit_fourier_series_np(x, y, n, repeat=False):
-
-    """
-    Execute fitting of the harmonic model/fourier series
+    """execute fitting of the harmonic model/fourier series
 
     Parameters
     ----------
@@ -67,8 +63,8 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     n : Integer
         Order of the Fourier Series.
 
-    repeat: Boolean
-            Whether x data should be expanded , default=False
+    repeat : bool, default: True
+        Whether x data should be expanded.
 
     Method
     ------
@@ -91,9 +87,8 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     """
 
     if repeat:
-        x_train = np.repeat(
-            x, 12
-        )  # each month scales to the yearly value at that timestep so need to repeat
+        # each month scales to the yearly value at that timestep so need to repeat
+        x_train = np.repeat(x, 12)
         # yearly temp. array for fitting if not already done
     else:
         x_train = x
@@ -220,7 +215,7 @@ def fit_to_bic_np(x, y, max_n, repeat=False):
 
         bic_score[i_n - 1] = calculate_bic(len(y), i_n, mse)
 
-    n_sel = np.argwhere(bic_score == bic_score.min())[0][0] + 1
+    n_sel = np.argmin(bic_score) + 1
     coeffs_fit, y_pred = fit_fourier_series_np(x, y, n_sel, repeat=repeat)
 
     coeffs = np.zeros([max_n * 4 - 2])

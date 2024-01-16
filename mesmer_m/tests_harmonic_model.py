@@ -13,14 +13,10 @@ Tests for monthly trend module of MESMER-M. We check:
         b. How this evolves with order
 """
 
-import importlib
-
 import harmonic_model as hm
 import numpy as np
 import xarray as xr
 from tqdm import tqdm_notebook as tqdm
-
-importlib.reload(hm)
 
 
 def dummy_yearly_trend(nr_runs):
