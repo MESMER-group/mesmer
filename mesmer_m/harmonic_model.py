@@ -33,6 +33,12 @@ def generate_fourier_series_np(coeffs, n, x, mon):
 
     """
 
+    # TODO:
+    # - rename n to order
+    # - why is there a "-2" for the number of coeffs?
+    # - check if this can this be vectorized, so we can remove the for loop we probably
+    #   need to reshape the coeffs to (4, n - 2)
+
     return np.sum(
         [
             (coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
