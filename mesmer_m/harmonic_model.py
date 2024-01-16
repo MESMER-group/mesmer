@@ -40,11 +40,13 @@ def generate_fourier_series_np(coeffs, n, x, mon):
 
     """
 
-    return np.sum(
-        [coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
-        + (coeffs[idx + 2] * x + coeffs[idx + 3])
-        * np.cos(np.pi * i * (mon % 12 + 1) / 6)
-        for i, idx in enumerate(range(0, n * 4, 4)]
+    return sum(
+        [
+            (coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
+            + (coeffs[idx + 2] * x + coeffs[idx + 3])
+            * np.cos(np.pi * i * (mon % 12 + 1) / 6)
+            for i, idx in enumerate(np.arange(n * 4, step=4))
+        ]
     )
 
 
