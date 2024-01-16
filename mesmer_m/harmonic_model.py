@@ -13,30 +13,23 @@ from scipy import optimize
 
 
 def generate_fourier_series_np(coeffs, n, x, mon):
-
-    """
-    Construct the Fourier Series
+    """construct the Fourier Series
 
     Parameters
     ----------
-
-    coeffs: array-like of shape (4*n-2)
-            coefficients of Fourier Series.
-
+    coeffs : array-like of shape (4*n-2)
+        coefficients of Fourier Series.
     n : Integer
         Order of the Fourier Series.
-
     x : array-like of shape (n_samples,)
         yearly temperature values.
-
     mon : array-like of shape (n_samples,)
-          month values (0-11).
+        month values (0-11).
 
     Returns
     -------
-
     predictions: array-like of shape (n_samples,)
-                 Fourier Series of order n calculated over x and mon with coeffs.
+        Fourier Series of order n calculated over x and mon with coeffs.
 
     """
 
@@ -81,10 +74,10 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     Returns
     -------
     coeffs : array-like of shape (4*n-2)
-            Fitted coefficients of Fourier series.
+        Fitted coefficients of Fourier series.
 
-     y : array-like of shape (n_samples*12,)
-         Predicted monthly temperature values.
+    y : array-like of shape (n_samples*12,)
+        Predicted monthly temperature values.
 
     """
 
@@ -121,9 +114,7 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     # )
 
     def fun(x, n, x_train, mon_train, y):
-
-        """
-        Loss function for fitting fourier series needed as input to scipy.optimize.least_squares
+        """loss function for fitting fourier series in scipy.optimize.least_squares
         """
         loss = np.mean((generate_fourier_series_np(x, n, x_train, mon_train) - y) ** 2)
 
@@ -145,26 +136,19 @@ def fit_fourier_series_np(x, y, n, repeat=False):
 
 
 def calculate_bic(n_samples, n_order, mse):
+    """calculate Bayesian Information Criteria (BIC)
 
-    """
-    Calculate Bayesian Information Criteria (BIC)
-
-    Input
-    -----
-
+    Parameters
+    ----------
     n_samples : Integer
-               size of training set.
-
+        size of training set.
     n_order : Integer
-             Order of Fourier Series.
-
+        Order of Fourier Series.
     mse : Float
-         Mean-squared error.
+        Mean-squared error.
 
     Returns
     -------
-
-
     BIC score : Float
 
     """
@@ -175,36 +159,27 @@ def calculate_bic(n_samples, n_order, mse):
 
 
 def fit_to_bic_np(x, y, max_n, repeat=False):
+    """choose order of Fourier Series to fit for by minimising BIC score
 
-    """
-    Choose order of Fourier Series to fit for by minimising BIC score
-
-    Input
-    -----
-
+    Parameters
+    ----------
     x : array-like of shape (n_samples/12,)
         Yearly temperature values to predict with.
-
     y : array-like of shape (n_samples,)
         Target monthly temperature values.
-
-    n : Integer
+    max_n : Integer
         Maximum order of Fourier Series.
-
-    repeat: Boolean
-            Passed on to fit_fourier_series_np , default=False
+    repeat : Boolean
+        Passed on to fit_fourier_series_np , default=False
 
     Returns
     -------
-
     n_sel : Integer
-           Selected order of Fourier Series.
-
+        Selected order of Fourier Series.
     coeffs_fit : array-like of size (4*n_Sel-2,)
-                Fitted coefficients for the selected order of Fourier Series.
-
+        Fitted coefficients for the selected order of Fourier Series.
     y_pred : array-like of size (n_samples,)
-            Predicted y values from final model.
+        Predicted y values from final model.
 
     """
 
@@ -227,28 +202,23 @@ def fit_to_bic_np(x, y, max_n, repeat=False):
 
 
 def fit_to_bic_xr(X, Y, max_n):
-
-    """
-    Fit Fourier Series using BIC score to select order - xarray wrapper
+    """fit Fourier Series using BIC score to select order - xarray wrapper
 
     Parameters
     ----------
-
     X : xr.DataArray
         Yearly temperature values used as predictors, must contain dims: ("sample","cell").
-
     Y : xr.DataArray
         Monthly temperature values to fit for, must contain dims: ("sample","cell").
-
     max_n : Integer
-            Maximum order of Fourier Series to fit for.
-
+        Maximum order of Fourier Series to fit for.
 
     Returns
     -------
     data_vars : `xr.Dataset`
-           Dataset containing the selected order of Fourier Series (n_sel), estimated coefficients of the Fourier Series (coeffs)
-           and the resulting predictions for monthly temperatures (predictions).
+        Dataset containing the selected order of Fourier Series (n_sel), estimated
+        coefficients of the Fourier Series (coeffs) and the resulting predictions for
+        monthly temperatures (predictions).
 
     """
 
