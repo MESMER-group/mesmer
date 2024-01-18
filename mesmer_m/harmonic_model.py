@@ -36,6 +36,7 @@ def generate_fourier_series_np(coeffs, n, x, mon):
     # TODO:
     # - rename n to order
     # - why is there a "-2" for the number of coeffs?
+    # - can remove n as it's coeffs.shape / 4
     # - check if this can this be vectorized, so we can remove the for loop we probably
     #   need to reshape the coeffs to (4, n - 2)
 
@@ -44,8 +45,9 @@ def generate_fourier_series_np(coeffs, n, x, mon):
             (coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
             + (coeffs[idx + 2] * x + coeffs[idx + 3])
             * np.cos(np.pi * i * (mon % 12 + 1) / 6)
-            for i, idx in enumerate(range(n * 4, step=4))
-        ]
+            for i, idx in enumerate(range(0, n * 4, 4))
+        ],
+        axis=0,
     )
 
 
