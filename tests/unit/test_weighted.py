@@ -82,9 +82,6 @@ def test_weighted_mean_errors_wrong_weights(as_dataset):
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
         mesmer.weighted.weighted_mean(data, weights=weights, dims=("lat", "lon"))
 
-    data.weighted(weights).mean(("lat", "lon"))
-    data.weighted(weights).mean(("lat", "lon"))
-
 
 def _test_weighted_mean(as_dataset, **kwargs):
     # not checking the actual values
@@ -97,8 +94,6 @@ def _test_weighted_mean(as_dataset, **kwargs):
     dims = list(kwargs.values()) if kwargs else ("lat", "lon")
 
     result = mesmer.weighted.weighted_mean(data, weights=weights, dims=dims)
-
-    result = data.weighted(weights).mean(dims, keep_attrs=True)
 
     if as_dataset:
         # ensure scalar is not broadcast
