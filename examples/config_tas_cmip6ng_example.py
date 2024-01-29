@@ -1,6 +1,7 @@
 """
 Example configuration file
 """
+
 import os.path
 
 from mesmer.create_emulations import create_seed_dict

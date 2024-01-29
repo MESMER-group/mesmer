@@ -94,6 +94,7 @@ def _gaspari_cohn_np(r):
     sel = (r >= 0) & (r < 1)
     r_sel = r[sel]
 
+    # fmt: off
     out[sel] = (
         1
         - 5 / 3 * r_sel**2
@@ -101,6 +102,7 @@ def _gaspari_cohn_np(r):
         + 1 / 2 * r_sel**4
         - 1 / 4 * r_sel**5
     )
+    # fmt: on
 
     # compute for 1 <= r < 2
     sel = (r >= 1) & (r < 2)
