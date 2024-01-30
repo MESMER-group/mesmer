@@ -1,6 +1,7 @@
 """
 Functions to calibrate all modules of MESMER
 """
+
 import logging
 import warnings
 
@@ -212,9 +213,7 @@ def _calibrate_tas(
         )
 
         if use_tas2:
-            gt_tas2_s = {
-                scen: gt_tas_scen**2 for scen, gt_tas_scen in gt_tas_s.items()
-            }
+            gt_tas2_s = {scen: gt_tas_scen**2 for scen, gt_tas_scen in gt_tas_s.items()}
 
         if use_hfds:
             gt_hfds_s = gather_gt_data(

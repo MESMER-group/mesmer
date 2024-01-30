@@ -19,7 +19,7 @@ dependencies:
  - statsmodels
  - xarray>=2023.04 # because pandas 2 is required
 # for testing
- - black<23.1
+ - black!=23
  - flake8
  - isort
  - pytest
