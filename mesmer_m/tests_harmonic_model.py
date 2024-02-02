@@ -20,7 +20,6 @@ from tqdm import tqdm_notebook as tqdm
 
 
 def dummy_yearly_trend(nr_runs):
-
     """
     Generate random non-linear yearly time series from 1870-2100
 
@@ -47,7 +46,6 @@ def dummy_yearly_trend(nr_runs):
 
 
 def dummy_harmonic_data(nr_runs, n=2, x=None):
-
     """
     Generate dummy data with a seasonal cycle
 
@@ -94,7 +92,6 @@ def dummy_harmonic_data(nr_runs, n=2, x=None):
 
 
 def dummy_fit(nr_runs, n=3, fit_to_bic=False):
-
     """
     Fits on dummy data with a seasonal cycle
 
@@ -138,7 +135,6 @@ def dummy_fit(nr_runs, n=3, fit_to_bic=False):
 
 
 def BIC_gridsearch_domain(max_n, max_nr_runs):
-
     """
     Fits on dummy data with a seasonal cycle
 
@@ -195,7 +191,6 @@ def BIC_gridsearch_domain(max_n, max_nr_runs):
 
 
 def check_fit_to_bic_xr(nr_runs, cells, max_n):
-
     """
     Performs dummy fit of fit_to_bic_xr xarray wrapper function
 
