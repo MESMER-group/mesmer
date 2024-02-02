@@ -12,6 +12,7 @@ Welcome to MESMER's documentation!
    :caption: For users
 
    installation
+   publications
 
 .. toctree::
    :maxdepth: 2
