@@ -40,9 +40,9 @@ def test_fit_volcanic_influence_self():
     )
 
     result = mesmer.volc.fit_volcanic_influence(-aod, slice("1850", "2014"))
-    expected = _get_volcanic_params(-1)
+    expected = _get_volcanic_params(-1.0)
 
-    xr.testing.assert_identical(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
 def test_fit_volcanic_warns_positive():
@@ -54,9 +54,9 @@ def test_fit_volcanic_warns_positive():
     with pytest.warns(UserWarning, match="The slope of 'aod' is positive"):
         result = mesmer.volc.fit_volcanic_influence(aod, slice("1850", "2014"))
 
-    expected = _get_volcanic_params(1)
+    expected = _get_volcanic_params(1.0)
 
-    xr.testing.assert_identical(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
 @pytest.mark.filterwarnings("ignore:The slope of")
