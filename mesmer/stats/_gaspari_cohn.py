@@ -94,24 +94,22 @@ def _gaspari_cohn_np(r):
     sel = (r >= 0) & (r < 1)
     r_sel = r[sel]
 
-    # fmt: off
+    # NOTE: see https://github.com/MESMER-group/mesmer/issues/157
+
     out[sel] = (
-        1 - r_sel**2 *
-        (5 / 3 - r_sel *
-         (5 / 8  + r_sel *
-          (1 / 2 - 1 / 4 * r_sel)))
+        #fmt: off
+        1 - r_sel**2 * (5 / 3 - r_sel * (5 / 8  + r_sel * (1 / 2 - 1 / 4 * r_sel)))
+        #fmt: on
     )
-    # fmt: on
 
     # compute for 1 <= r < 2
     sel = (r >= 1) & (r < 2)
     r_sel = r[sel]
 
     out[sel] = (
-        4
-        - r_sel
-        * (5 - r_sel * (5 / 3 + r_sel * (5 / 8 - r_sel * (1 / 2 - 1 / 12 * r_sel))))
-        - 2 / (3 * r_sel)
+        #fmt: off
+        4 - r_sel * (5 - r_sel * (5 / 3 + r_sel * (5 / 8 - r_sel * (1 / 2 - 1 / 12 * r_sel)))) - 2 / (3 * r_sel)
+        #fmt: on
     )
 
     return out
