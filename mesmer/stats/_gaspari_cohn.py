@@ -98,7 +98,7 @@ def _gaspari_cohn_np(r):
 
     out[sel] = (
         # fmt: off
-        1 - r_sel**2 * (5 / 3 - r_sel * (5 / 8  + r_sel * (1 / 2 - 1 / 4 * r_sel)))
+        1 - r_sel**2 * (5 / 3 - r_sel * (5 / 8 + r_sel * (1 / 2 - 1 / 4 * r_sel)))
         # fmt: on
     )
 
