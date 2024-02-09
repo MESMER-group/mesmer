@@ -97,7 +97,7 @@ def _gaspari_cohn_np(r):
     # fmt: off
     out[sel] = (
         1 - r_sel**2 *
-        (5 / 3 - r_sel * 
+        (5 / 3 - r_sel *
          (5 / 8  + r_sel *
           (1 / 2 - 1 / 4 * r_sel)))
     )
@@ -108,11 +108,9 @@ def _gaspari_cohn_np(r):
     r_sel = r[sel]
 
     out[sel] = (
-        4 - r_sel *
-        (5 - r_sel *
-         (5 /3 + r_sel *
-          (5 / 8 - r_sel *
-           (1 / 2 - 1 / 12 * r_sel))))
+        4
+        - r_sel
+        * (5 - r_sel * (5 / 3 + r_sel * (5 / 8 - r_sel * (1 / 2 - 1 / 12 * r_sel))))
         - 2 / (3 * r_sel)
     )
 
