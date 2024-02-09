@@ -157,4 +157,4 @@ cython_debug/
 .vscode
 
 # Mac peculiarities
-.DS_Store
+**/.DS_Store
