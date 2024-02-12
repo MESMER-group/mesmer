@@ -511,20 +511,20 @@ def fit_auto_regression(data, dim, lags):
     -------
     :obj:`xr.Dataset`
         Dataset containing the estimated parameters of the ``intercept``, the AR
-        ``coeffs`` and the ``variance`` of the residuals.
+        ``coeffs``, the ``variance`` of the residuals and the number of observations ``nobs``.
     """
 
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
     # NOTE: this is slowish, see https://github.com/MESMER-group/mesmer/pull/290
-    intercept, coeffs, variance = xr.apply_ufunc(
+    intercept, coeffs, variance, nobs = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
         input_core_dims=[[dim]],
-        output_core_dims=((), ("lags",), ()),
+        output_core_dims=((), ("lags",), (), ()),
         vectorize=True,
-        output_dtypes=[float, float, float],
+        output_dtypes=[float, float, float, float],
         kwargs={"lags": lags},
     )
 
@@ -536,6 +536,7 @@ def fit_auto_regression(data, dim, lags):
         "coeffs": coeffs,
         "variance": variance,
         "lags": lags,
+        "nobs": nobs
     }
 
     return xr.Dataset(data_vars)
@@ -560,6 +561,8 @@ def _fit_auto_regression_np(data, lags):
         Coefficients if the AR model. Will have as many entries as ``lags``.
     std : :obj:`np.array`
         Standard deviation of the residuals.
+    nobs: :obj:`np.array``
+        Number of observations.
     """
 
     from statsmodels.tsa.ar_model import AutoReg
@@ -573,4 +576,6 @@ def _fit_auto_regression_np(data, lags):
     # variance of the residuals
     variance = AR_result.sigma2
 
-    return intercept, coeffs, variance
+    nobs = AR_result.nobs
+
+    return intercept, coeffs, variance, nobs
