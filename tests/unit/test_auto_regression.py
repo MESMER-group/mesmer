@@ -465,7 +465,7 @@ def test_fit_auto_regression_xr_1D_values():
             "coeffs": ("lags", [0.99682459]),
             "variance": 1.05381192,
             "lags": [1],
-            "nobs": len(data.values)-lags
+            "nobs": len(data.values) - lags,
         }
     )
 
@@ -486,7 +486,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
             "coeffs": ("lags", [0.99318256]),
             "variance": 1.18712735,
             "lags": [2],
-            "nobs": len(data.values)-lags
+            "nobs": len(data.values) - lags,
         }
     )
 

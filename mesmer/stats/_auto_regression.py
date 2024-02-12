@@ -536,7 +536,7 @@ def fit_auto_regression(data, dim, lags):
         "coeffs": coeffs,
         "variance": variance,
         "lags": lags,
-        "nobs": nobs
+        "nobs": nobs,
     }
 
     return xr.Dataset(data_vars)
