@@ -6,6 +6,7 @@ v0.11.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
+- Added number of observations to the output of the AR process. #395
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
