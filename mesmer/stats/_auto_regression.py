@@ -524,7 +524,7 @@ def fit_auto_regression(data, dim, lags):
         input_core_dims=[[dim]],
         output_core_dims=((), ("lags",), (), ()),
         vectorize=True,
-        output_dtypes=[float, float, float, float],
+        output_dtypes=[float, float, float, int],
         kwargs={"lags": lags},
     )
 
