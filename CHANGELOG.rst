@@ -6,7 +6,8 @@ v0.11.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
-- Added number of observations to the output of the AR process. #395
+- Added number of observations to the output of the AR process. `#395 <https://github.com/MESMER-group/mesmer/pull/395>`_.
+  By `Victoria Bauer`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -368,3 +369,4 @@ v0.8.0 - 2021-07-13
 .. _`Mathias Hauser`: https://github.com/mathause
 .. _`Yann Quilcaille`: https://github.com/yquilcaille
 .. _`Zeb Nicholls`: https://github.com/znicholls
+.. _`Victoria Bauer`: https://github.com/veni-vidi-vici-dormivi
