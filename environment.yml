@@ -13,7 +13,7 @@ dependencies:
  - packaging
  - pandas>=2.0
  - pooch
- - regionmask>=0.8
+ - regionmask>=0.9
  - scikit-learn
  - statsmodels
  - xarray>=2023.04 # because pandas 2 is required

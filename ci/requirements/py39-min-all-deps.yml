@@ -14,7 +14,7 @@ dependencies:
  - packaging
  - pandas=2.0
  - pooch
- - regionmask=0.8
+ - regionmask=0.9
  - scikit-learn
  - shapely=1.8 # required by regionmask < 0.10
  - statsmodels
