@@ -13,7 +13,7 @@ dependencies:
   - pandas>=2.0
   - scikit-learn
   - statsmodels
-  - regionmask>=0.8
+  - regionmask>=0.9
   - xarray>=2023.04 # because pandas 2 is required
 # required for docs
   - sphinx-book-theme

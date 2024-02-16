@@ -6,11 +6,19 @@ v0.11.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
-- Added number of observations to the output of the AR process. `#395 <https://github.com/MESMER-group/mesmer/pull/395>`_.
+- Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+
+- The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_):
+
+  ============ ============= =========
+  Package      Old           New
+  ============ ============= =========
+  regionmask    >=0.8        >=0.9
+  ============ ============= =========
 
 Deprecations
 ^^^^^^^^^^^^
