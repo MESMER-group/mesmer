@@ -16,11 +16,9 @@ dependencies:
  - pooch
  - regionmask=0.8
  - scikit-learn
+ - shapely=1.8 # required by regionmask < 0.10
  - statsmodels
  - xarray=2023.04
 # for testing
- - black!=23
- - flake8
- - isort
  - pytest
  - pytest-cov
