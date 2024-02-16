@@ -12,7 +12,7 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
-- The supported versions of some dependencies were changed (`#398 <https://github.com/MESMER-group/mesmer/pull/398>`_):
+- The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_):
 
   ============ ============= =========
   Package      Old           New
