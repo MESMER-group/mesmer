@@ -1,4 +1,4 @@
-name: mesmer CI-CD
+name: CI-additional
 on:
   push:
     branches:
