@@ -1,16 +1,16 @@
 import importlib
 import os
 import os.path
-import shutil
-import pytest
 
 import cartopy.crs as ccrs
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 import xarray as xr
 
 import mesmer
+
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ import mesmer
             False,
             "tas/one_scen_one_ens",
         ),
-        # TODO: Add the other test cases too   
+        # TODO: Add the other test cases too
         # pytest.param(
         #     ["h-ssp585"],
         #     False,
@@ -85,7 +85,7 @@ def test_calibrate_mesmer(
     tmpdir,
     update_expected_files,
 ):
-    
+
     # define config values
     THRESHOLD_LAND = 1 / 3
 
@@ -99,9 +99,11 @@ def test_calibrate_mesmer(
     test_esms = ["IPSL-CM6A-LR"]
     test_cmip_generation = 6
 
-    for esm in test_esms: 
+    for esm in test_esms:
         # define paths
-        TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
+        TEST_DATA_PATH = (
+            importlib.resources.files("mesmer").parent / "tests" / "test-data"
+        )
         TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
         PARAMS_PATH = TEST_PATH / "params"
 
@@ -113,12 +115,12 @@ def test_calibrate_mesmer(
             fN = os.path.join(PARAMS_PATH, *folders, file)
 
             return joblib.load(fN)
-        
-        
 
         # load data
 
-        cmip_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
+        cmip_data_path = (
+            TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
+        )
 
         path_tas = cmip_data_path / "tas" / "ann" / "g025"
 
@@ -140,15 +142,12 @@ def test_calibrate_mesmer(
         # only done so we can compare with the legacy output
         tas = mesmer.grid.wrap_to_180(tas)
 
-
-
         # data preprocessing
 
         ## create global mean tas anomlies timeseries
         ref = tas.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
         tas = tas - ref
         tas_globmean = mesmer.weighted.global_mean(tas)
-
 
         ## create local gridded tas data
         def mask_and_stack(ds, threshold_land):
@@ -157,11 +156,9 @@ def test_calibrate_mesmer(
             ds = mesmer.grid.stack_lat_lon(ds)
             return ds
 
-        grid_orig = tas[["lat", "lon"]]     # we need to keep the original grid
+        grid_orig = tas[["lat", "lon"]]  # we need to keep the original grid
 
         tas_stacked = mask_and_stack(tas, threshold_land=THRESHOLD_LAND)
-
-
 
         # train global trend module
 
@@ -169,7 +166,7 @@ def test_calibrate_mesmer(
             tas_globmean, "time", n_steps=50, use_coords=False
         )
         tas_lowess_residuals = tas_globmean - tas_globmean_lowess
-        
+
         volcanic_params = mesmer.volc.fit_volcanic_influence(
             tas_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
         )
@@ -184,22 +181,28 @@ def test_calibrate_mesmer(
             file=f"params_gt_LOWESS_OLSVOLC_saod_tas_{esm}_h-{scenario}.pkl",
         )
 
-        np.testing.assert_allclose(volcanic_params.aod.values, params_gt_lowess_tas["saod"])
+        np.testing.assert_allclose(
+            volcanic_params.aod.values, params_gt_lowess_tas["saod"]
+        )
 
-        def _split_hist_proj(obj, dim="time", hist_period=HIST_PERIOD, proj_period=PROJ_PERIOD):
+        def _split_hist_proj(
+            obj, dim="time", hist_period=HIST_PERIOD, proj_period=PROJ_PERIOD
+        ):
             hist = obj.sel({dim: hist_period})
             proj = obj.sel({dim: proj_period})
 
             return hist, proj
-        
-        tas_hist_globmean_smooth_volc, tas_proj_smooth = _split_hist_proj(tas_globmean_volc)
+
+        tas_hist_globmean_smooth_volc, tas_proj_smooth = _split_hist_proj(
+            tas_globmean_volc
+        )
 
         np.testing.assert_allclose(
             params_gt_lowess_tas["hist"], tas_hist_globmean_smooth_volc.tas.values
         )
-        np.testing.assert_allclose(params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values)
-
-
+        np.testing.assert_allclose(
+            params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values
+        )
 
         # train global variability module
 
@@ -215,23 +218,25 @@ def test_calibrate_mesmer(
             *data, dim="time", ens_dim="ens", lags=ar_order
         )
 
-        #TODO: better seperate testing from calculating maybe
+        # TODO: better seperate testing from calculating maybe
         params_gv_T = load_params(
-            "global", "global_variability", file=f"params_gv_AR_tas_{esm}_hist_{scenario}.pkl"
+            "global",
+            "global_variability",
+            file=f"params_gv_AR_tas_{esm}_hist_{scenario}.pkl",
         )
 
         np.testing.assert_allclose(params_gv_T["AR_int"], global_ar_params.intercept)
-        np.testing.assert_equal(params_gv_T["AR_order_sel"], global_ar_params.lags.max().values)
+        np.testing.assert_equal(
+            params_gv_T["AR_order_sel"], global_ar_params.lags.max().values
+        )
         np.testing.assert_allclose(params_gv_T["AR_coefs"], global_ar_params.coeffs)
         np.testing.assert_allclose(
             params_gv_T["AR_std_innovs"], global_ar_params.standard_deviation
         )
-        
-        np.testing.assert_allclose(     # this is not necessarily the same
+
+        np.testing.assert_allclose(  # this is not necessarily the same
             params_gv_T["AR_std_innovs"] ** 2, global_ar_params.variance, atol=2e-5
         )
-
-
 
         # train local forced response module
 
@@ -282,8 +287,6 @@ def test_calibrate_mesmer(
             lv["coef_gvtas"]["tas"], local_forced_response_lr.params.tas_globmean_resid
         )
 
-
-
         # train local variability module
 
         ## train local AR process
@@ -321,7 +324,7 @@ def test_calibrate_mesmer(
             geodist, localisation_radii=LOCALISATION_RADII
         )
 
-        weights = xr.ones_like(tas_globmean.tas) # equal weights (for now?)
+        weights = xr.ones_like(tas_globmean.tas)  # equal weights (for now?)
         weights.name = "weights"
 
         dim = "time"  # rename to "sample"
@@ -343,6 +346,8 @@ def test_calibrate_mesmer(
             atol=1e-7,
         )
 
-        localized_ecov["localized_covariance_adjusted"] = mesmer.stats.adjust_covariance_ar1(
-            localized_ecov.localized_covariance, local_ar_params.coeffs
+        localized_ecov["localized_covariance_adjusted"] = (
+            mesmer.stats.adjust_covariance_ar1(
+                localized_ecov.localized_covariance, local_ar_params.coeffs
+            )
         )
