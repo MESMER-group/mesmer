@@ -136,8 +136,7 @@ def test_calibrate_mesmer(
         ds = mesmer.mask.mask_antarctica(ds)
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
-
-    grid_orig = tas[["lat", "lon"]]  # we need to keep the original grid
+    
     tas_stacked = mask_and_stack(tas, threshold_land=THRESHOLD_LAND)
 
     # train global trend module
@@ -194,8 +193,6 @@ def test_calibrate_mesmer(
         target=tas_stacked.tas,
         dim="time",  # switch to sample?
     )
-
-    local_forced_response_params = local_forced_response_lr.params
 
     # train local variability module
     # train local AR process
