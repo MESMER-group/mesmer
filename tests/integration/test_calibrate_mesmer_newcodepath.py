@@ -1,8 +1,7 @@
 import importlib
-
-import cartopy.crs as ccrs
+import os
+import os.path
 import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import xarray as xr
@@ -101,7 +100,7 @@ def test_calibrate_mesmer(
     # define paths
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
-    PARAMS_PATH = TEST_PATH / "params"
+    #PARAMS_PATH = TEST_PATH / "params"
 
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
@@ -124,16 +123,15 @@ def test_calibrate_mesmer(
     ).load()
 
     # data preprocessing
-    ## create global mean tas anomlies timeseries
-    tas = mesmer.grid.wrap_to_180(
-        tas
-    )  # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
+    # create global mean tas anomlies timeseries
+    tas = mesmer.grid.wrap_to_180(tas) 
+    # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
     tas = tas - ref
     tas_globmean = mesmer.weighted.global_mean(tas)
 
-    ## create local gridded tas data
+    # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
         ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
         ds = mesmer.mask.mask_antarctica(ds)
@@ -201,7 +199,7 @@ def test_calibrate_mesmer(
     local_forced_response_params = local_forced_response_lr.params
 
     # train local variability module
-    ## train local AR process
+    # train local AR process
     tas_stacked_residuals = local_forced_response_lr.residuals(
         predictors=predictors, target=tas_stacked.tas
     )
@@ -218,7 +216,7 @@ def test_calibrate_mesmer(
         lags=1,
     )
 
-    ## train covariance
+    # train covariance
     geodist = mesmer.geospatial.geodist_exact(tas_stacked.lon, tas_stacked.lat)
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
@@ -253,7 +251,7 @@ def test_calibrate_mesmer(
 
     # load data
 
-    ## global trend
+    # global trend
     # is not in the bundle
 
     # params_gt_lowess_tas = load_params(
@@ -273,7 +271,7 @@ def test_calibrate_mesmer(
     #     params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values
     # )
 
-    ## global variability
+    # global variability
     # params_gv_T = load_params(
     #     "global",
     #     "global_variability",
@@ -295,7 +293,7 @@ def test_calibrate_mesmer(
         bundle["params_gv"]["AR_std_innovs"] ** 2, global_ar_params.variance, atol=2e-5
     )
 
-    ## local forced response
+    # local forced response
     np.testing.assert_allclose(
         bundle["params_lt"]["intercept"]["tas"],
         local_forced_response_lr.params.intercept,
@@ -311,8 +309,8 @@ def test_calibrate_mesmer(
         local_forced_response_lr.params.tas_globmean_resid,
     )
 
-    ## local variability
-    ### AR process
+    # local variability
+    # AR process
     np.testing.assert_allclose(
         bundle["params_lv"]["AR1_coef"]["tas"], local_ar_params.coeffs.squeeze()
     )
@@ -324,7 +322,7 @@ def test_calibrate_mesmer(
         local_ar_params.standard_deviation.squeeze(),
     )
 
-    ### covariance
+    # covariance
     assert bundle["params_lv"]["L"]["tas"] == localized_ecov.localization_radius
 
     np.testing.assert_allclose(
