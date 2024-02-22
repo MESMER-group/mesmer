@@ -1,6 +1,4 @@
 import importlib
-import os
-import os.path
 
 import cartopy.crs as ccrs
 import joblib
@@ -101,9 +99,7 @@ def test_calibrate_mesmer(
     test_cmip_generation = 6
 
     # define paths
-    TEST_DATA_PATH = (
-        importlib.resources.files("mesmer").parent / "tests" / "test-data"
-    )
+    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
     PARAMS_PATH = TEST_PATH / "params"
 
@@ -129,7 +125,9 @@ def test_calibrate_mesmer(
 
     # data preprocessing
     ## create global mean tas anomlies timeseries
-    tas = mesmer.grid.wrap_to_180(tas) # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
+    tas = mesmer.grid.wrap_to_180(
+        tas
+    )  # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
     tas = tas - ref
@@ -168,9 +166,7 @@ def test_calibrate_mesmer(
 
         return hist, proj
 
-    tas_hist_globmean_smooth_volc, tas_proj_smooth = _split_hist_proj(
-        tas_globmean_volc
-    )
+    tas_hist_globmean_smooth_volc, tas_proj_smooth = _split_hist_proj(tas_globmean_volc)
 
     tas_hist_resid_novolc = tas_globmean - tas_hist_globmean_smooth_volc
     tas_proj_resid = tas_globmean - tas_proj_smooth
@@ -257,7 +253,6 @@ def test_calibrate_mesmer(
 
     # load data
 
-
     ## global trend
     # is not in the bundle
 
@@ -285,7 +280,9 @@ def test_calibrate_mesmer(
     #     file=f"params_gv_AR_tas_{esm}_hist_{scenario}.pkl",
     # )
 
-    np.testing.assert_allclose(bundle["params_gv"]["AR_int"], global_ar_params.intercept)
+    np.testing.assert_allclose(
+        bundle["params_gv"]["AR_int"], global_ar_params.intercept
+    )
     np.testing.assert_equal(
         bundle["params_gv"]["AR_order_sel"], global_ar_params.lags.max().values
     )
@@ -300,15 +297,18 @@ def test_calibrate_mesmer(
 
     ## local forced response
     np.testing.assert_allclose(
-        bundle["params_lt"]["intercept"]["tas"], local_forced_response_lr.params.intercept
+        bundle["params_lt"]["intercept"]["tas"],
+        local_forced_response_lr.params.intercept,
     )
 
     np.testing.assert_allclose(
-        bundle["params_lt"]["coef_gttas"]["tas"], local_forced_response_lr.params.tas_globmean
+        bundle["params_lt"]["coef_gttas"]["tas"],
+        local_forced_response_lr.params.tas_globmean,
     )
 
     np.testing.assert_allclose(
-        bundle["params_lv"]["coef_gvtas"]["tas"], local_forced_response_lr.params.tas_globmean_resid
+        bundle["params_lv"]["coef_gvtas"]["tas"],
+        local_forced_response_lr.params.tas_globmean_resid,
     )
 
     ## local variability
