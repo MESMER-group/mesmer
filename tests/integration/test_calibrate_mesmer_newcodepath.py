@@ -1,6 +1,5 @@
 import importlib
-import os
-import os.path
+
 import joblib
 import numpy as np
 import pytest
@@ -100,7 +99,7 @@ def test_calibrate_mesmer(
     # define paths
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
-    #PARAMS_PATH = TEST_PATH / "params"
+    # PARAMS_PATH = TEST_PATH / "params"
 
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
@@ -124,7 +123,7 @@ def test_calibrate_mesmer(
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    tas = mesmer.grid.wrap_to_180(tas) 
+    tas = mesmer.grid.wrap_to_180(tas)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
