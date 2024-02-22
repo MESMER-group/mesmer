@@ -107,17 +107,6 @@ def test_calibrate_mesmer(
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
     PARAMS_PATH = TEST_PATH / "params"
 
-    fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
-
-    bundle = joblib.load(fN_bundle)
-
-    def load_params(*folders, file):
-        fN = os.path.join(PARAMS_PATH, *folders, file)
-
-        return joblib.load(fN)
-
-    # load data
-
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
     )
@@ -138,13 +127,10 @@ def test_calibrate_mesmer(
         drop_variables=["height", "file_qf"],
     ).load()
 
-    # convert the 0..360 grid to a -180..180 grid
-    # only done so we can compare with the legacy output
-    tas = mesmer.grid.wrap_to_180(tas)
-
     # data preprocessing
-
     ## create global mean tas anomlies timeseries
+    tas = mesmer.grid.wrap_to_180(tas) # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
+
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
     tas = tas - ref
     tas_globmean = mesmer.weighted.global_mean(tas)
@@ -157,11 +143,9 @@ def test_calibrate_mesmer(
         return ds
 
     grid_orig = tas[["lat", "lon"]]  # we need to keep the original grid
-
     tas_stacked = mask_and_stack(tas, threshold_land=THRESHOLD_LAND)
 
     # train global trend module
-
     tas_globmean_lowess = mesmer.stats.lowess(
         tas_globmean, "time", n_steps=50, use_coords=False
     )
@@ -174,7 +158,6 @@ def test_calibrate_mesmer(
     tas_globmean_volc = mesmer.volc.superimpose_volcanic_influence(
         tas_globmean_lowess, volcanic_params, hist_period=HIST_PERIOD, dim="time"
     )
-
 
     # train global variability module
     def _split_hist_proj(
@@ -202,10 +185,6 @@ def test_calibrate_mesmer(
     )
 
     # train local forced response module
-
-    # TODO: allow passing "forced_response" and "variability" separately
-    # see https://github.com/MESMER-group/mesmer/issues/208
-
     predictors_split = {
         "tas_globmean": [tas_hist_globmean_smooth_volc.tas, tas_proj_smooth.tas],
         "tas_globmean_resid": [tas_hist_resid_novolc.tas, tas_proj_resid.tas],
@@ -236,6 +215,12 @@ def test_calibrate_mesmer(
     )
 
     data = (tas_stacked_residuals_hist, tas_stacked_residuals_proj)
+    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+        *data,
+        ens_dim="none",
+        dim="time",
+        lags=1,
+    )
 
     ## train covariance
     geodist = mesmer.geospatial.geodist_exact(tas_stacked.lon, tas_stacked.lat)
@@ -253,79 +238,81 @@ def test_calibrate_mesmer(
         tas_stacked_residuals, weights, phi_gc_localizer, dim, k_folds
     )
 
-    ### testing
-    # global trend
-    params_gt_lowess_tas = load_params(
-        "global",
-        "global_trend",
-        file=f"params_gt_LOWESS_OLSVOLC_saod_tas_{esm}_h-{scenario}.pkl",
+    localized_ecov["localized_covariance_adjusted"] = (
+        mesmer.stats.adjust_covariance_ar1(
+            localized_ecov.localized_covariance, local_ar_params.coeffs
+        )
     )
 
-    np.testing.assert_allclose(
-        volcanic_params.aod.values, params_gt_lowess_tas["saod"]
-    )
+    # ==================================================================== #
+    # testing
+    fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
 
-    np.testing.assert_allclose(
-        params_gt_lowess_tas["hist"], tas_hist_globmean_smooth_volc.tas.values
-    )
-    np.testing.assert_allclose(
-        params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values
-    )
+    bundle = joblib.load(fN_bundle)
 
-    # global variability
-    params_gv_T = load_params(
-        "global",
-        "global_variability",
-        file=f"params_gv_AR_tas_{esm}_hist_{scenario}.pkl",
-    )
+    # def load_params(*folders, file):
+    #     fN = os.path.join(PARAMS_PATH, *folders, file)
 
-    np.testing.assert_allclose(params_gv_T["AR_int"], global_ar_params.intercept)
+    #     return joblib.load(fN)
+
+    # load data
+
+
+    ## global trend
+    # is not in the bundle
+
+    # params_gt_lowess_tas = load_params(
+    #     "global",
+    #     "global_trend",
+    #     file=f"params_gt_LOWESS_OLSVOLC_saod_tas_{esm}_h-{scenario}.pkl",
+    # )
+
+    # np.testing.assert_allclose(
+    #     volcanic_params.aod.values, params_gt_lowess_tas["saod"]
+    # )
+
+    # np.testing.assert_allclose(
+    #     params_gt_lowess_tas["hist"], tas_hist_globmean_smooth_volc.tas.values
+    # )
+    # np.testing.assert_allclose(
+    #     params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values
+    # )
+
+    ## global variability
+    # params_gv_T = load_params(
+    #     "global",
+    #     "global_variability",
+    #     file=f"params_gv_AR_tas_{esm}_hist_{scenario}.pkl",
+    # )
+
+    np.testing.assert_allclose(bundle["params_gv"]["AR_int"], global_ar_params.intercept)
     np.testing.assert_equal(
-        params_gv_T["AR_order_sel"], global_ar_params.lags.max().values
+        bundle["params_gv"]["AR_order_sel"], global_ar_params.lags.max().values
     )
-    np.testing.assert_allclose(params_gv_T["AR_coefs"], global_ar_params.coeffs)
+    np.testing.assert_allclose(bundle["params_gv"]["AR_coefs"], global_ar_params.coeffs)
     np.testing.assert_allclose(
-        params_gv_T["AR_std_innovs"], global_ar_params.standard_deviation
+        bundle["params_gv"]["AR_std_innovs"], global_ar_params.standard_deviation
     )
 
     np.testing.assert_allclose(  # this is not necessarily the same
-        params_gv_T["AR_std_innovs"] ** 2, global_ar_params.variance, atol=2e-5
+        bundle["params_gv"]["AR_std_innovs"] ** 2, global_ar_params.variance, atol=2e-5
     )
 
-    # local forced response
-    lt = load_params(
-        "local",
-        "local_trends",
-        file=f"params_lt_OLS_gttas_tas_{esm}_hist_{scenario}.pkl",
-    )
-
-    lv = load_params(
-        "local",
-        "local_variability",
-        file=f"params_lv_OLS_AR1_sci_gvtas_tas_{esm}_hist_{scenario}.pkl",
+    ## local forced response
+    np.testing.assert_allclose(
+        bundle["params_lt"]["intercept"]["tas"], local_forced_response_lr.params.intercept
     )
 
     np.testing.assert_allclose(
-        lt["intercept"]["tas"], local_forced_response_lr.params.intercept
+        bundle["params_lt"]["coef_gttas"]["tas"], local_forced_response_lr.params.tas_globmean
     )
 
     np.testing.assert_allclose(
-        lt["coef_gttas"]["tas"], local_forced_response_lr.params.tas_globmean
+        bundle["params_lv"]["coef_gvtas"]["tas"], local_forced_response_lr.params.tas_globmean_resid
     )
 
-    np.testing.assert_allclose(
-        lv["coef_gvtas"]["tas"], local_forced_response_lr.params.tas_globmean_resid
-    )
-
-    # local variability
-    # AR process
-    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
-        *data,
-        ens_dim="none",
-        dim="time",
-        lags=1,
-    )
-
+    ## local variability
+    ### AR process
     np.testing.assert_allclose(
         bundle["params_lv"]["AR1_coef"]["tas"], local_ar_params.coeffs.squeeze()
     )
@@ -337,7 +324,7 @@ def test_calibrate_mesmer(
         local_ar_params.standard_deviation.squeeze(),
     )
 
-    # covariance
+    ### covariance
     assert bundle["params_lv"]["L"]["tas"] == localized_ecov.localization_radius
 
     np.testing.assert_allclose(
@@ -348,10 +335,4 @@ def test_calibrate_mesmer(
         bundle["params_lv"]["loc_ecov"]["tas"],
         localized_ecov.localized_covariance,
         atol=1e-7,
-    )
-
-    localized_ecov["localized_covariance_adjusted"] = (
-        mesmer.stats.adjust_covariance_ar1(
-            localized_ecov.localized_covariance, local_ar_params.coeffs
-        )
     )
