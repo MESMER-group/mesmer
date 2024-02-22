@@ -175,6 +175,75 @@ def test_calibrate_mesmer(
             tas_globmean_lowess, volcanic_params, hist_period=HIST_PERIOD, dim="time"
         )
 
+
+        # train global variability module
+
+        tas_hist_resid_novolc = tas_globmean - tas_hist_globmean_smooth_volc
+        tas_proj_resid = tas_globmean - tas_proj_smooth
+
+        data = (tas_hist_resid_novolc.tas, tas_proj_resid.tas)
+
+        ar_order = mesmer.stats._select_ar_order_scen_ens(
+            *data, dim="time", ens_dim="ens", maxlag=12, ic="bic"
+        )
+        global_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+            *data, dim="time", ens_dim="ens", lags=ar_order
+        )
+
+        # train local forced response module
+
+        # TODO: allow passing "forced_response" and "variability" separately
+        # see https://github.com/MESMER-group/mesmer/issues/208
+
+        predictors_split = {
+            "tas_globmean": [tas_hist_globmean_smooth_volc.tas, tas_proj_smooth.tas],
+            "tas_globmean_resid": [tas_hist_resid_novolc.tas, tas_proj_resid.tas],
+        }
+
+        predictors = dict()
+        for key, value in predictors_split.items():
+            predictors[key] = xr.concat(value, dim="time")
+
+        local_forced_response_lr = mesmer.stats.LinearRegression()
+
+        local_forced_response_lr.fit(
+            predictors=predictors,
+            target=tas_stacked.tas,
+            dim="time",  # switch to sample?
+        )
+
+        local_forced_response_params = local_forced_response_lr.params
+
+        # train local variability module
+        ## train local AR process
+        tas_stacked_residuals = local_forced_response_lr.residuals(
+            predictors=predictors, target=tas_stacked.tas
+        )
+
+        tas_stacked_residuals_hist, tas_stacked_residuals_proj = _split_hist_proj(
+            tas_stacked_residuals
+        )
+
+        data = (tas_stacked_residuals_hist, tas_stacked_residuals_proj)
+
+        ## train covariance
+        geodist = mesmer.geospatial.geodist_exact(tas_stacked.lon, tas_stacked.lat)
+        phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
+            geodist, localisation_radii=LOCALISATION_RADII
+        )
+
+        weights = xr.ones_like(tas_globmean.tas)  # equal weights (for now?)
+        weights.name = "weights"
+
+        dim = "time"  # rename to "sample"
+        k_folds = 30
+
+        localized_ecov = mesmer.stats.find_localized_empirical_covariance(
+            tas_stacked_residuals, weights, phi_gc_localizer, dim, k_folds
+        )
+
+        ### testing
+        # global trend
         params_gt_lowess_tas = load_params(
             "global",
             "global_trend",
@@ -204,21 +273,7 @@ def test_calibrate_mesmer(
             params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values
         )
 
-        # train global variability module
-
-        tas_hist_resid_novolc = tas_globmean - tas_hist_globmean_smooth_volc
-        tas_proj_resid = tas_globmean - tas_proj_smooth
-
-        data = (tas_hist_resid_novolc.tas, tas_proj_resid.tas)
-
-        ar_order = mesmer.stats._select_ar_order_scen_ens(
-            *data, dim="time", ens_dim="ens", maxlag=12, ic="bic"
-        )
-        global_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
-            *data, dim="time", ens_dim="ens", lags=ar_order
-        )
-
-        # TODO: better seperate testing from calculating maybe
+        # global variability
         params_gv_T = load_params(
             "global",
             "global_variability",
@@ -238,31 +293,7 @@ def test_calibrate_mesmer(
             params_gv_T["AR_std_innovs"] ** 2, global_ar_params.variance, atol=2e-5
         )
 
-        # train local forced response module
-
-        # TODO: allow passing "forced_response" and "variability" separately
-        # see https://github.com/MESMER-group/mesmer/issues/208
-
-        predictors_split = {
-            "tas_globmean": [tas_hist_globmean_smooth_volc.tas, tas_proj_smooth.tas],
-            "tas_globmean_resid": [tas_hist_resid_novolc.tas, tas_proj_resid.tas],
-        }
-
-        # TODO: fix this for several scenarios and ensemble members
-        predictors = dict()
-        for key, value in predictors_split.items():
-            predictors[key] = xr.concat(value, dim="time")
-
-        local_forced_response_lr = mesmer.stats.LinearRegression()
-
-        local_forced_response_lr.fit(
-            predictors=predictors,
-            target=tas_stacked.tas,
-            dim="time",  # switch to sample?
-        )
-
-        local_forced_response_params = local_forced_response_lr.params
-
+        # local forced response
         lt = load_params(
             "local",
             "local_trends",
@@ -287,19 +318,8 @@ def test_calibrate_mesmer(
             lv["coef_gvtas"]["tas"], local_forced_response_lr.params.tas_globmean_resid
         )
 
-        # train local variability module
-
-        ## train local AR process
-        tas_stacked_residuals = local_forced_response_lr.residuals(
-            predictors=predictors, target=tas_stacked.tas
-        )
-
-        tas_stacked_residuals_hist, tas_stacked_residuals_proj = _split_hist_proj(
-            tas_stacked_residuals
-        )
-
-        data = (tas_stacked_residuals_hist, tas_stacked_residuals_proj)
-
+        # local variability
+        # AR process
         local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
             *data,
             ens_dim="none",
@@ -318,22 +338,7 @@ def test_calibrate_mesmer(
             local_ar_params.standard_deviation.squeeze(),
         )
 
-        ## train covariance
-        geodist = mesmer.geospatial.geodist_exact(tas_stacked.lon, tas_stacked.lat)
-        phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-            geodist, localisation_radii=LOCALISATION_RADII
-        )
-
-        weights = xr.ones_like(tas_globmean.tas)  # equal weights (for now?)
-        weights.name = "weights"
-
-        dim = "time"  # rename to "sample"
-        k_folds = 30
-
-        localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-            tas_stacked_residuals, weights, phi_gc_localizer, dim, k_folds
-        )
-
+        # covariance
         assert bundle["params_lv"]["L"]["tas"] == localized_ecov.localization_radius
 
         np.testing.assert_allclose(
