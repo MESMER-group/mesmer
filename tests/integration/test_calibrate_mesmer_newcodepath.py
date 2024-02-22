@@ -136,7 +136,7 @@ def test_calibrate_mesmer(
         ds = mesmer.mask.mask_antarctica(ds)
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
-    
+
     tas_stacked = mask_and_stack(tas, threshold_land=THRESHOLD_LAND)
 
     # train global trend module
