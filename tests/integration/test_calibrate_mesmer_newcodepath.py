@@ -240,40 +240,9 @@ def test_calibrate_mesmer(
 
     bundle = joblib.load(fN_bundle)
 
-    # def load_params(*folders, file):
-    #     fN = os.path.join(PARAMS_PATH, *folders, file)
-
-    #     return joblib.load(fN)
-
-    # load data
-
-    # global trend
-    # is not in the bundle
-
-    # params_gt_lowess_tas = load_params(
-    #     "global",
-    #     "global_trend",
-    #     file=f"params_gt_LOWESS_OLSVOLC_saod_tas_{esm}_h-{scenario}.pkl",
-    # )
-
-    # np.testing.assert_allclose(
-    #     volcanic_params.aod.values, params_gt_lowess_tas["saod"]
-    # )
-
-    # np.testing.assert_allclose(
-    #     params_gt_lowess_tas["hist"], tas_hist_globmean_smooth_volc.tas.values
-    # )
-    # np.testing.assert_allclose(
-    #     params_gt_lowess_tas[scenario], tas_proj_smooth.tas.values
-    # )
+    # TODO: Test volcanic influence params too
 
     # global variability
-    # params_gv_T = load_params(
-    #     "global",
-    #     "global_variability",
-    #     file=f"params_gv_AR_tas_{esm}_hist_{scenario}.pkl",
-    # )
-
     np.testing.assert_allclose(
         bundle["params_gv"]["AR_int"], global_ar_params.intercept
     )
