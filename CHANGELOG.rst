@@ -32,6 +32,9 @@ Documentation
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
+- Start testing the minimum versions of required dependencies (`#398 <https://github.com/MESMER-group/mesmer/pull/398>`_).
+  By `Mathias Hauser`_.
+
 
 v0.10.0 - 2024.01.04
 --------------------
