@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 from packaging.version import Version
@@ -196,29 +195,15 @@ def test_check_dataarray_form_shape():
 
 
 def _get_time(*args, **kwargs):
-    # TODO: use xr.date_range once requiring xarray >= v0.21
 
     calendar = kwargs.pop("calendar", "standard")
     freq = kwargs.pop("freq", None)
 
     # translate freq strings
-    pandas_calendars = ["standard", "gregorian"]
-    if freq:
-        if calendar not in pandas_calendars and Version(xr.__version__) < Version(
-            "2023.11"
-        ):
-            freq = freq.replace("Y", "A").replace("ME", "M")
-        if calendar in pandas_calendars and Version(pd.__version__) < Version("2.2"):
-            freq = freq.replace("Y", "A").replace("ME", "M")
+    if freq and Version(xr.__version__) < Version("2024.02"):
+        freq = freq.replace("YE", "A").replace("ME", "M")
 
-    if Version(xr.__version__) >= Version("0.21"):
-        time = xr.date_range(*args, calendar=calendar, freq=freq, **kwargs)
-    else:
-
-        if calendar == "standard":
-            time = pd.date_range(*args, freq=freq, **kwargs)
-        else:
-            time = xr.cftime_range(*args, calendar=calendar, freq=freq, **kwargs)
+    time = xr.date_range(*args, calendar=calendar, freq=freq, **kwargs)
 
     return xr.DataArray(time, dims="time")
 
@@ -228,14 +213,14 @@ def _get_time(*args, **kwargs):
 )
 def test_assert_annual_data(calendar):
 
-    time = _get_time("2000", "2005", freq="Y", calendar=calendar)
+    time = _get_time("2000", "2005", freq="YE", calendar=calendar)
 
     # no error
     mesmer.core.utils._assert_annual_data(time)
 
 
 @pytest.mark.parametrize("calendar", ["standard", "gregorian", "365_day"])
-@pytest.mark.parametrize("freq", ["2Y", "ME"])
+@pytest.mark.parametrize("freq", ["2YE", "ME"])
 def test_assert_annual_data_wrong_freq(calendar, freq):
 
     time = _get_time("2000", periods=5, freq=freq, calendar=calendar)
@@ -248,7 +233,7 @@ def test_assert_annual_data_wrong_freq(calendar, freq):
 
 def test_assert_annual_data_unkown_freq():
 
-    time1 = _get_time("2000", periods=2, freq="Y")
+    time1 = _get_time("2000", periods=2, freq="YE")
     time2 = _get_time("2002", periods=3, freq="ME")
     time = xr.concat([time1, time2], dim="time")
 

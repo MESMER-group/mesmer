@@ -3,6 +3,8 @@ from functools import lru_cache
 
 import pandas as pd
 import pooch
+import xarray as xr
+from packaging.version import Version
 
 import mesmer
 
@@ -36,18 +38,19 @@ def _load_aod_obs(*, version, resample):
 
     df = pd.read_csv(
         filename,
-        delim_whitespace=True,
+        sep=r"\s+",
         skiprows=11,
         names=("year", "month", "aod"),
-        parse_dates=[["year", "month"]],
-        date_format={"year_month": "%Y %m"},
-        index_col="year_month",
+        dtype={"year": str, "month": str},
     )
 
-    aod = df.to_xarray().rename(year_month="time").aod
+    time = pd.to_datetime(df.year + df.month, format="%Y%m")
+
+    aod = xr.DataArray(df.aod.values, coords={"time": time}, name="aod")
 
     if resample:
-        aod = aod.resample(time="A").mean()
+        freq = "YE" if Version(xr.__version__) >= Version("2024.02") else "A"
+        aod = aod.resample(time=freq).mean()
 
     return aod
 
