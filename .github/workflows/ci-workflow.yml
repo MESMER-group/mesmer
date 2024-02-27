@@ -23,6 +23,7 @@ jobs:
         include:
           - env: "min-all-deps"
             python-version: "3.9"
+            os: "ubuntu-latest"
     defaults:
       run:
         shell: bash -l {0}
