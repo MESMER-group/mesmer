@@ -17,7 +17,7 @@ dependencies:
  - regionmask=0.9
  - scikit-learn
  - shapely=1.8 # required by regionmask < 0.10
- - statsmodels
+ - statsmodels>0.13
  - xarray=2023.04
 # for testing
  - pytest
