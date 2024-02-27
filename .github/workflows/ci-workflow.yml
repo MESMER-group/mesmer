@@ -1,4 +1,4 @@
-name: CI-additional
+name: mesmer CI-CD
 on:
   push:
     branches:
@@ -13,17 +13,19 @@ concurrency:
 
 jobs:
   test:
-    name: py${{ matrix.python-version }}-${{ matrix.env }}
-    runs-on: "ubuntu-latest"
-    defaults:
-      run:
-        shell: bash -l {0}
+    name: py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
+        os: ["ubuntu-latest"]
+        python-version: ["3.9", "3.11", "3.12"]
+        env: ["environment"]
         include:
           - env: "min-all-deps"
             python-version: "3.9"
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
     - name: Checkout repository
@@ -31,10 +33,7 @@ jobs:
 
     - name: Set environment variables
       run: |
-        PY=${{ matrix.python-version }}
-        # replace "." in matrix.python-version
-        PY=${PY//./}
-        echo "CONDA_ENV_FILE=ci/requirements/py${PY}-${{ matrix.env }}.yml" >> $GITHUB_ENV
+        echo "CONDA_ENV_FILE=ci/requirements/{{ matrix.env }}.yml" >> $GITHUB_ENV
 
     - name: Create conda environment
       uses: mamba-org/setup-micromamba@v1
@@ -57,6 +56,9 @@ jobs:
 
     - name: Conda list
       run: conda list
+
+    - name: Test installation
+      run: python scripts/test_install.py
 
     - name: Run tests
       run: python -u -m pytest
