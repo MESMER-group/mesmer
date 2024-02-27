@@ -1,10 +1,9 @@
-import importlib
+import pathlib
 
 import joblib
 import numpy as np
 import pytest
 import xarray as xr
-import pathlib
 
 import mesmer
 
@@ -233,10 +232,22 @@ def test_calibrate_mesmer(
     )
 
     # testing
-    assert_params_allclose(TEST_PATH, global_ar_params, local_forced_response_lr, local_ar_params, localized_ecov)
+    assert_params_allclose(
+        TEST_PATH,
+        global_ar_params,
+        local_forced_response_lr,
+        local_ar_params,
+        localized_ecov,
+    )
 
 
-def assert_params_allclose(TEST_PATH, global_ar_params, local_forced_response_lr, local_ar_params, localized_ecov):
+def assert_params_allclose(
+    TEST_PATH,
+    global_ar_params,
+    local_forced_response_lr,
+    local_ar_params,
+    localized_ecov,
+):
     fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
     bundle = joblib.load(fN_bundle)
 
