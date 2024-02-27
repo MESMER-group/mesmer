@@ -34,6 +34,8 @@ Internal Changes
 
 - Start testing the minimum versions of required dependencies (`#398 <https://github.com/MESMER-group/mesmer/pull/398>`_).
   By `Mathias Hauser`_.
+- Restore compatibility with pandas version v2.2 and xarray version v2024.02 (`#404 <https://github.com/MESMER-group/mesmer/pull/404>`_).
+  By `Mathias Hauser`_.
 
 
 v0.10.0 - 2024.01.04
