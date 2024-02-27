@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import pytest
 import xarray as xr
+import pathlib
 
 import mesmer
 
@@ -78,8 +79,6 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
-    tmpdir,
-    update_expected_files,
 ):
 
     # define config values
@@ -96,10 +95,9 @@ def test_calibrate_mesmer(
     scenario = scenarios[0]
     test_cmip_generation = 6
 
-    # define paths
-    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
+    # define paths and load data
+    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
-    # PARAMS_PATH = TEST_PATH / "params"
 
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
@@ -234,10 +232,12 @@ def test_calibrate_mesmer(
         )
     )
 
-    # ==================================================================== #
     # testing
-    fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
+    assert_params_allclose(TEST_PATH, global_ar_params, local_forced_response_lr, local_ar_params, localized_ecov)
 
+
+def assert_params_allclose(TEST_PATH, global_ar_params, local_forced_response_lr, local_ar_params, localized_ecov):
+    fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
     bundle = joblib.load(fN_bundle)
 
     # TODO: Test volcanic influence params too
