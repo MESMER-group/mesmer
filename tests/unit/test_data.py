@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
+from packaging.version import Version
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 
@@ -9,7 +10,9 @@ def test_load_stratospheric_aerosol_optical_depth_data():
 
     aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True)
 
-    time = pd.date_range("1850", "2023", freq="A")
+    freq = "YE" if Version(pd.__version__) >= Version("2.2") else "A"
+
+    time = pd.date_range("1850", "2023", freq=freq)
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     xr.testing.assert_equal(aod.time, time)
