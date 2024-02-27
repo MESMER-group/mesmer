@@ -13,13 +13,13 @@ concurrency:
 
 jobs:
   test:
-    name: py${{ matrix.python-version }}
+    name: py${{ matrix.python-version }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.9", "3.11", "3.12"]
-        env: ["environment"]
+        env: [""]
         include:
           - env: "min-all-deps"
             python-version: "3.9"
@@ -34,7 +34,12 @@ jobs:
 
     - name: Set environment variables
       run: |
-        echo "CONDA_ENV_FILE=ci/requirements/{{ matrix.env }}.yml" >> $GITHUB_ENV
+
+        if [[ ${{ matrix.python-version }} != "" ]]; then
+          echo "CONDA_ENV_FILE=environment.yml" >> $GITHUB_ENV
+        else
+          echo "CONDA_ENV_FILE=ci/requirements/{{ matrix.env }}.yml" >> $GITHUB_ENV
+        fi
 
     - name: Create conda environment
       uses: mamba-org/setup-micromamba@v1
