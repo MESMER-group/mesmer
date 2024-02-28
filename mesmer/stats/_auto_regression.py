@@ -174,7 +174,7 @@ def _select_ar_order_np(data, maxlag, ic="bic"):
 
     from statsmodels.tsa.ar_model import ar_select_order
 
-    ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic, old_names=False).ar_lags
+    ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic).ar_lags
 
     # None is returned if no lag is selected
     selected_ar_order = np.NaN if ar_lags is None else ar_lags[-1]
@@ -567,7 +567,7 @@ def _fit_auto_regression_np(data, lags):
 
     from statsmodels.tsa.ar_model import AutoReg
 
-    AR_model = AutoReg(data, lags=lags, old_names=False)
+    AR_model = AutoReg(data, lags=lags)
     AR_result = AR_model.fit()
 
     intercept = AR_result.params[0]

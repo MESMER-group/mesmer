@@ -564,7 +564,7 @@ def test_fit_auto_regression_np(lags):
         mesmer.stats._auto_regression._fit_auto_regression_np(data, lags=lags)
 
         mocked_auto_regression.assert_called_once()
-        mocked_auto_regression.assert_called_with(data, lags=lags, old_names=False)
+        mocked_auto_regression.assert_called_with(data, lags=lags)
 
         mocked_auto_regression_result.fit.assert_called_once()
         mocked_auto_regression_result.fit.assert_called_with()
