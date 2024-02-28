@@ -18,8 +18,7 @@ Breaking changes
   Package      Old           New
   ============ ============= =========
   regionmask    >=0.8        >=0.9
-  ============ ============= =========
-  statsmodels   any          >=0.13
+  statsmodels  not specified >=0.13
   ============ ============= =========
 
 Deprecations
