@@ -110,7 +110,7 @@ def test_make_realisations(
 
         # # Ideally we would use the below, but we can't because of numpy's
         # # random seed issue (see comment above).
-        # xr.testing.assert_allclose(result, exp, rtol=rtol)
+        xr.testing.assert_allclose(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
