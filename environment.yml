@@ -15,7 +15,7 @@ dependencies:
  - pooch
  - regionmask>=0.9
  - scikit-learn
- - statsmodels
+ - statsmodels>=0.13
  - xarray>=2023.04 # because pandas 2 is required
 # for testing
  - black!=23
