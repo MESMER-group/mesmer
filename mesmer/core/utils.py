@@ -66,10 +66,11 @@ def _minimize_local_discrete(func, sequence, **kwargs):
         if res < current_min:
             current_min = res
         else:
-            min_element = sequence[i - 1]
-            if min_element == sequence[0]:
+            # need to return element from the previous iteration
+            sel = i - 1
+            if sel == 0:
                 warnings.warn("First element is local minimum.", OptimizeWarning)
-            return min_element
+            return sequence[sel]
 
     warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
 
