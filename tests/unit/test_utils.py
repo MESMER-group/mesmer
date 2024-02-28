@@ -46,7 +46,9 @@ def test_minimize_local_discrete_warning():
 
     data_dict = {key: value for key, value in enumerate((1, 2, 3))}
 
-    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="First element is local minimum."):
+    with pytest.warns(
+        mesmer.core.utils.OptimizeWarning, match="First element is local minimum."
+    ):
         result = mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )
