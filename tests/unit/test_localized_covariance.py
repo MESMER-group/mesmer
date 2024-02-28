@@ -48,6 +48,7 @@ def get_weights(n_samples):
     return xr.DataArray(weights, dims="samples")
 
 
+@pytest.mark.filterwarnings("ignore:First element is local minimum.")
 def test_find_localized_empirical_covariance():
 
     n_samples = 20
@@ -97,6 +98,7 @@ def test_find_localized_empirical_covariance():
     _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
 
 
+@pytest.mark.filterwarnings("ignore:First element is local minimum.")
 def test_find_localized_empirical_covariance_np():
 
     n_samples = 20
