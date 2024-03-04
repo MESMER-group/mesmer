@@ -14,7 +14,6 @@ import warnings
 import joblib
 import numpy as np
 import regionmask
-from packaging.version import Version
 
 from mesmer.stats import gaspari_cohn
 
@@ -183,10 +182,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
 
     # obtain a (subsampled) land-sea mask
     ls = {}
-    if Version(regionmask.__version__) >= Version("0.9.0"):
-        land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
-    else:
-        land_110 = regionmask.defined_regions.natural_earth.land_110
+    land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point

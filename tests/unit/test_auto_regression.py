@@ -456,7 +456,8 @@ def test_fit_auto_regression_xr_1D_values():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.stats.fit_auto_regression(data, "time", lags=1)
+    lags = 1
+    result = mesmer.stats.fit_auto_regression(data, "time", lags=lags)
 
     expected = xr.Dataset(
         {
@@ -464,6 +465,7 @@ def test_fit_auto_regression_xr_1D_values():
             "coeffs": ("lags", [0.99682459]),
             "variance": 1.05381192,
             "lags": [1],
+            "nobs": data["time"].size - lags,
         }
     )
 
@@ -475,7 +477,8 @@ def test_fit_auto_regression_xr_1D_values_lags():
     # statsmodels.tsa.ar_model.AutoReg
 
     data = trend_data_1D()
-    result = mesmer.stats.fit_auto_regression(data, "time", lags=[2])
+    lags = 2
+    result = mesmer.stats.fit_auto_regression(data, "time", lags=[lags])
 
     expected = xr.Dataset(
         {
@@ -483,6 +486,7 @@ def test_fit_auto_regression_xr_1D_values_lags():
             "coeffs": ("lags", [0.99318256]),
             "variance": 1.18712735,
             "lags": [2],
+            "nobs": data["time"].size - lags,
         }
     )
 
@@ -560,7 +564,7 @@ def test_fit_auto_regression_np(lags):
         mesmer.stats._auto_regression._fit_auto_regression_np(data, lags=lags)
 
         mocked_auto_regression.assert_called_once()
-        mocked_auto_regression.assert_called_with(data, lags=lags, old_names=False)
+        mocked_auto_regression.assert_called_with(data, lags=lags)
 
         mocked_auto_regression_result.fit.assert_called_once()
         mocked_auto_regression_result.fit.assert_called_with()

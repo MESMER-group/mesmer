@@ -1,4 +1,4 @@
-name: mesmer CI-CD
+name: CI
 on:
   push:
     branches:
@@ -12,55 +12,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linting:
-    runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        python-version: ["3.10"]
-    defaults:
-      run:
-        shell: bash -l {0}
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Create conda environment
-      uses: mamba-org/setup-micromamba@v1
-      with:
-        environment-name: mesmer-linting
-        environment-file: environment.yml
-        create-args: >-
-          python=${{ matrix.python-version }}
-
-    - name: Install mesmer
-      run: |
-        python -m pip install --no-deps -e .
-
-    - name: Conda info
-      run: |
-        conda info -a
-        conda list
-
-    - name: Import mesmer
-      run: |
-        python -c "import mesmer"
-    - name: isort
-      run: isort --check mesmer examples tests setup.py
-    - name: black
-      if: always()
-      run: black --check mesmer examples tests setup.py docs/source/conf.py
-    - name: flake8
-      if: always()
-      run: flake8 mesmer examples tests setup.py
-
   test:
-    name: py${{ matrix.python-version }}
+    name: py${{ matrix.python-version }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.9", "3.11", "3.12"]
+        env: [""]
+        include:
+          - env: "min-all-deps"
+            python-version: "3.9"
+            os: "ubuntu-latest"
     defaults:
       run:
         shell: bash -l {0}
@@ -71,8 +35,12 @@ jobs:
 
     - name: Set environment variables
       run: |
-        echo "CONDA_ENV_FILE=environment.yml" >> $GITHUB_ENV
-        echo "PYTHON_VERSION=${{ matrix.python-version }}" >> $GITHUB_ENV
+
+        if [[ ${{ matrix.python-version }} != "" ]]; then
+          echo "CONDA_ENV_FILE=environment.yml" >> $GITHUB_ENV
+        else
+          echo "CONDA_ENV_FILE=ci/requirements/{{ matrix.env }}.yml" >> $GITHUB_ENV
+        fi
 
     - name: Create conda environment
       uses: mamba-org/setup-micromamba@v1
@@ -89,13 +57,6 @@ jobs:
       run: |
         python -m pip install --no-deps -e .
 
-    - name: Conda info
-      run: |
-        conda info -a
-
-    - name: Conda list
-      run: conda list
-
     - name: Test installation
       run: python scripts/test_install.py
 
@@ -107,7 +68,7 @@ jobs:
        --cov-report=xml
 
     - name: Upload code coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
           file: ./coverage.xml
           flags: unittests

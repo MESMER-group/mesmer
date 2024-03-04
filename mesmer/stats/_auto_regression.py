@@ -174,7 +174,7 @@ def _select_ar_order_np(data, maxlag, ic="bic"):
 
     from statsmodels.tsa.ar_model import ar_select_order
 
-    ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic, old_names=False).ar_lags
+    ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic).ar_lags
 
     # None is returned if no lag is selected
     selected_ar_order = np.NaN if ar_lags is None else ar_lags[-1]
@@ -511,20 +511,20 @@ def fit_auto_regression(data, dim, lags):
     -------
     :obj:`xr.Dataset`
         Dataset containing the estimated parameters of the ``intercept``, the AR
-        ``coeffs`` and the ``variance`` of the residuals.
+        ``coeffs``, the ``variance`` of the residuals and the number of observations ``nobs``.
     """
 
     if not isinstance(data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(data)}")
 
     # NOTE: this is slowish, see https://github.com/MESMER-group/mesmer/pull/290
-    intercept, coeffs, variance = xr.apply_ufunc(
+    intercept, coeffs, variance, nobs = xr.apply_ufunc(
         _fit_auto_regression_np,
         data,
         input_core_dims=[[dim]],
-        output_core_dims=((), ("lags",), ()),
+        output_core_dims=((), ("lags",), (), ()),
         vectorize=True,
-        output_dtypes=[float, float, float],
+        output_dtypes=[float, float, float, int],
         kwargs={"lags": lags},
     )
 
@@ -536,6 +536,7 @@ def fit_auto_regression(data, dim, lags):
         "coeffs": coeffs,
         "variance": variance,
         "lags": lags,
+        "nobs": nobs,
     }
 
     return xr.Dataset(data_vars)
@@ -558,13 +559,15 @@ def _fit_auto_regression_np(data, lags):
         Intercept of the fitted AR model.
     coeffs : :obj:`np.array`
         Coefficients if the AR model. Will have as many entries as ``lags``.
-    std : :obj:`np.array`
-        Standard deviation of the residuals.
+    variance : :obj:`np.array`
+       Variance of the residuals.
+    nobs: :obj:`np.array``
+        Number of observations.
     """
 
     from statsmodels.tsa.ar_model import AutoReg
 
-    AR_model = AutoReg(data, lags=lags, old_names=False)
+    AR_model = AutoReg(data, lags=lags)
     AR_result = AR_model.fit()
 
     intercept = AR_result.params[0]
@@ -573,4 +576,6 @@ def _fit_auto_regression_np(data, lags):
     # variance of the residuals
     variance = AR_result.sigma2
 
-    return intercept, coeffs, variance
+    nobs = AR_result.nobs
+
+    return intercept, coeffs, variance, nobs
