@@ -38,22 +38,7 @@ def generate_fourier_series_np(coeffs, n, x, mon):
     # - why is there a "-2" for the number of coeffs?
     # - can remove n as it's coeffs.shape / 4
     # - check if this can this be vectorized, so we can remove the for loop we probably
-    #   need to reshape the coeffs to (4, n - 2) -> yes see code below
-
-    # coeffs_ = coeffs.reshape(-1, 4)
-
-    # k = np.arange(coeffs_.shape[0])[:, np.newaxis]
-
-    # inner = np.pi * k * (mon % 12 + 1) / 6
-
-    # return np.sum(
-    #     (coeffs_[:, 0:1] * x + coeffs_[:, 1:2]) * np.sin(inner)
-    #     + (coeffs_[:, 2:3] * x + coeffs_[:, 3:4]) * np.cos(inner),
-    #     axis=0,
-    # )
-
-    # - can this be rewritten as fft? (probably not directly as the amplitude is
-    #   emulated)
+    #   need to reshape the coeffs to (4, n - 2)
 
     return np.sum(
         [
