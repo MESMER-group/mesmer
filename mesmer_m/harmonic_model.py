@@ -37,21 +37,33 @@ def generate_fourier_series_np(coeffs, n, x, mon):
     # - rename n to order
     # - why is there a "-2" for the number of coeffs?
     # - can remove n as it's coeffs.shape / 4
-    # - can this be rewritten as fft? (no -> as the amplitude varies with x)
+    # - check if this can this be vectorized, so we can remove the for loop we probably
+    #   need to reshape the coeffs to (4, n - 2) -> yes see code below
 
-    coeffs_ = coeffs.reshape(-1, 4)
+    # coeffs_ = coeffs.reshape(-1, 4)
 
-    k = np.arange(coeffs_.shape[0])[:, np.newaxis]
+    # k = np.arange(coeffs_.shape[0])[:, np.newaxis]
 
-    alpha = 2 * np.pi * k * (mon % 12 + 1) / 12
+    # inner = np.pi * k * (mon % 12 + 1) / 6
 
-    predictions = np.sum(
-        (coeffs_[:, 0:1] * x + coeffs_[:, 1:2]) * np.sin(alpha)
-        + (coeffs_[:, 2:3] * x + coeffs_[:, 3:4]) * np.cos(alpha),
+    # return np.sum(
+    #     (coeffs_[:, 0:1] * x + coeffs_[:, 1:2]) * np.sin(inner)
+    #     + (coeffs_[:, 2:3] * x + coeffs_[:, 3:4]) * np.cos(inner),
+    #     axis=0,
+    # )
+
+    # - can this be rewritten as fft? (probably not directly as the amplitude is
+    #   emulated)
+
+    return np.sum(
+        [
+            (coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
+            + (coeffs[idx + 2] * x + coeffs[idx + 3])
+            * np.cos(np.pi * i * (mon % 12 + 1) / 6)
+            for i, idx in enumerate(range(0, n * 4, 4))
+        ],
         axis=0,
     )
-
-    return predictions
 
 
 def fit_fourier_series_np(x, y, n, repeat=False):
