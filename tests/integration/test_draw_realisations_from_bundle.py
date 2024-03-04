@@ -110,7 +110,12 @@ def test_make_realisations(
 
         # # Ideally we would use the below, but we can't because of numpy's
         # # random seed issue (see comment above).
-        xr.testing.assert_allclose(result, exp)
+        try: 
+            xr.testing.assert_allclose(result, exp)
+        except AssertionError as e:
+            diff = (result - exp).to_array().values
+            print("\n max difference between old and new:", np.max(np.abs(diff)))
+            raise e
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
