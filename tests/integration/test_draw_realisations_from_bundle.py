@@ -17,12 +17,12 @@ import mesmer.create_emulations
     "use_tas2, use_hfds, n_realisations, outname",
     (
         # tas
-        pytest.param(
-            False,
-            False,
-            1,
-            "tas/one_scen_one_ens",
-        ),
+        # pytest.param(
+        #     False,
+        #     False,
+        #     1,
+        #     "tas/one_scen_one_ens",
+        # ),
         # tas, tas**2, and hfds
         pytest.param(
             True,

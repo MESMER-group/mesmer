@@ -193,7 +193,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             ar_params = xr.Dataset({"intercept": intercept, "coeffs": coeffs})
 
             dims = ("gridpoint_i", "gridpoint_j")
-            covariance = xr.DataArray(params_lv["loc_ecov_AR1_innovs"][targ], dims=dims)
+            covariance = xr.DataArray(params_lv["coloring_matrix_A"][targ], dims=dims)
 
             emus_ar = draw_auto_regression_correlated(
                 ar_params,

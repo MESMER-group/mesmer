@@ -479,9 +479,9 @@ def _draw_auto_regression_correlated_np(
 
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
-    innovations = np.random.multivariate_normal(
+    innovations = _home_baked_multivariate_normal(
         mean=np.zeros(n_coeffs),
-        cov=covariance,
+        A=covariance,
         size=[n_samples, n_ts + buffer],
     )
 
@@ -494,6 +494,35 @@ def _draw_auto_regression_correlated_np(
 
     return out[:, buffer:, :]
 
+def _home_baked_multivariate_normal(mean, A, size):
+    # Copy paste from https://github.com/numpy/numpy/blob/main/numpy/random/mtrand.pyx#L4080
+    mean = np.array(mean)
+    A = np.array(A)
+    if size is None:
+        shape = []
+    elif isinstance(size, (int, np.integer)):
+        shape = [size]
+    else:
+        shape = size
+
+    if len(mean.shape) != 1:
+        raise ValueError("mean must be 1 dimensional")
+    if (len(A.shape) != 2) or (A.shape[0] != A.shape[1]):
+        raise ValueError("cov must be 2 dimensional and square")
+    if mean.shape[0] != A.shape[0]:
+        raise ValueError("mean and cov must have same length")
+
+    # Compute shape of output and create a matrix of independent
+    # standard normally distributed random numbers. The matrix has rows
+    # with the same length as mean and as many rows are necessary to
+    # form a matrix of shape final_shape.
+    final_shape = list(shape[:])
+    final_shape.append(mean.shape[0])
+    x = np.random.standard_normal(final_shape).reshape(-1, mean.shape[0])
+    x = np.dot(x, A) #np.sqrt(s)[:, None] * v)
+    x += mean
+    x.shape = tuple(final_shape)
+    return x
 
 def fit_auto_regression(data, dim, lags):
     """fit an auto regression

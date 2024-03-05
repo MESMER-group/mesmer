@@ -7,6 +7,8 @@ Functions to train local variability module of MESMER.
 """
 
 import xarray as xr
+import numpy as np
+import warnings
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import (
@@ -222,6 +224,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     params_lv["loc_ecov"] = {}  # localized empirical cov matrix
     # localized empirical cov matrix of the innovations of the AR(1) process
     params_lv["loc_ecov_AR1_innovs"] = {}
+    params_lv["coloring_matrix_A"] = {}
 
     # largely ignore prepared targets and use original ones instead because in original
     # easier to loop over individ runs / scenarios
@@ -255,6 +258,18 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         loc_cov_ar1 = adjust_covariance_ar1(res.localized_covariance, params.coeffs)
 
         params_lv["loc_ecov_AR1_innovs"][targ_name] = loc_cov_ar1.values
+        
+        cov = np.array(loc_cov_ar1.values)
+        cov = cov.astype(np.double)
+        (u, s, v) = np.linalg.svd(cov)
+
+        psd = np.allclose(np.dot(v.T * s, v), cov, rtol=1e-8, atol=1e-8)
+        if not psd:
+            warnings.warn("covariance is not symmetric positive-semidefinite.",
+                    RuntimeWarning)
+
+        A = np.sqrt(s)[:, None] * v
+        params_lv["coloring_matrix_A"][targ_name] = A
 
     return params_lv
 
