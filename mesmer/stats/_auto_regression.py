@@ -494,6 +494,7 @@ def _draw_auto_regression_correlated_np(
 
     return out[:, buffer:, :]
 
+
 def _home_baked_multivariate_normal(mean, A, size):
     # Copy paste from https://github.com/numpy/numpy/blob/main/numpy/random/mtrand.pyx#L4080
     mean = np.array(mean)
@@ -519,10 +520,11 @@ def _home_baked_multivariate_normal(mean, A, size):
     final_shape = list(shape[:])
     final_shape.append(mean.shape[0])
     x = np.random.standard_normal(final_shape).reshape(-1, mean.shape[0])
-    x = np.dot(x, A) #np.sqrt(s)[:, None] * v)
+    x = np.dot(x, A)  # np.sqrt(s)[:, None] * v)
     x += mean
     x.shape = tuple(final_shape)
     return x
+
 
 def fit_auto_regression(data, dim, lags):
     """fit an auto regression
