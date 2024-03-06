@@ -1,5 +1,5 @@
 import warnings
-from typing import Set, Union
+from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -61,12 +61,16 @@ def _minimize_local_discrete(func, sequence, **kwargs):
             raise ValueError("`fun` returned `-inf`")
         # skip element if inf is returned - not sure about this?
         elif np.isinf(res):
-            warnings.warn("`fun` retured `inf`", OptimizeWarning)
+            warnings.warn("`fun` returned `inf`", OptimizeWarning)
 
         if res < current_min:
             current_min = res
         else:
-            return sequence[i - 1]
+            # need to return element from the previous iteration
+            sel = i - 1
+            if sel == 0:
+                warnings.warn("First element is local minimum.", OptimizeWarning)
+            return sequence[sel]
 
     warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
 
@@ -86,12 +90,28 @@ def _to_set(arg):
     return arg
 
 
+def _assert_annual_data(time):
+    """assert time coords has annual frequency"""
+
+    freq = xr.infer_freq(time)
+
+    if freq is None:
+        raise ValueError(
+            "Annual data is required but data of unknown frequency was passed"
+        )
+    # pandas v2.2 and xarray v2023.11.0 changed the time freq string for year
+    if not (freq.startswith("A") or freq.startswith("Y")):
+        raise ValueError(
+            f"Annual data is required but data with frequency {freq} was passed"
+        )
+
+
 def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: Union[str, Set[str]] = set(),
-    optional_vars: Union[str, Set[str]] = set(),
+    required_vars: Union[str, set[str]] = set(),
+    optional_vars: Union[str, set[str]] = set(),
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
@@ -140,7 +160,7 @@ def _check_dataarray_form(
     name: str = "obj",
     *,
     ndim: int = None,
-    required_dims: Union[str, Set[str]] = set(),
+    required_dims: Union[str, set[str]] = set(),
     shape=None,
 ):
     """check if a dataset conforms to some conditions
@@ -150,7 +170,7 @@ def _check_dataarray_form(
     name : str, default: 'obj'
         Name to use in error messages.
     ndim, int, optional
-        Number of required dimensions
+        Number of required dimensions, can be a tuple of int if several are possible.
     required_dims: str, set of str, optional
         Names of dims that are required for obj
     shape : tuple of ints, default: None
@@ -168,8 +188,11 @@ def _check_dataarray_form(
     if not isinstance(obj, xr.DataArray):
         raise TypeError(f"Expected {name} to be an xr.DataArray, got {type(obj)}")
 
-    if ndim is not None and ndim != obj.ndim:
-        raise ValueError(f"{name} should be {ndim}-dimensional, but is {obj.ndim}D")
+    ndim = (ndim,) if np.isscalar(ndim) else ndim
+    if ndim is not None and obj.ndim not in ndim:
+        *a, b = map(lambda x: f"{x}D", ndim)
+        ndim = (a and ", ".join(a) + " or " or "") + b
+        raise ValueError(f"{name} should be {ndim}, but is {obj.ndim}D")
 
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))

@@ -12,6 +12,7 @@ Welcome to MESMER's documentation!
    :caption: For users
 
    installation
+   publications
 
 .. toctree::
    :maxdepth: 2
@@ -24,6 +25,7 @@ Welcome to MESMER's documentation!
    :caption: API Reference
 
    api
+   api_legacy
 
 .. toctree::
    :maxdepth: 2

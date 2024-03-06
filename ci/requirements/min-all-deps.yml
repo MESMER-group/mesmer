@@ -1,0 +1,24 @@
+name: mesmer-tests
+
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+ - python=3.9
+ - cartopy
+ - dask[complete]
+ - gdal
+ - netcdf4
+ - numpy
+ - packaging
+ - pandas=2.0
+ - pooch
+ - regionmask=0.9
+ - scikit-learn
+ - shapely=1.8 # required by regionmask < 0.10
+ - statsmodels=0.13
+ - xarray=2023.04
+# for testing
+ - pytest
+ - pytest-cov

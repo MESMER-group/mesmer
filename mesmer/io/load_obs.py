@@ -10,10 +10,9 @@ import os
 import warnings
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
-from mesmer.core._data import fetch_remote_data
+from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 
 
 def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
@@ -194,20 +193,10 @@ def load_strat_aod(time, dir_obs=None):
             FutureWarning,
         )
 
-    filename = fetch_remote_data("isaod_gl_2022.dat")
-    df = pd.read_csv(
-        filename,
-        delim_whitespace=True,
-        skiprows=11,
-        names=("year", "month", "AOD"),
-        parse_dates=[["year", "month"]],
+    aod_obs = load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
     )
 
-    aod_obs = xr.DataArray(
-        df["AOD"], dims=("time",), coords=dict(time=("time", df["year_month"]))
-    )
-
-    aod_obs = aod_obs.groupby("time.year").mean("time")
-    aod_obs = aod_obs.sel(year=slice(time[0], time[-1]))
+    aod_obs = aod_obs.sel(time=slice(str(time[0]), str(time[-1])))
 
     return aod_obs

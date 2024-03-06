@@ -11,15 +11,14 @@ dependencies:
  - netcdf4
  - numpy
  - packaging
- - pandas<2.0
+ - pandas>=2.0
  - pooch
- - regionmask>=0.8
+ - regionmask>=0.9
  - scikit-learn
- - sphinx
- - statsmodels
- - xarray
+ - statsmodels>=0.13
+ - xarray>=2023.04 # because pandas 2 is required
 # for testing
- - black<23.1
+ - black!=23
  - flake8
  - isort
  - pytest

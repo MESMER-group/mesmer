@@ -1,13 +1,14 @@
 import numpy as np
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 import mesmer.core.utils
 
 
 @pytest.mark.parametrize(
     "values, expected",
-    [((5, 4, 3, 2, 3, 0), 3), ((0, 1, 2), 0)],
+    [((5, 4, 3, 2, 3, 0), 3), ((1, 0, 1, 2), 1)],
 )
 def test_minimize_local_discrete(values, expected):
 
@@ -43,14 +44,25 @@ def test_minimize_local_discrete_warning():
 
     assert result == 2
 
-    data_dict = {key: value for key, value in enumerate((5, np.inf, 3))}
+    data_dict = {key: value for key, value in enumerate((1, 2, 3))}
 
-    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` retured `inf`"):
+    with pytest.warns(
+        mesmer.core.utils.OptimizeWarning, match="First element is local minimum."
+    ):
         result = mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )
 
     assert result == 0
+
+    data_dict = {key: value for key, value in enumerate((5, 2, np.inf, 3))}
+
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` returned `inf`"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 1
 
 
 def test_minimize_local_discrete_error():
@@ -137,14 +149,25 @@ def test_check_dataarray_form_ndim(ndim):
 
     da = xr.DataArray(np.ones((2, 2)))
 
-    with pytest.raises(ValueError, match=f"obj should be {ndim}-dimensional"):
+    with pytest.raises(ValueError, match=f"obj should be {ndim}D"):
         mesmer.core.utils._check_dataarray_form(da, ndim=ndim)
 
-    with pytest.raises(ValueError, match=f"test should be {ndim}-dimensional"):
+    with pytest.raises(ValueError, match=f"test should be {ndim}D"):
         mesmer.core.utils._check_dataarray_form(da, ndim=ndim, name="test")
 
     # no error
     mesmer.core.utils._check_dataarray_form(da, ndim=2)
+
+
+def test_check_dataarray_form_ndim_several():
+
+    da = xr.DataArray(np.ones((2, 2)))
+
+    with pytest.raises(ValueError, match="obj should be 1D or 3D"):
+        mesmer.core.utils._check_dataarray_form(da, ndim=(1, 3))
+
+    with pytest.raises(ValueError, match="test should be 0D, 1D or 3D"):
+        mesmer.core.utils._check_dataarray_form(da, ndim=(0, 1, 3), name="test")
 
 
 @pytest.mark.parametrize("required_dims", ("foo", ["foo"], ["foo", "bar"]))
@@ -180,3 +203,50 @@ def test_check_dataarray_form_shape():
 
     # no error
     mesmer.core.utils._check_dataarray_form(da, shape=(2, 2))
+
+
+def _get_time(*args, **kwargs):
+
+    calendar = kwargs.pop("calendar", "standard")
+    freq = kwargs.pop("freq", None)
+
+    # translate freq strings
+    if freq and Version(xr.__version__) < Version("2024.02"):
+        freq = freq.replace("YE", "A").replace("ME", "M")
+
+    time = xr.date_range(*args, calendar=calendar, freq=freq, **kwargs)
+
+    return xr.DataArray(time, dims="time")
+
+
+@pytest.mark.parametrize(
+    "calendar", ["standard", "gregorian", "proleptic_gregorian", "365_day", "julian"]
+)
+def test_assert_annual_data(calendar):
+
+    time = _get_time("2000", "2005", freq="YE", calendar=calendar)
+
+    # no error
+    mesmer.core.utils._assert_annual_data(time)
+
+
+@pytest.mark.parametrize("calendar", ["standard", "gregorian", "365_day"])
+@pytest.mark.parametrize("freq", ["2YE", "ME"])
+def test_assert_annual_data_wrong_freq(calendar, freq):
+
+    time = _get_time("2000", periods=5, freq=freq, calendar=calendar)
+
+    with pytest.raises(
+        ValueError, match="Annual data is required but data with frequency"
+    ):
+        mesmer.core.utils._assert_annual_data(time)
+
+
+def test_assert_annual_data_unkown_freq():
+
+    time1 = _get_time("2000", periods=2, freq="YE")
+    time2 = _get_time("2002", periods=3, freq="ME")
+    time = xr.concat([time1, time2], dim="time")
+
+    with pytest.raises(ValueError, match="Annual data is required but data of unknown"):
+        mesmer.core.utils._assert_annual_data(time)

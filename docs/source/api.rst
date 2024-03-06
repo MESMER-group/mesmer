@@ -6,186 +6,116 @@ API reference
 This page provides an auto-generated summary of mesmers' API.
 
 
-Top-level functions
-===================
-
 Statistical functions
----------------------
-
+=====================
 
 Linear regression
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~stats.linear_regression.LinearRegression
-   ~stats.linear_regression.LinearRegression.fit
-   ~stats.linear_regression.LinearRegression.predict
-   ~stats.linear_regression.LinearRegression.residuals
-   ~stats.linear_regression.LinearRegression.to_netcdf
-   ~stats.linear_regression.LinearRegression.from_netcdf
+   ~stats.LinearRegression
+   ~stats.LinearRegression.fit
+   ~stats.LinearRegression.predict
+   ~stats.LinearRegression.residuals
+   ~stats.LinearRegression.to_netcdf
+   ~stats.LinearRegression.from_netcdf
 
 Auto regression
-^^^^^^^^^^^^^^^
+---------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~stats.auto_regression._select_ar_order_xr
-   ~stats.auto_regression._fit_auto_regression_xr
-   ~stats.auto_regression._draw_auto_regression_correlated_np
+   ~stats._select_ar_order_scen_ens
+   ~stats._fit_auto_regression_scen_ens
+   ~stats.select_ar_order
+   ~stats.fit_auto_regression
+   ~stats.draw_auto_regression_uncorrelated
+   ~stats.draw_auto_regression_correlated
 
 Localized covariance
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~stats.localized_covariance.adjust_covariance_ar1
-   ~stats.localized_covariance.find_localized_empirical_covariance
+   ~stats.adjust_covariance_ar1
+   ~stats.find_localized_empirical_covariance
 
 Smoothing
-^^^^^^^^^
+---------
 
 .. autosummary::
    :toctree: generated/
 
-   ~stats.smoothing.lowess
+   ~stats.lowess
 
-Computation
------------
+
+Gaspari-Cohn correlation matrix
+-------------------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~core.computation.calc_geodist_exact
-   ~core.computation.gaspari_cohn
+   ~stats.gaspari_cohn_correlation_matrices
+   ~stats.gaspari_cohn
 
-Data manipulation
+Data handling
+=============
+
+Grid manipulation
 -----------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~xarray_utils.grid.stack_lat_lon
-   ~xarray_utils.grid.unstack_lat_lon_and_align
-   ~xarray_utils.grid.unstack_lat_lon
-   ~xarray_utils.grid.align_to_coords
-   ~xarray_utils.mask.mask_ocean_fraction
-   ~xarray_utils.mask.mask_ocean
-   ~xarray_utils.mask.mask_antarctica
-   ~xarray_utils.global_mean.lat_weights
-   ~xarray_utils.global_mean.weighted_mean
+   ~core.grid.wrap_to_180
+   ~core.grid.wrap_to_360
+   ~core.grid.stack_lat_lon
+   ~core.grid.unstack_lat_lon_and_align
+   ~core.grid.unstack_lat_lon
+   ~core.grid.align_to_coords
 
-Legacy functions
-================
-
-Train mesmer
-------------
+Masking regions
+---------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~calibrate_mesmer.train_gt
-   ~calibrate_mesmer.train_gv
-   ~calibrate_mesmer.train_lt
-   ~calibrate_mesmer.train_lv
+   ~core.mask.mask_ocean_fraction
+   ~core.mask.mask_ocean
+   ~core.mask.mask_antarctica
+   ~core.regionmaskcompat.mask_3D_frac_approx
 
-Create emulations
------------------
-
-.. autosummary::
-   :toctree: generated/
-
-   ~create_emulations.gather_gt_data
-   ~create_emulations.create_emus_gv
-   ~create_emulations.create_emus_lt
-   ~create_emulations.create_emus_lv
-   ~create_emulations.create_emus_g
-   ~create_emulations.create_emus_l
-   ~create_emulations.make_realisations
-   ~create_emulations.create_seed_dict
-
-
-Individual methods and utils
-----------------------------
-
-Train mesmer
-^^^^^^^^^^^^
+Weighted operations: calculate global mean
+------------------------------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~calibrate_mesmer.train_gv_AR
-   ~calibrate_mesmer.train_gt_ic_LOWESS
-   ~calibrate_mesmer.train_gt_ic_OLSVOLC
-   ~calibrate_mesmer.train_lv_AR1_sci
-   ~calibrate_mesmer.train_lv_find_localized_ecov
-   ~calibrate_mesmer.get_scenario_weights
-   ~calibrate_mesmer.stack_predictors_and_targets
+   ~core.weighted.global_mean
+   ~core.weighted.lat_weights
+   ~core.weighted.weighted_mean
 
-Create emulations
-^^^^^^^^^^^^^^^^^
+Geospatial
+----------
 
 .. autosummary::
    :toctree: generated/
 
-   ~create_emulations.create_emus_gv_AR
-   ~create_emulations.create_emus_OLS_each_gp_sep
-   ~create_emulations.create_emus_lv_AR1_sci
-   ~create_emulations.create_emus_lv_OLS
+   ~core.geospatial.geodist_exact
 
 
-IO
---
+Emulator functions
+==================
 
-Load constant files
-^^^^^^^^^^^^^^^^^^^
+Volcanic influence
+------------------
 
 .. autosummary::
    :toctree: generated/
 
-   ~io.load_constant_files.load_phi_gc
-   ~io.load_constant_files.load_regs_ls_wgt_lon_lat
-
-
-Load output
-^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_mesmer.load_mesmer_output
-
-
-Load observations
-^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.load_obs.load_obs
-   ~io.load_obs.load_obs_tblend
-   ~io.load_obs.load_strat_aod
-
-Save mesmer bundle
-^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
-   ~io.save_mesmer_bundle.save_mesmer_bundle
-
-
-Utils
------
-
-.. autosummary::
-   :toctree: generated/
-
-   ~utils.convert.convert_dict_to_arr
-   ~utils.convert.separate_hist_future
-   ~utils.select.extract_land
-   ~utils.select.extract_time_period
-   ~utils.regionmaskcompat import mask_3D_frac_approx
+   ~core.volc.fit_volcanic_influence
+   ~core.volc.superimpose_volcanic_influence

@@ -88,7 +88,7 @@ def save_mesmer_data(params, *folders, filename_parts):
     Parameters
     ----------
     params : Any
-        Python object containg the parameters to save (e.g. a dictionary containing
+        Python object containing the parameters to save (e.g. a dictionary containing
         numpy arrays etc.)
     *folders : str
         Name of the folders where to store the data.

@@ -14,7 +14,7 @@ from mesmer.calibrate_mesmer.train_utils import (
     stack_predictors_and_targets,
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
-from mesmer.stats.linear_regression import _fit_linear_regression_xr
+from mesmer.stats import LinearRegression
 
 
 def train_lt(preds, targs, esm, cfg, save_params=True):
@@ -60,7 +60,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
         - ["full_model_contains_lv"] (whether the full model contains part of the local
           variability module, bool)
     params_lv : dict, optional
-        dictionary of local variability paramters which are derived together with the
+        dictionary of local variability parameters which are derived together with the
         local trend parameters
 
         - ["targs"] (emulated variables, str)
@@ -96,6 +96,7 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
     # specify necessary variables from config file
     wgt_scen_tr_eq = cfg.wgt_scen_tr_eq
+    # This code will ever only work with a single target variable
     method_lt = cfg.methods[targ_name]["lt"]
     method_lv = cfg.methods[targ_name]["lv"]
     method_lt_each_gp_sep = cfg.method_lt_each_gp_sep
@@ -168,22 +169,21 @@ def train_lt(preds, targs, esm, cfg, save_params=True):
 
         # NOTE: atm only one target can be and is present
         for targ in params_lt["targs"]:
-            reg_xr = _fit_linear_regression_xr(
-                predictors=X,
-                target=y[targ],
-                dim="sample",
-                weights=wgt_scen_eq,
-            )
+            lr = LinearRegression()
+            lr.fit(predictors=X, target=y[targ], dim="sample", weights=wgt_scen_eq)
+            params = lr.params
 
-            params_lt["intercept"][targ] = reg_xr.intercept.values
+            params_lt["intercept"][targ] = params.intercept.values
 
             for pred in params_lt["preds"]:
-                params_lt[f"coef_{pred}"][targ] = reg_xr[pred].values
+                params_lt[f"coef_{pred}"][targ] = params[pred].values
 
             for pred in params_lv["preds"]:
-                params_lv[f"coef_{pred}"][targ] = reg_xr[pred].values
+                params_lv[f"coef_{pred}"][targ] = params[pred].values
+    else:
+        raise NotImplementedError()
 
-    # save the local trend paramters if requested
+    # save the local trend parameters if requested
     if save_params:
         save_mesmer_data(
             params_lt,

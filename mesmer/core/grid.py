@@ -3,6 +3,78 @@ import xarray as xr
 from packaging.version import Version
 
 
+def _lon_to_180(lon):
+
+    with xr.set_options(keep_attrs=True):
+        lon = ((lon + 180) % 360) - 180
+
+    if isinstance(lon, xr.DataArray):
+        lon = lon.assign_coords({lon.name: lon})
+
+    return lon
+
+
+def _lon_to_360(lon):
+
+    with xr.set_options(keep_attrs=True):
+        lon = lon % 360
+
+    if isinstance(lon, xr.DataArray):
+        lon = lon.assign_coords({lon.name: lon})
+
+    return lon
+
+
+def wrap_to_180(obj, lon_name="lon"):
+    """
+    wrap array with longitude to [-180..180)
+
+    Parameters
+    ----------
+    obj : xr.Dataset or xr.DataArray
+        object with longitude coordinates
+    lon_name : str, default: "lon"
+        name of the longitude ('lon', 'longitude', ...)
+
+    Returns
+    -------
+    wrapped : Dataset
+        Another dataset array wrapped around.
+    """
+
+    new_lon = _lon_to_180(obj[lon_name])
+
+    obj = obj.assign_coords(**{lon_name: new_lon})
+    obj = obj.sortby(lon_name)
+
+    return obj
+
+
+def wrap_to_360(obj, lon_name="lon"):
+    """
+    wrap array with longitude to [0..360)
+
+    Parameters
+    ----------
+    obj : xr.Dataset or xr.DataArray
+        object with longitude coordinates
+    lon_name : str, default: "lon"
+        name of the longitude ('lon', 'longitude', ...)
+
+    Returns
+    -------
+    wrapped : Dataset
+        Another dataset array wrapped around.
+    """
+
+    new_lon = _lon_to_360(obj[lon_name])
+
+    obj = obj.assign_coords(**{lon_name: new_lon})
+    obj = obj.sortby(lon_name)
+
+    return obj
+
+
 def stack_lat_lon(
     data,
     *,
@@ -10,7 +82,7 @@ def stack_lat_lon(
     y_dim="lat",
     stack_dim="gridcell",
     multiindex=False,
-    dropna=True
+    dropna=True,
 ):
     """Stack a regular lat-lon grid to a 1D (unstructured) grid
 
@@ -55,7 +127,7 @@ def stack_lat_lon(
 def unstack_lat_lon_and_align(
     data, coords_orig, *, x_dim="lon", y_dim="lat", stack_dim="gridcell"
 ):
-    """unstack an 1D grid to a regular lat-lon grid and align with orignal coords
+    """unstack an 1D grid to a regular lat-lon grid and align with original coords
 
     Parameters
     ----------
@@ -112,7 +184,7 @@ def unstack_lat_lon(data, *, x_dim="lon", y_dim="lat", stack_dim="gridcell"):
 
 
 def align_to_coords(data, coords_orig):
-    """align an unstacked lat-lon grid with its orignal coords
+    """align an unstacked lat-lon grid with its original coords
 
     Parameters
     ----------

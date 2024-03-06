@@ -2,14 +2,13 @@ import numpy as np
 import pytest
 import xarray as xr
 
+import mesmer
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
-from mesmer.stats.localized_covariance import (
+from mesmer.stats._localized_covariance import (
     _adjust_ecov_ar1_np,
     _ecov_crossvalidation,
     _find_localized_empirical_covariance_np,
     _get_neg_loglikelihood,
-    adjust_covariance_ar1,
-    find_localized_empirical_covariance,
 )
 
 
@@ -49,6 +48,7 @@ def get_weights(n_samples):
     return xr.DataArray(weights, dims="samples")
 
 
+@pytest.mark.filterwarnings("ignore:First element is local minimum.")
 def test_find_localized_empirical_covariance():
 
     n_samples = 20
@@ -64,7 +64,7 @@ def test_find_localized_empirical_covariance():
         "shape": (n_gridpoints, n_gridpoints),
     }
 
-    result = find_localized_empirical_covariance(
+    result = mesmer.stats.find_localized_empirical_covariance(
         data, weights, localizer, dim="samples", k_folds=2
     )
 
@@ -73,7 +73,7 @@ def test_find_localized_empirical_covariance():
     _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
 
     # ensure it works if data is transposed
-    result = find_localized_empirical_covariance(
+    result = mesmer.stats.find_localized_empirical_covariance(
         data.T, weights, localizer, dim="samples", k_folds=3
     )
 
@@ -82,7 +82,7 @@ def test_find_localized_empirical_covariance():
     _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
 
     # ensure can pass equal_dim_suffixes
-    result = find_localized_empirical_covariance(
+    result = mesmer.stats.find_localized_empirical_covariance(
         data,
         weights,
         localizer,
@@ -98,6 +98,7 @@ def test_find_localized_empirical_covariance():
     _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
 
 
+@pytest.mark.filterwarnings("ignore:First element is local minimum.")
 def test_find_localized_empirical_covariance_np():
 
     n_samples = 20
@@ -297,7 +298,7 @@ def test_adjust_covariance_ar1(random_data_5x3, shape, dims):
     cov = np.cov(random_data_5x3, rowvar=False)
     cov = xr.DataArray(cov, dims=("cell_i", "cell_j"))
 
-    result = adjust_covariance_ar1(cov, ar_coefs)
+    result = mesmer.stats.adjust_covariance_ar1(cov, ar_coefs)
 
     expected = np.array(
         [

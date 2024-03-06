@@ -5,24 +5,16 @@ channels:
   - nodefaults
 
 dependencies:
-  - python=3.9
-  - black<23.1
+  - python=3.11
   - cartopy
-  - cython
   - dask[complete]
-  - flake8
-  - gdal
-  - isort
   - netcdf4
   - numpy
-  - pandas<2.0
-  - pytest
-  - pytest-cov
-  - pytest-xdist
+  - pandas>=2.0
   - scikit-learn
   - statsmodels
-  - regionmask>=0.8
-  - xarray
+  - regionmask>=0.9
+  - xarray>=2023.04 # because pandas 2 is required
 # required for docs
   - sphinx-book-theme
   - numpydoc
