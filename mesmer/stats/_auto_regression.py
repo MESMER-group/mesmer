@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-import xarray as xr
 import scipy
+import xarray as xr
 
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
