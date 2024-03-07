@@ -110,7 +110,7 @@ def test_make_realisations(
 
         # # Ideally we would use the below, but we can't because of numpy's
         # # random seed issue (see comment above).
-        try:
+        try: 
             xr.testing.assert_allclose(result, exp)
         except AssertionError as e:
             diff = (result - exp).to_array().values
