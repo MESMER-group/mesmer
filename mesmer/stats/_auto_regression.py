@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
+import scipy
 
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
@@ -479,11 +480,11 @@ def _draw_auto_regression_correlated_np(
 
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
-    innovations = np.random.multivariate_normal(
+    innovations = scipy.stats.multivariate_normal.rvs(
         mean=np.zeros(n_coeffs),
         cov=covariance,
         size=[n_samples, n_ts + buffer],
-    )
+    ).reshape(n_samples, n_ts + buffer, n_coeffs)
 
     out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
     for t in range(ar_order + 1, n_ts + buffer):
