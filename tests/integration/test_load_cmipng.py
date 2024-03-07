@@ -102,7 +102,7 @@ def test_load_cmipng_ref_two_ens_all(test_data_root_dir, varn, start, end):
     result = np.mean(dta_arr[sel, :, :], axis=(0, -1))
 
     expected = np.zeros_like(result)
-    expected[np.isnan(result)] = np.NaN
+    expected[np.isnan(result)] = np.nan
     np.testing.assert_allclose(expected, result, atol=1e-6)
 
     # test global mean is 0 (over reference period)
@@ -131,7 +131,7 @@ def test_load_cmipng_ref_two_ens_indiv(test_data_root_dir, varn, start, end):
     for arr in dta.values():
         result = np.mean(arr[sel, :, :], axis=0)
         expected = np.zeros_like(result)
-        expected[np.isnan(result)] = np.NaN
+        expected[np.isnan(result)] = np.nan
         np.testing.assert_allclose(expected, result, atol=1e-6)
 
     # test global mean is 0 (over reference period)
@@ -155,7 +155,7 @@ def test_load_cmipng_ref(test_data_root_dir, varn, start, end):
     # test individual gridpoints are 0 (over reference period)
     result = np.mean(dta[1][sel, :, :], axis=0)
     expected = np.zeros_like(result)
-    expected[np.isnan(result)] = np.NaN
+    expected[np.isnan(result)] = np.nan
     np.testing.assert_allclose(expected, result, atol=1e-6)
 
     # test global mean is 0 (over reference period)
