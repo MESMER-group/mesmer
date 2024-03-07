@@ -134,10 +134,10 @@ def test_to_unstructured_dropna(dropna, coords, time_pos):
         da, expected = data_2D_coords(as_dataset=False)
         kwargs = {"x_dim": "x", "y_dim": "y"}
 
-    da[slice(time_pos), 0, 0] = np.NaN
+    da[slice(time_pos), 0, 0] = np.nan
 
     # the gridpoint is dropped if ANY time step is NaN
-    expected[:, 0] = np.NaN
+    expected[:, 0] = np.nan
 
     if dropna:
         expected = expected.dropna("gridcell")
@@ -159,7 +159,7 @@ def test_unstructured_roundtrip_dropna_row(coords):
 
     coords_orig = da_structured.coords.to_dataset()[list(kwargs.values())]
 
-    da_structured[:, :, 0] = np.NaN
+    da_structured[:, :, 0] = np.nan
     expected = da_structured
 
     da_unstructured = mesmer.grid.stack_lat_lon(da_structured, **kwargs)
