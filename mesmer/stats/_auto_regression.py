@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import scipy
+import warnings
 import xarray as xr
 
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
@@ -480,9 +481,19 @@ def _draw_auto_regression_correlated_np(
 
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
+    try: 
+        cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
+    except np.linalg.LinAlgError as e:
+        if "Matrix is not positive definite" in str(e):
+            w, v = np.linalg.eigh(covariance) #, driver = "evr")
+            cov = scipy.stats.Covariance.from_eigendecomposition((w,v))
+            warnings.warn("Covariance matrix is not positive definite, using eigh instead of cholesky.")
+        else:
+            raise
+
     innovations = scipy.stats.multivariate_normal.rvs(
         mean=np.zeros(n_coeffs),
-        cov=covariance,
+        cov=cov,
         size=[n_samples, n_ts + buffer],
     ).reshape(n_samples, n_ts + buffer, n_coeffs)
 
