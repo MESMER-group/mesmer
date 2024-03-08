@@ -465,6 +465,7 @@ def test_draw_auto_regression_correlated_eigh():
         )
 
     expected = np.array([[[1.0, 1.0], [1.5, 1.7], [2.05, 2.39], [2.475, 3.013]]])
+    np.testing.assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize("obj", [xr.Dataset(), None])
