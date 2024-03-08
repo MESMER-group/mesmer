@@ -79,7 +79,7 @@ def ar_params_1D():
 
     intercept = xr.DataArray(0)
     coeffs = xr.DataArray([0], dims="lags")
-    variance = xr.DataArray(0)
+    variance = xr.DataArray(0.5)
     ar_params = xr.Dataset(
         {"intercept": intercept, "coeffs": coeffs, "variance": variance}
     )
@@ -92,7 +92,7 @@ def ar_params_2D():
 
     intercept = xr.DataArray([0, 0], dims="gridcell")
     coeffs = xr.DataArray([[0, 0]], dims=("lags", "gridcell"))
-    variance = xr.DataArray([0, 0], dims="gridcell")
+    variance = xr.DataArray([0.5, 0.3], dims="gridcell")
     ar_params = xr.Dataset(
         {"intercept": intercept, "coeffs": coeffs, "variance": variance}
     )
@@ -345,7 +345,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 
     intercept = np.zeros(n_cells)
     coefs = np.ones((ar_order, n_cells))
-    variance = np.ones((n_cells, n_cells))
+    variance = np.eye(n_cells)
 
     result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
@@ -361,7 +361,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 
     assert result.shape == expected_shape
 
-
+@pytest.mark.filterwarnings("ignore:Covariance matrix is not positive definite, using eigh instead of cholesky.")
 @pytest.mark.parametrize("intercept", [0, 1, 3.14])
 def test_draw_auto_regression_deterministic_intercept(intercept):
 
@@ -393,7 +393,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
     np.testing.assert_equal(result, expected)
 
-
+@pytest.mark.filterwarnings("ignore:Covariance matrix is not positive definite, using eigh instead of cholesky.")
 def test_draw_auto_regression_deterministic_coefs_buffer():
 
     result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
