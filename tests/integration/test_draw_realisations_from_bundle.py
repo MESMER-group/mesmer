@@ -102,34 +102,10 @@ def test_make_realisations(
     else:
         exp = xr.open_dataset(expected_output_file)
 
-        # check that less than 10% of output differs. Something weird is
-        # happening with numpy's random seed (we get different values
-        # depending on the operating system) so we currently can't do any
-        # better than this.
-        _assert_frac_allclose(result, exp, rtol=1e-4, wrong_tol=0.1)
-
-        # # Ideally we would use the below, but we can't because of numpy's
-        # # random seed issue (see comment above).
-        try:
-            xr.testing.assert_allclose(result, exp)
-        except AssertionError as e:
-            diff = (result - exp).to_array().values
-            print("\n max difference between old and new:", np.max(np.abs(diff)))
-            raise e
+        xr.testing.assert_allclose(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
         expected_dims = {"scenario", "realisation", "lon", "lat", "year"}
 
         assert set(exp_reshaped.dims) == expected_dims
-
-
-def _assert_frac_allclose(result, expected, rtol, wrong_tol):
-    # check that less than wrong_tol of output differs
-
-    for v in expected.data_vars:
-
-        differing_spots = ~np.isclose(result[v].values, expected[v].values, rtol=rtol)
-
-        frac_differing = differing_spots.sum() / result[v].values.size
-        assert frac_differing < wrong_tol, v
