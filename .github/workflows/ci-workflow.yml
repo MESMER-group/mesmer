@@ -18,13 +18,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest"]
         python-version: ["3.9", "3.11", "3.12"]
         env: [""]
         include:
           - env: "min-all-deps"
             python-version: "3.9"
             os: "ubuntu-latest"
+          - env: ""
+            python-version: "3.12"
+            os: "macos-latest"
+          - env: ""
+            python-version: "3.12"
+            os: "windows-latest"
     defaults:
       run:
         shell: bash -l {0}
