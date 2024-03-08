@@ -443,6 +443,24 @@ def test_draw_auto_regression_random():
 
     np.testing.assert_allclose(result, expected)
 
+def test_draw_auto_regression_correlated_eigh():
+    # test that the function uses eigh when the covariance matrix is not positive definite
+
+    with pytest.warns(UserWarning, match="Covariance matrix is not positive definite"):
+            result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+            intercept=1,
+            coeffs=np.array([[0.5, 0.7], [0.3, 0.2]]),
+            covariance= np.zeros((2,2)),
+            n_samples=1,
+            n_ts=4,
+            seed=0,
+            buffer=3,
+        )
+
+    expected = np.array([[[1.   , 1.   ],
+                          [1.5  , 1.7  ],
+                          [2.05 , 2.39 ],
+                          [2.475, 3.013]]])     
 
 @pytest.mark.parametrize("obj", [xr.Dataset(), None])
 def test_fit_auto_regression_xr_errors(obj):
