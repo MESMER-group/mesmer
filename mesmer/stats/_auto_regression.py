@@ -145,7 +145,7 @@ def select_ar_order(data, dim, maxlag, ic="bic"):
     )
 
     # remove zeros
-    selected_ar_order.data[selected_ar_order.data == 0] = np.NaN
+    selected_ar_order.data[selected_ar_order.data == 0] = np.nan
 
     selected_ar_order.name = "selected_ar_order"
 
@@ -180,7 +180,7 @@ def _select_ar_order_np(data, maxlag, ic="bic"):
     ar_lags = ar_select_order(data, maxlag=maxlag, ic=ic).ar_lags
 
     # None is returned if no lag is selected
-    selected_ar_order = np.NaN if ar_lags is None else ar_lags[-1]
+    selected_ar_order = np.nan if ar_lags is None else ar_lags[-1]
 
     return selected_ar_order
 
