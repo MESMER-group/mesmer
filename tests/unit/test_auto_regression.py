@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 
 
@@ -452,8 +452,7 @@ def test_draw_auto_regression_random():
 
 def test_draw_auto_regression_correlated_eigh():
     # test that the function uses eigh when the covariance matrix is not positive definite
-
-    with pytest.warns(UserWarning, match="Covariance matrix is not positive definite"):
+    with pytest.warns(LinAlgWarning, match="Covariance matrix is not positive definite"):
         result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
             intercept=1,
             coeffs=np.array([[0.5, 0.7], [0.3, 0.2]]),
