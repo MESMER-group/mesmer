@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   test:
-    name: py${{ matrix.python-version }} ${{ matrix.env }}
+    name: py${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -25,6 +25,12 @@ jobs:
           - env: "min-all-deps"
             python-version: "3.9"
             os: "ubuntu-latest"
+          - env: ""
+            python-version: "3.12"
+            os: "macos-latest"
+          - env: ""
+            python-version: "3.12"
+            os: "windows-latest"
     defaults:
       run:
         shell: bash -l {0}
