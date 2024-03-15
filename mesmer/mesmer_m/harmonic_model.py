@@ -12,7 +12,7 @@ import xarray as xr
 from scipy import optimize
 
 
-def generate_fourier_series_np(coeffs, n, x, mon):
+def generate_fourier_series_np(coeffs, n, year, mon):
     """construct the Fourier Series
 
     Parameters
@@ -21,7 +21,7 @@ def generate_fourier_series_np(coeffs, n, x, mon):
         coefficients of Fourier Series.
     n : Integer
         Order of the Fourier Series.
-    x : array-like of shape (n_samples,)
+    year : array-like of shape (n_samples,)
         yearly temperature values.
     mon : array-like of shape (n_samples,)
         month values (0-11).
@@ -35,24 +35,24 @@ def generate_fourier_series_np(coeffs, n, x, mon):
 
     return sum(
         [
-            (coeffs[idx] * x + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
-            + (coeffs[idx + 2] * x + coeffs[idx + 3])
+            (coeffs[idx] * year + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
+            + (coeffs[idx + 2] * year + coeffs[idx + 3])
             * np.cos(np.pi * i * (mon % 12 + 1) / 6)
             for i, idx in enumerate(np.arange(n * 4, step=4))
         ]
     )
 
 
-def fit_fourier_series_np(x, y, n, repeat=False):
+def fit_fourier_series_np(yearly_predictor, monthly_target, n, repeat=False):
     """execute fitting of the harmonic model/fourier series
 
     Parameters
     ----------
 
-    x : array-like of shape (n_samples,)
+    yearly_predictor : array-like of shape (n_samples,)
         Yearly temperature values to predict with.
 
-    y : array-like of shape (n_samples*12,)
+    monthly_target : array-like of shape (n_samples*12,)
         Target monthly temperature values.
 
     n : Integer
@@ -83,10 +83,10 @@ def fit_fourier_series_np(x, y, n, repeat=False):
 
     if repeat:
         # each month scales to the yearly value at that timestep so need to repeat
-        x_train = np.repeat(x, 12)
+        x_train = np.repeat(yearly_predictor, 12)
         # yearly temp. array for fitting if not already done
     else:
-        x_train = x
+        x_train = yearly_predictor
 
     # also get monthly values
     mon_train = np.tile(np.arange(1, 13), int(x_train.shape[0] / 12))
@@ -111,27 +111,27 @@ def fit_fourier_series_np(x, y, n, repeat=False):
     #    )
     # )
 
-    def fun(x, n, x_train, mon_train, y):
+    def fun(coefs, n, x_train, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
-        loss = np.mean((generate_fourier_series_np(x, n, x_train, mon_train) - y) ** 2)
+        loss = np.mean((generate_fourier_series_np(coefs, n, x_train, mon_train) - mon_target) ** 2)
 
         return loss
 
     # print(A.shape,)
-    x0 = np.zeros(n * 4)
-    x0[2] = 1
-    x0[3] = 0
+    c0 = np.zeros(n * 4)
+    c0[2] = 1
+    c0[3] = 0
 
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
 
     coeffs = optimize.least_squares(
-        fun, x0, args=(n, x_train, mon_train, y), loss="cauchy"
+        fun, c0, args=(n, x_train, mon_train, monthly_target), loss="cauchy"
     ).x
 
-    y_pred = generate_fourier_series_np(coeffs, n, x_train, mon_train)
+    preds = generate_fourier_series_np(coeffs, n, x_train, mon_train)
 
-    return coeffs, y_pred
+    return coeffs, preds
 
 
 def calculate_bic(n_samples, n_order, mse):
@@ -157,16 +157,16 @@ def calculate_bic(n_samples, n_order, mse):
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
 
-def fit_to_bic_np(x, y, max_n, repeat=False):
+def fit_to_bic_np(yearly_predictor, monthly_target, max_order, repeat=False):
     """choose order of Fourier Series to fit for by minimising BIC score
 
     Parameters
     ----------
-    x : array-like of shape (n_samples/12,)
-        Yearly temperature values to predict with.
-    y : array-like of shape (n_samples,)
+    yearly_predictor : array-like of shape (n_samples/12,)
+        Yearly temperature to predict with.
+    monthly_target : array-like of shape (n_samples,)
         Target monthly temperature values.
-    max_n : Integer
+    max_order : Integer
         Maximum order of Fourier Series.
     repeat : Boolean
         Passed on to fit_fourier_series_np , default=False
@@ -177,39 +177,40 @@ def fit_to_bic_np(x, y, max_n, repeat=False):
         Selected order of Fourier Series.
     coeffs_fit : array-like of size (4*n_Sel-2,)
         Fitted coefficients for the selected order of Fourier Series.
-    y_pred : array-like of size (n_samples,)
-        Predicted y values from final model.
+    preds : array-like of size (n_samples,)
+        Predicted monthly values from final model.
 
     """
 
-    bic_score = np.zeros([max_n])
+    bic_score = np.zeros([max_order])
 
-    for i_n in range(1, max_n + 1):
+    for i_n in range(1, max_order + 1):
 
-        _, y_pred = fit_fourier_series_np(x, y, i_n, repeat=repeat)
-        mse = np.mean((y_pred - y) ** 2)
+        _, preds = fit_fourier_series_np(yearly_predictor, monthly_target, i_n, repeat=repeat)
+        mse = np.mean((preds - monthly_target) ** 2)
 
-        bic_score[i_n - 1] = calculate_bic(len(y), i_n, mse)
+        bic_score[i_n - 1] = calculate_bic(len(monthly_target), i_n, mse)
 
     n_sel = np.argmin(bic_score) + 1
-    coeffs_fit, y_pred = fit_fourier_series_np(x, y, n_sel, repeat=repeat)
+    coeffs_fit, preds = fit_fourier_series_np(yearly_predictor, monthly_target, n_sel, repeat=repeat)
 
-    coeffs = np.zeros([max_n * 4 - 2])
+    coeffs = np.zeros([max_order * 4 - 2])
     coeffs[: len(coeffs_fit)] = coeffs_fit
 
-    return n_sel, coeffs, y_pred
+    return n_sel, coeffs, preds
 
 
-def fit_to_bic_xr(X, Y, max_n, repeat=False):
+def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
     """fit Fourier Series using BIC score to select order - xarray wrapper
 
     Parameters
     ----------
-    X : xr.DataArray
+    yearly_predictor : xr.DataArray
         Yearly temperature values used as predictors, must contain dims: ("sample","cell").
-    Y : xr.DataArray
+        Containing one value per year.
+    monthly_target : xr.DataArray
         Monthly temperature values to fit for, must contain dims: ("sample","cell").
-    max_n : Integer
+    max_order : Integer
         Maximum order of Fourier Series to fit for.
 
     Returns
@@ -221,21 +222,21 @@ def fit_to_bic_xr(X, Y, max_n, repeat=False):
 
     """
 
-    if not isinstance(X, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(X)}")
+    if not isinstance(yearly_predictor, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_predictor)}")
 
-    if not isinstance(Y, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(Y)}")
+    if not isinstance(monthly_target, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
 
     n_sel, coeffs, preds = xr.apply_ufunc(
         fit_to_bic_np,
-        X,
-        Y,
+        yearly_predictor,
+        monthly_target,
         input_core_dims=[["time"], ["time"]],
         output_core_dims=([], ["coeff"], ["time"]),
         vectorize=True,
         output_dtypes=[int, float, float],
-        kwargs={"max_n": max_n, "repeat": repeat},
+        kwargs={"max_n": max_order, "repeat": True},
         join = "outer"
     )
 
