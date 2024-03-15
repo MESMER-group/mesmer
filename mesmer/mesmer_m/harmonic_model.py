@@ -200,7 +200,7 @@ def fit_to_bic_np(x, y, max_n, repeat=False):
     return n_sel, coeffs, y_pred
 
 
-def fit_to_bic_xr(X, Y, max_n):
+def fit_to_bic_xr(X, Y, max_n, repeat=False):
     """fit Fourier Series using BIC score to select order - xarray wrapper
 
     Parameters
@@ -235,7 +235,8 @@ def fit_to_bic_xr(X, Y, max_n):
         output_core_dims=([], ["coeff"], ["time"]),
         vectorize=True,
         output_dtypes=[int, float, float],
-        kwargs={"max_n": max_n, "repeat": False},
+        kwargs={"max_n": max_n, "repeat": repeat},
+        join = "outer"
     )
 
     data_vars = {
