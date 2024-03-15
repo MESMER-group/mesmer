@@ -58,9 +58,6 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
     n : Integer
         Order of the Fourier Series.
 
-    repeat : bool, default: True
-        Whether x data should be expanded.
-
     Method
     ------
 
@@ -95,10 +92,9 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
 
         return loss
 
-    # print(A.shape,)
     c0 = np.zeros(n * 4)
-    c0[2] = 1
-    c0[3] = 0
+    c0[2] = 1 # why?
+    # c0[3] = 0 # not necessary ?
 
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
