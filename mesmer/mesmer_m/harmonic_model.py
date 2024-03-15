@@ -168,10 +168,10 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     n_sel = np.argmin(bic_score) + 1
     coeffs_fit, preds = fit_fourier_series_np(yearly_predictor, monthly_target, n_sel)
 
-    coeffs = np.zeros([max_order * 4 - 2])
-    coeffs[: len(coeffs_fit)] = coeffs_fit
+    #coeffs = np.zeros([max_order * 4 - 2])
+    #coeffs[: len(coeffs_fit)] = coeffs_fit
 
-    return n_sel, coeffs, preds
+    return n_sel, coeffs_fit, preds
 
 
 def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
@@ -202,7 +202,7 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
     if not isinstance(monthly_target, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
     
-    yearly_predictor = mesmer.mesmer_m._upsample_yearly_data(yearly_predictor)
+    yearly_predictor = mesmer.mesmer_m.upsample_yearly_data(yearly_predictor, monthly_target)
 
     n_sel, coeffs, preds = xr.apply_ufunc(
         fit_to_bic_np,
@@ -213,7 +213,6 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
         vectorize=True,
         output_dtypes=[int, float, float],
         kwargs={"max_order": max_order},
-        join = "outer"
     )
 
     data_vars = {

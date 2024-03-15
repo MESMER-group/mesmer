@@ -4,7 +4,7 @@ MESMER-M utility functions
 
 import xarray as xr
 
-def _upsample_yearly_data(yearly_data, monthly_data):
+def upsample_yearly_data(yearly_data, monthly_data):
     """Upsample yearly data to monthly data by repeating yearly mean for each month.
 
     Parameters
