@@ -89,24 +89,6 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
     # for simplicity's sake we take month values in there harmonic form
     mon_train = (np.pi * (mon_train % 12 + 1)) / 6
 
-    # construct predictor matrix
-
-    # A = np.hstack(
-    #    (
-    #        [
-    #            np.array(
-    #                [
-    #                    x_train * np.sin(i_n * mon_train),
-    #                    np.sin(i_n * mon_train),
-    #                    x_train * np.cos(i_n * mon_train),
-    #                    np.sin(i_n * mon_train),
-    #                ]
-    #            ).T
-    #            for i_n in range(n)
-    #        ]
-    #    )
-    # )
-
     def fun(coefs, n, x_train, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
         loss = np.mean((generate_fourier_series_np(coefs, n, x_train, mon_train) - mon_target) ** 2)
