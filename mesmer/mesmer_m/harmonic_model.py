@@ -212,7 +212,7 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
         output_core_dims=([], ["coeff"], ["time"]),
         vectorize=True,
         output_dtypes=[int, float, float],
-        kwargs={"max_n": max_order},
+        kwargs={"max_order": max_order},
         join = "outer"
     )
 
