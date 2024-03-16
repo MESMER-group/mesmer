@@ -128,7 +128,7 @@ def calculate_bic(n_samples, n_order, mse):
 
     """
 
-    n_params = n_order * 4 - 2
+    n_params = n_order * 4 - 2 # why - 2?
 
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
@@ -168,10 +168,10 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     n_sel = np.argmin(bic_score) + 1
     coeffs_fit, preds = fit_fourier_series_np(yearly_predictor, monthly_target, n_sel)
 
-    #coeffs = np.zeros([max_order * 4 - 2])
-    #coeffs[: len(coeffs_fit)] = coeffs_fit
+    coeffs = np.zeros([max_order * 4]) # removed -2, because it threw and error, why was that here?
+    coeffs[: len(coeffs_fit)] = coeffs_fit # need the coeff array to be the same size for all orders
 
-    return n_sel, coeffs_fit, preds
+    return n_sel, coeffs, preds
 
 
 def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
