@@ -34,7 +34,7 @@ def generate_fourier_series_np(coeffs, n, year, mon):
         Fourier Series of order n calculated over x and mon with coeffs.
 
     """
-    # TODO: infer order from coeffs
+    # TODO: infer order from coeffs, rename n to order
     return sum(
         [
             (coeffs[idx] * year + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
@@ -95,7 +95,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
         return loss
 
     c0 = np.zeros(n * 4)
-    c0[2] = 1 # why?
+    c0[2] = 1 # why? -> weird first guess?
     # c0[3] = 0 # not necessary ?
 
     # NOTE: this seems to select less 'orders' than the scipy one
@@ -128,7 +128,7 @@ def calculate_bic(n_samples, n_order, mse):
 
     """
 
-    n_params = n_order * 4 + 2 # why + 2? (before it was -2)
+    n_params = n_order * 4 + 2 # why + 2? (before it was -2) but that gave off result compared to the NB
 
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
@@ -158,14 +158,16 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     bic_score = np.zeros([max_order])
 
-    for i_n in range(1, max_order + 1):
+    for i_n in range(1, max_order + 1): # TODO rename i_n to order
 
         _, preds = fit_fourier_series_np(yearly_predictor, monthly_target, i_n)
+        # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
         mse = np.mean((preds - monthly_target) ** 2)
 
         bic_score[i_n - 1] = calculate_bic(len(monthly_target), i_n, mse)
 
     n_sel = np.argmin(bic_score) + 1
+    # TODO: we already fit for this order above so it would probably be faster to save the output from above and return it?
     coeffs_fit, preds = fit_fourier_series_np(yearly_predictor, monthly_target, n_sel)
 
     coeffs = np.zeros([max_order * 4]) # removed -2, because it threw and error, why was that here?
