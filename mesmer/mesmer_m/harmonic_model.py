@@ -34,7 +34,7 @@ def generate_fourier_series_np(coeffs, n, year, mon):
         Fourier Series of order n calculated over x and mon with coeffs.
 
     """
-
+    # TODO: infer order from coeffs
     return sum(
         [
             (coeffs[idx] * year + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
@@ -86,7 +86,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
     # also get monthly values
     mon_train = np.tile(np.arange(1, 13), int(x_train.shape[0] / 12))
     # for simplicity's sake we take month values in there harmonic form
-    mon_train = (np.pi * (mon_train % 12 + 1)) / 6
+    #mon_train = (np.pi * (mon_train % 12 + 1)) / 6 # this is double if we have it in generate_fourier_series_np as well
 
     def fun(coefs, n, x_train, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
@@ -128,7 +128,7 @@ def calculate_bic(n_samples, n_order, mse):
 
     """
 
-    n_params = n_order * 4 - 2 # why - 2?
+    n_params = n_order * 4 + 2 # why + 2? (before it was -2)
 
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
