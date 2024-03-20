@@ -1,7 +1,7 @@
 import numpy as np 
 
 import sys
-from tqdm import tqdm 
+#from tqdm import tqdm 
 from joblib import Parallel, delayed
 
 from sklearn.preprocessing import PowerTransformer, StandardScaler
