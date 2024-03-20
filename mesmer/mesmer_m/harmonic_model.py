@@ -14,18 +14,18 @@ from scipy import optimize
 import mesmer
 
 
-def generate_fourier_series_np(coeffs, n, year, mon):
+def generate_fourier_series_np(coeffs, order, yearly_T, months):
     """construct the Fourier Series
 
     Parameters
     ----------
     coeffs : array-like of shape (4*n-2)
         coefficients of Fourier Series.
-    n : Integer
+    order : Integer
         Order of the Fourier Series.
-    year : array-like of shape (n_samples,)
+    yearly_T : array-like of shape (n_samples,)
         yearly temperature values.
-    mon : array-like of shape (n_samples,)
+    months : array-like of shape (n_samples,)
         month values (0-11).
 
     Returns
@@ -35,17 +35,25 @@ def generate_fourier_series_np(coeffs, n, year, mon):
 
     """
     # TODO: infer order from coeffs, rename n to order
-    return sum(
+
+    #set these parameters fixed according to paper
+    # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
+    beta0 = 0
+    beta1 = 1
+
+    seasonal_cycle =  sum(
         [
-            (coeffs[idx] * year + coeffs[idx + 1]) * np.sin(np.pi * i * (mon % 12 + 1) / 6)
-            + (coeffs[idx + 2] * year + coeffs[idx + 3])
-            * np.cos(np.pi * i * (mon % 12 + 1) / 6)
-            for i, idx in enumerate(np.arange(n * 4, step=4))
+            (coeffs[idx*4] * yearly_T + coeffs[idx*4 + 1]) * np.sin(np.pi * i * (months % 12 + 1) / 6)
+            + (coeffs[idx*4 + 2] * yearly_T + coeffs[idx*4 + 3])
+            * np.cos(np.pi * i * (months % 12 + 1) / 6)
+            for idx, i in enumerate(range(1, order+1))
         ]
     )
+    # NOTE: why +1 after the modulo month
+    return beta0 + beta1 * yearly_T + seasonal_cycle 
 
 
-def fit_fourier_series_np(yearly_predictor, monthly_target, n):
+def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     """execute fitting of the harmonic model/fourier series
 
     Parameters
@@ -57,7 +65,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
     monthly_target : array-like of shape (n_samples*12,)
         Target monthly temperature values.
 
-    n : Integer
+    order : Integer
         Order of the Fourier Series.
 
     Method
@@ -75,7 +83,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
     coeffs : array-like of shape (4*n-2)
         Fitted coefficients of Fourier series.
 
-    y : array-like of shape (n_samples*12,)
+    preds : array-like of shape (n_samples*12,)
         Predicted monthly temperature values.
 
     """
@@ -88,36 +96,36 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, n):
     # for simplicity's sake we take month values in there harmonic form
     #mon_train = (np.pi * (mon_train % 12 + 1)) / 6 # this is double if we have it in generate_fourier_series_np as well
 
-    def fun(coefs, n, x_train, mon_train, mon_target):
+    def fun(coeffs, n, x_train, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
-        loss = np.mean((generate_fourier_series_np(coefs, n, x_train, mon_train) - mon_target) ** 2)
+        loss = np.mean((generate_fourier_series_np(coeffs, order, x_train, mon_train) - mon_target) ** 2)
 
         return loss
 
-    c0 = np.zeros(n * 4)
-    c0[2] = 1 # why? -> weird first guess?
+    firstguess = np.zeros(order * 4)
+    #c0[2] = 1 # this was so beta1 is close to 1
     # c0[3] = 0 # not necessary ?
 
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
 
     coeffs = optimize.least_squares(
-        fun, c0, args=(n, x_train, mon_train, monthly_target), loss="cauchy"
+        fun, firstguess, args=(order, x_train, mon_train, monthly_target), loss="cauchy"
     ).x
 
-    preds = generate_fourier_series_np(coeffs, n, x_train, mon_train)
+    preds = generate_fourier_series_np(coeffs = coeffs, order = order, yearly_T = x_train, months = mon_train)
 
     return coeffs, preds
 
 
-def calculate_bic(n_samples, n_order, mse):
+def calculate_bic(n_samples, order, mse):
     """calculate Bayesian Information Criteria (BIC)
 
     Parameters
     ----------
     n_samples : Integer
         size of training set.
-    n_order : Integer
+    order : Integer
         Order of Fourier Series.
     mse : Float
         Mean-squared error.
@@ -128,7 +136,8 @@ def calculate_bic(n_samples, n_order, mse):
 
     """
 
-    n_params = n_order * 4 + 2 # why + 2? (before it was -2) but that gave off result compared to the NB
+    n_params = order * 4 #-2 because for order 0 the first two coefficients dissapear for sin(0)= 0
+    # removed this now because we don+t fit the beta0 and beta1
 
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
@@ -143,15 +152,15 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     monthly_target : array-like of shape (n_samples*12,)
         Target monthly temperature values.
     max_order : Integer
-        Maximum order of Fourier Series.
+        Maximum considered order of Fourier Series for which to fit.
 
     Returns
     -------
-    n_sel : Integer
+    selected_order : Integer
         Selected order of Fourier Series.
-    coeffs_fit : array-like of size (4*n_Sel-2,)
+    coeffs : array-like of size (4*n_Sel-2,)
         Fitted coefficients for the selected order of Fourier Series.
-    preds : array-like of size (n_samples,)
+    predictions : array-like of size (n_samples,)
         Predicted monthly values from final model.
 
     """
@@ -160,20 +169,23 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     for i_n in range(1, max_order + 1): # TODO rename i_n to order
 
-        _, preds = fit_fourier_series_np(yearly_predictor, monthly_target, i_n)
+        _, predictions = fit_fourier_series_np(yearly_predictor, monthly_target, i_n)
         # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
-        mse = np.mean((preds - monthly_target) ** 2)
+        mse = np.mean((predictions - monthly_target) ** 2)
 
         bic_score[i_n - 1] = calculate_bic(len(monthly_target), i_n, mse)
+        # TODO: we could stop fitting when we hit a minimum, similar to _minimize_local_discrete
 
-    n_sel = np.argmin(bic_score) + 1
+    selected_order = np.argmin(bic_score) + 1
     # TODO: we already fit for this order above so it would probably be faster to save the output from above and return it?
-    coeffs_fit, preds = fit_fourier_series_np(yearly_predictor, monthly_target, n_sel)
+    coeffs_fit, predictions = fit_fourier_series_np(yearly_predictor = yearly_predictor, 
+                                              monthly_target = monthly_target, 
+                                              order = selected_order)
 
-    coeffs = np.zeros([max_order * 4]) # removed -2, because it threw and error, why was that here?
+    coeffs = np.zeros([max_order * 4]) # removed -2, because we always return all coefficients
     coeffs[: len(coeffs_fit)] = coeffs_fit # need the coeff array to be the same size for all orders
 
-    return n_sel, coeffs, preds
+    return selected_order, coeffs, predictions
 
 
 def fit_to_bic_xr(yearly_predictor, monthly_target, max_order):
