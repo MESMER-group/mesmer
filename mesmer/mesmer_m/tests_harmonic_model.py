@@ -16,7 +16,7 @@ Tests for monthly trend module of MESMER-M. We check:
 import harmonic_model as hm
 import numpy as np
 import xarray as xr
-from tqdm import tqdm_notebook as tqdm
+#from tqdm import tqdm_notebook as tqdm
 
 
 def dummy_yearly_trend(nr_runs):
@@ -174,7 +174,7 @@ def BIC_gridsearch_domain(max_n, max_nr_runs):
         y_acts[i_nr] = np.zeros([max_n + 1, i_nr * 231 * 12])
         y_preds[i_nr] = np.zeros([max_n + 1, i_nr * 231 * 12])
 
-        for i_n in tqdm(range(1, max_n + 1)):
+        for i_n in range(1, max_n + 1): #tqdm(range(1, max_n + 1)):
 
             _, y, _, bic_results = dummy_fit(i_nr, n=i_n, fit_to_bic=True)
 
