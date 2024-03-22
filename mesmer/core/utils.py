@@ -121,8 +121,6 @@ def upsample_yearly_data(yearly_data, monthly_time):
     upsampled_yearly_data: xarray.DataArray
         Upsampled monthly temperature values containing the yearly values for every month of the corresponding year.
     """
-    _assert_annual_data(yearly_data.time)
-
     # make sure monthly and yearly data both start at the beginning of the period
     year = yearly_data.resample(time = "YS").bfill()
     month = monthly_time.resample(time = "MS").bfill()
