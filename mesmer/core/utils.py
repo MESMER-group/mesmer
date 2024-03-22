@@ -105,6 +105,7 @@ def _assert_annual_data(time):
             f"Annual data is required but data with frequency {freq} was passed"
         )
 
+
 def upsample_yearly_data(yearly_data, monthly_time):
     """Upsample yearly data to monthly data by repeating yearly value for each month.
 
@@ -122,8 +123,8 @@ def upsample_yearly_data(yearly_data, monthly_time):
         Upsampled monthly temperature values containing the yearly values for every month of the corresponding year.
     """
     # make sure monthly and yearly data both start at the beginning of the period
-    year = yearly_data.resample(time = "YS").bfill()
-    month = monthly_time.resample(time = "MS").bfill()
+    year = yearly_data.resample(time="YS").bfill()
+    month = monthly_time.resample(time="MS").bfill()
 
     # forward fill yearly values to monthly resolution
     upsampled_yearly_data = year.reindex_like(month, method="ffill")
@@ -132,6 +133,7 @@ def upsample_yearly_data(yearly_data, monthly_time):
     upsampled_yearly_data = year.reindex_like(monthly_time, method="ffill")
 
     return upsampled_yearly_data
+
 
 def _check_dataset_form(
     obj,
