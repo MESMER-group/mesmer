@@ -47,11 +47,12 @@ def test_upsample_yearly_data(freq_y, freq_m):
             upsampled_years.values[i * 12 : (i + 1) * 12] == yearly_data.values[i]
         ).all()
 
+
 def test_upsample_yearly_data_wrong_dims():
     yearly_data = make_dummy_yearly_data("YS")
     yearly_data = yearly_data.rename({"time": "year"})
     monthly_data = make_dummy_monthly_data("MM")
-    
+
     with pytest.raises(ValueError, match="yearly_data is missing the required dims"):
         mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
 
@@ -65,11 +66,15 @@ def test_upsample_yearly_data_wrong_dims():
     with pytest.raises(ValueError, match="monthly_time should be 1D, but is 2D"):
         mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data)
 
+
 def test_upsample_yearly_data_wrong_length():
     yearly_data = make_dummy_yearly_data("YS")
-    monthly_data = make_dummy_monthly_data("MM").isel(time = slice(0,12*3))
-    
-    with pytest.raises(ValueError, match="Length of monthly time not equal to 12 times the length of yearly data."):
+    monthly_data = make_dummy_monthly_data("MM").isel(time=slice(0, 12 * 3))
+
+    with pytest.raises(
+        ValueError,
+        match="Length of monthly time not equal to 12 times the length of yearly data.",
+    ):
         mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
 
 
