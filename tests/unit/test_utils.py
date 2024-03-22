@@ -39,7 +39,7 @@ def test_upsample_yearly_data(freq_y, freq_m):
             freq_y = freq_y.replace("YE", "A")
         elif "YS" in freq_y:
             freq_y = freq_y.replace("YS", "AS")
-        
+
         if freq_m == "ME":
             freq_m = freq_m.replace("ME", "M")
 
