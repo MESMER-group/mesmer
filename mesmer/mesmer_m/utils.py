@@ -5,7 +5,7 @@ MESMER-M utility functions
 import xarray as xr
 
 def upsample_yearly_data(yearly_data, monthly_data):
-    """Upsample yearly data to monthly data by repeating yearly mean for each month.
+    """Upsample yearly data to monthly data by repeating yearly value for each month.
 
     Parameters
     ----------
@@ -17,18 +17,14 @@ def upsample_yearly_data(yearly_data, monthly_data):
 
     Returns
     -------
-    monthly_data: xarray.Dataset, xarray.DataArray
-        Upsampled monthly temperature values.
+    upsampled_yearly_data: xarray.Dataset, xarray.DataArray
+        Upsampled monthly temperature values containing the yearly values for every month of the corresponding year.
     """
 
-    ye = yearly_data.resample(time="YE").ffill()
-    me = ye.resample(time="ME").bfill()
+    year = yearly_data.resample(time = "YS").bfill()
+    month = monthly_data.resample(time = "MS").bfill()
 
-    # resample misses first year
-    firstyear = monthly_data.isel(time=slice(0, 11)).resample(time="ME").ffill()
-    firstyear.values[:,] = yearly_data.isel(time=0)
+    upsampled_yearly_data = year.reindex_like(month, method="ffill")
+    upsampled_yearly_data = year.reindex_like(monthly_data, method="ffill")
 
-    year_to_mon_data = xr.concat([firstyear, me], dim="time")
-    year_to_mon_data["time"] = monthly_data["time"]
-
-    return year_to_mon_data
+    return upsampled_yearly_data
