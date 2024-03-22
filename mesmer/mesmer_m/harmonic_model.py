@@ -43,9 +43,9 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
 
     seasonal_cycle =  sum(
         [
-            (coeffs[idx*4] * yearly_T + coeffs[idx*4 + 1]) * np.sin(np.pi * i * (months % 12 + 1) / 6)
+            (coeffs[idx*4] * yearly_T + coeffs[idx*4 + 1]) * np.sin(np.pi * i * (months) / 6)
             + (coeffs[idx*4 + 2] * yearly_T + coeffs[idx*4 + 3])
-            * np.cos(np.pi * i * (months % 12 + 1) / 6)
+            * np.cos(np.pi * i * (months) / 6)
             for idx, i in enumerate(range(1, order+1))
         ]
     )
