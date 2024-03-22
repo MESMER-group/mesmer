@@ -1,6 +1,7 @@
 import datetime
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 from packaging.version import Version
@@ -33,6 +34,15 @@ def make_dummy_monthly_data(freq):
 @pytest.mark.parametrize("freq_y", ["YM", "YS", "YE", "YS-JUL", "YS-NOV"])
 @pytest.mark.parametrize("freq_m", ["MM", "MS", "ME"])
 def test_upsample_yearly_data(freq_y, freq_m):
+    if Version(pd.__version__) < Version("2.2"):
+        if freq_y == "YE":
+            freq_y = freq_y.replace("YE", "A")
+        elif "YS" in freq_y:
+            freq_y = freq_y.replace("YS", "AS")
+        
+        if freq_m == "ME":
+            freq_m = freq_m.replace("ME", "M")
+
     yearly_data = make_dummy_yearly_data(freq_y)
     monthly_data = make_dummy_monthly_data(freq_m)
 
