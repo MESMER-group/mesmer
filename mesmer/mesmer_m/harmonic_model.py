@@ -199,7 +199,7 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order = 6):
     monthly_target : xr.DataArray
         Monthly temperature values to fit for, must contain dims: ("sample","cell").
     max_order : Integer, default 6
-        Maximum order of Fourier Series to fit for. Default is 6 since maximum orders are usually sample_frequency/2.
+        Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful maximum order is sample_frequency/2.
 
     Returns
     -------
