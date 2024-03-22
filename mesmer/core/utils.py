@@ -127,7 +127,7 @@ def upsample_yearly_data(yearly_data, monthly_time):
     _check_dataarray_form(yearly_data, "yearly_data", required_dims="time")
     _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims="time")
 
-    if len(yearly_data.time) * 12 != len(monthly_time.values):
+    if yearly_data.time.size * 12 != monthly_time.size:
         raise ValueError(
             "Length of monthly time not equal to 12 times the length of yearly data."
         )
