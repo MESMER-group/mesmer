@@ -122,6 +122,12 @@ def upsample_yearly_data(yearly_data, monthly_time):
     upsampled_yearly_data: xarray.DataArray
         Upsampled monthly temperature values containing the yearly values for every month of the corresponding year.
     """
+    _check_dataarray_form(yearly_data, "yearly_data", required_dims="time")
+    _check_dataarray_form(monthly_time, "monthly_time", ndim = 1, required_dims="time")
+
+    if len(yearly_data.time)*12 != len(monthly_time.values):
+        raise ValueError("Length of monthly time not equal to 12 times the length of yearly data.")
+    
     # make sure monthly and yearly data both start at the beginning of the period
     year = yearly_data.resample(time="YS").bfill()
     month = monthly_time.resample(time="MS").bfill()
