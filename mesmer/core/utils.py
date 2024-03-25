@@ -109,7 +109,7 @@ def _assert_annual_data(time):
 
 
 def upsample_yearly_data(yearly_data, monthly_time):
-    """Upsample yearly data to monthly data by repeating yearly value for each month.
+    """Upsample yearly data to monthly resolution by repeating yearly values.
 
     Parameters
     ----------
@@ -117,12 +117,12 @@ def upsample_yearly_data(yearly_data, monthly_time):
         Yearly values to upsample.
 
     monthly_time: xarray.DataArray
-        Monthly time used to define the time dimension of the upsampled data.
+        Monthly time used to define the time coordinates of the upsampled data.
 
     Returns
     -------
     upsampled_yearly_data: xarray.DataArray
-        Upsampled monthly temperature values containing the yearly values for every month of the corresponding year.
+        Upsampled yearly temperature values containing the yearly values for every month of the corresponding year.
     """
     _check_dataarray_form(yearly_data, "yearly_data", required_dims="time")
     _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims="time")
