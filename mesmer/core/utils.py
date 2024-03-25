@@ -133,7 +133,9 @@ def upsample_yearly_data(yearly_data, monthly_time):
         )
 
     # make sure monthly and yearly data both start at the beginning of the period
-    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS" # pandas v2.2 changed the time freq string for year
+    freq = (
+        "AS" if Version(pd.__version__) < Version("2.2") else "YS"
+    )  # pandas v2.2 changed the time freq string for year
     year = yearly_data.resample(time=freq).bfill()
     month = monthly_time.resample(time="MS").bfill()
 

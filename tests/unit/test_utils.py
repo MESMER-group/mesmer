@@ -10,9 +10,11 @@ import mesmer.core.utils
 def make_dummy_yearly_data(freq, calendar="standard"):
     if freq == "YM":
         freq = "AS-JUL" if Version(pd.__version__) < Version("2.2") else "YS-JUL"
-        time = xr.date_range(start="2000", periods=5, freq=freq, calendar = calendar) + pd.Timedelta("14d")
+        time = xr.date_range(
+            start="2000", periods=5, freq=freq, calendar=calendar
+        ) + pd.Timedelta("14d")
     else:
-        time = xr.date_range(start="2000", periods=5, freq=freq, calendar = calendar)
+        time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
     data = xr.DataArray([1, 2, 3, 4, 5], dims=("time"), coords={"time": time})
     return data
@@ -20,9 +22,13 @@ def make_dummy_yearly_data(freq, calendar="standard"):
 
 def make_dummy_monthly_data(freq, calendar="standard"):
     if freq == "MM":
-        time = time = xr.date_range(start="2000", periods=5*12, freq="MS", calendar = calendar) + pd.Timedelta("14d")
+        time = time = xr.date_range(
+            start="2000", periods=5 * 12, freq="MS", calendar=calendar
+        ) + pd.Timedelta("14d")
     else:
-        time = xr.date_range(start="2000-01", periods=5 * 12, freq=freq, calendar = calendar)
+        time = xr.date_range(
+            start="2000-01", periods=5 * 12, freq=freq, calendar=calendar
+        )
 
     data = xr.DataArray(np.ones(5 * 12), dims=("time"), coords={"time": time})
     return data
