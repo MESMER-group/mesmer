@@ -16,7 +16,7 @@ def make_dummy_yearly_data(freq, calendar="standard"):
     else:
         time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
-    data = xr.DataArray([1., 2., 3., 4., 5.], dims=("time"), coords={"time": time})
+    data = xr.DataArray([1.0, 2.0, 3.0, 4.0, 5.0], dims=("time"), coords={"time": time})
     return data
 
 
@@ -57,7 +57,7 @@ def test_upsample_yearly_data(freq_y, freq_m, calendar):
     xr.testing.assert_equal(upsampled_years.time, monthly_data.time)
 
     yearly_means = upsampled_years.groupby("time.year").mean()
-    np.testing.assert_equal(yearly_means.values, yearly_data.values)    
+    np.testing.assert_equal(yearly_means.values, yearly_data.values)
 
 
 def test_upsample_yearly_data_wrong_dims():
