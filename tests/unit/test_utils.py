@@ -56,8 +56,9 @@ def test_upsample_yearly_data(freq_y, freq_m, calendar):
 
     xr.testing.assert_equal(upsampled_years.time, monthly_data.time)
 
-    yearly_means = upsampled_years.groupby("time.year").mean()
-    np.testing.assert_equal(yearly_means.values, yearly_data.values)
+    # check if the values for each month are the same as the yearly values
+    yearly_data = yearly_data.groupby("time.year").mean()
+    assert (upsampled_years.groupby("time.year") == yearly_data).all()
 
 
 def test_upsample_yearly_data_wrong_dims():
