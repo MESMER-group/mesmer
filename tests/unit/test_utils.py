@@ -1,9 +1,94 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 from packaging.version import Version
 
 import mesmer.core.utils
+
+
+def make_dummy_yearly_data(freq, calendar="standard"):
+    if freq == "YM":
+        freq = "AS-JUL" if Version(pd.__version__) < Version("2.2") else "YS-JUL"
+        time = xr.date_range(
+            start="2000", periods=5, freq=freq, calendar=calendar
+        ) + pd.Timedelta("14d")
+    else:
+        time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
+
+    data = xr.DataArray([1.0, 2.0, 3.0, 4.0, 5.0], dims=("time"), coords={"time": time})
+    return data
+
+
+def make_dummy_monthly_data(freq, calendar="standard"):
+    if freq == "MM":
+        time = time = xr.date_range(
+            start="2000", periods=5 * 12, freq="MS", calendar=calendar
+        ) + pd.Timedelta("14d")
+    else:
+        time = xr.date_range(
+            start="2000-01", periods=5 * 12, freq=freq, calendar=calendar
+        )
+
+    data = xr.DataArray(np.ones(5 * 12), dims=("time"), coords={"time": time})
+    return data
+
+
+@pytest.mark.parametrize("freq_y", ["YM", "YS", "YE", "YS-JUL", "YS-NOV"])
+@pytest.mark.parametrize("freq_m", ["MM", "MS", "ME"])
+@pytest.mark.parametrize("calendar", ["standard", "gregorian", "365_day"])
+def test_upsample_yearly_data(freq_y, freq_m, calendar):
+    if Version(pd.__version__) < Version("2.2"):
+        if freq_y == "YE":
+            freq_y = freq_y.replace("YE", "A")
+        elif "YS" in freq_y:
+            freq_y = freq_y.replace("YS", "AS")
+
+        if freq_m == "ME":
+            freq_m = freq_m.replace("ME", "M")
+
+    yearly_data = make_dummy_yearly_data(freq_y, calendar=calendar)
+    monthly_data = make_dummy_monthly_data(freq_m, calendar=calendar)
+
+    upsampled_years = mesmer.core.utils.upsample_yearly_data(
+        yearly_data, monthly_data.time
+    )
+
+    xr.testing.assert_equal(upsampled_years.time, monthly_data.time)
+
+    # check if the values for each month are the same as the yearly values
+    yearly_data = yearly_data.groupby("time.year").mean()
+    assert (upsampled_years.groupby("time.year") == yearly_data).all()
+
+
+def test_upsample_yearly_data_wrong_dims():
+    yearly_data = make_dummy_yearly_data("YS")
+    yearly_data = yearly_data.rename({"time": "year"})
+    monthly_data = make_dummy_monthly_data("MM")
+
+    with pytest.raises(ValueError, match="yearly_data is missing the required dims"):
+        mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
+
+    yearly_data = make_dummy_yearly_data("YS")
+    monthly_data = monthly_data.rename({"time": "months"})
+    with pytest.raises(ValueError, match="monthly_time is missing the required dims"):
+        mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.months)
+
+    monthly_data = make_dummy_monthly_data("MM")
+    monthly_data = monthly_data.expand_dims({"extra": 1})
+    with pytest.raises(ValueError, match="monthly_time should be 1D, but is 2D"):
+        mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data)
+
+
+def test_upsample_yearly_data_wrong_length():
+    yearly_data = make_dummy_yearly_data("YS")
+    monthly_data = make_dummy_monthly_data("MM").isel(time=slice(0, 12 * 3))
+
+    with pytest.raises(
+        ValueError,
+        match="Length of monthly time not equal to 12 times the length of yearly data.",
+    ):
+        mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
 
 
 @pytest.mark.parametrize(
