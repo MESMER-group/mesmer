@@ -11,7 +11,7 @@ import numpy as np
 import xarray as xr
 from scipy import optimize
 
-import mesmer
+import mesmer.core.utils
 
 
 def generate_fourier_series_np(coeffs, order, yearly_T, months):
@@ -216,7 +216,7 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order = 6):
     if not isinstance(monthly_target, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
     
-    yearly_predictor = mesmer.mesmer_m.upsample_yearly_data(yearly_predictor, monthly_target)
+    yearly_predictor = mesmer.core.utils.upsample_yearly_data(yearly_predictor, monthly_target)
 
     n_sel, coeffs, preds = xr.apply_ufunc(
         fit_to_bic_np,
