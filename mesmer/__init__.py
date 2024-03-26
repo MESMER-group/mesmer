@@ -42,7 +42,6 @@ __all__ += [
     "testing",
     "volc",
     "weighted",
-    "mesmer_m",
 ]
 
 
