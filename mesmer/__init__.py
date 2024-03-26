@@ -9,7 +9,16 @@ analyze the results.
 
 from importlib.metadata import version as _get_version
 
-from . import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
+from . import (
+    calibrate_mesmer,
+    core,
+    create_emulations,
+    io,
+    mesmer_m,
+    stats,
+    testing,
+    utils,
+)
 from .core import _data as data
 from .core import geospatial, grid, mask, volc, weighted
 
@@ -28,6 +37,7 @@ __all__ += [
     "geospatial",
     "grid",
     "mask",
+    "mesmer_m",
     "stats",
     "testing",
     "volc",
