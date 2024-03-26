@@ -166,7 +166,7 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     bic_score = np.zeros([max_order])
 
-    for i_n in range(1, max_order + 1): # TODO rename i_n to order
+    for i_n in range(1, max_order + 1):
 
         _, predictions = fit_fourier_series_np(yearly_predictor, monthly_target, i_n)
         # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
@@ -198,7 +198,8 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order = 6):
     monthly_target : xr.DataArray
         Monthly temperature values to fit for, must contain dims: ("sample","cell").
     max_order : Integer, default 6
-        Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful maximum order is sample_frequency/2.
+        Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful 
+        maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
 
     Returns
     -------
