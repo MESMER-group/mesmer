@@ -37,6 +37,7 @@ __all__ += [
     "geospatial",
     "grid",
     "mask",
+    "mesmer_m",
     "stats",
     "testing",
     "volc",

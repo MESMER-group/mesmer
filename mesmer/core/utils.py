@@ -2,7 +2,9 @@ import warnings
 from typing import Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
+from packaging.version import Version
 
 
 class OptimizeWarning(UserWarning):
@@ -104,6 +106,45 @@ def _assert_annual_data(time):
         raise ValueError(
             f"Annual data is required but data with frequency {freq} was passed"
         )
+
+
+def upsample_yearly_data(yearly_data, monthly_time):
+    """Upsample yearly data to monthly resolution by repeating yearly values.
+
+    Parameters
+    ----------
+    yearly_data : xarray.DataArray
+        Yearly values to upsample.
+
+    monthly_time: xarray.DataArray
+        Monthly time used to define the time coordinates of the upsampled data.
+
+    Returns
+    -------
+    upsampled_yearly_data: xarray.DataArray
+        Upsampled yearly temperature values containing the yearly values for every month of the corresponding year.
+    """
+    _check_dataarray_form(yearly_data, "yearly_data", required_dims="time")
+    _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims="time")
+
+    if yearly_data.time.size * 12 != monthly_time.size:
+        raise ValueError(
+            "Length of monthly time not equal to 12 times the length of yearly data."
+        )
+
+    # make sure monthly and yearly data both start at the beginning of the period
+    # pandas v2.2 changed the time freq string for year
+    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
+    year = yearly_data.resample(time=freq).bfill()
+    month = monthly_time.resample(time="MS").bfill()
+
+    # forward fill yearly values to monthly resolution
+    upsampled_yearly_data = year.reindex_like(month, method="ffill")
+
+    # make sure the time dimension of the upsampled data is the same as the original monthly time
+    upsampled_yearly_data = year.reindex_like(monthly_time, method="ffill")
+
+    return upsampled_yearly_data
 
 
 def _check_dataset_form(

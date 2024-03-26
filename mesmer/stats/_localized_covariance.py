@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import scipy
 import xarray as xr
 
 from mesmer.core.utils import (
@@ -267,12 +268,11 @@ def _get_neg_loglikelihood(data, covariance, weights):
     The mean is assumed to be zero for all points.
     """
 
-    from scipy.stats import multivariate_normal
-
     # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
     # optimizing the rest
 
-    log_likelihood = multivariate_normal.logpdf(data, cov=covariance)
+    cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
+    log_likelihood = scipy.stats.multivariate_normal.logpdf(data, cov=cov)
 
     # logpdf can return a scalar, which np.average does not like
     log_likelihood = np.atleast_1d(log_likelihood)

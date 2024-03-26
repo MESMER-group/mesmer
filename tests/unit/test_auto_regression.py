@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 
 
@@ -79,7 +79,7 @@ def ar_params_1D():
 
     intercept = xr.DataArray(0)
     coeffs = xr.DataArray([0], dims="lags")
-    variance = xr.DataArray(0)
+    variance = xr.DataArray(0.5)
     ar_params = xr.Dataset(
         {"intercept": intercept, "coeffs": coeffs, "variance": variance}
     )
@@ -92,7 +92,7 @@ def ar_params_2D():
 
     intercept = xr.DataArray([0, 0], dims="gridcell")
     coeffs = xr.DataArray([[0, 0]], dims=("lags", "gridcell"))
-    variance = xr.DataArray([0, 0], dims="gridcell")
+    variance = xr.DataArray([0.5, 0.3], dims="gridcell")
     ar_params = xr.Dataset(
         {"intercept": intercept, "coeffs": coeffs, "variance": variance}
     )
@@ -345,7 +345,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 
     intercept = np.zeros(n_cells)
     coefs = np.ones((ar_order, n_cells))
-    variance = np.ones((n_cells, n_cells))
+    variance = np.eye(n_cells)
 
     result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
@@ -362,6 +362,9 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
     assert result.shape == expected_shape
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Covariance matrix is not positive definite, using eigh instead of cholesky."
+)
 @pytest.mark.parametrize("intercept", [0, 1, 3.14])
 def test_draw_auto_regression_deterministic_intercept(intercept):
 
@@ -394,6 +397,9 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
     np.testing.assert_equal(result, expected)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Covariance matrix is not positive definite, using eigh instead of cholesky."
+)
 def test_draw_auto_regression_deterministic_coefs_buffer():
 
     result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
@@ -441,6 +447,25 @@ def test_draw_auto_regression_random():
     expected = np.array([2.58455078, 3.28976946, 1.86569258, 2.78266986])
     expected = expected.reshape(1, 4, 1)
 
+    np.testing.assert_allclose(result, expected)
+
+
+def test_draw_auto_regression_correlated_eigh():
+    # test that the function uses eigh when the covariance matrix is not positive definite
+    with pytest.warns(
+        LinAlgWarning, match="Covariance matrix is not positive definite"
+    ):
+        result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+            intercept=1,
+            coeffs=np.array([[0.5, 0.7], [0.3, 0.2]]),
+            covariance=np.zeros((2, 2)),
+            n_samples=1,
+            n_ts=4,
+            seed=0,
+            buffer=3,
+        )
+
+    expected = np.array([[[1.0, 1.0], [1.5, 1.7], [2.05, 2.39], [2.475, 3.013]]])
     np.testing.assert_allclose(result, expected)
 
 
