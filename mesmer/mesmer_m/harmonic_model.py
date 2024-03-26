@@ -49,7 +49,6 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
             for idx, i in enumerate(range(1, order+1))
         ]
     )
-    # NOTE: why +1 after the modulo month
     return beta0 + beta1 * yearly_T + seasonal_cycle 
 
 
