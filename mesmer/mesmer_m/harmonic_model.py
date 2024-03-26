@@ -182,7 +182,7 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
                                               order = selected_order)
 
     coeffs = np.zeros([max_order * 4])*np.nan # removed -2, because we always return all coefficients
-    coeffs[: selected_order] = coeffs_fit # need the coeff array to be the same size for all orders
+    coeffs[: selected_order*4] = coeffs_fit # need the coeff array to be the same size for all orders
 
     return selected_order, coeffs, predictions
 
