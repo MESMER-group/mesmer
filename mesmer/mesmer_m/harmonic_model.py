@@ -26,7 +26,7 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
     yearly_T : array-like of shape (n_samples,)
         yearly temperature values.
     months : array-like of shape (n_samples,)
-        month values (0-11).
+        month values (1-12).
 
     Returns
     -------
@@ -36,7 +36,7 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
     """
     # TODO: infer order from coeffs, rename n to order
 
-    #set these parameters fixed according to paper
+    # fix these parameters, according to paper
     # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
     beta0 = 0
     beta1 = 1
@@ -95,13 +95,13 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     # for simplicity's sake we take month values in there harmonic form
     #mon_train = (np.pi * (mon_train % 12 + 1)) / 6 # this is double if we have it in generate_fourier_series_np as well
 
-    def fun(coeffs, n, x_train, mon_train, mon_target):
+    def func(coeffs, n, x_train, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
         loss = np.mean((generate_fourier_series_np(coeffs, order, x_train, mon_train) - mon_target) ** 2)
 
         return loss
 
-    firstguess = np.zeros(order * 4)
+    first_guess = np.zeros(order * 4)
     #c0[2] = 1 # this was so beta1 is close to 1
     # c0[3] = 0 # not necessary ?
 
@@ -109,10 +109,10 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     # np.linalg.lstsq(A, y)[0]
 
     coeffs = optimize.least_squares(
-        fun, firstguess, args=(order, x_train, mon_train, monthly_target), loss="cauchy"
+        func, first_guess, args=(order, x_train, mon_train, monthly_target), loss="cauchy"
     ).x
 
-    preds = generate_fourier_series_np(coeffs = coeffs, order = order, yearly_T = x_train, months = mon_train)
+    preds = generate_fourier_series_np(coeffs=coeffs, order=order, yearly_T=x_train, months=mon_train)
 
     return coeffs, preds
 
@@ -181,8 +181,8 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
                                               monthly_target = monthly_target, 
                                               order = selected_order)
 
-    coeffs = np.zeros([max_order * 4]) # removed -2, because we always return all coefficients
-    coeffs[: len(coeffs_fit)] = coeffs_fit # need the coeff array to be the same size for all orders
+    coeffs = np.zeros([max_order * 4])*np.nan # removed -2, because we always return all coefficients
+    coeffs[: selected_order] = coeffs_fit # need the coeff array to be the same size for all orders
 
     return selected_order, coeffs, predictions
 
