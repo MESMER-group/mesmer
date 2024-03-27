@@ -103,12 +103,12 @@ class PowerTransformerVariableLambda(PowerTransformer):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
             lambdas = lambda_function(coeff, x=x_func)
-            ## version with sklearn yeo johnson transform
+            # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
             # for i, lmbda in enumerate(lambdas):
             #     x_trans[i] = self._yeo_johnson_transform(x[i], lmbda)
 
-            ## version with own power transform
+            # version with own power transform
             x_trans = self._yeo_johnson_transform_fmin(x, lambdas)
 
             n_samples = x.shape[0]
