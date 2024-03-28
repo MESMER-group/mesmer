@@ -11,7 +11,7 @@ import numpy as np
 import xarray as xr
 from scipy import optimize
 
-import mesmer.core.utils
+import mesmer
 
 
 def generate_fourier_series_np(coeffs, order, yearly_T, months):
