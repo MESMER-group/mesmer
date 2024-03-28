@@ -144,10 +144,9 @@ def calculate_bic(n_samples, order, mse):
 
     """
 
-    n_params = (
-        order * 4
-    )  # -2 because for order 0 the first two coefficients dissapear for sin(0)= 0
-    # removed this now because we don+t fit the beta0 and beta1
+    n_params = order * 4
+    # NOTE: removed -2 now because for order=0 the first two coefficients dissapear as sin(0) == 0
+    # removed this now because we no longer fit beta0 and beta1
 
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
