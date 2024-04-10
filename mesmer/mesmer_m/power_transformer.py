@@ -169,9 +169,10 @@ class PowerTransformerVariableLambda(PowerTransformer):
         Parameters
         ----------
         monthly_residuals : array-like, shape (n_years, n_gridcells)
-            The data to be transformed using a power transformation.
+            The monthly temperature data to be transformed using a power transformation with self.coeffs_. 
+            Contains the yearly values of one month for all gridcells, e.g. all January values.
         yearly_T: array-like, shape (n_years, n_gridcells)
-            The yearly temperature values used as predictors for the lambdas.
+            The yearly temperature values used as predictors for the lambdas using self.coffs_.
         Returns
         -------
         transformed_monthly_resids : array-like, shape (n_years, n_gridcells)
