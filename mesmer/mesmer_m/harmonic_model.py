@@ -93,9 +93,12 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
 
     def func(coeffs, order, yearly_predictor, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
-        
+
         loss = np.mean(
-            (generate_fourier_series_np(coeffs, order, yearly_predictor, mon_train) - mon_target)
+            (
+                generate_fourier_series_np(coeffs, order, yearly_predictor, mon_train)
+                - mon_target
+            )
             ** 2
         )
 
@@ -172,7 +175,9 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     for i_order in range(1, max_order + 1):
 
-        _, predictions = fit_fourier_series_np(yearly_predictor, monthly_target, i_order)
+        _, predictions = fit_fourier_series_np(
+            yearly_predictor, monthly_target, i_order
+        )
         # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
         mse = np.mean((predictions - monthly_target) ** 2)
 
@@ -189,7 +194,7 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     # need the coeff array to be the same size for all orders
     coeffs = np.zeros([max_order * 4]) * np.nan
-    coeffs[: selected_order * 4] = coeffs_fit  
+    coeffs[: selected_order * 4] = coeffs_fit
 
     return selected_order, coeffs, predictions
 
