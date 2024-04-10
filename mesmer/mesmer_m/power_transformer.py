@@ -14,7 +14,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
     """Apply a power transform gridcellwise to make monthly residuals more Gaussian-like.
     The class inherits from Sklearn's Power transofrmer class. It is modified
     to allow for transformation parameters (lambda) which have a functional
-    dependency on spatially resolved yearly mean temperature. 
+    dependency on spatially resolved yearly mean temperature.
     Every month requires its own PowerTransform.
 
     Please refer to [1] for a description of the  Power transformer class.
@@ -47,13 +47,13 @@ class PowerTransformerVariableLambda(PowerTransformer):
     TBD
     """
 
-    #TODO: we dont actually save the lambdas anywhere, should we? then adjust documentation
+    # TODO: we dont actually save the lambdas anywhere, should we? then adjust documentation
 
     def __init__(self, **kwargs):
         super().__init__(self, **kwargs)
 
     def fit_fmin(self, monthly_residuals, yearly_T, n_gridcells):
-        """Estimate the optimal parameter lambda for each gridcell, given 
+        """Estimate the optimal parameter lambda for each gridcell, given
         temperature residuals for one month of the year.
         The optimal lambda parameter for minimizing skewness is estimated on
         each gridcell independently using maximum likelihood.
@@ -120,22 +120,32 @@ class PowerTransformerVariableLambda(PowerTransformer):
             #     x_trans[i] = self._yeo_johnson_transform(x[i], lmbda)
 
             # version with own power transform
-            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(local_monthly_residuals, lambdas)
+            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(
+                local_monthly_residuals, lambdas
+            )
 
             n_samples = local_monthly_residuals.shape[0]
-            loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
-            loglikelihood += ((lambdas - 1) * np.sign(local_monthly_residuals) * np.log1p(np.abs(local_monthly_residuals))).sum()
+            loglikelihood = (
+                -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
+            )
+            loglikelihood += (
+                (lambdas - 1)
+                * np.sign(local_monthly_residuals)
+                * np.log1p(np.abs(local_monthly_residuals))
+            ).sum()
 
             return -loglikelihood
 
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
-        local_monthly_residuals = local_monthly_residuals[~np.isnan(local_monthly_residuals)]
+        local_monthly_residuals = local_monthly_residuals[
+            ~np.isnan(local_monthly_residuals)
+        ]
         local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
         # choosing bracket -2, 2 like for boxcox
         bounds = np.c_[[0, -0.1], [1, 0.1]]
-        #TODO: write first guess variable for readability
+        # TODO: write first guess variable for readability
         return minimize(
             _neg_log_likelihood,
             np.array([0.01, 0.01]),
@@ -158,10 +168,12 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         # assign values for the four cases
         transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
-        transformed[pos_b] = (np.power(local_monthly_residuals[pos_b] + 1, lambdas[pos_b]) - 1) / lambdas[pos_b]
-        transformed[pos_c] = -(np.power(-local_monthly_residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1) / (
-            2 - lambdas[pos_c]
-        )
+        transformed[pos_b] = (
+            np.power(local_monthly_residuals[pos_b] + 1, lambdas[pos_b]) - 1
+        ) / lambdas[pos_b]
+        transformed[pos_c] = -(
+            np.power(-local_monthly_residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1
+        ) / (2 - lambdas[pos_c])
         transformed[pos_d] = -np.log1p(-local_monthly_residuals[pos_d])
 
         return transformed
@@ -171,7 +183,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         Parameters
         ----------
         monthly_residuals : array-like, shape (n_years, n_gridcells)
-            The monthly temperature data to be transformed using a power transformation with the fitted self.coeffs_. 
+            The monthly temperature data to be transformed using a power transformation with the fitted self.coeffs_.
             Contains the yearly values of one month for all gridcells, e.g. all January values.
         yearly_T: array-like, shape (n_years, n_gridcells)
             The yearly temperature values used as predictors for the lambdas using the fitted self.coeffs_.
@@ -189,15 +201,19 @@ class PowerTransformerVariableLambda(PowerTransformer):
         #         with np.errstate(invalid='ignore'):  # hide NaN warnings
         #             transformed_monthly_resids[j, i] = self._yeo_johnson_transform(monthly_residuals[j, i], j_lmbda)
         for i, lmbda in enumerate(lambdas.T):
-            transformed_monthly_resids[:, i] = self._yeo_johnson_transform_fmin(monthly_residuals[:, i], lmbda)
+            transformed_monthly_resids[:, i] = self._yeo_johnson_transform_fmin(
+                monthly_residuals[:, i], lmbda
+            )
 
         if self.standardize:
-            transformed_monthly_resids = self._scaler.transform(transformed_monthly_resids)
+            transformed_monthly_resids = self._scaler.transform(
+                transformed_monthly_resids
+            )
 
         return transformed_monthly_resids
 
     def _get_yeo_johnson_lambdas(self, yearly_T):
-        #TODO: check the dimensions in all of this
+        # TODO: check the dimensions in all of this
 
         lambdas = np.zeros_like(yearly_T)
         gridcell = 0
@@ -236,25 +252,33 @@ class PowerTransformerVariableLambda(PowerTransformer):
         """
 
         if self.standardize:
-            transformed_monthly_T = self._scaler.inverse_transform(transformed_monthly_T)
+            transformed_monthly_T = self._scaler.inverse_transform(
+                transformed_monthly_T
+            )
 
         inverted_monthly_T = np.zeros_like(transformed_monthly_T)
 
         lambdas = self._get_yeo_johnson_lambdas(yearly_T)
 
         # TODO: what actually is i? years or gridcells
-        for i, lmbda in enumerate(lambdas.T): 
-            #TODO: what is j? years or gridcells?
+        for i, lmbda in enumerate(lambdas.T):
+            # TODO: what is j? years or gridcells?
             for j, j_lmbda in enumerate(lmbda):
                 with np.errstate(invalid="ignore"):  # hide NaN warnings
-                    inverted_monthly_T[j, i] = self._yeo_johnson_inverse_transform(transformed_monthly_T[j, i], j_lmbda)
+                    inverted_monthly_T[j, i] = self._yeo_johnson_inverse_transform(
+                        transformed_monthly_T[j, i], j_lmbda
+                    )
 
             # TODO: what does this mean?
             inverted_monthly_T[:, i] = np.where(
-                inverted_monthly_T[:, i] < self.mins_[i], self.mins_[i], inverted_monthly_T[:, i]
+                inverted_monthly_T[:, i] < self.mins_[i],
+                self.mins_[i],
+                inverted_monthly_T[:, i],
             )
             inverted_monthly_T[:, i] = np.where(
-                inverted_monthly_T[:, i] > self.maxs_[i], self.maxs_[i], inverted_monthly_T[:, i]
+                inverted_monthly_T[:, i] > self.maxs_[i],
+                self.maxs_[i],
+                inverted_monthly_T[:, i],
             )
 
         return inverted_monthly_T
