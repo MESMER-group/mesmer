@@ -19,22 +19,22 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
 
     Parameters
     ----------
-    coeffs : array-like of shape (4*n-2)
+    coeffs : array-like of shape (4*order)
         coefficients of Fourier Series.
     order : Integer
         Order of the Fourier Series.
-    yearly_T : array-like of shape (n_samples,)
+    yearly_T : array-like of shape (n_years*12,)
         yearly temperature values.
-    months : array-like of shape (n_samples,)
+    months : array-like of shape (n_years*12,)
         month values (1-12).
 
     Returns
     -------
-    predictions: array-like of shape (n_samples,)
-        Fourier Series of order n calculated over x and mon with coeffs.
+    predictions: array-like of shape (n_years*12,)
+        Fourier Series of order n calculated over yearly_T and months with coeffs.
 
     """
-    # TODO: infer order from coeffs, rename n to order
+    # TODO: infer order from coeffs
 
     # fix these parameters, according to paper
     # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
@@ -59,10 +59,10 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     Parameters
     ----------
 
-    yearly_predictor : array-like of shape (n_samples,)
-        Yearly temperature values to predict with.
+    yearly_predictor : array-like of shape (n_years*12,)
+        Repeated yearly temperature values to predict with.
 
-    monthly_target : array-like of shape (n_samples*12,)
+    monthly_target : array-like of shape (n_years*12,)
         Target monthly temperature values.
 
     order : Integer
@@ -71,43 +71,37 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     Method
     ------
 
-    We use np.linalg.lstsq as a simple solver, given we have the equation:
+    We use scipy.optimize.least_squares as a simple solver, given we have the equation:
 
-    sum_{i=0}^{n} [(a{i}*x + b{i})*np.cos(\frac{np.pi*i*(mon%12+1)}{6}+(c{i}*x + d{i})*np.cos(\frac{np.pi*i*(mon%12+1)}{6})]
+    sum_{i=0}^{n} yearly_predictor + [(a{i}*x + b{i})*np.cos(\frac{np.pi*i*(mon)}{6}+(c{i}*x + d{i})*np.cos(\frac{np.pi*i*(mon)}{6})]
 
-    we expect the input A to be of size n_samples, n*4-2 such that each column contains each coefficient's respective variable
+    We expect the yearly_predictor and monthly target to both be of size n_years*12, such that the yearly predictor contains each yearly value repeated 12 times to represent each month.
 
 
     Returns
     -------
-    coeffs : array-like of shape (4*n-2)
+    coeffs : array-like of shape (4*order)
         Fitted coefficients of Fourier series.
 
-    preds : array-like of shape (n_samples*12,)
+    preds : array-like of shape (n_years*12,)
         Predicted monthly temperature values.
 
     """
 
-    # each month scales to the yearly value at that timestep so need to repeat
-    x_train = yearly_predictor  # np.repeat(yearly_predictor, 12)
+    # get monthly values
+    mon_train = np.tile(np.arange(1, 13), int(yearly_predictor.shape[0] / 12))
 
-    # also get monthly values
-    mon_train = np.tile(np.arange(1, 13), int(x_train.shape[0] / 12))
-    # for simplicity's sake we take month values in there harmonic form
-    # mon_train = (np.pi * (mon_train % 12 + 1)) / 6 # this is double if we have it in generate_fourier_series_np as well
-
-    def func(coeffs, n, x_train, mon_train, mon_target):
+    def func(coeffs, order, yearly_predictor, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
+        
         loss = np.mean(
-            (generate_fourier_series_np(coeffs, order, x_train, mon_train) - mon_target)
+            (generate_fourier_series_np(coeffs, order, yearly_predictor, mon_train) - mon_target)
             ** 2
         )
 
         return loss
 
     first_guess = np.zeros(order * 4)
-    # c0[2] = 1 # this was so beta1 is close to 1
-    # c0[3] = 0 # not necessary ?
 
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
@@ -115,19 +109,19 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     coeffs = optimize.least_squares(
         func,
         first_guess,
-        args=(order, x_train, mon_train, monthly_target),
+        args=(order, yearly_predictor, mon_train, monthly_target),
         loss="cauchy",
     ).x
 
     preds = generate_fourier_series_np(
-        coeffs=coeffs, order=order, yearly_T=x_train, months=mon_train
+        coeffs=coeffs, order=order, yearly_T=yearly_predictor, months=mon_train
     )
 
     return coeffs, preds
 
 
 def calculate_bic(n_samples, order, mse):
-    """calculate Bayesian Information Criteria (BIC)
+    """calculate Bayesian Information Criterion (BIC)
 
     Parameters
     ----------
@@ -156,9 +150,9 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     Parameters
     ----------
-    yearly_predictor : array-like of shape (n_samples,)
-        Yearly temperature to predict with.
-    monthly_target : array-like of shape (n_samples*12,)
+    yearly_predictor : array-like of shape (n_years*12,)
+        Repeated yearly temperature to predict with. Containing the repeated yearly value for every month.
+    monthly_target : array-like of shape (n_years*12,)
         Target monthly temperature values.
     max_order : Integer
         Maximum considered order of Fourier Series for which to fit.
@@ -167,22 +161,22 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     -------
     selected_order : Integer
         Selected order of Fourier Series.
-    coeffs : array-like of size (4*n_Sel-2,)
+    coeffs : array-like of size (4*n_sel,)
         Fitted coefficients for the selected order of Fourier Series.
-    predictions : array-like of size (n_samples,)
+    predictions : array-like of size (n_years*12,)
         Predicted monthly values from final model.
 
     """
 
     bic_score = np.zeros([max_order])
 
-    for i_n in range(1, max_order + 1):
+    for i_order in range(1, max_order + 1):
 
-        _, predictions = fit_fourier_series_np(yearly_predictor, monthly_target, i_n)
+        _, predictions = fit_fourier_series_np(yearly_predictor, monthly_target, i_order)
         # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
         mse = np.mean((predictions - monthly_target) ** 2)
 
-        bic_score[i_n - 1] = calculate_bic(len(monthly_target), i_n, mse)
+        bic_score[i_order - 1] = calculate_bic(len(monthly_target), i_order, mse)
         # TODO: we could stop fitting when we hit a minimum, similar to _minimize_local_discrete
 
     selected_order = np.argmin(bic_score) + 1
@@ -193,26 +187,25 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
         order=selected_order,
     )
 
-    coeffs = (
-        np.zeros([max_order * 4]) * np.nan
-    )  # removed -2, because we always return all coefficients
-    coeffs[: selected_order * 4] = (
-        coeffs_fit  # need the coeff array to be the same size for all orders
-    )
+    # need the coeff array to be the same size for all orders
+    coeffs = np.zeros([max_order * 4]) * np.nan
+    coeffs[: selected_order * 4] = coeffs_fit  
 
     return selected_order, coeffs, predictions
 
 
 def fit_to_bic_xr(yearly_predictor, monthly_target, max_order=6):
-    """fit Fourier Series using BIC score to select order - xarray wrapper
+    """fit Fourier Series to every gridcell using BIC score to select order - xarray wrapper
+    Repeats yearly values for every month before passing to :func:`fit_to_bic_np`
 
     Parameters
     ----------
-    yearly_predictor : xr.DataArray
-        Yearly temperature values used as predictors, must contain dims: ("sample","cell").
+    yearly_predictor : xr.DataArray of shape (n_years, gridcell)
+        Yearly temperature values used as predictors
         Containing one value per year.
-    monthly_target : xr.DataArray
-        Monthly temperature values to fit for, must contain dims: ("sample","cell").
+    monthly_target : xr.DataArray of shape (n_months, gridcell)
+        Monthly temperature values to fit for, containing one value per month, for every year in yearly_predictor.
+        So n_months = 12*n_years
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
         maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
