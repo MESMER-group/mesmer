@@ -72,8 +72,10 @@ class PowerTransformerVariableLambda(PowerTransformer):
         self : object
         """
 
-        #TODO: infer n_index from data
-        monthly_residuals = monthly_residuals.copy()  # force copy so that fit does not change X inplace
+        # TODO: infer n_index from data
+        monthly_residuals = (
+            monthly_residuals.copy()
+        )  # force copy so that fit does not change X inplace
 
         self.coeffs_ = np.array(
             Parallel(n_jobs=-1, verbose=False)(
