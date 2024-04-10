@@ -164,32 +164,34 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return transformed
 
-    def transform_fmin(self, X, X_func):
+    def transform_fmin(self, monthly_residuals, yearly_T):
         """Apply the power transform to each feature using the fitted lambdas.
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        monthly_residuals : array-like, shape (n_years, n_gridcells)
             The data to be transformed using a power transformation.
+        yearly_T: array-like, shape (n_years, n_gridcells)
+            The yearly temperature values used as predictors for the lambdas.
         Returns
         -------
-        X_trans : array-like, shape (n_samples, n_features)
-            The transformed data.
+        transformed_monthly_resids : array-like, shape (n_years, n_gridcells)
+            The transformed monthly residuals.
         """
-        lambdas = self._get_yeo_johnson_lambdas(X_func)
+        lambdas = self._get_yeo_johnson_lambdas(yearly_T)
 
-        X_trans = np.zeros_like(X)
+        transformed_monthly_resids = np.zeros_like(monthly_residuals)
 
         # for i, lmbda in enumerate(lambdas.T):
         #     for j,j_lmbda in enumerate(lmbda):
         #         with np.errstate(invalid='ignore'):  # hide NaN warnings
-        #             X_trans[j, i] = self._yeo_johnson_transform(X[j, i], j_lmbda)
+        #             transformed_monthly_resids[j, i] = self._yeo_johnson_transform(monthly_residuals[j, i], j_lmbda)
         for i, lmbda in enumerate(lambdas.T):
-            X_trans[:, i] = self._yeo_johnson_transform_fmin(X[:, i], lmbda)
+            transformed_monthly_resids[:, i] = self._yeo_johnson_transform_fmin(monthly_residuals[:, i], lmbda)
 
         if self.standardize:
-            X_trans = self._scaler.transform(X_trans)
+            transformed_monthly_resids = self._scaler.transform(transformed_monthly_resids)
 
-        return X_trans
+        return transformed_monthly_resids
 
     def _get_yeo_johnson_lambdas(self, X_func):
 
