@@ -47,6 +47,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
     TBD
     """
 
+    #TODO: we dont actually save the lambdas anywhere, should we? then adjust documentation
+
     def __init__(self, **kwargs):
         super().__init__(self, **kwargs)
 
