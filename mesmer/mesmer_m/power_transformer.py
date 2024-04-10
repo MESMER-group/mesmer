@@ -111,18 +111,18 @@ class PowerTransformerVariableLambda(PowerTransformer):
         def _neg_log_likelihood(coeffs):
             """Return the negative log likelihood of the observed local monthly residual temperatures
             as a function of lambda."""
-            lambdas = lambda_function(coeffs, local_yearly_T)
+            lmbda = lambda_function(coeffs, local_yearly_T)
             # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
             # for i, lmbda in enumerate(lambdas):
             #     x_trans[i] = self._yeo_johnson_transform(x[i], lmbda)
 
             # version with own power transform
-            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(local_monthly_residuals, lambdas)
+            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(local_monthly_residuals, lmbda)
 
             n_samples = local_monthly_residuals.shape[0]
             loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
-            loglikelihood += ((lambdas - 1) * np.sign(local_monthly_residuals) * np.log1p(np.abs(local_monthly_residuals))).sum()
+            loglikelihood += ((lmbda - 1) * np.sign(local_monthly_residuals) * np.log1p(np.abs(local_monthly_residuals))).sum()
 
             return -loglikelihood
 
