@@ -194,14 +194,17 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return transformed_monthly_resids
 
-    def _get_yeo_johnson_lambdas(self, X_func):
+    def _get_yeo_johnson_lambdas(self, yearly_T):
+        #TODO: check the dimensions in all of this
 
-        lambdas = np.zeros_like(X_func)
-        i = 0
-        for a, b in zip(self.coeffs_, X_func.T):
-            lambdas[:, i] = lambda_function(a, b)
-            i += 1
+        lambdas = np.zeros_like(yearly_T)
+        gridcell = 0
+        # TODO: sure yearly_T.T gives local yearly T?
+        for coeffs, local_yearly_T in zip(self.coeffs_, yearly_T.T):
+            lambdas[:, gridcell] = lambda_function(coeffs, local_yearly_T)
+            gridcell += 1
 
+        # TODO: this should not be necessary?
         lambdas = np.where(lambdas < 0, 0, lambdas)
         lambdas = np.where(lambdas > 2, 2, lambdas)
 
