@@ -111,18 +111,18 @@ class PowerTransformerVariableLambda(PowerTransformer):
         def _neg_log_likelihood(coeffs):
             """Return the negative log likelihood of the observed local monthly residual temperatures
             as a function of lambda."""
-            lmbda = lambda_function(coeffs, local_yearly_T)
+            lambdas = lambda_function(coeffs, local_yearly_T)
             # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
             # for i, lmbda in enumerate(lambdas):
             #     x_trans[i] = self._yeo_johnson_transform(x[i], lmbda)
 
             # version with own power transform
-            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(local_monthly_residuals, lmbda)
+            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(local_monthly_residuals, lambdas)
 
             n_samples = local_monthly_residuals.shape[0]
             loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
-            loglikelihood += ((lmbda - 1) * np.sign(local_monthly_residuals) * np.log1p(np.abs(local_monthly_residuals))).sum()
+            loglikelihood += ((lambdas - 1) * np.sign(local_monthly_residuals) * np.log1p(np.abs(local_monthly_residuals))).sum()
 
             return -loglikelihood
 
@@ -142,33 +142,27 @@ class PowerTransformerVariableLambda(PowerTransformer):
             jac=rosen_der,
         ).x
 
-    def _yeo_johnson_transform_fmin(self, x, lmbda):
-        """Return transformed input x following Yeo-Johnson transform with
+    def _yeo_johnson_transform_fmin(self, local_monthly_residuals, lambdas):
+        """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
         parameter lambda.
         """
 
-        out = np.zeros_like(x)
-        # pos = x >= 0  # binary mask
-        # when x >= 0
-        # and lmbda = 0
-        pos_a = (x >= 0) & (np.abs(lmbda) <= np.spacing(1.0))
-        # and lmbda != 0
-        pos_b = (x >= 0) & (np.abs(lmbda) > np.spacing(1.0))
-        # when x<0
-        # and lambda != 2
-        pos_c = (x < 0) & (np.abs(lmbda - 2) > np.spacing(1.0))
-        # and lambda == 2
-        pos_d = (x < 0) & (np.abs(lmbda - 2) <= np.spacing(1.0))
+        transformed = np.zeros_like(local_monthly_residuals)
+        # get positions of four cases:
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= np.spacing(1.0))
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > np.spacing(1.0))
+        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
+        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
 
         # assign values for the four cases
-        out[pos_a] = np.log1p(x[pos_a])
-        out[pos_b] = (np.power(x[pos_b] + 1, lmbda[pos_b]) - 1) / lmbda[pos_b]
-        out[pos_c] = -(np.power(-x[pos_c] + 1, 2 - lmbda[pos_c]) - 1) / (
-            2 - lmbda[pos_c]
+        transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
+        transformed[pos_b] = (np.power(local_monthly_residuals[pos_b] + 1, lambdas[pos_b]) - 1) / lambdas[pos_b]
+        transformed[pos_c] = -(np.power(-local_monthly_residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1) / (
+            2 - lambdas[pos_c]
         )
-        out[pos_d] = -np.log1p(-x[pos_d])
+        transformed[pos_d] = -np.log1p(-local_monthly_residuals[pos_d])
 
-        return out
+        return transformed
 
     def transform_fmin(self, X, X_func):
         """Apply the power transform to each feature using the fitted lambdas.
