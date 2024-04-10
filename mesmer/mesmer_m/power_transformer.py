@@ -6,8 +6,8 @@ from scipy.optimize import minimize, rosen_der
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
-def lambda_function(coeff, local_yearly_T):
-    return 2 / (1 + coeff[0] * np.exp(local_yearly_T * coeff[1]))
+def lambda_function(coeffs, local_yearly_T):
+    return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
 
 
 class PowerTransformerVariableLambda(PowerTransformer):
