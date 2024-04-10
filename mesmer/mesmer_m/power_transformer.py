@@ -6,8 +6,8 @@ from scipy.optimize import minimize, rosen_der
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
-def lambda_function(coeff, x):
-    return 2 / (1 + coeff[0] * np.exp(x * coeff[1]))
+def lambda_function(coeff, local_yearly_T):
+    return 2 / (1 + coeff[0] * np.exp(local_yearly_T * coeff[1]))
 
 
 class PowerTransformerVariableLambda(PowerTransformer):
@@ -93,15 +93,15 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return self
 
-    def _yeo_johnson_optimize_fmin(self, x, x_func):
+    def _yeo_johnson_optimize_fmin(self, local_monthly_residuals, local_yearly_T):
         """Find and return optimal lambda parameter of the Yeo-Johnson
-        transform by MLE, for observed data x.
+        transform by MLE, for observed local monthly residual temperatures.
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
 
         def _neg_log_likelihood(coeff):
-            """Return the negative log likelihood of the observed data x as a
-            function of lambda."""
+            """Return the negative log likelihood of the observed local monthly residual temperatures
+            as a function of lambda."""
             lambdas = lambda_function(coeff, x=x_func)
             # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
