@@ -13,7 +13,7 @@ def lambda_function(coeff, x):
 class PowerTransformerVariableLambda(PowerTransformer):
     """Apply a power transform featurewise to make data more Gaussian-like.
     The class inherits from Sklearn's Power transofrmer class. It is modified
-    to allow for traansformation parameters (lambda) which have a functional
+    to allow for transformation parameters (lambda) which have a functional
     dependency on spatially resolved yearly mean temperature.
 
     Please refer to [1] for a description of the  Power transformer class.
@@ -34,13 +34,13 @@ class PowerTransformerVariableLambda(PowerTransformer):
                 def lambda_function(coeff, x):
                     return(2/(1+coeff[0]*np.exp(x*coeff[1])))
                 in this case n_functional_parameters = 2
-            e.g. for polynomial dependency following:
+            e.g. for polynomial dependency :
                 def lambda_function(coeff, x):
                     return(coeff[0] + coeff[1]*x + coeff[2]*x**2 )
                 in this case n_functional_parameters = 3
     lambdas_ : ndarray of float of shape (n_features, n_years)
         The parameters of the power transformation for the selected features.
-        Calculated for each feature using  lambda_function
+        Calculated for each feature using lambda_function
 
     References
     ----------
@@ -56,26 +56,29 @@ class PowerTransformerVariableLambda(PowerTransformer):
     def __init__(self, **kwargs):
         super().__init__(self, **kwargs)
 
-    def fit_fmin(self, X, X_func, n_index):
-        """Estimate the optimal parameter lambda for each feature.
+    def fit_fmin(self, monthly_residuals, yearly_T, n_index):
+        """Estimate the optimal parameter lambda for each month and gridcell.
         The optimal lambda parameter for minimizing skewness is estimated on
-        each feature independently using maximum likelihood.
+        each month and gridcell independently using maximum likelihood.
         Parameters
         ----------
-        X : ndarray
-            array-like, shape (n_samples, n_features)
-            The data used to estimate the optimal transformation parameters.
-        X_func : temp values to calculate lmbda as lmbda = a*y + b
+        monthly_residuals : ndarray of shape (n_years, n_gridcells)
+            Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters.
+            Contains the value of one month for all years, e.g. all January values.
+        yearly_T :  ndarray of shape (n_years, n_gridcells)
+            yearly temperature values used as predictors for lambda.
         Returns
         -------
         self : object
         """
-        X = X.copy()  # force copy so that fit does not change X inplace
+
+        #TODO: infer n_index from data
+        monthly_residuals = monthly_residuals.copy()  # force copy so that fit does not change X inplace
 
         self.coeffs_ = np.array(
             Parallel(n_jobs=-1, verbose=False)(
                 delayed(self._yeo_johnson_optimize_fmin)(
-                    X[:, i_grid], X_func[:, i_grid]
+                    monthly_residuals[:, i_grid], yearly_T[:, i_grid]
                 )
                 for i_grid in np.arange(n_index)
             )
@@ -83,13 +86,13 @@ class PowerTransformerVariableLambda(PowerTransformer):
         # self.coeffs_ = np.array([self._yeo_johnson_optimize_fmin(X[:,i_grid], X_func[:,i_grid]) for i_grid in tqdm(np.arange(n_index),  desc = 'Optimizing Fmin:', position = 0, leave = True, file=sys.stdout)])
         # xarray: optim_function(col) for col in X.T
         # print(self.coeffs_.shape)
-        self.mins_ = np.amin(X, axis=0)
-        self.maxs_ = np.amax(X, axis=0)
+        self.mins_ = np.amin(monthly_residuals, axis=0)
+        self.maxs_ = np.amax(monthly_residuals, axis=0)
         # print(self.coeffs_)
 
         if self.standardize:
             self._scaler = StandardScaler(copy=True)
-            self._scaler.fit(X)
+            self._scaler.fit(monthly_residuals)
 
         return self
 
