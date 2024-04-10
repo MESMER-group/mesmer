@@ -205,10 +205,10 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order=6):
 
     Parameters
     ----------
-    yearly_predictor : xr.DataArray of shape (n_years, gridcell)
+    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
         Yearly temperature values used as predictors
         Containing one value per year.
-    monthly_target : xr.DataArray of shape (n_months, gridcell)
+    monthly_target : xr.DataArray of shape (n_months, n_gridcells)
         Monthly temperature values to fit for, containing one value per month, for every year in yearly_predictor.
         So n_months = 12*n_years
     max_order : Integer, default 6
