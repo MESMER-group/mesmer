@@ -210,7 +210,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return lambdas
 
-    def inverse_transform_fmin(self, X, X_func):
+    def inverse_transform_fmin(self, transformed_monthly_T, yearly_T):
         """Apply the inverse power transformation using the fitted lambdas.
         The inverse of the Yeo-Johnson transformation is given by::
             if X >= 0 and lambda_ == 0:
@@ -223,30 +223,36 @@ class PowerTransformerVariableLambda(PowerTransformer):
                 X = 1 - exp(-X_trans)
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        transformed_monthly_T : array-like, shape (n_years, n_gridcells)
             The transformed data.
+        yearly_T: array-like, shape (n_years, n_gridcells)
+            The yearly temperature values used as predictors for the lambdas using the fitted self.coeffs_.
         Returns
         -------
-        X : array-like, shape (n_samples, n_features)
-            The original data
+        inverted_monthly_T : array-like, shape (n_years, n_gridcells)
+            The inverted, i.e. original, monthly temperature values.
         """
 
         if self.standardize:
-            X = self._scaler.inverse_transform(X)
+            transformed_monthly_T = self._scaler.inverse_transform(transformed_monthly_T)
 
-        X_inv = np.zeros_like(X)
+        inverted_monthly_T = np.zeros_like(transformed_monthly_T)
 
-        lambdas = self._get_yeo_johnson_lambdas(X_func)
+        lambdas = self._get_yeo_johnson_lambdas(yearly_T)
 
-        for i, lmbda in enumerate(lambdas.T):
+        # TODO: what actually is i? years or gridcells
+        for i, lmbda in enumerate(lambdas.T): 
+            #TODO: what is j? years or gridcells?
             for j, j_lmbda in enumerate(lmbda):
                 with np.errstate(invalid="ignore"):  # hide NaN warnings
-                    X_inv[j, i] = self._yeo_johnson_inverse_transform(X[j, i], j_lmbda)
-            X_inv[:, i] = np.where(
-                X_inv[:, i] < self.mins_[i], self.mins_[i], X_inv[:, i]
+                    inverted_monthly_T[j, i] = self._yeo_johnson_inverse_transform(transformed_monthly_T[j, i], j_lmbda)
+
+            # TODO: what does this mean?
+            inverted_monthly_T[:, i] = np.where(
+                inverted_monthly_T[:, i] < self.mins_[i], self.mins_[i], inverted_monthly_T[:, i]
             )
-            X_inv[:, i] = np.where(
-                X_inv[:, i] > self.maxs_[i], self.maxs_[i], X_inv[:, i]
+            inverted_monthly_T[:, i] = np.where(
+                inverted_monthly_T[:, i] > self.maxs_[i], self.maxs_[i], inverted_monthly_T[:, i]
             )
 
-        return X_inv
+        return inverted_monthly_T
