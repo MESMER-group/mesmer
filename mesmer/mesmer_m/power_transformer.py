@@ -58,15 +58,15 @@ class PowerTransformerVariableLambda(PowerTransformer):
         Parameters
         ----------
         monthly_residuals : ndarray of shape (n_years, n_gridcells)
-            Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters.
+            Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
             Contains the value of one month for all years, e.g. all January values.
         yearly_T :  ndarray of shape (n_years, n_gridcells)
-            yearly temperature values used as predictors for lambda.
+            yearly temperature values used as predictors for the lambdas.
         Returns
         -------
         self : object
         """
-
+        # TODO: write what is in self
         # TODO: infer n_gridcells from data
         monthly_residuals = (
             monthly_residuals.copy()
@@ -97,33 +97,43 @@ class PowerTransformerVariableLambda(PowerTransformer):
         """Find and return optimal lambda parameter of the Yeo-Johnson
         transform by MLE, for observed local monthly residual temperatures.
         Like for Box-Cox, MLE is done via the brent optimizer.
+        Parameters
+        ----------
+        local_monthly_residuals : ndarray of shape (n_years,)
+            Monthly residuals of one gridcell, used to fit for the optimal lambda.
+        local_yearly_T :  ndarray of shape (n_years,)
+            yearly temperature values of one gridcell used as predictor for lambda.
+        Returns
+        -------
+        res: optimized coefficients for lambda function
         """
 
-        def _neg_log_likelihood(coeff):
+        def _neg_log_likelihood(coeffs):
             """Return the negative log likelihood of the observed local monthly residual temperatures
             as a function of lambda."""
-            lambdas = lambda_function(coeff, x=x_func)
+            lambdas = lambda_function(coeffs, local_yearly_T)
             # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
             # for i, lmbda in enumerate(lambdas):
             #     x_trans[i] = self._yeo_johnson_transform(x[i], lmbda)
 
             # version with own power transform
-            x_trans = self._yeo_johnson_transform_fmin(x, lambdas)
+            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(local_monthly_residuals, lambdas)
 
-            n_samples = x.shape[0]
-            loglike = -n_samples / 2 * np.log(x_trans.var())
-            loglike += ((lambdas - 1) * np.sign(x) * np.log1p(np.abs(x))).sum()
+            n_samples = local_monthly_residuals.shape[0]
+            loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
+            loglikelihood += ((lambdas - 1) * np.sign(local_monthly_residuals) * np.log1p(np.abs(local_monthly_residuals))).sum()
 
-            return -loglike
+            return -loglikelihood
 
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
-        x = x[~np.isnan(x)]
-        x_func = x_func[~np.isnan(x_func)]
+        local_monthly_residuals = local_monthly_residuals[~np.isnan(local_monthly_residuals)]
+        local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
         # choosing bracket -2, 2 like for boxcox
         bounds = np.c_[[0, -0.1], [1, 0.1]]
+        #TODO: write first guess variable for readability
         return minimize(
             _neg_log_likelihood,
             np.array([0.01, 0.01]),
