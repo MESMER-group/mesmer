@@ -50,10 +50,11 @@ class PowerTransformerVariableLambda(PowerTransformer):
     def __init__(self, **kwargs):
         super().__init__(self, **kwargs)
 
-    def fit_fmin(self, monthly_residuals, yearly_T, n_index):
-        """Estimate the optimal parameter lambda for each month and gridcell.
+    def fit_fmin(self, monthly_residuals, yearly_T, n_gridcells):
+        """Estimate the optimal parameter lambda for each gridcell, given 
+        temperature residuals for one month of the year.
         The optimal lambda parameter for minimizing skewness is estimated on
-        each month and gridcell independently using maximum likelihood.
+        each gridcell independently using maximum likelihood.
         Parameters
         ----------
         monthly_residuals : ndarray of shape (n_years, n_gridcells)
@@ -66,7 +67,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         self : object
         """
 
-        # TODO: infer n_index from data
+        # TODO: infer n_gridcells from data
         monthly_residuals = (
             monthly_residuals.copy()
         )  # force copy so that fit does not change X inplace
@@ -74,9 +75,9 @@ class PowerTransformerVariableLambda(PowerTransformer):
         self.coeffs_ = np.array(
             Parallel(n_jobs=-1, verbose=False)(
                 delayed(self._yeo_johnson_optimize_fmin)(
-                    monthly_residuals[:, i_grid], yearly_T[:, i_grid]
+                    monthly_residuals[:, gridcell], yearly_T[:, gridcell]
                 )
-                for i_grid in np.arange(n_index)
+                for gridcell in np.arange(n_gridcells)
             )
         )  # ,  desc = 'Optimizing Fmin:', position = 0, leave = True, file=sys.stdout)))
         # self.coeffs_ = np.array([self._yeo_johnson_optimize_fmin(X[:,i_grid], X_func[:,i_grid]) for i_grid in tqdm(np.arange(n_index),  desc = 'Optimizing Fmin:', position = 0, leave = True, file=sys.stdout)])
