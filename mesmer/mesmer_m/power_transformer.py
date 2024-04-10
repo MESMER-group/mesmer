@@ -11,10 +11,11 @@ def lambda_function(coeff, x):
 
 
 class PowerTransformerVariableLambda(PowerTransformer):
-    """Apply a power transform featurewise to make data more Gaussian-like.
+    """Apply a power transform gridcellwise to make monthly residuals more Gaussian-like.
     The class inherits from Sklearn's Power transofrmer class. It is modified
     to allow for transformation parameters (lambda) which have a functional
-    dependency on spatially resolved yearly mean temperature.
+    dependency on spatially resolved yearly mean temperature. 
+    Every month requires its own PowerTransform.
 
     Please refer to [1] for a description of the  Power transformer class.
     Please refer to [2] for an explanation of the modifications.
@@ -22,25 +23,18 @@ class PowerTransformerVariableLambda(PowerTransformer):
     Parameters
     ----------
     **kwargs :
-        refer to the Power Transformer class to see a full list of possible
-        options
+        refer to the Power Transformer class to see a full list of possible options
 
     Attributes
     ----------
-    coeffs_ : ndarray of shape (n_featuers, n_functional_parameters)
-        The parameters of the functional dependency lambda follows.
-        Defined via function lambda_function(coeff, x)
-            e.g. for exponential dependency following [2]:
-                def lambda_function(coeff, x):
-                    return(2/(1+coeff[0]*np.exp(x*coeff[1])))
-                in this case n_functional_parameters = 2
-            e.g. for polynomial dependency :
-                def lambda_function(coeff, x):
-                    return(coeff[0] + coeff[1]*x + coeff[2]*x**2 )
-                in this case n_functional_parameters = 3
-    lambdas_ : ndarray of float of shape (n_features, n_years)
-        The parameters of the power transformation for the selected features.
-        Calculated for each feature using lambda_function
+    coeffs_ : ndarray of shape (n_gridcell, n_coefficients)
+        The coefficients to calculate lambda depending on the local yearly temperature.
+        Defined via function lambda_function(coeff, local_yearly_T) as exponential dependency following [2]:
+            def lambda_function(coeff, local_yearly_T):
+                return(2/(1+coeff[0]*np.exp(local_yearly_T*coeff[1])))
+            and n_coefficients = 2
+    lambdas_ : ndarray of float of shape (n_gridcell, n_years)
+        The parameters of the power transformation for each gridcell, calculated using lambda_function.
 
     References
     ----------
