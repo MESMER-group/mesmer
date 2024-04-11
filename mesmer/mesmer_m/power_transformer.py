@@ -76,7 +76,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         self.coeffs_ = np.array(
             Parallel(n_jobs=-1, verbose=False)(
-                delayed(self._yeo_johnson_optimize_fmin)(
+                delayed(self._yeo_johnson_optimize_lambda)(
                     monthly_residuals[:, gridcell], yearly_T[:, gridcell]
                 )
                 for gridcell in np.arange(n_gridcells)
