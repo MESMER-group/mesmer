@@ -52,7 +52,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
     def __init__(self, **kwargs):
         super().__init__(self, **kwargs)
 
-    def fit_fmin(self, monthly_residuals, yearly_T, n_gridcells):
+    def fit(self, monthly_residuals, yearly_T, n_gridcells):
         """Estimate the optimal parameter lambda for each gridcell, given
         temperature residuals for one month of the year.
         The optimal lambda parameter for minimizing skewness is estimated on
@@ -95,7 +95,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return self
 
-    def _yeo_johnson_optimize_fmin(self, local_monthly_residuals, local_yearly_T):
+    def _yeo_johnson_optimize_lambda(self, local_monthly_residuals, local_yearly_T):
         """Find and return optimal lambda parameter of the Yeo-Johnson
         transform by MLE, for observed local monthly residual temperatures.
         Like for Box-Cox, MLE is done via the brent optimizer.
@@ -120,7 +120,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
             #     x_trans[i] = self._yeo_johnson_transform(x[i], lmbda)
 
             # version with own power transform
-            transformed_local_monthly_resids = self._yeo_johnson_transform_fmin(
+            transformed_local_monthly_resids = self._yeo_johnson_transform(
                 local_monthly_residuals, lambdas
             )
 
@@ -154,7 +154,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
             jac=rosen_der,
         ).x
 
-    def _yeo_johnson_transform_fmin(self, local_monthly_residuals, lambdas):
+    def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
         """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
         parameter lambda.
         """
@@ -178,7 +178,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return transformed
 
-    def transform_fmin(self, monthly_residuals, yearly_T):
+    def transform(self, monthly_residuals, yearly_T):
         """Apply the power transform to each feature using the fitted lambdas.
         Parameters
         ----------
@@ -201,7 +201,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         #         with np.errstate(invalid='ignore'):  # hide NaN warnings
         #             transformed_monthly_resids[j, i] = self._yeo_johnson_transform(monthly_residuals[j, i], j_lmbda)
         for i, lmbda in enumerate(lambdas.T):
-            transformed_monthly_resids[:, i] = self._yeo_johnson_transform_fmin(
+            transformed_monthly_resids[:, i] = self._yeo_johnson_transform(
                 monthly_residuals[:, i], lmbda
             )
 
@@ -228,7 +228,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return lambdas
 
-    def inverse_transform_fmin(self, transformed_monthly_T, yearly_T):
+    def inverse_transform(self, transformed_monthly_T, yearly_T):
         """Apply the inverse power transformation using the fitted lambdas.
         The inverse of the Yeo-Johnson transformation is given by::
             if X >= 0 and lambda_ == 0:
