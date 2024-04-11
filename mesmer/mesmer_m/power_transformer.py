@@ -250,7 +250,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         inverted_monthly_T : array-like, shape (n_years, n_gridcells)
             The inverted, i.e. original, monthly temperature values.
         """
-
+        # TODO: if we save the lambdas, we would not need to give yearly temperaure here
         if self.standardize:
             transformed_monthly_T = self._scaler.inverse_transform(
                 transformed_monthly_T
