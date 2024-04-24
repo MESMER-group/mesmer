@@ -143,8 +143,9 @@ class PowerTransformerVariableLambda(PowerTransformer):
         ]
         local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
-        # choosing bracket -2, 2 like for boxcox
-        bounds = np.c_[[0, 0], [1, 0.1]]
+        # bounds for the parameters of the lambda function
+        # lower and upper bounds for xi0 and xi1, the coefficients of the lambda function
+        bounds = np.array([[0, 1], [0, 0.1]])
         # TODO: write first guess variable for readability
         return minimize(
             _neg_log_likelihood,
