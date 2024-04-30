@@ -67,3 +67,18 @@ def test_yeo_johnson_transform():
     expected = np.array([0,1,0,0,-1,0])
 
     np.testing.assert_equal(result, expected)
+
+def test_inverse_transform():
+    monthly_residuals = np.ones((10,10))
+    yearly_T = np.zeros((10,10))
+
+    pt = PowerTransformerVariableLambda()
+    pt.standardize = False
+    pt.coeffs_ = np.tile([1,0], (10, 1))
+    pt.mins_ = np.amin(monthly_residuals, axis=0)
+    pt.maxs_ = np.amax(monthly_residuals, axis=0)
+
+    transformed = pt.transform(monthly_residuals, yearly_T)
+    result = pt.inverse_transform(transformed, yearly_T)
+
+    np.testing.assert_equal(result, monthly_residuals)
