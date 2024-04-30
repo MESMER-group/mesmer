@@ -25,3 +25,17 @@ def test_lambda_function():
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
     expected_lambdas = np.array([1.0015, 1.001 , 1.0005, 1.    , 0.9995, 0.999 , 0.9985])
 
+
+def test_fit_power_transformer():
+    # with enough random data points the fit should be close to 1 and 0
+    gridcells = 1
+    years = 100000
+    monthly_residuals = np.random.rand(years, gridcells)*10
+    yearly_T = np.ones((years, gridcells))
+    pt = PowerTransformerVariableLambda()
+    pt.fit(monthly_residuals, yearly_T, gridcells)
+    pt.coeffs_
+
+    result = pt.coeffs_[0]
+    expected = np.array([1, 0])
+    np.testing.assert_allclose(result, expected, rtol=1e-10, atol=1e-10)
