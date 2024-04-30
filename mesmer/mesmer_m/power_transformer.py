@@ -147,7 +147,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         bounds = np.c_[[0, -0.1], [1, 0.1]]
         # first guess is that data is already normal distributed
         firstguess = np.array([1, 0])
-        
+
         return minimize(
             _neg_log_likelihood,
             firstguess,
