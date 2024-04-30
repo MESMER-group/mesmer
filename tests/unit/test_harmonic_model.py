@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
 
-from mesmer.mesmer_m.harmonic_model import (
-    fit_to_bic_np,
-    generate_fourier_series_np,
-)
+from mesmer.mesmer_m.harmonic_model import fit_to_bic_np, generate_fourier_series_np
 
 
 def test_generate_fourier_series_np():
