@@ -1,11 +1,8 @@
 import numpy as np
 import pytest
-import xarray as xr
 
 from mesmer.mesmer_m.harmonic_model import (
-    fit_fourier_series_np,
     fit_to_bic_np,
-    fit_to_bic_xr,
     generate_fourier_series_np,
 )
 
