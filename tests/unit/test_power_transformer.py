@@ -5,32 +5,33 @@ import xarray as xr
 import mesmer
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
-    lambda_function
+    lambda_function,
 )
+
 
 def test_lambda_function():
     # Note that we test with normally distributed data
     # which should make lambda close to 1 and
     # the coefficients close to 1 and 0
-    # but for the sake of testing, we set the coefficients slighly differently 
+    # but for the sake of testing, we set the coefficients slighly differently
     coeffs = [1, 0.001]
-    local_yearly_T_test_data = np.random.rand(10)*100 
+    local_yearly_T_test_data = np.random.rand(10) * 100
 
     # even for random numbers, the lambdas should always be between 0 and 2
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
 
     assert np.all(lambdas >= 0) and np.all(lambdas <= 2)
 
-    local_yearly_T_test_data = np.array([-3,-2,-1,0,1,2,3])
+    local_yearly_T_test_data = np.array([-3, -2, -1, 0, 1, 2, 3])
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
-    expected_lambdas = np.array([1.0015, 1.001 , 1.0005, 1.    , 0.9995, 0.999 , 0.9985])
+    expected_lambdas = np.array([1.0015, 1.001, 1.0005, 1.0, 0.9995, 0.999, 0.9985])
 
 
 def test_fit_power_transformer():
     # with enough random data points the fit should be close to 1 and 0
     gridcells = 1
     years = 100000
-    monthly_residuals = np.random.rand(years, gridcells)*10
+    monthly_residuals = np.random.rand(years, gridcells) * 10
     yearly_T = np.ones((years, gridcells))
     pt = PowerTransformerVariableLambda()
     pt.fit(monthly_residuals, yearly_T, gridcells)
