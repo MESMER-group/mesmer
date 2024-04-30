@@ -20,8 +20,10 @@ def test_lambda_function():
     assert np.all(lambdas >= 0) and np.all(lambdas <= 2)
 
     local_yearly_T_test_data = np.array([-3, -2, -1, 0, 1, 2, 3])
+
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
     expected_lambdas = np.array([1.0015, 1.001, 1.0005, 1.0, 0.9995, 0.999, 0.9985])
+
     np.testing.assert_equal(lambdas, expected_lambdas)
 
 
@@ -31,10 +33,37 @@ def test_fit_power_transformer():
     years = 100000
     monthly_residuals = np.random.rand(years, gridcells) * 10
     yearly_T = np.ones((years, gridcells))
+
     pt = PowerTransformerVariableLambda()
     pt.fit(monthly_residuals, yearly_T, gridcells)
     pt.coeffs_
 
     result = pt.coeffs_[0]
     expected = np.array([1, 0])
+
     np.testing.assert_allclose(result, expected, rtol=1e-10, atol=1e-10)
+
+def test_transform():
+    pt = PowerTransformerVariableLambda()
+    pt.standardize = False
+    pt.coeffs_ = np.tile([1,0], (10, 1))
+
+    monthly_residuals = np.ones((10,10))
+    yearly_T = np.zeros((10,10))
+
+    result = pt.transform(monthly_residuals, yearly_T)
+    expected = np.ones((10,10))
+
+    np.testing.assert_equal(result, expected)
+
+def test_yeo_johnson_transform():
+    pt = PowerTransformerVariableLambda()
+
+    # test all possible combinations of local_monthly_residuals and lambdas
+    local_monthly_residuals = np.array([0,1,0,1,-1,-1])
+    lambdas = np.array([1,1,0,0,1,2])
+
+    result = pt._yeo_johnson_transform(local_monthly_residuals, lambdas)
+    expected = np.array([0,1,0,0,-1,0])
+
+    np.testing.assert_equal(result, expected)
