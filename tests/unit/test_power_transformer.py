@@ -1,8 +1,5 @@
 import numpy as np
-import pytest
-import xarray as xr
 
-import mesmer
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
     lambda_function,
@@ -25,6 +22,7 @@ def test_lambda_function():
     local_yearly_T_test_data = np.array([-3, -2, -1, 0, 1, 2, 3])
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
     expected_lambdas = np.array([1.0015, 1.001, 1.0005, 1.0, 0.9995, 0.999, 0.9985])
+    np.testing.assert_equal(lambdas, expected_lambdas)
 
 
 def test_fit_power_transformer():
