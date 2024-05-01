@@ -2,14 +2,14 @@
 Configuration file for cmip6-ng, tas, hist + all ssps
 
 """
-import os.path
 
+import os.path
 
 
 class config_mesmer:
     """
     This class defines the full configuration of MESMER.
-    
+
     Inputs:
      - paths: information on what paths to use.
         If nothing is provided in 'paths', default is to assume paths for tests.
@@ -18,31 +18,30 @@ class config_mesmer:
      - gen: generation of CMIP data (default: 6). If some paths are provided in 'paths', it MUST be consistent with 'gen'.
      - esms: list of the ESMs used. The default is 'all', BUT if no paths are provided, it is assumed that only data for tests are used, then only ["IPSL-CM6A-LR"].
     """
-    
-    def __init__(self, paths={}, gen=6, esms='all'):
-    
+
+    def __init__(self, paths={}, gen=6, esms="all"):
+
         # preparing some parameters
         self.paths = paths
         self.gen = gen
         self.esms = esms
-        
+
         # Handling paths & directories
         self.paths_directories()
-        
+
         # Handling flexible configuration
         self.flex_config()
 
         # Handling non-flexible configuration
         self.nonflex_config()
-        
+
         return
-    
-    
+
     def paths_directories(self):
-        
+
         # ---------------------------------------------------------------------------------
         # PATHS
-        
+
         # path to mesmer root directory can be found in a slightly sneaky way
         # like this
         MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
@@ -53,109 +52,119 @@ class config_mesmer:
         TEST_DATA_ROOT = os.path.join(
             MESMER_ROOT, "tests", "test-data", "calibrate-coarse-grid"
         )
-        
+
         # ---------------------------------------------------------------------------------
         # DIRECTORIES
         # checking if any is unknown:
         for key_path in self.paths:
-            if key_path not in ['dir_cmipng', 'dir_cmip_X', 'dir_obs', 'dir_aux', 'dir_mesmer_params', 'dir_mesmer_emus', 'dir_stats', 'dir_plots']:
-                raise Exception('Unknown type of directory provided in "paths", please check available options.')
-                
+            if key_path not in [
+                "dir_cmipng",
+                "dir_cmip_X",
+                "dir_obs",
+                "dir_aux",
+                "dir_mesmer_params",
+                "dir_mesmer_emus",
+                "dir_stats",
+                "dir_plots",
+            ]:
+                raise Exception(
+                    'Unknown type of directory provided in "paths", please check available options.'
+                )
+
         # cmip-ng
         gen = 6  # generation
-        if 'dir_cmipng' in self.paths:
-            self.dir_cmipng = self.paths['dir_cmipng']
+        if "dir_cmipng" in self.paths:
+            self.dir_cmipng = self.paths["dir_cmipng"]
         else:
             self.dir_cmipng = os.path.join(
                 TEST_DATA_ROOT, "cmip{}-ng/".format(gen)
             )  # TODO: remove need for trailing "/" here
 
         # cmip-x: climate extremes
-        if 'dir_cmip_X' in self.paths:
-            self.dir_cmip_X = self.paths['dir_cmip_X']
+        if "dir_cmip_X" in self.paths:
+            self.dir_cmip_X = self.paths["dir_cmip_X"]
         else:
             # For now, no test data is provided for climate extremes.
             self.dir_cmip_X = None
-            
+
         # observations
-        if 'dir_obs' in self.paths:
-            self.dir_obs = self.paths['dir_obs']
+        if "dir_obs" in self.paths:
+            self.dir_obs = self.paths["dir_obs"]
         else:
             self.dir_obs = os.path.join(
                 TEST_DATA_ROOT, "observations/"
             )  # TODO: remove need for trailing "/" here
 
         # auxiliary data
-        if 'dir_aux' in self.paths:
-            self.dir_aux = self.paths['dir_aux']
+        if "dir_aux" in self.paths:
+            self.dir_aux = self.paths["dir_aux"]
         else:
             self.dir_aux = "auxillary/"
 
         # mesmer params
-        if 'dir_mesmer_params' in self.paths:
-            self.dir_mesmer_params = self.paths['dir_mesmer_params']
+        if "dir_mesmer_params" in self.paths:
+            self.dir_mesmer_params = self.paths["dir_mesmer_params"]
         else:
             self.dir_mesmer_params = os.path.join(MESMER_ROOT, "calibrated_parameters/")
-            
+
         # mesmer emus
-        if 'dir_mesmer_emus' in self.paths:
-            self.dir_mesmer_emus = self.paths['dir_mesmer_emus']
+        if "dir_mesmer_emus" in self.paths:
+            self.dir_mesmer_emus = self.paths["dir_mesmer_emus"]
         else:
             self.dir_mesmer_emus = os.path.join(MESMER_ROOT, "emulations/")
-        
+
         # emulation statistics
-        if 'dir_stats' in self.paths:
-            self.dir_stats = self.paths['dir_stats']
+        if "dir_stats" in self.paths:
+            self.dir_stats = self.paths["dir_stats"]
         else:
             self.dir_stats = "/net/exo/landclim/yquilcaille/across_scen_T/statistics/"
 
         # plots
-        if 'dir_plots' in self.paths:
-            self.dir_plots = self.paths['dir_plots']
+        if "dir_plots" in self.paths:
+            self.dir_plots = self.paths["dir_plots"]
         else:
             self.dir_plots = "/net/exo/landclim/yquilcaille/across_scen_T/plots/"
-            
+
         # ---------------------------------------------------------------------------------
         return
-        
-        
+
     def flex_config(self):
-        
+
         # ---------------------------------------------------------------------------------
         # ESMs
-        
-        if (self.paths == {}):
+
+        if self.paths == {}:
             # running in test mode, only using this ESM
             self.esms = ["IPSL-CM6A-LR"]
-            
-        elif self.esms == 'all':
+
+        elif self.esms == "all":
             self.esms = [
-                            "ACCESS-CM2",
-                            "ACCESS-ESM1-5",
-                            "AWI-CM-1-1-MR",
-                            "CanESM5",
-                            "CESM2",
-                            "CESM2-WACCM",
-                            "CMCC-CM2-SR5",
-                            "CNRM-CM6-1",
-                            "CNRM-CM6-1-HR",
-                            "CNRM-ESM2-1",
-                            "E3SM-1-1",
-                            "FGOALS-f3-L",
-                            "FGOALS-g3",
-                            "FIO-ESM-2-0",
-                            "HadGEM3-GC31-LL",
-                            "HadGEM3-GC31-MM",
-                            "IPSL-CM6A-LR",
-                            "MCM-UA-1-0",
-                            "MPI-ESM1-2-HR",
-                            "MPI-ESM1-2-LR",
-                            "MRI-ESM2-0",
-                            "NESM3",
-                            "NorESM2-LM",
-                            "NorESM2-MM",
-                            "UKESM1-0-LL",
-                        ]
+                "ACCESS-CM2",
+                "ACCESS-ESM1-5",
+                "AWI-CM-1-1-MR",
+                "CanESM5",
+                "CESM2",
+                "CESM2-WACCM",
+                "CMCC-CM2-SR5",
+                "CNRM-CM6-1",
+                "CNRM-CM6-1-HR",
+                "CNRM-ESM2-1",
+                "E3SM-1-1",
+                "FGOALS-f3-L",
+                "FGOALS-g3",
+                "FIO-ESM-2-0",
+                "HadGEM3-GC31-LL",
+                "HadGEM3-GC31-MM",
+                "IPSL-CM6A-LR",
+                "MCM-UA-1-0",
+                "MPI-ESM1-2-HR",
+                "MPI-ESM1-2-LR",
+                "MRI-ESM2-0",
+                "NESM3",
+                "NorESM2-LM",
+                "NorESM2-MM",
+                "UKESM1-0-LL",
+            ]
             # tmp removed (need to investigate stms soon how can get them in too!):
             # -CAMS-CSM1-0 (train_lt did not work: nans?!)
             # -CIESM (sth wrong with GHFDS)
@@ -166,9 +175,9 @@ class config_mesmer:
             # - "GFDL-ESM4" (didn't even try. Just assumed same problem)
             # - "GISS-E2-1-G" (sth wrong when reading in files, index issue)
             # Check update on this aspect on slack Yann-Lea
-            
+
         else:
-            pass # nothing to change, esms is used as provided.
+            pass  # nothing to change, esms is used as provided.
 
         # ---------------------------------------------------------------------------------
         # Variables, ensembles, regions
@@ -189,8 +198,9 @@ class config_mesmer:
 
         self.time = {}
         self.time["start"] = "1850"  # first included year
-        self.time["end"] = "2100"  # last included year #TODO: check if even used anywhere??
-
+        self.time["end"] = (
+            "2100"  # last included year #TODO: check if even used anywhere??
+        )
 
         # ---------------------------------------------------------------------------------
         # Parameters
@@ -200,7 +210,9 @@ class config_mesmer:
 
         self.nr_emus_v = 1000  # tmp made smaller for testing purposes. Normally 6000.
         self.scen_seed_offset_v = 0  # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
-        self.max_iter_cv = 15  # max. nr of iterations in cross validation, will increase later
+        self.max_iter_cv = (
+            15  # max. nr of iterations in cross validation, will increase later
+        )
 
         # ---------------------------------------------------------------------------------
         # predictors (for global module)
@@ -217,76 +229,89 @@ class config_mesmer:
         # ---------------------------------------------------------------------------------
         # methods (for all modules)
         self.methods = {}
-        self.method_lt_each_gp_sep = True  # method local trends applied to each gp separately
-        
+        self.method_lt_each_gp_sep = (
+            True  # method local trends applied to each gp separately
+        )
+
         # tas
         self.methods["tas"] = {}  # methods for the target variable tas
         self.methods["tas"]["gt"] = "LOWESS_OLSVOLC"  # global trend emulation method
         self.methods["tas"]["lt"] = "OLS"  # local trends emulation method
         self.methods["tas"]["gv"] = "AR"  # global variability emulation method
         self.methods["tas"]["lv"] = "OLS_AR1_sci"  # local variability emulation method
-        
+
         # hfds
         self.methods["hfds"] = {}
         self.methods["hfds"]["gt"] = "LOWESS"
-        
+
         # pr
         self.methods["pr"] = {}
         self.methods["pr"]["gt"] = "LOWESS"
-        
+
         # txx
         self.methods["txx"] = {}
         self.methods["txx"]["l_distrib"] = "GEV"  # local variability emulation method
         self.methods["txx"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+
         # mrso
         self.methods["mrso"] = {}  # methods for the target variable sm
-        self.methods["mrso"]["l_distrib"] = "gaussian"  # local variability emulation method
+        self.methods["mrso"][
+            "l_distrib"
+        ] = "gaussian"  # local variability emulation method
         self.methods["mrso"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+
         # mrsomean
         self.methods["mrsomean"] = {}  # methods for the target variable sm
-        self.methods["mrsomean"]["l_distrib"] = "gaussian"  # local variability emulation method
+        self.methods["mrsomean"][
+            "l_distrib"
+        ] = "gaussian"  # local variability emulation method
         self.methods["mrsomean"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+
         # mrso_minmon
         self.methods["mrso_minmon"] = {}  # methods for the target variable sm
-        self.methods["mrso_minmon"]["l_distrib"] = "gaussian"  # local variability emulation method
-        self.methods["mrso_minmon"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+        self.methods["mrso_minmon"][
+            "l_distrib"
+        ] = "gaussian"  # local variability emulation method
+        self.methods["mrso_minmon"][
+            "lv"
+        ] = "AR1_sci"  # local variability emulation method
+
         # fwixx
         self.methods["fwixx"] = {}
         self.methods["fwixx"]["l_distrib"] = "GEV"  # local variability emulation method
         self.methods["fwixx"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+
         # fwisa
         self.methods["fwisa"] = {}
-        self.methods["fwisa"]["l_distrib"] = "gaussian" # GEV | gaussian  # local variability emulation method
+        self.methods["fwisa"][
+            "l_distrib"
+        ] = "gaussian"  # GEV | gaussian  # local variability emulation method
         self.methods["fwisa"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+
         # fwixd
         self.methods["fwixd"] = {}
-        self.methods["fwixd"]["l_distrib"] = "poisson"  # local variability emulation method
+        self.methods["fwixd"][
+            "l_distrib"
+        ] = "poisson"  # local variability emulation method
         self.methods["fwixd"]["lv"] = "AR1_sci"  # local variability emulation method
-        
+
         # fwils
         self.methods["fwils"] = {}
-        self.methods["fwils"]["l_distrib"] = "poisson"  # local variability emulation method
+        self.methods["fwils"][
+            "l_distrib"
+        ] = "poisson"  # local variability emulation method
         self.methods["fwils"]["lv"] = "AR1_sci"  # local variability emulation method
-        
-        return 
-        
-        
+
+        return
+
     def nonflex_config(self):
-    
+
         # ---------------------------------------------------------------------------------
         # list of scenarios that could be considered. Right now, complying to previous scripts of configurations, passing scenarios as set configuration, but could be passed in flexible configurations.
-        if (self.paths == {}):
+        if self.paths == {}:
             # running in test mode, only using this ESM
-            self.scenarios = [
-                "h-ssp126"
-            ]
-            
+            self.scenarios = ["h-ssp126"]
+
         else:
             self.scenarios = [
                 "h-ssp585",
@@ -319,7 +344,7 @@ class config_mesmer:
                 self.seed[esm][scen]["lv"] = i + j * self.scen_seed_offset_v + 1000000
                 j += 1
             i += 1
-            
+
         return
 
 

@@ -7,13 +7,10 @@ import numpy as np
 import pyproj
 import xarray as xr
 
-#from .utils import create_equal_dim_names
-
-
+# from .utils import create_equal_dim_names
 
 
 # TAKEN FROM CURRENT CODE OF MESMER, TO REMOVE WITH REBASE
-
 
 
 def geodist_exact(lon, lat, equal_dim_suffixes=("_i", "_j")):
@@ -88,7 +85,6 @@ def _geodist_exact(lon, lat):
     geodist += np.transpose(geodist)
 
     return geodist
-
 
 
 def gaspari_cohn_correlation_matrices(geodist, localisation_radii):
