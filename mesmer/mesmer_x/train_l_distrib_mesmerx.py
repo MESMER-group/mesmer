@@ -163,8 +163,8 @@ def xr_train_distrib(
         quality_xr2 = quality_xr.copy()
 
         # remnants of MESMERv0, because stuck with its format...
-        lon_l_vec = lon["grid"][ls["idx_grid_l"]]
-        lat_l_vec = lat["grid"][ls["idx_grid_l"]]
+        lon_l_vec = predictors.lon #lon["grid"][ls["idx_grid_l"]] try by Vici to fix missing variables
+        lat_l_vec = predictors.lat #lat["grid"][ls["idx_grid_l"]]
         # ... and function of MESMERv1
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
@@ -823,7 +823,7 @@ class distrib_cov:
             if self.fg_with_global_opti:
                 # find boundaries on each coefficient
                 bounds = []
-                for i_c in np.arange(n_coeffs):
+                for i_c in np.arange(self.n_coeffs):
                     vals_bounds = self.find_bound(
                         i_c=i_c, x0=self.fg_coeffs, fact_coeff=-0.05
                     ), self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=0.05)
@@ -1018,7 +1018,7 @@ class distrib_cov:
             ind_data_stopped = np.where(self.data_targ >= thres)[0]
 
         # identifying remaining positions
-        ind_data_ok = [i for i in np.arange(self.n_sample) if i not in ind_stopped_data]
+        ind_data_ok = [i for i in np.arange(self.n_sample) if i not in ind_data_stopped]
         return ind_data_ok, ind_data_stopped
 
     def fullcond_thres(self, distrib):
@@ -1037,22 +1037,22 @@ class distrib_cov:
         # ps.crps_quadrature cannot be applied on conditional distributions, thus calculating in each point of the sample, then averaging
         # WARNING, TAKES A VERY LONG TIME TO COMPUTE
         tmp_cprs = []
-        for i in np.arange(tmp_fit.n_sample):
-            distrib = tmp_fit.expr_fit.evaluate(
-                coeffs, {p: tmp_fit.data_pred[p][i] for p in tmp_fit.data_pred}
+        for i in np.arange(self.n_sample):
+            distrib = self.expr_fit.evaluate(
+                coeffs, {p: self.data_pred[p][i] for p in self.data_pred}
             )
             tmp_cprs.append(
                 ps.crps_quadrature(
-                    x=tmp_fit.data_targ[i],
+                    x=self.data_targ[i],
                     cdf_or_dist=distrib,
-                    xmin=-10 * np.abs(tmp_fit.data_targ[i]),
-                    xmax=10 * np.abs(tmp_fit.data_targ[i]),
+                    xmin=-10 * np.abs(self.data_targ[i]),
+                    xmax=10 * np.abs(self.data_targ[i]),
                     tol=1.0e-4,
                 )
             )
 
         # averaging
-        return np.sum(tmp_fit.weights_driver * np.array(tmp_cprs))
+        return np.sum(self.weights_driver * np.array(tmp_cprs))
 
     # --------------------------------------------------------------------------------
 
