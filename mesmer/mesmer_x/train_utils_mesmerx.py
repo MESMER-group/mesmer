@@ -196,9 +196,9 @@ class Expression:
         self.inputs_list = []
         for param in self.parameters_expressions:
             terms = str.split(self.parameters_expressions[param], "__")
-            for l in np.array(terms)[np.arange(1, len(terms), 2)]:
-                if l not in self.inputs_list:
-                    self.inputs_list.append(l)
+            for i in np.array(terms)[np.arange(1, len(terms), 2)]:
+                if i not in self.inputs_list:
+                    self.inputs_list.append(i)
 
         # require a specific order for use in correct_expr_parameters
         self.inputs_list.sort(key=len, reverse=True)
@@ -220,8 +220,8 @@ class Expression:
 
             # reading this condensed expression to find terms to replace
             dico_replace, t = {}, ""  # initialization
-            for l in expr + " ":  # adding one space at the end to treat the last term
-                if l in [
+            for ex in expr + " ":  # adding one space at the end to treat the last term
+                if ex in [
                     "(",
                     ")",
                     "[",
@@ -277,7 +277,7 @@ class Expression:
                         # was a readable character, is still a readable character, nothing to do
                         pass
                 else:
-                    t += l
+                    t += i
 
             # list of replacements in correct order
             tmp = list(dico_replace.keys())
@@ -309,7 +309,7 @@ class Expression:
             inputs_values: dict(inp_i = values or np.array())  or  xr.dataset(inp_i)
             forced_shape: tuple or list of dimensions of coefficients_values and inputs_values for transposition of the shape
 
-        /!\ Warning: with xarrays for coefficients_values and inputs_values, the outputs with have for shape first the one of the coefficient, then the one of the inputs --> trying to avoid this issue with 'forced_shape'
+        ! Warning: with xarrays for coefficients_values and inputs_values, the outputs with have for shape first the one of the coefficient, then the one of the inputs --> trying to avoid this issue with 'forced_shape'
         """
         # Check 1: are all the coefficients provided?
         if type(coefficients_values) in [dict, xr.Dataset]:
@@ -359,8 +359,8 @@ class Expression:
                 if (type(self.parameters_values[param]) in [int, float]) or (
                     self.parameters_values[param].ndim == 0
                 ):
-                    if (type(coefficients_values) == xr.Dataset) and (
-                        type(inputs_values) == xr.Dataset
+                    if isinstance(coefficients_values, xr.Dataset) and (
+                        isinstance(inputs_values ,xr.Dataset)
                     ):
                         self.parameters_values[param] = self.parameters_values[
                             param
