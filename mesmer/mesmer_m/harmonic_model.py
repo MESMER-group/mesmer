@@ -14,15 +14,15 @@ from scipy import optimize
 import mesmer
 
 
-def generate_fourier_series_np(coeffs, yearly_T, months):
+def generate_fourier_series_np(yearly_T, coeffs, months):
     """construct the Fourier Series
 
     Parameters
     ----------
-    coeffs : array-like of shape (4*order)
-        coefficients of Fourier Series.
     yearly_T : array-like of shape (n_years*12,)
         yearly temperature values.
+    coeffs : array-like of shape (4*order)
+        coefficients of Fourier Series.
     months : array-like of shape (n_years*12,)
         month values (1-12).
 
@@ -94,7 +94,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
 
         loss = np.mean(
             (
-                generate_fourier_series_np(coeffs, order, yearly_predictor, mon_train)
+                generate_fourier_series_np(yearly_predictor, coeffs, mon_train)
                 - mon_target
             )
             ** 2
@@ -115,7 +115,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     ).x
 
     preds = generate_fourier_series_np(
-        coeffs=coeffs, order=order, yearly_T=yearly_predictor, months=mon_train
+        yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
     )
 
     return coeffs, preds
