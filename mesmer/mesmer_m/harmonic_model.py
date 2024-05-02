@@ -14,15 +14,13 @@ from scipy import optimize
 import mesmer
 
 
-def generate_fourier_series_np(coeffs, order, yearly_T, months):
+def generate_fourier_series_np(coeffs, yearly_T, months):
     """construct the Fourier Series
 
     Parameters
     ----------
     coeffs : array-like of shape (4*order)
         coefficients of Fourier Series.
-    order : Integer
-        Order of the Fourier Series.
     yearly_T : array-like of shape (n_years*12,)
         yearly temperature values.
     months : array-like of shape (n_years*12,)
@@ -34,7 +32,7 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
         Fourier Series of order n calculated over yearly_T and months with coeffs.
 
     """
-    # TODO: infer order from coeffs
+    order = int(len(coeffs) / 4)
 
     # fix these parameters, according to paper
     # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
