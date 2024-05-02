@@ -6,7 +6,7 @@ Configuration file for cmip6-ng, tas, hist + all ssps
 import os.path
 
 
-class config_mesmer:
+class ConfigMesmerX:
     """
     This class defines the full configuration of MESMER.
 
@@ -329,7 +329,7 @@ class config_mesmer:
         if self.scen_seed_offset_v == 0:
             self.scenarios_emus_v = ["all"]
         else:
-            self.scenarios_emus_v = scenarios
+            self.scenarios_emus_v = self.scenarios
 
         self.nr_emus = {}
         self.nr_ts_emus_v = {}

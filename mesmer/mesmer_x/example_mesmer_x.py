@@ -9,7 +9,7 @@ import numpy as np
 import xarray as xr
 
 # load in MESMER-X configurations used in this script
-from configs.config_all import config_mesmer
+from mesmer.mesmer_x.temporary_config_all import ConfigMesmerX
 
 # load in MESMER scripts for treatment of data
 # from mesmer.io import (
@@ -85,7 +85,7 @@ dir_mesmer_emus = "/net/exo/landclim/yquilcaille/mesmer-x/emulations/"
 dir_stats = "/net/exo/landclim/yquilcaille/mesmer-x/statistics/"  # emulation statistics
 dir_plots = "/net/exo/landclim/yquilcaille/mesmer-x/plots/"  # plots
 
-cfg = config_mesmer(
+cfg = ConfigMesmerX(
     gen=gen,
     paths={
         "dir_cmipng": dir_cmipng,
