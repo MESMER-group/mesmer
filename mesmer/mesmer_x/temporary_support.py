@@ -8,7 +8,7 @@ import numpy as np
 
 # load in MESMER scripts for treatment of data
 from mesmer.io import (
-    load_cmip,
+    load_cmipng,
     load_phi_gc,
     load_regs_ls_wgt_lon_lat,
     test_combination_vars,
@@ -61,14 +61,14 @@ def load_inputs_MESMERx(cfg, variables, esms):
             else:
                 available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
             if len(available_runs) > 0:
-                targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmip(
+                targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmipng(
                     targ, esm, scen, cfg
                 )
-                pred_g_dict[esm][scen], PRED_dict[esm][scen], _, _, _ = load_cmip(
+                pred_g_dict[esm][scen], PRED_dict[esm][scen], _, _, _ = load_cmipng(
                     pred, esm, scen, cfg
                 )
                 if sub_pred is not None:
-                    _, SUB_PRED_dict[esm][scen], _, _, _ = load_cmip(
+                    _, SUB_PRED_dict[esm][scen], _, _, _ = load_cmipng(
                         sub_pred, esm, scen, cfg
                     )
 
