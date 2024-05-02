@@ -12,21 +12,24 @@ import xarray as xr
 from configs.config_all import config_mesmer
 
 # load in MESMER scripts for treatment of data
-from mesmer.io import (
-    load_cmip,
-    load_phi_gc,
-    load_regs_ls_wgt_lon_lat,
-    test_combination_vars,
-)
+# from mesmer.io import (
+#     load_cmip,
+#     load_phi_gc,
+#     load_regs_ls_wgt_lon_lat,
+#     test_combination_vars,
+# )
 
 # import MESMER tools
 # from mesmer.calibrate_mesmer import train_lv
 # from mesmer.create_emulations import create_emus_lv
-from mesmer.mesmer_x import *
+#from mesmer.mesmer_x import *
+import mesmer.mesmer_x.train_l_distrib_mesmerx as mesmer_x_train
+import mesmer.mesmer_x.train_utils_mesmerx as mesmer_x_train_utils
+from mesmer.mesmer_x.temporary_support import load_inputs_MESMERx
 from mesmer.utils import (
-    convert_dict_to_arr,
-    extract_land,
-    read_form_fit_distrib,
+    # convert_dict_to_arr,
+    # extract_land,
+    # read_form_fit_distrib,
     separate_hist_future,
 )
 
@@ -36,7 +39,7 @@ from mesmer.utils import (
 # variables to represent
 targ = "mrso"  # txx, mrso, fwils, fwisa, fwixd, fwixx, mrso_minmon mrsomean??!
 pred = "tas"
-sub_pred = None  #'hfds' # hfds | (pr)
+sub_pred = None  #'hfds' hfds | (pr)
 
 # options for server
 # To control if run everything or using a bunch of processes
@@ -221,7 +224,7 @@ expr = "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__
 # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)" # testing
 
 # training conditional distributions following 'expr' in all grid points
-xr_coeffs_distrib, xr_qual = xr_train_distrib(
+xr_coeffs_distrib, xr_qual = mesmer_x_train.xr_train_distrib(
     predictors=predictors,
     target=target,
     target_name=targ,
@@ -233,7 +236,7 @@ xr_coeffs_distrib, xr_qual = xr_train_distrib(
 )
 
 # probability integral transform: projection of the data on a standard normal distribution
-transf_target = probability_integral_transform(
+transf_target = mesmer_x_train_utils.probability_integral_transform(
     data=target,
     expr_start=expr,
     coeffs_start=xr_coeffs_distrib,
@@ -253,11 +256,14 @@ transf_target = probability_integral_transform(
 # new scenario:
 #NEW CODE OF MESMER, same structure as 'predictors' used for training, output=preds_newscen
 
+preds_newscen = [] # TODO
+
 # generate realizations based on the auto-regression with spatially correlated innovations
 # NEW CODE OF MESMER, output = 'transf_emus'
+transf_emus = [] # TODO
 
 # probability integral transform: projection of the transformed data on the knwon distributions
-emus = probability_integral_transform(
+emus = mesmer_x_train_utils.probability_integral_transform(
     data=transf_emus,
     expr_start="norm(loc=0, scale=1)",
     expr_end=expr,
