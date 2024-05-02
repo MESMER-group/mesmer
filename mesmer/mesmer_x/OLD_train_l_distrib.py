@@ -110,7 +110,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
     # dictionary that will be filled in for every parameter
     params_out = {var_targ: {} for var_targ in targs}
 
-    ## looping on targets to fit a distrib on.
+    # looping on targets to fit a distrib on.
     for var_targ in targs:
 
         #  Reading form_fit_distrib to prepare complete description of the fit
@@ -221,12 +221,12 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
                 "%",
                 end="\r",
             )
-            ## shaping inputs for covariated GEV (has checked before that it is Runs x Time x GridPoints)
+            # shaping inputs for covariated GEV (has checked before that it is Runs x Time x GridPoints)
             data_in = np.hstack(
                 [data[scen][: n_runs[scen], :, i_gp].flatten() for scen in common_scen]
             )
 
-            ## fitting covariated GEV:@HERE, parameters to improve the fit --> class 'distrib_cov' using '**kwargs'
+            # fitting covariated GEV:@HERE, parameters to improve the fit --> class 'distrib_cov' using '**kwargs'
             tmp_cov = distrib_cov(
                 data=data_in,
                 cov_preds=tmp_preds,
@@ -236,7 +236,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
             )
             sol = tmp_cov.fit()
 
-            ## saving
+            # saving
             sols.append(sol)
             if (
                 np.all(np.isnan(list(sol.values()))) == False
@@ -749,7 +749,7 @@ class distrib_cov:
         if self.data.ndim > 1:
             raise Exception(
                 "input data must be a vector"
-            )  ## should do tests also for covariations.
+            )  # should do tests also for covariations.
         if (len(self.cov["cov_loc_data"]) > 0) and (
             self.data.shape[0] != self.cov["cov_loc_data"][0].shape[0]
         ):
@@ -1160,7 +1160,7 @@ class distrib_cov:
         # preparing optimization of loc0, scale0 and shape0: calculating mean, median, skew kurtosis of detrended data
         self.dd_mean = np.mean(
             data_det
-        )  # np.mean(data) #np.mean(data_det) #### why did i switch from data_det to data?
+        )  # np.mean(data) #np.mean(data_det) why did i switch from data_det to data?
         self.dd_var = np.var(data_det)
         self.dd_skew = ss.skew(data_det)  # ss.skew(data_det)
 
@@ -1566,7 +1566,7 @@ class distrib_cov:
                 np.isclose(0, scale + c * (loc - data_fit))
             ):  # rewritten for simplicity as scale + c * (loc - data) > 0
                 test = False
-            # if type(c) == np.float64:## no covariants on shape
+            # if type(c) == np.float64:# no covariants on shape
             #    if -c > 0:# support of this GEV is [ loc - scale/shape ; +inf [
             #        if np.any( data_fit < loc - scale/(-c) )  or  np.any(np.isclose( data_fit , loc - scale/(-c) )):
             #            test = False

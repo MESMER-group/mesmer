@@ -40,41 +40,41 @@ from mesmer.utils import (
 def load_inputs_MESMERx(cfg, variables, esms):
     targ, pred, sub_pred = variables
 
-    ## initiate TEMPORARY dictionaries
+    # initiate TEMPORARY dictionaries
     targ_g_dict = {
         esm: {} for esm in esms
-    }  ## target with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
+    }  # target with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
     pred_g_dict = {
         esm: {} for esm in esms
-    }  ## predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
+    }  # predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
     PRED_dict = {
         esm: {} for esm in esms
-    }  ## global mean predictor (dict[esm][scen][run]: array Time)
+    }  # global mean predictor (dict[esm][scen][run]: array Time)
     if sub_pred is not None:
         SUB_PRED_dict = {
             esm: {} for esm in esms
-        }  ## global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
+        }  # global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
 
-    ## initiate dictionnaries
-    time = {esm: {} for esm in esms}  ## time axis (dict[esm][scen]: array Time)
+    # initiate dictionnaries
+    time = {esm: {} for esm in esms}  # time axis (dict[esm][scen]: array Time)
     targ_g = (
         {}
-    )  ## target with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
+    )  # target with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
     pred_g = (
         {}
-    )  ## predictor with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
-    PRED = {}  ## global mean tas (dict[esm][scen]: array Run x Time x Lat x Lon)
+    )  # predictor with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
+    PRED = {}  # global mean tas (dict[esm][scen]: array Run x Time x Lat x Lon)
     if sub_pred is not None:
         SUB_PRED = (
             {}
-        )  ## global mean hfds (dict[esm][scen]: array Run x Time x Lat x Lon)
+        )  # global mean hfds (dict[esm][scen]: array Run x Time x Lat x Lon)
 
     for esm in esms:
         print(esm)
 
         for scen in cfg.scenarios:
 
-            ## checking if this (esm,scen) combination has compatible runs.
+            # checking if this (esm,scen) combination has compatible runs.
             if sub_pred is not None:
                 available_runs, _ = test_combination_vars(
                     [targ, pred, sub_pred], esm, scen, cfg
@@ -93,14 +93,14 @@ def load_inputs_MESMERx(cfg, variables, esms):
                         sub_pred, esm, scen, cfg
                     )
 
-        ## grouping the level [run] of dict[esm][scen][run] into a single array
+        # grouping the level [run] of dict[esm][scen][run] into a single array
         targ_g[esm] = convert_dict_to_arr(targ_g_dict[esm])
         pred_g[esm] = convert_dict_to_arr(pred_g_dict[esm])
         PRED[esm] = convert_dict_to_arr(PRED_dict[esm])
         if sub_pred is not None:
             SUB_PRED[esm] = convert_dict_to_arr(SUB_PRED_dict[esm])
 
-    ## clean temporary files
+    # clean temporary files
     del targ_g_dict, pred_g_dict, PRED_dict
     if sub_pred is not None:
         del SUB_PRED_dict
@@ -109,10 +109,10 @@ def load_inputs_MESMERx(cfg, variables, esms):
     if len(PRED) == 0:
         raise Exception("No common runs found.")
 
-    ## load in the constant files
+    # load in the constant files
     reg_dict, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(cfg.reg_type, lon, lat)
 
-    ## extract land
+    # extract land
     land_targ, reg_dict, ls = extract_land(
         targ_g, reg_dict, wgt_g, ls, threshold_land=cfg.threshold_land
     )
@@ -120,14 +120,14 @@ def load_inputs_MESMERx(cfg, variables, esms):
         pred_g, reg_dict, wgt_g, ls, threshold_land=cfg.threshold_land
     )
 
-    ## prepare the auxiliary files. better results with default values L, but like this much faster + less space needed
+    # prepare the auxiliary files. better results with default values L, but like this much faster + less space needed
     phi_gc = load_phi_gc(lon, lat, ls, cfg, L_start=1750, L_end=10000, L_interval=250)
 
     lon_mesh, lat_mesh = np.meshgrid(lon["c"], lat["c"])
 
-    ## adding few lines for future regional calculations (used for tests)
+    # adding few lines for future regional calculations (used for tests)
     ind = np.where(ls["idx_grid_l"])
-    gp2reg = reg_dict["grids"][:, ind[0], ind[1]]  ## grid points to regions
+    gp2reg = reg_dict["grids"][:, ind[0], ind[1]]  # grid points to regions
     ww_reg = np.nansum((ls["wgt_gp_l"] * gp2reg).T, axis=0)
 
     # Just checking what ESMs are actually used. Some are removed because not having all drivers

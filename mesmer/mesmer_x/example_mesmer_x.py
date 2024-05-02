@@ -34,7 +34,7 @@ from mesmer.utils import (
 # 0. OPTIONS FOR THE SCRIPT
 # ==============================================================
 # variables to represent
-targ = "mrso"  # txx, mrso, fwils, fwisa, fwixd, fwixx, mrso_minmon ##mrsomean??!
+targ = "mrso"  # txx, mrso, fwils, fwisa, fwixd, fwixx, mrso_minmon mrsomean??!
 pred = "tas"
 sub_pred = None  #'hfds' # hfds | (pr)
 
@@ -242,7 +242,7 @@ transf_target = probability_integral_transform(
 )
 
 # training of auto-regression with spatially correlated innovations
-##### NEW CODE OF MESMER: not applied on residuals, but on 'transf_target'
+# NEW CODE OF MESMER: not applied on residuals, but on 'transf_target'
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
@@ -251,10 +251,10 @@ transf_target = probability_integral_transform(
 # 3.3. EXAMPLE OF EMULATION
 # --------------------------------------------------------------
 # new scenario:
-##### NEW CODE OF MESMER, same structure as 'predictors' used for training, output=preds_newscen
+#NEW CODE OF MESMER, same structure as 'predictors' used for training, output=preds_newscen
 
 # generate realizations based on the auto-regression with spatially correlated innovations
-##### NEW CODE OF MESMER, output = 'transf_emus'
+# NEW CODE OF MESMER, output = 'transf_emus'
 
 # probability integral transform: projection of the transformed data on the knwon distributions
 emus = probability_integral_transform(
