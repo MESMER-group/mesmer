@@ -149,7 +149,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
                 "transfo_asymptleft": [0, np.inf],
                 "transfo_asymptright": [0, np.inf],
             }
-            if transfo in ["generalizedlogistic", "generalizedalgebraic"]:
+            if distr in ["generalizedlogistic", "generalizedalgebraic"]:
                 boundaries_coeffs["transfo_alpha"] = [0, np.inf]
 
         elif var_targ in ["mrsomean"]:  # mrso? mrso_minmon?
@@ -238,9 +238,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
 
             # saving
             sols.append(sol)
-            if (
-                np.all(np.isnan(list(sol.values()))) == False
-            ):  # want to remove the case for missing points in data
+            if not np.all(np.isnan(list(sol.values()))):  # want to remove the case for missing points in data
                 quality_fit[i_gp] = tmp_cov.neg_loglike(sol)
             else:
                 quality_fit[i_gp] = np.nan
@@ -398,7 +396,7 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
 
             # looping on runs available for targs[var_targ] AND preds[var_targ]
             if False:
-                if type(params_l_distrib[var_targ]["nruns_training"]) == str:
+                if isinstance(params_l_distrib[var_targ]["nruns_training"], str):
                     nrr = eval(params_l_distrib[var_targ]["nruns_training"])[scen]
                 else:
                     nrr = params_l_distrib[var_targ]["nruns_training"][scen]
@@ -646,7 +644,7 @@ class distrib_cov:
                         + tmp[cov_type + "_names"][ii]
                     )
 
-                elif (type(tmp[cov_type + "_form"][ii]) == list) and (
+                elif isinstance(tmp[cov_type + "_form"][ii], list) and (
                     tmp[cov_type + "_form"][ii][0] == "power"
                 ):
                     pwr = tmp[cov_type + "_form"][ii][1]
@@ -685,8 +683,8 @@ class distrib_cov:
         if distrib in ["gaussian"]:
             tmp = self.cov["coeffs_loc_names"] + self.cov["coeffs_scale_names"]
         elif distrib in [
-            "GEV"
-        ]:  #  or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
+            "GEV" #  or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
+        ]:
             tmp = (
                 self.cov["coeffs_loc_names"]
                 + self.cov["coeffs_scale_names"]
@@ -748,8 +746,8 @@ class distrib_cov:
         # test on sizes of sample
         if self.data.ndim > 1:
             raise Exception(
-                "input data must be a vector"
-            )  # should do tests also for covariations.
+                "input data must be a vector"  # should do tests also for covariations.
+            )
         if (len(self.cov["cov_loc_data"]) > 0) and (
             self.data.shape[0] != self.cov["cov_loc_data"][0].shape[0]
         ):
@@ -764,7 +762,7 @@ class distrib_cov:
 
         else:
             if np.isclose(prior_shape, 0):
-                if option_silent == False:
+                if not option_silent:
                     print("setting prior_shape to None")
                 prior_shape = None
 
@@ -948,7 +946,7 @@ class distrib_cov:
             inds_pow = [
                 i
                 for i, form in enumerate(self.cov["cov_" + typ_cov + "_form"])
-                if (type(self.cov["cov_" + typ_cov + "_form"][i]) == list)
+                if isinstance(self.cov["cov_" + typ_cov + "_form"][i], list)
                 and (self.cov["cov_" + typ_cov + "_form"][i][0] == "power")
             ]
         else:
@@ -1273,8 +1271,8 @@ class distrib_cov:
                 del self.data_tmp
 
                 # checking if valid first guess
-                valid_True = checks[True][1] and np.isinf(checks[True][1]) == False
-                valid_False = checks[False][1] and np.isinf(checks[False][1]) == False
+                valid_True = checks[True][1] and not np.isinf(checks[True][1])
+                valid_False = checks[False][1] and not np.isinf(checks[False][1])
                 # selecting one or the other:
                 if valid_True and valid_False:  # both options are valid
                     if (
@@ -1440,7 +1438,7 @@ class distrib_cov:
                     else:  # not the first sigmoid term on this parameter, already accounted for.
                         pass
 
-                elif (type(self.cov["cov_" + typ + "_form"][ii]) == list) and (
+                elif isinstance(self.cov["cov_" + typ + "_form"][ii], list) and (
                     self.cov["cov_" + typ + "_form"][ii][0] == "power"
                 ):
                     pwr = self.cov["cov_" + typ + "_form"][ii][1]
@@ -1682,7 +1680,7 @@ class distrib_cov:
     def neg_loglike(self, args):
         # negative log likelihood (for fit)
         # just in case used out of the optimization function, to evaluate the quality of the fit
-        if type(args) == dict:
+        if isinstance(args, dict):
             args = [args[kk] for kk in args]
 
         return -self.loglike(args)
@@ -1720,7 +1718,7 @@ class distrib_cov:
             )
 
             # Checking if failed. May have to choose the second option for difficult fits. (only "if self.distrib in [ 'GEV' ]", try if can remove it given all new improvements?)
-            if m.success == False:
+            if not m.success:
                 self.eval_fg0_best = False
                 # making a correct first guess
                 self.x0 = self.find_fg()
@@ -1738,7 +1736,7 @@ class distrib_cov:
                 )
 
                 # checking if that one failed as well
-                if self.error_failedfit and (m.success == False):
+                if self.error_failedfit and not m.success:
                     raise Exception(
                         "The fast detrend provides with a valid first guess, but not good enough."
                     )
