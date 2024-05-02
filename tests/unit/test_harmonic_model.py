@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
+import xarray as xr
 
-from mesmer.mesmer_m.harmonic_model import fit_to_bic_np, generate_fourier_series_np
-
+from mesmer.mesmer_m.harmonic_model import fit_to_bic_xr, fit_to_bic_np, generate_fourier_series_np
+from mesmer.testing import trend_data_2D
+from mesmer.core.utils import upsample_yearly_data
 
 def test_generate_fourier_series_np():
     n_years = 10
@@ -15,7 +17,7 @@ def test_generate_fourier_series_np():
     expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = generate_fourier_series_np([0, -1, 0, -2], 1, yearly_predictor, months)
+    result = generate_fourier_series_np(yearly_predictor, [0, -1, 0, -2], months)
 
     np.testing.assert_equal(result, expected)
 
@@ -40,7 +42,7 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
     months = np.tile(np.arange(1, 13), 10)
 
     monthly_target = generate_fourier_series_np(
-        coefficients, int(len(coefficients) / 4), yearly_predictor, months
+        yearly_predictor, coefficients, months
     )
     selected_order, estimated_coefficients, predictions = fit_to_bic_np(
         yearly_predictor, monthly_target, max_order=6
@@ -66,3 +68,39 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
 
     # actually all what really counts is that the predictions are close to the target
     np.testing.assert_allclose(predictions, monthly_target, atol=1e-1)
+
+@pytest.mark.parametrize(
+    "coefficients",
+    [
+        np.array([0, -1, 0, -2]),
+        np.array([1, 2, 3, 4, 5, 6, 7, 8]),
+        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+    ],
+)
+def test_fit_to_bic_xr(coefficients):
+    yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
+    yearly_predictor["time"] = xr.cftime_range(start='2000-01-01', periods=10, freq='YS')
+
+    time = xr.cftime_range(start='2000-01-01', periods=10*12, freq='MS')
+    monthly_time = xr.DataArray(
+        time,
+        dims=["time"],
+        coords={"time": time},
+    )
+    upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
+
+    months = np.tile(np.arange(1, 13), 10)
+    monthly_target = xr.apply_ufunc(
+        generate_fourier_series_np,
+        upsampled_yearly_predictor,
+        input_core_dims=[["time"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        output_dtypes=[float],
+        kwargs={"coeffs": coefficients,
+                "months": months},            
+    )
+
+    result = fit_to_bic_xr(yearly_predictor, monthly_target)
+
+    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=1e-1)
