@@ -15,8 +15,15 @@ import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import basinhopping, minimize, shgo
 
-from mesmer.mesmer_x.temporary_spatial import geodist_exact, gaspari_cohn_correlation_matrices
-from mesmer.mesmer_x.train_utils_mesmerx import Expression, listxrds_to_np, weighted_median
+from mesmer.mesmer_x.temporary_spatial import (
+    gaspari_cohn_correlation_matrices,
+    geodist_exact,
+)
+from mesmer.mesmer_x.train_utils_mesmerx import (
+    Expression,
+    listxrds_to_np,
+    weighted_median,
+)
 
 
 def xr_train_distrib(
@@ -667,52 +674,52 @@ class distrib_cov:
     # FIRST GUESS
     def find_fg(self):
         """
-            Objective:
-                Compute a first guess of the coefficients, to ensure convergence of the incoming fit.
+        Objective:
+            Compute a first guess of the coefficients, to ensure convergence of the incoming fit.
 
-            Motivation:
-                In many situations, the fit may be complex because of complex expressions for the conditional distributions & because large domains in the set of coefficients lead to unvalid fits (e.g. sample out of support).
+        Motivation:
+            In many situations, the fit may be complex because of complex expressions for the conditional distributions & because large domains in the set of coefficients lead to unvalid fits (e.g. sample out of support).
 
-            Criterias:
-                The method must return a first guess that is ROBUST (close to the global minimum) & VALID (respect all conditions implemented in the tests), must be FLEXIBLE (any sample, any distribution & any expression).
+        Criterias:
+            The method must return a first guess that is ROBUST (close to the global minimum) & VALID (respect all conditions implemented in the tests), must be FLEXIBLE (any sample, any distribution & any expression).
 
-            Method:
-                1. Global fit of the coefficients of the location using derivatives, to improve the very first guess for the location
-                2. Fit of the coefficients of the location, assuming that the center of the distribution should be close from its location.
-                3. Fit of the coefficients of the scale, assuming that the deviation of the distribution should be close from its scale.
-                4. Improvement of all coefficients: better coefficients on location & scale, and especially estimating those on shape. Based on the Negative Log Likelihoog, albeit without the validity of the coefficients.
-                5. Improvement of coefficients: ensuring that all points are within a likely support of the distribution. Two possibilities tried:
-                (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is to penalize very unlikely values, both works, but NLL^n works as well for extremly unlikely values, that lead to division by 0 with CDF)
-                (step 5 still not always working, trying without?)
+        Method:
+            1. Global fit of the coefficients of the location using derivatives, to improve the very first guess for the location
+            2. Fit of the coefficients of the location, assuming that the center of the distribution should be close from its location.
+            3. Fit of the coefficients of the scale, assuming that the deviation of the distribution should be close from its scale.
+            4. Improvement of all coefficients: better coefficients on location & scale, and especially estimating those on shape. Based on the Negative Log Likelihoog, albeit without the validity of the coefficients.
+            5. Improvement of coefficients: ensuring that all points are within a likely support of the distribution. Two possibilities tried:
+            (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is to penalize very unlikely values, both works, but NLL^n works as well for extremly unlikely values, that lead to division by 0 with CDF)
+            (step 5 still not always working, trying without?)
 
-            Risks for the method:
-                The only risk that I identify is if the user sets boundaries on coefficients or parameters that would reject this optimal first guess, and the domain of the next local minimum is far away.
+        Risks for the method:
+            The only risk that I identify is if the user sets boundaries on coefficients or parameters that would reject this optimal first guess, and the domain of the next local minimum is far away.
 
-            Justification for the method:
-                This is a surprisingly complex problem to satisfy the criterias of robustness, validity & flexibility.
-                a. In theory, this problem could be solved with a global optimization. Among the global optimizers available in scipy, they come with two types of requirements:
-                    - basinhopping: requires a first guess. Tried with first guess close from optimum, good performances, but lacks in reproductibility and stability: not reliable enough here. Ok if runs much longer.
-                    - brute, differential_evolution, shgo, dual_annealing, direct: requires bounds
-                        - brute, dual_annealing, direct: performances too low & too slow
-                        - differential_evolution: lacks in reproductibility & stability
-                        - shgo: good performances with the right sampling method, relatively fast, but still adds ~10s. Highly dependant on the bounds, must not be too large.
-                 The best global optimizer, shgo, would then require bounds that are not too large.
-                 b. The set of coefficients have only sparse valid domains. The distance between valid domains is often bigger than the adequate width of bounds for shgo.
-                 It implies that the bounds used for shgo must correspond to the valid domain that already contains the global minimum, and no other domain.
-                 It implies that the region of the global minimum must have already been identified...
-                 This is the tricky part, here are the different elements that I used to tackle this problem:
-                     - all combinations of local & global optimizers of scipy
-                     - including or not the tests for validity
-                     - assessment of bounds for global optimizers based on ratio of NLL or domain of data_targ
-                     - first optimizations based on mean & spread
-                     - brute force approach on logspace valid for parameters (not scalable with # of parameters)
-                 c. The only solution that was working is inspired by what the semi-analytical solution used in the original code of MESMER-X. Its principle is to use fits first for location coefficients, then scale, then improve.
-                    The steps are described in the section Method, steps 1-5. At step 5 that these coefficients are very close from the global minimum. shgo usually does not bring much at the expense of speed.
-                    Thus skipping global minimum unless asked.
+        Justification for the method:
+            This is a surprisingly complex problem to satisfy the criterias of robustness, validity & flexibility.
+            a. In theory, this problem could be solved with a global optimization. Among the global optimizers available in scipy, they come with two types of requirements:
+                - basinhopping: requires a first guess. Tried with first guess close from optimum, good performances, but lacks in reproductibility and stability: not reliable enough here. Ok if runs much longer.
+                - brute, differential_evolution, shgo, dual_annealing, direct: requires bounds
+                    - brute, dual_annealing, direct: performances too low & too slow
+                    - differential_evolution: lacks in reproductibility & stability
+                    - shgo: good performances with the right sampling method, relatively fast, but still adds ~10s. Highly dependant on the bounds, must not be too large.
+             The best global optimizer, shgo, would then require bounds that are not too large.
+             b. The set of coefficients have only sparse valid domains. The distance between valid domains is often bigger than the adequate width of bounds for shgo.
+             It implies that the bounds used for shgo must correspond to the valid domain that already contains the global minimum, and no other domain.
+             It implies that the region of the global minimum must have already been identified...
+             This is the tricky part, here are the different elements that I used to tackle this problem:
+                 - all combinations of local & global optimizers of scipy
+                 - including or not the tests for validity
+                 - assessment of bounds for global optimizers based on ratio of NLL or domain of data_targ
+                 - first optimizations based on mean & spread
+                 - brute force approach on logspace valid for parameters (not scalable with # of parameters)
+             c. The only solution that was working is inspired by what the semi-analytical solution used in the original code of MESMER-X. Its principle is to use fits first for location coefficients, then scale, then improve.
+                The steps are described in the section Method, steps 1-5. At step 5 that these coefficients are very close from the global minimum. shgo usually does not bring much at the expense of speed.
+                Thus skipping global minimum unless asked.
 
-            !! WARNING to anyone trying to improve this part !!
-                If you attempt to modify the calculation of the first guess, it is *absolutely mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY, FLEXIBILITY.
-                In particular, it is mandatory to test it for different situations: variables, grid points, distributions & expressions.
+        !! WARNING to anyone trying to improve this part !!
+            If you attempt to modify the calculation of the first guess, it is *absolutely mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY, FLEXIBILITY.
+            In particular, it is mandatory to test it for different situations: variables, grid points, distributions & expressions.
         """
 
         # during optimizations, will encounter many warnings because NaN or inf values encountered: avoiding the spam.
