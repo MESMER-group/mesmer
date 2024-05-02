@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 from mesmer.mesmer_m.harmonic_model import fit_to_bic_xr, fit_to_bic_np, generate_fourier_series_np
 from mesmer.testing import trend_data_2D
@@ -79,7 +81,9 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
 )
 def test_fit_to_bic_xr(coefficients):
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
-    yearly_predictor["time"] = xr.cftime_range(start='2000-01-01', periods=10, freq='YS')
+
+    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
+    yearly_predictor["time"] = xr.cftime_range(start='2000-01-01', periods=10, freq=freq)
 
     time = xr.cftime_range(start='2000-01-01', periods=10*12, freq='MS')
     monthly_time = xr.DataArray(
