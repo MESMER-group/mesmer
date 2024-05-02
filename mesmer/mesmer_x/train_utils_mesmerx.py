@@ -360,7 +360,7 @@ class Expression:
                     self.parameters_values[param].ndim == 0
                 ):
                     if isinstance(coefficients_values, xr.Dataset) and (
-                        isinstance(inputs_values ,xr.Dataset)
+                        isinstance(inputs_values, xr.Dataset)
                     ):
                         self.parameters_values[param] = self.parameters_values[
                             param
