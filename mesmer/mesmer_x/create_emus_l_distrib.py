@@ -100,7 +100,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                     "The different covariants for the parameters have different list of scenarios, please provide the same ones. NB: 'all' applies to all other scenarios, thus did not cause this issue."
                 )
 
-        if force_scen != None:
+        if force_scen is not None:
             list_scens = force_scen
 
         # evaluate the evolutions of the parameters for these covariants
