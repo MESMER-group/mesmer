@@ -7,7 +7,7 @@ import numpy as np
 import pyproj
 import xarray as xr
 
-# from .utils import create_equal_dim_names
+from mesmer.core.utils import create_equal_dim_names
 
 
 # TAKEN FROM CURRENT CODE OF MESMER, TO REMOVE WITH REBASE
