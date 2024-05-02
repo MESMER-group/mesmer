@@ -11,7 +11,7 @@ from mesmer.io import (
     load_cmipng,
     load_phi_gc,
     load_regs_ls_wgt_lon_lat,
-    test_combination_vars,
+    # test_combination_vars, TODO: write this function
 )
 from mesmer.utils import convert_dict_to_arr, extract_land
 
@@ -53,13 +53,14 @@ def load_inputs_MESMERx(cfg, variables, esms):
 
         for scen in cfg.scenarios:
 
-            # checking if this (esm,scen) combination has compatible runs.
-            if sub_pred is not None:
-                available_runs, _ = test_combination_vars(
-                    [targ, pred, sub_pred], esm, scen, cfg
-                )
-            else:
-                available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
+            # TODO: checking if this (esm,scen) combination has compatible runs.
+            # if sub_pred is not None:
+            #     available_runs, _ = test_combination_vars(
+            #         [targ, pred, sub_pred], esm, scen, cfg
+            #     )
+            # else:
+            #     available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
+            available_runs = 1
             if len(available_runs) > 0:
                 targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmipng(
                     targ, esm, scen, cfg
