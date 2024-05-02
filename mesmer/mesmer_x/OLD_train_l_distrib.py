@@ -238,7 +238,9 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
 
             # saving
             sols.append(sol)
-            if not np.all(np.isnan(list(sol.values()))):  # want to remove the case for missing points in data
+            if not np.all(
+                np.isnan(list(sol.values()))
+            ):  # want to remove the case for missing points in data
                 quality_fit[i_gp] = tmp_cov.neg_loglike(sol)
             else:
                 quality_fit[i_gp] = np.nan
@@ -683,7 +685,7 @@ class distrib_cov:
         if distrib in ["gaussian"]:
             tmp = self.cov["coeffs_loc_names"] + self.cov["coeffs_scale_names"]
         elif distrib in [
-            "GEV" #  or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
+            "GEV"  #  or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
         ]:
             tmp = (
                 self.cov["coeffs_loc_names"]

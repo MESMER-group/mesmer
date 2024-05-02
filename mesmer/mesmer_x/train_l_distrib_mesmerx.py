@@ -163,8 +163,10 @@ def xr_train_distrib(
         quality_xr2 = quality_xr.copy()
 
         # remnants of MESMERv0, because stuck with its format...
-        lon_l_vec = predictors.lon #lon["grid"][ls["idx_grid_l"]] try by Vici to fix missing variables
-        lat_l_vec = predictors.lat #lat["grid"][ls["idx_grid_l"]]
+        lon_l_vec = (
+            predictors.lon
+        )  # lon["grid"][ls["idx_grid_l"]] try by Vici to fix missing variables
+        lat_l_vec = predictors.lat  # lat["grid"][ls["idx_grid_l"]]
         # ... and function of MESMERv1
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 

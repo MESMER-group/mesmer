@@ -8,8 +8,19 @@ sys.path.append("../")
 import numpy as np
 import xarray as xr
 
+# import MESMER tools
+# from mesmer.calibrate_mesmer import train_lv
+# from mesmer.create_emulations import create_emus_lv
+# from mesmer.mesmer_x import *
+import mesmer.mesmer_x.train_l_distrib_mesmerx as mesmer_x_train
+import mesmer.mesmer_x.train_utils_mesmerx as mesmer_x_train_utils
+
 # load in MESMER-X configurations used in this script
 from mesmer.mesmer_x.temporary_config_all import ConfigMesmerX
+from mesmer.mesmer_x.temporary_support import load_inputs_MESMERx
+from mesmer.utils import (  # convert_dict_to_arr,; extract_land,; read_form_fit_distrib,
+    separate_hist_future,
+)
 
 # load in MESMER scripts for treatment of data
 # from mesmer.io import (
@@ -19,19 +30,6 @@ from mesmer.mesmer_x.temporary_config_all import ConfigMesmerX
 #     test_combination_vars,
 # )
 
-# import MESMER tools
-# from mesmer.calibrate_mesmer import train_lv
-# from mesmer.create_emulations import create_emus_lv
-#from mesmer.mesmer_x import *
-import mesmer.mesmer_x.train_l_distrib_mesmerx as mesmer_x_train
-import mesmer.mesmer_x.train_utils_mesmerx as mesmer_x_train_utils
-from mesmer.mesmer_x.temporary_support import load_inputs_MESMERx
-from mesmer.utils import (
-    # convert_dict_to_arr,
-    # extract_land,
-    # read_form_fit_distrib,
-    separate_hist_future,
-)
 
 # ==============================================================
 # 0. OPTIONS FOR THE SCRIPT
@@ -254,13 +252,13 @@ transf_target = mesmer_x_train_utils.probability_integral_transform(
 # 3.3. EXAMPLE OF EMULATION
 # --------------------------------------------------------------
 # new scenario:
-#NEW CODE OF MESMER, same structure as 'predictors' used for training, output=preds_newscen
+# NEW CODE OF MESMER, same structure as 'predictors' used for training, output=preds_newscen
 
-preds_newscen = [] # TODO
+preds_newscen = []  # TODO
 
 # generate realizations based on the auto-regression with spatially correlated innovations
 # NEW CODE OF MESMER, output = 'transf_emus'
-transf_emus = [] # TODO
+transf_emus = []  # TODO
 
 # probability integral transform: projection of the transformed data on the knwon distributions
 emus = mesmer_x_train_utils.probability_integral_transform(

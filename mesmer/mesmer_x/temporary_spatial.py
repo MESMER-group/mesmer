@@ -9,7 +9,6 @@ import xarray as xr
 
 from mesmer.core.utils import create_equal_dim_names
 
-
 # TAKEN FROM CURRENT CODE OF MESMER, TO REMOVE WITH REBASE
 
 
