@@ -4,9 +4,14 @@ import pytest
 import xarray as xr
 from packaging.version import Version
 
-from mesmer.mesmer_m.harmonic_model import fit_to_bic_xr, fit_to_bic_np, generate_fourier_series_np
-from mesmer.testing import trend_data_2D
 from mesmer.core.utils import upsample_yearly_data
+from mesmer.mesmer_m.harmonic_model import (
+    fit_to_bic_np,
+    fit_to_bic_xr,
+    generate_fourier_series_np,
+)
+from mesmer.testing import trend_data_2D
+
 
 def test_generate_fourier_series_np():
     n_years = 10
@@ -43,9 +48,7 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
 
     months = np.tile(np.arange(1, 13), 10)
 
-    monthly_target = generate_fourier_series_np(
-        yearly_predictor, coefficients, months
-    )
+    monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
     selected_order, estimated_coefficients, predictions = fit_to_bic_np(
         yearly_predictor, monthly_target, max_order=6
     )
@@ -71,6 +74,7 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
     # actually all what really counts is that the predictions are close to the target
     np.testing.assert_allclose(predictions, monthly_target, atol=1e-1)
 
+
 @pytest.mark.parametrize(
     "coefficients",
     [
@@ -83,9 +87,11 @@ def test_fit_to_bic_xr(coefficients):
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
 
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    yearly_predictor["time"] = xr.cftime_range(start='2000-01-01', periods=10, freq=freq)
+    yearly_predictor["time"] = xr.cftime_range(
+        start="2000-01-01", periods=10, freq=freq
+    )
 
-    time = xr.cftime_range(start='2000-01-01', periods=10*12, freq='MS')
+    time = xr.cftime_range(start="2000-01-01", periods=10 * 12, freq="MS")
     monthly_time = xr.DataArray(
         time,
         dims=["time"],
@@ -101,8 +107,7 @@ def test_fit_to_bic_xr(coefficients):
         output_core_dims=[["time"]],
         vectorize=True,
         output_dtypes=[float],
-        kwargs={"coeffs": coefficients,
-                "months": months},            
+        kwargs={"coeffs": coefficients, "months": months},
     )
 
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
