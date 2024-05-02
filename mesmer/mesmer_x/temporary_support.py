@@ -5,21 +5,6 @@ sys.path.append("../")
 
 # additional packages for this script
 import numpy as np
-import xarray as xr
-
-# load in MESMER-X configurations used in this script
-from configs.config_all import config_mesmer  # config_across_scen_T_cmip6ng_test
-
-# import MESMER tools
-from mesmer.calibrate_mesmer import train_gt, train_gv, train_lt, train_lv
-from mesmer.create_emulations import (
-    create_emus_g,
-    create_emus_gt,
-    create_emus_gv,
-    create_emus_l,
-    create_emus_lt,
-    create_emus_lv,
-)
 
 # load in MESMER scripts for treatment of data
 from mesmer.io import (
@@ -28,12 +13,11 @@ from mesmer.io import (
     load_regs_ls_wgt_lon_lat,
     test_combination_vars,
 )
-from mesmer.mesmer_x import *
+
 from mesmer.utils import (
     convert_dict_to_arr,
     extract_land,
     read_form_fit_distrib,
-    separate_hist_future,
 )
 
 
