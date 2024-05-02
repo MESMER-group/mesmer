@@ -161,8 +161,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= np.spacing(1.0))
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > np.spacing(1.0))
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
         pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
         pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
 
