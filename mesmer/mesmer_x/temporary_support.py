@@ -7,11 +7,10 @@ sys.path.append("../")
 import numpy as np
 
 # load in MESMER scripts for treatment of data
-from mesmer.io import (
+from mesmer.io import (  # test_combination_vars, TODO: write this function
     load_cmipng,
     load_phi_gc,
     load_regs_ls_wgt_lon_lat,
-    # test_combination_vars, TODO: write this function
 )
 from mesmer.utils import convert_dict_to_arr, extract_land
 
