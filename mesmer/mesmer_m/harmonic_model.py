@@ -231,7 +231,7 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order=6):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
-        yearly_predictor, monthly_target
+        yearly_predictor, monthly_target.time
     )
 
     n_sel, coeffs, preds = xr.apply_ufunc(
