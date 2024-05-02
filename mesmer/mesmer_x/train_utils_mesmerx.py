@@ -277,7 +277,7 @@ class Expression:
                         # was a readable character, is still a readable character, nothing to do
                         pass
                 else:
-                    t += i
+                    t += ex
 
             # list of replacements in correct order
             tmp = list(dico_replace.keys())
