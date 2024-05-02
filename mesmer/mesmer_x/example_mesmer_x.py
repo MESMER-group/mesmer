@@ -37,7 +37,7 @@ from mesmer.utils import (  # convert_dict_to_arr,; extract_land,; read_form_fit
 # variables to represent
 targ = "mrso"  # txx, mrso, fwils, fwisa, fwixd, fwixx, mrso_minmon mrsomean??!
 pred = "tas"
-sub_pred = None  #'hfds' hfds | (pr)
+sub_pred = None  # 'hfds' hfds | (pr)
 
 # options for server
 # To control if run everything or using a bunch of processes

@@ -685,7 +685,7 @@ class distrib_cov:
         if distrib in ["gaussian"]:
             tmp = self.cov["coeffs_loc_names"] + self.cov["coeffs_scale_names"]
         elif distrib in [
-            "GEV"  #  or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
+            "GEV"  # or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
         ]:
             tmp = (
                 self.cov["coeffs_loc_names"]

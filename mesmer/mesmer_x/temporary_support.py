@@ -13,7 +13,7 @@ from mesmer.io import (
     load_regs_ls_wgt_lon_lat,
     test_combination_vars,
 )
-from mesmer.utils import convert_dict_to_arr, extract_land, read_form_fit_distrib
+from mesmer.utils import convert_dict_to_arr, extract_land
 
 
 def load_inputs_MESMERx(cfg, variables, esms):

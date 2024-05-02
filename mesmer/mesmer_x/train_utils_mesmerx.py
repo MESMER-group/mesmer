@@ -16,7 +16,7 @@ import scipy.stats as ss
 import xarray as xr
 
 
-class expression:
+class Expression:
     """
         Class to interpret string of conditional distribution, interpret them, and evaluate them.
         When initialized, the class identifies the distribution, inputs, parameters and coefficients.
@@ -170,17 +170,17 @@ class expression:
             self.coefficients_dict[param] = []
             # iniatilize detection
             cf = ""
-            for l in (
+            for pep in (
                 self.parameters_expressions[param] + " "
             ):  # adding one space at the end to append the last coefficient
-                if l == "c":
+                if pep == "c":
                     # starting expression for a coefficient
                     cf = "c"
                 elif (cf == "c") and (
-                    l in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+                    pep in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
                 ):
                     # continuing expression for a coefficient
-                    cf += l
+                    cf += pep
                 else:
                     if cf not in ["", "c"]:
                         # ending expression for a coefficient
@@ -444,8 +444,8 @@ def probability_integral_transform(
 
     """
     # preparation of distributions
-    expression_start = expression(expr_start, "start")
-    expression_end = expression(expr_end, "end")
+    expression_start = Expression(expr_start, "start")
+    expression_end = Expression(expr_end, "end")
     if coeffs_start is None:
         coeffs_start = xr.Dataset()
     if coeffs_end is None:

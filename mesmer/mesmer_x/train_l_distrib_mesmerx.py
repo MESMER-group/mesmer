@@ -15,8 +15,8 @@ import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import basinhopping, minimize, shgo
 
-from mesmer.mesmer_x.temporary_spatial import *
-from mesmer.mesmer_x.train_utils_mesmerx import *
+from mesmer.mesmer_x.temporary_spatial import geodist_exact, gaspari_cohn_correlation_matrices
+from mesmer.mesmer_x.train_utils_mesmerx import Expression, listxrds_to_np, weighted_median
 
 
 def xr_train_distrib(
@@ -90,7 +90,7 @@ def xr_train_distrib(
     # PREPARATION OF FIT
     # --------------------------------------------------------------------------------
     # getting list of inputs from predictors
-    expression_fit = expression(expr, expr_name)
+    expression_fit = Expression(expr, expr_name)
 
     # shaping predictors in current temporary format for use in np_train_distrib
     predictors_np = {
@@ -174,7 +174,7 @@ def xr_train_distrib(
             r_gasparicohn_2ndfit
         ]
         ind_nonan = np.where(
-            np.isnan(coefficients_xr[expression_fit.coefficients_list[0]]) == False
+            np.isnan(coefficients_xr[expression_fit.coefficients_list[0]]) is False
         )[0]
 
         for igp, gp in enumerate(gridpoints):
@@ -283,7 +283,7 @@ class distrib_cov:
 
     func_first_guess: callable, optional
         If provided, and that 'first_guess' is not provided, will be called to provide a first guess for the fit. This is an experimental feature, thus not tested.
-        /!\ BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR OWN RISKS.
+        !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR OWN RISKS.
 
     scores_fit: list
         After the fit, several scores can be calculated to assess the quality of the fit. Default: 'func_optim', 'NLL', 'BIC'
@@ -396,7 +396,7 @@ class distrib_cov:
         self.add_test = (data_targ_addtest is not None) and (
             data_preds_addtest is not None
         )
-        if (self.add_test == False) and (
+        if (self.add_test is False) and (
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
             raise Exception(
@@ -450,7 +450,7 @@ class distrib_cov:
         )
         if options_solver is None:
             pass
-        elif type(options_solver) == dict:
+        elif isinstance(options_solver, dict):
             default_options_solver.update(options_solver)
         else:
             raise Exception("options_solver must be a dictionary")
@@ -498,7 +498,7 @@ class distrib_cov:
         )
         if options_optim is None:
             pass
-        elif type(options_optim) == dict:
+        elif isinstance(options_optim, dict):
             default_options_optim.update(options_optim)
         else:
             raise Exception("options_optim must be a dictionary")
@@ -623,7 +623,7 @@ class distrib_cov:
     def test_all(self, coefficients):
         # test for the validity of the coefficients
         test_coeff = self._test_coeffs(coefficients)
-        if test_coeff == False:
+        if not test_coeff:
             # tests on coefficients show already that it wont work: filling in the rest with NaN
             return test_coeff, False, False, False
 
@@ -642,7 +642,7 @@ class distrib_cov:
                 ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
             else:
                 test_param = self._test_evol_params(distrib, self.data_targ)
-            if test_param == False:
+            if not test_param:
                 # tests on parameters show already that it wont work: filling in the rest with NaN
                 return test_coeff, test_param, False, False
 
@@ -710,7 +710,7 @@ class distrib_cov:
                     The steps are described in the section Method, steps 1-5. At step 5 that these coefficients are very close from the global minimum. shgo usually does not bring much at the expense of speed.
                     Thus skipping global minimum unless asked.
 
-            /!\ WARNING to anyone trying to improve this part /!\
+            !! WARNING to anyone trying to improve this part !!
                 If you attempt to modify the calculation of the first guess, it is *absolutely mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY, FLEXIBILITY.
                 In particular, it is mandatory to test it for different situations: variables, grid points, distributions & expressions.
         """
@@ -856,7 +856,7 @@ class distrib_cov:
             },
         )
         # observed that Powell solver is much faster, but less robust. May rarely create directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at critical steps or when Powell fails.
-        if (option_NelderMead == "fail_run" and fit.success == False) or (
+        if (option_NelderMead == "fail_run" and fit.success is False) or (
             option_NelderMead == "best_run"
         ):
             fit_NM = minimize(
@@ -881,9 +881,9 @@ class distrib_cov:
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
     def fg_fun_deriv01(self, x):
-        distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
+        # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
         loc_low = self.expr_fit.parameters_values["loc"]
-        distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
+        # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
         loc_high = self.expr_fit.parameters_values["loc"]
         deriv = {
             p: (loc_high - loc_low)
@@ -906,14 +906,14 @@ class distrib_cov:
     def fg_fun_loc(self, x_loc):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
-        distrib = self.expr_fit.evaluate(x, self.data_pred)
+        # distrib = self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
         return np.sum((loc - self.smooth_data_targ) ** 2)
 
     def fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
-        distrib = self.expr_fit.evaluate(x, self.data_pred)
+        # distrib = self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
         sca = self.expr_fit.parameters_values[
             "scale"
@@ -1078,7 +1078,7 @@ class distrib_cov:
             )
 
             # checking if the fit has failed
-            if self.error_failedfit and (m.success == False):
+            if self.error_failedfit and (m.success is False):
                 raise Exception("Failed fit.")
             else:
                 self.coefficients_fit = m.x
