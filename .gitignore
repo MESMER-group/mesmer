@@ -2,10 +2,6 @@
 # mesmer specific
 generated
 
-# old MESMER-X files until they are removed
-mesmer_x/OLD_train_l_distrib.py
-mesmer_x/create_emus_l_distrib.py
-
 # allow saving mesmer params without commiting them to the repo
 tests/test-data/output/*/params
 tests/test-data/output/*/*/params
