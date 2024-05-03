@@ -161,12 +161,14 @@ class PowerTransformerVariableLambda(PowerTransformer):
         parameter lambda.
         """
 
+        eps = np.finfo(np.float64).eps
+
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= np.spacing(1.0))
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > np.spacing(1.0))
-        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= eps)
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > eps)
+        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
+        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
         # assign values for the four cases
         transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
