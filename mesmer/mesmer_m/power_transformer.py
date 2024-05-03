@@ -150,7 +150,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return minimize(
             _neg_log_likelihood,
-            firstguess,
+            first_guess,
             bounds=bounds,
             method="SLSQP",
             jac=rosen_der,
