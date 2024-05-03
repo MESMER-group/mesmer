@@ -146,7 +146,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         # choosing bracket -2, 2 like for boxcox
         bounds = np.c_[[0, -0.1], [1, 0.1]]
         # first guess is that data is already normal distributed
-        firstguess = np.array([1, 0])
+        first_guess = np.array([1, 0])
 
         return minimize(
             _neg_log_likelihood,
