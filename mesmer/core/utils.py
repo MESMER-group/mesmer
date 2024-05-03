@@ -135,8 +135,8 @@ def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
     # make sure monthly and yearly data both start at the beginning of the period
     # pandas v2.2 changed the time freq string for year
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    year = yearly_data.resample({time_dim:freq}).bfill()
-    month = monthly_time.resample({time_dim:"MS"}).bfill()
+    year = yearly_data.resample({time_dim: freq}).bfill()
+    month = monthly_time.resample({time_dim: "MS"}).bfill()
 
     # forward fill yearly values to monthly resolution
     upsampled_yearly_data = year.reindex_like(month, method="ffill")
