@@ -108,7 +108,7 @@ def _assert_annual_data(time):
         )
 
 
-def upsample_yearly_data(yearly_data, monthly_time):
+def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
     Parameters
@@ -124,10 +124,10 @@ def upsample_yearly_data(yearly_data, monthly_time):
     upsampled_yearly_data: xarray.DataArray
         Upsampled yearly temperature values containing the yearly values for every month of the corresponding year.
     """
-    _check_dataarray_form(yearly_data, "yearly_data", required_dims="time")
-    _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims="time")
+    _check_dataarray_form(yearly_data, "yearly_data", required_dims=time_dim)
+    _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims=time_dim)
 
-    if yearly_data.time.size * 12 != monthly_time.size:
+    if yearly_data[time_dim].size * 12 != monthly_time.size:
         raise ValueError(
             "Length of monthly time not equal to 12 times the length of yearly data."
         )
@@ -135,8 +135,8 @@ def upsample_yearly_data(yearly_data, monthly_time):
     # make sure monthly and yearly data both start at the beginning of the period
     # pandas v2.2 changed the time freq string for year
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    year = yearly_data.resample(time=freq).bfill()
-    month = monthly_time.resample(time="MS").bfill()
+    year = yearly_data.resample({time_dim:freq}).bfill()
+    month = monthly_time.resample({time_dim:"MS"}).bfill()
 
     # forward fill yearly values to monthly resolution
     upsampled_yearly_data = year.reindex_like(month, method="ffill")
