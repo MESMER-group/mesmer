@@ -41,7 +41,7 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
     beta0 = 0
     beta1 = 1
 
-    seasonal_cycle = sum(
+    seasonal_cycle = np.nansum(
         [
             (coeffs[idx * 4] * yearly_T + coeffs[idx * 4 + 1])
             * np.sin(np.pi * i * (months) / 6)
@@ -193,7 +193,7 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     )
 
     # need the coeff array to be the same size for all orders
-    coeffs = np.zeros([max_order * 4])
+    coeffs = np.zeros([max_order * 4]) * np.nan
     coeffs[: selected_order * 4] = coeffs_fit
 
     return selected_order, coeffs, predictions
