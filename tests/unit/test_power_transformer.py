@@ -12,7 +12,7 @@ def test_lambda_function():
     # the coefficients close to 1 and 0
     # but for the sake of testing, we set the coefficients differently
     coeffs = [1, 0.1]
-    local_yearly_T_test_data = np.random.rand(10) * 100
+    local_yearly_T_test_data = np.random.normal(0, 1, 10)
 
     # even for random numbers, the lambdas should always be between 0 and 2
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
