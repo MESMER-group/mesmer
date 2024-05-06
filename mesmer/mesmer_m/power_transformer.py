@@ -145,10 +145,12 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         # choosing bracket -2, 2 like for boxcox
         bounds = np.c_[[0, -0.1], [1, 0.1]]
-        # TODO: write first guess variable for readability
+        # first guess is that data is already normal distributed
+        first_guess = np.array([1, 0])
+
         return minimize(
             _neg_log_likelihood,
-            np.array([0.01, 0.01]),
+            first_guess,
             bounds=bounds,
             method="SLSQP",
             jac=rosen_der,
@@ -159,12 +161,14 @@ class PowerTransformerVariableLambda(PowerTransformer):
         parameter lambda.
         """
 
+        eps = np.finfo(np.float64).eps
+
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
-        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < eps)
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= eps)
+        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
+        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
         # assign values for the four cases
         transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
