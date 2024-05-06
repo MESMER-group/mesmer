@@ -32,7 +32,7 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
         Fourier Series of order n calculated over yearly_T and months with coeffs.
 
     """
-    order = int(len(coeffs) / 4)
+    order = int(coeffs.size / 4)
 
     # fix these parameters, according to paper
     # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
