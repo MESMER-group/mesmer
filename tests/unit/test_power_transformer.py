@@ -61,11 +61,11 @@ def test_yeo_johnson_transform():
     pt = PowerTransformerVariableLambda()
 
     # test all possible combinations of local_monthly_residuals and lambdas
-    local_monthly_residuals = np.array([0, 1, 0, 1, -1, -1])
-    lambdas = np.array([1, 1, 0, 0, 1, 2])
+    local_monthly_residuals = np.array([0., 1., 0., 1., -1., -1.])
+    lambdas = np.array([1., 1., 0., 0., 1., 2.])
 
     result = pt._yeo_johnson_transform(local_monthly_residuals, lambdas)
-    expected = np.array([0, 1, 0, 0, -1, 0])
+    expected = np.array([0., 1., 0., np.log1p(1.), -1., -np.log1p(1.)])
 
     np.testing.assert_equal(result, expected)
 
