@@ -27,9 +27,9 @@ def test_fit_power_transformer():
     # should be close to 1 and 0 as well
 
     gridcells = 1
-    years = 100000
-    monthly_residuals = np.random.rand(years, gridcells) * 10
-    yearly_T = np.ones((years, gridcells))
+    n_months = 100000
+    monthly_residuals = np.random.rand(n_months, gridcells) * 10
+    yearly_T = np.ones((n_months, gridcells))
 
     pt = PowerTransformerVariableLambda()
     pt.fit(monthly_residuals, yearly_T, gridcells)
@@ -41,18 +41,18 @@ def test_fit_power_transformer():
 
 
 def test_transform():
-    n_years = 20
+    n_ts = 20
     n_gridcells = 10
 
     pt = PowerTransformerVariableLambda()
     pt.standardize = False
     pt.coeffs_ = np.tile([1, 0], (n_gridcells, 1))
 
-    monthly_residuals = np.ones((n_years, n_gridcells))
-    yearly_T = np.zeros((n_years, n_gridcells))
+    monthly_residuals = np.ones((n_ts, n_gridcells))
+    yearly_T = np.zeros((n_ts, n_gridcells))
 
     result = pt.transform(monthly_residuals, yearly_T)
-    expected = np.ones((n_years, n_gridcells))
+    expected = np.ones((n_ts, n_gridcells))
 
     np.testing.assert_equal(result, expected)
 
