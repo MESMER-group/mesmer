@@ -71,16 +71,22 @@ def test_yeo_johnson_transform():
 
 
 def test_inverse_transform():
-    monthly_residuals = np.ones((10, 10))
-    yearly_T = np.zeros((10, 10))
+    n_years = 20
+    n_gridcells = 5
+    # dummy seasonal cylce, having negative and positive values
+    monthly_residuals = np.sin(np.linspace(0, 2 * np.pi, n_years * n_gridcells)).reshape(n_years, n_gridcells)
+    yearly_T = np.zeros((n_years, n_gridcells))
 
     pt = PowerTransformerVariableLambda()
     pt.standardize = False
-    pt.coeffs_ = np.tile([1, 0], (10, 1))
+    # dummy lambdas (since yearly_T is zero lambda comes out to be second coefficient)
+    # we have all cases for lambdas 0 and 2 (special cases), 1 (identity case)
+    # lambda between 1 and 1 and lambda between 1 and 2 for concave and convex cases
+    pt.coeffs_ = np.array([[0, 0], [0, 1], [0, 2], [0, 0.5], [0, 1.5]])
     pt.mins_ = np.amin(monthly_residuals, axis=0)
     pt.maxs_ = np.amax(monthly_residuals, axis=0)
 
     transformed = pt.transform(monthly_residuals, yearly_T)
     result = pt.inverse_transform(transformed, yearly_T)
 
-    np.testing.assert_equal(result, monthly_residuals)
+    np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
