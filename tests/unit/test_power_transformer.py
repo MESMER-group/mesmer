@@ -23,7 +23,7 @@ def test_lambda_function():
 def test_fit_power_transformer():
     # with enough random data points the fit should be close to 1 and 0
     # here we test with uniform random data because it is quicker to fit
-    # Uniform data is also symmetrically distributed so coefficients 
+    # Uniform data is also symmetrically distributed so coefficients
     # should be close to 1 and 0 as well
 
     gridcells = 1
@@ -61,11 +61,11 @@ def test_yeo_johnson_transform():
     pt = PowerTransformerVariableLambda()
 
     # test all possible combinations of local_monthly_residuals and lambdas
-    local_monthly_residuals = np.array([0., 1., 0., 1., -1., -1.])
-    lambdas = np.array([1., 1., 0., 0., 1., 2.])
+    local_monthly_residuals = np.array([0.0, 1.0, 0.0, 1.0, -1.0, -1.0])
+    lambdas = np.array([1.0, 1.0, 0.0, 0.0, 1.0, 2.0])
 
     result = pt._yeo_johnson_transform(local_monthly_residuals, lambdas)
-    expected = np.array([0., 1., 0., np.log1p(1.), -1., -np.log1p(1.)])
+    expected = np.array([0.0, 1.0, 0.0, np.log1p(1.0), -1.0, -np.log1p(1.0)])
 
     np.testing.assert_equal(result, expected)
 
@@ -74,7 +74,9 @@ def test_inverse_transform():
     n_years = 20
     n_gridcells = 5
     # dummy seasonal cylce, having negative and positive values
-    monthly_residuals = np.sin(np.linspace(0, 2 * np.pi, n_years * n_gridcells)).reshape(n_years, n_gridcells)
+    monthly_residuals = np.sin(
+        np.linspace(0, 2 * np.pi, n_years * n_gridcells)
+    ).reshape(n_years, n_gridcells)
     yearly_T = np.zeros((n_years, n_gridcells))
 
     pt = PowerTransformerVariableLambda()
