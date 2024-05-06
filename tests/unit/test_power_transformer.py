@@ -71,13 +71,13 @@ def test_yeo_johnson_transform():
 
 
 def test_inverse_transform():
-    n_years = 20
+    n_ts = 20
     n_gridcells = 5
     # dummy seasonal cylce, having negative and positive values
     monthly_residuals = np.sin(
-        np.linspace(0, 2 * np.pi, n_years * n_gridcells)
-    ).reshape(n_years, n_gridcells)
-    yearly_T = np.zeros((n_years, n_gridcells))
+        np.linspace(0, 2 * np.pi, n_ts * n_gridcells)
+    ).reshape(n_ts, n_gridcells)
+    yearly_T = np.zeros((n_ts, n_gridcells))
 
     pt = PowerTransformerVariableLambda()
     pt.standardize = False
