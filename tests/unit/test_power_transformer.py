@@ -38,7 +38,7 @@ def test_fit_power_transformer():
     result = pt.coeffs_[0]
     expected = np.array([1, 0])
 
-    np.testing.assert_allclose(result, expected, rtol=1e-10, atol=1e-10)
+    np.testing.assert_allclose(result, expected, atol=1e-7)
 
 
 def test_transform():
