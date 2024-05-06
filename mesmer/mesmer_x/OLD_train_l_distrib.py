@@ -1566,7 +1566,7 @@ class distrib_cov:
                 np.isclose(0, scale + c * (loc - data_fit))
             ):  # rewritten for simplicity as scale + c * (loc - data) > 0
                 test = False
-            # if type(c) == np.float64:# no covariants on shape
+            # if type(c) == np.float64: # no covariants on shape
             #    if -c > 0:# support of this GEV is [ loc - scale/shape ; +inf [
             #        if np.any( data_fit < loc - scale/(-c) )  or  np.any(np.isclose( data_fit , loc - scale/(-c) )):
             #            test = False
