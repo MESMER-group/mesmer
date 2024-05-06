@@ -181,7 +181,7 @@ def xr_train_distrib(
             r_gasparicohn_2ndfit
         ]
         ind_nonan = np.where(
-            np.isnan(coefficients_xr[expression_fit.coefficients_list[0]]) is False
+            ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
         )[0]
 
         for igp, gp in enumerate(gridpoints):
