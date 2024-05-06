@@ -22,6 +22,10 @@ def test_lambda_function():
 
 def test_fit_power_transformer():
     # with enough random data points the fit should be close to 1 and 0
+    # here we test with uniform random data because it is quicker to fit
+    # Uniform data is also symmetrically distributed so coefficients 
+    # should be close to 1 and 0 as well
+
     gridcells = 1
     years = 100000
     monthly_residuals = np.random.rand(years, gridcells) * 10
