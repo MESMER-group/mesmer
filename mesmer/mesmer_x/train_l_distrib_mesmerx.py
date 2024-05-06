@@ -16,12 +16,12 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import basinhopping, minimize, shgo
 
 from mesmer.geospatial import geodist_exact
-from mesmer.stats import gaspari_cohn_correlation_matrices
 from mesmer.mesmer_x.train_utils_mesmerx import (
     Expression,
     listxrds_to_np,
     weighted_median,
 )
+from mesmer.stats import gaspari_cohn_correlation_matrices
 
 
 def xr_train_distrib(
