@@ -34,8 +34,8 @@ def test_fit_power_transformer():
     pt = PowerTransformerVariableLambda()
     pt.fit(monthly_residuals, yearly_T, gridcells)
 
-    result = pt.coeffs_[0]
-    expected = np.array([1, 0])
+    result = pt.coeffs_
+    expected = np.array([[1, 0]])
 
     np.testing.assert_allclose(result, expected, atol=1e-7)
 
