@@ -28,7 +28,7 @@ def test_fit_power_transformer():
     # should be close to 1 and 0 as well
 
     gridcells = 1
-    n_months = 100000
+    n_months = 100_000
     monthly_residuals = np.random.rand(n_months, gridcells) * 10
     yearly_T = np.ones((n_months, gridcells))
 
