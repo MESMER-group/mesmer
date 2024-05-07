@@ -15,7 +15,7 @@ import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import basinhopping, minimize, shgo
 
-from mesmer.geospatial import geodist_exact
+from mesmer.core.geospatial import geodist_exact
 from mesmer.mesmer_x.train_utils_mesmerx import (
     Expression,
     listxrds_to_np,
