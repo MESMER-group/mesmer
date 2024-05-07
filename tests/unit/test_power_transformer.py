@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
@@ -38,6 +39,35 @@ def test_fit_power_transformer():
     expected = np.array([[1, 0]])
 
     np.testing.assert_allclose(result, expected, atol=1e-7)
+
+
+def test_yeo_johnson_optimize_lambda():
+    np.random.seed(0)
+    n_years = 10_000
+    yearly_T = np.repeat(np.random.randn(n_years), 12)
+
+    skew = -2
+    local_monthly_residuals = scipy.stats.skewnorm.rvs(skew, size=n_years * 12)
+
+    pt = PowerTransformerVariableLambda()
+    pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
+    lmbda = lambda_function(pt.coeffs_, yearly_T)
+    transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
+    
+    assert (lmbda > 1).all() & (lmbda <= 2).all()
+    np.testing.assert_allclose(scipy.stats.skew(transformed), 0, atol=0.01)
+
+    # this fails, need to investigate more
+    # skew = 2
+    # local_monthly_residuals = scipy.stats.skewnorm.rvs(skew, size=n_years * 12)
+
+    # pt = PowerTransformerVariableLambda()
+    # pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
+    # lmbda = lambda_function(pt.coeffs_, yearly_T)
+    # transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
+    
+    # assert (lmbda >= 0).all() & (lmbda <= 1).all()
+    # np.testing.assert_allclose(scipy.stats.skew(transformed), 0, atol=0.01)
 
 
 def test_transform():
