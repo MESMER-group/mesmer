@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 # from tqdm import tqdm
 from joblib import Parallel, delayed
@@ -286,3 +287,125 @@ class PowerTransformerVariableLambda(PowerTransformer):
             )
 
         return inverted_monthly_T
+
+def _yeo_johnson_transform(local_monthly_residuals, lambdas):
+    """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
+    parameter lambda.
+    """
+
+    transformed = np.zeros_like(local_monthly_residuals)
+    # get positions of four cases:
+    pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
+    pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
+    pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
+    pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+
+    # assign values for the four cases
+    transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
+    transformed[pos_b] = (
+        np.power(local_monthly_residuals[pos_b] + 1, lambdas[pos_b]) - 1
+    ) / lambdas[pos_b]
+    transformed[pos_c] = -(
+        np.power(-local_monthly_residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1
+    ) / (2 - lambdas[pos_c])
+    transformed[pos_d] = -np.log1p(-local_monthly_residuals[pos_d])
+
+    return transformed
+
+def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
+    
+    # the computation of lambda is influenced by NaNs so we need to
+    # get rid of them
+    local_monthly_residuals = local_monthly_residuals[~np.isnan(local_monthly_residuals)]
+    local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
+
+    def _neg_log_likelihood(coeffs):
+        """Return the negative log likelihood of the observed local monthly residual temperatures
+        as a function of lambda."""
+        lambdas = lambda_function(coeffs, local_yearly_T)
+
+        # version with own power transform
+        transformed_local_monthly_resids = _yeo_johnson_transform(
+            local_monthly_residuals, lambdas
+        )
+
+        n_samples = local_monthly_residuals.shape[0]
+        loglikelihood = (
+            -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
+        )
+        loglikelihood += (
+            (lambdas - 1)
+            * np.sign(local_monthly_residuals)
+            * np.log1p(np.abs(local_monthly_residuals))
+        ).sum()
+
+        return -loglikelihood
+
+    bounds = np.array([[0, np.inf], [-0.1, 0.1]])
+    first_guess = np.array([1, 0])
+
+    xi_0, xi_1 = minimize(
+        _neg_log_likelihood,
+        x0=first_guess,
+        bounds=bounds,
+        method="SLSQP",
+        jac=rosen_der,
+    ).x
+
+    return xi_0, xi_1
+
+def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
+    
+    lambdas = 2/(1 + coeffs.xi_0 * np.exp(yearly_T * coeffs.xi_1))
+
+    return lambdas.rename("lambdas")
+
+def fit_power_transformer_xr(monthly_residuals, yearly_T):
+
+    """Estimate the optimal parameter lambda for each gridcell, given an xarray dataset
+    of temperature residuals.
+    The optimal lambda parameter for minimizing skewness is estimated on
+    each gridcell independently using maximum likelihood.
+
+    Parameters
+    ----------
+    monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
+        Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
+
+    yearly_T :  xr.DataArray of shape (n_years, n_gridcells)
+        yearly temperature values used as predictors for the lambdas.
+
+    Returns
+    -------
+    :obj:`xr.DataSet`
+        Dataset containing the estimate parameters needed to estimate lambda.
+
+    """
+    monthly_residuals_grouped = monthly_residuals.groupby('time.month')
+
+    coeffs = []
+    for month in range(1,13):
+        xi_0, xi_1 = xr.apply_ufunc(
+            _yeo_johnson_optimize_lambda,
+            monthly_residuals_grouped[month],
+            yearly_T,
+            input_core_dims=[["time"], ["time"]],
+            output_core_dims=[[],[]],
+            output_dtypes=[float, float],
+            vectorize=True,
+            join="outer"
+        )
+        data = {
+            "xi_0": xi_0,
+            "xi_1": xi_1
+        }
+
+        dataset = xr.Dataset(data)
+        coeffs.append(dataset)
+    
+    coeffs = xr.concat(coeffs, dim = "month")
+    
+    # get lambdas
+    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time":"year"})
+
+    return xr.merge([coeffs, lambdas])
