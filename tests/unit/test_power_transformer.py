@@ -44,10 +44,10 @@ def test_fit_power_transformer():
 def test_yeo_johnson_optimize_lambda():
     np.random.seed(0)
     n_years = 10_000
-    yearly_T = np.repeat(np.random.randn(n_years), 12)
+    yearly_T = np.random.randn(n_years)
 
     skew = -2
-    local_monthly_residuals = scipy.stats.skewnorm.rvs(skew, size=n_years * 12)
+    local_monthly_residuals = scipy.stats.skewnorm.rvs(skew, size=n_years)
 
     pt = PowerTransformerVariableLambda()
     pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
@@ -59,7 +59,7 @@ def test_yeo_johnson_optimize_lambda():
 
     # this fails, need to investigate more
     # skew = 2
-    # local_monthly_residuals = scipy.stats.skewnorm.rvs(skew, size=n_years * 12)
+    # local_monthly_residuals = scipy.stats.skewnorm.rvs(skew, size=n_years)
 
     # pt = PowerTransformerVariableLambda()
     # pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
