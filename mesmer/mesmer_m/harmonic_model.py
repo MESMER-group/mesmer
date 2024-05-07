@@ -108,18 +108,21 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order, first_guess):
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
 
-    coeffs = optimize.least_squares(
+    minimize_result = optimize.least_squares(
         func,
         first_guess,
-        args=(yearly_predictor, mon_train, monthly_target),
+        args=(order, yearly_predictor, mon_train, monthly_target),
         loss="cauchy",
-    ).x
+    )
+
+    coeffs = minimize_result.x
+    mse = minimize_result.fun
 
     preds = generate_fourier_series_np(
         yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
     )
 
-    return coeffs, preds
+    return coeffs, preds, mse
 
 
 def calculate_bic(n_samples, order, mse):
@@ -176,14 +179,12 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     for i_order in range(1, max_order + 1):
 
-        coeffs, predictions = fit_fourier_series_np(
+        coeffs, predictions, mse = fit_fourier_series_np(
             yearly_predictor,
             monthly_target,
             i_order,
             first_guess=np.append(last_coeffs, np.zeros(4)),
         )
-        # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
-        mse = np.mean((monthly_target - predictions) ** 2)
         bic_score = calculate_bic(len(monthly_target), i_order, mse)
 
         if bic_score < current_min_score:
