@@ -16,6 +16,7 @@ def test_lambda_function():
     local_yearly_T_test_data = np.random.normal(0, 1, 10)
 
     # even for random numbers, the lambdas should always be between 0 and 2
+    # because the function is logistic between 0 and 2
     lambdas = lambda_function(coeffs, local_yearly_T_test_data)
 
     assert np.all(lambdas > 0) and np.all(lambdas < 2)
