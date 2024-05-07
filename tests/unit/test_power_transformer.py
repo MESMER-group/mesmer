@@ -8,10 +8,10 @@ from mesmer.mesmer_m.power_transformer import (
 
 
 def test_lambda_function():
-    # Note that we test with normally distributed data
-    # which should make lambda close to 1 and
-    # the coefficients close to 1 and 0
-    # but for the sake of testing, we set the coefficients differently
+    # Note that we test with normally distributed data without skewness
+    # which would yield coefficients close to 1 and 0
+    # and a constant lambda of about 1
+    # but for the sake of testing, we use coefficients which respresent skewness
     coeffs = [1, 0.1]
     local_yearly_T_test_data = np.random.normal(0, 1, 10)
 
