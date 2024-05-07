@@ -105,7 +105,6 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order, first_guess):
 
         return loss
 
-
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
 
@@ -178,9 +177,12 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     for i_order in range(1, max_order + 1):
 
         coeffs, predictions = fit_fourier_series_np(
-            yearly_predictor, monthly_target, i_order, first_guess=np.append(last_coeffs, np.zeros(4))
+            yearly_predictor,
+            monthly_target,
+            i_order,
+            first_guess=np.append(last_coeffs, np.zeros(4)),
         )
-        
+
         mse = np.mean((monthly_target - predictions) ** 2)
         bic_score = calculate_bic(len(monthly_target), i_order, mse)
 
