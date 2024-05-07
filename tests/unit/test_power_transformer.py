@@ -53,7 +53,7 @@ def test_yeo_johnson_optimize_lambda():
     pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
     lmbda = lambda_function(pt.coeffs_, yearly_T)
     transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
-    
+
     assert (lmbda > 1).all() & (lmbda <= 2).all()
     np.testing.assert_allclose(scipy.stats.skew(transformed), 0, atol=0.01)
 
@@ -65,7 +65,7 @@ def test_yeo_johnson_optimize_lambda():
     # pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
     # lmbda = lambda_function(pt.coeffs_, yearly_T)
     # transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
-    
+
     # assert (lmbda >= 0).all() & (lmbda <= 1).all()
     # np.testing.assert_allclose(scipy.stats.skew(transformed), 0, atol=0.01)
 
@@ -104,9 +104,9 @@ def test_inverse_transform():
     n_ts = 20
     n_gridcells = 5
     # dummy seasonal cylce, having negative and positive values
-    monthly_residuals = np.sin(
-        np.linspace(0, 2 * np.pi, n_ts * n_gridcells)
-    ).reshape(n_ts, n_gridcells)
+    monthly_residuals = np.sin(np.linspace(0, 2 * np.pi, n_ts * n_gridcells)).reshape(
+        n_ts, n_gridcells
+    )
     yearly_T = np.zeros((n_ts, n_gridcells))
 
     pt = PowerTransformerVariableLambda()
