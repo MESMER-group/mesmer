@@ -288,6 +288,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         return inverted_monthly_T
 
+
 def _yeo_johnson_transform(local_monthly_residuals, lambdas):
     """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
     parameter lambda.
@@ -312,11 +313,14 @@ def _yeo_johnson_transform(local_monthly_residuals, lambdas):
 
     return transformed
 
+
 def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
-    
+
     # the computation of lambda is influenced by NaNs so we need to
     # get rid of them
-    local_monthly_residuals = local_monthly_residuals[~np.isnan(local_monthly_residuals)]
+    local_monthly_residuals = local_monthly_residuals[
+        ~np.isnan(local_monthly_residuals)
+    ]
     local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
     def _neg_log_likelihood(coeffs):
@@ -330,9 +334,7 @@ def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
         )
 
         n_samples = local_monthly_residuals.shape[0]
-        loglikelihood = (
-            -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
-        )
+        loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
         loglikelihood += (
             (lambdas - 1)
             * np.sign(local_monthly_residuals)
@@ -354,14 +356,15 @@ def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
 
     return xi_0, xi_1
 
+
 def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
-    
-    lambdas = 2/(1 + coeffs.xi_0 * np.exp(yearly_T * coeffs.xi_1))
+
+    lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_T * coeffs.xi_1))
 
     return lambdas.rename("lambdas")
 
-def fit_power_transformer_xr(monthly_residuals, yearly_T):
 
+def fit_power_transformer_xr(monthly_residuals, yearly_T):
     """Estimate the optimal parameter lambda for each gridcell, given an xarray dataset
     of temperature residuals.
     The optimal lambda parameter for minimizing skewness is estimated on
@@ -381,31 +384,28 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
         Dataset containing the estimate parameters needed to estimate lambda.
 
     """
-    monthly_residuals_grouped = monthly_residuals.groupby('time.month')
+    monthly_residuals_grouped = monthly_residuals.groupby("time.month")
 
     coeffs = []
-    for month in range(1,13):
+    for month in range(1, 13):
         xi_0, xi_1 = xr.apply_ufunc(
             _yeo_johnson_optimize_lambda,
             monthly_residuals_grouped[month],
             yearly_T,
             input_core_dims=[["time"], ["time"]],
-            output_core_dims=[[],[]],
+            output_core_dims=[[], []],
             output_dtypes=[float, float],
             vectorize=True,
-            join="outer"
+            join="outer",
         )
-        data = {
-            "xi_0": xi_0,
-            "xi_1": xi_1
-        }
+        data = {"xi_0": xi_0, "xi_1": xi_1}
 
         dataset = xr.Dataset(data)
         coeffs.append(dataset)
-    
-    coeffs = xr.concat(coeffs, dim = "month")
-    
+
+    coeffs = xr.concat(coeffs, dim="month")
+
     # get lambdas
-    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time":"year"})
+    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
 
     return xr.merge([coeffs, lambdas])
