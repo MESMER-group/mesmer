@@ -182,7 +182,7 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
             i_order,
             first_guess=np.append(last_coeffs, np.zeros(4)),
         )
-
+        # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
         mse = np.mean((monthly_target - predictions) ** 2)
         bic_score = calculate_bic(len(monthly_target), i_order, mse)
 
