@@ -1,9 +1,6 @@
 # https://pre-commit.com/
 ci:
     autoupdate_schedule: monthly
-exclude: |
-  ^mesmer_x/OLD_train_l_distrib.py
-  ^mesmer_x/create_emus_l_distrib.py
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
