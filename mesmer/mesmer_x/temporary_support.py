@@ -59,7 +59,7 @@ def load_inputs_MESMERx(cfg, variables, esms):
             #     )
             # else:
             #     available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
-            available_runs = 1
+            available_runs = ["all"]
             if len(available_runs) > 0:
                 targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmipng(
                     targ, esm, scen, cfg
