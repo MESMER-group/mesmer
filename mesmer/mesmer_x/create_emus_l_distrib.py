@@ -10,7 +10,16 @@ Function to back-transform local variability emulations with MESMER that are sta
 import numpy as np
 import scipy.stats as ss
 
-from mesmer.utils import eval_param_distrib, read_form_fit_distrib, sigmoid_backtransf
+# from mesmer.utils import eval_param_distrib, read_form_fit_distrib, sigmoid_backtransf
+
+def eval_param_distrib(param, cov, force_scen):
+    pass
+
+def read_form_fit_distrib(form_fit_distrib):
+    pass
+
+def sigmoid_backtransf(data, left, right, type_sigm, alpha=None):
+    pass
 
 
 def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=None):
