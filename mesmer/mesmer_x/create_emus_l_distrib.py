@@ -12,11 +12,14 @@ import scipy.stats as ss
 
 # from mesmer.utils import eval_param_distrib, read_form_fit_distrib, sigmoid_backtransf
 
+
 def eval_param_distrib(param, cov, force_scen):
     pass
 
+
 def read_form_fit_distrib(form_fit_distrib):
     pass
+
 
 def sigmoid_backtransf(data, left, right, type_sigm, alpha=None):
     pass

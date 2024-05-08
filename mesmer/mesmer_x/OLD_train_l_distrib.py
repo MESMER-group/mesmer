@@ -49,7 +49,6 @@ from scipy.optimize import minimize
 from scipy.special import gamma, zeta
 from statsmodels.regression.linear_model import OLS
 
-
 # from mesmer.utils import (
 #     eval_param_distrib,
 #     read_form_fit_distrib,
@@ -57,18 +56,23 @@ from statsmodels.regression.linear_model import OLS
 #     sigmoid_transf,
 # )
 
+
 # dummy functions
 def eval_param_distrib(param, cov, force_scen):
     pass
 
+
 def read_form_fit_distrib(form_fit_distrib):
     pass
+
 
 def sigmoid_backtransf(data, left, right, type_sigm, alpha=None):
     pass
 
+
 def sigmoid_transf(data, left, right, type_sigm, alpha=None):
     pass
+
 
 def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwargs):
     """Derive local parameters for a covariated distribution.
