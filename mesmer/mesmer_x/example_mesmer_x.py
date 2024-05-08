@@ -97,9 +97,12 @@ cfg = ConfigMesmerX(
     },
     esms="all",
 )
-for path in [path_save_results, path_save_figures]:
-    if not os.path.exists(path):
-        os.makedirs(path)
+
+# make paths if not existing
+# for path in [path_save_results, path_save_figures]:
+#     if not os.path.exists(path):
+#         os.makedirs(path)
+
 # ==============================================================
 # ==============================================================
 
