@@ -159,7 +159,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
         """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
-        parameter lambda.
+        parameter lambda. Input is for one month and gridcell but all years.
         """
 
         eps = np.finfo(np.float64).eps
@@ -289,7 +289,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         return inverted_monthly_T
 
 
-def _yeo_johnson_transform(local_monthly_residuals, lambdas):
+def _yeo_johnson_transform_np(local_monthly_residuals, lambdas):
     """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
     parameter lambda.
     """
@@ -329,7 +329,7 @@ def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
         lambdas = lambda_function(coeffs, local_yearly_T)
 
         # version with own power transform
-        transformed_local_monthly_resids = _yeo_johnson_transform(
+        transformed_local_monthly_resids = _yeo_johnson_transform_np(
             local_monthly_residuals, lambdas
         )
 
@@ -381,7 +381,7 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
     Returns
     -------
     :obj:`xr.DataSet`
-        Dataset containing the estimate parameters needed to estimate lambda.
+        Dataset containing the estimate coefficients xi_0 and xi_1 needed to estimate lambda with dimensions (months, n_gridcells) and the lambdas themselves with dimensions (months, n_gridcells, n_years).
 
     """
     monthly_residuals_grouped = monthly_residuals.groupby("time.month")
@@ -409,3 +409,27 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
     lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
 
     return xr.merge([coeffs, lambdas])
+
+def yeo_johnson_transform_xr(monthly_residuals, lambdas):
+    """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
+    parameters lambda, fit with fit_power_transformer_xr.
+
+    Parameters
+    ----------
+    monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
+        Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
+
+    lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
+    """
+
+    lambdas = lambdas.stack(stack = ['year', 'month'])
+    return xr.apply_ufunc(
+        _yeo_johnson_transform_np,
+        monthly_residuals,
+        lambdas,
+        input_core_dims=[["time"], ["stack"]],
+        output_core_dims=[["time"]],
+        output_dtypes=[float],
+        vectorize=True,
+        join="outer",
+    ).rename("transformed")
