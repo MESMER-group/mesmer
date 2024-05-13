@@ -421,7 +421,7 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
 
     lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
     """
-
+    # NOTE: this is equivalent to using pt.transform with pt = PowerTransformerVariableLambda(standardize = False)
     lambdas = lambdas.stack(stack = ['year', 'month'])
     return xr.apply_ufunc(
         _yeo_johnson_transform_np,
