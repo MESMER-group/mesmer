@@ -201,7 +201,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         transformed_monthly_resids = np.zeros_like(monthly_residuals)
 
         # for gridcell, lmbda in enumerate(lambdas.T):
-        #     for year,year_lmbda in enumerate(lmbda):
+        #     for year, year_lmbda in enumerate(lmbda):
         #         with np.errstate(invalid='ignore'):  # hide NaN warnings
         #             transformed_monthly_resids[year, gridcell] = self._yeo_johnson_transform(monthly_residuals[year, gridcell], year_lmbda)
         for gridcell, lmbda in enumerate(lambdas.T):
