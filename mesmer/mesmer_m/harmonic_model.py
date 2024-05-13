@@ -9,7 +9,7 @@ Functions to train monthly trend module of MESMER-M
 
 import numpy as np
 import xarray as xr
-from scipy import optimize
+import scipy as sp
 
 import mesmer
 
@@ -51,7 +51,7 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
     return beta0 + beta1 * yearly_T + seasonal_cycle
 
 
-def fit_fourier_series_np(yearly_predictor, monthly_target, order, first_guess):
+def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     """execute fitting of the harmonic model/fourier series
 
     Parameters
@@ -62,9 +62,6 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order, first_guess):
 
     monthly_target : array-like of shape (n_years*12,)
         Target monthly temperature values.
-
-    order : Integer
-        Order of the Fourier Series.
 
     first_guess : array-like of shape (4*order)
         Initial guess for the coefficients of the Fourier Series.
@@ -108,7 +105,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order, first_guess):
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
 
-    minimize_result = optimize.least_squares(
+    minimize_result = sp.optimize.least_squares(
         func,
         first_guess,
         args=(yearly_predictor, mon_train, monthly_target),
