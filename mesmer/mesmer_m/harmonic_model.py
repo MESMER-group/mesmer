@@ -111,7 +111,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order, first_guess):
     minimize_result = optimize.least_squares(
         func,
         first_guess,
-        args=(order, yearly_predictor, mon_train, monthly_target),
+        args=(yearly_predictor, mon_train, monthly_target),
         loss="cauchy",
     )
 
