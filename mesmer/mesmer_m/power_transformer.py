@@ -267,8 +267,10 @@ class PowerTransformerVariableLambda(PowerTransformer):
         for gridcell, lmbda in enumerate(lambdas.T):
             for year, y_lmbda in enumerate(lmbda):
                 with np.errstate(invalid="ignore"):  # hide NaN warnings
-                    inverted_monthly_T[year, gridcell] = self._yeo_johnson_inverse_transform(
-                        transformed_monthly_T[year, gridcell], y_lmbda
+                    inverted_monthly_T[year, gridcell] = (
+                        self._yeo_johnson_inverse_transform(
+                            transformed_monthly_T[year, gridcell], y_lmbda
+                        )
                     )
 
             # clip values to not exceed original range
