@@ -24,7 +24,7 @@ def test_generate_fourier_series_np():
     expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = generate_fourier_series_np(yearly_predictor, [0, -1, 0, -2], months)
+    result = generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]), months)
 
     np.testing.assert_equal(result, expected)
 
