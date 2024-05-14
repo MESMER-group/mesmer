@@ -14,17 +14,15 @@ from scipy import optimize
 import mesmer
 
 
-def generate_fourier_series_np(coeffs, order, yearly_T, months):
+def generate_fourier_series_np(yearly_T, coeffs, months):
     """construct the Fourier Series
 
     Parameters
     ----------
-    coeffs : array-like of shape (4*order)
-        coefficients of Fourier Series.
-    order : Integer
-        Order of the Fourier Series.
     yearly_T : array-like of shape (n_years*12,)
         yearly temperature values.
+    coeffs : array-like of shape (4*order)
+        coefficients of Fourier Series.
     months : array-like of shape (n_years*12,)
         month values (1-12).
 
@@ -34,7 +32,7 @@ def generate_fourier_series_np(coeffs, order, yearly_T, months):
         Fourier Series of order n calculated over yearly_T and months with coeffs.
 
     """
-    # TODO: infer order from coeffs
+    order = int(coeffs.size / 4)
 
     # fix these parameters, according to paper
     # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
@@ -96,7 +94,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
 
         loss = np.mean(
             (
-                generate_fourier_series_np(coeffs, order, yearly_predictor, mon_train)
+                generate_fourier_series_np(yearly_predictor, coeffs, mon_train)
                 - mon_target
             )
             ** 2
@@ -117,7 +115,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     ).x
 
     preds = generate_fourier_series_np(
-        coeffs=coeffs, order=order, yearly_T=yearly_predictor, months=mon_train
+        yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
     )
 
     return coeffs, preds
@@ -199,7 +197,7 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
     return selected_order, coeffs, predictions
 
 
-def fit_to_bic_xr(yearly_predictor, monthly_target, max_order=6):
+def fit_to_bic_xr(yearly_predictor, monthly_target, max_order=6, time_dim="time"):
     """fit Fourier Series to every gridcell using BIC score to select order - xarray wrapper
     Repeats yearly values for every month before passing to :func:`fit_to_bic_np`
 
@@ -231,7 +229,7 @@ def fit_to_bic_xr(yearly_predictor, monthly_target, max_order=6):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
-        yearly_predictor, monthly_target
+        yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
 
     n_sel, coeffs, preds = xr.apply_ufunc(
