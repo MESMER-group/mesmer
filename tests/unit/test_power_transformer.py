@@ -115,7 +115,7 @@ def test_inverse_transform():
     pt.standardize = False
     # dummy lambdas (since yearly_T is zero lambda comes out to be second coefficient)
     # we have all cases for lambdas 0 and 2 (special cases), 1 (identity case)
-    # lambda between 1 and 1 and lambda between 1 and 2 for concave and convex cases
+    # lambda between 0 and 1 and lambda between 1 and 2 for concave and convex cases
     pt.coeffs_ = np.array([[0, 0], [0, 1], [0, 2], [0, 0.5], [0, 1.5]])
     pt.mins_ = np.amin(monthly_residuals, axis=0)
     pt.maxs_ = np.amax(monthly_residuals, axis=0)
