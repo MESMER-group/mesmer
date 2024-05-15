@@ -107,7 +107,7 @@ def test_fit_to_bic_xr(coefficients):
     )
     upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
 
-    months = np.tile(np.arange(1, 13), 10)
+    months = upsampled_yearly_predictor.time.dt.month
     monthly_target = xr.apply_ufunc(
         generate_fourier_series_np,
         upsampled_yearly_predictor,
