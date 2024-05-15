@@ -51,9 +51,6 @@ def test_generate_fourier_series_np():
 )
 def test_fit_to_bic_np(coefficients, yearly_predictor):
     max_order = 6
-    # fill up all coefficient arrays with zeros to have the same length 4*max_order
-    coefficients = np.concatenate([coefficients, np.zeros(4 * max_order - len(coefficients))])
-
     months = np.tile(np.arange(1, 13), 10)
 
     monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
@@ -62,14 +59,18 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
     )
 
     # assert selected_order == int(len(coefficients) / 4)
-    # the model does not necessarily select the "correct" order
+    # the model does not necessarily select the "correct" order 
+    # (i.e. the third coef array in combination with the third predictor)
     # but the coefficients of higher orders should be close to zero
 
     # linear combination of the coefficients with the predictor should be similar
+    # fill up all coefficient arrays with zeros to have the same length 4*max_order
+    original_coefficients = np.concatenate([coefficients, np.zeros(4 * max_order - len(coefficients))])
+    estimated_coefficients = np.nan_to_num(estimated_coefficients, 0, )
     np.testing.assert_allclose(
         [
-            coefficients[i] * yearly_predictor[i] + coefficients[i + 1]
-            for i in range(0, len(coefficients), 2)
+            original_coefficients[i] * yearly_predictor[i] + original_coefficients[i + 1]
+            for i in range(0, len(original_coefficients), 2)
         ],
         [
             estimated_coefficients[i] * yearly_predictor[i]
