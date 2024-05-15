@@ -102,7 +102,7 @@ def test_yeo_johnson_transform():
     np.testing.assert_equal(result, expected)
 
 
-def test_inverse_transform():
+def test_transform_roundtrip():
     n_ts = 20
     n_gridcells = 5
     # dummy seasonal cylce, having negative and positive values
