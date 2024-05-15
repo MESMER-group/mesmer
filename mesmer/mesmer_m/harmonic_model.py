@@ -8,8 +8,8 @@ Functions to train monthly trend module of MESMER-M
 """
 
 import numpy as np
-import xarray as xr
 import scipy as sp
+import xarray as xr
 
 import mesmer
 
@@ -106,14 +106,14 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     # np.linalg.lstsq(A, y)[0]
 
     minimize_result = sp.optimize.least_squares(
-        func, # TODO: func should return residuals
+        func,  # TODO: func should return residuals
         first_guess,
         args=(yearly_predictor, mon_train, monthly_target),
-        loss="cauchy", # TODO: when returning residuals we should use 'linear'
+        loss="cauchy",  # TODO: when returning residuals we should use 'linear'
     )
 
     coeffs = minimize_result.x
-    mse = minimize_result.fun 
+    mse = minimize_result.fun
     # NOTE: when we switch to returning the residuals .fun no longer returns the mse
 
     preds = generate_fourier_series_np(
