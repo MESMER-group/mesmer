@@ -50,15 +50,15 @@ def test_generate_fourier_series_np():
     [np.zeros(10 * 12), np.ones(10 * 12), np.linspace(-1, 1, 10 * 12) * 10],
 )
 def test_fit_to_bic_np(coefficients, yearly_predictor):
-
-    # fill up all coefficient arrays with zeros to have the same length 4*6
-    coefficients = np.concatenate([coefficients, np.zeros(4 * 6 - len(coefficients))])
+    max_order = 6
+    # fill up all coefficient arrays with zeros to have the same length 4*max_order
+    coefficients = np.concatenate([coefficients, np.zeros(4 * max_order - len(coefficients))])
 
     months = np.tile(np.arange(1, 13), 10)
 
     monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
     selected_order, estimated_coefficients, predictions = fit_to_bic_np(
-        yearly_predictor, monthly_target, max_order=6
+        yearly_predictor, monthly_target, max_order=max_order
     )
 
     # assert selected_order == int(len(coefficients) / 4)
