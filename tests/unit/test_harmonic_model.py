@@ -24,15 +24,21 @@ def test_generate_fourier_series_np():
     expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]), months)
+    result = generate_fourier_series_np(
+        yearly_predictor, np.array([0, -1, 0, -2]), months
+    )
     np.testing.assert_equal(result, expected)
 
     yearly_predictor = np.ones(n_months)
-    result = generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]), months)
+    result = generate_fourier_series_np(
+        yearly_predictor, np.array([0, -1, 0, -2]), months
+    )
     expected += 1
     np.testing.assert_equal(result, expected)
 
-    result = generate_fourier_series_np(yearly_predictor, np.array([3.14, -1, 1, -2]), months)
+    result = generate_fourier_series_np(
+        yearly_predictor, np.array([3.14, -1, 1, -2]), months
+    )
     expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
@@ -59,17 +65,23 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
     )
 
     # assert selected_order == int(len(coefficients) / 4)
-    # the model does not necessarily select the "correct" order 
+    # the model does not necessarily select the "correct" order
     # (i.e. the third coef array in combination with the third predictor)
     # but the coefficients of higher orders should be close to zero
 
     # linear combination of the coefficients with the predictor should be similar
     # fill up all coefficient arrays with zeros to have the same length 4*max_order
-    original_coefficients = np.concatenate([coefficients, np.zeros(4 * max_order - len(coefficients))])
-    estimated_coefficients = np.nan_to_num(estimated_coefficients, 0, )
+    original_coefficients = np.concatenate(
+        [coefficients, np.zeros(4 * max_order - len(coefficients))]
+    )
+    estimated_coefficients = np.nan_to_num(
+        estimated_coefficients,
+        0,
+    )
     np.testing.assert_allclose(
         [
-            original_coefficients[i] * yearly_predictor[i] + original_coefficients[i + 1]
+            original_coefficients[i] * yearly_predictor[i]
+            + original_coefficients[i + 1]
             for i in range(0, len(original_coefficients), 2)
         ],
         [
@@ -122,6 +134,7 @@ def test_fit_to_bic_xr(coefficients):
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
 
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
+
 
 def test_fit_to_bix_xr_instance_checks():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
