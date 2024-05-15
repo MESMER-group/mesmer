@@ -72,6 +72,7 @@ def test_yeo_johnson_optimize_lambda():
 
 
 def test_transform():
+    # NOTE: testing trivial transform with lambda = 1
     n_ts = 20
     n_gridcells = 10
 
