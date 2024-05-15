@@ -121,4 +121,4 @@ def test_fit_to_bic_xr(coefficients):
 
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
 
-    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=1e-1)
+    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
