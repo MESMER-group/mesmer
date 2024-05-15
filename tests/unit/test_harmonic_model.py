@@ -122,3 +122,13 @@ def test_fit_to_bic_xr(coefficients):
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
 
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
+
+def test_fit_to_bix_xr_instance_checks():
+    yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
+    monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
+
+    with pytest.raises(TypeError):
+        fit_to_bic_xr(yearly_predictor.values, monthly_target)
+
+    with pytest.raises(TypeError):
+        fit_to_bic_xr(yearly_predictor, monthly_target.values)
