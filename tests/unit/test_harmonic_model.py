@@ -80,7 +80,7 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
     )
 
     # actually all what really counts is that the predictions are close to the target
-    np.testing.assert_allclose(predictions, monthly_target, atol=1e-1)
+    np.testing.assert_allclose(predictions, monthly_target, atol=0.1)
 
 
 @pytest.mark.parametrize(
