@@ -53,7 +53,7 @@ def test_generate_fourier_series_np():
 )
 @pytest.mark.parametrize(
     "yearly_predictor",
-    [np.repeat([-1,1], 10*6), np.linspace(-1, 1, 10 * 12) * 10],
+    [np.repeat([-1, 1], 10 * 6), np.linspace(-1, 1, 10 * 12) * 10],
 )
 def test_fit_to_bic_np(coefficients, yearly_predictor):
     max_order = 6
