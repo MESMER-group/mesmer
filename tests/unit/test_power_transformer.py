@@ -1,25 +1,30 @@
 import numpy as np
 import scipy
+import pytest
 
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
     lambda_function,
 )
 
+@pytest.mark.parametrize(
+    "coeffs, t, expected",
+    [
+        ([1, 0.1], -np.inf, 2.0),
+        ([1, 0.1], np.inf, 0.0),
+        ([1, -0.1], -np.inf, 0.0),
+        ([1, -0.1], np.inf, 2.0),
+        ([0, 0], 1, 2),
+        ([0, 1], 1, 2),
+        ([1, 0], 1, 1),
+        ([2, 0], 1, 2 / 3),
+        ([1, 1], np.log(9), 2 / 10),
+    ]
+)
+def test_lambda_function(coeffs, t, expected):
 
-def test_lambda_function():
-    # Note that we test with normally distributed data without skewness
-    # which would yield coefficients close to 1 and 0
-    # and a constant lambda of about 1
-    # but for the sake of testing, we use coefficients which respresent skewness
-    coeffs = [1, 0.1]
-    local_yearly_T_test_data = np.random.normal(0, 1, 10)
-
-    # even for random numbers, the lambdas should always be between 0 and 2
-    # because the function is logistic between 0 and 2
-    lambdas = lambda_function(coeffs, local_yearly_T_test_data)
-
-    assert np.all(lambdas > 0) and np.all(lambdas < 2)
+    result = lambda_function(coeffs, t)
+    np.testing.assert_allclose(result, expected)
 
 
 def test_fit_power_transformer():
