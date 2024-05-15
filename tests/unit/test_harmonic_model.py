@@ -53,7 +53,7 @@ def test_generate_fourier_series_np():
 )
 @pytest.mark.parametrize(
     "yearly_predictor",
-    [np.zeros(10 * 12), np.ones(10 * 12), np.linspace(-1, 1, 10 * 12) * 10],
+    [np.repeat([-1,1], 10*6), np.linspace(-1, 1, 10 * 12) * 10],
 )
 def test_fit_to_bic_np(coefficients, yearly_predictor):
     max_order = 6
@@ -66,11 +66,11 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
 
     # assert selected_order == int(len(coefficients) / 4)
     # the model does not necessarily select the "correct" order
-    # (i.e. the third coef array in combination with the third predictor)
+    # (i.e. the third coef array in combination with the second predictor)
     # but the coefficients of higher orders should be close to zero
 
-    # linear combination of the coefficients with the predictor should be similar
     # fill up all coefficient arrays with zeros to have the same length 4*max_order
+    # to also be able to compare coefficients of higher orders than the original one
     original_coefficients = np.concatenate(
         [coefficients, np.zeros(4 * max_order - len(coefficients))]
     )
@@ -78,21 +78,24 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
         estimated_coefficients,
         0,
     )
-    np.testing.assert_allclose(
-        [
-            original_coefficients[i] * yearly_predictor[i]
-            + original_coefficients[i + 1]
-            for i in range(0, len(original_coefficients), 2)
-        ],
-        [
-            estimated_coefficients[i] * yearly_predictor[i]
-            + estimated_coefficients[i + 1]
-            for i in range(0, len(estimated_coefficients), 2)
-        ],
-        atol=1e-2,
-    )
+    # NOTE: if we would use a constant predictor only the linear combination of coefficients needs to be close
+    # np.testing.assert_allclose(
+    #     [
+    #         original_coefficients[i] * yearly_predictor[i]
+    #         + original_coefficients[i + 1]
+    #         for i in range(0, len(original_coefficients), 2)
+    #     ],
+    #     [
+    #         estimated_coefficients[i] * yearly_predictor[i]
+    #         + estimated_coefficients[i + 1]
+    #         for i in range(0, len(estimated_coefficients), 2)
+    #     ],
+    #     atol=1e-2,
+    # )
 
-    # actually all what really counts is that the predictions are close to the target
+    np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-2)
+
+    # but actually all what really counts is that the predictions are close to the target
     np.testing.assert_allclose(predictions, monthly_target, atol=0.1)
 
 
