@@ -95,6 +95,37 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
     # actually all what really counts is that the predictions are close to the target
     np.testing.assert_allclose(predictions, monthly_target, atol=0.1)
 
+def test_fit_to_bic_numerical_stability():
+    coefficients = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    n_years = 3
+    yearly_predictor = np.ones(12 * n_years)
+
+    max_order = 6
+    months = np.tile(np.arange(1, 13), n_years)
+
+    monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
+    selected_order, estimated_coefficients, predictions = fit_to_bic_np(
+        yearly_predictor, monthly_target, max_order=max_order
+    )
+
+    assert selected_order == 2
+
+    expected_coefficients = np.full(4*max_order, np.nan)
+    expected_coefficients[: selected_order * 4] = np.array([1.49981711, 1.49981711, 3.49957326, 3.49957326, 5.4993294 ,
+       5.4993294 , 7.49908555, 7.49908555])
+    expected_predictions = np.array([ 25.58545928,   9.12336508, -10.99853688, -16.9260173 ,
+        -5.58765396,   8.99902459,  10.46294769,  -3.07130031,
+       -16.99780532, -15.12238966,   3.53558919,  22.99731761,
+        25.58545928,   9.12336508, -10.99853688, -16.9260173 ,
+        -5.58765396,   8.99902459,  10.46294769,  -3.07130031,
+       -16.99780532, -15.12238966,   3.53558919,  22.99731761,
+        25.58545928,   9.12336508, -10.99853688, -16.9260173 ,
+        -5.58765396,   8.99902459,  10.46294769,  -3.07130031,
+       -16.99780532, -15.12238966,   3.53558919,  22.99731761])
+    
+    np.testing.assert_allclose(expected_coefficients, estimated_coefficients)
+    np.testing.assert_allclose(predictions, expected_predictions)
+
 
 @pytest.mark.parametrize(
     "coefficients",
