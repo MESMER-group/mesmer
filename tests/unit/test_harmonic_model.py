@@ -25,8 +25,16 @@ def test_generate_fourier_series_np():
         2 * np.pi * (months) / 12
     )
     result = generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]), months)
-
     np.testing.assert_equal(result, expected)
+
+    yearly_predictor = np.ones(n_months)
+    result = generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]), months)
+    expected += 1
+    np.testing.assert_equal(result, expected)
+
+    result = generate_fourier_series_np(yearly_predictor, np.array([3.14, -1, 1, -2]), months)
+    expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
+    np.testing.assert_allclose(result, expected, atol=1e-10)
 
 
 @pytest.mark.parametrize(
