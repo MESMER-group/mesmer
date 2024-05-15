@@ -106,14 +106,15 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     # np.linalg.lstsq(A, y)[0]
 
     minimize_result = sp.optimize.least_squares(
-        func,
+        func, # TODO: func should return residuals
         first_guess,
         args=(yearly_predictor, mon_train, monthly_target),
-        loss="cauchy",
+        loss="cauchy", # TODO: when returning residuals we should use 'linear'
     )
 
     coeffs = minimize_result.x
-    mse = minimize_result.fun
+    mse = minimize_result.fun 
+    # NOTE: when we switch to returning the residuals .fun no longer returns the mse
 
     preds = generate_fourier_series_np(
         yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
