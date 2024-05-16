@@ -2,7 +2,7 @@ import numpy as np
 
 # from tqdm import tqdm
 from joblib import Parallel, delayed
-from scipy.optimize import minimize, rosen_der
+from scipy.optimize import minimize
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
