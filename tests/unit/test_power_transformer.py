@@ -1,11 +1,12 @@
 import numpy as np
-import scipy as sp
 import pytest
+import scipy as sp
 
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
     lambda_function,
 )
+
 
 @pytest.mark.parametrize(
     "coeffs, t, expected",
@@ -19,7 +20,7 @@ from mesmer.mesmer_m.power_transformer import (
         ([1, 0], 1, 1),
         ([2, 0], 1, 2 / 3),
         ([1, 1], np.log(9), 2 / 10),
-    ]
+    ],
 )
 def test_lambda_function(coeffs, t, expected):
 
