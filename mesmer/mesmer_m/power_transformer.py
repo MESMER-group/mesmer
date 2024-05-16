@@ -143,6 +143,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         ]
         local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
+        # first coefficient only positive for logistic function
+        # second coefficient bounded to avoid very steep function
         bounds = np.array([[0, np.inf], [-0.1, 0.1]])
         # first guess is that data is already normal distributed
         first_guess = np.array([1, 0])
