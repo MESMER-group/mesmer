@@ -42,7 +42,7 @@ def test_mask_percentage_deprecated(small_region):
 
 @pytest.mark.parametrize("dim", ["lon", "lat"])
 @pytest.mark.parametrize("invalid_coords", ([0, 1, 3], [[0, 1, 2]]))
-def test_mask_percentage_wrong_coords(dim, invalid_coords):
+def test_mask_percentage_wrong_coords(small_region, dim, invalid_coords):
 
     valid_coords = [0, 1, 2]
     latlon = {"lon": valid_coords, "lat": valid_coords}
@@ -52,17 +52,17 @@ def test_mask_percentage_wrong_coords(dim, invalid_coords):
     with pytest.raises(
         InvalidCoordsError, match="'lon' and 'lat' must be 1D and equally spaced."
     ):
-        mask_3D_frac_approx(None, **latlon)
+        mask_3D_frac_approx(small_region, **latlon)
 
 
 @pytest.mark.parametrize("lat", ((-91, 90), (-90, 92), (-91, 92)))
-def test_mask_percentage_lon_beyond_90(lat):
+def test_mask_percentage_lon_beyond_90(small_region ,lat):
 
     lat = np.arange(*lat)
     lon = np.arange(0, 360, 10)
 
     with pytest.raises(InvalidCoordsError, match=r"lat must be between \-90 and \+90"):
-        mask_3D_frac_approx(None, lon, lat)
+        mask_3D_frac_approx(small_region, lon, lat)
 
 
 def test_mask_percentage_coords():
