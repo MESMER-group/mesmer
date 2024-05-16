@@ -9,6 +9,7 @@ dependencies:
  - dask
  - joblib
  - matplotlib-base
+ - nc-time-axis
  - netcdf4
  - numpy
  - packaging
