@@ -56,7 +56,7 @@ def test_mask_percentage_wrong_coords(small_region, dim, invalid_coords):
 
 
 @pytest.mark.parametrize("lat", ((-91, 90), (-90, 92), (-91, 92)))
-def test_mask_percentage_lon_beyond_90(small_region ,lat):
+def test_mask_percentage_lon_beyond_90(small_region, lat):
 
     lat = np.arange(*lat)
     lon = np.arange(0, 360, 10)
