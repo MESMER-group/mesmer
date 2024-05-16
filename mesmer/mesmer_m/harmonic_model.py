@@ -39,14 +39,15 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
     beta0 = 0
     beta1 = 1
 
-    seasonal_cycle = sum(
+    seasonal_cycle = np.nansum(
         [
             (coeffs[idx * 4] * yearly_T + coeffs[idx * 4 + 1])
             * np.sin(np.pi * i * (months) / 6)
             + (coeffs[idx * 4 + 2] * yearly_T + coeffs[idx * 4 + 3])
             * np.cos(np.pi * i * (months) / 6)
             for idx, i in enumerate(range(1, order + 1))
-        ]
+        ],
+        axis=0,
     )
     return beta0 + beta1 * yearly_T + seasonal_cycle
 
