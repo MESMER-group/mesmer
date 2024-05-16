@@ -69,7 +69,7 @@ def _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs):
         # TODO: use this function directly once requiring regionmask >= 0.12
         return regions.mask_3D_frac_approx(lon, lat, **kwargs)
     else:
-        _mask_3D_frac_approx(regions, lon, lat, **kwargs)
+        return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
 
 
 def _mask_3D_frac_approx(regions, lon, lat, **kwargs):
