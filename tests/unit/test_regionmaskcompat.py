@@ -10,6 +10,10 @@ from mesmer.core.regionmaskcompat import (
     sample_coord,
 )
 
+pytestmark = [
+    pytest.mark.filterwarnings("ignore:`mask_3D_frac_approx` has been deprecated")
+]
+
 
 @pytest.fixture
 def small_region():
