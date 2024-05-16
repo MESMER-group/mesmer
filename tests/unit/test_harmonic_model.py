@@ -33,6 +33,7 @@ def test_generate_fourier_series_np():
     result = generate_fourier_series_np(
         yearly_predictor, np.array([0, -1, 0, -2]), months
     )
+    # NOTE: yearly_predictor is added to the Fourier series
     expected += 1
     np.testing.assert_equal(result, expected)
 
