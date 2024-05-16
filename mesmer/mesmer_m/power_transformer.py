@@ -153,7 +153,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
             first_guess,
             bounds=bounds,
             method="SLSQP",
-            jac=rosen_der,
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
