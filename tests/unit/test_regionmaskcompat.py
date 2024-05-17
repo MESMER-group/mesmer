@@ -14,6 +14,7 @@ pytestmark = [
     pytest.mark.filterwarnings("ignore:`mask_3D_frac_approx` has been deprecated")
 ]
 
+
 @pytest.fixture
 def small_region():
     poly = shapely.geometry.box(0, 0, 1, 1)
