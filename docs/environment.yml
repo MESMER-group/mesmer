@@ -4,6 +4,8 @@ channels:
   - conda-forge
   - nodefaults
 
+# NOTE: transitive dependencies are commented
+
 dependencies:
   - python=3.11
 #   - cartopy
