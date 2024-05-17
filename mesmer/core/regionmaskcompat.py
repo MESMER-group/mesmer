@@ -22,7 +22,7 @@ def mask_percentage(regions, lon, lat, **kwargs):
     warnings.warn(
         "`mask_percentage` has been renamed to `mask_3D_frac_approx`", FutureWarning
     )
-    return _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs)
+    return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
 
 
 def mask_3D_frac_approx(regions, lon, lat, **kwargs):
@@ -59,20 +59,20 @@ def mask_3D_frac_approx(regions, lon, lat, **kwargs):
         FutureWarning,
     )
 
-    return _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs)
+    return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
 
 
-def _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs):
+def _mask_3D_frac_approx(regions, lon, lat, **kwargs):
 
     if Version(regionmask.__version__) >= Version("0.12.0"):
 
         # TODO: use this function directly once requiring regionmask >= 0.12
         return regions.mask_3D_frac_approx(lon, lat, **kwargs)
     else:
-        return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
+        return _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs)
 
 
-def _mask_3D_frac_approx(regions, lon, lat, **kwargs):
+def _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs):
 
     backend = regionmask.core.mask._determine_method(lon, lat)
     if "rasterize" not in backend:
