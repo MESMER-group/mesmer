@@ -29,14 +29,10 @@ def test_lambda_function(coeffs, t, expected):
 
 
 def test_fit_power_transformer():
-    # with enough random data points the fit should be close to 1 and 0
-    # here we test with uniform random data because it is quicker to fit
-    # Uniform data is also symmetrically distributed so coefficients
-    # should be close to 1 and 0 as well
-
+    # with enough random normal data points the fit should be close to 1 and 0
     gridcells = 1
     n_months = 100_000
-    monthly_residuals = np.random.rand(n_months, gridcells) * 10
+    monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
     pt = PowerTransformerVariableLambda()
@@ -45,7 +41,7 @@ def test_fit_power_transformer():
     result = pt.coeffs_
     expected = np.array([[1, 0]])
 
-    np.testing.assert_allclose(result, expected, atol=1e-7)
+    np.testing.assert_allclose(result, expected, atol=1e-2)
 
 
 def test_yeo_johnson_optimize_lambda():
