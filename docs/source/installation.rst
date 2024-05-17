@@ -30,7 +30,7 @@ Alternately, mesmer can be installed with pip:
 
 .. code-block:: bash
 
-   python -m pip install mesmer-emulator
+   python -m pip install mesmer-emulator[full]
 
 Development installation
 ------------------------
