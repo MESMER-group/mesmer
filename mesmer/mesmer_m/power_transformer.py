@@ -2,7 +2,7 @@ import numpy as np
 
 # from tqdm import tqdm
 from joblib import Parallel, delayed
-from scipy.optimize import minimize, rosen_der
+from scipy.optimize import minimize
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
@@ -154,7 +154,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
             first_guess,
             bounds=bounds,
             method="SLSQP",
-            jac=rosen_der,
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
