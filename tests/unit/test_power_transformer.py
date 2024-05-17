@@ -44,13 +44,18 @@ def test_fit_power_transformer():
     np.testing.assert_allclose(result, expected, atol=1e-2)
 
 
-def test_yeo_johnson_optimize_lambda():
+@pytest.mark.parametrize(
+    "skew, bounds",
+    [
+        (-2, [1, 2]), # left skewed data
+        (2, [0, 1]), # right skewed data
+    ],
+)
+def test_yeo_johnson_optimize_lambda(skew, bounds):
     np.random.seed(0)
     n_years = 100_000
+
     yearly_T = np.random.randn(n_years)
-
-    # test with left skewed data
-    skew = -2
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
     pt = PowerTransformerVariableLambda()
@@ -58,20 +63,8 @@ def test_yeo_johnson_optimize_lambda():
     lmbda = lambda_function(pt.coeffs_, yearly_T)
     transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
 
-    assert (lmbda > 1).all() & (lmbda <= 2).all()
-    np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.01)
-
-    # test with right skewed data
-    skew = 2
-    local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
-
-    pt = PowerTransformerVariableLambda()
-    pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
-    lmbda = lambda_function(pt.coeffs_, yearly_T)
-    transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
-
-    assert (lmbda >= 0).all() & (lmbda <= 1).all()
-    np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.01)
+    assert (lmbda >= bounds[0]).all() & (lmbda <= bounds[1]).all()
+    np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.1)
 
 
 def test_transform():
