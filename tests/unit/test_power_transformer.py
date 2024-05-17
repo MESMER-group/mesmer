@@ -46,7 +46,7 @@ def test_fit_power_transformer():
 
 def test_yeo_johnson_optimize_lambda():
     np.random.seed(0)
-    n_years = 10_000
+    n_years = 100_000
     yearly_T = np.random.randn(n_years)
 
     skew = -2
@@ -60,17 +60,16 @@ def test_yeo_johnson_optimize_lambda():
     assert (lmbda > 1).all() & (lmbda <= 2).all()
     np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.01)
 
-    # this fails, need to investigate more
-    # skew = 2
-    # local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
+    skew = 2
+    local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
-    # pt = PowerTransformerVariableLambda()
-    # pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
-    # lmbda = lambda_function(pt.coeffs_, yearly_T)
-    # transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
+    pt = PowerTransformerVariableLambda()
+    pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
+    lmbda = lambda_function(pt.coeffs_, yearly_T)
+    transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
 
-    # assert (lmbda >= 0).all() & (lmbda <= 1).all()
-    # np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.01)
+    assert (lmbda >= 0).all() & (lmbda <= 1).all()
+    np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.01)
 
 
 def test_transform():
