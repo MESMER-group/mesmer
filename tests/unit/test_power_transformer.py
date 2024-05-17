@@ -30,6 +30,7 @@ def test_lambda_function(coeffs, t, expected):
 
 def test_fit_power_transformer():
     # with enough random normal data points the fit should be close to 1 and 0
+    np.random.seed(0)
     gridcells = 1
     n_months = 100_000
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
@@ -49,6 +50,11 @@ def test_fit_power_transformer():
     [
         (-2, [1, 2]), # left skewed data
         (2, [0, 1]), # right skewed data
+        (-5, [1, 2]), # more skew
+        (5, [0, 1]), # more skew
+        (-0.5, [1, 2]), # less skew
+        (0.5, [0, 1]), # less skew
+        (0, [0.9, 1.1]), # no skew
     ],
 )
 def test_yeo_johnson_optimize_lambda(skew, bounds):
