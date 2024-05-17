@@ -40,9 +40,13 @@ def test_fit_power_transformer():
     pt.fit(monthly_residuals, yearly_T, gridcells)
 
     result = pt.coeffs_
+    # to test viability
     expected = np.array([[1, 0]])
-
     np.testing.assert_allclose(result, expected, atol=1e-2)
+
+    # to test numerical stability
+    expected_exact = np.array([[0.99589859, 0.00178623]])
+    np.testing.assert_allclose(result, expected_exact, atol=1e-7)
 
 
 @pytest.mark.parametrize(
