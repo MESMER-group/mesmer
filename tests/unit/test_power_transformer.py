@@ -49,6 +49,7 @@ def test_yeo_johnson_optimize_lambda():
     n_years = 100_000
     yearly_T = np.random.randn(n_years)
 
+    # test with left skewed data
     skew = -2
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
@@ -60,6 +61,7 @@ def test_yeo_johnson_optimize_lambda():
     assert (lmbda > 1).all() & (lmbda <= 2).all()
     np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.01)
 
+    # test with right skewed data
     skew = 2
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
