@@ -10,6 +10,16 @@ from mesmer.core.regionmaskcompat import (
     sample_coord,
 )
 
+pytestmark = [
+    pytest.mark.filterwarnings("ignore:`mask_3D_frac_approx` has been deprecated")
+]
+
+
+@pytest.fixture
+def small_region():
+    poly = shapely.geometry.box(0, 0, 1, 1)
+    return regionmask.Regions([poly])
+
 
 def test_sample_coord():
 
@@ -20,6 +30,14 @@ def test_sample_coord():
     actual = sample_coord([0, 1, 2])
     expected = np.arange(-0.45, 2.46, 0.1)
     np.testing.assert_allclose(actual, expected)
+
+
+def test_mask_percentage_deprecated(small_region):
+
+    lon = lat = np.array([0, 1, 2])
+
+    with pytest.warns(FutureWarning, match="`mask_3D_frac_approx` has been deprecated"):
+        mask_3D_frac_approx(small_region, lon, lat)
 
 
 @pytest.mark.parametrize("dim", ["lon", "lat"])
