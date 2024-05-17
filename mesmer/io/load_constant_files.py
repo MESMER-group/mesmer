@@ -186,9 +186,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point
-    ls["grid_raw"] = _mask_3D_frac_approx(
-        land_110, lon["c"], lat["c"]
-    ).values.squeeze()
+    ls["grid_raw"] = _mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values.squeeze()
 
     # remove Antarctica
     idx_ANT = lat["c"] < -60
