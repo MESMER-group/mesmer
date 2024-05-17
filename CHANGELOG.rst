@@ -25,6 +25,9 @@ Breaking changes
 Deprecations
 ^^^^^^^^^^^^
 
+- Deprecated ``mask_3D_frac_approx`` as the functionality is now offered in regionmask
+  v0.12.0 (`#451 <https://github.com/MESMER-group/mesmer/pull/451>`_).
+
 Bug fixes
 ^^^^^^^^^
 

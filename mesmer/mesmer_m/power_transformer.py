@@ -2,7 +2,7 @@ import numpy as np
 
 # from tqdm import tqdm
 from joblib import Parallel, delayed
-from scipy.optimize import minimize, rosen_der
+from scipy.optimize import minimize
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
@@ -154,7 +154,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
             first_guess,
             bounds=bounds,
             method="SLSQP",
-            jac=rosen_der,
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
@@ -166,8 +165,11 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= eps)
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > eps)
+        # NOTE: this code is copied from sklearn's PowerTransformer, see
+        # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
+        # we acknowledge there is an inconsistency in the comarison of lambdas
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < eps)
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= eps)
         pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
         pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
