@@ -52,13 +52,13 @@ def test_fit_power_transformer():
 @pytest.mark.parametrize(
     "skew, bounds",
     [
-        (-2, [1, 2]), # left skewed data
-        (2, [0, 1]), # right skewed data
-        (-5, [1, 2]), # more skew
-        (5, [0, 1]), # more skew
-        (-0.5, [1, 2]), # less skew
-        (0.5, [0, 1]), # less skew
-        (0, [0.9, 1.1]), # no skew
+        (-2, [1, 2]),  # left skewed data
+        (2, [0, 1]),  # right skewed data
+        (-5, [1, 2]),  # more skew
+        (5, [0, 1]),  # more skew
+        (-0.5, [1, 2]),  # less skew
+        (0.5, [0, 1]),  # less skew
+        (0, [0.9, 1.1]),  # no skew
     ],
 )
 def test_yeo_johnson_optimize_lambda(skew, bounds):
