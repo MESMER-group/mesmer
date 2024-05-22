@@ -5,8 +5,10 @@ build:
     pre_install:
         # see https://github.com/readthedocs/readthedocs.org/issues/8201
       - git update-index --assume-unchanged docs/environment.yml docs/source/conf.py
-      # install mesmer, needs to be editable
-      - python -m pip install -e .
+      # install mesmer
+      # * needs to be editable
+      # * --no-deps to ensure minimal required deps
+      - python -m pip install --no-deps -e .
   tools:
     python: mambaforge-22.9
 sphinx:
