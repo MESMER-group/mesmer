@@ -4,17 +4,26 @@ channels:
   - conda-forge
   - nodefaults
 
+# NOTE: transitive dependencies are commented
+
 dependencies:
   - python=3.11
-  - cartopy
-  - dask[complete]
-  - netcdf4
+#   - cartopy
+#   - dask
+  - joblib
+#   - matplotlib-base
+#   - nc-time-axis
+#   - netcdf4
   - numpy
-  - pandas>=2.0
+  - packaging
+  - pandas
+  - pooch
+  - pyproj
+  - regionmask
   - scikit-learn
+  - scipy
   - statsmodels
-  - regionmask>=0.9
-  - xarray>=2023.04 # because pandas 2 is required
+  - xarray
 # required for docs
   - sphinx-book-theme
   - numpydoc
