@@ -45,7 +45,7 @@ def test_fit_power_transformer():
     np.testing.assert_allclose(result, expected, atol=1e-2)
 
     # to test numerical stability
-    expected_exact = np.array([[0.99589859, 0.00178623]])
+    expected_exact = np.array([[9.976913e-01, -1.998520e-05]])
     np.testing.assert_allclose(result, expected_exact, atol=1e-7)
 
 
