@@ -36,7 +36,7 @@ def test_fit_power_transformer():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
-    pt = PowerTransformerVariableLambda(standardize=False) 
+    pt = PowerTransformerVariableLambda(standardize=False)
     # standardize false speeds up the fit and does not impact the coefficients
     pt.fit(monthly_residuals, yearly_T, gridcells)
 
@@ -117,7 +117,7 @@ def test_transform_roundtrip():
     )
     yearly_T = np.zeros((n_ts, n_gridcells))
 
-    pt = PowerTransformerVariableLambda(standardize = False)
+    pt = PowerTransformerVariableLambda(standardize=False)
     # dummy lambdas (since yearly_T is zero lambda comes out to be second coefficient)
     # we have all cases for lambdas 0 and 2 (special cases), 1 (identity case)
     # lambda between 0 and 1 and lambda between 1 and 2 for concave and convex cases
@@ -130,8 +130,9 @@ def test_transform_roundtrip():
 
     np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
 
+
 def test_standard_scaler():
-    # generate random data with mean different from 0 and std different from one 
+    # generate random data with mean different from 0 and std different from one
     np.random.seed(0)
     n_ts = 100_000
     n_gridcells = 1
