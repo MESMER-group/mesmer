@@ -34,6 +34,16 @@ def test_fit_power_transformer():
     gridcells = 1
     n_months = 100_000
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
+    np.testing.assert_allclose(monthly_residuals[0:10], np.array([[17.64052346],
+       [ 4.00157208],
+       [ 9.78737984],
+       [22.40893199],
+       [18.6755799 ],
+       [-9.7727788 ],
+       [ 9.50088418],
+       [-1.51357208],
+       [-1.03218852],
+       [ 4.10598502]]), atol = 1e-7)
     yearly_T = np.ones((n_months, gridcells))
 
     pt = PowerTransformerVariableLambda(standardize=False)
