@@ -147,3 +147,7 @@ def test_standard_scaler():
     # the transformed data should have mean close to 0 and std close to 1
     np.testing.assert_allclose(np.mean(transformed), 0, atol=1e-2)
     np.testing.assert_allclose(np.std(transformed), 1, atol=1e-2)
+
+    # inverse transform should give back the original data
+    result = pt.inverse_transform(transformed, yearly_T)
+    np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
