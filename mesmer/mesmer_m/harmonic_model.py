@@ -181,7 +181,6 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
         coeffs, predictions, mse = fit_fourier_series_np(
             yearly_predictor,
             monthly_target,
-            i_order,
             # use coeffs from last iteration as first guess
             first_guess=np.append(last_coeffs, np.zeros(4)),
         )
