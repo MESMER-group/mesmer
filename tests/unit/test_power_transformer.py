@@ -36,7 +36,8 @@ def test_fit_power_transformer():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
-    pt = PowerTransformerVariableLambda(standardize=False)
+    pt = PowerTransformerVariableLambda(standardize=False) 
+    # standardize false speeds up the fit and does not impact the coefficients
     pt.fit(monthly_residuals, yearly_T, gridcells)
 
     result = pt.coeffs_
@@ -68,7 +69,7 @@ def test_yeo_johnson_optimize_lambda(skew, bounds):
     yearly_T = np.random.randn(n_years)
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
-    pt = PowerTransformerVariableLambda()
+    pt = PowerTransformerVariableLambda(standardize=False)
     pt.coeffs_ = pt._yeo_johnson_optimize_lambda(local_monthly_residuals, yearly_T)
     lmbda = lambda_function(pt.coeffs_, yearly_T)
     transformed = pt._yeo_johnson_transform(local_monthly_residuals, lmbda)
@@ -82,8 +83,7 @@ def test_transform():
     n_ts = 20
     n_gridcells = 10
 
-    pt = PowerTransformerVariableLambda()
-    pt.standardize = False
+    pt = PowerTransformerVariableLambda(standardize=False)
     pt.coeffs_ = np.tile([1, 0], (n_gridcells, 1))
 
     monthly_residuals = np.ones((n_ts, n_gridcells))
@@ -96,7 +96,7 @@ def test_transform():
 
 
 def test_yeo_johnson_transform():
-    pt = PowerTransformerVariableLambda()
+    pt = PowerTransformerVariableLambda(standardize=False)
 
     # test all possible combinations of local_monthly_residuals and lambdas
     local_monthly_residuals = np.array([0.0, 1.0, 0.0, 1.0, -1.0, -1.0])
@@ -117,8 +117,7 @@ def test_transform_roundtrip():
     )
     yearly_T = np.zeros((n_ts, n_gridcells))
 
-    pt = PowerTransformerVariableLambda()
-    pt.standardize = False
+    pt = PowerTransformerVariableLambda(standardize = False)
     # dummy lambdas (since yearly_T is zero lambda comes out to be second coefficient)
     # we have all cases for lambdas 0 and 2 (special cases), 1 (identity case)
     # lambda between 0 and 1 and lambda between 1 and 2 for concave and convex cases
