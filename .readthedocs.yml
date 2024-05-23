@@ -2,6 +2,9 @@ version: 2
 build:
   os: ubuntu-22.04
   jobs:
+    post_checkout:
+      # unshallow so the version works
+      - git fetch --unshallow
     pre_install:
         # see https://github.com/readthedocs/readthedocs.org/issues/8201
       - git update-index --assume-unchanged docs/environment.yml docs/source/conf.py
