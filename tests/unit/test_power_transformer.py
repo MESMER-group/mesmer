@@ -36,7 +36,7 @@ def test_fit_power_transformer():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
-    pt = PowerTransformerVariableLambda()
+    pt = PowerTransformerVariableLambda(standardize=False)
     pt.fit(monthly_residuals, yearly_T, gridcells)
 
     result = pt.coeffs_
