@@ -3,8 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to MESMER's documentation!
-==================================
+.. include:: ../../README.rst
 
 .. toctree::
    :maxdepth: 2
@@ -16,12 +15,14 @@ Welcome to MESMER's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
    :caption: For developers
 
    development
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
    :caption: API Reference
 
    api
@@ -29,8 +30,7 @@ Welcome to MESMER's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
    :caption: Versions
 
    changelog
-
-.. include:: ../../README.rst

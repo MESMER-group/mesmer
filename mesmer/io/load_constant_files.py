@@ -17,7 +17,7 @@ import regionmask
 
 from mesmer.stats import gaspari_cohn
 
-from ..core.regionmaskcompat import mask_3D_frac_approx
+from ..core.regionmaskcompat import _mask_3D_frac_approx
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
@@ -186,7 +186,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point
-    ls["grid_raw"] = mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values.squeeze()
+    ls["grid_raw"] = _mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values.squeeze()
 
     # remove Antarctica
     idx_ANT = lat["c"] < -60
