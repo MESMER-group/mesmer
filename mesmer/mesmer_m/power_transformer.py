@@ -153,7 +153,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
             _neg_log_likelihood,
             first_guess,
             bounds=bounds,
-            method="SLSQP",
+            method="Nelder-Mead",
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
