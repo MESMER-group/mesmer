@@ -129,3 +129,20 @@ def test_transform_roundtrip():
     result = pt.inverse_transform(transformed, yearly_T)
 
     np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
+
+def test_standard_scaler():
+    # generate random data with mean different from 0 and std different from one 
+    np.random.seed(0)
+    n_ts = 100_000
+    n_gridcells = 1
+    monthly_residuals = np.random.randn(n_ts, n_gridcells) * 10 + 5
+    yearly_T = np.zeros((n_ts, n_gridcells))
+
+    # fit the transformer
+    pt = PowerTransformerVariableLambda(standardize=True)
+    pt.fit(monthly_residuals, yearly_T, n_gridcells)
+    transformed = pt.transform(monthly_residuals, yearly_T)
+
+    # the transformed data should have mean close to 0 and std close to 1
+    np.testing.assert_allclose(np.mean(transformed), 0, atol=1e-2)
+    np.testing.assert_allclose(np.std(transformed), 1, atol=1e-2)
