@@ -42,6 +42,8 @@ Internal Changes
 - Restore compatibility with pandas version v2.2 and xarray version v2024.02 (`#404 <https://github.com/MESMER-group/mesmer/pull/404>`_).
   By `Mathias Hauser`_.
 - Explicitely include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
+- Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
+  By `Victoria Bauer`_.
 
 
 v0.10.0 - 2024.01.04
