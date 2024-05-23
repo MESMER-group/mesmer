@@ -36,6 +36,8 @@ def test_fit_power_transformer():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
+    assert np.finfo(np.float64).eps == 2.220446049250313e-16
+
     pt = PowerTransformerVariableLambda(standardize=False)
     pt.fit(monthly_residuals, yearly_T, gridcells)
 
