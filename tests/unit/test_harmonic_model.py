@@ -117,6 +117,7 @@ def test_fit_to_bic_numerical_stability():
     expected_coefficients = np.full(4 * max_order, np.nan)
     expected_coefficients[: selected_order * 4] = np.array(
         [
+    hm_optimizing
             1.5,
             1.5,
             3.5,
