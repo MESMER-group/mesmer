@@ -6,15 +6,19 @@ channels:
 
 dependencies:
  - cartopy
- - dask[complete]
- - gdal
+ - dask
+ - joblib
+ - matplotlib-base
+ - nc-time-axis
  - netcdf4
  - numpy
  - packaging
  - pandas>=2.0
  - pooch
+ - pyproj
  - regionmask>=0.9
  - scikit-learn
+ - scipy
  - statsmodels>=0.13
  - xarray>=2023.04 # because pandas 2 is required
 # for testing
