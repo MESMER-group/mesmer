@@ -13,6 +13,6 @@ build:
       # * --no-deps to ensure minimal required deps
       - python -m pip install -e .[docs]
   tools:
-    python: "3.11"
+    python: "3.12"
 sphinx:
   configuration: docs/source/conf.py
