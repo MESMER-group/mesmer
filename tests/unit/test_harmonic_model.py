@@ -171,22 +171,23 @@ def test_fit_to_bic_numerical_stability():
     np.testing.assert_allclose(expected_coefficients, estimated_coefficients)
     np.testing.assert_allclose(predictions, expected_predictions)
 
+
 def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
-    coeff = np.arange(6*4)
+    coeff = np.arange(6 * 4)
     max_order = 6
 
     # generate decreasing coefficients with some noise
-    trend = np.repeat(np.linspace(1.2, 0.2, max_order),4)
-    scale = np.tile([0,5.], (n_cells, max_order*2))
+    trend = np.repeat(np.linspace(1.2, 0.2, max_order), 4)
+    scale = np.tile([0, 5.0], (n_cells, max_order * 2))
     rng = np.random.default_rng(0)
-    noise = rng.normal(loc = 0, scale = 0.1, size=(n_cells, max_order*4))
+    noise = rng.normal(loc=0, scale=0.1, size=(n_cells, max_order * 4))
     data = trend * scale + noise
     data = np.round(data, 1)
 
     # replace superfluous orders with nans
-    for cell, order in zip(range(len(orders)+1), orders):
-        data[cell, order*4:] = np.nan
+    for cell, order in zip(range(len(orders) + 1), orders):
+        data[cell, order * 4 :] = np.nan
 
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
 
@@ -203,7 +204,7 @@ def test_fit_to_bic_xr():
     np.random.seed(0)
     n_ts = 10
 
-    coefficients = get_2D_coefficients(orders=[1,2,3,4,5,6], n_lat=3, n_lon=2)
+    coefficients = get_2D_coefficients(orders=[1, 2, 3, 4, 5, 6], n_lat=3, n_lon=2)
 
     yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2)
 
@@ -236,11 +237,14 @@ def test_fit_to_bic_xr():
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
     assert (result.n_sel.values == np.array([1, 2, 3, 4, 5, 6])).all()
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
-    
+
     # test if the model can recover the underlying cycle with noise on top of monthly target
-    noisy_monthly_target = monthly_target + np.random.normal(loc=0, scale=0.1, size=monthly_target.values.shape)
+    noisy_monthly_target = monthly_target + np.random.normal(
+        loc=0, scale=0.1, size=monthly_target.values.shape
+    )
     result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.2)
+
 
 def test_fit_to_bix_xr_instance_checks():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
