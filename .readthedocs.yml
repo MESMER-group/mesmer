@@ -11,10 +11,8 @@ build:
       # install mesmer
       # * needs to be editable
       # * --no-deps to ensure minimal required deps
-      - python -m pip install --no-deps -e .
+      - python -m pip install -e .[docs]
   tools:
-    python: mambaforge-22.9
+    python: "3.11"
 sphinx:
   configuration: docs/source/conf.py
-conda:
-  environment: docs/environment.yml
