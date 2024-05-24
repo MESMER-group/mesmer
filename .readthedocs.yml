@@ -8,9 +8,7 @@ build:
     pre_install:
         # see https://github.com/readthedocs/readthedocs.org/issues/8201
       - git update-index --assume-unchanged docs/environment.yml docs/source/conf.py
-      # install mesmer
-      # * needs to be editable
-      # * --no-deps to ensure minimal required deps
+      # editable install mesmer with docs extras
       - python -m pip install -e .[docs]
   tools:
     python: "3.12"
