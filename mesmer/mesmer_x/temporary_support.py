@@ -7,11 +7,8 @@ sys.path.append("../")
 import numpy as np
 
 # load in MESMER scripts for treatment of data
-from mesmer.io import (  # test_combination_vars, TODO: write this function
-    load_cmipng,
-    load_phi_gc,
-    load_regs_ls_wgt_lon_lat,
-)
+# TODO: write the function test_combination_vars
+from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land
 
 
@@ -19,33 +16,28 @@ def load_inputs_MESMERx(cfg, variables, esms):
     targ, pred, sub_pred = variables
 
     # initiate TEMPORARY dictionaries
-    targ_g_dict = {
-        esm: {} for esm in esms
-    }  # target with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
-    pred_g_dict = {
-        esm: {} for esm in esms
-    }  # predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
-    PRED_dict = {
-        esm: {} for esm in esms
-    }  # global mean predictor (dict[esm][scen][run]: array Time)
+    targ_g_dict = {esm: {} for esm in esms}  
+    # target with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
+    pred_g_dict = {esm: {} for esm in esms}  
+    # predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
+    PRED_dict = {esm: {} for esm in esms}  
+    # global mean predictor (dict[esm][scen][run]: array Time)
     if sub_pred is not None:
-        SUB_PRED_dict = {
-            esm: {} for esm in esms
-        }  # global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
+        SUB_PRED_dict = {esm: {} for esm in esms}  
+        # global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
 
     # initiate dictionnaries
-    time = {esm: {} for esm in esms}  # time axis (dict[esm][scen]: array Time)
-    targ_g = (
-        {}
-    )  # target with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
-    pred_g = (
-        {}
-    )  # predictor with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
-    PRED = {}  # global mean tas (dict[esm][scen]: array Run x Time x Lat x Lon)
+    time = {esm: {} for esm in esms}  
+    # time axis (dict[esm][scen]: array Time)
+    targ_g = {}
+    # target with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
+    pred_g = {}
+    # predictor with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
+    PRED = {}  
+    # global mean tas (dict[esm][scen]: array Run x Time x Lat x Lon)
     if sub_pred is not None:
-        SUB_PRED = (
-            {}
-        )  # global mean hfds (dict[esm][scen]: array Run x Time x Lat x Lon)
+        SUB_PRED = {}
+        # global mean hfds (dict[esm][scen]: array Run x Time x Lat x Lon)
 
     for esm in esms:
         print(esm)
