@@ -172,8 +172,8 @@ class Expression:
             cf = ""
 
             # adding one space at the end to append the last coefficient
-            for pep in (self.parameters_expressions[param] + " "):  
-                
+            for pep in self.parameters_expressions[param] + " ":
+
                 if pep == "c":
                     # starting expression for a coefficient
                     cf = "c"
@@ -221,10 +221,10 @@ class Expression:
 
             # reading this condensed expression to find terms to replace
             dico_replace, t = {}, ""  # initialization
-            
+
             # adding one space at the end to treat the last term
-            for ex in expr + " ":  
-               
+            for ex in expr + " ":
+
                 if ex in [
                     "(",
                     ")",
@@ -535,10 +535,10 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
     TMP = []
 
     for scen in forcescen:
-        
+
         # could be replaced with a while, but still a quick loop
-        for item in listds:  
-            
+        for item in listds:
+
             if item[1] == scen:
                 # for each scenario, creating one unique serie: consistency of members & scenarios have to be ensured while loading data
                 if coords is not None:

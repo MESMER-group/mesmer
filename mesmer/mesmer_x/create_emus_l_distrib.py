@@ -135,7 +135,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
         # backtransforming from a normal distribution on the scenarios of the preds
         # objective: one timeserie at a time. It is a good tradeoff speed/RAM.
         # looping on emulators first, because the emulators dont depend on the scenarios for backtransf
-        for i_emu in np.arange(nr_emus):  
+        for i_emu in np.arange(nr_emus):
             print(
                 "backtransforming emulations of",
                 var_targ,
@@ -174,10 +174,10 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                         ).T
                     else:
                         raise Exception("check the dimensions...")
-                
+
                 # (Emus, Time, GridPoints)
                 elif distr in ["gaussian"]:
-                    if (params_all[scen]["loc_all"].ndim == 3):  
+                    if params_all[scen]["loc_all"].ndim == 3:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][i_emu, ..., ind_NoNaN],
@@ -192,10 +192,10 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                         ).T
                     else:
                         raise Exception("check the dimensions...")
-                
+
                 # (Emus, Time, GridPoints)
                 elif distr in ["poisson"]:
-                    if (params_all[scen]["loc_all"].ndim == 3):
+                    if params_all[scen]["loc_all"].ndim == 3:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][i_emu, ..., ind_NoNaN],

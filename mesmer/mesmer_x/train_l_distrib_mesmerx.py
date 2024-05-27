@@ -386,7 +386,7 @@ class distrib_cov:
         self.data_targ = data_targ
         self.n_sample = len(self.data_targ)
         # can be different from length of predictors IF no predictors.
-        
+
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise Exception("NaN or infinite values in target of fit")
         self.data_pred = data_pred
@@ -539,7 +539,7 @@ class distrib_cov:
             # if no predictors, straightforward
             if len(self.data_pred) == 0:
                 weights_driver = np.ones(self.data_pred.shape)
-            
+
             # preparing a single array for all predictors
             else:
                 tmp = np.array([val for val in self.data_pred.values()]).T
@@ -613,7 +613,7 @@ class distrib_cov:
         # dont try testing if there are issues on the parameters
         if test:
             bottom, top = distrib.support()
-            
+
             # out of support
             if (
                 np.any(np.isnan(bottom))
@@ -621,8 +621,8 @@ class distrib_cov:
                 or np.any(data < bottom)
                 or np.any(top < data)
             ):
-                test = False  
-        
+                test = False
+
         return test
 
     def _test_proba_value(self, distrib, data):
@@ -656,7 +656,7 @@ class distrib_cov:
                 ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
             else:
                 test_param = self._test_evol_params(distrib, self.data_targ)
-            
+
             # tests on parameters show already that it wont work: filling in the rest with NaN
             if not test_param:
                 return test_coeff, test_param, False, False
@@ -736,7 +736,7 @@ class distrib_cov:
 
             # preparing derivatives to estimate derivatives of data along predictors, and infer a very first guess for the coefficients
             # facilitates the representation of the trends
-            self.smooth_data_targ = self.smooth_data(self.data_targ)  
+            self.smooth_data_targ = self.smooth_data(self.data_targ)
 
             m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
             ind_targ_low = np.where(self.smooth_data_targ < m - s)[0]
@@ -771,7 +771,7 @@ class distrib_cov:
                     func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
                 )
                 # warning, basinhopping tends to indroduce non-reproductibility in fits, reduced when using 2nd round of fits
-                
+
                 self.fg_coeffs = globalfit_d01.x
 
             else:
@@ -873,7 +873,7 @@ class distrib_cov:
                 self.name_ftol: self.ftol_req,
             },
         )
-        
+
         # observed that Powell solver is much faster, but less robust. May rarely create directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at critical steps or when Powell fails.
         if (option_NelderMead == "fail_run" and fit.success is False) or (
             option_NelderMead == "best_run"
@@ -904,7 +904,7 @@ class distrib_cov:
         loc_low = self.expr_fit.parameters_values["loc"]
         # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
         loc_high = self.expr_fit.parameters_values["loc"]
-        
+
         deriv = {
             p: (loc_high - loc_low)
             / (
@@ -913,7 +913,7 @@ class distrib_cov:
             )
             for p in self.data_pred
         }
-        
+
         return (
             np.sum(
                 [

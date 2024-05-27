@@ -182,7 +182,7 @@ class ConfigMesmerX:
         self.targs = ["tas"]  # emulated variables
 
         # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
-        self.ens_type_tr = "msic"  
+        self.ens_type_tr = "msic"
 
         self.reg_type = "ar6.land"
 
@@ -191,15 +191,15 @@ class ConfigMesmerX:
         self.ref = {}
         self.ref["type"] = "individ"  # alternatives: 'first','all'
         # first included year
-        self.ref["start"] = "1850"  
+        self.ref["start"] = "1850"
         # last included year
-        self.ref["end"] = "1900"  
+        self.ref["end"] = "1900"
 
         self.time = {}
         # first included year
-        self.time["start"] = "1850"  
+        self.time["start"] = "1850"
         # last included year #TODO: check if even used anywhere??
-        self.time["end"] = "2100"  
+        self.time["end"] = "2100"
 
         # ---------------------------------------------------------------------------------
         # Parameters
@@ -211,11 +211,11 @@ class ConfigMesmerX:
         self.nr_emus_v = 1000
         # tmp made smaller for testing purposes. Normally 6000.
 
-        self.scen_seed_offset_v = 0  
+        self.scen_seed_offset_v = 0
         # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 
         # max. nr of iterations in cross validation, will increase later
-        self.max_iter_cv = 15  
+        self.max_iter_cv = 15
 
         # ---------------------------------------------------------------------------------
         # predictors (for global module)
@@ -234,19 +234,19 @@ class ConfigMesmerX:
         self.methods = {}
 
         # method local trends applied to each gp separately
-        self.method_lt_each_gp_sep = True  
+        self.method_lt_each_gp_sep = True
 
         # tas
         # methods for the target variable tas
-        self.methods["tas"] = {}  
+        self.methods["tas"] = {}
         # global trend emulation method
         self.methods["tas"]["gt"] = "LOWESS_OLSVOLC"
-        # local trends emulation method  
+        # local trends emulation method
         self.methods["tas"]["lt"] = "OLS"
         # global variability emulation method
-        self.methods["tas"]["gv"] = "AR"  
+        self.methods["tas"]["gv"] = "AR"
         # local variability emulation method
-        self.methods["tas"]["lv"] = "OLS_AR1_sci"  
+        self.methods["tas"]["lv"] = "OLS_AR1_sci"
 
         # hfds
         self.methods["hfds"] = {}
@@ -261,39 +261,39 @@ class ConfigMesmerX:
 
         # txx
         self.methods["txx"] = {}
-        self.methods["txx"]["l_distrib"] = "GEV"  
-        self.methods["txx"]["lv"] = "AR1_sci"  
+        self.methods["txx"]["l_distrib"] = "GEV"
+        self.methods["txx"]["lv"] = "AR1_sci"
 
         # mrso
-        self.methods["mrso"] = {}  
+        self.methods["mrso"] = {}
         self.methods["mrso"]["l_distrib"] = "gaussian"
-        self.methods["mrso"]["lv"] = "AR1_sci"  
+        self.methods["mrso"]["lv"] = "AR1_sci"
 
         # mrsomean
-        self.methods["mrsomean"] = {}  
+        self.methods["mrsomean"] = {}
         self.methods["mrsomean"]["l_distrib"] = "gaussian"
-        self.methods["mrsomean"]["lv"] = "AR1_sci"  
+        self.methods["mrsomean"]["lv"] = "AR1_sci"
 
         # mrso_minmon
-        self.methods["mrso_minmon"] = {}  
+        self.methods["mrso_minmon"] = {}
         self.methods["mrso_minmon"]["l_distrib"] = "gaussian"
-        self.methods["mrso_minmon"]["lv"] = "AR1_sci"  
+        self.methods["mrso_minmon"]["lv"] = "AR1_sci"
 
         # fwixx
         self.methods["fwixx"] = {}
         self.methods["fwixx"]["l_distrib"] = "GEV"
-        self.methods["fwixx"]["lv"] = "AR1_sci"  
+        self.methods["fwixx"]["lv"] = "AR1_sci"
 
         # fwisa
         self.methods["fwisa"] = {}
-        self.methods["fwisa"]["l_distrib"] = "gaussian"  
-        # GEV | gaussian  
-        self.methods["fwisa"]["lv"] = "AR1_sci" 
+        self.methods["fwisa"]["l_distrib"] = "gaussian"
+        # GEV | gaussian
+        self.methods["fwisa"]["lv"] = "AR1_sci"
 
         # fwixd
         self.methods["fwixd"] = {}
-        self.methods["fwixd"]["l_distrib"] = "poisson"  
-        self.methods["fwixd"]["lv"] = "AR1_sci" 
+        self.methods["fwixd"]["l_distrib"] = "poisson"
+        self.methods["fwixd"]["lv"] = "AR1_sci"
 
         # fwils
         self.methods["fwils"] = {}
