@@ -18,9 +18,7 @@ import mesmer.mesmer_x.train_utils_mesmerx as mesmer_x_train_utils
 # load in MESMER-X configurations used in this script
 from mesmer.mesmer_x.temporary_config_all import ConfigMesmerX
 from mesmer.mesmer_x.temporary_support import load_inputs_MESMERx
-from mesmer.utils import (  # convert_dict_to_arr,; extract_land,; read_form_fit_distrib,
-    separate_hist_future,
-)
+from mesmer.utils import separate_hist_future
 
 if __name__ == "__main__":
     # load in MESMER scripts for treatment of data
@@ -50,9 +48,8 @@ if __name__ == "__main__":
     # ==============================================================
     # short preparation
     if run_on_exo:
-        os.nice(
-            19
-        )  # Priority of this script on the server. Value in [-20,19], default at 0, higher is nicer to others
+        # Priority of this script on the server. Value in [-20,19], default at 0, higher is nicer to others
+        os.nice(19)  
     subindex_csl = int(sys.argv[1]) if run_on_exo else None
     runs_per_process = 3
 
@@ -75,16 +72,17 @@ if __name__ == "__main__":
         "fwils": "/landclim_nobackup/yquilcaille/FWI_CMIP6/hurs_tasmax_sfcWind_pr/Drying-NSHeq_Day-continuous_Owinter-wDC/regridded/fwils/ann/g025",
     }[targ]
     # '/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/IPCC_AR6_CH11/data/cmip6/mrso/sm_annmean'
-    dir_obs = (
-        "/net/exo/landclim/yquilcaille/mesmer-x/data/observations/"  # observations
-    )
-    dir_aux = "/net/exo/landclim/yquilcaille/mesmer-x/data/auxiliary/"  # auxiliary data
+
+    # observations
+    dir_obs = "/net/exo/landclim/yquilcaille/mesmer-x/data/observations/"
+    # auxiliary data
+    dir_aux = "/net/exo/landclim/yquilcaille/mesmer-x/data/auxiliary/"
     dir_mesmer_params = "/net/exo/landclim/yquilcaille/mesmer-x/calibrated_parameters/"
     dir_mesmer_emus = "/net/exo/landclim/yquilcaille/mesmer-x/emulations/"
-    dir_stats = (
-        "/net/exo/landclim/yquilcaille/mesmer-x/statistics/"  # emulation statistics
-    )
-    dir_plots = "/net/exo/landclim/yquilcaille/mesmer-x/plots/"  # plots
+    # emulation statistics
+    dir_stats = "/net/exo/landclim/yquilcaille/mesmer-x/statistics/"
+    # plots
+    dir_plots = "/net/exo/landclim/yquilcaille/mesmer-x/plots/"
 
     cfg = ConfigMesmerX(
         gen=gen,
@@ -102,9 +100,9 @@ if __name__ == "__main__":
     )
 
     # make paths if not existing
-    # for path in [path_save_results, path_save_figures]:
-    #     if not os.path.exists(path):
-    #         os.makedirs(path)
+    for path in [path_save_results, path_save_figures]:
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     # ==============================================================
     # ==============================================================
@@ -121,9 +119,8 @@ if __name__ == "__main__":
     print(" ")
 
     # load in the ESM runs
-    esms = [
-        cfg.esms[3]
-    ]  # cfg.esms # just taking 1 esm (CanESM5) with several ensemble members for refactoring
+    # just taking 1 esm (CanESM5) with several ensemble members for refactoring
+    esms = [cfg.esms[3]]  # cfg.esms
     if run_on_exo:
         esms = esms[
             subindex_csl * runs_per_process : (subindex_csl + 1) * runs_per_process
@@ -222,10 +219,13 @@ if __name__ == "__main__":
     # --------------------------------------------------------------
     expr_name = "cfgA"
     expr = "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
-    # expr = "genextreme(loc=c1 + c2 * __GMT_t__, scale=c3*(c1 + c2 * __GMT_t__), c=c7)" # potential solution for extreme precipitations
-    # expr = "skewnorm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6, a=c7)" # testing
-    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)" # testing
-
+    # potential solution for extreme precipitations
+    # expr = "genextreme(loc=c1 + c2 * __GMT_t__, scale=c3*(c1 + c2 * __GMT_t__), c=c7)" 
+    # testing
+    # expr = "skewnorm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6, a=c7)" 
+    # testing
+    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)" 
+    
     # training conditional distributions following 'expr' in all grid points
     xr_coeffs_distrib, xr_qual = mesmer_x_train.xr_train_distrib(
         predictors=predictors,
