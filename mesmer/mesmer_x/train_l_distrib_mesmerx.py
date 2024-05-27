@@ -172,6 +172,7 @@ def xr_train_distrib(
         # lon["grid"][ls["idx_grid_l"]] try by Vici to fix missing variables
         lat_l_vec = predictors.lat
         # lat["grid"][ls["idx_grid_l"]]
+
         # ... and function of MESMERv1
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
@@ -385,6 +386,7 @@ class distrib_cov:
         self.data_targ = data_targ
         self.n_sample = len(self.data_targ)
         # can be different from length of predictors IF no predictors.
+        
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise Exception("NaN or infinite values in target of fit")
         self.data_pred = data_pred
@@ -533,12 +535,13 @@ class distrib_cov:
 
     def eval_weights(self, n_bins_density=40):
         if self.weighted_NLL:
-            if len(self.data_pred) == 0:
-                # if no predictors, straightforward
-                weights_driver = np.ones(self.data_pred.shape)
 
+            # if no predictors, straightforward
+            if len(self.data_pred) == 0:
+                weights_driver = np.ones(self.data_pred.shape)
+            
+            # preparing a single array for all predictors
             else:
-                # preparing a single array for all predictors
                 tmp = np.array([val for val in self.data_pred.values()]).T
 
                 # assessing limits on each axis
@@ -599,21 +602,27 @@ class distrib_cov:
         # checking set boundaries on parameters
         for param in self.boundaries_params:
             bottom, top = self.boundaries_params[param]
+
+            # out of boundaries
             if np.any(self.expr_fit.parameters_values[param] < bottom) or np.any(
                 top < self.expr_fit.parameters_values[param]
             ):
-                test = False  # out of boundaries
+                test = False
 
         # test of the support of the distribution: is there any data out of the corresponding support?
-        if test:  # dont try testing if there are issues on the parameters
+        # dont try testing if there are issues on the parameters
+        if test:
             bottom, top = distrib.support()
+            
+            # out of support
             if (
                 np.any(np.isnan(bottom))
                 or np.any(np.isnan(top))
                 or np.any(data < bottom)
                 or np.any(top < data)
             ):
-                test = False  # out of support
+                test = False  
+        
         return test
 
     def _test_proba_value(self, distrib, data):
@@ -624,15 +633,16 @@ class distrib_cov:
             cdf >= self.threshold_min_proba
         )
 
+    # test for the validity of the coefficients
     def test_all(self, coefficients):
-        # test for the validity of the coefficients
         test_coeff = self._test_coeffs(coefficients)
+
+        # tests on coefficients show already that it wont work: filling in the rest with NaN
         if not test_coeff:
-            # tests on coefficients show already that it wont work: filling in the rest with NaN
             return test_coeff, False, False, False
 
+        # evaluate the distribution for the predictors and this iteration of coefficients
         else:
-            # evaluate the distribution for the predictors and this iteration of coefficients
             distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
             if self.add_test:
                 distrib_add = self.expr_fit.evaluate(
@@ -646,8 +656,9 @@ class distrib_cov:
                 ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
             else:
                 test_param = self._test_evol_params(distrib, self.data_targ)
+            
+            # tests on parameters show already that it wont work: filling in the rest with NaN
             if not test_param:
-                # tests on parameters show already that it wont work: filling in the rest with NaN
                 return test_coeff, test_param, False, False
 
             else:
@@ -724,8 +735,9 @@ class distrib_cov:
             warnings.simplefilter("ignore")
 
             # preparing derivatives to estimate derivatives of data along predictors, and infer a very first guess for the coefficients
-            self.smooth_data_targ = self.smooth_data(self.data_targ)
             # facilitates the representation of the trends
+            self.smooth_data_targ = self.smooth_data(self.data_targ)  
+
             m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
             ind_targ_low = np.where(self.smooth_data_targ < m - s)[0]
             ind_targ_high = np.where(self.smooth_data_targ > m + s)[0]
@@ -759,6 +771,7 @@ class distrib_cov:
                     func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
                 )
                 # warning, basinhopping tends to indroduce non-reproductibility in fits, reduced when using 2nd round of fits
+                
                 self.fg_coeffs = globalfit_d01.x
 
             else:
@@ -792,6 +805,7 @@ class distrib_cov:
                     len(self.expr_fit.coefficients_dict["scale"])
                 )
                 # compared to all 0, better for ref level but worse for trend
+
             else:
                 x0 = self.fg_coeffs[self.fg_ind_sca]
             localfit_sca = self.minimize(
@@ -859,6 +873,7 @@ class distrib_cov:
                 self.name_ftol: self.ftol_req,
             },
         )
+        
         # observed that Powell solver is much faster, but less robust. May rarely create directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at critical steps or when Powell fails.
         if (option_NelderMead == "fail_run" and fit.success is False) or (
             option_NelderMead == "best_run"
@@ -889,6 +904,7 @@ class distrib_cov:
         loc_low = self.expr_fit.parameters_values["loc"]
         # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
         loc_high = self.expr_fit.parameters_values["loc"]
+        
         deriv = {
             p: (loc_high - loc_low)
             / (
@@ -897,6 +913,7 @@ class distrib_cov:
             )
             for p in self.data_pred
         }
+        
         return (
             np.sum(
                 [
