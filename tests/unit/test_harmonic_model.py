@@ -191,7 +191,6 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
 
     coords = {
-        "coeff": np.arange(max_order * 4),
         "lon": ("cells", LON.flatten()),
         "lat": ("cells", LAT.flatten()),
     }
