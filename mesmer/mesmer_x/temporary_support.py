@@ -16,29 +16,35 @@ def load_inputs_MESMERx(cfg, variables, esms):
     targ, pred, sub_pred = variables
 
     # initiate TEMPORARY dictionaries
-    targ_g_dict = {esm: {} for esm in esms}
     # target with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
-    pred_g_dict = {esm: {} for esm in esms}
-    # predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
-    PRED_dict = {esm: {} for esm in esms}
-    # global mean predictor (dict[esm][scen][run]: array Time)
-    if sub_pred is not None:
-        SUB_PRED_dict = {esm: {} for esm in esms}
-        # global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
+    targ_g_dict = {esm: {} for esm in esms}  
 
-    # initiate dictionnaries
-    time = {esm: {} for esm in esms}
+    # predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
+    pred_g_dict = {esm: {} for esm in esms}  
+
+    # global mean predictor (dict[esm][scen][run]: array Time)
+    PRED_dict = {esm: {} for esm in esms}  
+
+    # global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
+    if sub_pred is not None:
+        SUB_PRED_dict = {esm: {} for esm in esms}  
+        
+    # initiate dictionaries
     # time axis (dict[esm][scen]: array Time)
-    targ_g = {}
+    time = {esm: {} for esm in esms}  
+    
     # target with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
-    pred_g = {}
+    targ_g = {}
     # predictor with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
-    PRED = {}
+    pred_g = {}
+    
     # global mean tas (dict[esm][scen]: array Run x Time x Lat x Lon)
+    PRED = {}  
+    
+    # global mean hfds (dict[esm][scen]: array Run x Time x Lat x Lon)
     if sub_pred is not None:
         SUB_PRED = {}
-        # global mean hfds (dict[esm][scen]: array Run x Time x Lat x Lon)
-
+        
     for esm in esms:
         print(esm)
 
@@ -51,6 +57,7 @@ def load_inputs_MESMERx(cfg, variables, esms):
             #     )
             # else:
             #     available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
+            
             available_runs = ["all"]
             if len(available_runs) > 0:
                 targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmipng(
