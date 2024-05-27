@@ -178,9 +178,9 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
 
     # generate coefficients that reseble real ones
     # generate rapidly decreasing coefficients for increasing orders
-    trend = np.repeat(np.linspace(1.2, 0.2, max_order)**2, 4)
+    trend = np.repeat(np.linspace(1.2, 0.2, max_order) ** 2, 4)
     # the first coefficients are rather small  (scaling of seasonal variability with temperature change)
-    # while the second ones are large (constant distance of each month from the yearly mean) 
+    # while the second ones are large (constant distance of each month from the yearly mean)
     scale = np.tile([0.01, 5.0], (n_cells, max_order * 2))
     # generate some variability so not all coefficients are exactly the same
     rng = np.random.default_rng(0)
