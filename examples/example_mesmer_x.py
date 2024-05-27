@@ -31,7 +31,6 @@ if __name__ == "__main__":
     #     test_combination_vars,
     # )
 
-
     # ==============================================================
     # 0. OPTIONS FOR THE SCRIPT
     # ==============================================================
@@ -45,7 +44,6 @@ if __name__ == "__main__":
     run_on_exo = False
     # ==============================================================
     # ==============================================================
-
 
     # ==============================================================
     # 1. PREPARATION OF MESMER-X
@@ -77,11 +75,15 @@ if __name__ == "__main__":
         "fwils": "/landclim_nobackup/yquilcaille/FWI_CMIP6/hurs_tasmax_sfcWind_pr/Drying-NSHeq_Day-continuous_Owinter-wDC/regridded/fwils/ann/g025",
     }[targ]
     # '/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/IPCC_AR6_CH11/data/cmip6/mrso/sm_annmean'
-    dir_obs = "/net/exo/landclim/yquilcaille/mesmer-x/data/observations/"  # observations
+    dir_obs = (
+        "/net/exo/landclim/yquilcaille/mesmer-x/data/observations/"  # observations
+    )
     dir_aux = "/net/exo/landclim/yquilcaille/mesmer-x/data/auxiliary/"  # auxiliary data
     dir_mesmer_params = "/net/exo/landclim/yquilcaille/mesmer-x/calibrated_parameters/"
     dir_mesmer_emus = "/net/exo/landclim/yquilcaille/mesmer-x/emulations/"
-    dir_stats = "/net/exo/landclim/yquilcaille/mesmer-x/statistics/"  # emulation statistics
+    dir_stats = (
+        "/net/exo/landclim/yquilcaille/mesmer-x/statistics/"  # emulation statistics
+    )
     dir_plots = "/net/exo/landclim/yquilcaille/mesmer-x/plots/"  # plots
 
     cfg = ConfigMesmerX(
@@ -107,7 +109,6 @@ if __name__ == "__main__":
     # ==============================================================
     # ==============================================================
 
-
     # ==============================================================
     # 2. PREPARATION: based on data structures of the former version of MESMER
     # ==============================================================
@@ -124,7 +125,9 @@ if __name__ == "__main__":
         cfg.esms[3]
     ]  # cfg.esms # just taking 1 esm (CanESM5) with several ensemble members for refactoring
     if run_on_exo:
-        esms = esms[subindex_csl * runs_per_process : (subindex_csl + 1) * runs_per_process]
+        esms = esms[
+            subindex_csl * runs_per_process : (subindex_csl + 1) * runs_per_process
+        ]
 
     # preparing data
     (
@@ -150,7 +153,6 @@ if __name__ == "__main__":
     print(" ")
     # ==============================================================
     # ==============================================================
-
 
     # ==============================================================
     # 3. EXAMPLE TO RUN MESMER-X
@@ -215,7 +217,6 @@ if __name__ == "__main__":
     # --------------------------------------------------------------
     # --------------------------------------------------------------
 
-
     # --------------------------------------------------------------
     # 3.2. EXAMPLE OF TRAINING
     # --------------------------------------------------------------
@@ -250,7 +251,6 @@ if __name__ == "__main__":
     # NEW CODE OF MESMER: not applied on residuals, but on 'transf_target'
     # --------------------------------------------------------------
     # --------------------------------------------------------------
-
 
     # --------------------------------------------------------------
     # 3.3. EXAMPLE OF EMULATION
