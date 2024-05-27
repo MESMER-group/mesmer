@@ -176,12 +176,17 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
     max_order = 6
 
-    # generate decreasing coefficients with some noise
-    trend = np.repeat(np.linspace(1.2, 0.2, max_order), 4)
-    scale = np.tile([0, 5.0], (n_cells, max_order * 2))
+    # generate coefficients that reseble real ones
+    # generate rapidly decreasing coefficients for increasing orders
+    trend = np.repeat(np.linspace(1.2, 0.2, max_order)**2, 4)
+    # the first coefficients are rather small  (scaling of seasonal variability with temperature change)
+    # while the second ones are large (constant distance of each month from the yearly mean) 
+    scale = np.tile([0.01, 5.0], (n_cells, max_order * 2))
+    # generate some variability so not all coefficients are exactly the same
     rng = np.random.default_rng(0)
-    noise = rng.normal(loc=0, scale=0.1, size=(n_cells, max_order * 4))
-    coeffs = trend * scale + noise
+    variability = rng.normal(loc=0, scale=0.1, size=(n_cells, max_order * 4))
+    # put it together
+    coeffs = trend * scale + variability
     coeffs = np.round(coeffs, 1)
 
     # replace superfluous orders with nans
