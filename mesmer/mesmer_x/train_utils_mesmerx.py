@@ -170,7 +170,7 @@ class Expression:
             self.coefficients_dict[param] = []
             # iniatilize detection
             cf = ""
-            for pep in (self.parameters_expressions[param] + " "):  
+            for pep in self.parameters_expressions[param] + " ":
                 # adding one space at the end to append the last coefficient
                 if pep == "c":
                     # starting expression for a coefficient
@@ -219,7 +219,7 @@ class Expression:
 
             # reading this condensed expression to find terms to replace
             dico_replace, t = {}, ""  # initialization
-            for ex in expr + " ":  
+            for ex in expr + " ":
                 # adding one space at the end to treat the last term
                 if ex in [
                     "(",
@@ -339,19 +339,19 @@ class Expression:
 
         # Evaluation 1: coefficients
         for c in coefficients_values:
-            exec(c + " = coefficients_values[c]")  
+            exec(c + " = coefficients_values[c]")
             # using the evil exec...
 
         # Evaluation 2: inputs
         for i in inputs_values:
-            exec(i + " = inputs_values[i]")  
+            exec(i + " = inputs_values[i]")
             # the evil exec strikes back...
 
         # Evaluation 3: parameters
         self.parameters_values = {}
         for param in self.parameters_list:
             # may need to silence warnings here, to avoid spamming
-            self.parameters_values[param] = eval(self.parameters_expressions[param])  
+            self.parameters_values[param] = eval(self.parameters_expressions[param])
             # the evil exec evolves as evil eval!
 
         # Correcting shapes 1: constant parameters must have the shape of the inputs
@@ -528,7 +528,7 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
     # looping over scenarios
     TMP = []
     for scen in forcescen:
-        for item in listds:  
+        for item in listds:
             # could be replaced with a while, but still a quick loop
             if item[1] == scen:
                 # for each scenario, creating one unique serie: consistency of members & scenarios have to be ensured while loading data

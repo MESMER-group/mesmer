@@ -16,24 +16,24 @@ def load_inputs_MESMERx(cfg, variables, esms):
     targ, pred, sub_pred = variables
 
     # initiate TEMPORARY dictionaries
-    targ_g_dict = {esm: {} for esm in esms}  
+    targ_g_dict = {esm: {} for esm in esms}
     # target with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
-    pred_g_dict = {esm: {} for esm in esms}  
+    pred_g_dict = {esm: {} for esm in esms}
     # predictor with global coverage (dict[esm][scen][run]: array Time x Lat x Lon)
-    PRED_dict = {esm: {} for esm in esms}  
+    PRED_dict = {esm: {} for esm in esms}
     # global mean predictor (dict[esm][scen][run]: array Time)
     if sub_pred is not None:
-        SUB_PRED_dict = {esm: {} for esm in esms}  
+        SUB_PRED_dict = {esm: {} for esm in esms}
         # global mean hfds (needed as predictor) (dict[esm][scen][run]: array Time)
 
     # initiate dictionnaries
-    time = {esm: {} for esm in esms}  
+    time = {esm: {} for esm in esms}
     # time axis (dict[esm][scen]: array Time)
     targ_g = {}
     # target with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
     pred_g = {}
     # predictor with global coverage (dict[esm][scen]: array Run x Time x Lat x Lon)
-    PRED = {}  
+    PRED = {}
     # global mean tas (dict[esm][scen]: array Run x Time x Lat x Lon)
     if sub_pred is not None:
         SUB_PRED = {}

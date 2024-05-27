@@ -76,7 +76,7 @@ class ConfigMesmerX:
         if "dir_cmipng" in self.paths:
             self.dir_cmipng = self.paths["dir_cmipng"]
         else:
-            self.dir_cmipng = os.path.join(TEST_DATA_ROOT, "cmip{}-ng/".format(gen))  
+            self.dir_cmipng = os.path.join(TEST_DATA_ROOT, "cmip{}-ng/".format(gen))
             # TODO: remove need for trailing "/" here
 
         # cmip-x: climate extremes
@@ -90,7 +90,7 @@ class ConfigMesmerX:
         if "dir_obs" in self.paths:
             self.dir_obs = self.paths["dir_obs"]
         else:
-            self.dir_obs = os.path.join(TEST_DATA_ROOT, "observations/")  
+            self.dir_obs = os.path.join(TEST_DATA_ROOT, "observations/")
             # TODO: remove need for trailing "/" here
 
         # auxiliary data
@@ -181,7 +181,7 @@ class ConfigMesmerX:
         # Variables, ensembles, regions
         self.targs = ["tas"]  # emulated variables
 
-        self.ens_type_tr = "msic"  
+        self.ens_type_tr = "msic"
         # initial-condition ensemble (ic), multiple-scenarios ensemble (ms)
 
         self.reg_type = "ar6.land"
@@ -195,21 +195,21 @@ class ConfigMesmerX:
 
         self.time = {}
         self.time["start"] = "1850"  # first included year
-        self.time["end"] = "2100"  
+        self.time["end"] = "2100"
         # last included year #TODO: check if even used anywhere??
 
         # ---------------------------------------------------------------------------------
         # Parameters
         self.threshold_land = 1 / 3
 
-        self.wgt_scen_tr_eq = True  
+        self.wgt_scen_tr_eq = True
         # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
-        self.nr_emus_v = 1000  
+        self.nr_emus_v = 1000
         # tmp made smaller for testing purposes. Normally 6000.
-        self.scen_seed_offset_v = 0  
+        self.scen_seed_offset_v = 0
         # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
-        self.max_iter_cv = 15  
+        self.max_iter_cv = 15
         # max. nr of iterations in cross validation, will increase later
 
         # ---------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ class ConfigMesmerX:
         # ---------------------------------------------------------------------------------
         # methods (for all modules)
         self.methods = {}
-        self.method_lt_each_gp_sep = True  
+        self.method_lt_each_gp_sep = True
         # method local trends applied to each gp separately
 
         # tas
@@ -252,21 +252,21 @@ class ConfigMesmerX:
 
         # mrso
         self.methods["mrso"] = {}  # methods for the target variable sm
-        self.methods["mrso"]["l_distrib"] = "gaussian"  
+        self.methods["mrso"]["l_distrib"] = "gaussian"
         # local variability emulation method
         self.methods["mrso"]["lv"] = "AR1_sci"  # local variability emulation method
 
         # mrsomean
         self.methods["mrsomean"] = {}  # methods for the target variable sm
-        self.methods["mrsomean"]["l_distrib"] = "gaussian"  
+        self.methods["mrsomean"]["l_distrib"] = "gaussian"
         # local variability emulation method
         self.methods["mrsomean"]["lv"] = "AR1_sci"  # local variability emulation method
 
         # mrso_minmon
         self.methods["mrso_minmon"] = {}  # methods for the target variable sm
-        self.methods["mrso_minmon"]["l_distrib"] = "gaussian"  
+        self.methods["mrso_minmon"]["l_distrib"] = "gaussian"
         # local variability emulation method
-        self.methods["mrso_minmon"]["lv"] = "AR1_sci"  
+        self.methods["mrso_minmon"]["lv"] = "AR1_sci"
         # local variability emulation method
 
         # fwixx
@@ -276,19 +276,21 @@ class ConfigMesmerX:
 
         # fwisa
         self.methods["fwisa"] = {}
-        self.methods["fwisa"]["l_distrib"] = "gaussian"  
+        self.methods["fwisa"]["l_distrib"] = "gaussian"
         # GEV | gaussian  # local variability emulation method
         self.methods["fwisa"]["lv"] = "AR1_sci"  # local variability emulation method
 
         # fwixd
         self.methods["fwixd"] = {}
-        self.methods["fwixd"]["l_distrib"] = "poisson"  
+        self.methods["fwixd"]["l_distrib"] = "poisson"
         # local variability emulation method
         self.methods["fwixd"]["lv"] = "AR1_sci"  # local variability emulation method
 
         # fwils
         self.methods["fwils"] = {}
-        self.methods["fwils"]["l_distrib"] = "poisson"  # local variability emulation method
+        self.methods["fwils"][
+            "l_distrib"
+        ] = "poisson"  # local variability emulation method
         self.methods["fwils"]["lv"] = "AR1_sci"  # local variability emulation method
 
         return

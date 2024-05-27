@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # short preparation
     if run_on_exo:
         # Priority of this script on the server. Value in [-20,19], default at 0, higher is nicer to others
-        os.nice(19)  
+        os.nice(19)
     subindex_csl = int(sys.argv[1]) if run_on_exo else None
     runs_per_process = 3
 
@@ -220,12 +220,12 @@ if __name__ == "__main__":
     expr_name = "cfgA"
     expr = "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
     # potential solution for extreme precipitations
-    # expr = "genextreme(loc=c1 + c2 * __GMT_t__, scale=c3*(c1 + c2 * __GMT_t__), c=c7)" 
+    # expr = "genextreme(loc=c1 + c2 * __GMT_t__, scale=c3*(c1 + c2 * __GMT_t__), c=c7)"
     # testing
-    # expr = "skewnorm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6, a=c7)" 
+    # expr = "skewnorm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6, a=c7)"
     # testing
-    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)" 
-    
+    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)"
+
     # training conditional distributions following 'expr' in all grid points
     xr_coeffs_distrib, xr_qual = mesmer_x_train.xr_train_distrib(
         predictors=predictors,

@@ -170,7 +170,7 @@ def xr_train_distrib(
         # remnants of MESMERv0, because stuck with its format...
         lon_l_vec = predictors.lon
         # lon["grid"][ls["idx_grid_l"]] try by Vici to fix missing variables
-        lat_l_vec = predictors.lat  
+        lat_l_vec = predictors.lat
         # lat["grid"][ls["idx_grid_l"]]
         # ... and function of MESMERv1
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
@@ -724,7 +724,7 @@ class distrib_cov:
             warnings.simplefilter("ignore")
 
             # preparing derivatives to estimate derivatives of data along predictors, and infer a very first guess for the coefficients
-            self.smooth_data_targ = self.smooth_data(self.data_targ)  
+            self.smooth_data_targ = self.smooth_data(self.data_targ)
             # facilitates the representation of the trends
             m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
             ind_targ_low = np.where(self.smooth_data_targ < m - s)[0]
@@ -755,7 +755,9 @@ class distrib_cov:
                 self.fg_coeffs = np.zeros(self.n_coeffs)
 
                 # Step 1: fit coefficients of location (objective: generate an adequate first guess for the coefficients of location. proven to be necessary in many situations, & accelerate step 2)
-                globalfit_d01 = basinhopping(func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10)  
+                globalfit_d01 = basinhopping(
+                    func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
+                )
                 # warning, basinhopping tends to indroduce non-reproductibility in fits, reduced when using 2nd round of fits
                 self.fg_coeffs = globalfit_d01.x
 
@@ -786,7 +788,9 @@ class distrib_cov:
                 ]
             )
             if self.first_guess is None:
-                x0 = np.std(self.data_targ) * np.ones(len(self.expr_fit.coefficients_dict["scale"]))  
+                x0 = np.std(self.data_targ) * np.ones(
+                    len(self.expr_fit.coefficients_dict["scale"])
+                )
                 # compared to all 0, better for ref level but worse for trend
             else:
                 x0 = self.fg_coeffs[self.fg_ind_sca]
@@ -832,7 +836,7 @@ class distrib_cov:
                     ), self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=0.05)
                     bounds.append([np.min(vals_bounds), np.max(vals_bounds)])
                 # global minimization, using the one with the best performances in this situation
-                globalfit_all = shgo(self.func_optim, bounds, sampling_method="sobol")  
+                globalfit_all = shgo(self.func_optim, bounds, sampling_method="sobol")
                 # sobol or halton, observed lower performances with simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
                 self.fg_coeffs = globalfit_all.x
         # first guess finished
@@ -915,7 +919,7 @@ class distrib_cov:
         x[self.fg_ind_sca] = x_sca
         # distrib = self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
-        sca = self.expr_fit.parameters_values["scale"]  
+        sca = self.expr_fit.parameters_values["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
         dev = np.abs(self.data_targ - loc)
         return np.sum((dev - sca) ** 2)

@@ -101,7 +101,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
             maybe_scens.sort()
             if maybe_scens == ["all"]:  # will be applied to all scens
                 pass
-            
+
             # first time that we find a list of scenarios
             elif len(list_scens) == 0:
                 list_scens += maybe_scens  # creating this list of scenarios
@@ -116,7 +116,9 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
             list_scens = force_scen
 
         # evaluate the evolutions of the parameters for these covariants
-        params_all = eval_param_distrib(param=params_distrib[var_targ], cov=preds[var_targ], force_scen=list_scens)
+        params_all = eval_param_distrib(
+            param=params_distrib[var_targ], cov=preds[var_targ], force_scen=list_scens
+        )
 
         # check for need to do a logistic transformation
         descrip_fit = read_form_fit_distrib(
@@ -131,7 +133,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
         # backtransforming from a normal distribution on the scenarios of the preds
         # objective: one timeserie at a time. It is a good tradeoff speed/RAM.
-        for i_emu in np.arange(nr_emus):  
+        for i_emu in np.arange(nr_emus):
             # looping on emulators first, because the emulators dont depend on the scenarios for backtransf
             print(
                 "backtransforming emulations of",
@@ -144,14 +146,16 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
             # how likely are the emulated values knowing the standard normal distribution at this year for this scenario?
             # can be run once for all scenarios
-            p_tmp = ss.norm.cdf(x=transf_emus_lv["all"][var_targ][i_emu, :, ind_NoNaN], loc=0, scale=1).T  
+            p_tmp = ss.norm.cdf(
+                x=transf_emus_lv["all"][var_targ][i_emu, :, ind_NoNaN], loc=0, scale=1
+            ).T
 
             for scen in list_scens:
 
                 # to what values of the known GEV would correspond these probabilities?
                 # (Emus, Time, GridPoints)
                 if distr in ["GEV"]:
-                    if (params_all[scen]["loc_all"].ndim == 3):
+                    if params_all[scen]["loc_all"].ndim == 3:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             c=-params_all[scen]["shape_all"][i_emu, ..., ind_NoNaN],
@@ -160,7 +164,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                         ).T
 
                     # (Time, GridPoints): values from params_all have always one axis for time even if constant.
-                    elif (params_all[scen]["loc_all"].ndim == 2):
+                    elif params_all[scen]["loc_all"].ndim == 2:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             c=-params_all[scen]["shape_all"][..., ind_NoNaN],
@@ -172,14 +176,14 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
                 elif distr in ["gaussian"]:
                     # (Emus, Time, GridPoints)
-                    if (params_all[scen]["loc_all"].ndim == 3):  
+                    if params_all[scen]["loc_all"].ndim == 3:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][i_emu, ..., ind_NoNaN],
                             scale=params_all[scen]["scale_all"][i_emu, ..., ind_NoNaN],
                         ).T
                     # (Time, GridPoints): values from params_all have always one axis for time even if constant.
-                    elif (params_all[scen]["loc_all"].ndim == 2):
+                    elif params_all[scen]["loc_all"].ndim == 2:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][..., ind_NoNaN],
@@ -190,14 +194,14 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
                 elif distr in ["poisson"]:
                     # (Emus, Time, GridPoints)
-                    if (params_all[scen]["loc_all"].ndim == 3):
+                    if params_all[scen]["loc_all"].ndim == 3:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][i_emu, ..., ind_NoNaN],
                             mu=params_all[scen]["mu_all"][i_emu, ..., ind_NoNaN],
                         ).T
                     # (Time, GridPoints): values from params_all have always one axis for time even if constant.
-                    elif (params_all[scen]["loc_all"].ndim == 2): 
+                    elif params_all[scen]["loc_all"].ndim == 2:
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][..., ind_NoNaN],
