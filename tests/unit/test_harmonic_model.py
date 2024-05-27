@@ -181,12 +181,12 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     scale = np.tile([0, 5.0], (n_cells, max_order * 2))
     rng = np.random.default_rng(0)
     noise = rng.normal(loc=0, scale=0.1, size=(n_cells, max_order * 4))
-    data = trend * scale + noise
-    data = np.round(data, 1)
+    coeffs = trend * scale + noise
+    coeffs = np.round(coeffs, 1)
 
     # replace superfluous orders with nans
     for cell, order in enumerate(orders):
-        data[cell, order * 4 :] = np.nan
+        coeffs[cell, order * 4 :] = np.nan
 
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
 
@@ -195,7 +195,7 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
         "lat": ("cells", LAT.flatten()),
     }
 
-    return xr.DataArray(data, dims=("cells", "coeff"), coords=coords, name="coeffs")
+    return xr.DataArray(coeffs, dims=("cells", "coeff"), coords=coords)
 
 
 def test_fit_to_bic_xr():
