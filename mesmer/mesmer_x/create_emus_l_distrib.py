@@ -81,8 +81,8 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
             distr_ppf = ss.genextreme.ppf
 
         elif distr in ["poisson"]:
-            distr_ppf = ss.poisson.ppf
             # warning, this function is super slow: major source is "scipy.special.pdtrik" used in "scipy.stats.poisson._ppf"
+            distr_ppf = ss.poisson.ppf
 
         # checking different sizes
         nr_emus, nr_t, nr_gps = transf_emus_lv["all"][var_targ].shape
@@ -104,7 +104,8 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
             # first time that we find a list of scenarios
             elif len(list_scens) == 0:
-                list_scens += maybe_scens  # creating this list of scenarios
+                # creating this list of scenarios
+                list_scens += maybe_scens
 
             # checking if different scenarios are provided
             elif np.any(list_scens != maybe_scens):
@@ -133,8 +134,8 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
         # backtransforming from a normal distribution on the scenarios of the preds
         # objective: one timeserie at a time. It is a good tradeoff speed/RAM.
-        for i_emu in np.arange(nr_emus):
-            # looping on emulators first, because the emulators dont depend on the scenarios for backtransf
+        # looping on emulators first, because the emulators dont depend on the scenarios for backtransf
+        for i_emu in np.arange(nr_emus):  
             print(
                 "backtransforming emulations of",
                 var_targ,
@@ -173,10 +174,10 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                         ).T
                     else:
                         raise Exception("check the dimensions...")
-
+                
+                # (Emus, Time, GridPoints)
                 elif distr in ["gaussian"]:
-                    # (Emus, Time, GridPoints)
-                    if params_all[scen]["loc_all"].ndim == 3:
+                    if (params_all[scen]["loc_all"].ndim == 3):  
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][i_emu, ..., ind_NoNaN],
@@ -191,10 +192,10 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                         ).T
                     else:
                         raise Exception("check the dimensions...")
-
+                
+                # (Emus, Time, GridPoints)
                 elif distr in ["poisson"]:
-                    # (Emus, Time, GridPoints)
-                    if params_all[scen]["loc_all"].ndim == 3:
+                    if (params_all[scen]["loc_all"].ndim == 3):
                         data_backPIT = distr_ppf(
                             q=p_tmp,
                             loc=params_all[scen]["loc_all"][i_emu, ..., ind_NoNaN],
