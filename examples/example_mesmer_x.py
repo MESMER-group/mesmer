@@ -47,9 +47,9 @@ if __name__ == "__main__":
     # 1. PREPARATION OF MESMER-X
     # ==============================================================
     # short preparation
+    # Priority of this script on the server. Value in [-20,19], default at 0, higher is nicer to others
     if run_on_exo:
-        # Priority of this script on the server. Value in [-20,19], default at 0, higher is nicer to others
-        os.nice(19)
+        os.nice(19)  
     subindex_csl = int(sys.argv[1]) if run_on_exo else None
     runs_per_process = 3
 
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     # testing
     # expr = "skewnorm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6, a=c7)"
     # testing
-    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)"
+    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)" 
 
     # training conditional distributions following 'expr' in all grid points
     xr_coeffs_distrib, xr_qual = mesmer_x_train.xr_train_distrib(
