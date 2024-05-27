@@ -174,7 +174,6 @@ def test_fit_to_bic_numerical_stability():
 
 def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
-    coeff = np.arange(6 * 4)
     max_order = 6
 
     # generate decreasing coefficients with some noise
@@ -192,7 +191,7 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
 
     coords = {
-        "coeff": coeff,
+        "coeff": np.arange(max_order * 4),
         "lon": ("cells", LON.flatten()),
         "lat": ("cells", LAT.flatten()),
     }
