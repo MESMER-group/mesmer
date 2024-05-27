@@ -170,8 +170,10 @@ class Expression:
             self.coefficients_dict[param] = []
             # iniatilize detection
             cf = ""
-            for pep in self.parameters_expressions[param] + " ":
-                # adding one space at the end to append the last coefficient
+
+            # adding one space at the end to append the last coefficient
+            for pep in (self.parameters_expressions[param] + " "):  
+                
                 if pep == "c":
                     # starting expression for a coefficient
                     cf = "c"
@@ -219,8 +221,10 @@ class Expression:
 
             # reading this condensed expression to find terms to replace
             dico_replace, t = {}, ""  # initialization
-            for ex in expr + " ":
-                # adding one space at the end to treat the last term
+            
+            # adding one space at the end to treat the last term
+            for ex in expr + " ":  
+               
                 if ex in [
                     "(",
                     ")",
@@ -454,6 +458,7 @@ def probability_integral_transform(
 
     # transformation
     OUT = []
+
     # loop to change with new data structure of MESMER
     for i, item in enumerate(data):
         data_item, scen = item
@@ -484,6 +489,7 @@ def probability_integral_transform(
         # archiving
         target_name
         OUT.append((transf_item, scen))
+
     return OUT
 
 
@@ -527,13 +533,17 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
     """
     # looping over scenarios
     TMP = []
+
     for scen in forcescen:
-        for item in listds:
-            # could be replaced with a while, but still a quick loop
+        
+        # could be replaced with a while, but still a quick loop
+        for item in listds:  
+            
             if item[1] == scen:
                 # for each scenario, creating one unique serie: consistency of members & scenarios have to be ensured while loading data
                 if coords is not None:
                     TMP.append(item[0][name_var].loc[coords].values.flatten())
                 else:
                     TMP.append(item[0][name_var].values.flatten())
+
     return np.hstack(TMP)
