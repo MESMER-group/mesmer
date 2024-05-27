@@ -172,7 +172,7 @@ def test_fit_to_bic_numerical_stability():
     np.testing.assert_allclose(predictions, expected_predictions)
 
 
-def get_2D_coefficients(orders, n_lat=3, n_lon=2):
+def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
     max_order = 6
 
@@ -190,7 +190,7 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
     coeffs = np.round(coeffs, 1)
 
     # replace superfluous orders with nans
-    for cell, order in enumerate(orders):
+    for cell, order in enumerate(order_per_cell):
         coeffs[cell, order * 4 :] = np.nan
 
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
@@ -205,8 +205,9 @@ def get_2D_coefficients(orders, n_lat=3, n_lon=2):
 
 def test_fit_to_bic_xr():
     n_ts = 10
+    orders = [1, 2, 3, 4, 5, 6]
 
-    coefficients = get_2D_coefficients(orders=[1, 2, 3, 4, 5, 6], n_lat=3, n_lon=2)
+    coefficients = get_2D_coefficients(order_per_cell=orders, n_lat=3, n_lon=2)
 
     yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2)
 
@@ -237,7 +238,7 @@ def test_fit_to_bic_xr():
 
     # test if the model can recover the monthly target from perfect fourier series
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
-    assert (result.n_sel.values == np.array([1, 2, 3, 4, 5, 6])).all()
+    assert (result.n_sel.values == orders).all()
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
