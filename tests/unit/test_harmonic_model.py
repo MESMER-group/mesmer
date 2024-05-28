@@ -238,7 +238,7 @@ def test_fit_to_bic_xr():
 
     # test if the model can recover the monthly target from perfect fourier series
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
-    assert (result.n_sel.values == orders).all()
+    np.testing.assert_equal(result.n_sel.values, orders)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
