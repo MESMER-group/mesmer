@@ -226,7 +226,7 @@ class Expression:
             for ex in expr + " ":
 
                 # TODO: could do this using regular expressions, think about it
-                if ex in [ 
+                if ex in [
                     "(",
                     ")",
                     "[",
