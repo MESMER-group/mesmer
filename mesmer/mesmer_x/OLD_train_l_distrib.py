@@ -1032,7 +1032,7 @@ class distrib_cov:
         else:
             inds_sigm = []
 
-        # checking that there are covariates on this parameter with lositic form
+        # checking that there are covariates on this parameter with logistic form
         if len(inds_sigm) > 0:
             # already made sure that only one sigmoid form is used on this parameter
             form_sigm = self.cov["cov_" + typ_cov + "_form"][inds_sigm[0]]
