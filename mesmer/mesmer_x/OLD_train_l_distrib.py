@@ -756,7 +756,7 @@ class distrib_cov:
         if method_fit in [
             "CG",
             "BFGS",
-            "L-BFGS-B",
+            "L-BFGS-B"
         ]:
             self.name_xtol = "gtol"
         elif method_fit in ["Newton-CG", "Powell", "TNC", "trust-constr"]:
