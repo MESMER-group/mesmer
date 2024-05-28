@@ -20,14 +20,15 @@ from mesmer.mesmer_x.temporary_config_all import ConfigMesmerX
 from mesmer.mesmer_x.temporary_support import load_inputs_MESMERx
 from mesmer.utils import separate_hist_future
 
+# load in MESMER scripts for treatment of data
+# from mesmer.io import (
+#     load_cmip,
+#     load_phi_gc,
+#     load_regs_ls_wgt_lon_lat,
+#     test_combination_vars,
+# )
+
 if __name__ == "__main__":
-    # load in MESMER scripts for treatment of data
-    # from mesmer.io import (
-    #     load_cmip,
-    #     load_phi_gc,
-    #     load_regs_ls_wgt_lon_lat,
-    #     test_combination_vars,
-    # )
 
     # ==============================================================
     # 0. OPTIONS FOR THE SCRIPT
@@ -61,6 +62,7 @@ if __name__ == "__main__":
     gen = 6
     dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
     # /net/ch4/data/cmip6-Next_Generation/mrso/ann/g025
+    
     dir_cmip_X = {
         "txx": "/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/IPCC_AR6_CH11/data/cmip6/tasmax/txx_regrid",
         "mrso": "/net/ch4/data/cmip6-Next_Generation/mrso/ann/g025",
