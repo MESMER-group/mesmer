@@ -8,8 +8,8 @@ Functions to train monthly trend module of MESMER-M
 """
 
 import numpy as np
+import scipy as sp
 import xarray as xr
-from scipy import optimize
 
 import mesmer
 
@@ -52,7 +52,7 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
     return beta0 + beta1 * yearly_T + seasonal_cycle
 
 
-def fit_fourier_series_np(yearly_predictor, monthly_target, order):
+def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     """execute fitting of the harmonic model/fourier series
 
     Parameters
@@ -64,8 +64,8 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     monthly_target : array-like of shape (n_years*12,)
         Target monthly temperature values.
 
-    order : Integer
-        Order of the Fourier Series.
+    first_guess : array-like of shape (4*order)
+        Initial guess for the coefficients of the Fourier Series.
 
     Method
     ------
@@ -90,7 +90,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
     # get monthly values
     mon_train = np.tile(np.arange(1, 13), int(yearly_predictor.shape[0] / 12))
 
-    def func(coeffs, order, yearly_predictor, mon_train, mon_target):
+    def func(coeffs, yearly_predictor, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
 
         loss = np.mean(
@@ -103,23 +103,25 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, order):
 
         return loss
 
-    first_guess = np.zeros(order * 4)
-
     # NOTE: this seems to select less 'orders' than the scipy one
     # np.linalg.lstsq(A, y)[0]
 
-    coeffs = optimize.least_squares(
-        func,
+    minimize_result = sp.optimize.least_squares(
+        func,  # TODO: func should return residuals
         first_guess,
-        args=(order, yearly_predictor, mon_train, monthly_target),
-        loss="cauchy",
-    ).x
+        args=(yearly_predictor, mon_train, monthly_target),
+        loss="cauchy",  # TODO: when returning residuals we should use 'linear'
+    )
+
+    coeffs = minimize_result.x
+    mse = minimize_result.fun
+    # NOTE: when we switch to returning the residuals .fun no longer returns the mse
 
     preds = generate_fourier_series_np(
         yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
     )
 
-    return coeffs, preds
+    return coeffs, preds, mse
 
 
 def calculate_bic(n_samples, order, mse):
@@ -170,30 +172,30 @@ def fit_to_bic_np(yearly_predictor, monthly_target, max_order):
 
     """
 
-    bic_score = np.zeros([max_order])
+    current_min_score = float("inf")
+    last_coeffs = []
+    selected_order = 0
 
     for i_order in range(1, max_order + 1):
 
-        _, predictions = fit_fourier_series_np(
-            yearly_predictor, monthly_target, i_order
+        coeffs, predictions, mse = fit_fourier_series_np(
+            yearly_predictor,
+            monthly_target,
+            # use coeffs from last iteration as first guess
+            first_guess=np.append(last_coeffs, np.zeros(4)),
         )
-        # TODO: in fit_fourier_series_np we already calculate mse, we could just return it and not do it again here?
-        mse = np.mean((predictions - monthly_target) ** 2)
+        bic_score = calculate_bic(len(monthly_target), i_order, mse)
 
-        bic_score[i_order - 1] = calculate_bic(len(monthly_target), i_order, mse)
-        # TODO: we could stop fitting when we hit a minimum, similar to _minimize_local_discrete
-
-    selected_order = np.argmin(bic_score) + 1
-    # TODO: we already fit for this order above so it would probably be faster to save the output from above and return it?
-    coeffs_fit, predictions = fit_fourier_series_np(
-        yearly_predictor=yearly_predictor,
-        monthly_target=monthly_target,
-        order=selected_order,
-    )
+        if bic_score < current_min_score:
+            current_min_score = bic_score
+            last_coeffs = coeffs
+            selected_order = i_order
+        else:
+            break
 
     # need the coeff array to be the same size for all orders
-    coeffs = np.zeros([max_order * 4]) * np.nan
-    coeffs[: selected_order * 4] = coeffs_fit
+    coeffs = np.full(max_order * 4, fill_value=np.nan)
+    coeffs[: selected_order * 4] = last_coeffs
 
     return selected_order, coeffs, predictions
 

@@ -3,7 +3,7 @@ import xarray as xr
 
 # from tqdm import tqdm
 from joblib import Parallel, delayed
-from scipy.optimize import minimize, rosen_der
+from scipy.optimize import minimize
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
@@ -144,8 +144,9 @@ class PowerTransformerVariableLambda(PowerTransformer):
         ]
         local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
-        # choosing bracket -2, 2 like for boxcox
-        bounds = np.c_[[0, -0.1], [1, 0.1]]
+        # first coefficient only positive for logistic function
+        # second coefficient bounded to avoid very steep function
+        bounds = np.array([[0, np.inf], [-0.1, 0.1]])
         # first guess is that data is already normal distributed
         first_guess = np.array([1, 0])
 
@@ -153,8 +154,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
             _neg_log_likelihood,
             first_guess,
             bounds=bounds,
-            method="SLSQP",
-            jac=rosen_der,
+            method="Nelder-Mead",
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
@@ -166,8 +166,11 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= eps)
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > eps)
+        # NOTE: this code is copied from sklearn's PowerTransformer, see
+        # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
+        # we acknowledge there is an inconsistency in the comarison of lambdas
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < eps)
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= eps)
         pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
         pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
