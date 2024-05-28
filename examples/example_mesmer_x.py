@@ -28,6 +28,7 @@ from mesmer.utils import separate_hist_future
 #     test_combination_vars,
 # )
 
+
 def main():
 
     # ==============================================================
@@ -281,4 +282,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()      
+    main()

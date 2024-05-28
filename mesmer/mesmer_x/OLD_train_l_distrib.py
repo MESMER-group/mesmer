@@ -753,11 +753,7 @@ class distrib_cov:
         self.maxfev = maxfev  # used to have np.inf, but sometimes, the fit doesnt work... and it is meant to.
 
         # TNC and trust-constr: better to use xtol
-        if method_fit in [
-            "CG",
-            "BFGS",
-            "L-BFGS-B"
-        ]:
+        if method_fit in ["CG", "BFGS", "L-BFGS-B"]:
             self.name_xtol = "gtol"
         elif method_fit in ["Newton-CG", "Powell", "TNC", "trust-constr"]:
             self.name_xtol = "xtol"
@@ -1152,21 +1148,14 @@ class distrib_cov:
                     alpha=alpha,
                 )
                 # transfo_asymptleft & right in coeffs_transfo_names
-                self.tmp_sol["transfo"] = [
-                    m1,
-                    m2,
-                    1
-                ]
+                self.tmp_sol["transfo"] = [m1, m2, 1]
 
             else:
                 data = sigmoid_transf(
                     data=self.data, left=m1, right=m2, type_sigm=self.transfo[1]
                 )
                 # transfo_asymptleft & right in coeffs_transfo_names
-                self.tmp_sol["transfo"] = [
-                    m1,
-                    m2
-                ]
+                self.tmp_sol["transfo"] = [m1, m2]
         else:
             data = self.data
 
