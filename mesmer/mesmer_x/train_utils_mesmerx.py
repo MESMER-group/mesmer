@@ -92,7 +92,7 @@ class Expression:
             self.is_distrib_discrete = self.distrib in ss._discrete_distns._distn_names
 
         else:
-            raise Exception(
+            raise ValueError(
                 "Please provide a distribution written as in scipy.stats: https://docs.scipy.org/doc/scipy/reference/stats.html"
             )
 
@@ -114,17 +114,17 @@ class Expression:
             if param in self.parameters_list:
                 self.parameters_expressions[param] = sub
             else:
-                raise Exception(
+                raise ValueError(
                     "The parameter "
                     + param
                     + " is not part of prepared expression in scipy.stats: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
                     + self.distrib.name
                 )
 
-        # recommend not to try to fill in missing information on parameters with constant parameters, but to raise an Exception instead.
+        # recommend not to try to fill in missing information on parameters with constant parameters, but to raise a ValueError instead.
         for pot_param in self.parameters_list:
             if pot_param not in self.parameters_expressions.keys():
-                raise Exception("No information provided for " + pot_param)
+                raise ValueError("No information provided for " + pot_param)
 
     def find_parameters_list(self):
         """
@@ -150,7 +150,7 @@ class Expression:
         elif self.distrib.name in ss._continuous_distns._distn_names:
             self.parameters_list += ["loc", "scale"]
         else:
-            raise Exception(
+            raise ValueError(
                 "Distribution name not found in discrete or continuous lists."
             )
 
@@ -252,7 +252,7 @@ class Expression:
                         # a term is here, and needs to be confirmed as readable
                         if "np." == t[: len("np.")]:
                             if t[len("np.") :] not in vars(np):
-                                raise Exception(
+                                raise ValueError(
                                     "Proposed a numpy function that doesnt exist: " + t
                                 )
                             else:
@@ -260,7 +260,7 @@ class Expression:
                                 pass
                         elif "math." == t[: len("math.")]:
                             if t[len("math.") :] not in vars(math):
-                                raise Exception(
+                                raise ValueError(
                                     "Proposed a math function that doesnt exist: " + t
                                 )
                             else:
@@ -271,7 +271,7 @@ class Expression:
                         elif t in vars(math):
                             dico_replace[t] = "math." + t
                         else:
-                            raise Exception(
+                            raise ValueError(
                                 "The term "
                                 + t
                                 + " appears in "
@@ -322,11 +322,11 @@ class Expression:
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
-                    raise Exception("Missing information for the coefficient " + c)
+                    raise ValueError("Missing information for the coefficient " + c)
         else:
             # case where a vector is provided, used for the optimization performed during the training
             if len(coefficients_values) != len(self.coefficients_list):
-                raise Exception("Inconsistent information for the coefficients_values")
+                raise ValueError("Inconsistent information for the coefficients_values")
             else:
                 coefficients_values = {
                     c: coefficients_values[i]
@@ -336,12 +336,12 @@ class Expression:
         # Check 2: are all the inputs provided?
         for i in self.inputs_list:
             if i not in inputs_values:
-                raise Exception("Missing information for the input " + i)
+                raise ValueError("Missing information for the input " + i)
 
         # Check 3: do the inputs have the same shape
         shapes = [inputs_values[i].shape for i in self.inputs_list]
         if len(set(shapes)) > 1:
-            raise Exception("Different shapes of inputs detected.")
+            raise ValueError("Different shapes of inputs detected.")
 
         # Evaluation 1: coefficients
         for c in coefficients_values:
