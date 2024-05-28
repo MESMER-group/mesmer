@@ -1155,7 +1155,7 @@ class distrib_cov:
                 self.tmp_sol["transfo"] = [
                     m1,
                     m2,
-                    1,
+                    1
                 ]
 
             else:
