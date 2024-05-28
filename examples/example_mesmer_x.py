@@ -28,7 +28,7 @@ from mesmer.utils import separate_hist_future
 #     test_combination_vars,
 # )
 
-if __name__ == "__main__":
+def main():
 
     # ==============================================================
     # 0. OPTIONS FOR THE SCRIPT
