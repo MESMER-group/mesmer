@@ -423,6 +423,7 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
         Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
 
     lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
+        The parameters of the power transformation for each gridcell, calculated using lambda_function.
     """
     # NOTE: this is equivalent to using pt.transform with pt = PowerTransformerVariableLambda(standardize = False)
     lambdas = lambdas.stack(stack = ['year', 'month'])
@@ -436,3 +437,41 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
         vectorize=True,
         join="outer",
     ).rename("transformed")
+
+def inverse_transform(transformed_monthly_T, lambdas):
+    """Apply the inverse power transformation using the fitted lambdas.
+    The inverse of the Yeo-Johnson transformation is given by::
+        if X >= 0 and lambda_ == 0:
+            X = exp(X_trans) - 1
+        elif X >= 0 and lambda_ != 0:
+            X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+        elif X < 0 and lambda_ != 2:
+            X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+        elif X < 0 and lambda_ == 2:
+            X = 1 - exp(-X_trans)
+    Parameters
+    ----------
+    transformed_monthly_T : xr.DataArray of shape (n_years, n_gridcells)
+        The transformed data.
+    lambdas: xr.DataArray of shape (months, n_gridcells, n_years)
+        The parameters of the power transformation for each gridcell, calculated using lambda_function.
+
+    Returns
+    -------
+    inverted_monthly_T : array-like, shape (n_years, n_gridcells)
+        The inverted monthly temperature values, following the distribution of the original monthly values.
+    """
+    # TODO: if we save the lambdas, we would not need to give yearly temperaure here
+
+    inverted_monthly_T = np.zeros_like(transformed_monthly_T)
+
+    for gridcell, lmbda in enumerate(lambdas.T):
+        for year, y_lmbda in enumerate(lmbda):
+            with np.errstate(invalid="ignore"):  # hide NaN warnings
+                inverted_monthly_T[year, gridcell] = (
+                    PowerTransformer._yeo_johnson_inverse_transform(
+                        transformed_monthly_T[year, gridcell], y_lmbda
+                    )
+                )
+
+    return inverted_monthly_T
