@@ -176,7 +176,7 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
     max_order = 6
 
-    # generate coefficients that reseble real ones
+    # generate coefficients that resemble real ones
     # generate rapidly decreasing coefficients for increasing orders
     trend = np.repeat(np.linspace(1.2, 0.2, max_order) ** 2, 4)
     # the first coefficients are rather small  (scaling of seasonal variability with temperature change)
