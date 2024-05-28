@@ -354,7 +354,6 @@ class Expression:
         for param in self.parameters_list:
             # may need to silence warnings here, to avoid spamming
             self.parameters_values[param] = eval(self.parameters_expressions[param])
-            # the evil exec evolves as evil eval!
 
         # Correcting shapes 1: constant parameters must have the shape of the inputs
         if len(self.inputs_list) > 0:
