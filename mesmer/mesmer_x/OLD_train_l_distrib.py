@@ -1165,7 +1165,7 @@ class distrib_cov:
                 # transfo_asymptleft & right in coeffs_transfo_names
                 self.tmp_sol["transfo"] = [
                     m1,
-                    m2,
+                    m2
                 ]
         else:
             data = self.data
