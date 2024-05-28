@@ -354,8 +354,7 @@ def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
         _neg_log_likelihood,
         x0=first_guess,
         bounds=bounds,
-        method="SLSQP",
-        jac=rosen_der,
+        method="Nelder-Mead",
     ).x
 
     return xi_0, xi_1
