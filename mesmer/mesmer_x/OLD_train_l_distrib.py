@@ -1508,6 +1508,7 @@ class distrib_cov:
             # The parameter mu must be positive. CHOOSING to force it to zero, to avoid spurious fits
             # Besides, when loc and mu are close to zero, the probability of obtaining the value 0 is ~1-mu.
             # Having mu=0 makes any value != 0 infinitely unlikely => setting a threshold on mu at 1.e-9, ie 1 / 1e9 years.
+            # TODO: use np.fmax(tmp["mu"], 1.0e-9)?
             pos_mu = np.max([tmp["mu"], 1.0e-9 * np.ones(tmp["mu"].shape)], axis=0)
             return (int_loc, pos_mu)
 
