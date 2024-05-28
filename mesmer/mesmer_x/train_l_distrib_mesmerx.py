@@ -850,8 +850,8 @@ class distrib_cov:
                     ), self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=0.05)
                     bounds.append([np.min(vals_bounds), np.max(vals_bounds)])
                 # global minimization, using the one with the best performances in this situation
-                globalfit_all = shgo(self.func_optim, bounds, sampling_method="sobol")
                 # sobol or halton, observed lower performances with simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
+                globalfit_all = shgo(self.func_optim, bounds, sampling_method="sobol")
                 self.fg_coeffs = globalfit_all.x
         # first guess finished
 
