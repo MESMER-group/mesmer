@@ -225,7 +225,8 @@ class Expression:
             # adding one space at the end to treat the last term
             for ex in expr + " ":
 
-                if ex in [
+                # TODO: could do this using regular expressions, think about it
+                if ex in [ 
                     "(",
                     ")",
                     "[",
