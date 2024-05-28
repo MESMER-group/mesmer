@@ -461,17 +461,17 @@ def inverse_transform(transformed_monthly_T, lambdas):
     inverted_monthly_T : array-like, shape (n_years, n_gridcells)
         The inverted monthly temperature values, following the distribution of the original monthly values.
     """
-    # TODO: if we save the lambdas, we would not need to give yearly temperaure here
 
-    inverted_monthly_T = np.zeros_like(transformed_monthly_T)
+    lambdas = lambdas.stack(stack = ['year', 'month'])
+    pt = PowerTransformer(method='yeo-johnson', standardize=False)
 
-    for gridcell, lmbda in enumerate(lambdas.T):
-        for year, y_lmbda in enumerate(lmbda):
-            with np.errstate(invalid="ignore"):  # hide NaN warnings
-                inverted_monthly_T[year, gridcell] = (
-                    PowerTransformer._yeo_johnson_inverse_transform(
-                        transformed_monthly_T[year, gridcell], y_lmbda
-                    )
-                )
-
-    return inverted_monthly_T
+    return xr.apply_ufunc(
+        pt._yeo_johnson_inverse_transform,
+        transformed_monthly_T,
+        lambdas,
+        input_core_dims=[["time"], ["stack"]],
+        output_core_dims=[["time"]],
+        output_dtypes=[float],
+        vectorize=True,
+        join="outer",
+    ).rename("inverted")
