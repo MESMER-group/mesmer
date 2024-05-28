@@ -344,7 +344,6 @@ class Expression:
         # Evaluation 1: coefficients
         for c in coefficients_values:
             exec(c + " = coefficients_values[c]")
-            # using the evil exec...
 
         # Evaluation 2: inputs
         for i in inputs_values:
