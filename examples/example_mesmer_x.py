@@ -244,7 +244,7 @@ def main():
     )
 
     # probability integral transform: projection of the data on a standard normal distribution
-    transf_target = mesmer_x_train_utils.probability_integral_transform( # noqa: F841
+    transf_target = mesmer_x_train_utils.probability_integral_transform(  # noqa: F841
         data=target,
         expr_start=expr,
         coeffs_start=xr_coeffs_distrib,
@@ -254,7 +254,7 @@ def main():
 
     # training of auto-regression with spatially correlated innovations
     # NEW CODE OF MESMER: not applied on residuals, but on 'transf_target'
-    # TODO 
+    # TODO
 
     # --------------------------------------------------------------
     # --------------------------------------------------------------
