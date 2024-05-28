@@ -384,8 +384,8 @@ class distrib_cov:
     ):
         # preparing basic information
         self.data_targ = data_targ
-        self.n_sample = len(self.data_targ)
         # can be different from length of predictors IF no predictors.
+        n_sample = len(self.data_targ)
 
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise Exception("NaN or infinite values in target of fit")
