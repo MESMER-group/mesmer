@@ -805,7 +805,6 @@ class distrib_cov:
                 x0 = np.std(self.data_targ) * np.ones(
                     len(self.expr_fit.coefficients_dict["scale"])
                 )
-                # compared to all 0, better for ref level but worse for trend
 
             else:
                 x0 = self.fg_coeffs[self.fg_ind_sca]
