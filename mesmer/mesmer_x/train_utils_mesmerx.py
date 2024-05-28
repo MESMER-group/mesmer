@@ -348,7 +348,6 @@ class Expression:
         # Evaluation 2: inputs
         for i in inputs_values:
             exec(i + " = inputs_values[i]")
-            # the evil exec strikes back...
 
         # Evaluation 3: parameters
         self.parameters_values = {}
