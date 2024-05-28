@@ -801,6 +801,7 @@ class distrib_cov:
                 ]
             )
             if self.first_guess is None:
+                # compared to all 0, better for ref level but worse for trend
                 x0 = np.std(self.data_targ) * np.ones(
                     len(self.expr_fit.coefficients_dict["scale"])
                 )
