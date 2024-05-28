@@ -49,6 +49,8 @@ from scipy.optimize import minimize
 from scipy.special import gamma, zeta
 from statsmodels.regression.linear_model import OLS
 
+# TODO: remove this file as it contains outdated functionality
+
 # from mesmer.utils import (
 #     eval_param_distrib,
 #     read_form_fit_distrib,
