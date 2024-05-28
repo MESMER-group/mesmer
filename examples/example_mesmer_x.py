@@ -1,6 +1,7 @@
 # add pathway to folders 1 level higher (i.e., to mesmer and configs)
 import os
 import sys
+import joblib
 
 sys.path.append("../")
 
@@ -252,6 +253,10 @@ def main():
 
     # training of auto-regression with spatially correlated innovations
     # NEW CODE OF MESMER: not applied on residuals, but on 'transf_target'
+    # TODO this below is just here to satisfy the linter but eventually
+    # we should use transf_target to train the tempospatial corellated innovations here
+    transf_target = transf_target * 1 # dummy use of transf_target
+
     # --------------------------------------------------------------
     # --------------------------------------------------------------
 
@@ -275,6 +280,8 @@ def main():
         coeffs_end=xr_coeffs_distrib,
         preds_end=preds_newscen,
     )
+
+    joblib.dump(emus, cfg.paths["dir_mesmer_emus"] + "emus_" + targ + ".pkl")
     # --------------------------------------------------------------
     # --------------------------------------------------------------
     # ==============================================================
