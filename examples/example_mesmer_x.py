@@ -62,7 +62,7 @@ if __name__ == "__main__":
     gen = 6
     dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
     # /net/ch4/data/cmip6-Next_Generation/mrso/ann/g025
-    
+
     dir_cmip_X = {
         "txx": "/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/IPCC_AR6_CH11/data/cmip6/tasmax/txx_regrid",
         "mrso": "/net/ch4/data/cmip6-Next_Generation/mrso/ann/g025",
