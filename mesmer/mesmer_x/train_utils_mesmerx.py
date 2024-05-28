@@ -283,6 +283,7 @@ class Expression:
                         pass
                 else:
                     t += ex
+                # TODO: would make sense to invert the logic here - move building t above the validity check - but again let's keep for now
 
             # list of replacements in correct order
             tmp = list(dico_replace.keys())
