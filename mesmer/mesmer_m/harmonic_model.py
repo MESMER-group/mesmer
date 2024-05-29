@@ -91,28 +91,17 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     mon_train = np.tile(np.arange(1, 13), int(yearly_predictor.shape[0] / 12))
 
     def func(coeffs, yearly_predictor, mon_train, mon_target):
-        """loss function for fitting fourier series in scipy.optimize.least_squares"""
-
-        resids = (
-            generate_fourier_series_np(yearly_predictor, coeffs, mon_train) - mon_target
-        )
-
-        return resids
-
-    # NOTE: this seems to select less 'orders' than the scipy one
-    # np.linalg.lstsq(A, y)[0]
+        return generate_fourier_series_np(yearly_predictor, coeffs, mon_train) - mon_target
 
     minimize_result = sp.optimize.least_squares(
-        func,  # TODO: func should return residuals
+        func,
         first_guess,
         args=(yearly_predictor, mon_train, monthly_target),
-        loss="linear",  # TODO: when returning residuals we should use 'linear'
+        loss="linear",
     )
 
     coeffs = minimize_result.x
     mse = np.mean(minimize_result.fun**2)
-    # NOTE: when we switch to returning the residuals .fun no longer returns the mse
-
     preds = generate_fourier_series_np(
         yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
     )
