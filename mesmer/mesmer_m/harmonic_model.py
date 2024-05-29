@@ -93,7 +93,9 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     def func(coeffs, yearly_predictor, mon_train, mon_target):
         """loss function for fitting fourier series in scipy.optimize.least_squares"""
 
-        resids = generate_fourier_series_np(yearly_predictor, coeffs, mon_train) - mon_target
+        resids = (
+            generate_fourier_series_np(yearly_predictor, coeffs, mon_train) - mon_target
+        )
 
         return resids
 
@@ -108,7 +110,7 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     )
 
     coeffs = minimize_result.x
-    mse = np.mean(minimize_result.fun ** 2)
+    mse = np.mean(minimize_result.fun**2)
     # NOTE: when we switch to returning the residuals .fun no longer returns the mse
 
     preds = generate_fourier_series_np(

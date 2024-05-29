@@ -56,10 +56,12 @@ def test_fit_to_bic_np(coefficients):
     max_order = 6
     n_years = 100
     months = np.tile(np.arange(1, 13), n_years)
-    yearly_predictor = yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
+    yearly_predictor = yearly_predictor = trend_data_1D(
+        n_timesteps=n_years, intercept=0, slope=1
+    ).values
     yearly_predictor = np.repeat(yearly_predictor, 12)
     monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
-    
+
     selected_order, estimated_coefficients, predictions = fit_to_bic_np(
         yearly_predictor, monthly_target, max_order=max_order
     )
@@ -78,6 +80,7 @@ def test_fit_to_bic_np(coefficients):
 
     np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-7)
     np.testing.assert_allclose(predictions, monthly_target, atol=1e-7)
+
 
 def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
@@ -155,10 +158,25 @@ def test_fit_to_bic_xr():
     )
     result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
-    np.testing.assert_allclose(result.predictions.isel(cells=0, time=slice(0,12)).values,
-                               np.array([ 9.99630445,  9.98829217,  7.32212458,  2.73123514, -2.53876124,
-                                -7.07931947, -9.69283667, -9.6945128 , -7.08035255, -2.53178204,
-                                2.74790275,  7.34046832]))
+    np.testing.assert_allclose(
+        result.predictions.isel(cells=0, time=slice(0, 12)).values,
+        np.array(
+            [
+                9.99630445,
+                9.98829217,
+                7.32212458,
+                2.73123514,
+                -2.53876124,
+                -7.07931947,
+                -9.69283667,
+                -9.6945128,
+                -7.08035255,
+                -2.53178204,
+                2.74790275,
+                7.34046832,
+            ]
+        ),
+    )
 
 
 def test_fit_to_bix_xr_instance_checks():
