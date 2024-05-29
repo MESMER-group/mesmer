@@ -53,12 +53,11 @@ def test_generate_fourier_series_np():
     ],
 )
 def test_fit_to_bic_np(coefficients):
+    # ensure original coeffs and order is estimated from fourier series without noise
     max_order = 6
     n_years = 100
     months = np.tile(np.arange(1, 13), n_years)
-    yearly_predictor = yearly_predictor = trend_data_1D(
-        n_timesteps=n_years, intercept=0, slope=1
-    ).values
+    yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
     yearly_predictor = np.repeat(yearly_predictor, 12)
     monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
 
@@ -152,6 +151,7 @@ def test_fit_to_bic_xr():
     noisy_monthly_target = monthly_target + rng.normal(
         loc=0, scale=0.1, size=monthly_target.values.shape
     )
+    
     result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
     np.testing.assert_allclose(
