@@ -10,7 +10,7 @@ from mesmer.mesmer_m.harmonic_model import (
     fit_to_bic_xr,
     generate_fourier_series_np,
 )
-from mesmer.testing import trend_data_2D
+from mesmer.testing import trend_data_1D, trend_data_2D
 
 
 def test_generate_fourier_series_np():
@@ -52,23 +52,19 @@ def test_generate_fourier_series_np():
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
     ],
 )
-@pytest.mark.parametrize(
-    "yearly_predictor",
-    [np.repeat([-1, 1], 10 * 6), np.linspace(-1, 1, 10 * 12) * 10],
-)
-def test_fit_to_bic_np(coefficients, yearly_predictor):
+def test_fit_to_bic_np(coefficients):
     max_order = 6
-    months = np.tile(np.arange(1, 13), 10)
-
+    n_years = 100
+    months = np.tile(np.arange(1, 13), n_years)
+    yearly_predictor = yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
+    yearly_predictor = np.repeat(yearly_predictor, 12)
     monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
+    
     selected_order, estimated_coefficients, predictions = fit_to_bic_np(
         yearly_predictor, monthly_target, max_order=max_order
     )
 
-    # assert selected_order == int(len(coefficients) / 4)
-    # the model does not necessarily select the "correct" order
-    # (i.e. the third coef array in combination with the second predictor)
-    # but the coefficients of higher orders should be close to zero
+    np.testing.assert_equal(selected_order, int(len(coefficients) / 4))
 
     # fill up all coefficient arrays with zeros to have the same length 4*max_order
     # to also be able to compare coefficients of higher orders than the original one
@@ -79,98 +75,9 @@ def test_fit_to_bic_np(coefficients, yearly_predictor):
         estimated_coefficients,
         0,
     )
-    # NOTE: if we would use a constant predictor only the linear combination of coefficients needs to be close
-    # np.testing.assert_allclose(
-    #     [
-    #         original_coefficients[i] * yearly_predictor[i]
-    #         + original_coefficients[i + 1]
-    #         for i in range(0, len(original_coefficients), 2)
-    #     ],
-    #     [
-    #         estimated_coefficients[i] * yearly_predictor[i]
-    #         + estimated_coefficients[i + 1]
-    #         for i in range(0, len(estimated_coefficients), 2)
-    #     ],
-    #     atol=1e-2,
-    # )
 
-    np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-2)
-
-    np.testing.assert_allclose(predictions, monthly_target, atol=0.1)
-
-
-def test_fit_to_bic_numerical_stability():
-    coefficients = np.array([1, 2, 3, 4, 5, 6, 7, 8])
-    n_years = 3
-    yearly_predictor = np.ones(12 * n_years)
-
-    max_order = 6
-    months = np.tile(np.arange(1, 13), n_years)
-
-    monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
-    selected_order, estimated_coefficients, predictions = fit_to_bic_np(
-        yearly_predictor, monthly_target, max_order=max_order
-    )
-
-    assert selected_order == 2
-
-    expected_coefficients = np.full(4 * max_order, np.nan)
-    expected_coefficients[: selected_order * 4] = np.array(
-        [
-            1.5,
-            1.5,
-            3.5,
-            3.5,
-            5.499359,
-            5.499359,
-            7.499126,
-            7.499126,
-        ]
-    )
-    expected_predictions = np.array(
-        [
-            25.58647411,
-            9.12411969,
-            -10.99825277,
-            -16.92622002,
-            -5.58822129,
-            8.99825274,
-            10.46211833,
-            -3.07203284,
-            -16.99825283,
-            -15.12237243,
-            3.53613445,
-            22.99825286,
-            25.58647411,
-            9.12411969,
-            -10.99825277,
-            -16.92622002,
-            -5.58822129,
-            8.99825274,
-            10.46211833,
-            -3.07203284,
-            -16.99825283,
-            -15.12237243,
-            3.53613445,
-            22.99825286,
-            25.58647411,
-            9.12411969,
-            -10.99825277,
-            -16.92622002,
-            -5.58822129,
-            8.99825274,
-            10.46211833,
-            -3.07203284,
-            -16.99825283,
-            -15.12237243,
-            3.53613445,
-            22.99825286,
-        ]
-    )
-
-    np.testing.assert_allclose(expected_coefficients, estimated_coefficients)
-    np.testing.assert_allclose(predictions, expected_predictions)
-
+    np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-7)
+    np.testing.assert_allclose(predictions, monthly_target, atol=1e-7)
 
 def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
     n_cells = n_lat * n_lon
@@ -204,7 +111,7 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
 
 
 def test_fit_to_bic_xr():
-    n_ts = 10
+    n_ts = 100
     orders = [1, 2, 3, 4, 5, 6]
 
     coefficients = get_2D_coefficients(order_per_cell=orders, n_lat=3, n_lon=2)
@@ -239,7 +146,7 @@ def test_fit_to_bic_xr():
     # test if the model can recover the monthly target from perfect fourier series
     result = fit_to_bic_xr(yearly_predictor, monthly_target)
     np.testing.assert_equal(result.n_sel.values, orders)
-    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
+    xr.testing.assert_allclose(result["predictions"], monthly_target)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
     rng = np.random.default_rng(0)
@@ -247,7 +154,11 @@ def test_fit_to_bic_xr():
         loc=0, scale=0.1, size=monthly_target.values.shape
     )
     result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
-    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.2)
+    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
+    np.testing.assert_allclose(result.predictions.isel(cells=0, time=slice(0,12)).values,
+                               np.array([ 9.99630445,  9.98829217,  7.32212458,  2.73123514, -2.53876124,
+                                -7.07931947, -9.69283667, -9.6945128 , -7.08035255, -2.53178204,
+                                2.74790275,  7.34046832]))
 
 
 def test_fit_to_bix_xr_instance_checks():
