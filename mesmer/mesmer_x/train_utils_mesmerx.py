@@ -16,7 +16,7 @@ import scipy.stats as ss
 import xarray as xr
 
 
-class expression:
+class Expression:
     """
         Class to interpret string of conditional distribution, interpret them, and evaluate them.
         When initialized, the class identifies the distribution, inputs, parameters and coefficients.
@@ -92,7 +92,7 @@ class expression:
             self.is_distrib_discrete = self.distrib in ss._discrete_distns._distn_names
 
         else:
-            raise Exception(
+            raise ValueError(
                 "Please provide a distribution written as in scipy.stats: https://docs.scipy.org/doc/scipy/reference/stats.html"
             )
 
@@ -114,17 +114,17 @@ class expression:
             if param in self.parameters_list:
                 self.parameters_expressions[param] = sub
             else:
-                raise Exception(
+                raise ValueError(
                     "The parameter "
                     + param
                     + " is not part of prepared expression in scipy.stats: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
                     + self.distrib.name
                 )
 
-        # recommend not to try to fill in missing information on parameters with constant parameters, but to raise an Exception instead.
+        # recommend not to try to fill in missing information on parameters with constant parameters, but to raise a ValueError instead.
         for pot_param in self.parameters_list:
             if pot_param not in self.parameters_expressions.keys():
-                raise Exception("No information provided for " + pot_param)
+                raise ValueError("No information provided for " + pot_param)
 
     def find_parameters_list(self):
         """
@@ -150,7 +150,7 @@ class expression:
         elif self.distrib.name in ss._continuous_distns._distn_names:
             self.parameters_list += ["loc", "scale"]
         else:
-            raise Exception(
+            raise ValueError(
                 "Distribution name not found in discrete or continuous lists."
             )
 
@@ -170,17 +170,18 @@ class expression:
             self.coefficients_dict[param] = []
             # iniatilize detection
             cf = ""
-            for l in (
-                self.parameters_expressions[param] + " "
-            ):  # adding one space at the end to append the last coefficient
-                if l == "c":
+
+            # adding one space at the end to append the last coefficient
+            for pep in self.parameters_expressions[param] + " ":
+
+                if pep == "c":
                     # starting expression for a coefficient
                     cf = "c"
                 elif (cf == "c") and (
-                    l in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+                    pep in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
                 ):
                     # continuing expression for a coefficient
-                    cf += l
+                    cf += pep
                 else:
                     if cf not in ["", "c"]:
                         # ending expression for a coefficient
@@ -196,9 +197,9 @@ class expression:
         self.inputs_list = []
         for param in self.parameters_expressions:
             terms = str.split(self.parameters_expressions[param], "__")
-            for l in np.array(terms)[np.arange(1, len(terms), 2)]:
-                if l not in self.inputs_list:
-                    self.inputs_list.append(l)
+            for i in np.array(terms)[np.arange(1, len(terms), 2)]:
+                if i not in self.inputs_list:
+                    self.inputs_list.append(i)
 
         # require a specific order for use in correct_expr_parameters
         self.inputs_list.sort(key=len, reverse=True)
@@ -220,8 +221,12 @@ class expression:
 
             # reading this condensed expression to find terms to replace
             dico_replace, t = {}, ""  # initialization
-            for l in expr + " ":  # adding one space at the end to treat the last term
-                if l in [
+
+            # adding one space at the end to treat the last term
+            for ex in expr + " ":
+
+                # TODO: could do this using regular expressions, think about it
+                if ex in [
                     "(",
                     ")",
                     "[",
@@ -247,7 +252,7 @@ class expression:
                         # a term is here, and needs to be confirmed as readable
                         if "np." == t[: len("np.")]:
                             if t[len("np.") :] not in vars(np):
-                                raise Exception(
+                                raise ValueError(
                                     "Proposed a numpy function that doesnt exist: " + t
                                 )
                             else:
@@ -255,7 +260,7 @@ class expression:
                                 pass
                         elif "math." == t[: len("math.")]:
                             if t[len("math.") :] not in vars(math):
-                                raise Exception(
+                                raise ValueError(
                                     "Proposed a math function that doesnt exist: " + t
                                 )
                             else:
@@ -266,7 +271,7 @@ class expression:
                         elif t in vars(math):
                             dico_replace[t] = "math." + t
                         else:
-                            raise Exception(
+                            raise ValueError(
                                 "The term "
                                 + t
                                 + " appears in "
@@ -277,7 +282,8 @@ class expression:
                         # was a readable character, is still a readable character, nothing to do
                         pass
                 else:
-                    t += l
+                    t += ex
+                # TODO: would make sense to invert the logic here - move building t above the validity check - but again let's keep for now
 
             # list of replacements in correct order
             tmp = list(dico_replace.keys())
@@ -309,18 +315,18 @@ class expression:
             inputs_values: dict(inp_i = values or np.array())  or  xr.dataset(inp_i)
             forced_shape: tuple or list of dimensions of coefficients_values and inputs_values for transposition of the shape
 
-        /!\ Warning: with xarrays for coefficients_values and inputs_values, the outputs with have for shape first the one of the coefficient, then the one of the inputs --> trying to avoid this issue with 'forced_shape'
+        ! Warning: with xarrays for coefficients_values and inputs_values, the outputs with have for shape first the one of the coefficient, then the one of the inputs --> trying to avoid this issue with 'forced_shape'
         """
         # Check 1: are all the coefficients provided?
         if type(coefficients_values) in [dict, xr.Dataset]:
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
-                    raise Exception("Missing information for the coefficient " + c)
+                    raise ValueError("Missing information for the coefficient " + c)
         else:
             # case where a vector is provided, used for the optimization performed during the training
             if len(coefficients_values) != len(self.coefficients_list):
-                raise Exception("Inconsistent information for the coefficients_values")
+                raise ValueError("Inconsistent information for the coefficients_values")
             else:
                 coefficients_values = {
                     c: coefficients_values[i]
@@ -330,28 +336,26 @@ class expression:
         # Check 2: are all the inputs provided?
         for i in self.inputs_list:
             if i not in inputs_values:
-                raise Exception("Missing information for the input " + i)
+                raise ValueError("Missing information for the input " + i)
 
         # Check 3: do the inputs have the same shape
         shapes = [inputs_values[i].shape for i in self.inputs_list]
         if len(set(shapes)) > 1:
-            raise Exception("Different shapes of inputs detected.")
+            raise ValueError("Different shapes of inputs detected.")
 
         # Evaluation 1: coefficients
         for c in coefficients_values:
-            exec(c + " = coefficients_values[c]")  # using the evil exec...
+            exec(c + " = coefficients_values[c]")
 
         # Evaluation 2: inputs
         for i in inputs_values:
-            exec(i + " = inputs_values[i]")  # the evil exec strikes back...
+            exec(i + " = inputs_values[i]")
 
         # Evaluation 3: parameters
         self.parameters_values = {}
         for param in self.parameters_list:
             # may need to silence warnings here, to avoid spamming
-            self.parameters_values[param] = eval(
-                self.parameters_expressions[param]
-            )  # the evil exec evolves as evil eval!
+            self.parameters_values[param] = eval(self.parameters_expressions[param])
 
         # Correcting shapes 1: constant parameters must have the shape of the inputs
         if len(self.inputs_list) > 0:
@@ -359,8 +363,8 @@ class expression:
                 if (type(self.parameters_values[param]) in [int, float]) or (
                     self.parameters_values[param].ndim == 0
                 ):
-                    if (type(coefficients_values) == xr.Dataset) and (
-                        type(inputs_values) == xr.Dataset
+                    if isinstance(coefficients_values, xr.Dataset) and (
+                        isinstance(inputs_values, xr.Dataset)
                     ):
                         self.parameters_values[param] = self.parameters_values[
                             param
@@ -444,8 +448,8 @@ def probability_integral_transform(
 
     """
     # preparation of distributions
-    expression_start = expression(expr_start, "start")
-    expression_end = expression(expr_end, "end")
+    expression_start = Expression(expr_start, "start")
+    expression_end = Expression(expr_end, "end")
     if coeffs_start is None:
         coeffs_start = xr.Dataset()
     if coeffs_end is None:
@@ -453,6 +457,7 @@ def probability_integral_transform(
 
     # transformation
     OUT = []
+
     # loop to change with new data structure of MESMER
     for i, item in enumerate(data):
         data_item, scen = item
@@ -483,6 +488,7 @@ def probability_integral_transform(
         # archiving
         target_name
         OUT.append((transf_item, scen))
+
     return OUT
 
 
@@ -526,12 +532,17 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
     """
     # looping over scenarios
     TMP = []
+
     for scen in forcescen:
-        for item in listds:  # could be replaced with a while, but still a quick loop
+
+        # could be replaced with a while, but still a quick loop
+        for item in listds:
+
             if item[1] == scen:
                 # for each scenario, creating one unique serie: consistency of members & scenarios have to be ensured while loading data
                 if coords is not None:
                     TMP.append(item[0][name_var].loc[coords].values.flatten())
                 else:
                     TMP.append(item[0][name_var].values.flatten())
+
     return np.hstack(TMP)

@@ -49,12 +49,31 @@ from scipy.optimize import minimize
 from scipy.special import gamma, zeta
 from statsmodels.regression.linear_model import OLS
 
-from mesmer.utils import (
-    eval_param_distrib,
-    read_form_fit_distrib,
-    sigmoid_backtransf,
-    sigmoid_transf,
-)
+# TODO: remove this file as it contains outdated functionality
+
+# from mesmer.utils import (
+#     eval_param_distrib,
+#     read_form_fit_distrib,
+#     sigmoid_backtransf,
+#     sigmoid_transf,
+# )
+
+
+# dummy functions
+def eval_param_distrib(param, cov, force_scen):
+    pass
+
+
+def read_form_fit_distrib(form_fit_distrib):
+    pass
+
+
+def sigmoid_backtransf(data, left, right, type_sigm, alpha=None):
+    pass
+
+
+def sigmoid_transf(data, left, right, type_sigm, alpha=None):
+    pass
 
 
 def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwargs):
@@ -110,7 +129,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
     # dictionary that will be filled in for every parameter
     params_out = {var_targ: {} for var_targ in targs}
 
-    ## looping on targets to fit a distrib on.
+    # looping on targets to fit a distrib on.
     for var_targ in targs:
 
         #  Reading form_fit_distrib to prepare complete description of the fit
@@ -129,6 +148,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
             tmp_list = ["loc", "mu"]
         else:
             raise Exception("This distribution has not been prepared here")
+
         # validating the list of provided covariants
         if set(descrip_fit.keys()) == set(tmp_list):
             params_list = ["cov_" + pp for pp in tmp_list]
@@ -149,7 +169,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
                 "transfo_asymptleft": [0, np.inf],
                 "transfo_asymptright": [0, np.inf],
             }
-            if transfo in ["generalizedlogistic", "generalizedalgebraic"]:
+            if distr in ["generalizedlogistic", "generalizedalgebraic"]:
                 boundaries_coeffs["transfo_alpha"] = [0, np.inf]
 
         elif var_targ in ["mrsomean"]:  # mrso? mrso_minmon?
@@ -180,6 +200,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
         tmp_preds = {}
         for param in params_list:
             tmp_preds[param] = []
+
             # if info on a parameter is not provided in form_fit_distrib, next line will serve as a check.
             for name_covar in descrip_fit[param[len("cov_") :]]:
                 form_fit = descrip_fit[param[len("cov_") :]][name_covar]
@@ -221,12 +242,13 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
                 "%",
                 end="\r",
             )
-            ## shaping inputs for covariated GEV (has checked before that it is Runs x Time x GridPoints)
+
+            # shaping inputs for covariated GEV (has checked before that it is Runs x Time x GridPoints)
             data_in = np.hstack(
                 [data[scen][: n_runs[scen], :, i_gp].flatten() for scen in common_scen]
             )
 
-            ## fitting covariated GEV:@HERE, parameters to improve the fit --> class 'distrib_cov' using '**kwargs'
+            # fitting covariated GEV:@HERE, parameters to improve the fit --> class 'distrib_cov' using '**kwargs'
             tmp_cov = distrib_cov(
                 data=data_in,
                 cov_preds=tmp_preds,
@@ -236,11 +258,11 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
             )
             sol = tmp_cov.fit()
 
-            ## saving
+            # saving
             sols.append(sol)
-            if (
-                np.all(np.isnan(list(sol.values()))) == False
-            ):  # want to remove the case for missing points in data
+
+            # want to remove the case for missing points in data
+            if not np.all(np.isnan(list(sol.values()))):
                 quality_fit[i_gp] = tmp_cov.neg_loglike(sol)
             else:
                 quality_fit[i_gp] = np.nan
@@ -253,11 +275,11 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
 
         # reshaping parameters for vector along gridpoints.
         # Warning, they are coefficients used to calculate parameters of the distribution. Yet, for the model, these coefficients are actually named parameters as well.
+        # may include: loc, scale, shape AND transfo
         params = {
             kk: np.array([sols[ii][kk] for ii in np.arange(len(sols))])
             for kk in sols[0]
         }
-        # may include: loc, scale, shape AND transfo
 
         # end of loop, end of fit, archiving this training
         params_out[var_targ]["parameters"] = params
@@ -398,7 +420,7 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
 
             # looping on runs available for targs[var_targ] AND preds[var_targ]
             if False:
-                if type(params_l_distrib[var_targ]["nruns_training"]) == str:
+                if isinstance(params_l_distrib[var_targ]["nruns_training"], str):
                     nrr = eval(params_l_distrib[var_targ]["nruns_training"])[scen]
                 else:
                     nrr = params_l_distrib[var_targ]["nruns_training"][scen]
@@ -407,17 +429,20 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
             for i_run in np.arange(nrr):
 
                 # how likely are the observed values knowing the distribution at this year for this scenario?
-                if distr in ["GEV"]:  # distribution that have location, scale AND shape
-                    if (
-                        params_all[scen]["loc_all"].ndim == 3
-                    ):  # such a test could be avoided if using xarrays
+                # distribution that have location, scale AND shape
+                if distr in ["GEV"]:
+
+                    # such a test could be avoided if using xarrays
+                    if params_all[scen]["loc_all"].ndim == 3:
                         tmp = distr_cdf(
                             x=data_for_PIT[i_run, :, :],
                             c=-params_all[scen]["shape_all"][i_run, ..., ind_NoNaN],
                             loc=params_all[scen]["loc_all"][i_run, ..., ind_NoNaN],
                             scale=params_all[scen]["scale_all"][i_run, ..., ind_NoNaN],
                         )
-                    else:  # always (Time), even for constant terms, keep one axis for Time.
+
+                    # always (Time), even for constant terms, keep one axis for Time.
+                    else:
                         tmp = distr_cdf(
                             x=data_for_PIT[i_run, :, :],
                             c=-params_all[scen]["shape_all"][..., ind_NoNaN],
@@ -425,36 +450,36 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
                             scale=params_all[scen]["scale_all"][..., ind_NoNaN],
                         )
 
-                elif distr in [
-                    "gaussian"
-                ]:  # distribution that have location, scale BUT no shape
-                    if (
-                        params_all[scen]["loc_all"].ndim == 3
-                    ):  # such a test could be avoided if using xarrays
+                # distribution that have location, scale BUT no shape
+                # such a test could be avoided if using xarrays
+                elif distr in ["gaussian"]:
+                    if params_all[scen]["loc_all"].ndim == 3:
                         tmp = distr_cdf(
                             x=data_for_PIT[i_run, :, :],
                             loc=params_all[scen]["loc_all"][i_run, ..., ind_NoNaN],
                             scale=params_all[scen]["scale_all"][i_run, ..., ind_NoNaN],
                         )
-                    else:  # always (Time), even for constant terms, keep one axis for Time.
+
+                    # always (Time), even for constant terms, keep one axis for Time.
+                    else:
                         tmp = distr_cdf(
                             x=data_for_PIT[i_run, :, :],
                             loc=params_all[scen]["loc_all"][..., ind_NoNaN],
                             scale=params_all[scen]["scale_all"][..., ind_NoNaN],
                         )
 
-                elif distr in [
-                    "poisson"
-                ]:  # distribution that have location, scale BUT no shape
-                    if (
-                        params_all[scen]["loc_all"].ndim == 3
-                    ):  # such a test could be avoided if using xarrays
+                # distribution that have location, scale BUT no shape
+                # such a test could be avoided if using xarrays
+                elif distr in ["poisson"]:
+                    if params_all[scen]["loc_all"].ndim == 3:
                         tmp = distr_cdf(
                             k=data_for_PIT[i_run, :, :],
                             loc=params_all[scen]["loc_all"][i_run, ..., ind_NoNaN],
                             mu=params_all[scen]["mu_all"][i_run, ..., ind_NoNaN],
                         )
-                    else:  # always (Time), even for constant terms, keep one axis for Time.
+
+                    # always (Time), even for constant terms, keep one axis for Time.
+                    else:
                         tmp = distr_cdf(
                             k=data_for_PIT[i_run, :, :],
                             loc=params_all[scen]["loc_all"][..., ind_NoNaN],
@@ -606,8 +631,9 @@ class distrib_cov:
             tmp[cov_type + "_data"] = [item[1] for item in cov_preds[cov_type]]
 
             # form of the fit for the covariates
-            tmp[cov_type + "_form"] = [item[2] for item in cov_preds[cov_type]]
             # warning: assuming that if there are multiple logistic evolutions for the same parameter, they are under the same exponential.
+            tmp[cov_type + "_form"] = [item[2] for item in cov_preds[cov_type]]
+
             # coefficients associated
             tmp["coeffs_" + typ + "_names"] = [typ + "_0"]
             for ii in np.arange(len(tmp[cov_type + "_names"])):
@@ -646,7 +672,7 @@ class distrib_cov:
                         + tmp[cov_type + "_names"][ii]
                     )
 
-                elif (type(tmp[cov_type + "_form"][ii]) == list) and (
+                elif isinstance(tmp[cov_type + "_form"][ii], list) and (
                     tmp[cov_type + "_form"][ii][0] == "power"
                 ):
                     pwr = tmp[cov_type + "_form"][ii][1]
@@ -657,7 +683,8 @@ class distrib_cov:
                 else:
                     raise Exception("Unknown form of fit in " + type)
 
-        # check for a case not handled: on one parameter, several sigmoids asked, but from different kinds: that would be a mess for the evaluation of the coefficients on the parameters.
+        # check for a case not handled: on one parameter, several sigmoids asked, but from different kinds:
+        # that would be a mess for the evaluation of the coefficients on the parameters.
         for typ in tmp["params"]:
             lst_forms = [
                 form
@@ -684,9 +711,8 @@ class distrib_cov:
         # full list of coefficients
         if distrib in ["gaussian"]:
             tmp = self.cov["coeffs_loc_names"] + self.cov["coeffs_scale_names"]
-        elif distrib in [
-            "GEV"
-        ]:  #  or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
+        elif distrib in ["GEV"]:
+            # ^ or (self.transfo[0] and str.split(distrib,'-')[0] in ['GEV'])
             tmp = (
                 self.cov["coeffs_loc_names"]
                 + self.cov["coeffs_scale_names"]
@@ -725,11 +751,9 @@ class distrib_cov:
         self.maxiter = maxiter  # used to have np.inf, but sometimes, the fit doesnt work... and it is meant to.
         self.error_failedfit = error_failedfit
         self.maxfev = maxfev  # used to have np.inf, but sometimes, the fit doesnt work... and it is meant to.
-        if method_fit in [
-            "CG",
-            "BFGS",
-            "L-BFGS-B",
-        ]:  # TNC and trust-constr: better to use xtol
+
+        # TNC and trust-constr: better to use xtol
+        if method_fit in ["CG", "BFGS", "L-BFGS-B"]:
             self.name_xtol = "gtol"
         elif method_fit in ["Newton-CG", "Powell", "TNC", "trust-constr"]:
             self.name_xtol = "xtol"
@@ -746,10 +770,9 @@ class distrib_cov:
             raise Exception("method for this fit not prepared, to avoid")
 
         # test on sizes of sample
+        # should do tests also for covariations.
         if self.data.ndim > 1:
-            raise Exception(
-                "input data must be a vector"
-            )  ## should do tests also for covariations.
+            raise Exception("input data must be a vector")
         if (len(self.cov["cov_loc_data"]) > 0) and (
             self.data.shape[0] != self.cov["cov_loc_data"][0].shape[0]
         ):
@@ -764,7 +787,7 @@ class distrib_cov:
 
         else:
             if np.isclose(prior_shape, 0):
-                if option_silent == False:
+                if not option_silent:
                     print("setting prior_shape to None")
                 prior_shape = None
 
@@ -871,29 +894,32 @@ class distrib_cov:
         # identifying the sigmoid term with the stronger variations on the sigmoid: used to identify the proper 'm1', which matters for the sigmoid transformation and loc_0
         tmp = []
         for ii in range(len(data_sigm)):
-            ind = data_sigm[
-                0
-            ].argsort()  # here starts the moment where it is written as if a single sigmoid evolution
-            ii = int(
-                0.1 * len(ind)
-            )  # taking average over 10% of higher and lower values to determine these two values
+            # here starts the moment where it is written as if a single sigmoid evolution
+            ind = data_sigm[0].argsort()
+
+            # taking average over 10% of higher and lower values to determine these two values
+            ii = int(0.1 * len(ind))
             tmp.append(np.abs(np.mean(dat[ind[:ii]]) - np.mean(dat[ind[-ii:]])))
+
         istrsigm = np.argmax(tmp)
+
         # identification of the overall evolution --> identification of min and max
-        ind = data_sigm[
-            istrsigm
-        ].argsort()  # here starts the moment where it is written as if a single sigmoid evolution
-        ii = int(
-            0.1 * len(ind)
-        )  # taking average over 10% of higher and lower values to determine these two values
-        if np.mean(dat[ind[:ii]]) < np.mean(
-            dat[ind[-ii:]]
-        ):  # increasing sigmoid evolution
+        # here starts the moment where it is written as if a single sigmoid evolution
+        ind = data_sigm[istrsigm].argsort()
+
+        # taking average over 10% of higher and lower values to determine these two values
+        ii = int(0.1 * len(ind))
+
+        # increasing sigmoid evolution
+        if np.mean(dat[ind[:ii]]) < np.mean(dat[ind[-ii:]]):
             m1 = np.min(dat)
             m2 = np.max(dat)
-        else:  # decreasing sigmoid evolution
+
+        # decreasing sigmoid evolution
+        else:
             m1 = np.max(dat)
             m2 = np.min(dat)
+
         # increasing range of (m1,m2). The 2 following lines account for both signs of the derivative
         m1 += 0.01 * (m1 - m2)
         m2 -= 0.01 * (m1 - m2)
@@ -905,9 +931,8 @@ class distrib_cov:
 
         # ---------------------
         # linear contribution
-        if (
-            len(self.cov["cov_" + typ_cov + "_names"]) > 0
-        ):  # checking that they are covariates
+        # checking that they are covariates
+        if len(self.cov["cov_" + typ_cov + "_names"]) > 0:
             inds_lin = [
                 i
                 for i, form in enumerate(self.cov["cov_" + typ_cov + "_form"])
@@ -915,17 +940,21 @@ class distrib_cov:
             ]
         else:
             inds_lin = []
-        if (
-            len(inds_lin) > 0
-        ):  # checking that they are covariates on parameters with linear form
+
+        # checking that they are covariates on parameters with linear form
+        if len(inds_lin) > 0:
             data_lin = [self.cov["cov_" + typ_cov + "_data"][i] for i in inds_lin]
             ex = np.concatenate([np.ones((len(data), 1)), np.array(data_lin).T], axis=1)
         else:
-            ex = np.ones(len(data))  # overkill, can simply remove mean.
+            # overkill, can simply remove mean.
+            ex = np.ones(len(data))
+
         mod = OLS(exog=ex, endog=data)
         res = mod.fit()
         self.tmp_sol[typ_cov][0] = res.params[0]
-        if len(inds_lin) > 0:  # just filling in linear coefficients
+
+        # just filling in linear coefficients
+        if len(inds_lin) > 0:
             for i in np.arange(1, len(res.params)):
                 cf = (
                     typ_cov
@@ -942,31 +971,33 @@ class distrib_cov:
 
         # ---------------------
         # power contribution
-        if (
-            len(self.cov["cov_" + typ_cov + "_names"]) > 0
-        ):  # checking that they are covariates
+        # checking that they are covariates
+        if len(self.cov["cov_" + typ_cov + "_names"]) > 0:
             inds_pow = [
                 i
                 for i, form in enumerate(self.cov["cov_" + typ_cov + "_form"])
-                if (type(self.cov["cov_" + typ_cov + "_form"][i]) == list)
+                if isinstance(self.cov["cov_" + typ_cov + "_form"][i], list)
                 and (self.cov["cov_" + typ_cov + "_form"][i][0] == "power")
             ]
         else:
             inds_pow = []
-        if (
-            len(inds_pow) > 0
-        ):  # checking that they are covariates on parameters with linear form
+
+        # checking that they are covariates on parameters with linear form
+        if len(inds_pow) > 0:
             data_pow = []
             for i in inds_pow:
                 pwr = self.cov["cov_" + typ_cov + "_form"][i][1]
                 data_pow.append(self.cov["cov_" + typ_cov + "_data"][i] ** pwr)
             ex = np.concatenate([np.ones((len(data), 1)), np.array(data_pow).T], axis=1)
         else:
-            ex = np.ones(len(data))  # overkill, can simply remove mean.
+            # overkill, can simply remove mean.
+            ex = np.ones(len(data))
         mod = OLS(exog=ex, endog=data_detrended)
         res = mod.fit()
         self.tmp_sol[typ_cov][0] += res.params[0]
-        if len(inds_pow) > 0:  # just filling in power coefficients
+
+        # just filling in power coefficients
+        if len(inds_pow) > 0:
             for i in np.arange(1, len(res.params)):
                 pwr = self.cov["cov_" + typ_cov + "_form"][inds_pow[i - 1]][1]
                 cf = (
@@ -987,9 +1018,8 @@ class distrib_cov:
         # ---------------------
         # sigmoid contribution
         # principle: making a sigmoid transformation to evaluate parameters.
-        if (
-            len(self.cov["cov_" + typ_cov + "_names"]) > 0
-        ):  # checking that they are covariates on this parameter
+        # checking that they are covariates on this parameter
+        if len(self.cov["cov_" + typ_cov + "_names"]) > 0:
             inds_sigm = [
                 i
                 for i, form in enumerate(self.cov["cov_" + typ_cov + "_form"])
@@ -997,11 +1027,12 @@ class distrib_cov:
             ]
         else:
             inds_sigm = []
-        if (
-            len(inds_sigm) > 0
-        ):  # checking that there are covariates on this parameter with lositic form
+
+        # checking that there are covariates on this parameter with logistic form
+        if len(inds_sigm) > 0:
             # already made sure that only one sigmoid form is used on this parameter
             form_sigm = self.cov["cov_" + typ_cov + "_form"][inds_sigm[0]]
+
             # gathering data
             data_sigm = [self.cov["cov_" + typ_cov + "_data"][i] for i in inds_sigm]
             ex = np.concatenate(
@@ -1035,10 +1066,10 @@ class distrib_cov:
                     type_sigm=form_sigm,
                     detect_NaN=False,
                 )
+
             # fitting
-            mod = OLS(
-                exog=ex, endog=data_detrended_transf
-            )  # assuming linear variations on these terms!
+            # assuming linear variations on these terms!
+            mod = OLS(exog=ex, endog=data_detrended_transf)
             res = mod.fit()
             # filling in sigmoid coefficients
             self.tmp_sol[typ_cov][
@@ -1058,13 +1089,13 @@ class distrib_cov:
                         typ_cov + "_" + form_sigm + "_lambda_" + cv_nm
                     )
                 ] = res.params[1 + ii]
+
+            # better physical interpretation, we are using anomalies in global variables
             self.tmp_sol[typ_cov][
                 self.cov["coeffs_" + typ_cov + "_names"].index(
                     typ_cov + "_" + form_sigm + "_epsilon"
                 )
-            ] = -res.params[
-                0
-            ]  # better physical interpretation, we are using anomalies in global variables
+            ] = -res.params[0]
 
             # detrending with sigmoid evolution
             if form_sigm in ["generalizedlogistic", "generalizedalgebraic"]:
@@ -1088,15 +1119,17 @@ class distrib_cov:
         return data_detrended
 
     def find_fg(self):
-        # Objective: optimizing loc_0, scale_0, shape_0, so that it matches the expected mean, variance and skewness. These values may be used as first guess for the real fit, especially the shape.
-        # The use of the parameter "eval_fg0_best" leads to an effective doubling of this step. Even though this step is very fast, it could be avoided by saving both solutions in a self.thingy
+        # Objective: optimizing loc_0, scale_0, shape_0, so that it matches the expected mean, variance and skewness.
+        # These values may be used as first guess for the real fit, especially the shape.
+        # The use of the parameter "eval_fg0_best" leads to an effective doubling of this step.
+        # Even though this step is very fast, it could be avoided by saving both solutions in a self.thingy
 
         # INITIATING
         self.tmp_sol = {}
 
         # TRANFORMATION?
+        # using all inputs on location to identify correct boundaries. More statistical sense with only linear terms?
         if self.transfo[0]:
-            # using all inputs on location to identify correct boundaries. More statistical sense with only linear terms?
             inds_sigm = np.arange(len(self.cov["cov_loc_form"]))
             data_sigm = self.cov["cov_loc_data"]
 
@@ -1114,19 +1147,15 @@ class distrib_cov:
                     type_sigm=self.transfo[1],
                     alpha=alpha,
                 )
-                self.tmp_sol["transfo"] = [
-                    m1,
-                    m2,
-                    1,
-                ]  # transfo_asymptleft & right in coeffs_transfo_names
+                # transfo_asymptleft & right in coeffs_transfo_names
+                self.tmp_sol["transfo"] = [m1, m2, 1]
+
             else:
                 data = sigmoid_transf(
                     data=self.data, left=m1, right=m2, type_sigm=self.transfo[1]
                 )
-                self.tmp_sol["transfo"] = [
-                    m1,
-                    m2,
-                ]  # transfo_asymptleft & right in coeffs_transfo_names
+                # transfo_asymptleft & right in coeffs_transfo_names
+                self.tmp_sol["transfo"] = [m1, m2]
         else:
             data = self.data
 
@@ -1135,7 +1164,9 @@ class distrib_cov:
 
         # SCALE:
         # evaluating running standard deviation of scale on a nn-values window: there will be peaks at change in scenarios, but it will be smoothen out by the linear regressions
-        nn = 100  # with sma, seems to be better to have high values for proper evaluations of scale_0
+        # with sma, seems to be better to have high values for proper evaluations of scale_0
+        nn = 100
+
         std_data_det = np.sqrt(
             np.max(
                 [
@@ -1147,20 +1178,17 @@ class distrib_cov:
             )
         )
         if self.distrib in ["GEV", "gaussian"]:
-            _ = self.reglin_fg(
-                typ_cov="scale", data=std_data_det
-            )  # coeffs are saved, useless to get the rest of the signal
+            # coeffs are saved, useless to get the rest of the signal
+            _ = self.reglin_fg(typ_cov="scale", data=std_data_det)
         elif self.distrib in ["poisson"]:
-            _ = self.reglin_fg(
-                typ_cov="mu", data=std_data_det
-            )  # coeffs are saved, useless to get the rest of the signal
+            # coeffs are saved, useless to get the rest of the signal
+            _ = self.reglin_fg(typ_cov="mu", data=std_data_det)
         else:
             raise Exception("Distribution not prepared here")
 
         # preparing optimization of loc0, scale0 and shape0: calculating mean, median, skew kurtosis of detrended data
-        self.dd_mean = np.mean(
-            data_det
-        )  # np.mean(data) #np.mean(data_det) #### why did i switch from data_det to data?
+        self.dd_mean = np.mean(data_det)
+        # np.mean(data) #np.mean(data_det) why did i switch from data_det to data?
         self.dd_var = np.var(data_det)
         self.dd_skew = ss.skew(data_det)  # ss.skew(data_det)
 
@@ -1182,13 +1210,13 @@ class distrib_cov:
             # just avoiding zeros on sigmoid coefficients on shape parameter
             for param in self.cov["coeffs_shape_names"]:
                 for form in self.possible_sigmoid_forms:
-                    if (
-                        form + "_lambda" in param
-                    ):  # this parameter is a sigmoid lambda. Making a slow evolution
+
+                    # this parameter is a sigmoid lambda. Making a slow evolution
+                    if form + "_lambda" in param:
                         self.fg_x0[self.coeffs_names.index(param)] = 0.1
-                    if (
-                        form + "_asympt" in param
-                    ):  # this parameter is a sigmoid difference. Making a small difference, relatively to its parameter_0
+
+                    # this parameter is a sigmoid difference. Making a small difference, relatively to its parameter_0
+                    if form + "_asympt" in param:
                         if "left" in param:
                             self.fg_x0[self.coeffs_names.index(param)] = 0.0
                         else:  # right
@@ -1221,9 +1249,12 @@ class distrib_cov:
             correct_borders_shape = np.max(
                 [-bnds_c_limit[1], self.boundaries_params["shape"][0]]
             ), np.min([-bnds_c_limit[0], self.boundaries_params["shape"][1]])
+
+            # may need to take min or max +/- 0.1 for shape with covariants
             self.safe_fg_shape = 0.5 * (
                 correct_borders_shape[0] + correct_borders_shape[1]
-            )  # may need to take min or max +/- 0.1 for shape with covariants
+            )
+
             self.fg_x0[self.coeffs_names.index("shape_0")] = self.safe_fg_shape
             # 0.1 is meant to add some margin in the domain. The definition of the support assumes that the shape is <0, which is no issue, for fg_shape is usually <0
             # self.safe_fg_shape = np.max( [self.fg_shape, np.sqrt(self.dd_var) / (self.dd_mean - np.max(self.data)) + 0.1 ] )
@@ -1251,12 +1282,12 @@ class distrib_cov:
 
                     # allocating values to x0, already containing information on initial first value of loc_0 and initial coefficients on linear covariates of location
                     x0 = np.copy(self.fg_x0)
-                    x0[
-                        self.coeffs_names.index("loc_0")
-                    ] += delta_loc0  # the location computed out of this step is NOT a proper location_0!
-                    x0[
-                        self.coeffs_names.index("scale_0")
-                    ] += delta_scale0  # better & safer results with += instead of =
+
+                    # the location computed out of this step is NOT a proper location_0!
+                    # better & safer results with += instead of =
+                    x0[self.coeffs_names.index("loc_0")] += delta_loc0
+                    x0[self.coeffs_names.index("scale_0")] += delta_scale0
+
                     if "shape_0" in self.coeffs_names:
                         x0[self.coeffs_names.index("shape_0")] = shape0
 
@@ -1273,13 +1304,12 @@ class distrib_cov:
                 del self.data_tmp
 
                 # checking if valid first guess
-                valid_True = checks[True][1] and np.isinf(checks[True][1]) == False
-                valid_False = checks[False][1] and np.isinf(checks[False][1]) == False
+                valid_True = checks[True][1] and not np.isinf(checks[True][1])
+                valid_False = checks[False][1] and not np.isinf(checks[False][1])
                 # selecting one or the other:
                 if valid_True and valid_False:  # both options are valid
-                    if (
-                        self.eval_fg0_best
-                    ):  # default mode. Most of the time, will be here, taking the best first guess among the 2 options. For difficult fits, the 2nd may actually work better.
+                    # default mode. Most of the time, will be here, taking the best first guess among the 2 options. For difficult fits, the 2nd may actually work better.
+                    if self.eval_fg0_best:
                         if checks[True][2] <= checks[False][2]:
                             x0 = checks[True][0]
                         else:
@@ -1290,41 +1320,39 @@ class distrib_cov:
                         else:
                             x0 = checks[True][0]
 
-                elif valid_True:  # only the first mode is valid
+                # only the first mode is valid
+                elif valid_True:
                     x0 = checks[True][0]
 
-                elif valid_False:  # only the second mode is valid
+                # only the second mode is valid
+                elif valid_False:
                     x0 = checks[False][0]
 
         elif self.distrib in ["gaussian"]:
             # special case: the relevant parameters from the gaussian can directly be deduced here:
             x0 = list(self.tmp_sol["loc"]) + list(self.tmp_sol["scale"])
-            x0[
-                self.coeffs_names.index("loc_0")
-            ] += (
-                self.dd_mean
-            )  # the location computed out of this step is NOT a proper location_0!
+            # the location computed out of this step is NOT a proper location_0!
+            x0[self.coeffs_names.index("loc_0")] += self.dd_mean
+
             if self.transfo[0]:
                 x0 = x0 + list(self.tmp_sol["transfo"])
 
         elif self.distrib in ["poisson"]:
             # special case: the relevant parameters from the gaussian can directly be deduced here:
             x0 = list(self.tmp_sol["loc"]) + list(self.tmp_sol["mu"])
-            x0[
-                self.coeffs_names.index("loc_0")
-            ] -= (
-                self.dd_var
-            )  # the location computed out of this step is NOT a proper location_0!
-            x0[
-                self.coeffs_names.index("mu_0")
-            ] += (
-                self.dd_var
-            )  # the location computed out of this step is NOT a proper location_0!
+
+            # the location computed out of this step is NOT a proper location_0!
+            x0[self.coeffs_names.index("loc_0")] -= self.dd_var
+
+            # the location computed out of this step is NOT a proper location_0!
+            x0[self.coeffs_names.index("mu_0")] += self.dd_var
+
             if self.transfo[0]:
                 x0 = x0 + list(self.tmp_sol["transfo"])
             args = self._parse_args(x0)
             if np.min(args[1]) < 0:
                 x0[self.coeffs_names.index("mu_0")] -= np.min(args[1]) * 1.1
+
             # some points in the sample may be 0, and for a location too high, it would cause the first guess to start in a wrong domain
             counter_modif_loc0 = 0
             while (
@@ -1377,14 +1405,15 @@ class distrib_cov:
                 ):
                     form_sigm = self.cov["cov_" + typ + "_form"][ii]
                     # all sigmoid terms are under the same exponential: they are dealt with the first time sigmoid is encountered on this parameter
-                    if (
-                        self.cov["cov_" + typ + "_form"].index(form_sigm) == ii
-                    ):  # only the first one with sigmoid is returned here, checking if it is the one of the loop
+                    # only the first one with sigmoid is returned here, checking if it is the one of the loop
+                    if self.cov["cov_" + typ + "_form"].index(form_sigm) == ii:
+
                         # summing sigmoid terms
                         ind_sigm = np.where(
                             np.array(self.cov["cov_" + typ + "_form"]) == form_sigm
                         )[0]
                         var = 0
+
                         for i in ind_sigm:
                             L = coeffs[
                                 self.coeffs_names.index(
@@ -1411,9 +1440,9 @@ class distrib_cov:
                             self.coeffs_names.index(typ + "_" + form_sigm + "_epsilon")
                         ]
                         if np.isclose(left, right):
-                            tmp[typ] += np.zeros(
-                                var.shape
-                            )  # just for shape of tmp[typ]
+                            # just for shape of tmp[typ]
+                            tmp[typ] += np.zeros(var.shape)
+
                         else:
                             if form_sigm in [
                                 "generalizedlogistic",
@@ -1440,7 +1469,7 @@ class distrib_cov:
                     else:  # not the first sigmoid term on this parameter, already accounted for.
                         pass
 
-                elif (type(self.cov["cov_" + typ + "_form"][ii]) == list) and (
+                elif isinstance(self.cov["cov_" + typ + "_form"][ii], list) and (
                     self.cov["cov_" + typ + "_form"][ii][0] == "power"
                 ):
                     pwr = self.cov["cov_" + typ + "_form"][ii][1]
@@ -1477,7 +1506,9 @@ class distrib_cov:
             # the location must be integer values
             int_loc = np.array(np.round(tmp["loc"], 0), dtype=int)
             # The parameter mu must be positive. CHOOSING to force it to zero, to avoid spurious fits
-            # Besides, when loc and mu are close to zero, the probability of obtaining the value 0 is ~1-mu. Having mu=0 makes any value != 0 infinitely unlikely => setting a threshold on mu at 1.e-9, ie 1 / 1e9 years.
+            # Besides, when loc and mu are close to zero, the probability of obtaining the value 0 is ~1-mu.
+            # Having mu=0 makes any value != 0 infinitely unlikely => setting a threshold on mu at 1.e-9, ie 1 / 1e9 years.
+            # TODO: use np.fmax(tmp["mu"], 1.0e-9)?
             pos_mu = np.max([tmp["mu"], 1.0e-9 * np.ones(tmp["mu"].shape)], axis=0)
             return (int_loc, pos_mu)
 
@@ -1491,15 +1522,15 @@ class distrib_cov:
         for coeff in self.boundaries_coeffs:
             low, top = self.boundaries_coeffs[coeff]
             cff = args[self.coeffs_names.index(coeff)]
+
+            # out of boundaries, strong signal to negative log likelyhood
             if (
                 np.any(cff < low)
                 or np.any(top < cff)
                 or np.any(np.isclose(cff, low))
                 or np.any(np.isclose(top, cff))
             ):
-                test = (
-                    False  # out of boundaries, strong signal to negative log likelyhood
-                )
+                test = False
 
         # checking the transformation
         if self.transfo[0]:
@@ -1514,15 +1545,19 @@ class distrib_cov:
 
         # checking that the coefficient in the exponential of the sigmoid evolution is positive
         for param in self.coeffs_names:
-            if "_lambda" in param:  # on this parameter, there is a sigmoid evolution.
+
+            # on this parameter, there is a sigmoid evolution.
+            if "_lambda" in param:
                 pass
                 # if args[self.coeffs_names.index(param)] < 0:
                 #    test = False
 
-        # has observed with sigmoid evolution that there may be compensation between coefficients, leading to a biased evolution of coefficients. This situation is rare for TXx, but happens often with SMA.
+        # has observed with sigmoid evolution that there may be compensation between coefficients, leading to a biased evolution of coefficients.
+        # This situation is rare for TXx, but happens often with SMA.
         for param in self.cov["params"]:
             for form_sigm in self.possible_sigmoid_forms:
                 if form_sigm in self.cov["cov_" + param + "_form"]:
+
                     # checking for this parameter of the distribution if the fit of a sigmoid evolution leads to a drift in its param_0 and param_sigmoid_delta_covariate
                     # criteria: if the first guess provided to the optimization function has increased the constant term X times, it is unlikely and there may be a drift.
                     try:
@@ -1530,8 +1565,9 @@ class distrib_cov:
                             args[self.coeffs_names.index(param + "_0")]
                         ) > 10 * np.abs(self.x0[self.coeffs_names.index(param + "_0")]):
                             test = False
+
+                    # test on coefficients but to define first guess, not yet during fit. Thus, has not & cannot do this test yet.
                     except AttributeError:
-                        # test on coefficients but to define first guess, not yet during fit. Thus, has not & cannot do this test yet.
                         pass
 
         return test
@@ -1561,12 +1597,16 @@ class distrib_cov:
         if do_c:
             # test of the support of the GEV: is there any data out of the corresponding support?
             # The support of the GEV is: [ loc - scale/shape ; +inf [ if shape>0  and ] -inf ; loc - scale/shape ] if shape<0
-            # NB: checking the support with only '<' is not enough, not even '<='. Has encountered situations where only '<' AND 'isclose' avoids data points to be too close from boundaries, leading to unrealistic values in the ensuing processes.
+            # NB: checking the support with only '<' is not enough, not even '<='.
+            # Has encountered situations where only '<' AND 'isclose' avoids data points to be too close from boundaries, leading to unrealistic values in the ensuing processes.
+
             if np.any(scale + c * (loc - data_fit) <= 0) or np.any(
                 np.isclose(0, scale + c * (loc - data_fit))
-            ):  # rewritten for simplicity as scale + c * (loc - data) > 0
+            ):
+                # rewritten for simplicity as scale + c * (loc - data) > 0
                 test = False
-            # if type(c) == np.float64:## no covariants on shape
+
+            # if type(c) == np.float64: # no covariants on shape
             #    if -c > 0:# support of this GEV is [ loc - scale/shape ; +inf [
             #        if np.any( data_fit < loc - scale/(-c) )  or  np.any(np.isclose( data_fit , loc - scale/(-c) )):
             #            test = False
@@ -1585,38 +1625,43 @@ class distrib_cov:
             # comparing to prescribed borders for shape
             if test:  # if false, no need to test
                 low, high = self.boundaries_params["shape"]
+
+                # out of boundaries, strong signal to negative log likelyhood
                 if (
                     np.any(-c < low)
                     or np.any(high < -c)
                     or np.any(np.isclose(-c, low))
                     or np.any(np.isclose(high, -c))
                 ):
-                    test = False  # out of boundaries, strong signal to negative log likelyhood
+                    test = False
 
         # scale should be strictly positive, or respect any other set boundaries
         if test:  # if false, no need to test
             if self.distrib in ["GEV", "gaussian"]:
                 low, high = self.boundaries_params["scale"]
-                if np.any(scale < low) or np.any(
-                    high < scale
-                ):  # or np.any(np.isclose(scale , low)) or np.any(np.isclose(high , scale)): # trying without the isclose, cases with no evolutions, ie scale~=0
-                    test = False  # out of boundaries, strong signal to negative log likelyhood
+
+                # out of boundaries, strong signal to negative log likelyhood
+                if np.any(scale < low) or np.any(high < scale):
+                    # or np.any(np.isclose(scale , low)) or np.any(np.isclose(high , scale)):
+                    # trying without the isclose, cases with no evolutions, ie scale~=0
+                    test = False
             elif self.distrib in ["poisson"]:
                 low, high = self.boundaries_params["mu"]
-                if np.any(mu < low) or np.any(
-                    high < mu
-                ):  # or np.any(np.isclose(scale , low)) or np.any(np.isclose(high , scale)): # trying without the isclose, cases with no evolutions, ie scale~=0
-                    test = False  # out of boundaries, strong signal to negative log likelyhood
+
+                # out of boundaries, strong signal to negative log likelyhood
+                if np.any(mu < low) or np.any(high < mu):
+                    # or np.any(np.isclose(scale , low)) or np.any(np.isclose(high , scale)):
+                    # trying without the isclose, cases with no evolutions, ie scale~=0
+                    test = False
 
         # location should respect set boundaries
         if test:  # if false, no need to test
             low, high = self.boundaries_params["loc"]
-            if np.any(loc < low) or np.any(
-                high < loc
-            ):  # or np.any(np.isclose(loc , low)) or np.any(np.isclose(high , loc)):
-                test = (
-                    False  # out of boundaries, strong signal to negative log likelyhood
-                )
+
+            # out of boundaries, strong signal to negative log likelyhood
+            if np.any(loc < low) or np.any(high < loc):
+                # or np.any(np.isclose(loc , low)) or np.any(np.isclose(high , loc)):
+                test = False
 
         return test
 
@@ -1631,6 +1676,7 @@ class distrib_cov:
             if self.transfo[0]:
                 m1 = args[self.coeffs_names.index("transfo_asymptleft")]
                 m2 = args[self.coeffs_names.index("transfo_asymptright")]
+
                 # new data that will be used
                 if self.transfo[1] in ["generalizedlogistic", "generalizedalgebraic"]:
                     alpha = args[self.coeffs_names.index("transfo_alpha")]
@@ -1682,7 +1728,7 @@ class distrib_cov:
     def neg_loglike(self, args):
         # negative log likelihood (for fit)
         # just in case used out of the optimization function, to evaluate the quality of the fit
-        if type(args) == dict:
+        if isinstance(args, dict):
             args = [args[kk] for kk in args]
 
         return -self.loglike(args)
@@ -1701,7 +1747,6 @@ class distrib_cov:
 
         else:
             # Before fitting, need a good first guess, using 'find_fg'.
-
             # trying first with the best choice for a first guess.
             self.eval_fg0_best = True
             # making a correct first guess
@@ -1720,7 +1765,7 @@ class distrib_cov:
             )
 
             # Checking if failed. May have to choose the second option for difficult fits. (only "if self.distrib in [ 'GEV' ]", try if can remove it given all new improvements?)
-            if m.success == False:
+            if not m.success:
                 self.eval_fg0_best = False
                 # making a correct first guess
                 self.x0 = self.find_fg()
@@ -1738,7 +1783,7 @@ class distrib_cov:
                 )
 
                 # checking if that one failed as well
-                if self.error_failedfit and (m.success == False):
+                if self.error_failedfit and not m.success:
                     raise Exception(
                         "The fast detrend provides with a valid first guess, but not good enough."
                     )
