@@ -157,23 +157,25 @@ def test_fit_to_bic_xr():
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
 
     # compare numerically one cell of one year
-    expected = np.array([
-                9.99630445,
-                9.98829217,
-                7.32212458,
-                2.73123514,
-                -2.53876124,
-                -7.07931947,
-                -9.69283667,
-                -9.6945128,
-                -7.08035255,
-                -2.53178204,
-                2.74790275,
-                7.34046832,
-            ]
-        )
+    expected = np.array(
+        [
+            9.99630445,
+            9.98829217,
+            7.32212458,
+            2.73123514,
+            -2.53876124,
+            -7.07931947,
+            -9.69283667,
+            -9.6945128,
+            -7.08035255,
+            -2.53178204,
+            2.74790275,
+            7.34046832,
+        ]
+    )
     np.testing.assert_allclose(
-        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected)
+        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected
+    )
 
 
 def test_fit_to_bix_xr_instance_checks():
