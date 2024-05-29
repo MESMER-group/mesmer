@@ -14,6 +14,7 @@ from mesmer.testing import trend_data_1D, trend_data_2D
 
 
 def test_generate_fourier_series_np():
+    # test if fourier series is generated correctly
     n_years = 10
     n_months = n_years * 12
 
@@ -53,7 +54,7 @@ def test_generate_fourier_series_np():
     ],
 )
 def test_fit_to_bic_np(coefficients):
-    # ensure original coeffs and order is estimated from fourier series without noise
+    # ensure original coeffs and series is recovered from noiseless fourier series
     max_order = 6
     n_years = 100
     months = np.tile(np.arange(1, 13), n_years)
@@ -151,13 +152,12 @@ def test_fit_to_bic_xr():
     noisy_monthly_target = monthly_target + rng.normal(
         loc=0, scale=0.1, size=monthly_target.values.shape
     )
-    
+
     result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
-    np.testing.assert_allclose(
-        result.predictions.isel(cells=0, time=slice(0, 12)).values,
-        np.array(
-            [
+
+    # compare numerically one cell of one year
+    expected = np.array([
                 9.99630445,
                 9.98829217,
                 7.32212458,
@@ -171,8 +171,9 @@ def test_fit_to_bic_xr():
                 2.74790275,
                 7.34046832,
             ]
-        ),
-    )
+        )
+    np.testing.assert_allclose(
+        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected)
 
 
 def test_fit_to_bix_xr_instance_checks():
