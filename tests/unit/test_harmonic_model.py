@@ -127,11 +127,7 @@ def test_fit_to_bic_xr():
     )
 
     time = xr.cftime_range(start="2000-01-01", periods=n_ts * 12, freq="MS")
-    monthly_time = xr.DataArray(
-        time,
-        dims=["time"],
-        coords={"time": time},
-    )
+    monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
     upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
 
     months = upsampled_yearly_predictor.time.dt.month
