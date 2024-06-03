@@ -510,7 +510,6 @@ def inverse_transform(transformed_monthly_T, lambdas):
     """
 
     lambdas = lambdas.stack(stack=["year", "month"])
-    pt = PowerTransformer(method="yeo-johnson", standardize=False)
 
     return xr.apply_ufunc(
         _yeo_johnson_inverse_transform_np,
