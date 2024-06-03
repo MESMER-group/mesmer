@@ -471,9 +471,9 @@ def inverse_transform(transformed_monthly_T, lambdas):
         pt._yeo_johnson_inverse_transform,
         transformed_monthly_T,
         lambdas,
-        input_core_dims=[["time"], ["stack"]],
-        output_core_dims=[["time"]],
-        output_dtypes=[float],
+        input_core_dims=[[], []],
+        output_core_dims=[[]],
+        output_dtypes=[np.ndarray],
         vectorize=True,
         join="outer",
     ).rename("inverted")
