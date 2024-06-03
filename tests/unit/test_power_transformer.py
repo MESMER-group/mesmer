@@ -155,6 +155,7 @@ def test_standard_scaler():
     result = pt.inverse_transform(transformed, yearly_T)
     np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
 
+
 # =================== tests for xr methods ===================
 def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, scale=1):
 
@@ -174,7 +175,7 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, scale=1):
         "lon": ("cells", LON.flatten()),
         "lat": ("cells", LAT.flatten()),
     }
-    
+
     return xr.DataArray(ts_array, dims=("cells", "time"), coords=coords, name="data")
 
 
@@ -184,33 +185,55 @@ def test_power_transformer_xr():
     n_lon = 2
     n_gridcells = n_lat * n_lon
 
-    monthly_residuals = skewed_data_2D(n_timesteps=n_years*12, n_lat=n_lat, n_lon=n_lon)
+    monthly_residuals = skewed_data_2D(
+        n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon
+    )
     yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=2, scale=n_lon)
 
     # new method
-    pt_transform = power_transformer.fit_power_transformer_xr(monthly_residuals, yearly_T)
-    transformed = power_transformer.yeo_johnson_transform_xr(monthly_residuals, pt_transform.lambdas)
-    inverse_transformed = power_transformer.inverse_transform(transformed, pt_transform.lambdas)
+    pt_transform = power_transformer.fit_power_transformer_xr(
+        monthly_residuals, yearly_T
+    )
+    transformed = power_transformer.yeo_johnson_transform_xr(
+        monthly_residuals, pt_transform.lambdas
+    )
+    inverse_transformed = power_transformer.inverse_transform(
+        transformed, pt_transform.lambdas
+    )
     xr.testing.assert_allclose(inverse_transformed, monthly_residuals)
 
     # old method
     power_trans_old = []
     for mon in range(12):
-        pt = power_transformer.PowerTransformerVariableLambda(standardize = False)
-        power_trans_old.append(pt.fit(monthly_residuals.values.T[mon::12,:], yearly_T.values.T, n_gridcells))
+        pt = power_transformer.PowerTransformerVariableLambda(standardize=False)
+        power_trans_old.append(
+            pt.fit(
+                monthly_residuals.values.T[mon::12, :], yearly_T.values.T, n_gridcells
+            )
+        )
 
     # transform
     transformed_old = []
     for mon in range(12):
-        transformed_old.append(power_trans_old[mon].transform(monthly_residuals.values.T[mon::12,:], yearly_T.values.T))
+        transformed_old.append(
+            power_trans_old[mon].transform(
+                monthly_residuals.values.T[mon::12, :], yearly_T.values.T
+            )
+        )
 
     for mon in range(12):
-        np.testing.assert_equal(transformed_old[mon], transformed.values.T[mon::12,:])
+        np.testing.assert_equal(transformed_old[mon], transformed.values.T[mon::12, :])
 
     # inverse transform
     inverse_transformed_old = []
     for mon in range(12):
-        inverse_transformed_old.append(power_trans_old[mon].inverse_transform(transformed_old[mon], yearly_T.values.T))
+        inverse_transformed_old.append(
+            power_trans_old[mon].inverse_transform(
+                transformed_old[mon], yearly_T.values.T
+            )
+        )
 
     for mon in range(12):
-        np.testing.assert_allclose(inverse_transformed_old[mon], inverse_transformed.values.T[mon::12,:])
+        np.testing.assert_allclose(
+            inverse_transformed_old[mon], inverse_transformed.values.T[mon::12, :]
+        )
