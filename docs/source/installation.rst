@@ -8,9 +8,12 @@ Required dependencies
 - `dask <https://dask.org/>`__
 - `numpy <http://www.numpy.org/>`__
 - `pandas <https://pandas.pydata.org/>`__
-- `scikit-learn <https://scikit-learn.org/stable/>`__
-- `statsmodels <https://www.statsmodels.org/stable/index.html>`__
 - `regionmask <https://regionmask.readthedocs.io/en/stable/>`__
+- `pooch <https://www.fatiando.org/pooch/latest/>`__
+- `pyproj <https://pyproj4.github.io/pyproj/stable/>`__
+- `scikit-learn <https://scikit-learn.org/stable/>`__
+- `scipy <https://scipy.org/>`__
+- `statsmodels <https://www.statsmodels.org/stable/index.html>`__
 - `xarray <http://xarray.pydata.org/>`__
 
 Instructions
@@ -23,25 +26,13 @@ installing mesmer using conda/mamba:
 
     conda install -c conda-forge mesmer
 
-Alternately, mesmer can be installed with pip (but we make no guarantees about
-the simplicity of installing mesmer's dependencies using pip)
+Alternately, mesmer can be installed with pip:
 
 .. code-block:: bash
 
-   python -m pip install mesmer-emulator
+   python -m pip install mesmer-emulator[complete]
 
-Otherwise, mesmer can be installed directly from github
+Development installation
+------------------------
 
-.. code-block:: bash
-
-   python -m pip install git+https://github.com/MESMER-group/mesmer.git
-
-To install mesmer in development mode, first clone it using git and then
-install it in an editable mode afterwards:
-
-.. code-block:: bash
-
-   git clone git+https://github.com/MESMER-group/mesmer.git
-   python -m pip install -e mesmer
-
-.. _conda: http://conda.io/
+See instructions on github: `#315 <https://github.com/MESMER-group/mesmer/issues/315>`__.

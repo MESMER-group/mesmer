@@ -7,16 +7,18 @@ channels:
 dependencies:
  - python=3.9
  - cartopy
- - dask[complete]
- - gdal
+ - dask
+ - joblib
  - netcdf4
  - numpy
  - packaging
  - pandas=2.0
  - pooch
  - properscoring
+ - pyproj
  - regionmask=0.9
  - scikit-learn
+ - scipy
  - shapely=1.8 # required by regionmask < 0.10
  - statsmodels=0.13
  - xarray=2023.04

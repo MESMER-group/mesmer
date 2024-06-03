@@ -2,7 +2,7 @@ import numpy as np
 
 # from tqdm import tqdm
 from joblib import Parallel, delayed
-from scipy.optimize import minimize, rosen_der
+from scipy.optimize import minimize
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
@@ -143,15 +143,17 @@ class PowerTransformerVariableLambda(PowerTransformer):
         ]
         local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
-        # choosing bracket -2, 2 like for boxcox
-        bounds = np.c_[[0, -0.1], [1, 0.1]]
-        # TODO: write first guess variable for readability
+        # first coefficient only positive for logistic function
+        # second coefficient bounded to avoid very steep function
+        bounds = np.array([[0, np.inf], [-0.1, 0.1]])
+        # first guess is that data is already normal distributed
+        first_guess = np.array([1, 0])
+
         return minimize(
             _neg_log_likelihood,
-            np.array([0.01, 0.01]),
+            first_guess,
             bounds=bounds,
-            method="SLSQP",
-            jac=rosen_der,
+            method="Nelder-Mead",
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
@@ -159,12 +161,17 @@ class PowerTransformerVariableLambda(PowerTransformer):
         parameter lambda.
         """
 
+        eps = np.finfo(np.float64).eps
+
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= np.spacing(1.0))
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > np.spacing(1.0))
-        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+        # NOTE: this code is copied from sklearn's PowerTransformer, see
+        # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
+        # we acknowledge there is an inconsistency in the comarison of lambdas
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < eps)
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= eps)
+        pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
+        pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
         # assign values for the four cases
         transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
@@ -196,13 +203,13 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         transformed_monthly_resids = np.zeros_like(monthly_residuals)
 
-        # for i, lmbda in enumerate(lambdas.T):
-        #     for j,j_lmbda in enumerate(lmbda):
+        # for gridcell, lmbda in enumerate(lambdas.T):
+        #     for year, year_lmbda in enumerate(lmbda):
         #         with np.errstate(invalid='ignore'):  # hide NaN warnings
-        #             transformed_monthly_resids[j, i] = self._yeo_johnson_transform(monthly_residuals[j, i], j_lmbda)
-        for i, lmbda in enumerate(lambdas.T):
-            transformed_monthly_resids[:, i] = self._yeo_johnson_transform(
-                monthly_residuals[:, i], lmbda
+        #             transformed_monthly_resids[year, gridcell] = self._yeo_johnson_transform(monthly_residuals[year, gridcell], year_lmbda)
+        for gridcell, lmbda in enumerate(lambdas.T):
+            transformed_monthly_resids[:, gridcell] = self._yeo_johnson_transform(
+                monthly_residuals[:, gridcell], lmbda
             )
 
         if self.standardize:
@@ -260,25 +267,26 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         lambdas = self._get_yeo_johnson_lambdas(yearly_T)
 
-        # TODO: what actually is i? years or gridcells
-        for i, lmbda in enumerate(lambdas.T):
-            # TODO: what is j? years or gridcells?
-            for j, j_lmbda in enumerate(lmbda):
+        for gridcell, lmbda in enumerate(lambdas.T):
+            for year, y_lmbda in enumerate(lmbda):
                 with np.errstate(invalid="ignore"):  # hide NaN warnings
-                    inverted_monthly_T[j, i] = self._yeo_johnson_inverse_transform(
-                        transformed_monthly_T[j, i], j_lmbda
+                    inverted_monthly_T[year, gridcell] = (
+                        self._yeo_johnson_inverse_transform(
+                            transformed_monthly_T[year, gridcell], y_lmbda
+                        )
                     )
 
-            # TODO: what does this mean?
-            inverted_monthly_T[:, i] = np.where(
-                inverted_monthly_T[:, i] < self.mins_[i],
-                self.mins_[i],
-                inverted_monthly_T[:, i],
+            # clip values to not exceed original range
+            # apparently a relict from when lambda was not constrained to [0,2]
+            inverted_monthly_T[:, gridcell] = np.where(
+                inverted_monthly_T[:, gridcell] < self.mins_[gridcell],
+                self.mins_[gridcell],
+                inverted_monthly_T[:, gridcell],
             )
-            inverted_monthly_T[:, i] = np.where(
-                inverted_monthly_T[:, i] > self.maxs_[i],
-                self.maxs_[i],
-                inverted_monthly_T[:, i],
+            inverted_monthly_T[:, gridcell] = np.where(
+                inverted_monthly_T[:, gridcell] > self.maxs_[gridcell],
+                self.maxs_[gridcell],
+                inverted_monthly_T[:, gridcell],
             )
 
         return inverted_monthly_T

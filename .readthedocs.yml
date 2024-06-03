@@ -2,14 +2,15 @@ version: 2
 build:
   os: ubuntu-22.04
   jobs:
+    post_checkout:
+      # unshallow so the version works
+      - git fetch --unshallow
     pre_install:
         # see https://github.com/readthedocs/readthedocs.org/issues/8201
-      - git update-index --assume-unchanged docs/environment.yml docs/source/conf.py
-      # install mesmer, needs to be editable
-      - python -m pip install -e .
+      - git update-index --assume-unchanged docs/source/conf.py
+      # editable install mesmer with docs extras
+      - python -m pip install -e .[docs]
   tools:
-    python: mambaforge-22.9
+    python: "3.12"
 sphinx:
   configuration: docs/source/conf.py
-conda:
-  environment: docs/environment.yml
