@@ -413,6 +413,7 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
 
     return xr.merge([coeffs, lambdas])
 
+
 def yeo_johnson_transform_xr(monthly_residuals, lambdas):
     """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
     parameters lambda, fit with fit_power_transformer_xr.
@@ -426,7 +427,7 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
         The parameters of the power transformation for each gridcell, calculated using lambda_function.
     """
     # NOTE: this is equivalent to using pt.transform with pt = PowerTransformerVariableLambda(standardize = False)
-    lambdas = lambdas.stack(stack = ['year', 'month'])
+    lambdas = lambdas.stack(stack=["year", "month"])
     return xr.apply_ufunc(
         _yeo_johnson_transform_np,
         monthly_residuals,
@@ -437,6 +438,7 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
         vectorize=True,
         join="outer",
     ).rename("transformed")
+
 
 def inverse_transform(transformed_monthly_T, lambdas):
     """Apply the inverse power transformation using the fitted lambdas.
@@ -462,8 +464,8 @@ def inverse_transform(transformed_monthly_T, lambdas):
         The inverted monthly temperature values, following the distribution of the original monthly values.
     """
 
-    lambdas = lambdas.stack(stack = ['year', 'month'])
-    pt = PowerTransformer(method='yeo-johnson', standardize=False)
+    lambdas = lambdas.stack(stack=["year", "month"])
+    pt = PowerTransformer(method="yeo-johnson", standardize=False)
 
     return xr.apply_ufunc(
         pt._yeo_johnson_inverse_transform,
