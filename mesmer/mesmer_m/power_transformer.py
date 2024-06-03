@@ -317,6 +317,7 @@ def _yeo_johnson_transform_np(local_monthly_residuals, lambdas):
 
     return transformed
 
+
 def _yeo_johnson_inverse_transform_np(transformed_monthly_residuals, lambdas):
     """Invert transformed_monthly_residuals following Yeo-Johnson transform with
     parameters lambda.
@@ -335,18 +336,29 @@ def _yeo_johnson_inverse_transform_np(transformed_monthly_residuals, lambdas):
     # get positions of four cases:
     pos_a = (transformed_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
     pos_b = (transformed_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
-    pos_c = (transformed_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-    pos_d = (transformed_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+    pos_c = (transformed_monthly_residuals < 0) & (
+        np.abs(lambdas - 2) > np.spacing(1.0)
+    )
+    pos_d = (transformed_monthly_residuals < 0) & (
+        np.abs(lambdas - 2) <= np.spacing(1.0)
+    )
 
     # assign values for the four cases
-    transformed[pos_a] = np.exp(transformed_monthly_residuals[pos_a]) -1
+    transformed[pos_a] = np.exp(transformed_monthly_residuals[pos_a]) - 1
     transformed[pos_b] = (
-        np.power(transformed_monthly_residuals[pos_b] * lambdas[pos_b] + 1, 1/lambdas[pos_b]) - 1
+        np.power(
+            transformed_monthly_residuals[pos_b] * lambdas[pos_b] + 1,
+            1 / lambdas[pos_b],
+        )
+        - 1
     )
-    transformed[pos_c] = 1 -(
-        np.power(-(2 - lambdas[pos_c])*transformed_monthly_residuals[pos_c] + 1, 1/(2 - lambdas[pos_c]))
+    transformed[pos_c] = 1 - (
+        np.power(
+            -(2 - lambdas[pos_c]) * transformed_monthly_residuals[pos_c] + 1,
+            1 / (2 - lambdas[pos_c]),
+        )
     )
-    transformed[pos_d] = 1-np.exp(-transformed_monthly_residuals[pos_d])
+    transformed[pos_d] = 1 - np.exp(-transformed_monthly_residuals[pos_d])
 
     return transformed
 
