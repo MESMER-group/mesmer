@@ -317,6 +317,39 @@ def _yeo_johnson_transform_np(local_monthly_residuals, lambdas):
 
     return transformed
 
+def _yeo_johnson_inverse_transform_np(transformed_monthly_residuals, lambdas):
+    """Invert transformed_monthly_residuals following Yeo-Johnson transform with
+    parameters lambda.
+
+    if X >= 0 and lambda_ == 0:
+        X = exp(X_trans) - 1
+    elif X >= 0 and lambda_ != 0:
+        X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+    elif X < 0 and lambda_ != 2:
+        X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+    elif X < 0 and lambda_ == 2:
+        X = 1 - exp(-X_trans)
+    """
+
+    transformed = np.zeros_like(transformed_monthly_residuals)
+    # get positions of four cases:
+    pos_a = (transformed_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
+    pos_b = (transformed_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
+    pos_c = (transformed_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
+    pos_d = (transformed_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+
+    # assign values for the four cases
+    transformed[pos_a] = np.exp(transformed_monthly_residuals[pos_a]) -1
+    transformed[pos_b] = (
+        np.power(transformed_monthly_residuals[pos_b] * lambdas[pos_b] + 1, 1/lambdas[pos_b]) - 1
+    )
+    transformed[pos_c] = 1 -(
+        np.power(-(2 - lambdas[pos_c])*transformed_monthly_residuals[pos_c] + 1, 1/(2 - lambdas[pos_c]))
+    )
+    transformed[pos_d] = 1-np.exp(-transformed_monthly_residuals[pos_d])
+
+    return transformed
+
 
 def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
 
@@ -468,12 +501,12 @@ def inverse_transform(transformed_monthly_T, lambdas):
     pt = PowerTransformer(method="yeo-johnson", standardize=False)
 
     return xr.apply_ufunc(
-        pt._yeo_johnson_inverse_transform,
+        _yeo_johnson_inverse_transform_np,
         transformed_monthly_T,
         lambdas,
-        input_core_dims=[[], []],
-        output_core_dims=[[]],
-        output_dtypes=[np.ndarray],
+        input_core_dims=[["time"], ["stack"]],
+        output_core_dims=[["time"]],
+        output_dtypes=[float],
         vectorize=True,
         join="outer",
     ).rename("inverted")
