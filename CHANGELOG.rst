@@ -12,9 +12,9 @@ New Features
    - move MESMER-M scripts into mesmer, adapt init file and small issues (`#419 <https://github.com/MESMER-group/mesmer/pull/419>`_,
    `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_)
    - documentation (`#424 <https://github.com/MESMER-group/mesmer/pull/424>`_, `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
-   - refactoring of MESMER-M functions (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_, 
-   `#434 <https://github.com/MESMER-group/mesmer/pull/434>`_, `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_) 
-   - add utility functions for MESMER-M (`#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, 
+   - refactoring of MESMER-M functions (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
+   `#434 <https://github.com/MESMER-group/mesmer/pull/434>`_, `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_)
+   - add utility functions for MESMER-M (`#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
    `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
    - adjust the first guess for the power transformer to 0 and 1 (`#429 <https://github.com/MESMER-group/mesmer/pull/429/files>`_)
    - adjust the bounds for the power transformer to all positive numbers for first coefficient (`#446 <https://github.com/MESMER-group/mesmer/pull/446>`_))
@@ -22,7 +22,7 @@ New Features
    `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_, `#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
    - add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_, `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_,
    `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
-   - small issues (415`#433 <https://github.com/MESMER-group/mesmer/pull/433>`_, 
+   - small issues (415`#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
    `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_, `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_
    By `Victoria Bauer`_ and `Mathias Hauser`_.
 
