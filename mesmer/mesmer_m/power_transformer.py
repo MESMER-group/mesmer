@@ -311,7 +311,7 @@ def _yeo_johnson_transform_np(residuals, lambdas):
 
     # assign values for the four cases
     transformed[sel_a] = np.log1p(residuals[sel_a])
-    transformed[sel_a] = (
+    transformed[sel_b] = (
         np.power(residuals[sel_b] + 1, lambdas[sel_b]) - 1
     ) / lambdas[sel_b]
     transformed[sel_c] = -(
@@ -422,13 +422,13 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
         dimensions (months, n_gridcells, n_years).
 
     """
-    monthly_residuals_grouped = monthly_residuals.groupby("time.month")
+    monthly_resids_grouped = monthly_residuals.groupby("time.month")
 
     coeffs = []
     for month in range(1, 13):
         xi_0, xi_1 = xr.apply_ufunc(
             _yeo_johnson_optimize_lambda,
-            monthly_residuals_grouped[month],
+            monthly_resids_grouped[month],
             yearly_T,
             input_core_dims=[["time"], ["time"]],
             output_core_dims=[[], []],
@@ -444,7 +444,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
     return xr.concat(coeffs, dim="month")
 
 
-def yeo_johnson_transform_xr(monthly_residuals, lambdas):
+def yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     """Return transformed input local_monthly_residuals following Yeo-Johnson transform
     with parameters lambda, fit with fit_power_transformer_xr.
 
@@ -454,17 +454,23 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
         Monthly residuals after removing harmonic model fits, used to fit for the 
         optimal transformation parameters (lambdas).
 
-    lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
+    coefficients : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using 
         lambda_function.
+
+    yearly_T :  xr.DataArray of shape (n_years, n_gridcells)
+        yearly temperature values used as predictors for the lambdas.
     """
     # NOTE: this is equivalent to using pt.transform with 
     # pt = PowerTransformerVariableLambda(standardize = False)
-    lambdas = lambdas.stack(stack=["year", "month"])
-    return xr.apply_ufunc(
+
+    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
+    lambdas_stacked = lambdas.stack(stack=["year", "month"])
+
+    transformed_resids = xr.apply_ufunc(
         _yeo_johnson_transform_np,
         monthly_residuals,
-        lambdas,
+        lambdas_stacked,
         input_core_dims=[["time"], ["stack"]],
         output_core_dims=[["time"]],
         output_dtypes=[float],
@@ -472,8 +478,10 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
         join="outer",
     ).rename("transformed")
 
+    return xr.merge([transformed_resids, lambdas])
 
-def inverse_yo_johnson_transform_xr(monthly_residuals, lambdas):
+
+def inverse_yo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     """Apply the inverse power transformation using the fitted lambdas.
     The inverse of the Yeo-Johnson transformation is given by::
         if X >= 0 and lambda_ == 0:
@@ -499,15 +507,18 @@ def inverse_yo_johnson_transform_xr(monthly_residuals, lambdas):
         the original monthly values.
     """
 
-    lambdas = lambdas.stack(stack=["year", "month"])
+    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
+    lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
-    return xr.apply_ufunc(
+    inverted_resids = xr.apply_ufunc(
         _yeo_johnson_inverse_transform_np,
         monthly_residuals,
-        lambdas,
+        lambdas_stacked,
         input_core_dims=[["time"], ["stack"]],
         output_core_dims=[["time"]],
         output_dtypes=[float],
         vectorize=True,
         join="outer",
     ).rename("inverted")
+
+    return xr.merge([inverted_resids, lambdas])
