@@ -290,33 +290,29 @@ class PowerTransformerVariableLambda(PowerTransformer):
         return inverted_monthly_T
 
 
-def _yeo_johnson_transform_np(local_monthly_residuals, lambdas):
-    """Return transformed input local_monthly_residuals following Yeo-Johnson 
+def _yeo_johnson_transform_np(residuals, lambdas):
+    """Return transformed input of local monthly residuals following Yeo-Johnson
     transform with parameter lambda.
     """
 
-    transformed = np.zeros_like(local_monthly_residuals)
+    transformed = np.zeros_like(residuals)
     # get positions of four cases:
-    pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
-    pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
-    pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-    pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+    pos_a = (residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
+    pos_b = (residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
+    pos_c = (residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
+    pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
 
     # assign values for the four cases
-    transformed[pos_a] = np.log1p(local_monthly_residuals[pos_a])
-    transformed[pos_b] = (
-        np.power(local_monthly_residuals[pos_b] + 1, lambdas[pos_b]) - 1
-    ) / lambdas[pos_b]
-    transformed[pos_c] = -(
-        np.power(-local_monthly_residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1
-    ) / (2 - lambdas[pos_c])
-    transformed[pos_d] = -np.log1p(-local_monthly_residuals[pos_d])
+    transformed[pos_a] = np.log1p(residuals[pos_a])
+    transformed[pos_b] = (np.power(residuals[pos_b] + 1, lambdas[pos_b]) - 1) / lambdas[pos_b]
+    transformed[pos_c] = -(np.power(-residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1) / (2 - lambdas[pos_c])
+    transformed[pos_d] = -np.log1p(-residuals[pos_d])
 
     return transformed
 
 
-def _yeo_johnson_inverse_transform_np(transformed_monthly_residuals, lambdas):
-    """Invert transformed_monthly_residuals following Yeo-Johnson transform with
+def _yeo_johnson_inverse_transform_np(residuals, lambdas):
+    """Invert emulated monthly residuals following Yeo-Johnson transform with
     parameters lambda.
 
     if X >= 0 and lambda_ == 0:
@@ -329,44 +325,27 @@ def _yeo_johnson_inverse_transform_np(transformed_monthly_residuals, lambdas):
         X = 1 - exp(-X_trans)
     """
 
-    transformed = np.zeros_like(transformed_monthly_residuals)
+    transformed = np.zeros_like(residuals)
     # get positions of four cases:
-    pos_a = (transformed_monthly_residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
-    pos_b = (transformed_monthly_residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
-    pos_c = (transformed_monthly_residuals < 0) & (
-        np.abs(lambdas - 2) > np.spacing(1.0)
-    )
-    pos_d = (transformed_monthly_residuals < 0) & (
-        np.abs(lambdas - 2) <= np.spacing(1.0)
-    )
-
+    pos_a = (residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
+    pos_b = (residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
+    pos_c = (residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
+    pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+    
     # assign values for the four cases
-    transformed[pos_a] = np.exp(transformed_monthly_residuals[pos_a]) - 1
-    transformed[pos_b] = (
-        np.power(
-            transformed_monthly_residuals[pos_b] * lambdas[pos_b] + 1,
-            1 / lambdas[pos_b],
-        )
-        - 1
-    )
-    transformed[pos_c] = 1 - (
-        np.power(
-            -(2 - lambdas[pos_c]) * transformed_monthly_residuals[pos_c] + 1,
-            1 / (2 - lambdas[pos_c]),
-        )
-    )
-    transformed[pos_d] = 1 - np.exp(-transformed_monthly_residuals[pos_d])
+    transformed[pos_a] = np.exp(residuals[pos_a]) - 1
+    transformed[pos_b] = np.power(residuals[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
+    transformed[pos_c] = 1 - np.power(-(2 - lambdas[pos_c]) * residuals[pos_c] + 1,1 / (2 - lambdas[pos_c]))
+    transformed[pos_d] = 1 - np.exp(-residuals[pos_d])
 
     return transformed
 
 
-def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
+def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
 
     # the computation of lambda is influenced by NaNs so we need to
     # get rid of them
-    local_monthly_residuals = local_monthly_residuals[
-        ~np.isnan(local_monthly_residuals)
-    ]
+    residuals = residuals[~np.isnan(residuals)]
     local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
     def _neg_log_likelihood(coeffs):
@@ -376,16 +355,12 @@ def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
 
         # version with own power transform
         transformed_local_monthly_resids = _yeo_johnson_transform_np(
-            local_monthly_residuals, lambdas
+            residuals, lambdas
         )
 
-        n_samples = local_monthly_residuals.shape[0]
+        n_samples = residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
-        loglikelihood += (
-            (lambdas - 1)
-            * np.sign(local_monthly_residuals)
-            * np.log1p(np.abs(local_monthly_residuals))
-        ).sum()
+        loglikelihood += ((lambdas - 1)* np.sign(residuals)* np.log1p(np.abs(residuals))).sum()
 
         return -loglikelihood
 
@@ -409,7 +384,7 @@ def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
     return lambdas.rename("lambdas")
 
 
-def fit_power_transformer_xr(monthly_residuals, yearly_T):
+def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
     """Estimate the optimal parameter lambda for each gridcell, given an xarray dataset
     of temperature residuals.
     The optimal lambda parameter for minimizing skewness is estimated on
@@ -488,7 +463,7 @@ def yeo_johnson_transform_xr(monthly_residuals, lambdas):
     ).rename("transformed")
 
 
-def inverse_transform(transformed_monthly_T, lambdas):
+def inverse_yo_johnson_transform_xr(monthly_residuals, lambdas):
     """Apply the inverse power transformation using the fitted lambdas.
     The inverse of the Yeo-Johnson transformation is given by::
         if X >= 0 and lambda_ == 0:
@@ -518,7 +493,7 @@ def inverse_transform(transformed_monthly_T, lambdas):
 
     return xr.apply_ufunc(
         _yeo_johnson_inverse_transform_np,
-        transformed_monthly_T,
+        monthly_residuals,
         lambdas,
         input_core_dims=[["time"], ["stack"]],
         output_core_dims=[["time"]],
