@@ -400,10 +400,10 @@ def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
 
 
 def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
-    """Estimate the optimal parameter lambda for each gridcell, given an xarray dataset
-    of temperature residuals.
-    The optimal lambda parameter for minimizing skewness is estimated on
-    each gridcell independently using maximum likelihood.
+    """Estimate the optimal coefficients for the parameters lambda for each gridcell, 
+    to normalize monthly residuals conditional on yearly temperatures.
+    The optimal coefficients for the lambda parameters for minimizing skewness are 
+    estimated on each gridcell independently using maximum likelihood.
 
     Parameters
     ----------
@@ -436,9 +436,8 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
             vectorize=True,
             join="outer",
         )
-        data = {"xi_0": xi_0, "xi_1": xi_1}
 
-        dataset = xr.Dataset(data)
+        dataset = xr.Dataset({"xi_0": xi_0, "xi_1": xi_1})
         coeffs.append(dataset)
 
     return xr.concat(coeffs, dim="month")
@@ -483,15 +482,6 @@ def yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
 
 def inverse_yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     """Apply the inverse power transformation using the fitted lambdas.
-    The inverse of the Yeo-Johnson transformation is given by::
-        if X >= 0 and lambda_ == 0:
-            X = exp(X_trans) - 1
-        elif X >= 0 and lambda_ != 0:
-            X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
-        elif X < 0 and lambda_ != 2:
-            X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
-        elif X < 0 and lambda_ == 2:
-            X = 1 - exp(-X_trans)
     Parameters
     ----------
     transformed_monthly_T : xr.DataArray of shape (n_years, n_gridcells)
@@ -505,6 +495,18 @@ def inverse_yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     inverted_monthly_T : array-like, shape (n_years, n_gridcells)
         The inverted monthly temperature values, following the distribution of 
         the original monthly values.
+
+    Notes
+    -----
+    The inverse of the Yeo-Johnson transformation is given by::
+        if X >= 0 and lambda_ == 0:
+            X = exp(X_trans) - 1
+        elif X >= 0 and lambda_ != 0:
+            X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+        elif X < 0 and lambda_ != 2:
+            X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+        elif X < 0 and lambda_ == 2:
+            X = 1 - exp(-X_trans)
     """
 
     lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
