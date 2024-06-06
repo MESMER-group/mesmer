@@ -392,6 +392,7 @@ def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
 
 
 def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
+    # use logistic function between 0 and 2 to estimate lambdas
 
     lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_T * coeffs.xi_1))
 
@@ -416,7 +417,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
     Returns
     -------
     :obj:`xr.DataSet`
-        Dataset containing the estimate coefficients xi_0 and xi_1 needed to estimate 
+        Dataset containing the estimated coefficients xi_0 and xi_1 needed to estimate 
         lambda with dimensions (months, n_gridcells) and the lambdas themselves with 
         dimensions (months, n_gridcells, n_years).
 
@@ -440,12 +441,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
         dataset = xr.Dataset(data)
         coeffs.append(dataset)
 
-    coeffs = xr.concat(coeffs, dim="month")
-
-    # get lambdas
-    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
-
-    return xr.merge([coeffs, lambdas])
+    return xr.concat(coeffs, dim="month")
 
 
 def yeo_johnson_transform_xr(monthly_residuals, lambdas):
