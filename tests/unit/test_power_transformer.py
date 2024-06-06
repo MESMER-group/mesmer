@@ -157,7 +157,7 @@ def test_standard_scaler():
 
 
 # =================== tests for xr methods ===================
-def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, scale=1):
+def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
 
     n_cells = n_lat * n_lon
     time = xr.cftime_range(start="2000-01-01", periods=n_timesteps, freq="MS")
