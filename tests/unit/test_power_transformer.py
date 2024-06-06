@@ -157,17 +157,19 @@ def test_standard_scaler():
 
 
 # =================== tests for xr methods ===================
+
 def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
 
     n_cells = n_lat * n_lon
     time = xr.cftime_range(start="2000-01-01", periods=n_timesteps, freq="MS")
 
     ts_array = np.empty((n_cells, n_timesteps))
+    rng = np.random.default_rng(0)
+
     for cell in range(n_cells):
-        rng = np.random.default_rng(0)
         skew = rng.uniform(-5, 5)
         ts = sp.stats.skewnorm.rvs(skew, size=n_timesteps)
-        ts_array[cell] = ts
+        ts_array[cell, :] = ts
 
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
     coords = {
@@ -181,8 +183,7 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
 
 def test_power_transformer_xr():
     n_years = 100
-    n_lat = 3
-    n_lon = 2
+    n_lon, n_lat = 2, 3
     n_gridcells = n_lat * n_lon
 
     monthly_residuals = skewed_data_2D(
@@ -191,18 +192,19 @@ def test_power_transformer_xr():
     yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=2, scale=n_lon)
 
     # new method
-    pt_transform = power_transformer.fit_power_transformer_xr(
+    pt_coefficients = power_transformer.fit_yeo_johnson_transform(
         monthly_residuals, yearly_T
     )
     transformed = power_transformer.yeo_johnson_transform_xr(
-        monthly_residuals, pt_transform.lambdas
+        monthly_residuals, pt_coefficients, yearly_T
     )
-    inverse_transformed = power_transformer.inverse_transform(
-        transformed, pt_transform.lambdas
+    inverse_transformed = power_transformer.inverse_yeo_johnson_transform_xr(
+        transformed.transformed, pt_coefficients, yearly_T
     )
-    xr.testing.assert_allclose(inverse_transformed, monthly_residuals)
+    xr.testing.assert_allclose(inverse_transformed.inverted, monthly_residuals)
 
     # old method
+    # NOTE: remove this once we remove the old method
     power_trans_old = []
     for mon in range(12):
         pt = power_transformer.PowerTransformerVariableLambda(standardize=False)
@@ -222,7 +224,7 @@ def test_power_transformer_xr():
         )
 
     for mon in range(12):
-        np.testing.assert_equal(transformed_old[mon], transformed.values.T[mon::12, :])
+        np.testing.assert_equal(transformed_old[mon], transformed.transformed.values.T[mon::12, :])
 
     # inverse transform
     inverse_transformed_old = []
@@ -235,5 +237,5 @@ def test_power_transformer_xr():
 
     for mon in range(12):
         np.testing.assert_allclose(
-            inverse_transformed_old[mon], inverse_transformed.values.T[mon::12, :]
+            inverse_transformed_old[mon], inverse_transformed.inverted.values.T[mon::12, :]
         )
