@@ -291,29 +291,41 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
 
 def _yeo_johnson_transform_np(residuals, lambdas):
-    """Return transformed input of local monthly residuals following Yeo-Johnson
-    transform with parameter lambda.
+    """Return transformed input local_monthly_residuals following Yeo-Johnson
+    transform with parameter lambda. Input is for one month and gridcell but 
+    all years. This function is adjusted from sklearns to accomodate variable
+    lambdas for each residual.
     """
+
+    eps = np.finfo(np.float64).eps
 
     transformed = np.zeros_like(residuals)
     # get positions of four cases:
-    pos_a = (residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
-    pos_b = (residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
-    pos_c = (residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-    pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+    # NOTE: this code is copied from sklearn's PowerTransformer, see
+    # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
+    # we acknowledge there is an inconsistency in the comparison of lambdas
+    sel_a = (residuals >= 0) & (np.abs(lambdas) < eps)
+    sel_b = (residuals >= 0) & (np.abs(lambdas) >= eps)
+    sel_c = (residuals < 0) & (np.abs(lambdas - 2) > eps)
+    sel_d = (residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
     # assign values for the four cases
-    transformed[pos_a] = np.log1p(residuals[pos_a])
-    transformed[pos_b] = (np.power(residuals[pos_b] + 1, lambdas[pos_b]) - 1) / lambdas[pos_b]
-    transformed[pos_c] = -(np.power(-residuals[pos_c] + 1, 2 - lambdas[pos_c]) - 1) / (2 - lambdas[pos_c])
-    transformed[pos_d] = -np.log1p(-residuals[pos_d])
+    transformed[sel_a] = np.log1p(residuals[sel_a])
+    transformed[sel_a] = (
+        np.power(residuals[sel_b] + 1, lambdas[sel_b]) - 1
+    ) / lambdas[sel_b]
+    transformed[sel_c] = -(
+        np.power(-residuals[sel_c] + 1, 2 - lambdas[sel_c]) - 1
+    ) / (2 - lambdas[sel_c])
+    transformed[sel_d] = -np.log1p(-residuals[sel_d])
 
     return transformed
 
 
 def _yeo_johnson_inverse_transform_np(residuals, lambdas):
     """Invert emulated monthly residuals following Yeo-Johnson transform with
-    parameters lambda.
+    parameters lambda. This function is adjusted from sklearns to accomodate 
+    variable lambdas for each residual.
 
     if X >= 0 and lambda_ == 0:
         X = exp(X_trans) - 1
@@ -325,12 +337,14 @@ def _yeo_johnson_inverse_transform_np(residuals, lambdas):
         X = 1 - exp(-X_trans)
     """
 
+    eps = np.finfo(np.float64).eps
+
     transformed = np.zeros_like(residuals)
     # get positions of four cases:
-    pos_a = (residuals >= 0) & (np.abs(lambdas) < np.spacing(1.0))
-    pos_b = (residuals >= 0) & (np.abs(lambdas) >= np.spacing(1.0))
-    pos_c = (residuals < 0) & (np.abs(lambdas - 2) > np.spacing(1.0))
-    pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= np.spacing(1.0))
+    pos_a = (residuals >= 0) & (np.abs(lambdas) < eps)
+    pos_b = (residuals >= 0) & (np.abs(lambdas) >= eps)
+    pos_c = (residuals < 0) & (np.abs(lambdas - 2) > eps)
+    pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= eps)
     
     # assign values for the four cases
     transformed[pos_a] = np.exp(residuals[pos_a]) - 1
