@@ -158,6 +158,7 @@ def test_standard_scaler():
 
 # =================== tests for xr methods ===================
 
+
 def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
 
     n_cells = n_lat * n_lon
@@ -224,7 +225,9 @@ def test_power_transformer_xr():
         )
 
     for mon in range(12):
-        np.testing.assert_equal(transformed_old[mon], transformed.transformed.values.T[mon::12, :])
+        np.testing.assert_equal(
+            transformed_old[mon], transformed.transformed.values.T[mon::12, :]
+        )
 
     # inverse transform
     inverse_transformed_old = []
@@ -237,5 +240,6 @@ def test_power_transformer_xr():
 
     for mon in range(12):
         np.testing.assert_allclose(
-            inverse_transformed_old[mon], inverse_transformed.inverted.values.T[mon::12, :]
+            inverse_transformed_old[mon],
+            inverse_transformed.inverted.values.T[mon::12, :],
         )
