@@ -481,7 +481,7 @@ def yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     return xr.merge([transformed_resids, lambdas])
 
 
-def inverse_yo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
+def inverse_yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     """Apply the inverse power transformation using the fitted lambdas.
     The inverse of the Yeo-Johnson transformation is given by::
         if X >= 0 and lambda_ == 0:
