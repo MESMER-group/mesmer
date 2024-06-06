@@ -13,7 +13,7 @@ def lambda_function(coeffs, local_yearly_T):
 
 class PowerTransformerVariableLambda(PowerTransformer):
     """Apply a power transform gridcellwise to make monthly residuals more
-    Gaussian-like. The class inherits from Sklearn's Power transofrmer class. 
+    Gaussian-like. The class inherits from Sklearn's Power transofrmer class.
     It is modified to allow for transformation parameters (lambda) which have
     a functional dependency on spatially resolved yearly mean temperature.
     Every month requires its own PowerTransform.
@@ -29,14 +29,14 @@ class PowerTransformerVariableLambda(PowerTransformer):
     Attributes
     ----------
     coeffs_ : ndarray of shape (n_gridcell, n_coefficients)
-        The coefficients to calculate lambda depending on the local yearly 
-        temperature. Defined via function lambda_function(coeff, local_yearly_T) 
+        The coefficients to calculate lambda depending on the local yearly
+        temperature. Defined via function lambda_function(coeff, local_yearly_T)
         as exponential dependency following [2]:
             def lambda_function(coeff, local_yearly_T):
                 return(2/(1+coeff[0]*np.exp(local_yearly_T*coeff[1])))
             and n_coefficients = 2
     lambdas_ : ndarray of float of shape (n_gridcell, n_years)
-        The parameters of the power transformation for each gridcell, calculated 
+        The parameters of the power transformation for each gridcell, calculated
         using lambda_function.
 
     References
@@ -111,7 +111,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         """
 
         def _neg_log_likelihood(coeffs):
-            """Return the negative log likelihood of the observed local monthly 
+            """Return the negative log likelihood of the observed local monthly
             residual temperatures as a function of lambda."""
             lambdas = lambda_function(coeffs, local_yearly_T)
             # version with sklearn yeo johnson transform
@@ -158,7 +158,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
         """Return transformed input local_monthly_residuals following Yeo-Johnson
-        transform with parameter lambda. Input is for one month and gridcell but 
+        transform with parameter lambda. Input is for one month and gridcell but
         all years.
         """
 
@@ -191,8 +191,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         Parameters
         ----------
         monthly_residuals : array-like, shape (n_years, n_gridcells)
-            The monthly temperature data to be transformed using a power transformation 
-            with the fitted self.coeffs_. Contains the yearly values of one month 
+            The monthly temperature data to be transformed using a power transformation
+            with the fitted self.coeffs_. Contains the yearly values of one month
             for all gridcells, e.g. all January values.
         yearly_T: array-like, shape (n_years, n_gridcells)
             The yearly temperature values used as predictors for the lambdas using the
@@ -248,7 +248,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         transformed_monthly_T : array-like, shape (n_years, n_gridcells)
             The transformed data.
         yearly_T: array-like, shape (n_years, n_gridcells)
-            The yearly temperature values used as predictors for the lambdas using 
+            The yearly temperature values used as predictors for the lambdas using
             the fitted self.coeffs_.
         Returns
         -------
@@ -292,7 +292,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
 def _yeo_johnson_transform_np(residuals, lambdas):
     """Return transformed input local_monthly_residuals following Yeo-Johnson
-    transform with parameter lambda. Input is for one month and gridcell but 
+    transform with parameter lambda. Input is for one month and gridcell but
     all years. This function is adjusted from sklearns to accomodate variable
     lambdas for each residual.
     """
@@ -311,12 +311,12 @@ def _yeo_johnson_transform_np(residuals, lambdas):
 
     # assign values for the four cases
     transformed[sel_a] = np.log1p(residuals[sel_a])
-    transformed[sel_b] = (
-        np.power(residuals[sel_b] + 1, lambdas[sel_b]) - 1
-    ) / lambdas[sel_b]
-    transformed[sel_c] = -(
-        np.power(-residuals[sel_c] + 1, 2 - lambdas[sel_c]) - 1
-    ) / (2 - lambdas[sel_c])
+    transformed[sel_b] = (np.power(residuals[sel_b] + 1, lambdas[sel_b]) - 1) / lambdas[
+        sel_b
+    ]
+    transformed[sel_c] = -(np.power(-residuals[sel_c] + 1, 2 - lambdas[sel_c]) - 1) / (
+        2 - lambdas[sel_c]
+    )
     transformed[sel_d] = -np.log1p(-residuals[sel_d])
 
     return transformed
@@ -324,7 +324,7 @@ def _yeo_johnson_transform_np(residuals, lambdas):
 
 def _yeo_johnson_inverse_transform_np(residuals, lambdas):
     """Invert emulated monthly residuals following Yeo-Johnson transform with
-    parameters lambda. This function is adjusted from sklearns to accomodate 
+    parameters lambda. This function is adjusted from sklearns to accomodate
     variable lambdas for each residual.
 
     if X >= 0 and lambda_ == 0:
@@ -345,11 +345,15 @@ def _yeo_johnson_inverse_transform_np(residuals, lambdas):
     pos_b = (residuals >= 0) & (np.abs(lambdas) >= eps)
     pos_c = (residuals < 0) & (np.abs(lambdas - 2) > eps)
     pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= eps)
-    
+
     # assign values for the four cases
     transformed[pos_a] = np.exp(residuals[pos_a]) - 1
-    transformed[pos_b] = np.power(residuals[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
-    transformed[pos_c] = 1 - np.power(-(2 - lambdas[pos_c]) * residuals[pos_c] + 1,1 / (2 - lambdas[pos_c]))
+    transformed[pos_b] = (
+        np.power(residuals[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
+    )
+    transformed[pos_c] = 1 - np.power(
+        -(2 - lambdas[pos_c]) * residuals[pos_c] + 1, 1 / (2 - lambdas[pos_c])
+    )
     transformed[pos_d] = 1 - np.exp(-residuals[pos_d])
 
     return transformed
@@ -363,18 +367,18 @@ def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
     local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
     def _neg_log_likelihood(coeffs):
-        """Return the negative log likelihood of the observed local monthly residual 
+        """Return the negative log likelihood of the observed local monthly residual
         temperatures as a function of lambda."""
         lambdas = lambda_function(coeffs, local_yearly_T)
 
         # version with own power transform
-        transformed_local_monthly_resids = _yeo_johnson_transform_np(
-            residuals, lambdas
-        )
+        transformed_local_monthly_resids = _yeo_johnson_transform_np(residuals, lambdas)
 
         n_samples = residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
-        loglikelihood += ((lambdas - 1)* np.sign(residuals)* np.log1p(np.abs(residuals))).sum()
+        loglikelihood += (
+            (lambdas - 1) * np.sign(residuals) * np.log1p(np.abs(residuals))
+        ).sum()
 
         return -loglikelihood
 
@@ -400,9 +404,9 @@ def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
 
 
 def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
-    """Estimate the optimal coefficients for the parameters lambda for each gridcell, 
+    """Estimate the optimal coefficients for the parameters lambda for each gridcell,
     to normalize monthly residuals conditional on yearly temperatures.
-    The optimal coefficients for the lambda parameters for minimizing skewness are 
+    The optimal coefficients for the lambda parameters for minimizing skewness are
     estimated on each gridcell independently using maximum likelihood.
 
     Parameters
@@ -417,8 +421,8 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
     Returns
     -------
     :obj:`xr.DataSet`
-        Dataset containing the estimated coefficients xi_0 and xi_1 needed to estimate 
-        lambda with dimensions (months, n_gridcells) and the lambdas themselves with 
+        Dataset containing the estimated coefficients xi_0 and xi_1 needed to estimate
+        lambda with dimensions (months, n_gridcells) and the lambdas themselves with
         dimensions (months, n_gridcells, n_years).
 
     """
@@ -450,17 +454,17 @@ def yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     Parameters
     ----------
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
-        Monthly residuals after removing harmonic model fits, used to fit for the 
+        Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
 
     coefficients : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
-        The parameters of the power transformation for each gridcell, calculated using 
+        The parameters of the power transformation for each gridcell, calculated using
         lambda_function.
 
     yearly_T :  xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
     """
-    # NOTE: this is equivalent to using pt.transform with 
+    # NOTE: this is equivalent to using pt.transform with
     # pt = PowerTransformerVariableLambda(standardize = False)
 
     lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
@@ -487,13 +491,13 @@ def inverse_yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     transformed_monthly_T : xr.DataArray of shape (n_years, n_gridcells)
         The transformed data.
     lambdas: xr.DataArray of shape (months, n_gridcells, n_years)
-        The parameters of the power transformation for each gridcell, calculated 
+        The parameters of the power transformation for each gridcell, calculated
         using lambda_function.
 
     Returns
     -------
     inverted_monthly_T : array-like, shape (n_years, n_gridcells)
-        The inverted monthly temperature values, following the distribution of 
+        The inverted monthly temperature values, following the distribution of
         the original monthly values.
 
     Notes
