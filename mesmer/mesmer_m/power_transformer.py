@@ -12,10 +12,10 @@ def lambda_function(coeffs, local_yearly_T):
 
 
 class PowerTransformerVariableLambda(PowerTransformer):
-    """Apply a power transform gridcellwise to make monthly residuals more Gaussian-like.
-    The class inherits from Sklearn's Power transofrmer class. It is modified
-    to allow for transformation parameters (lambda) which have a functional
-    dependency on spatially resolved yearly mean temperature.
+    """Apply a power transform gridcellwise to make monthly residuals more
+    Gaussian-like. The class inherits from Sklearn's Power transofrmer class. 
+    It is modified to allow for transformation parameters (lambda) which have
+    a functional dependency on spatially resolved yearly mean temperature.
     Every month requires its own PowerTransform.
 
     Please refer to [1] for a description of the  Power transformer class.
@@ -29,13 +29,15 @@ class PowerTransformerVariableLambda(PowerTransformer):
     Attributes
     ----------
     coeffs_ : ndarray of shape (n_gridcell, n_coefficients)
-        The coefficients to calculate lambda depending on the local yearly temperature.
-        Defined via function lambda_function(coeff, local_yearly_T) as exponential dependency following [2]:
+        The coefficients to calculate lambda depending on the local yearly 
+        temperature. Defined via function lambda_function(coeff, local_yearly_T) 
+        as exponential dependency following [2]:
             def lambda_function(coeff, local_yearly_T):
                 return(2/(1+coeff[0]*np.exp(local_yearly_T*coeff[1])))
             and n_coefficients = 2
     lambdas_ : ndarray of float of shape (n_gridcell, n_years)
-        The parameters of the power transformation for each gridcell, calculated using lambda_function.
+        The parameters of the power transformation for each gridcell, calculated 
+        using lambda_function.
 
     References
     ----------
@@ -48,8 +50,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
     TBD
     """
 
-    # TODO: we dont actually save the lambdas anywhere, should we? then adjust documentation
-
     def __init__(self, **kwargs):
         super().__init__(self, **kwargs)
 
@@ -61,7 +61,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         Parameters
         ----------
         monthly_residuals : ndarray of shape (n_years, n_gridcells)
-            Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
+            Monthly residuals after removing harmonic model fits, used to fit for
+            the optimal transformation parameters (lambdas).
             Contains the value of one month for all years, e.g. all January values.
         yearly_T :  ndarray of shape (n_years, n_gridcells)
             yearly temperature values used as predictors for the lambdas.
@@ -82,10 +83,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
                 )
                 for gridcell in np.arange(n_gridcells)
             )
-        )  # ,  desc = 'Optimizing Fmin:', position = 0, leave = True, file=sys.stdout)))
-        # self.coeffs_ = np.array([self._yeo_johnson_optimize_fmin(X[:,i_grid], X_func[:,i_grid]) for i_grid in tqdm(np.arange(n_index),  desc = 'Optimizing Fmin:', position = 0, leave = True, file=sys.stdout)])
-        # xarray: optim_function(col) for col in X.T
-        # print(self.coeffs_.shape)
+        )
+
         self.mins_ = np.amin(monthly_residuals, axis=0)
         self.maxs_ = np.amax(monthly_residuals, axis=0)
         # print(self.coeffs_)
@@ -112,8 +111,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         """
 
         def _neg_log_likelihood(coeffs):
-            """Return the negative log likelihood of the observed local monthly residual temperatures
-            as a function of lambda."""
+            """Return the negative log likelihood of the observed local monthly 
+            residual temperatures as a function of lambda."""
             lambdas = lambda_function(coeffs, local_yearly_T)
             # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
@@ -158,8 +157,9 @@ class PowerTransformerVariableLambda(PowerTransformer):
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
-        """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
-        parameter lambda. Input is for one month and gridcell but all years.
+        """Return transformed input local_monthly_residuals following Yeo-Johnson
+        transform with parameter lambda. Input is for one month and gridcell but 
+        all years.
         """
 
         eps = np.finfo(np.float64).eps
@@ -168,7 +168,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         # get positions of four cases:
         # NOTE: this code is copied from sklearn's PowerTransformer, see
         # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
-        # we acknowledge there is an inconsistency in the comarison of lambdas
+        # we acknowledge there is an inconsistency in the comparison of lambdas
         pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < eps)
         pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= eps)
         pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
@@ -191,10 +191,12 @@ class PowerTransformerVariableLambda(PowerTransformer):
         Parameters
         ----------
         monthly_residuals : array-like, shape (n_years, n_gridcells)
-            The monthly temperature data to be transformed using a power transformation with the fitted self.coeffs_.
-            Contains the yearly values of one month for all gridcells, e.g. all January values.
+            The monthly temperature data to be transformed using a power transformation 
+            with the fitted self.coeffs_. Contains the yearly values of one month 
+            for all gridcells, e.g. all January values.
         yearly_T: array-like, shape (n_years, n_gridcells)
-            The yearly temperature values used as predictors for the lambdas using the fitted self.coeffs_.
+            The yearly temperature values used as predictors for the lambdas using the
+            fitted self.coeffs_.
         Returns
         -------
         transformed_monthly_resids : array-like, shape (n_years, n_gridcells)
@@ -204,10 +206,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         transformed_monthly_resids = np.zeros_like(monthly_residuals)
 
-        # for gridcell, lmbda in enumerate(lambdas.T):
-        #     for year, year_lmbda in enumerate(lmbda):
-        #         with np.errstate(invalid='ignore'):  # hide NaN warnings
-        #             transformed_monthly_resids[year, gridcell] = self._yeo_johnson_transform(monthly_residuals[year, gridcell], year_lmbda)
         for gridcell, lmbda in enumerate(lambdas.T):
             transformed_monthly_resids[:, gridcell] = self._yeo_johnson_transform(
                 monthly_residuals[:, gridcell], lmbda
@@ -221,7 +219,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
         return transformed_monthly_resids
 
     def _get_yeo_johnson_lambdas(self, yearly_T):
-        # TODO: check the dimensions in all of this
 
         lambdas = np.zeros_like(yearly_T)
         gridcell = 0
@@ -230,7 +227,6 @@ class PowerTransformerVariableLambda(PowerTransformer):
             lambdas[:, gridcell] = lambda_function(coeffs, local_yearly_T)
             gridcell += 1
 
-        # TODO: this should not be necessary?
         lambdas = np.where(lambdas < 0, 0, lambdas)
         lambdas = np.where(lambdas > 2, 2, lambdas)
 
@@ -252,7 +248,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         transformed_monthly_T : array-like, shape (n_years, n_gridcells)
             The transformed data.
         yearly_T: array-like, shape (n_years, n_gridcells)
-            The yearly temperature values used as predictors for the lambdas using the fitted self.coeffs_.
+            The yearly temperature values used as predictors for the lambdas using 
+            the fitted self.coeffs_.
         Returns
         -------
         inverted_monthly_T : array-like, shape (n_years, n_gridcells)
@@ -294,8 +291,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
 
 def _yeo_johnson_transform_np(local_monthly_residuals, lambdas):
-    """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
-    parameter lambda.
+    """Return transformed input local_monthly_residuals following Yeo-Johnson 
+    transform with parameter lambda.
     """
 
     transformed = np.zeros_like(local_monthly_residuals)
@@ -373,8 +370,8 @@ def _yeo_johnson_optimize_lambda(local_monthly_residuals, local_yearly_T):
     local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
 
     def _neg_log_likelihood(coeffs):
-        """Return the negative log likelihood of the observed local monthly residual temperatures
-        as a function of lambda."""
+        """Return the negative log likelihood of the observed local monthly residual 
+        temperatures as a function of lambda."""
         lambdas = lambda_function(coeffs, local_yearly_T)
 
         # version with own power transform
@@ -421,7 +418,8 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
     Parameters
     ----------
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
-        Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
+        Monthly residuals after removing harmonic model fits, used to fit for the optimal
+        transformation parameters (lambdas).
 
     yearly_T :  xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
@@ -429,7 +427,9 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
     Returns
     -------
     :obj:`xr.DataSet`
-        Dataset containing the estimate coefficients xi_0 and xi_1 needed to estimate lambda with dimensions (months, n_gridcells) and the lambdas themselves with dimensions (months, n_gridcells, n_years).
+        Dataset containing the estimate coefficients xi_0 and xi_1 needed to estimate 
+        lambda with dimensions (months, n_gridcells) and the lambdas themselves with 
+        dimensions (months, n_gridcells, n_years).
 
     """
     monthly_residuals_grouped = monthly_residuals.groupby("time.month")
@@ -460,18 +460,21 @@ def fit_power_transformer_xr(monthly_residuals, yearly_T):
 
 
 def yeo_johnson_transform_xr(monthly_residuals, lambdas):
-    """Return transformed input local_monthly_residuals following Yeo-Johnson transform with
-    parameters lambda, fit with fit_power_transformer_xr.
+    """Return transformed input local_monthly_residuals following Yeo-Johnson transform
+    with parameters lambda, fit with fit_power_transformer_xr.
 
     Parameters
     ----------
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
-        Monthly residuals after removing harmonic model fits, used to fit for the optimal transformation parameters (lambdas).
+        Monthly residuals after removing harmonic model fits, used to fit for the 
+        optimal transformation parameters (lambdas).
 
     lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
-        The parameters of the power transformation for each gridcell, calculated using lambda_function.
+        The parameters of the power transformation for each gridcell, calculated using 
+        lambda_function.
     """
-    # NOTE: this is equivalent to using pt.transform with pt = PowerTransformerVariableLambda(standardize = False)
+    # NOTE: this is equivalent to using pt.transform with 
+    # pt = PowerTransformerVariableLambda(standardize = False)
     lambdas = lambdas.stack(stack=["year", "month"])
     return xr.apply_ufunc(
         _yeo_johnson_transform_np,
@@ -501,12 +504,14 @@ def inverse_transform(transformed_monthly_T, lambdas):
     transformed_monthly_T : xr.DataArray of shape (n_years, n_gridcells)
         The transformed data.
     lambdas: xr.DataArray of shape (months, n_gridcells, n_years)
-        The parameters of the power transformation for each gridcell, calculated using lambda_function.
+        The parameters of the power transformation for each gridcell, calculated 
+        using lambda_function.
 
     Returns
     -------
     inverted_monthly_T : array-like, shape (n_years, n_gridcells)
-        The inverted monthly temperature values, following the distribution of the original monthly values.
+        The inverted monthly temperature values, following the distribution of 
+        the original monthly values.
     """
 
     lambdas = lambdas.stack(stack=["year", "month"])
