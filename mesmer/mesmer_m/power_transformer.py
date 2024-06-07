@@ -363,8 +363,9 @@ def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
 
     # the computation of lambda is influenced by NaNs so we need to
     # get rid of them
-    residuals = residuals[~np.isnan(residuals)]
-    local_yearly_T = local_yearly_T[~np.isnan(local_yearly_T)]
+    isnan = np.isnan(residuals) | np.isnan(local_yearly_T)
+    residuals = residuals[~isnan]
+    local_yearly_T = local_yearly_T[~isnan]
 
     def _neg_log_likelihood(coeffs):
         """Return the negative log likelihood of the observed local monthly residual
