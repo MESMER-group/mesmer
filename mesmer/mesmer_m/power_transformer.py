@@ -448,7 +448,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
     return xr.concat(coeffs, dim="month")
 
 
-def yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
+def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     """Return transformed input local_monthly_residuals following Yeo-Johnson transform
     with parameters lambda, fit with fit_power_transformer_xr.
 
@@ -485,7 +485,7 @@ def yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
     return xr.merge([transformed_resids, lambdas])
 
 
-def inverse_yeo_johnson_transform_xr(monthly_residuals, coeffs, yearly_T):
+def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     """Apply the inverse power transformation using the fitted lambdas.
     Parameters
     ----------
