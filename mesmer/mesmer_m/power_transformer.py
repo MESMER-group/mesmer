@@ -494,7 +494,8 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
 
 
 def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
-    """Apply the inverse power transformation using the fitted lambdas.
+    """apply the inverse power transformation using the fitted lambdas.
+
     Parameters
     ----------
     transformed_monthly_T : xr.DataArray of shape (n_years, n_gridcells)
