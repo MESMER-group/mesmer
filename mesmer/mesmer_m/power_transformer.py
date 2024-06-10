@@ -373,10 +373,10 @@ def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
         lambdas = lambda_function(coeffs, local_yearly_T)
 
         # version with own power transform
-        transformed_local_monthly_resids = _yeo_johnson_transform_np(residuals, lambdas)
+        transformed_resids = _yeo_johnson_transform_np(residuals, lambdas)
 
         n_samples = residuals.shape[0]
-        loglikelihood = -n_samples / 2 * np.log(transformed_local_monthly_resids.var())
+        loglikelihood = -n_samples / 2 * np.log(transformed_resids.var())
         loglikelihood += (
             (lambdas - 1) * np.sign(residuals) * np.log1p(np.abs(residuals))
         ).sum()
@@ -404,7 +404,7 @@ def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
     return lambdas.rename("lambdas")
 
 
-def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
+def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
     """Estimate the optimal coefficients for the parameters lambda for each gridcell,
     to normalize monthly residuals conditional on yearly temperatures.
     The optimal coefficients for the lambda parameters for minimizing skewness are
@@ -427,23 +427,26 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T):
         dimensions (months, n_gridcells, n_years).
 
     """
-    monthly_resids_grouped = monthly_residuals.groupby("time.month")
+    monthly_resids_grouped = monthly_residuals.groupby(time_dim + '.month')
 
     coeffs = []
     for month in range(1, 13):
+
+        # align time dimension
+        monthly_data = monthly_resids_grouped[month]
+        monthly_data[time_dim] = yearly_T[time_dim]
+
         xi_0, xi_1 = xr.apply_ufunc(
             _yeo_johnson_optimize_lambda,
-            monthly_resids_grouped[month],
+            monthly_data,
             yearly_T,
-            input_core_dims=[["time"], ["time"]],
+            input_core_dims=[[time_dim], [time_dim]],
             output_core_dims=[[], []],
             output_dtypes=[float, float],
             vectorize=True,
-            join="outer",
         )
 
-        dataset = xr.Dataset({"xi_0": xi_0, "xi_1": xi_1})
-        coeffs.append(dataset)
+        coeffs.append(xr.Dataset({"xi_0": xi_0, "xi_1": xi_1}))
 
     return xr.concat(coeffs, dim="month")
 
