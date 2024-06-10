@@ -427,7 +427,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
         dimensions (months, n_gridcells, n_years).
 
     """
-    monthly_resids_grouped = monthly_residuals.groupby(time_dim + '.month')
+    monthly_resids_grouped = monthly_residuals.groupby(time_dim + ".month")
 
     coeffs = []
     for month in range(1, 13):
