@@ -196,10 +196,10 @@ def test_power_transformer_xr():
     pt_coefficients = power_transformer.fit_yeo_johnson_transform(
         monthly_residuals, yearly_T
     )
-    transformed = power_transformer.yeo_johnson_transform_xr(
+    transformed = power_transformer.yeo_johnson_transform(
         monthly_residuals, pt_coefficients, yearly_T
     )
-    inverse_transformed = power_transformer.inverse_yeo_johnson_transform_xr(
+    inverse_transformed = power_transformer.inverse_yeo_johnson_transform(
         transformed.transformed, pt_coefficients, yearly_T
     )
     xr.testing.assert_allclose(inverse_transformed.inverted, monthly_residuals)
