@@ -292,8 +292,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
 def _yeo_johnson_transform_np(residuals, lambdas):
     """transform residuals using Yeo-Johnson transformation with variable lambda
-     
-    Input is for one month and gridcell but all years. This function is adjusted 
+
+    Input is for one month and gridcell but all years. This function is adjusted
     from sklearn to accomodate variable lambdas for each residual.
     """
 

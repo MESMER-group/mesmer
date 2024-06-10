@@ -201,7 +201,9 @@ def test_power_transformer_xr():
     inverse_transformed = power_transformer.inverse_yeo_johnson_transform(
         transformed.transformed, pt_coefficients, yearly_T
     )
-    xr.testing.assert_allclose(inverse_transformed.inverted, monthly_residuals, atol=1e-7)
+    xr.testing.assert_allclose(
+        inverse_transformed.inverted, monthly_residuals, atol=1e-7
+    )
 
     # old method
     # NOTE: remove this once we remove the old method
