@@ -487,7 +487,6 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
         output_core_dims=[["time"]],
         output_dtypes=[float],
         vectorize=True,
-        join="outer",
     ).rename("transformed")
 
     return xr.merge([transformed_resids, lambdas])
@@ -534,7 +533,6 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
         output_core_dims=[["time"]],
         output_dtypes=[float],
         vectorize=True,
-        join="outer",
     ).rename("inverted")
 
     return xr.merge([inverted_resids, lambdas])
