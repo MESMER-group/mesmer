@@ -324,7 +324,7 @@ def _yeo_johnson_transform_np(residuals, lambdas):
 
 def _yeo_johnson_inverse_transform_np(residuals, lambdas):
     """invert residuals using Yeo-Johnson transformation with variable lambda
-    
+
     This function is adjusted from sklearn to accomodate variable lambdas for each
     residual.
 
