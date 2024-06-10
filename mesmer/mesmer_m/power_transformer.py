@@ -291,10 +291,10 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
 
 def _yeo_johnson_transform_np(residuals, lambdas):
-    """Return transformed input local_monthly_residuals following Yeo-Johnson
-    transform with parameter lambda. Input is for one month and gridcell but
-    all years. This function is adjusted from sklearns to accomodate variable
-    lambdas for each residual.
+    """transform residuals using Yeo-Johnson transformation with variable lambda
+     
+    Input is for one month and gridcell but all years. This function is adjusted 
+    from sklearn to accomodate variable lambdas for each residual.
     """
 
     eps = np.finfo(np.float64).eps
@@ -409,7 +409,7 @@ def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
 
 
 def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
-    """Estimate the optimal coefficients for the parameters lambda for each gridcell,
+    """estimate the optimal coefficients for the parameters lambda for each gridcell,
     to normalize monthly residuals conditional on yearly temperatures.
     The optimal coefficients for the lambda parameters for minimizing skewness are
     estimated on each gridcell independently using maximum likelihood.
