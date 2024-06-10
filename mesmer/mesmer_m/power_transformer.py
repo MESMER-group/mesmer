@@ -419,9 +419,11 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the optimal
         transformation parameters (lambdas).
-
-    yearly_T :  xr.DataArray of shape (n_years, n_gridcells)
+    yearly_T : xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
+    time_dim : str, optional
+        Name of the time dimension in the input data used to align monthly residuals and
+        yearly temperature data.
 
     Returns
     -------
@@ -465,13 +467,17 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
-
-    coefficients : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
         lambda_function.
-
-    yearly_T :  xr.DataArray of shape (n_years, n_gridcells)
+    yearly_T : xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
+
+    Returns
+    -------
+    :obj:`xr.DataSet`
+        Dataset containing the transformed monthly residuals and the parameters of the
+        power transformation for each gridcell, calculated using lambda_function.
     """
     # NOTE: this is equivalent to using pt.transform with
     # pt = PowerTransformerVariableLambda(standardize = False)
@@ -497,17 +503,19 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
 
     Parameters
     ----------
-    transformed_monthly_T : xr.DataArray of shape (n_years, n_gridcells)
+    monthly_residuals : xr.DataArray of shape (n_years, n_gridcells)
         The transformed data.
-    lambdas: xr.DataArray of shape (months, n_gridcells, n_years)
-        The parameters of the power transformation for each gridcell, calculated
-        using lambda_function.
+    coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
+        The parameters of the power transformation for each gridcell, calculated using
+        lambda_function.
+    yearly_T : xr.DataArray of shape (n_years, n_gridcells)
+        yearly temperature values used as predictors for the lambdas.
 
     Returns
     -------
-    inverted_monthly_T : array-like, shape (n_years, n_gridcells)
-        The inverted monthly temperature values, following the distribution of
-        the original monthly values.
+    :obj:`xr.DataSet`
+        Dataset containing the inverted monthly residuals and the parameters of the
+        power transformation for each gridcell, calculated using lambda_function.
 
     Notes
     -----
