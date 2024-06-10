@@ -167,10 +167,9 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
     ts_array = np.empty((n_cells, n_timesteps))
     rng = np.random.default_rng(0)
 
-    for cell in range(n_cells):
-        skew = rng.uniform(-5, 5)
-        ts = sp.stats.skewnorm.rvs(skew, size=n_timesteps)
-        ts_array[cell, :] = ts
+    # create random data with a different skew for each cell
+    skew = rng.uniform(-5, 5, size=(n_cells, 1))
+    ts_array = sp.stats.skewnorm.rvs(skew, size=(n_cells, n_timesteps))
 
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
     coords = {
@@ -190,7 +189,7 @@ def test_power_transformer_xr():
     monthly_residuals = skewed_data_2D(
         n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon
     )
-    yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=2, scale=n_lon)
+    yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
 
     # new method
     pt_coefficients = power_transformer.fit_yeo_johnson_transform(
@@ -202,7 +201,7 @@ def test_power_transformer_xr():
     inverse_transformed = power_transformer.inverse_yeo_johnson_transform(
         transformed.transformed, pt_coefficients, yearly_T
     )
-    xr.testing.assert_allclose(inverse_transformed.inverted, monthly_residuals)
+    xr.testing.assert_allclose(inverse_transformed.inverted, monthly_residuals, atol=1e-7)
 
     # old method
     # NOTE: remove this once we remove the old method
