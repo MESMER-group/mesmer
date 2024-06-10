@@ -456,7 +456,8 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
 
 
 def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
-    """Return transformed input local_monthly_residuals following Yeo-Johnson transform
+    """
+    transform monthly_residuals following Yeo-Johnson transformer
     with parameters lambda, fit with fit_power_transformer_xr.
 
     Parameters
