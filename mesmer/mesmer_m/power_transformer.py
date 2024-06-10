@@ -372,7 +372,8 @@ def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
 
     def _neg_log_likelihood(coeffs):
         """Return the negative log likelihood of the observed local monthly residual
-        temperatures as a function of lambda."""
+        temperatures as a function of lambda.
+        """
         lambdas = lambda_function(coeffs, local_yearly_T)
 
         # version with own power transform
