@@ -323,10 +323,13 @@ def _yeo_johnson_transform_np(residuals, lambdas):
 
 
 def _yeo_johnson_inverse_transform_np(residuals, lambdas):
-    """Invert emulated monthly residuals following Yeo-Johnson transform with
-    parameters lambda. This function is adjusted from sklearns to accomodate
-    variable lambdas for each residual.
+    """invert residuals using Yeo-Johnson transformation with variable lambda
+    
+    This function is adjusted from sklearn to accomodate variable lambdas for each
+    residual.
 
+    Notes
+    -----
     if X >= 0 and lambda_ == 0:
         X = exp(X_trans) - 1
     elif X >= 0 and lambda_ != 0:
