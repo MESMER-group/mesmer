@@ -68,7 +68,8 @@ class ConfigMesmerX:
                 "dir_plots",
             ]:
                 raise Exception(
-                    'Unknown type of directory provided in "paths", please check available options.'
+                    'Unknown type of directory provided in "paths", please check'
+                    " available options."
                 )
 
         # cmip-ng

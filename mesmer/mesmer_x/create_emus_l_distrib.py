@@ -63,7 +63,8 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
     # checking that the provided inputs are transformed.
     if list(transf_emus_lv.keys()) != ["all"]:
         raise Exception(
-            "Data to backtransform must be emulations from 'create_emus_lv' with only the key 'all'"
+            "Data to backtransform must be emulations from 'create_emus_lv' with only"
+            " the key 'all'"
         )
 
     # creating the dictionary that will be filled in
@@ -111,7 +112,9 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
             # checking if different scenarios are provided
             elif np.any(list_scens != maybe_scens):
                 raise Exception(
-                    "The different covariants for the parameters have different list of scenarios, please provide the same ones. NB: 'all' applies to all other scenarios, thus did not cause this issue."
+                    "The different covariants for the parameters have different list of"
+                    " scenarios, please provide the same ones. NB: 'all' applies to all"
+                    " other scenarios, thus did not cause this issue."
                 )
 
         if force_scen is not None:

@@ -511,7 +511,8 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
             print(
                 "WARNING: some transformed values of "
                 + var_targ
-                + " are very unlikely, a possible cause is a fit missing strong signals. Action taken: blocking them at a limit."
+                + " are very unlikely, a possible cause is a fit missing strong"
+                " signals. Action taken: blocking them at a limit."
             )
 
     return transf_inputs
@@ -1785,7 +1786,8 @@ class distrib_cov:
                 # checking if that one failed as well
                 if self.error_failedfit and not m.success:
                     raise Exception(
-                        "The fast detrend provides with a valid first guess, but not good enough."
+                        "The fast detrend provides with a valid first guess, but not"
+                        " good enough."
                     )
 
             return self.translate_m_sol(m.x)

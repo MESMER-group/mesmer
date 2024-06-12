@@ -93,7 +93,8 @@ class Expression:
 
         else:
             raise ValueError(
-                "Please provide a distribution written as in scipy.stats: https://docs.scipy.org/doc/scipy/reference/stats.html"
+                "Please provide a distribution written as in scipy.stats:"
+                " https://docs.scipy.org/doc/scipy/reference/stats.html"
             )
 
     def find_expr_parameters(self):
@@ -117,7 +118,8 @@ class Expression:
                 raise ValueError(
                     "The parameter "
                     + param
-                    + " is not part of prepared expression in scipy.stats: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
+                    + " is not part of prepared expression in scipy.stats:"
+                    " https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
                     + self.distrib.name
                 )
 

@@ -406,7 +406,8 @@ class distrib_cov:
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
             raise Exception(
-                "Only one of data_targ_addtest & data_preds_addtest have been provided, not both of them. Please correct."
+                "Only one of data_targ_addtest & data_preds_addtest have been provided,"
+                " not both of them. Please correct."
             )
         self.data_targ_addtest = data_targ_addtest
         self.data_preds_addtest = data_preds_addtest
@@ -530,7 +531,9 @@ class distrib_cov:
             )
         ):
             raise Exception(
-                "Lack of consistency on the options 'type_fun_optim', 'threshold_stopping_rule' and 'ind_year_thres', not sure if the stopping rule will be employed"
+                "Lack of consistency on the options 'type_fun_optim',"
+                " 'threshold_stopping_rule' and 'ind_year_thres', not sure if the"
+                " stopping rule will be employed"
             )
 
     def eval_weights(self, n_bins_density=40):
