@@ -29,7 +29,7 @@ class Expression:
 
         Parameters
         ----------
-        expr: str
+        expr : str
             string describing the expression that will be used. Existing methods for
             flexible conditional distributions don't provide the level of flexibility
             that MESMER-X uses.
@@ -52,7 +52,7 @@ class Expression:
               normally. Names of packages should be included.
               spaces dont matter in the equations
 
-        expr_name: str
+        expr_name : str
             Name of the expression.
 
         Notes
