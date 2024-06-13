@@ -17,61 +17,66 @@ import xarray as xr
 
 
 class Expression:
-    """interpret string of conditional distribution, interpret them, and evaluate them
-
-    When initialized, the class identifies the distribution, inputs, parameters and
-    coefficients. Then, the next function would be evaluate(coefficients, inputs,
-    forced_shape) to assess the distribution given the provided values of coefficients
-    & inputs. NB language: the distribution depends on parameters (loc, scale, etc),
-    that are functions of inputs and coefficients.
-
-    Parameters
-    ----------
-    expr: str
-        string describing the expression that will be used. Existing methods for
-        flexible conditional distributions don't provide the level of flexibility that
-        MESMER-X uses.
-        Requirements to follow to have the expression being understood:
-        - distribution: must be the name of a distribution in scipy stats (continuous or
-          discrete): https://docs.scipy.org/doc/scipy/reference/stats.html
-        - parameters: all names for the parameters of the distributions must be
-          provided: loc, scale, shape, mu, a, b, c, etc.
-        - coefficients: must be named "c#", with # being the number of the coefficient:
-          e.g. c1, c2, c3.
-        - inputs: any string that can be written as a variable in python, and surrounded
-          with "__": e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__,
-          __GMT, _GMT_ etc.
-        - equations: the equations for the evolutions must be written as it would be
-          normally. Names of packages should be included.
-          spaces dont matter in the equations
-
-    expr_name: str
-        Name of the expression.
-
-    Notes
-    -----
-    - Forcing values of certain parameters (eg scale) to be positive: to implement in
-      class 'expression'?
-    - Forcing values of certain parameters (eg mu for poisson) to be integers: to
-      implement in class 'expression'?
-    - Reasons for not using sympy:
-        - sympy.stats does not have all required distributions (e.g. GEV) & all required
-          functions (e.g. log-likelihood)
-          -> so using scipy distributions with parameters as sympy expressions
-        - but these expressions dont deal well with numpy array, or even less with
-          xarray
-          -> could, but tedious.
-        - And the result would be significantly slower than with numpy/xarray based
-        approaches like here.
-
-    Examples
-    --------
-    - "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)"
-    - "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
-    - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
-    """
 
     def __init__(self, expr, expr_name):
+        """conditional distribution: definition, interpretation and evaluation
+
+        When initialized, the class identifies the distribution, inputs, parameters and
+        coefficients. Then, the next function would be evaluate(coefficients, inputs,
+        forced_shape) to assess the distribution given the provided values of
+        coefficients & inputs. NB language: the distribution depends on parameters
+        (loc, scale, etc), that are functions of inputs and coefficients.
+
+        Parameters
+        ----------
+        expr: str
+            string describing the expression that will be used. Existing methods for
+            flexible conditional distributions don't provide the level of flexibility
+            that MESMER-X uses.
+            Requirements to follow to have the expression being understood:
+
+            - distribution: must be the name of a distribution in scipy stats (discrete
+              or continuous): https://docs.scipy.org/doc/scipy/reference/stats.html
+
+            - parameters: all names for the parameters of the distributions must be
+              provided: loc, scale, shape, mu, a, b, c, etc.
+
+            - coefficients: must be named "c#", with # being the number of the
+              coefficient: e.g. c1, c2, c3.
+
+            - inputs: any string that can be written as a variable in python, and
+              surrounded with "__": e.g. __GMT__, __X1__, __gmt_tm1__, but NOT
+              __gmt-1__, __#days__, __GMT, _GMT_ etc.
+
+            - equations: the equations for the evolutions must be written as it would be
+              normally. Names of packages should be included.
+              spaces dont matter in the equations
+
+        expr_name: str
+            Name of the expression.
+
+        Notes
+        -----
+        - Forcing values of certain parameters (eg scale) to be positive: to implement
+          in class 'expression'?
+        - Forcing values of certain parameters (eg mu for poisson) to be integers: to
+          implement in class 'expression'?
+        - Reasons for not using sympy:
+          - sympy.stats does not have all required distributions (e.g. GEV) & all required
+            functions (e.g. log-likelihood)
+            -> so using scipy distributions with parameters as sympy expressions
+          - but these expressions dont deal well with numpy array, or even less with
+            xarray -> could, but tedious.
+          - And the result would be significantly slower than with numpy/xarray based
+            approaches like here.
+
+        Examples
+        --------
+        - "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)"
+        - "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
+        - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
+        """
+
         # basic initalization
         self.expression = expr
         self.expression_name = expr_name
@@ -134,7 +139,8 @@ class Expression:
                     + self.distrib.name
                 )
 
-        # recommend not to try to fill in missing information on parameters with constant parameters, but to raise a ValueError instead.
+        # recommend not to try to fill in missing information on parameters with
+        # constant parameters, but to raise a ValueError instead.
         for pot_param in self.parameters_list:
             if pot_param not in self.parameters_expressions.keys():
                 raise ValueError("No information provided for " + pot_param)
