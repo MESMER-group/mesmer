@@ -95,6 +95,7 @@ class Expression:
     def interpret_distrib(self):
         """interpreting the expression"""
 
+        dist = str.split(self.expression, "(")[0]
         if (
             dist
             in ss._discrete_distns._distn_names + ss._continuous_distns._distn_names
