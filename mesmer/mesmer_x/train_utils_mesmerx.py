@@ -17,45 +17,60 @@ import xarray as xr
 
 
 class Expression:
+    """interpret string of conditional distribution, interpret them, and evaluate them
+
+    When initialized, the class identifies the distribution, inputs, parameters and
+    coefficients. Then, the next function would be evaluate(coefficients, inputs,
+    forced_shape) to assess the distribution given the provided values of coefficients
+    & inputs. NB language: the distribution depends on parameters (loc, scale, etc),
+    that are functions of inputs and coefficients.
+
+    Parameters
+    ----------
+    expr: str
+        string describing the expression that will be used. Existing methods for
+        flexible conditional distributions don't provide the level of flexibility that
+        MESMER-X uses.
+        Requirements to follow to have the expression being understood:
+        - distribution: must be the name of a distribution in scipy stats (continuous or
+          discrete): https://docs.scipy.org/doc/scipy/reference/stats.html
+        - parameters: all names for the parameters of the distributions must be
+          provided: loc, scale, shape, mu, a, b, c, etc.
+        - coefficients: must be named "c#", with # being the number of the coefficient:
+          e.g. c1, c2, c3.
+        - inputs: any string that can be written as a variable in python, and surrounded
+          with "__": e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__,
+          __GMT, _GMT_ etc.
+        - equations: the equations for the evolutions must be written as it would be
+          normally. Names of packages should be included.
+          spaces dont matter in the equations
+
+    expr_name: str
+        Name of the expression.
+
+    Notes
+    -----
+    - Forcing values of certain parameters (eg scale) to be positive: to implement in
+      class 'expression'?
+    - Forcing values of certain parameters (eg mu for poisson) to be integers: to
+      implement in class 'expression'?
+    - Reasons for not using sympy:
+        - sympy.stats does not have all required distributions (e.g. GEV) & all required
+          functions (e.g. log-likelihood)
+          -> so using scipy distributions with parameters as sympy expressions
+        - but these expressions dont deal well with numpy array, or even less with
+          xarray
+          -> could, but tedious.
+        - And the result would be significantly slower than with numpy/xarray based
+        approaches like here.
+
+    Examples
+    --------
+    - "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)"
+    - "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
+    - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
     """
-        Class to interpret string of conditional distribution, interpret them, and evaluate them.
-        When initialized, the class identifies the distribution, inputs, parameters and coefficients.
-        Then, the next function would be evaluate(coefficients, inputs, forced_shape) to assess the distribution given the provided values of coefficients & inputs.
-        NB language: the distribution depends on parameters (loc, scale, etc), that are functions of inputs and coefficients.
 
-    Parameters:
-    -------
-        expr: str
-            string describing the expression that will be used. Existing methods for flexible conditional distributions dont provide the level of flexibility that MESMER-X actually uses.
-            Requirements to follow to have the expression being understood:
-                - distribution: must be the name of a distribution in scipy stats (continuous or discrete): https://docs.scipy.org/doc/scipy/reference/stats.html
-                - parameters: all names for the parameters of the distributions must be provided: loc, scale, shape, mu, a, b, c, etc.
-                - coefficients: must be named "c#", with # being the number of the coefficient: e.g. c1, c2, c3.
-                - inputs: any string that can be written as a variable in python, and surrounded with "__": e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__, __GMT, _GMT_ etc.
-                - equations: the equations for the evolutions must be written as it would be normally. Names of packages should be included.
-                spaces dont matter in the equiations
-            Examples:
-                - "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)"
-                - "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
-                - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
-
-        expr_name: str
-            Name of the expression.
-
-    Notes:
-    -------
-        - Forcing values of certain parameters (eg scale) to be positive: to implement in class 'expression'?
-        - Forcing values of certain parameters (eg mu for poisson) to be integers: to implement in class 'expression'?
-        - Reasons for not using sympy:
-            - sympy.stats does not have all required distributions (e.g. GEV) & all required functions (e.g. log-likelihood)
-            -> so using scipy distributions with parameters as sympy expressions
-            - but these expressions dont deal well with numpy array, or even less with xarray
-            -> could, but tedious.
-            - And the result would be significantly slower than with numpy/xarray based approaches like here.
-    """
-
-    # --------------------
-    # INITIALIZATION
     def __init__(self, expr, expr_name):
         # basic initalization
         self.expression = expr
@@ -77,12 +92,8 @@ class Expression:
         # correct expressions of parameters
         self.correct_expr_parameters()
 
-    # --------------------
-
-    # --------------------
-    # INTERPRETING THE EXPRESSION
     def interpret_distrib(self):
-        dist = str.split(self.expression, "(")[0]
+        """interpreting the expression"""
 
         if (
             dist
@@ -108,7 +119,6 @@ class Expression:
         # identifying groups
         sub_expressions = str.split(tmp_expression, ",")
 
-        # creating dictionary
         self.parameters_expressions = {}
         for sub_exp in sub_expressions:
             param, sub = str.split(sub_exp, "=")
@@ -156,10 +166,14 @@ class Expression:
                 "Distribution name not found in discrete or continuous lists."
             )
 
-        # prepary basic boundaries on parameters: incomplete, did not find a way to evaluate automatically the limits on shape parameters
+        # prepary basic boundaries on parameters: incomplete, did not find a way to
+        # evaluate automatically the limits on shape parameters
+
         self.boundaries_parameters = {
             p: [-np.inf, np.inf] for p in self.parameters_list
         }
+
+        # scale must be positive
         if "scale" in self.boundaries_parameters:
             self.boundaries_parameters["scale"][0] = 0
 
@@ -167,7 +181,9 @@ class Expression:
         """
         coefficients are supposed to be written as "c#", with "#" being a number.
         """
+
         self.coefficients_list, self.coefficients_dict = [], {}
+
         for param in self.parameters_expressions:
             self.coefficients_dict[param] = []
             # iniatilize detection
@@ -196,7 +212,9 @@ class Expression:
                         pass
 
     def find_inputs(self):
+
         self.inputs_list = []
+
         for param in self.parameters_expressions:
             terms = str.split(self.parameters_expressions[param], "__")
             for i in np.array(terms)[np.arange(1, len(terms), 2)]:
@@ -207,7 +225,10 @@ class Expression:
         self.inputs_list.sort(key=len, reverse=True)
 
     def correct_expr_parameters(self):
-        # list of inputs and coefficients, sorted by descending length, to be sure that when removing them, will remove the good ones and not those with their short name contained in the long name of another
+        # list of inputs and coefficients, sorted by descending length, to be sure that
+        # when removing them, will remove the good ones and not those with their short
+        # name contained in the long name of another
+
         tmp_list = self.inputs_list + self.coefficients_list + ["__"]
         tmp_list.sort(key=len, reverse=True)
 
@@ -227,7 +248,7 @@ class Expression:
             # adding one space at the end to treat the last term
             for ex in expr + " ":
 
-                # TODO: could do this using regular expressions, think about it
+                # TODO: could do this using regular expressions
                 if ex in [
                     "(",
                     ")",
@@ -281,11 +302,14 @@ class Expression:
                                 + ", but couldnt find an equivalent in numpy or math."
                             )
                     else:
-                        # was a readable character, is still a readable character, nothing to do
+                        # was a readable character, is still a readable character,
+                        # nothing to do
                         pass
                 else:
                     t += ex
-                # TODO: would make sense to invert the logic here - move building t above the validity check - but again let's keep for now
+
+                # TODO: would make sense to invert the logic here - move building 't'
+                # above the validity check
 
             # list of replacements in correct order
             tmp = list(dico_replace.keys())
@@ -303,22 +327,37 @@ class Expression:
                     param
                 ].replace("__" + i + "__", i)
 
-    # --------------------
-
-    # --------------------
-    # EVALUATE THE EXPRESSION
     def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
         """
         Evaluates the distribution with the provided inputs and coefficients
 
-        Parameters:
-        -------
-            coefficients_values: dict(c_i = values or np.array())  or  xr.dataset(c_i)  or  list of values
-            inputs_values: dict(inp_i = values or np.array())  or  xr.dataset(inp_i)
-            forced_shape: tuple or list of dimensions of coefficients_values and inputs_values for transposition of the shape
+        Parameters
+        ----------
+        coefficients_values : dict | xr.Dataset(c_i) | list of values
+            Coefficient arrays or scalars. Can have the following form
+            - dict(c_i = values or np.array())
+            - xr.Dataset(c_i)
+            - list of values
+        inputs_values : dict | xr.Dataset
+            Input arrays or scalars. Can be passed as
+            - dict(inp_i = values or np.array())
+            - xr.Dataset(inp_i)
+        forced_shape : None | tuple or list of dimensions
+            coefficients_values and inputs_values for transposition of the shape
 
-        ! Warning: with xarrays for coefficients_values and inputs_values, the outputs with have for shape first the one of the coefficient, then the one of the inputs --> trying to avoid this issue with 'forced_shape'
+        Warnings
+        --------
+        with xarrays for coefficients_values and inputs_values, the outputs with have
+        for shape first the one of the coefficient, then the one of the inputs
+        --> trying to avoid this issue with 'forced_shape'
         """
+
+        # TODO:
+        # - use broadcasting
+        # - can we avoid using exec & eval?
+        # - only parse the values once? (to avoid doing it repeatedly)
+        # - don't allow list of coefficients_values
+
         # Check 1: are all the coefficients provided?
         if type(coefficients_values) in [dict, xr.Dataset]:
             # case where provide explicit information on coefficients_values
@@ -326,7 +365,8 @@ class Expression:
                 if c not in coefficients_values:
                     raise ValueError("Missing information for the coefficient " + c)
         else:
-            # case where a vector is provided, used for the optimization performed during the training
+            # case where a vector is provided, used for the optimization performed
+            # during the training
             if len(coefficients_values) != len(self.coefficients_list):
                 raise ValueError("Inconsistent information for the coefficients_values")
             else:
@@ -359,8 +399,9 @@ class Expression:
             # may need to silence warnings here, to avoid spamming
             self.parameters_values[param] = eval(self.parameters_expressions[param])
 
-        # Correcting shapes 1: constant parameters must have the shape of the inputs
+        # Correcting shapes 1: scalar parameters must have the shape of the inputs
         if len(self.inputs_list) > 0:
+
             for param in self.parameters_list:
                 if (type(self.parameters_values[param]) in [int, float]) or (
                     self.parameters_values[param].ndim == 0
@@ -405,53 +446,57 @@ def probability_integral_transform(
     coeffs_end=None,
     preds_end=None,
 ):
-    """Probability integral transform of the data given parameters of a given distribution into their equivalent in a standard normal distribution.
+    """
+    Probability integral transform of the data given parameters of a given distribution
+    into their equivalent in a standard normal distribution.
 
     Parameters
     ----------
-    data: not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one 2D variable with both coordinates
-
-    target_name: str
+    data : not sure yet what data format will be used at the end.
+        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
+        2D variable with both coordinates
+    target_name : str
         name of the variable to train
-
     expr_start : str
         string describing the starting expression
-
     expr_end : str
         string describing the starting expression
-
-    preds_start: not sure yet what data format will be used at the end.
+    preds_start : not sure yet what data format will be used at the end.
         Covariants of the starting expression. Default: empty Dataset.
-
-    coeffs_start: xarray dataset
+    coeffs_start : xarray dataset
         Coefficients of the starting expression. Default: empty Dataset.
-
-    preds_end: not sure yet what data format will be used at the end.
+    preds_end : not sure yet what data format will be used at the end.
         Covariants of the ending expression. Default: empty Dataset.
-
-    coeffs_end: xarray dataset
+    coeffs_end : xarray dataset
         Coefficients of the ending expression. Default: empty Dataset.
 
     Returns
     -------
     transf_inputs : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one 2D variable with both coordinates
+        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
+        2D variable with both coordinates
 
     Notes
     -----
-    - Assumptions:
-        Context: The transformation may fail if the values are very unlikely, leading to a CDF equal or too close from 0 or 1, which will raise issues.
-        Current solution: During training, this problem is avoided thanks to the option 'threshold_min_proba', meaning that all points in sample would have a minimum probability.
-        Limit to solution: However, if transforming a sample not used during sample, and in a domain not represented in the training sample, it may cause issues.
-        Additional fix: If this situation is encountered, I suggest to block the CDF values 'cdf_item' within a domain: values with a probability of 1.e-99 could be forced to 1.e-9. Unless someone has a better idea! :D
-    - Disclaimer:
-    - TODO:
+    Assumptions:
+    - Context: The transformation may fail if the values are very unlikely, leading to a
+      CDF equal or too close from 0 or 1, which will raise issues.
+    - Current solution: During training, this problem is avoided thanks to the option
+      'threshold_min_proba', meaning that all points in sample would have a minimum
+      probability.
+    - Limit to solution: However, if transforming a sample not used during sample, and
+      in a domain not represented in the training sample, it may cause issues.
+    - Additional fix: If this situation is encountered, I suggest to block the CDF
+      values 'cdf_item' within a domain: values with a probability of 1.e-99 could be
+      forced to 1.e-9. Unless someone has a better idea! :D
+    Disclaimer:
+    - TODO
 
     """
     # preparation of distributions
     expression_start = Expression(expr_start, "start")
     expression_end = Expression(expr_end, "end")
+
     if coeffs_start is None:
         coeffs_start = xr.Dataset()
     if coeffs_end is None:
@@ -467,6 +512,7 @@ def probability_integral_transform(
             preds_start_item = xr.Dataset()
         else:
             preds_start_item = preds_start[i][0]
+
         if preds_end is None:
             preds_end_item = xr.Dataset()
         else:
@@ -477,6 +523,7 @@ def probability_integral_transform(
         distrib_start = expression_start.evaluate(
             coeffs_start, preds_start_item, forced_shape=data_item[target_name].dims
         )
+
         distrib_end = expression_end.evaluate(
             coeffs_end, preds_end_item, forced_shape=data_item[target_name].dims
         )
@@ -507,6 +554,7 @@ def weighted_median(data, weights):
     data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
     s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
     midpoint = 0.5 * sum(s_weights)
+
     if any(weights > midpoint):
         w_median = (data[weights == np.max(weights)])[0]
     else:
@@ -521,16 +569,21 @@ def weighted_median(data, weights):
 
 def listxrds_to_np(listds, name_var, forcescen, coords=None):
     """
-    **Temporary** function to prepare the format of inputs for training. This is meant to be used ONLY before the format of MESMERv1 data is confirmed.
+    **Temporary** function to prepare the format of inputs for training. This is meant
+    to be used ONLY before the format of MESMERv1 data is confirmed.
 
-    listds: list of xr Dataset
+    Parameters
+    ----------
+    listds : list of xr Dataset
         predictors or target.
-    name_var: str
+    name_var : str
         name of the variable to select.
-    forcescen: list of str
-        names of the scenarios to select, in this specific order. used to ensure the consistency between predictors & target.
-    coords: dict
-        default None (no selection). Otherwise, will loop over keys & values of dictionary to select in listds.
+    forcescen : list of str
+        names of the scenarios to select, in this specific order. used to ensure the
+        consistency between predictors & target.
+    coords : dict
+        default None (no selection). Otherwise, will loop over keys & values of
+        dictionary to select in listds.
     """
     # looping over scenarios
     TMP = []
@@ -541,7 +594,8 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
         for item in listds:
 
             if item[1] == scen:
-                # for each scenario, creating one unique serie: consistency of members & scenarios have to be ensured while loading data
+                # for each scenario, creating one unique serie: consistency of members &
+                #  scenarios have to be ensured while loading data
                 if coords is not None:
                     TMP.append(item[0][name_var].loc[coords].values.flatten())
                 else:

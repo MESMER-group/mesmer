@@ -34,14 +34,11 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
     transf_emus_lv : dict
         nested dictionary for transformed emulators, result of 'create_emus_lv'
         - [targ][scen] (3d array (emus, time, gp) of target for specific scenario)
-
     preds : dict
         nested dictionary with 3 keys: cov_loc, cov_scale, cov_shape. Each one may be empty for no variation of the parameter of the distribution. If not empty, the variables will be used as covariants.
         - [targ][cov_...][covariant][scen]  (1d array (time) of predictor for specific scenario)
-
     params_distrib : dict
         nested dictionary of local variability paramters. Result of the function 'train_l_distrib'.
-
     force_scen : None or iterable (list, set, 1d array)
         Used to prescribe a specific list of scenarios. If None, they will be deduced from the covariants. Important if no covariants, otherwise the parameters would not depend on scenarios, but using 'force_scen', we can have the desired scenarios.
 

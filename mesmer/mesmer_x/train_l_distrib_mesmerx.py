@@ -28,72 +28,76 @@ def xr_train_distrib(
     predictors,
     target,
     target_name,
-    expr,
+    expr,  # TODO: replace by instance of Expression (instead of building it here)
     expr_name,
     option_2ndfit=True,
     r_gasparicohn_2ndfit=500,
     scores_fit=["func_optim", "NLL", "BIC"],
 ):
     """
-    train in each grid point the target a conditional distribution as described by expr with the provided predictors
+    train in each grid point the target a conditional distribution as described by expr
+    with the provided predictors
 
-    predictors: not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with a coordinate 'time' and 1D variable with this coordinate
+    Parameters
+    ----------
+    predictors : not sure yet what data format will be used at the end.
+        Assumed to be a xarray Dataset with a coordinate 'time' and 1D variable with
+        this coordinate
 
-    target: not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one 2D variable with both coordinates
+    target : not sure yet what data format will be used at the end.
+        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
+        2D variable with both coordinates
 
-    target_name: str
+    target_name : str
         name of the variable to train
 
-    expr: str
-        string describing the expression that will be trained. Existing methods for flexible conditional distributions (e.g. https://github.com/OpheliaMiralles/pykelihood/blob/master/pykelihood/kernels.py) dont provide the level of flexibility that MESMER-X actually uses.
-        Requirements to follow to have the expression being understood:
-            - distribution: must be the name of a distribution in scipy stats (continuous or discrete): https://docs.scipy.org/doc/scipy/reference/stats.html
-            - parameters: all names for the parameters of the distributions must be provided: loc, scale, shape, mu, a, b, c, etc.
-            - coefficients: must be named "c#", with # being the number of the coefficient: e.g. c1, c2, c3.
-            - inputs: any string that can be written as a variable in python, and surrounded with "__": e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__, __GMT, _GMT_ etc.
-            - equations: the equations for the evolutions must be written as it would be normally. Names of packages should be included.
-            spaces dont matter in the equiations
-        Examples:
-            - "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)"
-            - "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
-            - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
+    expr : str
+        See docstring of mesmer.mesmer_x.train_utils_mesmerx.Expression
 
-    expr_name: str
+    expr_name : str
         Name of the expression.
 
-    option_2ndfit: boolean
-        If True, will do a first fit in each gridpoint, AND THEN, will do another fit that uses as first guess the results of the first fit around each gridpoint.
+    option_2ndfit : boolean, default: True
+        If True, will do a first fit in each gridpoint, AND THEN, will do another fit
+        that uses as first guess the results of the first fit around each gridpoint.
         It helps in reducing the risk of spurious fits. Default: False.
         This is an experimental feature, that has not been extensively tested.
 
-    r_gasparicohn_2ndfit: float
-        Distance used in calculation of the correlation in Gaspari-Cohn matrix for the 2nd fit.
+    r_gasparicohn_2ndfit : float
+        Distance used in calculation of the correlation in Gaspari-Cohn matrix for the
+        2nd fit.
 
-    scores_fit: list
-        After the fit, several scores can be calculated to assess the quality of the fit. Default: 'func_optim', 'NLL', 'BIC'
-            - func_optim: function optimized, as described in options_optim['type_fun_optim']: negative log likelihood or full conditional negative log likelihood
-            - NLL: Negative Log Likelihood
-            - BIC: Bayesian Information Criteria
-            - CRPS: Continuous Ranked Probability Score (warning, takes a long time to compute)
+    scores_fit : list, default: 'func_optim', 'NLL', 'BIC'
+        After the fit, several scores can be calculated to assess the quality of the fit
+
+        - func_optim: function optimized, as described in
+          options_optim['type_fun_optim']: negative log likelihood or full conditional
+          negative log likelihood
+        - NLL: Negative Log Likelihood
+
+          - BIC: Bayesian Information Criteria
+          - CRPS: Continuous Ranked Probability Score (warning, takes a long time to
+            compute)
     """
 
-    # --------------------------------------------------------------------------------
     # PREPARATION OF DATA: temporary because working on temporary format.
-    # not implementing checks on the format of predictors & target, because their current format is temporary and will be updated in MESMER v1
-    # must make 100% sure that each point of the predictors is associated with its corresponding point of the target: same ESM, same scenario, same member, same timestep, same gridpoint
-    # compiling list of scenarios, for similar order in listxrds_to_np, ensuring consistency of series of predictors & target
+
+    # - not implementing checks on the format of predictors & target, because their
+    #   current format is temporary and will be updated in MESMER v1
+    # - must make 100% sure that each point of the predictors is associated with its
+    #   corresponding point of the target: same ESM, same scenario, same member, same
+    #   timestep, same gridpoint
+    # - compiling list of scenarios, for similar order in listxrds_to_np, ensuring
+    #   consistency of series of predictors & target
+
     list_scens_pred = [item[1] for item in predictors]
     list_scens_targ = [item[1] for item in target]
     list_scens = [scen for scen in list_scens_pred if scen in list_scens_targ]
     list_scens.sort()
     gridpoints = target[0][0].gridpoint.values
-    # --------------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------------
     # PREPARATION OF FIT
-    # --------------------------------------------------------------------------------
+
     # getting list of inputs from predictors
     expression_fit = Expression(expr, expr_name)
 
@@ -104,22 +108,24 @@ def xr_train_distrib(
     }
 
     # preparing the Datasets of the fit:
-    # here, had the choice between two options: one variable for all coefficients (gridpoint, coefficient)   or   one variable for each coefficient (gridpoint).
-    # prefers 2nd option, because more similar to MESMER, and also because will facilitate future developments of MESMER-X on expressions depending on the gridpoint.
+    # here, had the choice between two options: one variable for all coefficients
+    # (gridpoint, coefficient) or one variable for each coefficient (gridpoint).
+    # prefers 2nd option, because more similar to MESMER, and also because will
+    # facilitate future developments of MESMER-X on expressions depending on the
+    # gridpoint.
+
     coefficients_xr = xr.Dataset()
     for coef in expression_fit.coefficients_list:
         coefficients_xr[coef] = xr.DataArray(
             np.nan, coords={"gridpoint": gridpoints}, dims=("gridpoint",)
         )
+
     quality_xr = xr.Dataset()
     for score in scores_fit:
         quality_xr[score] = xr.DataArray(
             np.nan, coords={"gridpoint": gridpoints}, dims=("gridpoint",)
         )
-    # --------------------------------------------------------------------------------
-    # --------------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------------
     # FIT
     # --------------------------------------------------------------------------------
     # looping over grid points (to replace with a map function)
@@ -151,17 +157,14 @@ def xr_train_distrib(
             scores_fit=scores_fit,
         )
 
-        # saving results
+        # TODO: assign to .values which is much faster (in the inner loop)
         for ic, coef in enumerate(expression_fit.coefficients_list):
             coefficients_xr[coef].loc[{"gridpoint": gp}] = coefficients_np[ic]
+
         for score in scores_fit:
             quality_xr[score].loc[{"gridpoint": gp}] = quality_np[score]
-    # --------------------------------------------------------------------------------
-    # --------------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------------
     # SECOND FIT if required
-    # --------------------------------------------------------------------------------
     if option_2ndfit:
         # preparing the Datasets of the fit
         coefficients_xr2 = coefficients_xr.copy()
@@ -169,11 +172,8 @@ def xr_train_distrib(
 
         # remnants of MESMERv0, because stuck with its format...
         lon_l_vec = predictors.lon
-        # lon["grid"][ls["idx_grid_l"]] try by Vici to fix missing variables
         lat_l_vec = predictors.lat
-        # lat["grid"][ls["idx_grid_l"]]
 
-        # ... and function of MESMERv1
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
         corr_gc = gaspari_cohn_correlation_matrices(geodist, [r_gasparicohn_2ndfit])[
@@ -195,7 +195,11 @@ def xr_train_distrib(
                 end="\r",
             )
 
-            # calculate first guess, with a weighted median based on Gaspari-Cohn matrix, while avoiding NaN values. Warning, weighted mean does not work well, because some gridpoints may have spurious values different by orders of magnitude.
+            # calculate first guess, with a weighted median based on Gaspari-Cohn
+            # matrix, while avoiding NaN values. Warning, weighted mean does not work
+            # well, because some gridpoints may have spurious values different by orders
+            # of magnitude.
+
             fg = np.zeros(len(expression_fit.coefficients_list))
             for ic, coef in enumerate(expression_fit.coefficients_list):
                 fg[ic] = weighted_median(
@@ -223,10 +227,9 @@ def xr_train_distrib(
             # saving results
             for ic, coef in enumerate(expression_fit.coefficients_list):
                 coefficients_xr2[coef].loc[{"gridpoint": gp}] = coefficients_np[ic]
+
             for score in scores_fit:
                 quality_xr2[score].loc[{"gridpoint": gp}] = quality_np[score]
-    # --------------------------------------------------------------------------------
-    # --------------------------------------------------------------------------------
 
     return coefficients_xr, quality_xr
 
@@ -250,127 +253,12 @@ def np_train_distrib(
 
 
 class distrib_cov:
-    """Class for the fit of a conditional distribution. This is meant to provide flexibility in the provided expressions and robustness in the training.
-    The components included in this class are:
-     - (evaluation of weights for the sample)
-     - tests on coefficients & parameters of the expression, in & out of sample
-     - 1st optimizations for the first guess
-     - 2nd optimization with minimization of the negative log likehood or full conditioning negative loglikelihood
-    Once this class has been initialized, the go-to function is fit(). It returns the vector of solutions for the problem proposed.
-
-    Parameters
-    ----------
-    data_targ : numpy array 1D
-        Sample of the target for fit of a conditional distribution
-
-    data_pred : dict of 1D vectors
-        Covariates for the conditional distribution. each key must be the exact name of the inputs used in 'expr_fit', and the values must be aligned with the values in 'data_targ'.
-
-    expr_fit : class 'expression'
-        Expression to train. The string provided to the class can be found in 'expr_fit.expression'.
-
-    data_targ_addtest: numpy array 1D, optional
-        Additional sample of the target. The fit will not be optimized on this data, but will test that this data remains valid. Important to avoid points out of support of the distribution. Default: None.
-
-    data_preds_addtest: numpy array 1D, optional
-        Additional sample of the covariates. The fit will not be optimized on this data, but will test that this data remains valid. Important to avoid points out of support of the distribution. Default: None.
-
-    threshold_min_proba: float, optional
-        Will test that each point of the sample and added sample have their probability higher than this value. Important to ensure that all points are feasible with the fitted distribution. Default: None.
-
-    boundaries_params: dict, optional
-        Prescribed boundaries on the parameters of the expression. Some basic boundaries are already provided through 'expr_fit.boundaries_params'. Default: None.
-
-    boundaries_coeffs: dict, optional
-        Prescribed boundaries on the coefficients of the expression. Default: None.
-
-    first_guess: numpy array, optional
-        If provided, will use these values as first guess for the first guess. Default: None.
-
-    func_first_guess: callable, optional
-        If provided, and that 'first_guess' is not provided, will be called to provide a first guess for the fit. This is an experimental feature, thus not tested.
-        !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR OWN RISKS.
-
-    scores_fit: list
-        After the fit, several scores can be calculated to assess the quality of the fit. Default: 'func_optim', 'NLL', 'BIC'
-            - func_optim: function optimized, as described in options_optim['type_fun_optim']: negative log likelihood or full conditional negative log likelihood
-            - NLL: Negative Log Likelihood
-            - BIC: Bayesian Information Criteria
-            - CRPS: Continuous Ranked Probability Score (warning, takes a long time to compute)
-
-    options_optim: dict, optional
-        A dictionary with options for the function to optimize.
-         * type_fun_optim: string, optional
-            If 'NLL', will optimize using the negative log likelihood. If 'fcNLL', will use the full conditional negative log likelihood based on the stopping rule. Default: NLL
-
-         * weighted_NLL: boolean, optional
-            If True, the optimization function will based on the weighted sum of the NLL, instead of the sum of the NLL. The weights are calculated as the inverse density in the predictors. Default: False.
-
-         * threshold_stopping_rule: float > 0, optional
-            Maximum return period, used to define the threshold of the stopping rule. Default: None.
-            threshold_stopping_rule, ind_year_thres and exclude_trigger must be used together.
-
-         * ind_year_thres: np.array, optional.
-            Positions in the predictors where the thresholds have to be tested. Default: None.
-            threshold_stopping_rule, ind_year_thres and exclude_trigger must be used together.
-
-         * exclude_trigger: boolean, optional
-            Whether the threshold will be included or not in the stopping rule. Default: None.
-            threshold_stopping_rule, ind_year_thres and exclude_trigger must be used together.
-
-    options_solver: dict, optional
-        A dictionary with options for the solvers, used to determine an adequate first guess and for the final optimization.
-         * method_fit: string, optional
-            Type of algorithm used during the optimization, using the function 'minimize'. Prepared options: BFGS, L-BFGS-B, Nelder-Mead, Powell, TNC, trust-constr. Default: 'Powell', HIGHLY RECOMMENDED for its stability & speed.
-
-         * xtol_req: float, optional
-            Accurracy of the fit in coefficients. Interpreted differently depending on 'method_fit'. Default: 1e-3
-
-         * ftol_req: float, optional
-            Accuracy of the fit in objective. Default: 1.e-6
-
-         * maxiter: int, optional
-            Maximum number of iteration of the optimization. Default: 10000.
-
-         * maxfev: int, optional
-            Maximum number of evaluation of the function during the optimization. Default: 10000.
-
-         * error_failedfit : boolean, optional
-            If True, will raise an issue if the fit failed. Default: True.
-
-         * fg_with_global_opti : boolean, optional
-            If True, will add a step where the first guess is improved using a global optimization. In theory, better, but in practice, no improvement in performances, but makes the fit much slower (+ ~10s). Defautl: False.
-
-    Notes:
-    -------
-    This code is entirely based on the code used in MESMER-X (https://doi.org/10.1029%2F2022GL099012 & https://doi.org/10.5194/esd-14-1333-2023).
-    However, there are some minor differences. The reasons are mostly due to streamlining of the code, removing deprecated features & implementing new ones.
-    Streamlining:
-        - Instead of prescribing distribution & intricated inputs, using the class 'expression'. Shortens a lot the code and keeps the same principle.
-        - The first guess has been extended to any expression. Also much shorter code.
-    Deprecated:
-        - Fit of the logit of sample instead of the sample. It was used for expressions with sigmoids, but did not improve the fit
-        - Test in the coefficients of a sigmoid to avoid simultaneous drifts. Appeared mostly with logits, and not feasible with class 'expression'
-    Removed
-        - In tests, was checking not only whether the coefficients or parameters were exceeding boundaries, but also were close. Removed because of modifications in first guess didnt work with situations with scale=0.
-        - Forcing values of certain parameters (eg mu for poisson) to be integers: to implement in class 'expression'?
-    Implemented:
-        - Additional sample used to test the validity of the fit through tests on coefficients & parameters.
-        - Minimum probability for the points in the sample. Useful to avoid having points becoming extremely unlikely, despite being in the sample.
-        - Optimization may be now account as well on the stopping rule (inspired by https://github.com/OpheliaMiralles/pykelihood)
-        - Weighting points of the sample with inverse of their density. Useful to give equivalent weights to the whole domain fitted.
-
-    Reasons for choosing that over available alternatives:
-        - scipy.stats.fit: nothing about conditional distribution, all tests on coefficients, parameters, values AND nothing about first guess
-        - pykelihood: not enough for the first guess (https://github.com/OpheliaMiralles/pykelihood/blob/master/pykelihood/kernels.py)
-        - symfit: not enough for the first guess (https://symfit.readthedocs.io/en/stable/fitting_types.html#likelihood)
-    """
 
     def __init__(
         self,
         data_targ,
         data_pred,
-        expr_fit,
+        expr_fit,  # TODO: replace by Expression instance
         data_targ_addtest=None,
         data_preds_addtest=None,
         threshold_min_proba=1.0e-9,
@@ -379,9 +267,192 @@ class distrib_cov:
         first_guess=None,
         func_first_guess=None,
         scores_fit=["func_optim", "NLL", "BIC"],
-        options_optim=None,
-        options_solver=None,
+        options_optim=None,  # TODO: replace by options class?
+        options_solver=None,  # TODO: dito?
     ):
+        """fit a conditional distribution.
+
+        This is meant to provide flexibility in the provided expressions and robustness
+        in the training. The components included in this class are:
+
+        - (evaluation of weights for the sample)
+        - tests on coefficients & parameters of the expression, in & out of sample
+        - 1st optimizations for the first guess
+        - 2nd optimization with minimization of the negative log likehood or full
+          conditioning negative loglikelihood
+
+        Once this class has been initialized, the go-to function is fit(). It returns
+        the vector of solutions for the problem proposed.
+
+        Parameters
+        ----------
+        data_targ : numpy array 1D
+            Sample of the target for fit of a conditional distribution
+
+        data_pred : dict of 1D vectors
+            Covariates for the conditional distribution. each key must be the exact name
+            of the inputs used in 'expr_fit', and the values must be aligned with the
+            values in 'data_targ'.
+
+        expr_fit : class 'expression'
+            Expression to train. The string provided to the class can be found in
+            'expr_fit.expression'.
+
+        data_targ_addtest : numpy array 1D, default: None
+            Additional sample of the target. The fit will not be optimized on this data,
+            but will test that this data remains valid. Important to avoid points out of
+            support of the distribution.
+
+        data_preds_addtest : numpy array 1D, default: None
+            Additional sample of the covariates. The fit will not be optimized on this
+            data, but will test that this data remains valid. Important to avoid points
+            out of support of the distribution.
+
+        threshold_min_proba : float, default: None
+            Will test that each point of the sample and added sample have their
+            probability higher than this value. Important to ensure that all points are
+            feasible with the fitted distribution.
+
+        boundaries_params : dict, default: None
+            Prescribed boundaries on the parameters of the expression. Some basic
+            boundaries are already provided through 'expr_fit.boundaries_params'.
+
+        boundaries_coeffs : dict, optional
+            Prescribed boundaries on the coefficients of the expression. Default: None.
+
+        first_guess : numpy array, default: None
+            If provided, will use these values as first guess for the first guess.
+
+        func_first_guess : callable, default: None
+            If provided, and that 'first_guess' is not provided, will be called to
+            provide a first guess for the fit. This is an experimental feature, thus not
+            tested.
+            !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR
+            OWN RISKS.
+
+        scores_fit : list of str, default: ['func_optim', 'NLL', 'BIC']
+            After the fit, several scores can be calculated to assess the quality of the
+            fit:
+
+            - func_optim: function optimized, as described in
+              options_optim['type_fun_optim']: negative log likelihood or full
+              conditional negative log likelihood
+            - NLL: Negative Log Likelihood
+            - BIC: Bayesian Information Criteria
+            - CRPS: Continuous Ranked Probability Score (warning, takes a long time to
+              compute)
+
+        options_optim : dict, default: None
+            A dictionary with options for the function to optimize:
+
+            * type_fun_optim: string, default: "NLL"
+                If 'NLL', will optimize using the negative log likelihood. If 'fcNLL',
+                will use the full conditional negative log likelihood based on the
+                stopping rule.
+
+            * weighted_NLL: boolean, default: False
+                If True, the optimization function will based on the weighted sum of the
+                NLL, instead of the sum of the NLL. The weights are calculated as the
+                inverse density in the predictors.
+
+            * threshold_stopping_rule: float > 0, default: None
+                Maximum return period, used to define the threshold of the stopping
+                rule.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+            * ind_year_thres: np.array, default: None
+                Positions in the predictors where the thresholds have to be tested.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+            * exclude_trigger: boolean, default: None
+                Whether the threshold will be included or not in the stopping rule.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+        options_solver : dict, optional
+            A dictionary with options for the solvers, used to determine an adequate
+            first guess and for the final optimization.
+
+            * method_fit: string, default: "Powell"
+                Type of algorithm used during the optimization, using the function
+                'minimize'. Prepared options: BFGS, L-BFGS-B, Nelder-Mead, Powell, TNC,
+                trust-constr. The default 'Powell', is HIGHLY RECOMMENDED for its
+                stability & speed.
+
+            * xtol_req: float, default: 1e-3
+                Accurracy of the fit in coefficients. Interpreted differently depending
+                on 'method_fit'.
+
+            * ftol_req: float, default: 1e-6
+                Accuracy of the fit in objective.
+
+            * maxiter: int, default: 10000
+                Maximum number of iteration of the optimization.
+
+            * maxfev: int, default: 10000
+                Maximum number of evaluation of the function during the optimization.
+
+            * error_failedfit : boolean, default: True.
+                If True, will raise an issue if the fit failed.
+
+            * fg_with_global_opti : boolean, default: False
+                If True, will add a step where the first guess is improved using a
+                global optimization. In theory, better, but in practice, no improvement
+                in performances, but makes the fit much slower (+ ~10s).
+
+        Notes
+        -----
+        This code is entirely based on the code used in MESMER-X ([1]_  and [2]_).
+        However, there are some minor differences. The reasons are mostly due to
+        streamlining of the code, removing deprecated features & implementing new ones.
+
+        - Streamlining:
+
+          - Instead of prescribing distribution & intricated inputs, using the class
+            'Expression'. Shortens a lot the code and keeps the same principle.
+          - The first guess has been extended to any expression. Also much shorter code.
+
+        - Deprecated:
+
+          - Fit of the logit of sample instead of the sample. It was used for
+            expressions with sigmoids, but did not improve the fit
+          - Test in the coefficients of a sigmoid to avoid simultaneous drifts. Appeared
+            mostly with logits, and not feasible with class 'expression'
+
+        - Removed
+          - In tests, was checking not only whether the coefficients or parameters were
+            exceeding boundaries, but also were close. Removed because of modifications
+            in first guess didnt work with situations with scale=0.
+          - Forcing values of certain parameters (eg mu for poisson) to be integers: to
+            implement in class 'expression'?
+
+        - Implemented:
+
+          - Additional sample used to test the validity of the fit through tests on
+            coefficients & parameters.
+          - Minimum probability for the points in the sample. Useful to avoid having
+            points becoming extremely unlikely, despite being in the sample.
+          - Optimization may be now account as well on the stopping rule (inspired b
+            https://github.com/OpheliaMiralles/pykelihood)
+          - Weighting points of the sample with inverse of their density. Useful to give
+            equivalent weights to the whole domain fitted.
+
+        - Reasons for choosing that over available alternatives:
+          - scipy.stats.fit: nothing about conditional distribution, all tests on
+            coefficients, parameters, values AND nothing about first guess
+          - pykelihood: not enough for the first guess
+            (https://github.com/OpheliaMiralles/pykelihood/blob/master/pykelihood/kernels.py)
+          - symfit: not enough for the first guess
+            (https://symfit.readthedocs.io/en/stable/fitting_types.html#likelihood)
+
+        .. [1] https://doi.org/10.1029%2F2022GL099012
+
+        .. [2] https://doi.org/10.5194/esd-14-1333-2023
+
+        """
+
         # preparing basic information
         self.data_targ = data_targ
         # can be different from length of predictors IF no predictors.
@@ -575,10 +646,6 @@ class distrib_cov:
             weights_driver = np.ones(self.data_targ.shape)
         return weights_driver / np.sum(weights_driver)
 
-    # --------------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------------------
-    # TESTS
     def _test_coeffs(self, values_coeffs):
         # initialize test
         test = True
@@ -612,8 +679,8 @@ class distrib_cov:
             ):
                 test = False
 
-        # test of the support of the distribution: is there any data out of the corresponding support?
-        # dont try testing if there are issues on the parameters
+        # test of the support of the distribution: is there any data out of the
+        # corresponding support? dont try testing if there are issues on the parameters
         if test:
             bottom, top = distrib.support()
 
@@ -629,8 +696,11 @@ class distrib_cov:
         return test
 
     def _test_proba_value(self, distrib, data):
-        # tested values must have a minimum probability of occuring, ie be in a confidence interval
-        # Warning: DONT write 'x=data', because 'x' may be called differently for some distribution (eg 'k' for poisson).
+        # tested values must have a minimum probability of occuring, ie be in a
+        # confidence interval
+        # NOTE: DONT write 'x=data', because 'x' may be called differently for some
+        # distribution (eg 'k' for poisson).
+
         cdf = distrib.cdf(data)
         return np.all(1 - cdf >= self.threshold_min_proba) * np.all(
             cdf >= self.threshold_min_proba
@@ -640,11 +710,11 @@ class distrib_cov:
     def test_all(self, coefficients):
         test_coeff = self._test_coeffs(coefficients)
 
-        # tests on coefficients show already that it wont work: filling in the rest with NaN
+        # tests on coeffs show already that it wont work: fill in the rest with NaN
         if not test_coeff:
             return test_coeff, False, False, False
 
-        # evaluate the distribution for the predictors and this iteration of coefficients
+        # evaluate the distribution for the predictors and this iteration of coeffs
         else:
             distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
             if self.add_test:
@@ -660,7 +730,7 @@ class distrib_cov:
             else:
                 test_param = self._test_evol_params(distrib, self.data_targ)
 
-            # tests on parameters show already that it wont work: filling in the rest with NaN
+            # tests on params show already that it wont work: fill in the rest with NaN
             if not test_param:
                 return test_coeff, test_param, False, False
 
@@ -676,69 +746,107 @@ class distrib_cov:
                     else:
                         test_proba = self._test_proba_value(distrib, self.data_targ)
 
-                # return values for each test and the distribution that has already been evaluated
+                # return values for each test and the distribution that has already been
+                # evaluated
                 return test_coeff, test_param, test_proba, distrib
 
-    # --------------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------------------
     # FIRST GUESS
     def find_fg(self):
         """
-        Objective:
-            Compute a first guess of the coefficients, to ensure convergence of the incoming fit.
+        compute first guess of the coefficients, to ensure convergence of the incoming fit.
 
         Motivation:
-            In many situations, the fit may be complex because of complex expressions for the conditional distributions & because large domains in the set of coefficients lead to unvalid fits (e.g. sample out of support).
+            In many situations, the fit may be complex because of complex expressions
+            for the conditional distributions & because large domains in the set of
+            coefficients lead to unvalid fits (e.g. sample out of support).
 
         Criterias:
-            The method must return a first guess that is ROBUST (close to the global minimum) & VALID (respect all conditions implemented in the tests), must be FLEXIBLE (any sample, any distribution & any expression).
+            The method must return a first guess that is ROBUST (close to the global
+            minimum) & VALID (respect all conditions implemented in the tests), must be
+            FLEXIBLE (any sample, any distribution & any expression).
 
         Method:
-            1. Global fit of the coefficients of the location using derivatives, to improve the very first guess for the location
-            2. Fit of the coefficients of the location, assuming that the center of the distribution should be close from its location.
-            3. Fit of the coefficients of the scale, assuming that the deviation of the distribution should be close from its scale.
-            4. Improvement of all coefficients: better coefficients on location & scale, and especially estimating those on shape. Based on the Negative Log Likelihoog, albeit without the validity of the coefficients.
-            5. Improvement of coefficients: ensuring that all points are within a likely support of the distribution. Two possibilities tried:
-            (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is to penalize very unlikely values, both works, but NLL^n works as well for extremly unlikely values, that lead to division by 0 with CDF)
-            (step 5 still not always working, trying without?)
+            1. Global fit of the coefficients of the location using derivatives, to
+               improve the very first guess for the location
+            2. Fit of the coefficients of the location, assuming that the center of the
+               distribution should be close from its location.
+            3. Fit of the coefficients of the scale, assuming that the deviation of the
+               distribution should be close from its scale.
+            4. Improvement of all coefficients: better coefficients on location & scale,
+               and especially estimating those on shape. Based on the Negative Log
+               Likelihoog, albeit without the validity of the coefficients.
+            5. Improvement of coefficients: ensuring that all points are within a likely
+               support of the distribution. Two possibilities tried:
+               (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is
+               to penalize very unlikely values, both works, but NLL^n works as well for
+               extremly unlikely values, that lead to division by 0 with CDF)
+               (step 5 still not always working, trying without?)
 
         Risks for the method:
-            The only risk that I identify is if the user sets boundaries on coefficients or parameters that would reject this optimal first guess, and the domain of the next local minimum is far away.
+            The only risk that I identify is if the user sets boundaries on coefficients
+            or parameters that would reject this optimal first guess, and the domain of
+            the next local minimum is far away.
 
         Justification for the method:
-            This is a surprisingly complex problem to satisfy the criterias of robustness, validity & flexibility.
-            a. In theory, this problem could be solved with a global optimization. Among the global optimizers available in scipy, they come with two types of requirements:
-                - basinhopping: requires a first guess. Tried with first guess close from optimum, good performances, but lacks in reproductibility and stability: not reliable enough here. Ok if runs much longer.
-                - brute, differential_evolution, shgo, dual_annealing, direct: requires bounds
-                    - brute, dual_annealing, direct: performances too low & too slow
-                    - differential_evolution: lacks in reproductibility & stability
-                    - shgo: good performances with the right sampling method, relatively fast, but still adds ~10s. Highly dependant on the bounds, must not be too large.
-             The best global optimizer, shgo, would then require bounds that are not too large.
-             b. The set of coefficients have only sparse valid domains. The distance between valid domains is often bigger than the adequate width of bounds for shgo.
-             It implies that the bounds used for shgo must correspond to the valid domain that already contains the global minimum, and no other domain.
-             It implies that the region of the global minimum must have already been identified...
-             This is the tricky part, here are the different elements that I used to tackle this problem:
-                 - all combinations of local & global optimizers of scipy
-                 - including or not the tests for validity
-                 - assessment of bounds for global optimizers based on ratio of NLL or domain of data_targ
-                 - first optimizations based on mean & spread
-                 - brute force approach on logspace valid for parameters (not scalable with # of parameters)
-             c. The only solution that was working is inspired by what the semi-analytical solution used in the original code of MESMER-X. Its principle is to use fits first for location coefficients, then scale, then improve.
-                The steps are described in the section Method, steps 1-5. At step 5 that these coefficients are very close from the global minimum. shgo usually does not bring much at the expense of speed.
+            This is a surprisingly complex problem to satisfy the criterias of
+            robustness, validity & flexibility.
+
+            a. In theory, this problem could be solved with a global optimization. Among
+               the global optimizers available in scipy, they come with two types of
+               requirements:
+               - basinhopping: requires a first guess. Tried with first guess close from
+                 optimum, good performances, but lacks in reproductibility and
+                 stability: not reliable enough here. Ok if runs much longer.
+               - brute, differential_evolution, shgo, dual_annealing, direct: requires bounds
+                 - brute, dual_annealing, direct: performances too low & too slow
+                 - differential_evolution: lacks in reproductibility & stability
+                 - shgo: good performances with the right sampling method, relatively
+                   fast, but still adds ~10s. Highly dependant on the bounds, must not
+                   be too large.
+               The best global optimizer, shgo, would then require bounds that are not too large.
+
+            b. The set of coefficients have only sparse valid domains. The distance
+               between valid domains is often bigger than the adequate width of bounds
+               for shgo.
+               It implies that the bounds used for shgo must correspond to the valid
+               domain that already contains the global minimum, and no other domain.
+               It implies that the region of the global minimum must have already been
+               identified...
+               This is the tricky part, here are the different elements that I used to
+               tackle this problem:
+               - all combinations of local & global optimizers of scipy
+               - including or not the tests for validity
+               - assessment of bounds for global optimizers based on ratio of NLL or
+                 domain of data_targ
+               - first optimizations based on mean & spread
+               - brute force approach on logspace valid for parameters (not scalable
+                 with # of parameters)
+             c. The only solution that was working is inspired by what the
+                semi-analytical solution used in the original code of MESMER-X. Its
+                principle is to use fits first for location coefficients, then scale,
+                then improve.
+                The steps are described in the section Method, steps 1-5. At step 5 that
+                these coefficients are very close from the global minimum. shgo usually
+                does not bring much at the expense of speed.
                 Thus skipping global minimum unless asked.
 
-        !! WARNING to anyone trying to improve this part !!
-            If you attempt to modify the calculation of the first guess, it is *absolutely mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY, FLEXIBILITY.
-            In particular, it is mandatory to test it for different situations: variables, grid points, distributions & expressions.
+        Warnings
+        --------
+        To anyone trying to improve this part:
+        If you attempt to modify the calculation of the first guess, it is *absolutely
+        mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY,
+        FLEXIBILITY.         In particular, it is mandatory to test it for different
+        situations: variables, grid points, distributions & expressions.
         """
 
-        # during optimizations, will encounter many warnings because NaN or inf values encountered: avoiding the spam.
+        # during optimizations, will encounter many warnings because NaN or inf values
+        # encountered: avoiding the spam.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            # preparing derivatives to estimate derivatives of data along predictors, and infer a very first guess for the coefficients
-            # facilitates the representation of the trends
+            # preparing derivatives to estimate derivatives of data along predictors,
+            # and infer a very first guess for the coefficients facilitates the
+            # representation of the trends
             self.smooth_data_targ = self.smooth_data(self.data_targ)
 
             m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
@@ -769,11 +877,14 @@ class distrib_cov:
             if self.first_guess is None:
                 self.fg_coeffs = np.zeros(self.n_coeffs)
 
-                # Step 1: fit coefficients of location (objective: generate an adequate first guess for the coefficients of location. proven to be necessary in many situations, & accelerate step 2)
+                # Step 1: fit coefficients of location (objective: generate an adequate
+                # first guess for the coefficients of location. proven to be necessary
+                # in many situations, & accelerate step 2)
                 globalfit_d01 = basinhopping(
                     func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
                 )
-                # warning, basinhopping tends to indroduce non-reproductibility in fits, reduced when using 2nd round of fits
+                # warning, basinhopping tends to indroduce non-reproductibility in fits,
+                # reduced when using 2nd round of fits
 
                 self.fg_coeffs = globalfit_d01.x
 
@@ -781,7 +892,8 @@ class distrib_cov:
                 # Using provided first guess, eg from 1st round of fits
                 self.fg_coeffs = np.copy(self.first_guess)
 
-            # Step 2: fit coefficients of location (objective: improving the subset of location coefficients)
+            # Step 2: fit coefficients of location (objective: improving the subset of
+            # location coefficients)
             self.fg_ind_loc = np.array(
                 [
                     self.expr_fit.coefficients_list.index(c)
@@ -796,7 +908,8 @@ class distrib_cov:
             )
             self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
 
-            # Step 3: fit coefficients of scale (objective: improving the subset of scale coefficients)
+            # Step 3: fit coefficients of scale (objective: improving the subset of
+            # scale coefficients)
             self.fg_ind_sca = np.array(
                 [
                     self.expr_fit.coefficients_list.index(c)
@@ -819,7 +932,8 @@ class distrib_cov:
             )
             self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
 
-            # Step 4: fit coefficients using NLL (objective: improving all coefficients, necessary to get good estimates for shape parameters, and avoid some local minima)
+            # Step 4: fit coefficients using NLL (objective: improving all coefficients,
+            # necessary to get good estimates for shape parameters, and avoid some local minima)
             localfit_nll = self.minimize(
                 func=self.fg_fun_NLL_notests,
                 x0=self.fg_coeffs,
@@ -828,13 +942,16 @@ class distrib_cov:
             )
             self.fg_coeffs = localfit_nll.x
 
-            # Step 5: fit on CDF or LL^n (objective: improving all coefficients, necessary to have all points within support. NB: NLL doesnt behave well enough here)
+            # Step 5: fit on CDF or LL^n (objective: improving all coefficients,
+            # necessary to have all points within support. NB: NLL doesnt behave well enough here)
             if False:
+                # TODO: unreachable code?
                 # fit coefficients on CDFs
                 fun_opti_prob = self.fg_fun_cdfs
             else:
                 # fit coefficients on log-likelihood to the power n
                 fun_opti_prob = self.fg_fun_LL_n
+
             localfit_opti = self.minimize(
                 func=fun_opti_prob,
                 x0=self.fg_coeffs,
@@ -852,18 +969,21 @@ class distrib_cov:
                         i_c=i_c, x0=self.fg_coeffs, fact_coeff=-0.05
                     ), self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=0.05)
                     bounds.append([np.min(vals_bounds), np.max(vals_bounds)])
-                # global minimization, using the one with the best performances in this situation
-                # sobol or halton, observed lower performances with simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
+
+                # global minimization, using the one with the best performances in this
+                # situation. sobol or halton, observed lower performances with
+                # implicial. n=1000, options={'maxiter':10000, 'maxev':10000})
                 globalfit_all = shgo(self.func_optim, bounds, sampling_method="sobol")
                 self.fg_coeffs = globalfit_all.x
-        # first guess finished
 
     def minimize(self, func, x0, fact_maxfev_iter=1, option_NelderMead="dont_run"):
         """
         options_NelderMead: str
             * dont_run: would minimize only the chosen solver in method_fit
-            * fail_run: would minimize using Nelder-Mead only if the chosen solver in method_fit fails
-            * best_run: will minimize using Nelder-Mead and the chosen solver in method_fit, then select the best results
+            * fail_run: would minimize using Nelder-Mead only if the chosen solver in
+              method_fit fails
+            * best_run: will minimize using Nelder-Mead and the chosen solver in
+              method_fit, then select the best results
         """
         fit = minimize(
             func,
@@ -877,7 +997,10 @@ class distrib_cov:
             },
         )
 
-        # observed that Powell solver is much faster, but less robust. May rarely create directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at critical steps or when Powell fails.
+        # observed that Powell solver is much faster, but less robust. May rarely create
+        # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
+        # critical steps or when Powell fails.
+
         if (option_NelderMead == "fail_run" and fit.success is False) or (
             option_NelderMead == "best_run"
         ):
@@ -979,18 +1102,17 @@ class distrib_cov:
             iter += 1
         return x[i_c]
 
-    # --------------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------------------
     # OPTIMIZATION FUNCTIONS & SCORES
     def func_optim(self, coefficients):
-        # check wheter these coefficients respect all conditions: if so, can compute a value for the optimization
+        # check wheter these coefficients respect all conditions: if so, can compute a
+        # value for the optimization
         test_coeff, test_param, test_proba, distrib = self.test_all(coefficients)
         if test_coeff and test_param and test_proba:
 
             # check for the stopping rule
             if self.type_fun_optim == "fcNLL":
-                # will apply the stopping rule: splitting data_fit into two sets of data using the given threshold
+                # will apply the stopping rule: splitting data_fit into two sets of data
+                # using the given threshold
                 self.ind_data_ok, self.ind_data_stopped = self.stopping_rule(distrib)
             else:
                 self.ind_ok_data = np.arange(self.data_targ.size)
@@ -1050,7 +1172,10 @@ class distrib_cov:
         # calculating 2nd term for full conditional of the NLL
         # fc1 = distrib.logcdf(self.data_targ)
         fc2 = distrib.sf(self.data_targ)
-        # return np.sum( (self.weights_driver * fc1)[self.ind_stopped_data] ) # not 100% sure here, to double-check
+
+        # return np.sum( (self.weights_driver * fc1)[self.ind_stopped_data] )
+        # TODO: not 100% sure here, to double-check
+
         return np.log(np.sum((self.weights_driver * fc2)[self.ind_stopped_data]))
 
     def bic(self, distrib):
@@ -1059,8 +1184,10 @@ class distrib_cov:
         )
 
     def crps(self, coeffs):
-        # ps.crps_quadrature cannot be applied on conditional distributions, thus calculating in each point of the sample, then averaging
-        # WARNING, TAKES A VERY LONG TIME TO COMPUTE
+        # ps.crps_quadrature cannot be applied on conditional distributions, thu
+        # calculating in each point of the sample, then averaging
+        # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE
+
         tmp_cprs = []
         for i in np.arange(self.n_sample):
             distrib = self.expr_fit.evaluate(
@@ -1079,9 +1206,6 @@ class distrib_cov:
         # averaging
         return np.sum(self.weights_driver * np.array(tmp_cprs))
 
-    # --------------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------------------
     # FIT
     def fit(self):
         # Before fitting, need a good first guess, using 'find_fg'.
@@ -1129,5 +1253,3 @@ class distrib_cov:
         # CRPS
         if "CRPS" in self.scores_fit:
             self.quality_fit["CRPS"] = self.crps(self.coefficients_fit)
-
-    # --------------------------------------------------------------------------------

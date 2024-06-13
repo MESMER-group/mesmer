@@ -7,19 +7,24 @@ import os.path
 
 
 class ConfigMesmerX:
-    """
-    This class defines the full configuration of MESMER.
-
-    Inputs:
-     - paths: information on what paths to use.
-        If nothing is provided in 'paths', default is to assume paths for tests.
-        If any known keyword is provided in 'paths', they will be used instead of default.
-        Unknown keywords in 'paths' cause an error.
-     - gen: generation of CMIP data (default: 6). If some paths are provided in 'paths', it MUST be consistent with 'gen'.
-     - esms: list of the ESMs used. The default is 'all', BUT if no paths are provided, it is assumed that only data for tests are used, then only ["IPSL-CM6A-LR"].
-    """
 
     def __init__(self, paths={}, gen=6, esms="all"):
+        """full configuration of MESMER.
+
+        Parameters
+        ----------
+        paths : dict
+            Information on what paths to use. If nothing is provided in 'paths', default
+            is to assume paths for tests. If any known keyword is provided in 'paths',
+            they will be used instead of default.
+            Unknown keywords in 'paths' cause an error.
+        gen : int, default: 6
+            Generation of CMIP data. If some paths are provided in 'paths', it MUST be
+            consistent with 'gen'.
+        esms : list of str, default: "all"
+            The ESMs used. The default is 'all', BUT if no paths are provided, it is
+            assumed that only data for tests are used, then only ["IPSL-CM6A-LR"].
+        """
 
         # preparing some parameters
         self.paths = paths
@@ -39,7 +44,6 @@ class ConfigMesmerX:
 
     def paths_directories(self):
 
-        # ---------------------------------------------------------------------------------
         # PATHS
 
         # path to mesmer root directory can be found in a slightly sneaky way
@@ -53,7 +57,6 @@ class ConfigMesmerX:
             MESMER_ROOT, "tests", "test-data", "calibrate-coarse-grid"
         )
 
-        # ---------------------------------------------------------------------------------
         # DIRECTORIES
         # checking if any is unknown:
         for key_path in self.paths:
@@ -124,14 +127,11 @@ class ConfigMesmerX:
         else:
             self.dir_plots = "/net/exo/landclim/yquilcaille/across_scen_T/plots/"
 
-        # ---------------------------------------------------------------------------------
         return
 
     def flex_config(self):
 
-        # ---------------------------------------------------------------------------------
         # ESMs
-
         if self.paths == {}:
             # running in test mode, only using this ESM
             self.esms = ["IPSL-CM6A-LR"]
@@ -164,21 +164,23 @@ class ConfigMesmerX:
                 "NorESM2-MM",
                 "UKESM1-0-LL",
             ]
-            # tmp removed (need to investigate stms soon how can get them in too!):
-            # -CAMS-CSM1-0 (train_lt did not work: nans?!)
-            # -CIESM (sth wrong with GHFDS)
-            # -"EC-Earth3" (sth wrong when reading in files, index issue)
+
+            # temporarily removed
+            # - "CAMS-CSM1-0" (train_lt did not work: nans?!)
+            # - "CIESM" (sth wrong with GHFDS)
+            # - "EC-Earth3" (sth wrong when reading in files, index issue)
             # - "EC-Earth3-Veg" (probably sth wrong with GHFDS)
             # - "EC-Earth3-Veg-LR" (didn't even try. Just assumed same problem)
             # - "GFDL-CM4" (probably sth wrong with GHFDS)
             # - "GFDL-ESM4" (didn't even try. Just assumed same problem)
             # - "GISS-E2-1-G" (sth wrong when reading in files, index issue)
+
+            # TODO: need to investigate stms soon how can get them in too!
             # Check update on this aspect on slack Yann-Lea
 
         else:
             pass  # nothing to change, esms is used as provided.
 
-        # ---------------------------------------------------------------------------------
         # Variables, ensembles, regions
         self.targs = ["tas"]  # emulated variables
 
@@ -187,7 +189,6 @@ class ConfigMesmerX:
 
         self.reg_type = "ar6.land"
 
-        # ---------------------------------------------------------------------------------
         # Time
         self.ref = {}
         self.ref["type"] = "individ"  # alternatives: 'first','all'
@@ -199,26 +200,27 @@ class ConfigMesmerX:
         self.time = {}
         # first included year
         self.time["start"] = "1850"
-        # last included year #TODO: check if even used anywhere??
+        # last included year
+        # TODO: check if even used anywhere??
         self.time["end"] = "2100"
 
-        # ---------------------------------------------------------------------------------
         # Parameters
         self.threshold_land = 1 / 3
 
+        # if True weigh each scenario equally (ie less weight to individ runs of scens
+        # with more ic members)
         self.wgt_scen_tr_eq = True
-        # if True weigh each scenario equally (ie less weight to individ runs of scens with more ic members)
 
+        # temporarily made smaller for testing purposes. Normally 6000.
         self.nr_emus_v = 1000
-        # tmp made smaller for testing purposes. Normally 6000.
 
+        # 0 meaning same emulations drawn for each scen, if put a number will have
+        # different ones for each scen
         self.scen_seed_offset_v = 0
-        # 0 meaning same emulations drawn for each scen, if put a number will have different ones for each scen
 
         # max. nr of iterations in cross validation, will increase later
         self.max_iter_cv = 15
 
-        # ---------------------------------------------------------------------------------
         # predictors (for global module)
         self.preds = {}
         self.preds["tas"] = {}
@@ -230,7 +232,6 @@ class ConfigMesmerX:
         self.preds["tas"]["gv"] = []
         self.preds["tas"]["g_all"] = self.preds["tas"]["gt"] + self.preds["tas"]["gv"]
 
-        # ---------------------------------------------------------------------------------
         # methods (for all modules)
         self.methods = {}
 
@@ -305,8 +306,10 @@ class ConfigMesmerX:
 
     def nonflex_config(self):
 
-        # ---------------------------------------------------------------------------------
-        # list of scenarios that could be considered. Right now, complying to previous scripts of configurations, passing scenarios as set configuration, but could be passed in flexible configurations.
+        # list of scenarios that could be considered. Right now, complying to previous
+        # scripts of configurations, passing scenarios as set configuration, but could
+        # be passed in flexible configurations.
+
         if self.paths == {}:
             # running in test mode, only using this ESM
             self.scenarios = ["h-ssp126"]
@@ -323,7 +326,6 @@ class ConfigMesmerX:
                 "h-ssp119",
             ]
 
-        # ---------------------------------------------------------------------------------
         # Emulations of scenarios and seeds
         if self.scen_seed_offset_v == 0:
             self.scenarios_emus_v = ["all"]
@@ -352,6 +354,9 @@ class ConfigMesmerX:
 # information about loaded data:
 
 # cmip-ng
-# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and pre-processed according to Brunner et al. 2020 (https://doi.org/10.5281/zenodo.3734128)
-# assumes folder structure / file name as in cmip-ng archives at ETHZ -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
-# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012), downloaded from KNMI climate explorer in August 2020, no pre-processing
+# Data downloaded from ESGF (https://esgf-node.llnl.gov/projects/esgf-llnl/) and
+# pre-processed according to Brunner et al. [2020](https://doi.org/10.5281/zenodo.3734128)
+# assumes folder structure / file name as in cmip-ng archives at ETHZ
+# -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
+# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012),
+# downloaded from KNMI climate explorer in August 2020, no pre-processing

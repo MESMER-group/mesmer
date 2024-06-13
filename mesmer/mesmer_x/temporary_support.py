@@ -98,7 +98,8 @@ def load_inputs_MESMERx(cfg, variables, esms):
         pred_g, reg_dict, wgt_g, ls, threshold_land=cfg.threshold_land
     )
 
-    # prepare the auxiliary files. better results with default values L, but like this much faster + less space needed
+    # prepare the auxiliary files. better results with default values L, but like this
+    # much faster + less space needed
     phi_gc = load_phi_gc(lon, lat, ls, cfg, L_start=1750, L_end=10000, L_interval=250)
 
     lon_mesh, lat_mesh = np.meshgrid(lon["c"], lat["c"])
@@ -108,7 +109,8 @@ def load_inputs_MESMERx(cfg, variables, esms):
     gp2reg = reg_dict["grids"][:, ind[0], ind[1]]  # grid points to regions
     ww_reg = np.nansum((ls["wgt_gp_l"] * gp2reg).T, axis=0)
 
-    # Just checking what ESMs are actually used. Some are removed because not having all drivers
+    # Just checking what ESMs are actually used. Some are removed because not having all
+    # drivers
     used_esms = [esm for esm in esms if len(PRED[esm].keys()) > 0]
 
     # adding few lines for SMA, because some values in NaN  or inf!
