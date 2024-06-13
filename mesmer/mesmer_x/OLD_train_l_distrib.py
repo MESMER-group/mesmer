@@ -83,21 +83,16 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
     ----------
     preds : dict
         dictionnary[target][name_covariant] = covariant. The covariants must be dictionnaries with scenarios as keys.
-
     targs : dict
         nested dictionary of targets with keys
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
-
     cfg : module
         config file containing metadata
-
     form_fit_distrib : str
         string containing information on which fit to do: transformation and evolution of parameters
         Examples: transfo-_loc-gttasL-gthfdsL_scale-_shape-gttasS; transfo-logistic_loc-gttasL_scale-
-
     save_params : bool, optional
         determines if parameters are saved or not, default = True
-
     **kwargs : additional parameters that will be fed to the class 'distrib_cov' for fit of a distribution
 
     Returns
@@ -307,14 +302,11 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
     preds : dict
         nested dictionary with 3 keys: cov_loc, cov_scale, cov_shape. Each one may be empty for no variation of the parameter of the distribution. If not empty, the variables will be used as covariants.
         - [targ][cov_...][covariant][scen]  (1d array (time) of predictor for specific scenario)
-
     targs : dict
         nested dictionary of targets with keys
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
-
     params_l_distrib : dict
         nested dictionary of local variability paramters. Result of the function 'train_l_distrib'.
-
     threshold_sigma : float
         If a distribution is not correctly fitted, some values to transform may lead to unlikely values for a standard normal distribution. If above, they will be set to the threshold. Default : 6 (~happens once every 1e9 times)
 
@@ -511,7 +503,8 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
             print(
                 "WARNING: some transformed values of "
                 + var_targ
-                + " are very unlikely, a possible cause is a fit missing strong signals. Action taken: blocking them at a limit."
+                + " are very unlikely, a possible cause is a fit missing strong"
+                " signals. Action taken: blocking them at a limit."
             )
 
     return transf_inputs
@@ -1785,7 +1778,8 @@ class distrib_cov:
                 # checking if that one failed as well
                 if self.error_failedfit and not m.success:
                     raise Exception(
-                        "The fast detrend provides with a valid first guess, but not good enough."
+                        "The fast detrend provides with a valid first guess, but not"
+                        " good enough."
                     )
 
             return self.translate_m_sol(m.x)
