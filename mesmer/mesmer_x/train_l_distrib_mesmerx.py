@@ -127,7 +127,6 @@ def xr_train_distrib(
         )
 
     # FIT
-    # --------------------------------------------------------------------------------
     # looping over grid points (to replace with a map function)
     for igp, gp in enumerate(gridpoints):
         print(
@@ -1093,7 +1092,8 @@ class distrib_cov:
         return LL
 
     def find_bound(self, i_c, x0, fact_coeff):
-        # could be accelerated using dichotomy, but 100 iterations max are fast enough not to require to make this part more complex.
+        # could be accelerated using dichotomy, but 100 iterations max are fast enough
+        # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
             test_c, test_p, test_v, _ = self.test_all(x)
