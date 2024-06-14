@@ -666,14 +666,14 @@ class distrib_cov:
         # checking set boundaries on coefficients
         for coeff in self.boundaries_coeffs:
             bottom, top = self.boundaries_coeffs[coeff]
-            if coeff not in self.expr_fit.list_coefficients:
+            if coeff not in self.expr_fit.coefficients_list:
                 raise ValueError(
                     "Provided wrong boundaries on coefficient, "
                     + coeff
                     + " does not exist in expr_fit"
                 )
             else:
-                values = values_coeffs[self.expr_fit.list_coefficients.index(coeff)]
+                values = values_coeffs[self.expr_fit.coefficients_list.index(coeff)]
             if np.any(values < bottom) or np.any(top < values):
                 test = False  # out of boundaries
         return test
