@@ -85,7 +85,7 @@ def load_inputs_MESMERx(cfg, variables, esms):
 
     # stops here if nothing in there to do:
     if len(PRED) == 0:
-        raise Exception("No common runs found.")
+        raise RuntimeError("No common runs found.")
 
     # load in the constant files
     reg_dict, ls, wgt_g, lon, lat = load_regs_ls_wgt_lon_lat(cfg.reg_type, lon, lat)

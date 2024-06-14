@@ -142,13 +142,13 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
         elif distr in ["poisson"]:
             tmp_list = ["loc", "mu"]
         else:
-            raise Exception("This distribution has not been prepared here")
+            raise ValueError("This distribution has not been prepared here")
 
         # validating the list of provided covariants
         if set(descrip_fit.keys()) == set(tmp_list):
             params_list = ["cov_" + pp for pp in tmp_list]
         else:
-            raise Exception(
+            raise ValueError(
                 "Given the distribution ("
                 + distr
                 + "), should have information on {"
@@ -189,7 +189,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
         if data[common_scen[0]].ndim == 3:
             n_runs = {sc: data[sc].shape[0] for sc in data}
         else:
-            raise Exception("Data must be Runs x Time x Gridpoints")
+            raise ValueError("Data must be Runs x Time x Gridpoints")
 
         # shaping covariants that will be used for all gridpoints.
         tmp_preds = {}
@@ -346,7 +346,7 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
             distr_cdf = ss.poisson.cdf
 
         else:
-            raise Exception("Distribution not prepared")
+            raise ValueError("Distribution not prepared")
 
         # checking once that all required covariants are there for this target
         for par_var in params_list:
@@ -354,7 +354,7 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
             req = [kk[0] for kk in params_l_distrib[var_targ][par_var]]
             for inp in req:
                 if inp not in preds[var_targ]:
-                    raise Exception("Missing input on " + par_var + ": " + inp)
+                    raise ValueError("Missing input on " + par_var + ": " + inp)
 
         # evaluate the evolutions of the parameters for this variable
         params_all = eval_param_distrib(
@@ -479,7 +479,7 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
                         )
 
                 else:
-                    raise Exception(
+                    raise ValueError(
                         "Distribution not prepared, please make sure of its type."
                     )
 
@@ -674,7 +674,7 @@ class distrib_cov:
                     )
 
                 else:
-                    raise Exception("Unknown form of fit in " + type)
+                    raise ValueError("Unknown form of fit in " + type)
 
         # check for a case not handled: on one parameter, several sigmoids asked, but from different kinds:
         # that would be a mess for the evaluation of the coefficients on the parameters.
@@ -685,7 +685,7 @@ class distrib_cov:
                 if form in self.possible_sigmoid_forms
             ]
             if len(set(lst_forms)) > 1:
-                raise Exception(
+                raise ValueError(
                     "Please avoid asking for different types of sigmoid on 1 parameter."
                 )
 
@@ -736,7 +736,7 @@ class distrib_cov:
             elif self.distrib in ["poisson"]:
                 self.boundaries_params = {"loc": [-np.inf, np.inf], "mu": [0, np.inf]}
             else:
-                raise Exception("Distribution not prepared here")
+                raise ValueError("Distribution not prepared here")
         else:
             self.boundaries_params = boundaries_params
         self.boundaries_coeffs = boundaries_coeffs  # this one is more technical
@@ -760,16 +760,16 @@ class distrib_cov:
             "COBYLA",
             "SLSQP",
         ]:
-            raise Exception("method for this fit not prepared, to avoid")
+            raise ValueError("method for this fit not prepared, to avoid")
 
         # test on sizes of sample
         # should do tests also for covariations.
         if self.data.ndim > 1:
-            raise Exception("input data must be a vector")
+            raise ValueError("input data must be a vector")
         if (len(self.cov["cov_loc_data"]) > 0) and (
             self.data.shape[0] != self.cov["cov_loc_data"][0].shape[0]
         ):
-            raise Exception("Sample of data and covariations have different sizes...")
+            raise ValueError("Sample of data and covariations have different sizes...")
 
         # prior for shape: normal distribution with sd=0 is not valid
         if type(prior_shape) in [tuple, list, np.ndarray]:
@@ -870,7 +870,7 @@ class distrib_cov:
                 ) ** 2.0
 
             else:
-                raise Exception("This distribution has not been prepared.")
+                raise ValueError("This distribution has not been prepared.")
 
             if self.eval_fg0_with_dd_mean:
                 out = err_mean + err_var + err_skew
@@ -1177,7 +1177,7 @@ class distrib_cov:
             # coeffs are saved, useless to get the rest of the signal
             _ = self.reglin_fg(typ_cov="mu", data=std_data_det)
         else:
-            raise Exception("Distribution not prepared here")
+            raise ValueError("Distribution not prepared here")
 
         # preparing optimization of loc0, scale0 and shape0: calculating mean, median, skew kurtosis of detrended data
         self.dd_mean = np.mean(data_det)
@@ -1230,7 +1230,7 @@ class distrib_cov:
                 tmp[np.where(self.data - loc > 0)]
             )
             if bnds_c_limit[1] < bnds_c_limit[0]:
-                raise Exception(
+                raise ValueError(
                     "No possible solution for shape there ("
                     + str(bnds_c_limit[0])
                     + " not < to "
@@ -1357,11 +1357,11 @@ class distrib_cov:
                 counter_modif_loc0 += 1
 
         else:
-            raise Exception("Distribution not prepared here")
+            raise ValueError("Distribution not prepared here")
 
         # checking whether succeeded, or need more work on first guess
         if np.isinf(self.loglike(x0)):
-            raise Exception("Could not find an improved first guess")
+            raise ValueError("Could not find an improved first guess")
         else:
             return x0
 
@@ -1476,7 +1476,7 @@ class distrib_cov:
                     )
 
                 else:
-                    raise Exception(
+                    raise ValueError(
                         self.cov["cov_" + typ + "_form"][ii] + " is not prepared!"
                     )
 
@@ -1582,7 +1582,7 @@ class distrib_cov:
             do_c = False
 
         else:
-            raise Exception("Distribution not prepared here")
+            raise ValueError("Distribution not prepared here")
 
         # initialize test
         test = True
@@ -1707,7 +1707,7 @@ class distrib_cov:
                     out = ss.poisson.logpmf(data_fit, loc=p_args[0], mu=p_args[1]).sum()
 
                 else:
-                    raise Exception("This distribution has not been prepared.")
+                    raise ValueError("This distribution has not been prepared.")
                 # if ll+prior > 0, want to reduce output if quality transformation decrease
                 # if ll+prior < 0, want to reduce further output if quality transformation decrease
                 return out
@@ -1777,7 +1777,7 @@ class distrib_cov:
 
                 # checking if that one failed as well
                 if self.error_failedfit and not m.success:
-                    raise Exception(
+                    raise ValueError(
                         "The fast detrend provides with a valid first guess, but not"
                         " good enough."
                     )

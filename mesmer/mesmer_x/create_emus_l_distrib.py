@@ -59,7 +59,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
     """
     # checking that the provided inputs are transformed.
     if list(transf_emus_lv.keys()) != ["all"]:
-        raise Exception(
+        raise ValueError(
             "Data to backtransform must be emulations from 'create_emus_lv' with only"
             " the key 'all'"
         )
@@ -108,7 +108,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
 
             # checking if different scenarios are provided
             elif np.any(list_scens != maybe_scens):
-                raise Exception(
+                raise ValueError(
                     "The different covariants for the parameters have different list of"
                     " scenarios, please provide the same ones. NB: 'all' applies to all"
                     " other scenarios, thus did not cause this issue."
@@ -174,7 +174,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                             scale=params_all[scen]["scale_all"][..., ind_NoNaN],
                         ).T
                     else:
-                        raise Exception("check the dimensions...")
+                        raise ValueError("check the dimensions...")
 
                 # (Emus, Time, GridPoints)
                 elif distr in ["gaussian"]:
@@ -192,7 +192,7 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                             scale=params_all[scen]["scale_all"][..., ind_NoNaN],
                         ).T
                     else:
-                        raise Exception("check the dimensions...")
+                        raise ValueError("check the dimensions...")
 
                 # (Emus, Time, GridPoints)
                 elif distr in ["poisson"]:
@@ -210,10 +210,10 @@ def backtransf_normal2distrib(transf_emus_lv, preds, params_distrib, force_scen=
                             mu=params_all[scen]["mu_all"][..., ind_NoNaN],
                         ).T
                     else:
-                        raise Exception("check the dimensions...")
+                        raise ValueError("check the dimensions...")
 
                 else:
-                    raise Exception(
+                    raise ValueError(
                         "Distribution not prepared, please make sure of its type."
                     )
 

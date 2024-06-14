@@ -472,14 +472,14 @@ class distrib_cov:
         self.n_sample = len(self.data_targ)
 
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
-            raise Exception("NaN or infinite values in target of fit")
+            raise ValueError("NaN or infinite values in target of fit")
         self.data_pred = data_pred
         if np.any(
             [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
         ) or np.any(
             [np.any(np.isinf(self.data_pred[pred])) for pred in self.data_pred]
         ):
-            raise Exception("NaN or infinite values in predictors of fit")
+            raise ValueError("NaN or infinite values in predictors of fit")
         self.expr_fit = expr_fit
 
         # preparing additional data
@@ -489,14 +489,14 @@ class distrib_cov:
         if (self.add_test is False) and (
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
-            raise Exception(
+            raise ValueError(
                 "Only one of data_targ_addtest & data_preds_addtest have been provided,"
                 " not both of them. Please correct."
             )
         self.data_targ_addtest = data_targ_addtest
         self.data_preds_addtest = data_preds_addtest
         if (threshold_min_proba <= 0) or (1 < threshold_min_proba):
-            raise Exception("threshold_min_proba must be in the segment [0;1[")
+            raise ValueError("threshold_min_proba must be in the segment [0;1[")
         else:
             self.threshold_min_proba = threshold_min_proba
 
@@ -522,7 +522,7 @@ class distrib_cov:
         self.func_first_guess = func_first_guess
         self.n_coeffs = len(self.expr_fit.coefficients_list)
         if len(self.first_guess) != self.n_coeffs:
-            raise Exception(
+            raise ValueError(
                 "The provided first guess does not have the correct shape: ("
                 + str(self.n_coeffs)
                 + ")"
@@ -544,7 +544,7 @@ class distrib_cov:
         elif isinstance(options_solver, dict):
             default_options_solver.update(options_solver)
         else:
-            raise Exception("options_solver must be a dictionary")
+            raise ValueError("options_solver must be a dictionary")
         self.xtol_req = default_options_solver["xtol_req"]
         self.ftol_req = default_options_solver["ftol_req"]
         self.maxiter = default_options_solver["maxiter"]
@@ -558,7 +558,7 @@ class distrib_cov:
             "COBYLA",
             "SLSQP",
         ] + ["CG", "Newton-CG"]:
-            raise Exception("method for this fit not prepared, to avoid")
+            raise ValueError("method for this fit not prepared, to avoid")
         else:
             self.name_xtol = {
                 "BFGS": "xrtol",
@@ -592,7 +592,7 @@ class distrib_cov:
         elif isinstance(options_optim, dict):
             default_options_optim.update(options_optim)
         else:
-            raise Exception("options_optim must be a dictionary")
+            raise ValueError("options_optim must be a dictionary")
 
         # preparing weights
         self.weighted_NLL = default_options_optim["weighted_NLL"]
@@ -614,7 +614,7 @@ class distrib_cov:
                 (self.threshold_stopping_rule is None) or (self.ind_year_thres is None)
             )
         ):
-            raise Exception(
+            raise ValueError(
                 "Lack of consistency on the options 'type_fun_optim',"
                 " 'threshold_stopping_rule' and 'ind_year_thres', not sure if the"
                 " stopping rule will be employed"
@@ -667,7 +667,7 @@ class distrib_cov:
         for coeff in self.boundaries_coeffs:
             bottom, top = self.boundaries_coeffs[coeff]
             if coeff not in self.expr_fit.list_coefficients:
-                raise Exception(
+                raise ValueError(
                     "Provided wrong boundaries on coefficient, "
                     + coeff
                     + " does not exist in expr_fit"
@@ -1231,7 +1231,7 @@ class distrib_cov:
 
         # checking if the fit has failed
         if self.error_failedfit and (m.success is False):
-            raise Exception("Failed fit.")
+            raise ValueError("Failed fit.")
         else:
             self.coefficients_fit = m.x
             self.eval_quality_fit()
