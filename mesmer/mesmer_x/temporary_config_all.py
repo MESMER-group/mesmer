@@ -70,7 +70,7 @@ class ConfigMesmerX:
                 "dir_stats",
                 "dir_plots",
             ]:
-                raise Exception(
+                raise ValueError(
                     'Unknown type of directory provided in "paths", please check'
                     " available options."
                 )
