@@ -326,6 +326,8 @@ class ConfigMesmerX:
                 "h-ssp119",
             ]
 
+        # TODO: see create_seed_dict in mesmer.create_emulations.make_realisations
+
         # Emulations of scenarios and seeds
         if self.scen_seed_offset_v == 0:
             self.scenarios_emus_v = ["all"]
@@ -358,5 +360,5 @@ class ConfigMesmerX:
 # pre-processed according to Brunner et al. [2020](https://doi.org/10.5281/zenodo.3734128)
 # assumes folder structure / file name as in cmip-ng archives at ETHZ
 # -> see mesmer.io.load_cmipng.file_finder_cmipng() for details
-# - global mean stratospheric AOD, monthly, 1850-"2020" (0 after 2012),
-# downloaded from KNMI climate explorer in August 2020, no pre-processing
+# - global mean stratospheric AOD, monthly, 1850-2020 (0 after 2012),
+#   downloaded from KNMI climate explorer in August 2020, no pre-processing

@@ -22,7 +22,7 @@ from mesmer.mesmer_x.train_utils_mesmerx import (
     listxrds_to_np,
     weighted_median,
 )
-from mesmer.stats import gaspari_cohn_correlation_matrices
+from mesmer.stats import gaspari_cohn
 
 
 def ignore_warnings(func):
@@ -141,18 +141,13 @@ def xr_train_distrib(
         )
 
     # FIT
+
+    print(f"Fitting the variable {target_name} with the expression {expr}:")
+
     # looping over grid points (to replace with a map function)
     for igp, gp in enumerate(gridpoints):
-        print(
-            "Fitting the variable "
-            + target_name
-            + " with the expression "
-            + expr
-            + ": "
-            + str(np.round(100.0 * (igp + 1) / gridpoints.size, 1))
-            + "%",
-            end="\r",
-        )
+        fraction = (igp + 1) / gridpoints.size
+        print(f"{fraction:0.1%}", end="\r")
 
         # shaping target for this gridpoint
         target_np = listxrds_to_np(
@@ -189,24 +184,17 @@ def xr_train_distrib(
 
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
-        corr_gc = gaspari_cohn_correlation_matrices(geodist, [r_gasparicohn_2ndfit])[
-            r_gasparicohn_2ndfit
-        ]
-        ind_nonan = np.where(
-            ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
-        )[0]
+        corr_gc = gaspari_cohn(geodist / r_gasparicohn_2ndfit)
+
+        sel_nonan = ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
+
+        print(
+            f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
+        )
 
         for igp, gp in enumerate(gridpoints):
-            print(
-                "Fitting the variable "
-                + target_name
-                + " with the expression "
-                + expr
-                + " (2nd round): "
-                + str(np.round(100.0 * (igp + 1) / gridpoints.size, 1))
-                + "%",
-                end="\r",
-            )
+            fraction = (igp + 1) / gridpoints.size
+            print(f"{fraction:0.1%}", end="\r")
 
             # calculate first guess, with a weighted median based on Gaspari-Cohn
             # matrix, while avoiding NaN values. Warning, weighted mean does not work
@@ -216,8 +204,8 @@ def xr_train_distrib(
             fg = np.zeros(len(expression_fit.coefficients_list))
             for ic, coef in enumerate(expression_fit.coefficients_list):
                 fg[ic] = weighted_median(
-                    data=coefficients_xr[coef].values[ind_nonan],
-                    weights=corr_gc[igp, ind_nonan],
+                    data=coefficients_xr[coef].values[sel_nonan],
+                    weights=corr_gc[igp, sel_nonan],
                 )
 
             # shaping target for this gridpoint
@@ -271,9 +259,9 @@ class distrib_cov:
         self,
         data_targ,
         data_pred,
-        expr_fit,  # TODO: replace by Expression instance
-        data_targ_addtest=None,
-        data_preds_addtest=None,
+        expr_fit,
+        data_targ_addtest=None,  # TODO: rename to data_targ_validation?
+        data_preds_addtest=None,  # TODO: rename to data_preds_validation?
         threshold_min_proba=1.0e-9,
         boundaries_params=None,
         boundaries_coeffs=None,
@@ -303,7 +291,7 @@ class distrib_cov:
             Sample of the target for fit of a conditional distribution
 
         data_pred : dict of 1D vectors
-            Covariates for the conditional distribution. each key must be the exact name
+            Covariates for the conditional distribution. Each key must be the exact name
             of the inputs used in 'expr_fit', and the values must be aligned with the
             values in 'data_targ'.
 
@@ -321,7 +309,7 @@ class distrib_cov:
             data, but will test that this data remains valid. Important to avoid points
             out of support of the distribution.
 
-        threshold_min_proba : float, default: None
+        threshold_min_proba : float, default: 1e-9
             Will test that each point of the sample and added sample have their
             probability higher than this value. Important to ensure that all points are
             feasible with the fitted distribution.
@@ -468,18 +456,21 @@ class distrib_cov:
 
         # preparing basic information
         self.data_targ = data_targ
+
         # can be different from length of predictors IF no predictors.
         self.n_sample = len(self.data_targ)
 
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise ValueError("NaN or infinite values in target of fit")
         self.data_pred = data_pred
+
         if np.any(
             [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
         ) or np.any(
             [np.any(np.isinf(self.data_pred[pred])) for pred in self.data_pred]
         ):
             raise ValueError("NaN or infinite values in predictors of fit")
+
         self.expr_fit = expr_fit
 
         # preparing additional data
@@ -490,28 +481,31 @@ class distrib_cov:
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
             raise ValueError(
-                "Only one of data_targ_addtest & data_preds_addtest have been provided,"
-                " not both of them. Please correct."
+                "Only one of `data_targ_addtest` & `data_preds_addtest` have been provided,"
+                " not both of them."
             )
         self.data_targ_addtest = data_targ_addtest
         self.data_preds_addtest = data_preds_addtest
+
         if (threshold_min_proba <= 0) or (1 < threshold_min_proba):
-            raise ValueError("threshold_min_proba must be in the segment [0;1[")
-        else:
-            self.threshold_min_proba = threshold_min_proba
+            raise ValueError("`threshold_min_proba` must be in [0;1[")
+
+        self.threshold_min_proba = threshold_min_proba
 
         # preparing information on boundaries
         self.boundaries_params = self.expr_fit.boundaries_parameters
         if boundaries_params is not None:
             for param in boundaries_params:
-                self.boundaries_params[param] = [
-                    np.max(
-                        [boundaries_params[param][0], self.boundaries_params[param][0]]
-                    ),
-                    np.min(
-                        [boundaries_params[param][1], self.boundaries_params[param][1]]
-                    ),
-                ]
+
+                lower_bound = np.max(
+                    [boundaries_params[param][0], self.boundaries_params[param][0]]
+                )
+                upper_bound = np.min(
+                    [boundaries_params[param][1], self.boundaries_params[param][1]]
+                )
+
+                self.boundaries_params[param] = [lower_bound, upper_bound]
+
         if boundaries_coeffs is not None:
             self.boundaries_coeffs = boundaries_coeffs
         else:
@@ -523,22 +517,20 @@ class distrib_cov:
         self.n_coeffs = len(self.expr_fit.coefficients_list)
         if len(self.first_guess) != self.n_coeffs:
             raise ValueError(
-                "The provided first guess does not have the correct shape: ("
-                + str(self.n_coeffs)
-                + ")"
+                f"The provided first guess does not have the correct shape: {self.n_coeffs}"
             )
         self.scores_fit = scores_fit
 
         # preparing information on solver
-        default_options_solver = dict(
-            method_fit="Powell",
-            xtol_req=1e-6,
-            ftol_req=1.0e-6,
-            maxiter=1000 * self.n_coeffs * np.log(self.n_coeffs),
-            maxfev=1000 * self.n_coeffs * np.log(self.n_coeffs),
-            error_failedfit=False,
-            fg_with_global_opti=False,
-        )
+        default_options_solver = {
+            "method_fit": "Powell",
+            "xtol_req": 1e-6,
+            "ftol_req": 1.0e-6,
+            "maxiter": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "maxfev": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "error_failedfit": False,
+            "fg_with_global_opti": False,
+        }
         if options_solver is None:
             pass
         elif isinstance(options_solver, dict):
@@ -557,7 +549,9 @@ class distrib_cov:
             "trust-exact",
             "COBYLA",
             "SLSQP",
-        ] + ["CG", "Newton-CG"]:
+            "CG",
+            "Newton-CG",
+        ]:
             raise ValueError("method for this fit not prepared, to avoid")
         else:
             self.name_xtol = {
@@ -592,11 +586,11 @@ class distrib_cov:
         elif isinstance(options_optim, dict):
             default_options_optim.update(options_optim)
         else:
-            raise ValueError("options_optim must be a dictionary")
+            raise ValueError("`options_optim` must be a dictionary")
 
         # preparing weights
         self.weighted_NLL = default_options_optim["weighted_NLL"]
-        self.weights_driver = self.eval_weights()
+        self.weights_driver = self.get_weights()
 
         # preparing information for the stopping rule
         self.type_fun_optim = default_options_optim["type_fun_optim"]
@@ -620,63 +614,62 @@ class distrib_cov:
                 " stopping rule will be employed"
             )
 
-    def eval_weights(self, n_bins_density=40):
+    def get_weights(self, n_bins_density=40):
+
         if self.weighted_NLL:
-
-            # if no predictors, straightforward
-            if len(self.data_pred) == 0:
-                weights_driver = np.ones(self.data_pred.shape)
-
-            # preparing a single array for all predictors
-            else:
-                tmp = np.array([val for val in self.data_pred.values()]).T
-
-                # assessing limits on each axis
-                m1, m2 = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
-
-                # interpolating over whole region
-                n_points, n_preds = tmp.shape
-                gmt_hist, tmpb = np.histogramdd(
-                    sample=tmp,
-                    bins=[
-                        np.linspace(
-                            (m1 - 0.05 * (m2 - m1))[i],
-                            (m2 + 0.05 * (m2 - m1))[i],
-                            n_bins_density,
-                        )
-                        for i in range(n_preds)
-                    ],
-                )
-                gmt_bins_center = [
-                    0.5 * (tmpb[i][1:] + tmpb[i][:-1]) for i in range(n_preds)
-                ]
-                interp = RegularGridInterpolator(
-                    points=gmt_bins_center, values=gmt_hist
-                )
-                weights_driver = 1 / interp(tmp)  # inverse of density
-
+            weights_driver = self._get_weights_nll(n_bins_density=n_bins_density)
         else:
             weights_driver = np.ones(self.data_targ.shape)
+
         return weights_driver / np.sum(weights_driver)
 
-    def _test_coeffs(self, values_coeffs):
-        # initialize test
-        test = True
+    def _get_weights_nll(self, n_bins_density=40):
+
+        # if no predictors, straightforward
+        if len(self.data_pred) == 0:
+            # TODO: isn't data_pred a dict and does therefore not have a shape?
+            return np.ones(self.data_pred.shape)
+
+        # explode data_pred dictionary into a single array for all predictors
+        tmp = np.array(list(self.data_pred.values())).T
+
+        # assessing limits on each axis
+        mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
+
+        bins = np.linspace(
+            (mn - 0.05 * (mx - mn)),
+            (mx + 0.05 * (mx - mn)),
+            n_bins_density,
+        )
+
+        # interpolating over whole region
+        gmt_hist, edges = np.histogramdd(sample=tmp, bins=bins.T)
+
+        gmt_bins_center = [0.5 * (edge[1:] + edges[:-1]) for edge in edges]
+        interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist)
+        weights_driver = 1 / interp(tmp)  # inverse of density
+
+        return weights_driver
+
+    def _test_coeffs_in_bounds(self, values_coeffs):
 
         # checking set boundaries on coefficients
         for coeff in self.boundaries_coeffs:
             bottom, top = self.boundaries_coeffs[coeff]
+
+            # TODO: move this check to __init__
             if coeff not in self.expr_fit.list_coefficients:
                 raise ValueError(
-                    "Provided wrong boundaries on coefficient, "
-                    + coeff
-                    + " does not exist in expr_fit"
+                    f"Provided wrong boundaries on coefficient, {coeff}"
+                    " does not exist in expr_fit"
                 )
-            else:
-                values = values_coeffs[self.expr_fit.list_coefficients.index(coeff)]
+
+            values = values_coeffs[self.expr_fit.list_coefficients.index(coeff)]
             if np.any(values < bottom) or np.any(top < values):
-                test = False  # out of boundaries
-        return test
+                # out of boundaries
+                return False
+
+        return True
 
     def _test_evol_params(self, distrib, data):
         # initialize test
@@ -709,7 +702,7 @@ class distrib_cov:
         return test
 
     def _test_proba_value(self, distrib, data):
-        # tested values must have a minimum probability of occuring, ie be in a
+        # tested values must have a minimum probability of occuring, i.e. be in a
         # confidence interval
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
@@ -719,55 +712,58 @@ class distrib_cov:
             cdf >= self.threshold_min_proba
         )
 
-    # test for the validity of the coefficients
-    def test_all(self, coefficients):
-        test_coeff = self._test_coeffs(coefficients)
+    def validate_coefficients(self, coefficients):
+        """validate coefficients
 
-        # tests on coeffs show already that it wont work: fill in the rest with NaN
+        Validate estimated coefficients
+        1. using the target data and predictors and
+        2. potentially the cross-validaten data
+        """
+
+        test_coeff = self._test_coeffs_in_bounds(coefficients)
+
+        # tests on coeffs show already that it wont work: fill in the rest with False
         if not test_coeff:
             return test_coeff, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
+        distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
+        if self.add_test:
+            distrib_add = self.expr_fit.evaluate(coefficients, self.data_preds_addtest)
+
+        # test for the validity of the parameters
+        if self.add_test:
+            test_param = self._test_evol_params(
+                distrib, self.data_targ
+            ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
         else:
-            distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
-            if self.add_test:
-                distrib_add = self.expr_fit.evaluate(
-                    coefficients, self.data_preds_addtest
-                )
+            test_param = self._test_evol_params(distrib, self.data_targ)
 
-            # test for the validity of the parameters
+        # tests on params show already that it wont work: fill in the rest with False
+        if not test_param:
+            return test_coeff, test_param, False, False
+
+        # test for the probability of the values
+        if self.threshold_min_proba is None:
+            test_proba = True
+        else:
             if self.add_test:
-                test_param = self._test_evol_params(
+                test_proba = self._test_proba_value(
                     distrib, self.data_targ
-                ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
+                ) * self._test_proba_value(distrib_add, self.data_targ_addtest)
             else:
-                test_param = self._test_evol_params(distrib, self.data_targ)
+                test_proba = self._test_proba_value(distrib, self.data_targ)
 
-            # tests on params show already that it wont work: fill in the rest with NaN
-            if not test_param:
-                return test_coeff, test_param, False, False
-
-            else:
-                # test for the probability of the values
-                if self.threshold_min_proba is None:
-                    test_proba = True
-                else:
-                    if self.add_test:
-                        test_proba = self._test_proba_value(
-                            distrib, self.data_targ
-                        ) * self._test_proba_value(distrib_add, self.data_targ_addtest)
-                    else:
-                        test_proba = self._test_proba_value(distrib, self.data_targ)
-
-                # return values for each test and the distribution that has already been
-                # evaluated
-                return test_coeff, test_param, test_proba, distrib
+        # return values for each test and the distribution that has already been
+        # evaluated
+        return test_coeff, test_param, test_proba, distrib
 
     # supress nan & inf warnings
     @ignore_warnings
     def find_fg(self):
         """
-        compute first guess of the coefficients, to ensure convergence of the incoming fit.
+        compute first guess of the coefficients, to ensure convergence of the incoming
+        fit.
 
         Motivation:
             In many situations, the fit may be complex because of complex expressions
@@ -811,13 +807,15 @@ class distrib_cov:
                - basinhopping: requires a first guess. Tried with first guess close from
                  optimum, good performances, but lacks in reproductibility and
                  stability: not reliable enough here. Ok if runs much longer.
-               - brute, differential_evolution, shgo, dual_annealing, direct: requires bounds
+               - brute, differential_evolution, shgo, dual_annealing, direct: requires
+                 bounds
                  - brute, dual_annealing, direct: performances too low & too slow
                  - differential_evolution: lacks in reproductibility & stability
                  - shgo: good performances with the right sampling method, relatively
                    fast, but still adds ~10s. Highly dependant on the bounds, must not
                    be too large.
-               The best global optimizer, shgo, would then require bounds that are not too large.
+               The best global optimizer, shgo, would then require bounds that are not
+               too large.
 
             b. The set of coefficients have only sparse valid domains. The distance
                between valid domains is often bigger than the adequate width of bounds
@@ -849,7 +847,7 @@ class distrib_cov:
         To anyone trying to improve this part:
         If you attempt to modify the calculation of the first guess, it is *absolutely
         mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY,
-        FLEXIBILITY.         In particular, it is mandatory to test it for different
+        FLEXIBILITY. In particular, it is mandatory to test it for different
         situations: variables, grid points, distributions & expressions.
         """
 
@@ -949,8 +947,8 @@ class distrib_cov:
         )
         self.fg_coeffs = localfit_nll.x
 
-        # Step 5: fit on CDF or LL^n (objective: improving all coefficients,
-        # necessary to have all points within support. NB: NLL doesnt behave well enough here)
+        # Step 5: fit on CDF or LL^n (objective: improving all coefficients, necessary
+        # to have all points within support. NB: NLL doesnt behave well enough here)
         if False:
             # TODO: unreachable code?
             # fit coefficients on CDFs
@@ -1104,7 +1102,7 @@ class distrib_cov:
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
-            test_c, test_p, test_v, _ = self.test_all(x)
+            test_c, test_p, test_v, _ = self.validate_coefficients(x)
             test = test_c * test_p * test_v
             x[i_c] += fact_coeff * x[i_c]
             iter += 1
@@ -1114,7 +1112,9 @@ class distrib_cov:
     def func_optim(self, coefficients):
         # check wheter these coefficients respect all conditions: if so, can compute a
         # value for the optimization
-        test_coeff, test_param, test_proba, distrib = self.test_all(coefficients)
+        test_coeff, test_param, test_proba, distrib = self.validate_coefficients(
+            coefficients
+        )
         if test_coeff and test_param and test_proba:
 
             # check for the stopping rule
