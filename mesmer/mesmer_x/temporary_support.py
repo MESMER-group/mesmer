@@ -50,7 +50,7 @@ def load_inputs_MESMERx(cfg, variables, esms):
 
         for scen in cfg.scenarios:
 
-            # TODO: checking if this (esm,scen) combination has compatible runs.
+            # TODO: checking if this (esm, scen) combination has compatible runs.
             # if sub_pred is not None:
             #     available_runs, _ = test_combination_vars(
             #         [targ, pred, sub_pred], esm, scen, cfg
