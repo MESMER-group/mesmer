@@ -18,7 +18,7 @@ _CONTINUOUS_DISTRIBUTIONS = sp.stats._continuous_distns._distn_names
 
 _ALL_DISTRIBUTIONS = _DISCRETE_DISTRIBUTIONS + _CONTINUOUS_DISTRIBUTIONS
 
-_NUMBERS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+_DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 
 class Expression:
@@ -206,7 +206,7 @@ class Expression:
                 if pep == "c":
                     # starting expression for a coefficient
                     cf = "c"
-                elif (cf == "c") and (pep in _NUMBERS):
+                elif (cf == "c") and (pep in _DIGITS):
                     # continuing expression for a coefficient
                     cf += pep
                 else:
@@ -260,7 +260,7 @@ class Expression:
             for ex in expr + " ":
 
                 # TODO: could do this using regular expressions
-                if ex in ["(", ")", "[", "]", "+", "-", "*", "/", "%"] + _NUMBERS:
+                if ex in ["(", ")", "[", "]", "+", "-", "*", "/", "%"] + _DIGITS:
                     # this is a readable character that will not be an issue to read
                     if t not in ["", " "]:
                         # a term is here, and needs to be confirmed as readable
