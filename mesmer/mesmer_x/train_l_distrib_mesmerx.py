@@ -192,6 +192,10 @@ def xr_train_distrib(
             f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
         )
 
+        print(
+            f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
+        )
+
         for igp, gp in enumerate(gridpoints):
             fraction = (igp + 1) / gridpoints.size
             print(f"{fraction:0.1%}", end="\r")
