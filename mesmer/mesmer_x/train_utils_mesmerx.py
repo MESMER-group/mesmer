@@ -10,10 +10,15 @@ Refactored code for the training of distributions
 import math
 
 import numpy as np
-import scipy.stats as ss
-
-# import sympy as sp
+import scipy as sp
 import xarray as xr
+
+_DISCRETE_DISTRIBUTIONS = sp.stats._discrete_distns._distn_names
+_CONTINUOUS_DISTRIBUTIONS = sp.stats._continuous_distns._distn_names
+
+_ALL_DISTRIBUTIONS = _DISCRETE_DISTRIBUTIONS + _CONTINUOUS_DISTRIBUTIONS
+
+_DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 
 class Expression:
@@ -62,8 +67,8 @@ class Expression:
         - Forcing values of certain parameters (eg mu for poisson) to be integers: to
           implement in class 'expression'?
         - Reasons for not using sympy:
-          - sympy.stats does not have all required distributions (e.g. GEV) & all required
-            functions (e.g. log-likelihood)
+          - sympy.stats does not have all required distributions (e.g. GEV) & all
+            required functions (e.g. log-likelihood)
             -> so using scipy distributions with parameters as sympy expressions
           - but these expressions dont deal well with numpy array, or even less with
             xarray -> could, but tedious.
@@ -101,20 +106,19 @@ class Expression:
         """interpreting the expression"""
 
         dist = str.split(self.expression, "(")[0]
-        if (
-            dist
-            in ss._discrete_distns._distn_names + ss._continuous_distns._distn_names
-        ):
-            self.distrib = vars(ss.distributions)[dist]
-            self.is_distrib_discrete = self.distrib in ss._discrete_distns._distn_names
 
-        else:
-            raise ValueError(
-                "Please provide a distribution written as in scipy.stats:"
+        if dist not in _ALL_DISTRIBUTIONS:
+            raise AttributeError(
+                f"Could not find distribution '{dist}'."
+                " Please provide a distribution written as in scipy.stats:"
                 " https://docs.scipy.org/doc/scipy/reference/stats.html"
             )
 
+        self.distrib = getattr(sp.stats, dist)
+        self.is_distrib_discrete = self.distrib in _DISCRETE_DISTRIBUTIONS
+
     def find_expr_parameters(self):
+
         # removing spaces that would hinder the identification
         tmp_expression = self.expression.replace(" ", "")
 
@@ -132,18 +136,16 @@ class Expression:
                 self.parameters_expressions[param] = sub
             else:
                 raise ValueError(
-                    "The parameter "
-                    + param
-                    + " is not part of prepared expression in scipy.stats:"
+                    f"The parameter {param} is not part of prepared expression in scipy.stats:"
                     " https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
-                    + self.distrib.name
+                    f" of the distribution '{self.distrib.name}'"
                 )
 
         # recommend not to try to fill in missing information on parameters with
         # constant parameters, but to raise a ValueError instead.
         for pot_param in self.parameters_list:
             if pot_param not in self.parameters_expressions.keys():
-                raise ValueError("No information provided for " + pot_param)
+                raise ValueError(f"No information provided for `{pot_param}`")
 
     def find_parameters_list(self):
         """
@@ -157,19 +159,21 @@ class Expression:
         """
         # identifies parameters of the distribution
         if isinstance(self.distrib, str):
-            self.distrib = getattr(ss, self.distrib)
+            self.distrib = getattr(sp.stats, self.distrib)
+
         if self.distrib.shapes:
             self.parameters_list = [
                 name.strip() for name in self.distrib.shapes.split(",")
             ]
         else:
             self.parameters_list = []
-        if self.distrib.name in ss._discrete_distns._distn_names:
+
+        if self.distrib.name in _DISCRETE_DISTRIBUTIONS:
             self.parameters_list += ["loc"]
-        elif self.distrib.name in ss._continuous_distns._distn_names:
+        elif self.distrib.name in _CONTINUOUS_DISTRIBUTIONS:
             self.parameters_list += ["loc", "scale"]
         else:
-            raise ValueError(
+            raise AttributeError(
                 "Distribution name not found in discrete or continuous lists."
             )
 
@@ -202,17 +206,17 @@ class Expression:
                 if pep == "c":
                     # starting expression for a coefficient
                     cf = "c"
-                elif (cf == "c") and (
-                    pep in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-                ):
+                elif (cf == "c") and (pep in _DIGITS):
                     # continuing expression for a coefficient
                     cf += pep
                 else:
                     if cf not in ["", "c"]:
+
                         # ending expression for a coefficient
                         if cf not in self.coefficients_list:
                             self.coefficients_list.append(cf)
                             self.coefficients_dict[param].append(cf)
+
                         cf = ""
                     else:
                         # not a coefficient, move to the next
@@ -256,42 +260,22 @@ class Expression:
             for ex in expr + " ":
 
                 # TODO: could do this using regular expressions
-                if ex in [
-                    "(",
-                    ")",
-                    "[",
-                    "]",
-                    "+",
-                    "-",
-                    "*",
-                    "/",
-                    "%",
-                    "0",
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                    "6",
-                    "7",
-                    "8",
-                    "9",
-                ]:
+                if ex in ["(", ")", "[", "]", "+", "-", "*", "/", "%"] + _DIGITS:
                     # this is a readable character that will not be an issue to read
                     if t not in ["", " "]:
                         # a term is here, and needs to be confirmed as readable
-                        if "np." == t[: len("np.")]:
+                        if t.startswith("np."):
                             if t[len("np.") :] not in vars(np):
                                 raise ValueError(
-                                    "Proposed a numpy function that doesnt exist: " + t
+                                    f"Proposed a numpy function that doesnt exist: {t}"
                                 )
                             else:
                                 # nothing to replace, can go with that
                                 pass
-                        elif "math." == t[: len("math.")]:
+                        elif t.startswith("math."):
                             if t[len("math.") :] not in vars(math):
                                 raise ValueError(
-                                    "Proposed a math function that doesnt exist: " + t
+                                    f"Proposed a math function that doesnt exist: {t}"
                                 )
                             else:
                                 # nothing to replace, can go with that
@@ -302,11 +286,8 @@ class Expression:
                             dico_replace[t] = "math." + t
                         else:
                             raise ValueError(
-                                "The term "
-                                + t
-                                + " appears in "
-                                + self.parameters_expressions[param]
-                                + ", but couldnt find an equivalent in numpy or math."
+                                f"The term {t} appears in {self.parameters_expressions[param]},"
+                                " but couldnt find an equivalent in numpy or math."
                             )
                     else:
                         # was a readable character, is still a readable character,
@@ -370,7 +351,7 @@ class Expression:
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
-                    raise ValueError("Missing information for the coefficient " + c)
+                    raise ValueError(f"Missing information for the coefficient: '{c}'")
         else:
             # case where a vector is provided, used for the optimization performed
             # during the training
@@ -385,11 +366,11 @@ class Expression:
         # Check 2: are all the inputs provided?
         for i in self.inputs_list:
             if i not in inputs_values:
-                raise ValueError("Missing information for the input " + i)
+                raise ValueError(f"Missing information for the input: '{i}'")
 
         # Check 3: do the inputs have the same shape
-        shapes = [inputs_values[i].shape for i in self.inputs_list]
-        if len(set(shapes)) > 1:
+        shapes = {inputs_values[i].shape for i in self.inputs_list}
+        if len(shapes) > 1:
             raise ValueError("Different shapes of inputs detected.")
 
         # Evaluation 1: coefficients
@@ -439,8 +420,6 @@ class Expression:
 
         # evaluation of the distribution
         return self.distrib(**self.parameters_values)
-
-    # --------------------
 
 
 def probability_integral_transform(
@@ -510,7 +489,7 @@ def probability_integral_transform(
         coeffs_end = xr.Dataset()
 
     # transformation
-    OUT = []
+    out = []
 
     # loop to change with new data structure of MESMER
     for i, item in enumerate(data):
@@ -524,7 +503,8 @@ def probability_integral_transform(
             preds_end_item = xr.Dataset()
         else:
             preds_end_item = preds_end[i][0]
-        print("Transforming " + target_name + ": " + scen, end="\r")
+
+        print(f"Transforming {target_name}: {scen}", end="\r")
 
         # calculation distributions for this scenario
         distrib_start = expression_start.evaluate(
@@ -542,10 +522,9 @@ def probability_integral_transform(
         transf_item = distrib_end.ppf(cdf_item)
 
         # archiving
-        target_name
-        OUT.append((transf_item, scen))
+        out.append((transf_item, scen))
 
-    return OUT
+    return out
 
 
 def weighted_median(data, weights):
@@ -593,7 +572,7 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
         dictionary to select in listds.
     """
     # looping over scenarios
-    TMP = []
+    tmp = []
 
     for scen in forcescen:
 
@@ -602,10 +581,10 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
 
             if item[1] == scen:
                 # for each scenario, creating one unique serie: consistency of members &
-                #  scenarios have to be ensured while loading data
+                # scenarios have to be ensured while loading data
                 if coords is not None:
-                    TMP.append(item[0][name_var].loc[coords].values.flatten())
+                    tmp.append(item[0][name_var].loc[coords].values.flatten())
                 else:
-                    TMP.append(item[0][name_var].values.flatten())
+                    tmp.append(item[0][name_var].values.flatten())
 
-    return np.hstack(TMP)
+    return np.hstack(tmp)

@@ -141,18 +141,13 @@ def xr_train_distrib(
         )
 
     # FIT
+
+    print(f"Fitting the variable {target_name} with the expression {expr}:")
+
     # looping over grid points (to replace with a map function)
     for igp, gp in enumerate(gridpoints):
-        print(
-            "Fitting the variable "
-            + target_name
-            + " with the expression "
-            + expr
-            + ": "
-            + str(np.round(100.0 * (igp + 1) / gridpoints.size, 1))
-            + "%",
-            end="\r",
-        )
+        fraction = (igp + 1) / gridpoints.size
+        print(f"{fraction:0.1%}", end="\r")
 
         # shaping target for this gridpoint
         target_np = listxrds_to_np(
@@ -196,17 +191,13 @@ def xr_train_distrib(
             ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
         )[0]
 
+        print(
+            f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
+        )
+
         for igp, gp in enumerate(gridpoints):
-            print(
-                "Fitting the variable "
-                + target_name
-                + " with the expression "
-                + expr
-                + " (2nd round): "
-                + str(np.round(100.0 * (igp + 1) / gridpoints.size, 1))
-                + "%",
-                end="\r",
-            )
+            fraction = (igp + 1) / gridpoints.size
+            print(f"{fraction:0.1%}", end="\r")
 
             # calculate first guess, with a weighted median based on Gaspari-Cohn
             # matrix, while avoiding NaN values. Warning, weighted mean does not work
@@ -271,9 +262,9 @@ class distrib_cov:
         self,
         data_targ,
         data_pred,
-        expr_fit,  # TODO: replace by Expression instance
-        data_targ_addtest=None,
-        data_preds_addtest=None,
+        expr_fit,
+        data_targ_addtest=None,  # TODO: rename to data_targ_validation?
+        data_preds_addtest=None,  # TODO: rename to data_preds_validation?
         threshold_min_proba=1.0e-9,
         boundaries_params=None,
         boundaries_coeffs=None,
@@ -303,7 +294,7 @@ class distrib_cov:
             Sample of the target for fit of a conditional distribution
 
         data_pred : dict of 1D vectors
-            Covariates for the conditional distribution. each key must be the exact name
+            Covariates for the conditional distribution. Each key must be the exact name
             of the inputs used in 'expr_fit', and the values must be aligned with the
             values in 'data_targ'.
 
@@ -321,7 +312,7 @@ class distrib_cov:
             data, but will test that this data remains valid. Important to avoid points
             out of support of the distribution.
 
-        threshold_min_proba : float, default: None
+        threshold_min_proba : float, default: 1e-9
             Will test that each point of the sample and added sample have their
             probability higher than this value. Important to ensure that all points are
             feasible with the fitted distribution.
@@ -468,18 +459,21 @@ class distrib_cov:
 
         # preparing basic information
         self.data_targ = data_targ
+
         # can be different from length of predictors IF no predictors.
         self.n_sample = len(self.data_targ)
 
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise ValueError("NaN or infinite values in target of fit")
         self.data_pred = data_pred
+
         if np.any(
             [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
         ) or np.any(
             [np.any(np.isinf(self.data_pred[pred])) for pred in self.data_pred]
         ):
             raise ValueError("NaN or infinite values in predictors of fit")
+
         self.expr_fit = expr_fit
 
         # preparing additional data
@@ -490,13 +484,14 @@ class distrib_cov:
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
             raise ValueError(
-                "Only one of data_targ_addtest & data_preds_addtest have been provided,"
-                " not both of them. Please correct."
+                "Only one of `data_targ_addtest` & `data_preds_addtest` have been provided,"
+                " not both of them."
             )
         self.data_targ_addtest = data_targ_addtest
         self.data_preds_addtest = data_preds_addtest
+
         if (threshold_min_proba <= 0) or (1 < threshold_min_proba):
-            raise ValueError("threshold_min_proba must be in the segment [0;1[")
+            raise ValueError("`threshold_min_proba` must be in [0;1[")
         else:
             self.threshold_min_proba = threshold_min_proba
 
@@ -523,22 +518,20 @@ class distrib_cov:
         self.n_coeffs = len(self.expr_fit.coefficients_list)
         if len(self.first_guess) != self.n_coeffs:
             raise ValueError(
-                "The provided first guess does not have the correct shape: ("
-                + str(self.n_coeffs)
-                + ")"
+                f"The provided first guess does not have the correct shape: {self.n_coeffs}"
             )
         self.scores_fit = scores_fit
 
         # preparing information on solver
-        default_options_solver = dict(
-            method_fit="Powell",
-            xtol_req=1e-6,
-            ftol_req=1.0e-6,
-            maxiter=1000 * self.n_coeffs * np.log(self.n_coeffs),
-            maxfev=1000 * self.n_coeffs * np.log(self.n_coeffs),
-            error_failedfit=False,
-            fg_with_global_opti=False,
-        )
+        default_options_solver = {
+            "method_fit": "Powell",
+            "xtol_req": 1e-6,
+            "ftol_req": 1.0e-6,
+            "maxiter": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "maxfev": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "error_failedfit": False,
+            "fg_with_global_opti": False,
+        }
         if options_solver is None:
             pass
         elif isinstance(options_solver, dict):
@@ -557,7 +550,9 @@ class distrib_cov:
             "trust-exact",
             "COBYLA",
             "SLSQP",
-        ] + ["CG", "Newton-CG"]:
+            "CG",
+            "Newton-CG",
+        ]:
             raise ValueError("method for this fit not prepared, to avoid")
         else:
             self.name_xtol = {
@@ -592,7 +587,7 @@ class distrib_cov:
         elif isinstance(options_optim, dict):
             default_options_optim.update(options_optim)
         else:
-            raise ValueError("options_optim must be a dictionary")
+            raise ValueError("`options_optim` must be a dictionary")
 
         # preparing weights
         self.weighted_NLL = default_options_optim["weighted_NLL"]
@@ -657,6 +652,7 @@ class distrib_cov:
 
         else:
             weights_driver = np.ones(self.data_targ.shape)
+
         return weights_driver / np.sum(weights_driver)
 
     def _test_coeffs(self, values_coeffs):
@@ -666,11 +662,12 @@ class distrib_cov:
         # checking set boundaries on coefficients
         for coeff in self.boundaries_coeffs:
             bottom, top = self.boundaries_coeffs[coeff]
+
+            # TODO: move this check to __init__
             if coeff not in self.expr_fit.coefficients_list:
                 raise ValueError(
-                    "Provided wrong boundaries on coefficient, "
-                    + coeff
-                    + " does not exist in expr_fit"
+                    f"Provided wrong boundaries on coefficient, {coeff}"
+                    " does not exist in expr_fit"
                 )
             else:
                 values = values_coeffs[self.expr_fit.coefficients_list.index(coeff)]
@@ -709,7 +706,7 @@ class distrib_cov:
         return test
 
     def _test_proba_value(self, distrib, data):
-        # tested values must have a minimum probability of occuring, ie be in a
+        # tested values must have a minimum probability of occuring, i.e. be in a
         # confidence interval
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
@@ -767,7 +764,8 @@ class distrib_cov:
     @ignore_warnings
     def find_fg(self):
         """
-        compute first guess of the coefficients, to ensure convergence of the incoming fit.
+        compute first guess of the coefficients, to ensure convergence of the incoming
+        fit.
 
         Motivation:
             In many situations, the fit may be complex because of complex expressions
@@ -811,13 +809,15 @@ class distrib_cov:
                - basinhopping: requires a first guess. Tried with first guess close from
                  optimum, good performances, but lacks in reproductibility and
                  stability: not reliable enough here. Ok if runs much longer.
-               - brute, differential_evolution, shgo, dual_annealing, direct: requires bounds
+               - brute, differential_evolution, shgo, dual_annealing, direct: requires
+                 bounds
                  - brute, dual_annealing, direct: performances too low & too slow
                  - differential_evolution: lacks in reproductibility & stability
                  - shgo: good performances with the right sampling method, relatively
                    fast, but still adds ~10s. Highly dependant on the bounds, must not
                    be too large.
-               The best global optimizer, shgo, would then require bounds that are not too large.
+               The best global optimizer, shgo, would then require bounds that are not
+               too large.
 
             b. The set of coefficients have only sparse valid domains. The distance
                between valid domains is often bigger than the adequate width of bounds
@@ -849,7 +849,7 @@ class distrib_cov:
         To anyone trying to improve this part:
         If you attempt to modify the calculation of the first guess, it is *absolutely
         mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY,
-        FLEXIBILITY.         In particular, it is mandatory to test it for different
+        FLEXIBILITY. In particular, it is mandatory to test it for different
         situations: variables, grid points, distributions & expressions.
         """
 
@@ -949,8 +949,8 @@ class distrib_cov:
         )
         self.fg_coeffs = localfit_nll.x
 
-        # Step 5: fit on CDF or LL^n (objective: improving all coefficients,
-        # necessary to have all points within support. NB: NLL doesnt behave well enough here)
+        # Step 5: fit on CDF or LL^n (objective: improving all coefficients, necessary
+        # to have all points within support. NB: NLL doesnt behave well enough here)
         if False:
             # TODO: unreachable code?
             # fit coefficients on CDFs
