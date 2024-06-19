@@ -11,6 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
   test:
     name: py${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.env }}
