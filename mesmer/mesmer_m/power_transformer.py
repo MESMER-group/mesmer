@@ -368,7 +368,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     # get rid of them
     isnan = np.isnan(monthly_residuals) | np.isnan(yearly_pred)
     monthly_residuals = monthly_residuals[~isnan]
-    local_yearly_T = yearly_pred[~isnan]
+    yearly_pred = yearly_pred[~isnan]
 
     def _neg_log_likelihood(coeffs):
         """Return the negative log likelihood of the observed local monthly residual
