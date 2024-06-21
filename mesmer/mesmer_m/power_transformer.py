@@ -409,7 +409,7 @@ def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
 
     Parameters
     ----------
-    coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell and month, calculated
         using fit_yeo_johnson_transform.
     yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
@@ -421,8 +421,8 @@ def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
         The parameters of the power transformation for each gridcell month and year
 
     """
-    if not isinstance(coeffs, xr.DataSet):
-        raise TypeError(f"Expected a `xr.DataSet`, got {type(coeffs)}")
+    if not isinstance(coeffs, xr.Dataset):
+        raise TypeError(f"Expected a `xr.Dataset`, got {type(coeffs)}")
 
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
@@ -451,7 +451,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
 
     Returns
     -------
-    :obj:`xr.DataSet`
+    :obj:`xr.Dataset`
         Dataset containing the estimated coefficients xi_0 and xi_1 needed to estimate
         lambda with dimensions (months, n_gridcells) and the lambdas themselves with
         dimensions (months, n_gridcells, n_years).
@@ -497,7 +497,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
-    coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
         lambda_function.
     yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
@@ -505,7 +505,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
 
     Returns
     -------
-    :obj:`xr.DataSet`
+    :obj:`xr.Dataset`
         Dataset containing the transformed monthly residuals and the parameters of the
         power transformation for each gridcell, calculated using lambda_function.
     """
@@ -518,8 +518,8 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    if not isinstance(coeffs, xr.DataSet):
-        raise TypeError(f"Expected a `xr.DataSet`, got {type(monthly_residuals)}")
+    if not isinstance(coeffs, xr.Dataset):
+        raise TypeError(f"Expected a `xr.Dataset`, got {type(monthly_residuals)}")
 
     lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename(
         {"time": "year"}
@@ -546,7 +546,7 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     ----------
     monthly_residuals : xr.DataArray of shape (n_years, n_gridcells)
         The transformed data.
-    coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
         lambda_function.
     yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
@@ -554,7 +554,7 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
 
     Returns
     -------
-    :obj:`xr.DataSet`
+    :obj:`xr.Dataset`
         Dataset containing the inverted monthly residuals and the parameters of the
         power transformation for each gridcell, calculated using lambda_function.
 
@@ -576,8 +576,8 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    if not isinstance(coeffs, xr.DataSet):
-        raise TypeError(f"Expected a `xr.DataSet`, got {type(monthly_residuals)}")
+    if not isinstance(coeffs, xr.Dataset):
+        raise TypeError(f"Expected a `xr.Dataset`, got {type(monthly_residuals)}")
 
     lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename(
         {"time": "year"}
