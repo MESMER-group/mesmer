@@ -290,8 +290,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         return inverted_monthly_T
 
 
-def _yeo_johnson_transform_np(residuals, lambdas):
-    """transform residuals using Yeo-Johnson transformation with variable lambda
+def _yeo_johnson_transform_np(data, lambdas):
+    """transform data using Yeo-Johnson transformation with variable lambda
 
     Input is for one month and gridcell but all years. This function is adjusted
     from sklearn to accomodate variable lambdas for each residual.
@@ -299,30 +299,30 @@ def _yeo_johnson_transform_np(residuals, lambdas):
 
     eps = np.finfo(np.float64).eps
 
-    transformed = np.zeros_like(residuals)
+    transformed = np.zeros_like(data)
     # get positions of four cases:
     # NOTE: this code is copied from sklearn's PowerTransformer, see
     # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
     # we acknowledge there is an inconsistency in the comparison of lambdas
-    sel_a = (residuals >= 0) & (np.abs(lambdas) < eps)
-    sel_b = (residuals >= 0) & (np.abs(lambdas) >= eps)
-    sel_c = (residuals < 0) & (np.abs(lambdas - 2) > eps)
-    sel_d = (residuals < 0) & (np.abs(lambdas - 2) <= eps)
+    sel_a = (data >= 0) & (np.abs(lambdas) < eps)
+    sel_b = (data >= 0) & (np.abs(lambdas) >= eps)
+    sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
+    sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
     # assign values for the four cases
-    transformed[sel_a] = np.log1p(residuals[sel_a])
-    transformed[sel_b] = (np.power(residuals[sel_b] + 1, lambdas[sel_b]) - 1) / lambdas[
+    transformed[sel_a] = np.log1p(data[sel_a])
+    transformed[sel_b] = (np.power(data[sel_b] + 1, lambdas[sel_b]) - 1) / lambdas[
         sel_b
     ]
-    transformed[sel_c] = -(np.power(-residuals[sel_c] + 1, 2 - lambdas[sel_c]) - 1) / (
+    transformed[sel_c] = -(np.power(-data[sel_c] + 1, 2 - lambdas[sel_c]) - 1) / (
         2 - lambdas[sel_c]
     )
-    transformed[sel_d] = -np.log1p(-residuals[sel_d])
+    transformed[sel_d] = -np.log1p(-data[sel_d])
 
     return transformed
 
 
-def _yeo_johnson_inverse_transform_np(residuals, lambdas):
+def _yeo_johnson_inverse_transform_np(data, lambdas):
     """invert residuals using Yeo-Johnson transformation with variable lambda
 
     This function is adjusted from sklearn to accomodate variable lambdas for each
@@ -342,47 +342,47 @@ def _yeo_johnson_inverse_transform_np(residuals, lambdas):
 
     eps = np.finfo(np.float64).eps
 
-    transformed = np.zeros_like(residuals)
+    transformed = np.zeros_like(data)
     # get positions of four cases:
-    pos_a = (residuals >= 0) & (np.abs(lambdas) < eps)
-    pos_b = (residuals >= 0) & (np.abs(lambdas) >= eps)
-    pos_c = (residuals < 0) & (np.abs(lambdas - 2) > eps)
-    pos_d = (residuals < 0) & (np.abs(lambdas - 2) <= eps)
+    pos_a = (data >= 0) & (np.abs(lambdas) < eps)
+    pos_b = (data >= 0) & (np.abs(lambdas) >= eps)
+    pos_c = (data < 0) & (np.abs(lambdas - 2) > eps)
+    pos_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
     # assign values for the four cases
-    transformed[pos_a] = np.exp(residuals[pos_a]) - 1
+    transformed[pos_a] = np.exp(data[pos_a]) - 1
     transformed[pos_b] = (
-        np.power(residuals[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
+        np.power(data[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
     )
     transformed[pos_c] = 1 - np.power(
-        -(2 - lambdas[pos_c]) * residuals[pos_c] + 1, 1 / (2 - lambdas[pos_c])
+        -(2 - lambdas[pos_c]) * data[pos_c] + 1, 1 / (2 - lambdas[pos_c])
     )
-    transformed[pos_d] = 1 - np.exp(-residuals[pos_d])
+    transformed[pos_d] = 1 - np.exp(-data[pos_d])
 
     return transformed
 
 
-def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
+def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
     # the computation of lambda is influenced by NaNs so we need to
     # get rid of them
-    isnan = np.isnan(residuals) | np.isnan(local_yearly_T)
-    residuals = residuals[~isnan]
-    local_yearly_T = local_yearly_T[~isnan]
+    isnan = np.isnan(monthly_residuals) | np.isnan(yearly_pred)
+    monthly_residuals = monthly_residuals[~isnan]
+    local_yearly_T = yearly_pred[~isnan]
 
     def _neg_log_likelihood(coeffs):
         """Return the negative log likelihood of the observed local monthly residual
         temperatures as a function of lambda.
         """
-        lambdas = lambda_function(coeffs, local_yearly_T)
+        lambdas = lambda_function(coeffs, yearly_pred)
 
         # version with own power transform
-        transformed_resids = _yeo_johnson_transform_np(residuals, lambdas)
+        transformed_resids = _yeo_johnson_transform_np(monthly_residuals, lambdas)
 
-        n_samples = residuals.shape[0]
+        n_samples = monthly_residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_resids.var())
         loglikelihood += (
-            (lambdas - 1) * np.sign(residuals) * np.log1p(np.abs(residuals))
+            (lambdas - 1) * np.sign(monthly_residuals) * np.log1p(np.abs(monthly_residuals))
         ).sum()
 
         return -loglikelihood
@@ -400,17 +400,39 @@ def _yeo_johnson_optimize_lambda(residuals, local_yearly_T):
     return xi_0, xi_1
 
 
-def _get_lambdas_from_covariates_xr(coeffs, yearly_T):
-    # use logistic function between 0 and 2 to estimate lambdas
+def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
+    """function that relates fitted coefficients and the yearly predictor
+    to the lambdas. We usee a logistic function between 0 and 2 to estimate
+    the lambdas.
 
-    lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_T * coeffs.xi_1))
+    Parameters
+    ----------
+    coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
+        The parameters of the power transformation for each gridcell and month, calculated 
+        using fit_yeo_johnson_transform.
+    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
+        yearly values used as predictors for the lambdas.
+
+    Returns
+    -------
+    lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
+        The parameters of the power transformation for each gridcell month and year
+    
+    """
+    if not isinstance(coeffs, xr.DataSet):
+        raise TypeError(f"Expected a `xr.DataSet`, got {type(coeffs)}")
+    
+    if not isinstance(yearly_pred, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
+
+    lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_pred * coeffs.xi_1))
 
     return lambdas.rename("lambdas")
 
 
-def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
+def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
     """estimate the optimal coefficients for the parameters lambda for each gridcell,
-    to normalize monthly residuals conditional on yearly temperatures.
+    to normalize monthly residuals conditional on yearly predictor.
     The optimal coefficients for the lambda parameters for minimizing skewness are
     estimated on each gridcell independently using maximum likelihood.
 
@@ -419,11 +441,11 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
     monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the optimal
         transformation parameters (lambdas).
-    yearly_T : xr.DataArray of shape (n_years, n_gridcells)
-        yearly temperature values used as predictors for the lambdas.
+    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
+        yearly values used as predictors for the lambdas.
     time_dim : str, optional
         Name of the time dimension in the input data used to align monthly residuals and
-        yearly temperature data.
+        yearly predictor data (needs to be the same in both).
 
     Returns
     -------
@@ -433,6 +455,12 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
         dimensions (months, n_gridcells, n_years).
 
     """
+    if not isinstance(monthly_residuals, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
+    
+    if not isinstance(yearly_pred, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
+    
     monthly_resids_grouped = monthly_residuals.groupby(time_dim + ".month")
 
     coeffs = []
@@ -440,12 +468,12 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
 
         # align time dimension
         monthly_data = monthly_resids_grouped[month]
-        monthly_data[time_dim] = yearly_T[time_dim]
+        monthly_data[time_dim] = yearly_pred[time_dim]
 
         xi_0, xi_1 = xr.apply_ufunc(
-            _yeo_johnson_optimize_lambda,
+            _yeo_johnson_optimize_lambda_np,
             monthly_data,
-            yearly_T,
+            yearly_pred,
             input_core_dims=[[time_dim], [time_dim]],
             output_core_dims=[[], []],
             output_dtypes=[float, float],
@@ -457,7 +485,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_T, time_dim="time"):
     return xr.concat(coeffs, dim="month")
 
 
-def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
+def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     """
     transform monthly_residuals following Yeo-Johnson transformer
     with parameters lambda, fit with fit_power_transformer_xr.
@@ -470,7 +498,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
         lambda_function.
-    yearly_T : xr.DataArray of shape (n_years, n_gridcells)
+    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
 
     Returns
@@ -482,7 +510,16 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     # NOTE: this is equivalent to using pt.transform with
     # pt = PowerTransformerVariableLambda(standardize = False)
 
-    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
+    if not isinstance(monthly_residuals, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
+    
+    if not isinstance(yearly_pred, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
+    
+    if not isinstance(coeffs, xr.DataSet):
+        raise TypeError(f"Expected a `xr.DataSet`, got {type(monthly_residuals)}")
+
+    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename({"time": "year"})
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     transformed_resids = xr.apply_ufunc(
@@ -498,7 +535,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     return xr.merge([transformed_resids, lambdas])
 
 
-def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
+def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     """apply the inverse power transformation using the fitted lambdas.
 
     Parameters
@@ -508,7 +545,7 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
     coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
         lambda_function.
-    yearly_T : xr.DataArray of shape (n_years, n_gridcells)
+    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
 
     Returns
@@ -529,8 +566,16 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_T):
         elif X < 0 and lambda_ == 2:
             X = 1 - exp(-X_trans)
     """
+    if not isinstance(monthly_residuals, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
+    
+    if not isinstance(yearly_pred, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
+    
+    if not isinstance(coeffs, xr.DataSet):
+        raise TypeError(f"Expected a `xr.DataSet`, got {type(monthly_residuals)}")
 
-    lambdas = _get_lambdas_from_covariates_xr(coeffs, yearly_T).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename({"time": "year"})
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     inverted_resids = xr.apply_ufunc(
