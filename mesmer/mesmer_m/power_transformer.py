@@ -382,7 +382,9 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         n_samples = monthly_residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_resids.var())
         loglikelihood += (
-            (lambdas - 1) * np.sign(monthly_residuals) * np.log1p(np.abs(monthly_residuals))
+            (lambdas - 1)
+            * np.sign(monthly_residuals)
+            * np.log1p(np.abs(monthly_residuals))
         ).sum()
 
         return -loglikelihood
@@ -408,7 +410,7 @@ def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
     Parameters
     ----------
     coeffs : xr.DataSet containing xi_0 and xi_1 of shape (months, n_gridcells)
-        The parameters of the power transformation for each gridcell and month, calculated 
+        The parameters of the power transformation for each gridcell and month, calculated
         using fit_yeo_johnson_transform.
     yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
         yearly values used as predictors for the lambdas.
@@ -417,11 +419,11 @@ def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
     -------
     lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
         The parameters of the power transformation for each gridcell month and year
-    
+
     """
     if not isinstance(coeffs, xr.DataSet):
         raise TypeError(f"Expected a `xr.DataSet`, got {type(coeffs)}")
-    
+
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
@@ -457,10 +459,10 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
     """
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
-    
+
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
-    
+
     monthly_resids_grouped = monthly_residuals.groupby(time_dim + ".month")
 
     coeffs = []
@@ -512,14 +514,16 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
 
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
-    
+
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
-    
+
     if not isinstance(coeffs, xr.DataSet):
         raise TypeError(f"Expected a `xr.DataSet`, got {type(monthly_residuals)}")
 
-    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename(
+        {"time": "year"}
+    )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     transformed_resids = xr.apply_ufunc(
@@ -568,14 +572,16 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     """
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
-    
+
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
-    
+
     if not isinstance(coeffs, xr.DataSet):
         raise TypeError(f"Expected a `xr.DataSet`, got {type(monthly_residuals)}")
 
-    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename(
+        {"time": "year"}
+    )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     inverted_resids = xr.apply_ufunc(
