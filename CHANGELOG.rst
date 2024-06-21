@@ -8,23 +8,6 @@ New Features
 ^^^^^^^^^^^^
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
-- Integrated, refactored and enhanced MESMER-M functionality:
-   - move MESMER-M scripts into mesmer, adapt init file and small issues (`#419 <https://github.com/MESMER-group/mesmer/pull/419>`_,
-   `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_)
-   - documentation (`#424 <https://github.com/MESMER-group/mesmer/pull/424>`_, `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
-   - refactoring of MESMER-M functions (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
-   `#434 <https://github.com/MESMER-group/mesmer/pull/434>`_, `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_)
-   - add utility functions for MESMER-M (`#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
-   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
-   - adjust the first guess for the power transformer to 0 and 1 (`#429 <https://github.com/MESMER-group/mesmer/pull/429/files>`_)
-   - adjust the bounds for the power transformer to all positive numbers for first coefficient (`#446 <https://github.com/MESMER-group/mesmer/pull/446>`_))
-   - optimizing (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_, `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_,
-   `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_, `#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
-   - add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_, `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_,
-   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
-   - small issues (415`#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
-   `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_, `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_
-   By `Victoria Bauer`_ and `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -61,6 +44,45 @@ Internal Changes
 - Explicitely include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
 - Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
   By `Victoria Bauer`_.
+
+Integration of MESMER-M
+^^^^^^^^^^^^^^^^^^^^^^^
+This version integrates MESMER-M into the remaining MESMER infrastructure. This includes some refactoring and enhancements of 
+the MESMER-M functionality. 
+
+- move MESMER-M scripts into mesmer, adapt init file and small issues (
+  `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_,
+  `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
+- documentation (
+  `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
+  `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
+- rewriting power transformer functions to work on xarrays, this also includes a move from a class structure to functions (
+  `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_
+)
+- refactoring of MESMER-M functions (
+  `#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
+  `#434 <https://github.com/MESMER-group/mesmer/pull/434>`_,
+  `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_)
+- add utility functions for MESMER-M (
+  `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
+  `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+- adjust the first guess for the power transformer to 0 and 1 (`#429 <https://github.com/MESMER-group/mesmer/pull/429/files>`_)
+- adjust the bounds for the power transformer to all positive numbers for first coefficient (`#446 <https://github.com/MESMER-group/mesmer/pull/446>`_))
+- optimizing (
+  `#443 <https://github.com/MESMER-group/mesmer/pull/443>`_, 
+  `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_,
+  `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_, 
+  `#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
+- add tests (
+  `#430 <https://github.com/MESMER-group/mesmer/pull/430>`_, 
+  `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_,
+  `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
+- small issues (
+  `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
+  `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_, 
+  `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_
+By `Victoria Bauer`_ and `Mathias Hauser`_.
+
 
 
 v0.10.0 - 2024.01.04
