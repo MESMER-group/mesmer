@@ -14,6 +14,7 @@ dependencies:
  - packaging
  - pandas=2.0
  - pooch
+ - properscoring
  - pyproj
  - regionmask=0.9
  - scikit-learn
