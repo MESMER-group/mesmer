@@ -47,8 +47,8 @@ Internal Changes
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
-This version integrates MESMER-M into the remaining MESMER infrastructure. This includes some refactoring and enhancements of 
-the MESMER-M functionality. 
+This version integrates MESMER-M into the remaining MESMER infrastructure. This includes some refactoring and enhancements of
+the MESMER-M functionality.
 
 - move MESMER-M scripts into mesmer, adapt init file and small issues (
   `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_,
@@ -68,17 +68,17 @@ the MESMER-M functionality.
 - adjust the first guess for the power transformer to 0 and 1 (`#429 <https://github.com/MESMER-group/mesmer/pull/429/files>`_)
 - adjust the bounds for the power transformer to all positive numbers for first coefficient (`#446 <https://github.com/MESMER-group/mesmer/pull/446>`_))
 - optimizing (
-  `#443 <https://github.com/MESMER-group/mesmer/pull/443>`_, 
+  `#443 <https://github.com/MESMER-group/mesmer/pull/443>`_,
   `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_,
-  `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_, 
+  `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_,
   `#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
 - add tests (
-  `#430 <https://github.com/MESMER-group/mesmer/pull/430>`_, 
+  `#430 <https://github.com/MESMER-group/mesmer/pull/430>`_,
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_,
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
 - small issues (
   `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
-  `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_, 
+  `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_,
   `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
