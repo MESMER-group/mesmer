@@ -57,8 +57,7 @@ the MESMER-M functionality.
   `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
   `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
 - rewriting power transformer functions to work on xarrays, this also includes a move from a class structure to functions (
-  `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_
-)
+  `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_)
 - refactoring of MESMER-M functions (
   `#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
   `#434 <https://github.com/MESMER-group/mesmer/pull/434>`_,
