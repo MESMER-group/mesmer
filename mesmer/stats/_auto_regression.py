@@ -598,10 +598,10 @@ def _fit_auto_regression_np(data, lags):
     return intercept, coeffs, variance, nobs
 
 
-def fit_auto_regression_monthly(monthly_data, time_dim = "time"):
+def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     """fit an auto regression of lag one on monthly data
     Autoregression parameters are estimated for each month and gridpoint separately.
-    This is based on the assuption that e.g. June depends on May differently 
+    This is based on the assuption that e.g. June depends on May differently
     than July on June. Autoregression is fit along `time_dim`.
 
     Parameters
@@ -619,38 +619,43 @@ def fit_auto_regression_monthly(monthly_data, time_dim = "time"):
     """
     if not isinstance(monthly_data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_data)}")
-    
+
     monthly_data = monthly_data.groupby(time_dim + ".month")
     coeffs = []
-    
-    for month in range(1,13):
+
+    for month in range(1, 13):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            prev_month = monthly_data[12].isel(time=slice(0, len(monthly_data[12].time)-1))
-            cur_month = monthly_data[month].isel(time=slice(1, len(monthly_data[1].time)))
+            prev_month = monthly_data[12].isel(
+                time=slice(0, len(monthly_data[12].time) - 1)
+            )
+            cur_month = monthly_data[month].isel(
+                time=slice(1, len(monthly_data[1].time))
+            )
         else:
             prev_month = monthly_data[month - 1]
             cur_month = monthly_data[month]
 
         prev_month[time_dim] = cur_month[time_dim]
-        
-        slope, intercept = xr.apply_ufunc(_fit_autoregression_monthly_np, 
-                    cur_month, 
-                    prev_month,
-                    input_core_dims=[["time"], ["time"]],
-                    output_core_dims=[[], []],
-                    vectorize=True,
-                    )
+
+        slope, intercept = xr.apply_ufunc(
+            _fit_autoregression_monthly_np,
+            cur_month,
+            prev_month,
+            input_core_dims=[["time"], ["time"]],
+            output_core_dims=[[], []],
+            vectorize=True,
+        )
 
         coeffs.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-    
+
     return xr.concat(coeffs, dim="month")
 
 
 def _fit_autoregression_monthly_np(data_month, data_prev_month):
     """fit an auto regression of lag one on monthly data - numpy wrapper
-    We use a linear function to relate the independent previous month's 
+    We use a linear function to relate the independent previous month's
     data to the dependent current month's data.
 
     Parameters
@@ -659,7 +664,7 @@ def _fit_autoregression_monthly_np(data_month, data_prev_month):
         A numpy array of the current month's data.
     data_prev_month : np.array
         A numpy array of the previous month's data.
-    
+
     Returns
     -------
     slope : :obj:`np.array`
@@ -667,18 +672,21 @@ def _fit_autoregression_monthly_np(data_month, data_prev_month):
     intercept : :obj:`np.array`
         The intercept of the AR(1) proces.
     """
-    
+
     def lin_func(x, a, b):
         return a * x + b
-    
-    slope, intercept = scipy.optimize.curve_fit(lin_func, 
-                     data_prev_month, # independent variable
-                     data_month, # dependent variable
-                     bounds=([-1,-np.inf], [1, np.inf]))[0]
-    
+
+    slope, intercept = scipy.optimize.curve_fit(
+        lin_func,
+        data_prev_month,  # independent variable
+        data_month,  # dependent variable
+        bounds=([-1, -np.inf], [1, np.inf]),
+    )[0]
+
     return slope, intercept
 
-def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim = "month"):
+
+def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="month"):
     """predict time series of an auto regression process with lag one.
 
     Parameters
@@ -695,7 +703,7 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim = 
         not influence overall result).
     month_dim : str, default "month"
         Name of the month dimension of the input data needed to stack the predictions.
-    
+
     Returns
     -------
     AR_predictions : xr.DataArray
@@ -706,25 +714,26 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim = 
     # the AR process alone is deterministic so we dont need realisations here
     # or a seed
 
-    AR_predictions = xr.apply_ufunc(_predict_auto_regression_monthly_np, 
-                intercept, 
-                slope,
-                input_core_dims=[[month_dim], [month_dim]],
-                output_core_dims=[["year", month_dim]],
-                vectorize=True,
-                #dask="parallelized",
-                output_dtypes=[float],
-                kwargs={"n_ts": len(time), "buffer": buffer}
-                )
+    AR_predictions = xr.apply_ufunc(
+        _predict_auto_regression_monthly_np,
+        intercept,
+        slope,
+        input_core_dims=[[month_dim], [month_dim]],
+        output_core_dims=[["year", month_dim]],
+        vectorize=True,
+        # dask="parallelized",
+        output_dtypes=[float],
+        kwargs={"n_ts": len(time), "buffer": buffer},
+    )
 
     AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
-    AR_predictions['time'] = time
+    AR_predictions["time"] = time
 
     return AR_predictions
 
 
 def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
-    """ predict time series of an auto regression process with lag one - numpy wrapper
+    """predict time series of an auto regression process with lag one - numpy wrapper
 
     Parameters
     ----------
@@ -737,26 +746,26 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
-    
+
     Returns
     -------
     out : np.array of shape (n_ts/12, 12)
         Predicted time series of the specified AR(1).
     """
-    if not n_ts%12 == 0:
+    if not n_ts % 12 == 0:
         raise ValueError("The number of time steps must be a multiple of 12.")
-    n_years = int(n_ts/12)
+    n_years = int(n_ts / 12)
 
-    out = np.zeros([n_years+buffer, 12])
+    out = np.zeros([n_years + buffer, 12])
 
-    for y in range(n_years+buffer):
+    for y in range(n_years + buffer):
         for month in range(12):
             prev_month = 11 if month == 0 else month - 1
             if month == 0:
                 prev_month = 11
             else:
                 prev_month = month - 1
-            
-            out[y,month] = intercept[month] + slope[month] * out[y-1,prev_month]
-        
-    return out[buffer:,:]
+
+            out[y, month] = intercept[month] + slope[month] * out[y - 1, prev_month]
+
+    return out[buffer:, :]
