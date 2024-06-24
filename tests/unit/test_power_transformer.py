@@ -3,13 +3,13 @@ import pytest
 import scipy as sp
 import xarray as xr
 
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.mesmer_m import power_transformer
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
     lambda_function,
 )
 from mesmer.testing import trend_data_2D
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 
 
 @pytest.mark.parametrize(
@@ -206,12 +206,30 @@ def test_power_transformer_xr():
         inverse_transformed.inverted, monthly_residuals, atol=1e-7
     )
 
-    _check_dataarray_form(transformed.transformed, name="transformed", ndim=2, required_dims=("cells", "time"),
-                          shape=(n_gridcells, n_years * 12))
-    _check_dataarray_form(inverse_transformed.inverted, name="inverted", ndim=2, required_dims=("cells", "time"),
-                            shape=(n_gridcells, n_years * 12))
-    _check_dataset_form(pt_coefficients, name="pt_coefficients", required_vars=("xi_0", "xi_1"))
-    _check_dataarray_form(pt_coefficients.xi_0, name="xi_0", ndim=2, required_dims=("cells",), shape=(12, n_gridcells))
+    _check_dataarray_form(
+        transformed.transformed,
+        name="transformed",
+        ndim=2,
+        required_dims=("cells", "time"),
+        shape=(n_gridcells, n_years * 12),
+    )
+    _check_dataarray_form(
+        inverse_transformed.inverted,
+        name="inverted",
+        ndim=2,
+        required_dims=("cells", "time"),
+        shape=(n_gridcells, n_years * 12),
+    )
+    _check_dataset_form(
+        pt_coefficients, name="pt_coefficients", required_vars=("xi_0", "xi_1")
+    )
+    _check_dataarray_form(
+        pt_coefficients.xi_0,
+        name="xi_0",
+        ndim=2,
+        required_dims=("cells",),
+        shape=(12, n_gridcells),
+    )
 
     # old method
     # NOTE: remove this once we remove the old method
