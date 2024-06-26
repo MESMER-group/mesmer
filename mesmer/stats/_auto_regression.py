@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 import pandas as pd
 import scipy
-import scipy.optimize
 import xarray as xr
 
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
@@ -640,7 +639,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         prev_month[time_dim] = cur_month[time_dim]
 
         slope, intercept = xr.apply_ufunc(
-            _fit_autoregression_monthly_np,
+            _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
             input_core_dims=[["time"], ["time"]],
@@ -653,7 +652,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     return xr.concat(coeffs, dim="month")
 
 
-def _fit_autoregression_monthly_np(data_month, data_prev_month):
+def _fit_auto_regression_monthly_np(data_month, data_prev_month):
     """fit an auto regression of lag one on monthly data - numpy wrapper
     We use a linear function to relate the independent previous month's
     data to the dependent current month's data.
@@ -673,8 +672,8 @@ def _fit_autoregression_monthly_np(data_month, data_prev_month):
         The intercept of the AR(1) proces.
     """
 
-    def lin_func(x, a, b):
-        return a * x + b
+    def lin_func(indep_var, slope, intercept):
+        return slope * indep_var + intercept
 
     slope, intercept = scipy.optimize.curve_fit(
         lin_func,
@@ -687,7 +686,8 @@ def _fit_autoregression_monthly_np(data_month, data_prev_month):
 
 
 def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="month"):
-    """predict time series of an auto regression process with lag one.
+    """predict time series of an auto regression process with lag one
+    using individual parameters for each month.
 
     Parameters
     ----------
@@ -708,11 +708,18 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
     -------
     AR_predictions : xr.DataArray
         Predicted time series of the specified AR(1). The array has shape
-        n_time x n_gridpoints.
+        n_timesteps x n_gridpoints.
 
     """
     # the AR process alone is deterministic so we dont need realisations here
     # or a seed
+    if not isinstance(intercept, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(intercept)}")
+    if not isinstance(slope, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(slope)}")
+    if not isinstance(time, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(time)}")
+
 
     AR_predictions = xr.apply_ufunc(
         _predict_auto_regression_monthly_np,
@@ -727,13 +734,15 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
     )
 
     AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
+    AR_predictions = AR_predictions.drop_vars(['time', 'year', month_dim])
     AR_predictions["time"] = time
 
-    return AR_predictions
+    return AR_predictions.transpose("time", ...)
 
 
 def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
-    """predict time series of an auto regression process with lag one - numpy wrapper
+    """predict time series of an auto regression process with lag one 
+    using individual parameters for each month - numpy wrapper
 
     Parameters
     ----------
@@ -754,7 +763,7 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
     """
     if not n_ts % 12 == 0:
         raise ValueError("The number of time steps must be a multiple of 12.")
-    n_years = int(n_ts / 12)
+    n_years = n_ts // 12
 
     out = np.zeros([n_years + buffer, 12])
 
