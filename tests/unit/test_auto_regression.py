@@ -682,16 +682,17 @@ def test_predict_auto_regression_monthly_np():
 def test_predict_auto_regression_monthly_np_buffer(buffer):
     slope = np.random.normal(size=12)
     intercept = np.ones(12)
+    n_ts = 120
     result_wo_buffer = (
         mesmer.stats._auto_regression._predict_auto_regression_monthly_np(
-            intercept, slope, 120, 0
+            intercept, slope, n_ts, 0
         )
     )
     result_w_buffer = mesmer.stats._auto_regression._predict_auto_regression_monthly_np(
-        intercept, slope, 120, buffer
+        intercept, slope, n_ts, buffer
     )
 
-    np.testing.assert_allclose(result_wo_buffer[buffer:, :], result_w_buffer)
+    np.testing.assert_allclose(result_wo_buffer[buffer:, :], result_w_buffer[:-buffer, :])
 
 
 def test_predict_auto_regression_monthly():
