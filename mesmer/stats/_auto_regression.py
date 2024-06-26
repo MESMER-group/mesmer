@@ -720,7 +720,6 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
     if not isinstance(time, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(time)}")
 
-
     AR_predictions = xr.apply_ufunc(
         _predict_auto_regression_monthly_np,
         intercept,
@@ -734,14 +733,14 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
     )
 
     AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
-    AR_predictions = AR_predictions.drop_vars(['time', 'year', month_dim])
+    AR_predictions = AR_predictions.drop_vars(["time", "year", month_dim])
     AR_predictions["time"] = time
 
     return AR_predictions.transpose("time", ...)
 
 
 def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
-    """predict time series of an auto regression process with lag one 
+    """predict time series of an auto regression process with lag one
     using individual parameters for each month - numpy wrapper
 
     Parameters
