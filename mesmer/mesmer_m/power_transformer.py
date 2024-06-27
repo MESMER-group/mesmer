@@ -7,8 +7,8 @@ from scipy.optimize import minimize
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
-def lambda_function(coeffs, local_yearly_T):
-    return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
+def lambda_function(xi_0, xi_1, local_yearly_T):
+    return 2 / (1 + xi_0 * np.exp(local_yearly_T * xi_1))
 
 
 class PowerTransformerVariableLambda(PowerTransformer):
@@ -113,7 +113,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         def _neg_log_likelihood(coeffs):
             """Return the negative log likelihood of the observed local monthly
             residual temperatures as a function of lambda."""
-            lambdas = lambda_function(coeffs, local_yearly_T)
+            lambdas = lambda_function(coeffs[0], coeffs[1], local_yearly_T)
             # version with sklearn yeo johnson transform
             # x_trans = np.zeros_like(x)
             # for i, lmbda in enumerate(lambdas):
@@ -224,7 +224,7 @@ class PowerTransformerVariableLambda(PowerTransformer):
         gridcell = 0
         # TODO: sure yearly_T.T gives local yearly T?
         for coeffs, local_yearly_T in zip(self.coeffs_, yearly_T.T):
-            lambdas[:, gridcell] = lambda_function(coeffs, local_yearly_T)
+            lambdas[:, gridcell] = lambda_function(coeffs[0], coeffs[1], local_yearly_T)
             gridcell += 1
 
         lambdas = np.where(lambdas < 0, 0, lambdas)
@@ -374,7 +374,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         """Return the negative log likelihood of the observed local monthly residual
         temperatures as a function of lambda.
         """
-        lambdas = lambda_function(coeffs, yearly_pred)
+        lambdas = lambda_function(coeffs[0], coeffs[1], yearly_pred)
 
         # version with own power transform
         transformed_resids = _yeo_johnson_transform_np(monthly_residuals, lambdas)
@@ -427,7 +427,17 @@ def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_pred * coeffs.xi_1))
+    lambdas = xr.apply_ufunc(
+        lambda_function,
+        coeffs.xi_0,
+        coeffs.xi_1,
+        yearly_pred,
+        input_core_dims=[[], [], []],
+        output_core_dims=[[]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+    )
 
     return lambdas.rename("lambdas")
 
