@@ -2,9 +2,8 @@ import numpy as np
 import pytest
 import scipy as sp
 import xarray as xr
-from sklearn.preprocessing import PowerTransformer, StandardScaler
+from sklearn.preprocessing import PowerTransformer
 
-import mesmer
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.mesmer_m import power_transformer
 from mesmer.testing import trend_data_2D
