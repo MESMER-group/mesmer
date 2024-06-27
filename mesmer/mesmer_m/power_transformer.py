@@ -1,11 +1,11 @@
 import numpy as np
 import xarray as xr
-
 from scipy.optimize import minimize
 
 
 def lambda_function(coeffs, local_yearly_T):
     return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
+
 
 def _yeo_johnson_transform_np(data, lambdas):
     """transform data using Yeo-Johnson transformation with variable lambda
