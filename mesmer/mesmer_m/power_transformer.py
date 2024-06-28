@@ -145,15 +145,15 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         # first coefficient only positive for logistic function
         # second coefficient bounded to avoid very steep function
-        bounds = np.array([[-np.inf, np.inf], [-0.1, 0.1]])
+        # bounds = np.array([[-np.inf, np.inf], [-0.1, 0.1]])
         # first guess is that data is already normal distributed
         first_guess = np.array([0, 0])
 
         return minimize(
             _neg_log_likelihood,
             first_guess,
-            bounds=bounds,
-            method="Nelder-Mead",
+            #bounds=bounds,
+            method="BFGS" #"Nelder-Mead",
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
@@ -162,15 +162,15 @@ class PowerTransformerVariableLambda(PowerTransformer):
         all years.
         """
 
-        eps = np.finfo(np.float64).eps
+        eps = np.finfo(np.float32).eps
 
         transformed = np.zeros_like(local_monthly_residuals)
         # get positions of four cases:
         # NOTE: this code is copied from sklearn's PowerTransformer, see
         # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
         # we acknowledge there is an inconsistency in the comparison of lambdas
-        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) < eps)
-        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) >= eps)
+        pos_a = (local_monthly_residuals >= 0) & (np.abs(lambdas) <= eps)
+        pos_b = (local_monthly_residuals >= 0) & (np.abs(lambdas) > eps)
         pos_c = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) > eps)
         pos_d = (local_monthly_residuals < 0) & (np.abs(lambdas - 2) <= eps)
 
@@ -297,15 +297,15 @@ def _yeo_johnson_transform_np(data, lambdas):
     from sklearn to accomodate variable lambdas for each residual.
     """
 
-    eps = np.finfo(np.float64).eps
+    eps = np.finfo(np.float32).eps
 
     transformed = np.zeros_like(data)
     # get positions of four cases:
     # NOTE: this code is copied from sklearn's PowerTransformer, see
     # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
     # we acknowledge there is an inconsistency in the comparison of lambdas
-    sel_a = (data >= 0) & (np.abs(lambdas) < eps)
-    sel_b = (data >= 0) & (np.abs(lambdas) >= eps)
+    sel_a = (data >= 0) & (np.abs(lambdas) <= eps)
+    sel_b = (data >= 0) & (np.abs(lambdas) > eps)
     sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
     sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
@@ -340,12 +340,12 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
         X = 1 - exp(-X_trans)
     """
 
-    eps = np.finfo(np.float64).eps
+    eps = np.finfo(np.float32).eps
 
     transformed = np.zeros_like(data)
     # get positions of four cases:
-    pos_a = (data >= 0) & (np.abs(lambdas) < eps)
-    pos_b = (data >= 0) & (np.abs(lambdas) >= eps)
+    pos_a = (data >= 0) & (np.abs(lambdas) <= eps)
+    pos_b = (data >= 0) & (np.abs(lambdas) > eps)
     pos_c = (data < 0) & (np.abs(lambdas - 2) > eps)
     pos_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
@@ -389,14 +389,14 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
         return -loglikelihood
 
-    bounds = np.array([[-np.inf, np.inf], [-0.1, 0.1]])
+    # bounds = np.array([[-np.inf, np.inf], [-0.1, 0.1]])
     first_guess = np.array([0, 0])
 
     xi_0, xi_1 = minimize(
         _neg_log_likelihood,
         x0=first_guess,
-        bounds=bounds,
-        method="Nelder-Mead",
+        # bounds=bounds,
+        method="BFGS" # "Nelder-Mead",
     ).x
 
     return xi_0, xi_1
