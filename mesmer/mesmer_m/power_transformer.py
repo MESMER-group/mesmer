@@ -8,8 +8,8 @@ from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
 def lambda_function(coeffs, local_yearly_T):
-    return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
-
+    # return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
+    return 2 / (1 + np.exp((coeffs[0] + local_yearly_T * coeffs[1])))
 
 class PowerTransformerVariableLambda(PowerTransformer):
     """Apply a power transform gridcellwise to make monthly residuals more
@@ -145,9 +145,9 @@ class PowerTransformerVariableLambda(PowerTransformer):
 
         # first coefficient only positive for logistic function
         # second coefficient bounded to avoid very steep function
-        bounds = np.array([[0, np.inf], [-0.1, 0.1]])
+        bounds = np.array([[-np.inf, np.inf], [-0.1, 0.1]])
         # first guess is that data is already normal distributed
-        first_guess = np.array([1, 0])
+        first_guess = np.array([0, 0])
 
         return minimize(
             _neg_log_likelihood,
@@ -389,8 +389,8 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
         return -loglikelihood
 
-    bounds = np.array([[0, np.inf], [-0.1, 0.1]])
-    first_guess = np.array([1, 0])
+    bounds = np.array([[-np.inf, np.inf], [-0.1, 0.1]])
+    first_guess = np.array([0, 0])
 
     xi_0, xi_1 = minimize(
         _neg_log_likelihood,
@@ -427,7 +427,8 @@ def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_pred * coeffs.xi_1))
+    # lambdas = 2 / (1 + coeffs.xi_0 * np.exp(yearly_pred * coeffs.xi_1))
+    lambdas = 2 / (1 + np.exp((coeffs.xi_0 + yearly_pred * coeffs.xi_1)))
 
     return lambdas.rename("lambdas")
 

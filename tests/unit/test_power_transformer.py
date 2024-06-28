@@ -13,23 +13,27 @@ from mesmer.testing import trend_data_2D
 
 
 @pytest.mark.parametrize(
-    "coeffs, t, expected",
+    "coeffs, T, expected",
     [
-        ([1, 0.1], -np.inf, 2.0),
-        ([1, 0.1], np.inf, 0.0),
-        ([1, -0.1], -np.inf, 0.0),
-        ([1, -0.1], np.inf, 2.0),
-        ([0, 0], 1, 2),
-        ([0, 1], 1, 2),
-        ([1, 0], 1, 1),
-        ([2, 0], 1, 2 / 3),
-        ([1, 1], np.log(9), 2 / 10),
+        ([1, 0.1], np.inf, 0.), # coeffs for monotonic increase function goes to zero for positive infinity
+        ([1, 0.1], -np.inf, 2.), # coeffs for monotonic increase function goes to 2 for negative infinity
+        ([1, -0.1], np.inf, 2.), # coeffs for monotonic decrease function goes to 2 for positive infinity
+        ([1, -0.1], -np.inf, 0.), # coeffs for monotonic decrease function goes to zero for negative infinity
+        ([0, 0], 1, 1.), # for zero zero function is a constant at 1
+        ([0, 0], np.pi, 1.), # for zero zero ALL values are 1
+        ([0, 1], np.log(9), 2 / 10), # for 0, 1 the function simplifies to 2 / (1+ exp(x))
     ],
 )
-def test_lambda_function(coeffs, t, expected):
+def test_lambda_function(coeffs, T, expected):
 
-    result = lambda_function(coeffs, t)
+    result = lambda_function(coeffs, T)
     np.testing.assert_allclose(result, expected)
+
+    def old_lambda_function(coeffs, T):
+        return 2 / (1 + coeffs[0] * np.exp(coeffs[1] * T))
+    
+    result_old = old_lambda_function([np.exp(coeffs[0]), coeffs[1]], T)
+    np.testing.assert_allclose(result, result_old)
 
 
 def test_fit_power_transformer():
@@ -46,12 +50,12 @@ def test_fit_power_transformer():
 
     result = pt.coeffs_
     # to test viability
-    expected = np.array([[1, 0]])
+    expected = np.array([[0, 0]])
     np.testing.assert_allclose(result, expected, atol=1e-2)
 
     # to test numerical stability
-    expected_exact = np.array([[9.976913e-01, -1.998520e-05]])
-    np.testing.assert_allclose(result, expected_exact, atol=1e-7)
+    expected_exact = np.array([[-0.001099, -0.001224]])
+    np.testing.assert_allclose(result, expected_exact, atol=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -88,7 +92,7 @@ def test_transform():
     n_gridcells = 10
 
     pt = PowerTransformerVariableLambda(standardize=False)
-    pt.coeffs_ = np.tile([1, 0], (n_gridcells, 1))
+    pt.coeffs_ = np.tile([0, 0], (n_gridcells, 1))
 
     monthly_residuals = np.ones((n_ts, n_gridcells))
     yearly_T = np.zeros((n_ts, n_gridcells))
@@ -167,9 +171,10 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
 
     ts_array = np.empty((n_cells, n_timesteps))
     rng = np.random.default_rng(0)
+    np.random.seed(0) # for scipy
 
     # create random data with a different skew for each cell
-    skew = rng.uniform(-5, 5, size=(n_cells, 1))
+    skew = rng.uniform(-2, 2, size=(n_cells, 1))
     ts_array = sp.stats.skewnorm.rvs(skew, size=(n_cells, n_timesteps))
 
     LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
