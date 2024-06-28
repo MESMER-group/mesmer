@@ -11,6 +11,7 @@ def lambda_function(coeffs, local_yearly_T):
     # return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
     return 2 / (1 + np.exp((coeffs[0] + local_yearly_T * coeffs[1])))
 
+
 class PowerTransformerVariableLambda(PowerTransformer):
     """Apply a power transform gridcellwise to make monthly residuals more
     Gaussian-like. The class inherits from Sklearn's Power transofrmer class.
@@ -152,8 +153,8 @@ class PowerTransformerVariableLambda(PowerTransformer):
         return minimize(
             _neg_log_likelihood,
             first_guess,
-            #bounds=bounds,
-            method="BFGS" #"Nelder-Mead",
+            # bounds=bounds,
+            method="BFGS",  # "Nelder-Mead",
         ).x
 
     def _yeo_johnson_transform(self, local_monthly_residuals, lambdas):
@@ -396,7 +397,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         _neg_log_likelihood,
         x0=first_guess,
         # bounds=bounds,
-        method="BFGS" # "Nelder-Mead",
+        method="BFGS",  # "Nelder-Mead",
     ).x
 
     return xi_0, xi_1
