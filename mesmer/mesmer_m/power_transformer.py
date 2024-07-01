@@ -22,7 +22,7 @@ def lambda_function(xi_0, xi_1, local_yearly_T):
     xi_1 : float
         Second coefficient of the logistic function (controlling the slope).
     local_yearly_T : ndarray of shape (n_years,)
-            yearly temperature values of one gridcell and month used as predictor 
+            yearly temperature values of one gridcell and month used as predictor
             for lambda.
 
     Returns
