@@ -9,13 +9,13 @@ from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 def lambda_function(xi_0, xi_1, local_yearly_T):
     r"""Use logistic function to calculate lambda depending on the local yearly
-    temperature. The function is defined as 
-    
+    temperature. The function is defined as
+
     .. math::
 
         \lambda = \frac{2}{\xi_0 + e^{\xi_1 \cdot T_y}}
-    
-    
+
+
     It ranges between 0 and 2.
 
     Parameters
