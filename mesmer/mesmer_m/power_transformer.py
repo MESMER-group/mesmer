@@ -8,6 +8,28 @@ from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
 def lambda_function(xi_0, xi_1, local_yearly_T):
+    """Use logistic function to calculate lambda depending on the local yearly
+    temperature. The function is defined as:
+    .. math::
+        \frac{2}{1 + \xi_0 * e^{(T_y * \xi_1)}}
+
+    It ranges between 0 and 2.
+
+    Parameters
+    ----------
+    xi_0 : float
+        First coefficient of the logistic function (controlling the intercept).
+    xi_1 : float
+        Second coefficient of the logistic function (controlling the slope).
+    local_yearly_T : ndarray of shape (n_years,)
+            yearly temperature values of one gridcell and month used as predictor 
+            for lambda.
+
+    Returns
+    -------
+    lambdas : ndarray of float of shape (n_years,)
+        The parameters of the power transformation for each gridcell and month
+    """
     return 2 / (1 + xi_0 * np.exp(local_yearly_T * xi_1))
 
 
