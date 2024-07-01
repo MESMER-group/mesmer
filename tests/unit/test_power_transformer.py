@@ -1,11 +1,15 @@
 import numpy as np
 import pytest
 import scipy as sp
+import xarray as xr
 
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.mesmer_m import power_transformer
 from mesmer.mesmer_m.power_transformer import (
     PowerTransformerVariableLambda,
     lambda_function,
 )
+from mesmer.testing import trend_data_2D
 
 
 @pytest.mark.parametrize(
@@ -151,3 +155,118 @@ def test_standard_scaler():
     # inverse transform should give back the original data
     result = pt.inverse_transform(transformed, yearly_T)
     np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
+
+
+# =================== tests for xr methods ===================
+
+
+def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
+
+    n_cells = n_lat * n_lon
+    time = xr.cftime_range(start="2000-01-01", periods=n_timesteps, freq="MS")
+
+    ts_array = np.empty((n_cells, n_timesteps))
+    rng = np.random.default_rng(0)
+
+    # create random data with a different skew for each cell
+    skew = rng.uniform(-5, 5, size=(n_cells, 1))
+    ts_array = sp.stats.skewnorm.rvs(skew, size=(n_cells, n_timesteps))
+
+    LON, LAT = np.meshgrid(np.arange(n_lon), np.arange(n_lat))
+    coords = {
+        "time": time,
+        "lon": ("cells", LON.flatten()),
+        "lat": ("cells", LAT.flatten()),
+    }
+
+    return xr.DataArray(ts_array, dims=("cells", "time"), coords=coords, name="data")
+
+
+def test_power_transformer_xr():
+    n_years = 100
+    n_lon, n_lat = 2, 3
+    n_gridcells = n_lat * n_lon
+
+    monthly_residuals = skewed_data_2D(
+        n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon
+    )
+    yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
+
+    # new method
+    pt_coefficients = power_transformer.fit_yeo_johnson_transform(
+        monthly_residuals, yearly_T
+    )
+    transformed = power_transformer.yeo_johnson_transform(
+        monthly_residuals, pt_coefficients, yearly_T
+    )
+    inverse_transformed = power_transformer.inverse_yeo_johnson_transform(
+        transformed.transformed, pt_coefficients, yearly_T
+    )
+    xr.testing.assert_allclose(
+        inverse_transformed.inverted, monthly_residuals, atol=1e-7
+    )
+
+    _check_dataarray_form(
+        transformed.transformed,
+        name="transformed",
+        ndim=2,
+        required_dims=("cells", "time"),
+        shape=(n_gridcells, n_years * 12),
+    )
+    _check_dataarray_form(
+        inverse_transformed.inverted,
+        name="inverted",
+        ndim=2,
+        required_dims=("cells", "time"),
+        shape=(n_gridcells, n_years * 12),
+    )
+    _check_dataset_form(
+        pt_coefficients, name="pt_coefficients", required_vars=("xi_0", "xi_1")
+    )
+    _check_dataarray_form(
+        pt_coefficients.xi_0,
+        name="xi_0",
+        ndim=2,
+        required_dims=("cells",),
+        shape=(12, n_gridcells),
+    )
+
+    # old method
+    # NOTE: remove this once we remove the old method
+    power_trans_old = []
+    for mon in range(12):
+        pt = power_transformer.PowerTransformerVariableLambda(standardize=False)
+        power_trans_old.append(
+            pt.fit(
+                monthly_residuals.values.T[mon::12, :], yearly_T.values.T, n_gridcells
+            )
+        )
+
+    # transform
+    transformed_old = []
+    for mon in range(12):
+        transformed_old.append(
+            power_trans_old[mon].transform(
+                monthly_residuals.values.T[mon::12, :], yearly_T.values.T
+            )
+        )
+
+    for mon in range(12):
+        np.testing.assert_equal(
+            transformed_old[mon], transformed.transformed.values.T[mon::12, :]
+        )
+
+    # inverse transform
+    inverse_transformed_old = []
+    for mon in range(12):
+        inverse_transformed_old.append(
+            power_trans_old[mon].inverse_transform(
+                transformed_old[mon], yearly_T.values.T
+            )
+        )
+
+    for mon in range(12):
+        np.testing.assert_allclose(
+            inverse_transformed_old[mon],
+            inverse_transformed.inverted.values.T[mon::12, :],
+        )
