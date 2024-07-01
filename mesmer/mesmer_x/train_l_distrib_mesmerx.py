@@ -264,8 +264,8 @@ class distrib_cov:
         data_targ,
         data_pred,
         expr_fit,
-        data_targ_addtest=None,  # TODO: rename to data_targ_validation?
-        data_preds_addtest=None,  # TODO: rename to data_preds_validation?
+        data_targ_addtest=None,  # TODO: rename to data_targ_verification?
+        data_preds_addtest=None,  # TODO: rename to data_preds_verification?
         threshold_min_proba=1.0e-9,
         boundaries_params=None,
         boundaries_coeffs=None,
