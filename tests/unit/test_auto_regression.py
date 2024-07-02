@@ -668,7 +668,8 @@ def test_predict_auto_regression_monthly_np():
         intercept, slope, 120, 0
     )
 
-    np.testing.assert_allclose(result, np.tile(intercept, 10).reshape(10, 12))
+    expected = np.tile(intercept, 10).reshape(10, 12)
+    np.testing.assert_allclose(result, expected)
 
     with pytest.raises(
         ValueError, match="The number of time steps must be a multiple of 12"
