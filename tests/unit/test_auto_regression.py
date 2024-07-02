@@ -691,9 +691,7 @@ def test_predict_auto_regression_monthly_np_buffer(buffer):
         intercept, slope, n_ts, buffer
     )
 
-    np.testing.assert_allclose(
-        res_wo_buffer[buffer:, :], res_w_buffer[:-buffer, :]
-    )
+    np.testing.assert_allclose(res_wo_buffer[buffer:, :], res_w_buffer[:-buffer, :])
 
 
 def test_predict_auto_regression_monthly():
