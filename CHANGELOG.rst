@@ -52,7 +52,8 @@ the MESMER-M functionality.
 
 - Modifications to the power transformer
   - rewrite power transformer functions to work with xarray, this also includes a refactoring from a class structure to functions (
-    `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_)
+    `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_,
+    `#474 <https://github.com/MESMER-group/mesmer/pull/474>`_)
   - adjust the first guess for the power transformer to the normally distributed case (`#429 <https://github.com/MESMER-group/mesmer/pull/429/files>`_)
   - adjust the bounds for the power transformer to all positive numbers for first coefficient (`#446 <https://github.com/MESMER-group/mesmer/pull/446>`_)
   - remove jacobian rosen_der from fit (`#447 <https://github.com/MESMER-group/mesmer/pull/447>`_)
