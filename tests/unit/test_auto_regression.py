@@ -662,7 +662,7 @@ def test_fit_auto_regression_monthly():
 
 
 def test_predict_auto_regression_monthly_np():
-    slope = np.repeat(0.0, 12)
+    slope = np.zeros(12)
     intercept = np.arange(1, 13)
     result = mesmer.stats._auto_regression._predict_auto_regression_monthly_np(
         intercept, slope, 120, 0
