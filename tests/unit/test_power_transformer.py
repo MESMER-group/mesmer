@@ -25,7 +25,7 @@ from mesmer.testing import trend_data_2D
 )
 def test_lambda_function(coeffs, t, expected):
 
-    result = power_transformer.lambda_function(coeffs, t)
+    result = power_transformer.lambda_function(coeffs[0], coeffs[1], t)
     np.testing.assert_allclose(result, expected)
 
 
@@ -71,7 +71,7 @@ def test_yeo_johnson_optimize_lambda_np(skew, bounds):
     coeffs = power_transformer._yeo_johnson_optimize_lambda_np(
         local_monthly_residuals, yearly_T
     )
-    lmbda = power_transformer.lambda_function(coeffs, yearly_T)
+    lmbda = power_transformer.lambda_function(coeffs[0], coeffs[1], yearly_T)
     transformed = power_transformer._yeo_johnson_transform_np(
         local_monthly_residuals, lmbda
     )
@@ -173,7 +173,7 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     ourfit = power_transformer._yeo_johnson_optimize_lambda_np(
         local_monthly_residuals, yearly_T
     )
-    result = power_transformer.lambda_function(ourfit, yearly_T_value)
+    result = power_transformer.lambda_function(ourfit[0], ourfit[1], yearly_T_value)
     sklearnfit = PowerTransformer(method="yeo-johnson", standardize=False).fit(
         local_monthly_residuals.reshape(-1, 1), yearly_T.reshape(-1, 1)
     )
