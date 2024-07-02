@@ -769,7 +769,8 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
     for y in range(n_years + buffer):
         for month in range(12):
             prev_month = 11 if month == 0 else month - 1
+            yy = y - 1 if month == 0 else y
 
-            out[y, month] = intercept[month] + slope[month] * out[y - 1, prev_month]
+            out[y, month] = intercept[month] + slope[month] * out[yy, prev_month]
 
     return out[buffer:, :]
