@@ -45,6 +45,46 @@ Internal Changes
 - Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
   By `Victoria Bauer`_.
 
+Integration of MESMER-M
+^^^^^^^^^^^^^^^^^^^^^^^
+This version integrates MESMER-M into the remaining MESMER infrastructure. This includes some refactoring and enhancements of
+the MESMER-M functionality.
+
+- Modifications to the power transformer
+  - rewrite power transformer functions to work with xarray, this also includes a refactoring from a class structure to functions (
+    `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_,
+    `#474 <https://github.com/MESMER-group/mesmer/pull/474>`_)
+  - adjust the first guess for the power transformer to the normally distributed case (`#429 <https://github.com/MESMER-group/mesmer/pull/429/files>`_)
+  - adjust the bounds for the power transformer to all positive numbers for first coefficient (`#446 <https://github.com/MESMER-group/mesmer/pull/446>`_)
+  - remove jacobian rosen_der from fit (`#447 <https://github.com/MESMER-group/mesmer/pull/447>`_)
+  - change opimization method from SLSQP to Nelder-Mead (`#455 <https://github.com/MESMER-group/mesmer/pull/455>`_)
+- Modifications to the harmonic model
+  - renaming and restructuring (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
+  - infer the harmonic model order from the coefficients (`#434 <https://github.com/MESMER-group/mesmer/pull/434>`_)
+  - only fit orders up to local minimum and use coeffs from precious order as first guess (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_)
+  - make the function to optimize for return residuals instead of loss (`#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
+- small issues (
+  `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
+  `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_,
+  `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_,
+  `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_,
+  `#475 <https://github.com/MESMER-group/mesmer/pull/475>`_)
+- add utility functions for MESMER-M (
+  `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
+  `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+- add tests (
+  `#430 <https://github.com/MESMER-group/mesmer/pull/430>`_,
+  `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_,
+  `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
+- move MESMER-M scripts into mesmer, adapt init file and some renaming (
+  `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_,
+  `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
+- documentation (
+  `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
+  `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
+By `Victoria Bauer`_ and `Mathias Hauser`_.
+
+
 
 v0.10.0 - 2024.01.04
 --------------------
