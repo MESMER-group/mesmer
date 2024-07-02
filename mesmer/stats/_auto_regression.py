@@ -619,7 +619,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     if not isinstance(monthly_data, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_data)}")
 
-    monthly_data = monthly_data.groupby(time_dim + ".month")
+    monthly_data = monthly_data.groupby(f"{time_dim}.month")
     coeffs = []
 
     for month in range(1, 13):
