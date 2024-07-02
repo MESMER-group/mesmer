@@ -1,7 +1,6 @@
 import numpy as np
 import xarray as xr
 from scipy.optimize import minimize
-from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
 def lambda_function(xi_0, xi_1, local_yearly_T):
