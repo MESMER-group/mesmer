@@ -726,15 +726,15 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
         intercept,
         slope,
         input_core_dims=[[month_dim], [month_dim]],
-        output_core_dims=[["year", month_dim]],
+        output_core_dims=[['time']],
         vectorize=True,
         # dask="parallelized",
         output_dtypes=[float],
         kwargs={"n_ts": len(time), "buffer": buffer},
     )
 
-    AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
-    AR_predictions = AR_predictions.drop_vars(["time", "year", month_dim])
+    # AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
+    # AR_predictions = AR_predictions.drop_vars(["time", "year", month_dim])
     AR_predictions = AR_predictions.assign_coords({"time": time})
 
     return AR_predictions.transpose("time", ...)
@@ -758,20 +758,17 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
 
     Returns
     -------
-    out : np.array of shape (n_ts/12, 12)
+    out : np.array of shape (n_ts)
         Predicted time series of the specified AR(1).
     """
     if n_ts % 12 != 0:
         raise ValueError("The number of time steps must be a multiple of 12.")
-    n_years = n_ts // 12
+    # n_years = n_ts // 12
 
-    out = np.zeros([n_years + buffer, 12])
+    out = np.zeros([n_ts + buffer])
 
-    for y in range(n_years + buffer):
-        for month in range(12):
-            prev_month = 11 if month == 0 else month - 1
-            yy = y - 1 if month == 0 else y
+    for t in range(n_ts + buffer):
+            month = t % 12
+            out[t] = intercept[month] + slope[month] * out[t-1]
 
-            out[y, month] = intercept[month] + slope[month] * out[yy, prev_month]
-
-    return out[buffer:, :]
+    return out[buffer:]
