@@ -761,7 +761,7 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
     out : np.array of shape (n_ts/12, 12)
         Predicted time series of the specified AR(1).
     """
-    if not n_ts % 12 == 0:
+    if n_ts % 12 != 0:
         raise ValueError("The number of time steps must be a multiple of 12.")
     n_years = n_ts // 12
 
