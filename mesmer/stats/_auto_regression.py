@@ -636,7 +636,8 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             prev_month = monthly_data[month - 1]
             cur_month = monthly_data[month]
 
-        prev_month[time_dim] = cur_month[time_dim]
+        # need to align time dimension for apply_ufunc
+        prev_month = prev_month.assign_coords({time_dim: cur_month[time_dim]})
 
         slope, intercept = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
@@ -734,7 +735,7 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
 
     AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
     AR_predictions = AR_predictions.drop_vars(["time", "year", month_dim])
-    AR_predictions["time"] = time
+    AR_predictions = AR_predictions.assign_coords({"time": time})
 
     return AR_predictions.transpose("time", ...)
 
