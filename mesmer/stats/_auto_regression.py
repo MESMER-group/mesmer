@@ -726,7 +726,7 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
         intercept,
         slope,
         input_core_dims=[[month_dim], [month_dim]],
-        output_core_dims=[['time']],
+        output_core_dims=[["time"]],
         vectorize=True,
         # dask="parallelized",
         output_dtypes=[float],
@@ -768,7 +768,7 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
     out = np.zeros([n_ts + buffer])
 
     for t in range(n_ts + buffer):
-            month = t % 12
-            out[t] = intercept[month] + slope[month] * out[t-1]
+        month = t % 12
+        out[t] = intercept[month] + slope[month] * out[t - 1]
 
     return out[buffer:]

@@ -679,7 +679,7 @@ def test_predict_auto_regression_monthly_np():
         )
 
 
-@pytest.mark.parametrize("buffer", [2, 12, 12*5])
+@pytest.mark.parametrize("buffer", [2, 12, 12 * 5])
 def test_predict_auto_regression_monthly_np_buffer(buffer):
     slope = np.random.normal(size=12)
     intercept = np.ones(12)
@@ -738,7 +738,7 @@ def test_predict_auto_regression_monthly():
 def test_fit_predict_autoregression_monthly_roundtrip():
     n_gridcells = 10
     n_years = 150
-    buffer = 30*12
+    buffer = 30 * 12
     np.random.seed(0)
     slopes = xr.DataArray(
         np.random.uniform(-0.99, 0.99, size=(12, n_gridcells)),
