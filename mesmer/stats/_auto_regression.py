@@ -893,13 +893,7 @@ def _draw_ar_corr_monthly_xr_internal(
 
 
 def _draw_auto_regression_monthly_np(
-    intercept, 
-    slope, 
-    covariance, 
-    n_samples, 
-    n_ts, 
-    seed, 
-    buffer
+    intercept, slope, covariance, n_samples, n_ts, seed, buffer
 ):
     """predict time series of an auto regression process with lag one
     using individual parameters for each month - numpy wrapper
