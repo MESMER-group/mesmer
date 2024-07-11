@@ -917,8 +917,6 @@ def _draw_auto_regression_monthly_np(
                     "Covariance matrix is not positive definite, using eigh instead of cholesky.",
                     LinAlgWarning,
                 )
-            else:
-                raise
 
         innovations[:, :, month, :] = scipy.stats.multivariate_normal.rvs(
             mean=np.zeros(n_gridcells),
