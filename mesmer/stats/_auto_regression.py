@@ -480,6 +480,18 @@ def _draw_auto_regression_correlated_np(
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     np.random.seed(seed)
 
+    innovations = _draw_innovations_correlated_np(covariance, n_coeffs, n_samples, n_ts, buffer)
+
+    out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
+    for t in range(ar_order + 1, n_ts + buffer):
+
+        ar = np.sum(coeffs * out[:, t - ar_lags, :], axis=1)
+
+        out[:, t, :] = intercept + ar + innovations[:, t, :]
+
+    return out[:, buffer:, :]
+
+def _draw_innovations_correlated_np(covariance, n_gridcells, n_samples, n_ts, buffer):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
     try:
@@ -492,23 +504,14 @@ def _draw_auto_regression_correlated_np(
                 "Covariance matrix is not positive definite, using eigh instead of cholesky.",
                 LinAlgWarning,
             )
-        else:
-            raise
 
     innovations = scipy.stats.multivariate_normal.rvs(
-        mean=np.zeros(n_coeffs),
+        mean=np.zeros(n_gridcells),
         cov=cov,
         size=[n_samples, n_ts + buffer],
-    ).reshape(n_samples, n_ts + buffer, n_coeffs)
+    ).reshape(n_samples, n_ts + buffer, n_gridcells)
 
-    out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
-    for t in range(ar_order + 1, n_ts + buffer):
-
-        ar = np.sum(coeffs * out[:, t - ar_lags, :], axis=1)
-
-        out[:, t, :] = intercept + ar + innovations[:, t, :]
-
-    return out[:, buffer:, :]
+    return innovations
 
 
 def fit_auto_regression(data, dim, lags):
@@ -922,26 +925,11 @@ def _draw_auto_regression_monthly_np(
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     np.random.seed(seed)
 
-    # NOTE: 'innovations' is the error or noise term. Each month has its own covariance
-    # matrix and therefore its own innovations.
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
     for month in range(12):
         cov_month = covariance[month, :, :]
-        try:
-            cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(cov_month))
-        except np.linalg.LinAlgError as e:
-            if "Matrix is not positive definite" in str(e):
-                w, v = np.linalg.eigh(cov_month)
-                cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
-                warnings.warn(
-                    "Covariance matrix is not positive definite, using eigh instead of cholesky.",
-                    LinAlgWarning,
-                )
-
-        innovations[:, :, month, :] = scipy.stats.multivariate_normal.rvs(
-            mean=np.zeros(n_gridcells),
-            cov=cov,
-            size=[n_samples, n_ts // 12 + buffer],
+        innovations[:, :, month, :] = _draw_innovations_correlated_np(
+            cov_month, n_gridcells, n_samples, n_ts // 12, buffer
         )
 
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
