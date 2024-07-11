@@ -721,8 +721,6 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
         shape n_timesteps x n_gridpoints.
 
     """
-    # the AR process alone is deterministic so we dont need realisations here
-    # or a seed
     _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
     (month_dim, gridcell_dim), (n_months, n_gridpoints) = (
         ar_params.intercept.dims,
@@ -738,6 +736,8 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
         ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
 
+    # here we only want the deterministic part of the AR1 process so we set the covariance to zero
+    # so that the innovations are zero
     covariance = xr.DataArray(
         np.zeros((n_months, n_gridpoints, n_gridpoints)),
         dims=("month", "gridcell_i", "gridcell_j"),
@@ -893,7 +893,13 @@ def _draw_ar_corr_monthly_xr_internal(
 
 
 def _draw_auto_regression_monthly_np(
-    intercept, slope, covariance, n_samples, n_ts, seed, buffer
+    intercept, 
+    slope, 
+    covariance, 
+    n_samples, 
+    n_ts, 
+    seed, 
+    buffer
 ):
     """predict time series of an auto regression process with lag one
     using individual parameters for each month - numpy wrapper
