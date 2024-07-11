@@ -664,23 +664,37 @@ def test_fit_auto_regression_monthly():
 def test_predict_auto_regression_monthly_intercept():
     n_gridcells = 2
     slope = np.zeros((12, n_gridcells))
-    slope = xr.DataArray(slope, dims=("month", "gridcell"), coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)})
+    slope = xr.DataArray(
+        slope,
+        dims=("month", "gridcell"),
+        coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
+    )
     intercept = np.tile(np.arange(1, 13), n_gridcells).reshape(n_gridcells, 12).T
-    intercept = xr.DataArray(intercept, dims=("month", "gridcell"), coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)})
-
-    n_years = 10
-    time = pd.date_range("2000-01-01", periods=12*n_years, freq="M")
-    time = xr.DataArray(time, dims = "time", coords={"time": time})
-    result = mesmer.stats.predict_auto_regression_monthly(
-        intercept, slope, time, 0
+    intercept = xr.DataArray(
+        intercept,
+        dims=("month", "gridcell"),
+        coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
 
-    expected = np.tile(np.arange(1, 13), n_gridcells * n_years).reshape(n_gridcells, 12 * n_years).T
-    expected = xr.DataArray(expected, dims=("time", "gridcell"), coords={"time": time, "gridcell": np.arange(n_gridcells)})
+    n_years = 10
+    time = pd.date_range("2000-01-01", periods=12 * n_years, freq="M")
+    time = xr.DataArray(time, dims="time", coords={"time": time})
+    result = mesmer.stats.predict_auto_regression_monthly(intercept, slope, time, 0)
+
+    expected = (
+        np.tile(np.arange(1, 13), n_gridcells * n_years)
+        .reshape(n_gridcells, 12 * n_years)
+        .T
+    )
+    expected = xr.DataArray(
+        expected,
+        dims=("time", "gridcell"),
+        coords={"time": time, "gridcell": np.arange(n_gridcells)},
+    )
     np.testing.assert_allclose(result, expected)
 
 
-@pytest.mark.parametrize("buffer", [2, 12, 12*5])
+@pytest.mark.parametrize("buffer", [2, 12, 12 * 5])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
     n_gridcells = 10
@@ -689,15 +703,17 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     intercept = np.ones((12, n_gridcells))
     covariance = np.tile(np.eye(n_gridcells), 12).reshape(12, n_gridcells, n_gridcells)
     n_ts = 120
-    
+
     res_wo_buffer = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
-        intercept, slope, covariance, n_realisations,  n_ts, seed, buffer = 0
+        intercept, slope, covariance, n_realisations, n_ts, seed, buffer=0
     )
     res_w_buffer = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
-        intercept, slope, covariance, n_realisations,  n_ts, seed, buffer = buffer
+        intercept, slope, covariance, n_realisations, n_ts, seed, buffer=buffer
     )
 
-    np.testing.assert_allclose(res_wo_buffer[:, buffer:, :], res_w_buffer[:, :-buffer, :])
+    np.testing.assert_allclose(
+        res_wo_buffer[:, buffer:, :], res_w_buffer[:, :-buffer, :]
+    )
 
 
 def test_predict_auto_regression_monthly():

@@ -688,7 +688,7 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
 
 def predict_auto_regression_monthly(intercept, slope, time, buffer):
     """predict time series of an auto regression process with lag one
-    using individual parameters for each month. This function is deterministic, 
+    using individual parameters for each month. This function is deterministic,
     i.e. does not produce random noise.
 
     Parameters
@@ -707,7 +707,7 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
     Returns
     -------
     result : xr.DataArray
-        Predicted deterministic time series of the specified AR(1). The array has 
+        Predicted deterministic time series of the specified AR(1). The array has
         shape n_timesteps x n_gridpoints.
 
     """
@@ -719,11 +719,14 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(slope)}")
     if not isinstance(time, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(time)}")
-    
+
     n_months, n_gridpoints = intercept.shape
-    
-    covariance = xr.DataArray(np.zeros((n_months, n_gridpoints, n_gridpoints)), dims=("month", "gridcell_i", "gridcell_j"))
-    
+
+    covariance = xr.DataArray(
+        np.zeros((n_months, n_gridpoints, n_gridpoints)),
+        dims=("month", "gridcell_i", "gridcell_j"),
+    )
+
     # ignore that covariance is all zeros and thus not positive-definite
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", LinAlgWarning)
@@ -737,20 +740,22 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
             buffer=buffer,
             time_dim="time",
             realisation_dim="realisation",
-        ).squeeze("realisation", drop = True)
-    
+        ).squeeze("realisation", drop=True)
+
     return result
 
-def draw_auto_regression_monthly(intercept,
-                                 slope, 
-                                 covariance,
-                                 time,
-                                 n_realisations,
-                                 seed,
-                                 buffer,
-                                 time_dim = "time",
-                                 realisation_dim = "realisation",
-                                 ):
+
+def draw_auto_regression_monthly(
+    intercept,
+    slope,
+    covariance,
+    time,
+    n_realisations,
+    seed,
+    buffer,
+    time_dim="time",
+    realisation_dim="realisation",
+):
     """draw time series of an auto regression process with lag one
     using individual parameters for each month including spatially-correlated innovations.
 
@@ -761,7 +766,7 @@ def draw_auto_regression_monthly(intercept,
     slope : xr.DataArray of shape (12, n_gridpoints)
         The slope of the AR(1) process for each month and gridpoint.
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
-        The covariance matrix representing spatial correlation between gridpoints for 
+        The covariance matrix representing spatial correlation between gridpoints for
         each month. Must be symmetric and at least positive-semidefinite.
         Used to draw spatially-correlated innovations using a multivariate normal.
     time : xr.DataArray
@@ -782,15 +787,21 @@ def draw_auto_regression_monthly(intercept,
     Returns
     -------
     result : xr.DataArray of shape (n_realisations, n_timesteps, n_gridpoints)
-        Predicted time series of the specified AR(1) process including spatially 
+        Predicted time series of the specified AR(1) process including spatially
         correlated innovations. The array has shape n_timesteps x n_gridpoints.
 
     """
     # check input
     (month_dim, gridcell_dim), (n_months, size) = intercept.dims, intercept.shape
-    _check_dataarray_form(intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim))
-    _check_dataarray_form(slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim))
-    _check_dataarray_form(covariance, "covariance", ndim=3, shape=(n_months, size, size))
+    _check_dataarray_form(
+        intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim)
+    )
+    _check_dataarray_form(
+        slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
+    )
+    _check_dataarray_form(
+        covariance, "covariance", ndim=3, shape=(n_months, size, size)
+    )
 
     result = _draw_ar_corr_monthly_xr_internal(
         intercept=intercept,
@@ -805,6 +816,7 @@ def draw_auto_regression_monthly(intercept,
     )
 
     return result
+
 
 def _draw_ar_corr_monthly_xr_internal(
     intercept,
@@ -853,13 +865,10 @@ def _draw_ar_corr_monthly_xr_internal(
 
     return out
 
-def _draw_auto_regression_monthly_np(intercept, 
-                                     slope, 
-                                     covariance, 
-                                     n_samples,
-                                     n_ts,
-                                     seed,
-                                     buffer):
+
+def _draw_auto_regression_monthly_np(
+    intercept, slope, covariance, n_samples, n_ts, seed, buffer
+):
     """predict time series of an auto regression process with lag one
     using individual parameters for each month - numpy wrapper
 
@@ -893,7 +902,7 @@ def _draw_auto_regression_monthly_np(intercept,
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     np.random.seed(seed)
 
-    # NOTE: 'innovations' is the error or noise term. Each month has its own covariance 
+    # NOTE: 'innovations' is the error or noise term. Each month has its own covariance
     # matrix and therefore its own innovations.
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
     for month in range(12):
@@ -922,7 +931,11 @@ def _draw_auto_regression_monthly_np(intercept,
     out = np.zeros([n_samples, n_ts + buffer * 12, n_gridcells])
 
     for t in range(n_ts + buffer * 12):
-            month = t % 12
-            out[:, t, :] = intercept[month, :] + slope[month, :] * out[:, t-1, :] + innovations[:, t, :]
+        month = t % 12
+        out[:, t, :] = (
+            intercept[month, :]
+            + slope[month, :] * out[:, t - 1, :]
+            + innovations[:, t, :]
+        )
 
-    return out[:, buffer*12:, :]
+    return out[:, buffer * 12 :, :]
