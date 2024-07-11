@@ -686,17 +686,21 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
     return slope, intercept
 
 
-def predict_auto_regression_monthly(intercept, slope, time, buffer):
+def predict_auto_regression_monthly(ar_params, time, buffer):
     """predict time series of an auto regression process with lag one
     using individual parameters for each month. This function is deterministic,
     i.e. does not produce random noise.
 
     Parameters
     ----------
-    intercept : xr.DataArray of shape (12, n_gridpoints)
-        The intercept of the AR(1) process for each month and gridpoint.
-    slope : xr.DataArray of shape (12, n_gridpoints)
-        The slope of the AR(1) process for each month and gridpoint.
+    ar_params : xr.Dataset
+        Dataset containing the estimated parameters of the AR1 process. Must contain the
+        following DataArray objects:
+
+        - intercept
+        - slope
+
+        both of shape (12, n_gridpoints).
     time : xr.DataArray
         The time coordinates that determines the length of the predicted timeseries and
         that will be the assigned time dimension of the predictions.
@@ -713,14 +717,16 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
     """
     # the AR process alone is deterministic so we dont need realisations here
     # or a seed
-    if not isinstance(intercept, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(intercept)}")
-    if not isinstance(slope, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(slope)}")
-    if not isinstance(time, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(time)}")
-
-    n_months, n_gridpoints = intercept.shape
+    _check_dataset_form(
+        ar_params, "ar_params", required_vars=("intercept", "slope")
+    )
+    (month_dim, gridcell_dim), (n_months, n_gridpoints) = ar_params.intercept.dims, ar_params.intercept.shape
+    _check_dataarray_form(
+        ar_params.intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim)
+    )
+    _check_dataarray_form(
+        ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
+    )
 
     covariance = xr.DataArray(
         np.zeros((n_months, n_gridpoints, n_gridpoints)),
@@ -731,8 +737,8 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", LinAlgWarning)
         result = _draw_ar_corr_monthly_xr_internal(
-            intercept=intercept,
-            slope=slope,
+            intercept=ar_params.intercept,
+            slope=ar_params.slope,
             covariance=covariance,
             time=time,
             realisation=1,
@@ -746,8 +752,7 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
 
 
 def draw_auto_regression_monthly(
-    intercept,
-    slope,
+    ar_params,
     covariance,
     time,
     n_realisations,
@@ -761,10 +766,14 @@ def draw_auto_regression_monthly(
 
     Parameters
     ----------
-    intercept : xr.DataArray of shape (12, n_gridpoints)
-        The intercept of the AR(1) process for each month and gridpoint.
-    slope : xr.DataArray of shape (12, n_gridpoints)
-        The slope of the AR(1) process for each month and gridpoint.
+    ar_params : xr.Dataset
+        Dataset containing the estimated parameters of the AR1 process. Must contain the
+        following DataArray objects:
+
+        - intercept
+        - slope
+
+        both of shape (12, n_gridpoints).
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
         The covariance matrix representing spatial correlation between gridpoints for
         each month. Must be symmetric and at least positive-semidefinite.
@@ -792,20 +801,23 @@ def draw_auto_regression_monthly(
 
     """
     # check input
-    (month_dim, gridcell_dim), (n_months, size) = intercept.dims, intercept.shape
+    _check_dataset_form(
+        ar_params, "ar_params", required_vars=("intercept", "slope")
+    )
+    (month_dim, gridcell_dim), (n_months, size) = ar_params.intercept.dims, ar_params.intercept.shape
     _check_dataarray_form(
-        intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
     _check_dataarray_form(
-        slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
     _check_dataarray_form(
         covariance, "covariance", ndim=3, shape=(n_months, size, size)
     )
 
     result = _draw_ar_corr_monthly_xr_internal(
-        intercept=intercept,
-        slope=slope,
+        intercept=ar_params.intercept,
+        slope=ar_params.slope,
         covariance=covariance,
         time=time,
         realisation=n_realisations,
@@ -874,9 +886,9 @@ def _draw_auto_regression_monthly_np(
 
     Parameters
     ----------
-    intercept : np.array of shape (12,)
+    intercept : np.array of shape (12, gridpoints)
         The intercept of the AR(1) process for each month.
-    slope : np.array of shape (12,)
+    slope : np.array of shape (12, gridpoints)
         The slope of the AR(1) process for each month.
     covariance: np.array of shape (12, n_gridpoints, n_gridpoints)
         The covariance matrix representing spatial correlation between gridpoints for each month.

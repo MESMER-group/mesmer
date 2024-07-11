@@ -675,11 +675,12 @@ def test_predict_auto_regression_monthly_intercept():
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
+    ar_params = xr.Dataset({"intercept": intercept, "slope": slope})
 
     n_years = 10
     time = pd.date_range("2000-01-01", periods=12 * n_years, freq="M")
     time = xr.DataArray(time, dims="time", coords={"time": time})
-    result = mesmer.stats.predict_auto_regression_monthly(intercept, slope, time, 0)
+    result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, 0)
 
     expected = (
         np.tile(np.arange(1, 13), n_gridcells * n_years)
@@ -708,10 +709,12 @@ def test_predict_auto_regression_monthly():
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
+    ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
+
     time = pd.date_range("2000-01-01", periods=n_years * 12, freq="M")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
-    result = mesmer.stats.predict_auto_regression_monthly(intercepts, slopes, time, 10)
+    result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, 10)
 
     _check_dataarray_form(
         result,
@@ -720,19 +723,6 @@ def test_predict_auto_regression_monthly():
         required_dims={"time", "gridcell"},
         shape=(len(time), n_gridcells),
     )
-
-    with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
-        mesmer.stats.predict_auto_regression_monthly(
-            intercepts.values, slopes, time, 10
-        )
-    with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
-        mesmer.stats.predict_auto_regression_monthly(
-            intercepts, slopes.values, time, 10
-        )
-    with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
-        mesmer.stats.predict_auto_regression_monthly(
-            intercepts, slopes, time.values, 10
-        )
 
 
 def test_fit_predict_autoregression_monthly_roundtrip():
@@ -750,15 +740,17 @@ def test_fit_predict_autoregression_monthly_roundtrip():
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
+    ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
+
     time = pd.date_range("2000-01-01", periods=n_years * 12, freq="M")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     data = mesmer.stats.predict_auto_regression_monthly(
-        intercepts, slopes, time, buffer
+        ar_params, time, buffer
     )
     AR_fit = mesmer.stats.fit_auto_regression_monthly(data)
     predicted = mesmer.stats.predict_auto_regression_monthly(
-        AR_fit.intercept, AR_fit.slope, data.time, buffer
+        ar_params, data.time, buffer
     )
 
     np.testing.assert_allclose(predicted, data)
@@ -803,6 +795,7 @@ def test_draw_auto_regression_monthly():
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
+    ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
 
     covariance = xr.DataArray(
         np.tile(np.eye(n_gridcells), 12).T.reshape(12, n_gridcells, n_gridcells),
@@ -818,8 +811,7 @@ def test_draw_auto_regression_monthly():
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     result = mesmer.stats.draw_auto_regression_monthly(
-        intercepts,
-        slopes,
+        ar_params,
         covariance,
         time,
         n_realisations,
