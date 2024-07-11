@@ -723,18 +723,21 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer):
     n_months, n_gridpoints = intercept.shape
     
     covariance = xr.DataArray(np.zeros((n_months, n_gridpoints, n_gridpoints)), dims=("month", "gridcell_i", "gridcell_j"))
-
-    result = _draw_ar_corr_monthly_xr_internal(
-        intercept=intercept,
-        slope=slope,
-        covariance=covariance,
-        time=time,
-        realisation=1,
-        seed=0,
-        buffer=buffer,
-        time_dim="time",
-        realisation_dim="realisation",
-    ).squeeze("realisation", drop = True)
+    
+    # ignore that covariance is all zeros and thus not positive-definite
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", LinAlgWarning)
+        result = _draw_ar_corr_monthly_xr_internal(
+            intercept=intercept,
+            slope=slope,
+            covariance=covariance,
+            time=time,
+            realisation=1,
+            seed=0,
+            buffer=buffer,
+            time_dim="time",
+            realisation_dim="realisation",
+        ).squeeze("realisation", drop = True)
     
     return result
 
