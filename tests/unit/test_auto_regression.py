@@ -752,7 +752,7 @@ def test_fit_predict_autoregression_monthly_roundtrip():
     np.testing.assert_allclose(predicted, data)
 
 
-@pytest.mark.parametrize("buffer", [2, 12, 12 * 5])
+@pytest.mark.parametrize("buffer", [1, 10, 20])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
     n_gridcells = 10
