@@ -763,6 +763,7 @@ def test_fit_predict_autoregression_monthly_roundtrip():
 
     np.testing.assert_allclose(predicted, data)
 
+
 @pytest.mark.parametrize("buffer", [2, 12, 12 * 5])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
@@ -817,14 +818,14 @@ def test_draw_auto_regression_monthly():
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     result = mesmer.stats.draw_auto_regression_monthly(
-        intercepts, 
-        slopes, 
+        intercepts,
+        slopes,
         covariance,
-        time, 
+        time,
         n_realisations,
         seed,
         buffer,
-        )
+    )
 
     _check_dataarray_form(
         result,
