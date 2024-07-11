@@ -6,6 +6,7 @@ from mesmer.stats._auto_regression import (
     fit_auto_regression,
     fit_auto_regression_monthly,
     predict_auto_regression_monthly,
+    draw_auto_regression_monthly,
     select_ar_order,
 )
 from mesmer.stats._gaspari_cohn import gaspari_cohn, gaspari_cohn_correlation_matrices
@@ -26,6 +27,7 @@ __all__ = [
     "select_ar_order",
     "fit_auto_regression_monthly",
     "predict_auto_regression_monthly",
+    "draw_auto_regression_monthly",
     # gaspari cohn
     "gaspari_cohn_correlation_matrices",
     "gaspari_cohn",

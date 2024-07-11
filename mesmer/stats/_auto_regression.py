@@ -686,9 +686,10 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
     return slope, intercept
 
 
-def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="month"):
+def predict_auto_regression_monthly(intercept, slope, time, buffer):
     """predict time series of an auto regression process with lag one
-    using individual parameters for each month.
+    using individual parameters for each month. This function is deterministic, 
+    i.e. does not produce random noise.
 
     Parameters
     ----------
@@ -702,14 +703,12 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
-    month_dim : str, default "month"
-        Name of the month dimension of the input data needed to stack the predictions.
 
     Returns
     -------
-    AR_predictions : xr.DataArray
-        Predicted time series of the specified AR(1). The array has shape
-        n_timesteps x n_gridpoints.
+    result : xr.DataArray
+        Predicted deterministic time series of the specified AR(1). The array has 
+        shape n_timesteps x n_gridpoints.
 
     """
     # the AR process alone is deterministic so we dont need realisations here
@@ -720,27 +719,144 @@ def predict_auto_regression_monthly(intercept, slope, time, buffer, month_dim="m
         raise TypeError(f"Expected a `xr.DataArray`, got {type(slope)}")
     if not isinstance(time, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(time)}")
+    
+    n_months, n_gridpoints = intercept.shape
+    
+    covariance = xr.DataArray(np.zeros((n_months, n_gridpoints, n_gridpoints)), dims=("month", "gridcell_i", "gridcell_j"))
 
-    AR_predictions = xr.apply_ufunc(
-        _predict_auto_regression_monthly_np,
-        intercept,
-        slope,
-        input_core_dims=[[month_dim], [month_dim]],
-        output_core_dims=[["time"]],
-        vectorize=True,
-        # dask="parallelized",
-        output_dtypes=[float],
-        kwargs={"n_ts": len(time), "buffer": buffer},
+    result = _draw_ar_corr_monthly_xr_internal(
+        intercept=intercept,
+        slope=slope,
+        covariance=covariance,
+        time=time,
+        realisation=1,
+        seed=0,
+        buffer=buffer,
+        time_dim="time",
+        realisation_dim="realisation",
+    ).squeeze("realisation", drop = True)
+    
+    return result
+
+def draw_auto_regression_monthly(intercept,
+                                 slope, 
+                                 covariance,
+                                 time,
+                                 n_realisations,
+                                 seed,
+                                 buffer,
+                                 time_dim = "time",
+                                 realisation_dim = "realisation",
+                                 ):
+    """draw time series of an auto regression process with lag one
+    using individual parameters for each month including spatially-correlated innovations.
+
+    Parameters
+    ----------
+    intercept : xr.DataArray of shape (12, n_gridpoints)
+        The intercept of the AR(1) process for each month and gridpoint.
+    slope : xr.DataArray of shape (12, n_gridpoints)
+        The slope of the AR(1) process for each month and gridpoint.
+    covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
+        The covariance matrix representing spatial correlation between gridpoints for 
+        each month. Must be symmetric and at least positive-semidefinite.
+        Used to draw spatially-correlated innovations using a multivariate normal.
+    time : xr.DataArray
+        The time coordinates that determines the length of the predicted timeseries and
+        that will be the assigned time dimension of the predictions.
+    n_realisations : int
+        The number of realisations to draw.
+    seed : int
+        Seed used to initialize the pseudo-random number generator.
+    buffer : int
+        Buffer to initialize the autoregressive process (ensures that start at 0 does
+        not influence overall result).
+    time_dim : str, default "time"
+        Name of the time dimension for the output data.
+    realisation_dim : str, default "realisation"
+        Name of the realisation dimension for the output data.
+
+    Returns
+    -------
+    result : xr.DataArray of shape (n_realisations, n_timesteps, n_gridpoints)
+        Predicted time series of the specified AR(1) process including spatially 
+        correlated innovations. The array has shape n_timesteps x n_gridpoints.
+
+    """
+    # check input
+    (month_dim, gridcell_dim), (n_months, size) = intercept.dims, intercept.shape
+    _check_dataarray_form(intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim))
+    _check_dataarray_form(slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim))
+    _check_dataarray_form(covariance, "covariance", ndim=3, shape=(n_months, size, size))
+
+    result = _draw_ar_corr_monthly_xr_internal(
+        intercept=intercept,
+        slope=slope,
+        covariance=covariance,
+        time=time,
+        realisation=n_realisations,
+        seed=seed,
+        buffer=buffer,
+        time_dim=time_dim,
+        realisation_dim=realisation_dim,
     )
 
-    # AR_predictions = AR_predictions.stack({"time": ["year", month_dim]})
-    # AR_predictions = AR_predictions.drop_vars(["time", "year", month_dim])
-    AR_predictions = AR_predictions.assign_coords({"time": time})
+    return result
 
-    return AR_predictions.transpose("time", ...)
+def _draw_ar_corr_monthly_xr_internal(
+    intercept,
+    slope,
+    covariance,
+    *,
+    time,
+    realisation,
+    seed,
+    buffer,
+    time_dim="time",
+    realisation_dim="realisation",
+):
 
+    # get the size and coords of the new dimensions
+    n_ts, time_coords = _get_size_and_coord_dict(time, time_dim, "time")
+    n_realisations, realisation_coords = _get_size_and_coord_dict(
+        realisation, realisation_dim, "realisation"
+    )
 
-def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
+    # the dimension name of the gridpoints
+    (_, gridpoint_dim) = intercept.dims
+    # make sure non-dimension coords are properly caught
+    gridpoint_coords = dict(slope[gridpoint_dim].coords)
+
+    out = _draw_auto_regression_monthly_np(
+        intercept=intercept.values,
+        slope=slope.transpose(..., gridpoint_dim).values,
+        covariance=covariance.values,
+        n_samples=n_realisations,
+        n_ts=n_ts,
+        seed=seed,
+        buffer=buffer,
+    )
+
+    dims = (realisation_dim, time_dim, gridpoint_dim)
+
+    # TODO: use dict union once requiring py3.9+
+    # coords = gridpoint_coords | time_coords | realisation_coords
+    coords = {**time_coords, **realisation_coords, **gridpoint_coords}
+
+    out = xr.DataArray(out, dims=dims, coords=coords)
+
+    # for consistency we transpose to time x gridpoint x realisation
+    out = out.transpose(time_dim, gridpoint_dim, realisation_dim)
+
+    return out
+
+def _draw_auto_regression_monthly_np(intercept, 
+                                     slope, 
+                                     covariance, 
+                                     n_samples,
+                                     n_ts,
+                                     seed,
+                                     buffer):
     """predict time series of an auto regression process with lag one
     using individual parameters for each month - numpy wrapper
 
@@ -750,25 +866,60 @@ def _predict_auto_regression_monthly_np(intercept, slope, n_ts, buffer):
         The intercept of the AR(1) process for each month.
     slope : np.array of shape (12,)
         The slope of the AR(1) process for each month.
+    covariance: np.array of shape (12, n_gridpoints, n_gridpoints)
+        The covariance matrix representing spatial correlation between gridpoints for each month.
+    n_samples : int
+        The number of realisations to draw.
     n_ts : int
-        The number of time steps to predict.
+        The number of time steps needed (i.e. the number of months in the whole timeseries).
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
-        not influence overall result).
+        not influence overall result). The number given is used for every month such
+        that at the end 12*buffer months are cut off.
 
     Returns
     -------
-    out : np.array of shape (n_ts)
-        Predicted time series of the specified AR(1).
+    out : np.array of shape (n_samples, n_ts, n_gridpoints)
+        Predicted time series of the specified AR(1) including spatially correllated innovations.
     """
-    if n_ts % 12 != 0:
-        raise ValueError("The number of time steps must be a multiple of 12.")
-    # n_years = n_ts // 12
+    intercept = np.asarray(intercept)
+    covariance = np.atleast_3d(covariance)
 
-    out = np.zeros([n_ts + buffer])
+    _, n_gridcells = intercept.shape
 
-    for t in range(n_ts + buffer):
-        month = t % 12
-        out[t] = intercept[month] + slope[month] * out[t - 1]
+    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
+    np.random.seed(seed)
 
-    return out[buffer:]
+    # NOTE: 'innovations' is the error or noise term. Each month has its own covariance 
+    # matrix and therefore its own innovations.
+    innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
+    for month in range(12):
+        cov_month = covariance[month, :, :]
+        try:
+            cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(cov_month))
+        except np.linalg.LinAlgError as e:
+            if "Matrix is not positive definite" in str(e):
+                w, v = np.linalg.eigh(cov_month)
+                cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
+                warnings.warn(
+                    "Covariance matrix is not positive definite, using eigh instead of cholesky.",
+                    LinAlgWarning,
+                )
+            else:
+                raise
+
+        innovations[:, :, month, :] = scipy.stats.multivariate_normal.rvs(
+            mean=np.zeros(n_gridcells),
+            cov=cov,
+            size=[n_samples, n_ts // 12 + buffer],
+        )
+
+    innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
+
+    out = np.zeros([n_samples, n_ts + buffer * 12, n_gridcells])
+
+    for t in range(n_ts + buffer * 12):
+            month = t % 12
+            out[:, t, :] = intercept[month, :] + slope[month, :] * out[:, t-1, :] + innovations[:, t, :]
+
+    return out[:, buffer*12:, :]
