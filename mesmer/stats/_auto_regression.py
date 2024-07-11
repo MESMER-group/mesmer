@@ -480,7 +480,9 @@ def _draw_auto_regression_correlated_np(
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     np.random.seed(seed)
 
-    innovations = _draw_innovations_correlated_np(covariance, n_coeffs, n_samples, n_ts, buffer)
+    innovations = _draw_innovations_correlated_np(
+        covariance, n_coeffs, n_samples, n_ts, buffer
+    )
 
     out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
     for t in range(ar_order + 1, n_ts + buffer):
@@ -490,6 +492,7 @@ def _draw_auto_regression_correlated_np(
         out[:, t, :] = intercept + ar + innovations[:, t, :]
 
     return out[:, buffer:, :]
+
 
 def _draw_innovations_correlated_np(covariance, n_gridcells, n_samples, n_ts, buffer):
     # NOTE: 'innovations' is the error or noise term.
