@@ -717,12 +717,16 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
     """
     # the AR process alone is deterministic so we dont need realisations here
     # or a seed
-    _check_dataset_form(
-        ar_params, "ar_params", required_vars=("intercept", "slope")
+    _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
+    (month_dim, gridcell_dim), (n_months, n_gridpoints) = (
+        ar_params.intercept.dims,
+        ar_params.intercept.shape,
     )
-    (month_dim, gridcell_dim), (n_months, n_gridpoints) = ar_params.intercept.dims, ar_params.intercept.shape
     _check_dataarray_form(
-        ar_params.intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.intercept,
+        "intercept",
+        ndim=2,
+        required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
         ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
@@ -801,12 +805,16 @@ def draw_auto_regression_monthly(
 
     """
     # check input
-    _check_dataset_form(
-        ar_params, "ar_params", required_vars=("intercept", "slope")
+    _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
+    (month_dim, gridcell_dim), (n_months, size) = (
+        ar_params.intercept.dims,
+        ar_params.intercept.shape,
     )
-    (month_dim, gridcell_dim), (n_months, size) = ar_params.intercept.dims, ar_params.intercept.shape
     _check_dataarray_form(
-        ar_params.intercept, "intercept", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.intercept,
+        "intercept",
+        ndim=2,
+        required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
         ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)

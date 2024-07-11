@@ -745,9 +745,7 @@ def test_fit_predict_autoregression_monthly_roundtrip():
     time = pd.date_range("2000-01-01", periods=n_years * 12, freq="M")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
-    data = mesmer.stats.predict_auto_regression_monthly(
-        ar_params, time, buffer
-    )
+    data = mesmer.stats.predict_auto_regression_monthly(ar_params, time, buffer)
     AR_fit = mesmer.stats.fit_auto_regression_monthly(data)
     predicted = mesmer.stats.predict_auto_regression_monthly(
         ar_params, data.time, buffer
