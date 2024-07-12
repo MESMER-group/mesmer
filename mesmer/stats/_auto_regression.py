@@ -692,8 +692,8 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
 
 
 def predict_auto_regression_monthly(ar_params, time, buffer):
-    """deterministically predict time series of an auto regression process 
-    with lag one (AR(1)) using individual parameters for each month. 
+    """deterministically predict time series of an auto regression process
+    with lag one (AR(1)) using individual parameters for each month.
     This function is deterministic, i.e. does not produce random noise!
 
     Parameters
@@ -721,7 +721,7 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
 
     """
     _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
-    
+
     (month_dim, gridcell_dim) = ar_params.intercept.dims
     (n_months, n_gridpoints) = ar_params.intercept.shape
 
