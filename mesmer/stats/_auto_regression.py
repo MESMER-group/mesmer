@@ -604,29 +604,28 @@ def _fit_auto_regression_np(data, lags):
 
 
 def fit_auto_regression_monthly(monthly_data, time_dim="time"):
-    """fit an auto regression of lag one on monthly data
-    Autoregression parameters are estimated for each month and gridpoint separately.
+    """fit an auto regression of lag one (AR(1)) on monthly data
+    The parameters are estimated for each month and gridpoint separately.
     This is based on the assuption that e.g. June depends on May differently
-    than July on June. Autoregression is fit along `time_dim`.
+    than July on June. The auto regression is fit along `time_dim`.
 
     Parameters
     ----------
-    monthly_data : xr.DataArray
+    monthly_data : `xr.DataArray` of shape (n_timesteps, n_gridpoints)
         A ``xr.DataArray`` to estimate the auto regression over. Each month has a value.
     time_dim : str
         Name of the time dimension (dimension along which to fit the auto regression).
 
     Returns
     -------
-    :obj:`xr.Dataset`
+    ar_params : `xr.Dataset`
         Dataset containing the estimated parameters of the AR(1) process, the ``intercept``and the
-        ``slope``.
+        ``slope`` for each month and gridpoint.
     """
-    if not isinstance(monthly_data, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_data)}")
+    _check_dataarray_form(monthly_data, "monthly_data", ndim=2)
 
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
-    coeffs = []
+    ar_params = []
 
     for month in range(1, 13):
         if month == 1:
@@ -654,13 +653,13 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             vectorize=True,
         )
 
-        coeffs.append(xr.Dataset({"slope": slope, "intercept": intercept}))
+        ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
 
-    return xr.concat(coeffs, dim="month")
+    return xr.concat(ar_params, dim="month")
 
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):
-    """fit an auto regression of lag one on monthly data - numpy wrapper
+    """fit an auto regression of lag one (AR(1)) on monthly data - numpy wrapper
     We use a linear function to relate the independent previous month's
     data to the dependent current month's data.
 
@@ -693,9 +692,9 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
 
 
 def predict_auto_regression_monthly(ar_params, time, buffer):
-    """predict time series of an auto regression process with lag one
-    using individual parameters for each month. This function is deterministic,
-    i.e. does not produce random noise.
+    """deterministically predict time series of an auto regression process 
+    with lag one (AR(1)) using individual parameters for each month. 
+    This function is deterministic, i.e. does not produce random noise!
 
     Parameters
     ----------
@@ -711,7 +710,7 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
         The time coordinates that determines the length of the predicted timeseries and
         that will be the assigned time dimension of the predictions.
     buffer : int
-        Buffer to initialize the autoregressive process (ensures that start at 0 does
+        Buffer to initialize the auto-regressive process (ensures that start at 0 does
         not influence overall result).
 
     Returns
@@ -722,10 +721,10 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
 
     """
     _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
-    (month_dim, gridcell_dim), (n_months, n_gridpoints) = (
-        ar_params.intercept.dims,
-        ar_params.intercept.shape,
-    )
+    
+    (month_dim, gridcell_dim) = ar_params.intercept.dims
+    (n_months, n_gridpoints) = ar_params.intercept.shape
+
     _check_dataarray_form(
         ar_params.intercept,
         "intercept",
@@ -740,7 +739,7 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
     # so that the innovations are zero
     covariance = xr.DataArray(
         np.zeros((n_months, n_gridpoints, n_gridpoints)),
-        dims=("month", "gridcell_i", "gridcell_j"),
+        dims=(month_dim, f"{gridcell_dim}_i", f"{gridcell_dim}_j"),
     )
 
     # ignore that covariance is all zeros and thus not positive-definite
@@ -895,8 +894,8 @@ def _draw_ar_corr_monthly_xr_internal(
 def _draw_auto_regression_monthly_np(
     intercept, slope, covariance, n_samples, n_ts, seed, buffer
 ):
-    """predict time series of an auto regression process with lag one
-    using individual parameters for each month - numpy wrapper
+    """draw time series of an auto regression process with lag one
+    (AR(1)) using individual parameters for each month - numpy wrapper
 
     Parameters
     ----------
@@ -909,7 +908,7 @@ def _draw_auto_regression_monthly_np(
     n_samples : int
         The number of realisations to draw.
     n_ts : int
-        The number of time steps needed (i.e. the number of months in the whole timeseries).
+        The number of time steps to draw (i.e. the number of months in the whole timeseries).
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result). The number given is used for every month such
@@ -928,17 +927,18 @@ def _draw_auto_regression_monthly_np(
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     np.random.seed(seed)
 
+    # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
     for month in range(12):
         cov_month = covariance[month, :, :]
         innovations[:, :, month, :] = _draw_innovations_correlated_np(
             cov_month, n_gridcells, n_samples, n_ts // 12, buffer
         )
-
+    # reshape innovations into continous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
+    # predict auto-regressive process using innovations
     out = np.zeros([n_samples, n_ts + buffer * 12, n_gridcells])
-
     for t in range(n_ts + buffer * 12):
         month = t % 12
         out[:, t, :] = (

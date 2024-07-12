@@ -657,7 +657,7 @@ def test_fit_auto_regression_monthly():
         shape=(12, n_gridcells),
     )
 
-    with pytest.raises(TypeError, match="Expected a `xr.DataArray`"):
+    with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
         mesmer.stats.fit_auto_regression_monthly(data.values)
 
 
