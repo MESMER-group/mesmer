@@ -852,7 +852,7 @@ def _draw_ar_corr_monthly_xr_internal(
     # make sure non-dimension coords are properly caught
     gridpoint_coords = dict(slope[gridpoint_dim].coords)
 
-    if not covariance is None:
+    if covariance is not None:
         covariance = covariance.values
 
     out = _draw_auto_regression_monthly_np(
@@ -917,7 +917,7 @@ def _draw_auto_regression_monthly_np(
 
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
-    if not covariance is None:
+    if covariance is not None:
         for month in range(12):
             cov_month = covariance[month, :, :]
             innovations[:, :, month, :] = _draw_innovations_correlated_np(
