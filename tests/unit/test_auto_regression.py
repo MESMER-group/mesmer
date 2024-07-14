@@ -767,7 +767,7 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     )
 
     np.testing.assert_allclose(
-        res_wo_buffer[:, buffer*12:, :], res_w_buffer[:, :-buffer*12, :]
+        res_wo_buffer[:, buffer * 12 :, :], res_w_buffer[:, : -buffer * 12, :]
     )
 
 
