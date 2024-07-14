@@ -669,7 +669,7 @@ def test_predict_auto_regression_monthly_intercept():
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
-    intercept = np.tile(np.arange(1, 13), n_gridcells).reshape(n_gridcells, 12).T
+    intercept = np.tile(np.arange(1, 13), [n_gridcells, 1]).T
     intercept = xr.DataArray(
         intercept,
         dims=("month", "gridcell"),
@@ -682,11 +682,7 @@ def test_predict_auto_regression_monthly_intercept():
     time = xr.DataArray(time, dims="time", coords={"time": time})
     result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, 0)
 
-    expected = (
-        np.tile(np.arange(1, 13), n_gridcells * n_years)
-        .reshape(n_gridcells, 12 * n_years)
-        .T
-    )
+    expected = np.tile(np.arange(1, 13), [n_gridcells, n_years]).T
     expected = xr.DataArray(
         expected,
         dims=("time", "gridcell"),
@@ -757,9 +753,9 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
     n_gridcells = 10
     seed = 0
-    slope = np.random.normal(size=(12, n_gridcells))
+    slope = np.random.uniform(-1, 1, size=(12, n_gridcells))
     intercept = np.ones((12, n_gridcells))
-    covariance = np.tile(np.eye(n_gridcells), 12).reshape(12, n_gridcells, n_gridcells)
+    covariance = None
     n_ts = 120
 
     res_wo_buffer = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
@@ -770,7 +766,7 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     )
 
     np.testing.assert_allclose(
-        res_wo_buffer[:, buffer:, :], res_w_buffer[:, :-buffer, :]
+        res_wo_buffer[:, buffer*12:, :], res_w_buffer[:, :-buffer*12, :]
     )
 
 
@@ -794,7 +790,7 @@ def test_draw_auto_regression_monthly():
     ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
 
     covariance = xr.DataArray(
-        np.tile(np.eye(n_gridcells), 12).T.reshape(12, n_gridcells, n_gridcells),
+        np.tile(np.eye(n_gridcells), [12, 1, 1]),
         dims=("month", "gridcell_i", "gridcell_j"),
         coords={
             "month": np.arange(1, 13),
