@@ -734,28 +734,17 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
     _check_dataarray_form(
         ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
-
-    # here we only want the deterministic part of the AR1 process so we set the covariance to zero
-    # so that the innovations are zero
-    covariance = xr.DataArray(
-        np.zeros((n_months, n_gridpoints, n_gridpoints)),
-        dims=(month_dim, f"{gridcell_dim}_i", f"{gridcell_dim}_j"),
-    )
-
-    # ignore that covariance is all zeros and thus not positive-definite
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", LinAlgWarning)
-        result = _draw_ar_corr_monthly_xr_internal(
-            intercept=ar_params.intercept,
-            slope=ar_params.slope,
-            covariance=covariance,
-            time=time,
-            realisation=1,
-            seed=0,
-            buffer=buffer,
-            time_dim="time",
-            realisation_dim="realisation",
-        ).squeeze("realisation", drop=True)
+    result = _draw_ar_corr_monthly_xr_internal(
+        intercept=ar_params.intercept,
+        slope=ar_params.slope,
+        covariance=None,
+        time=time,
+        realisation=1,
+        seed=0,
+        buffer=buffer,
+        time_dim="time",
+        realisation_dim="realisation",
+    ).squeeze("realisation", drop=True)
 
     return result
 
@@ -867,10 +856,13 @@ def _draw_ar_corr_monthly_xr_internal(
     # make sure non-dimension coords are properly caught
     gridpoint_coords = dict(slope[gridpoint_dim].coords)
 
+    if not covariance is None:
+        covariance = covariance.values
+
     out = _draw_auto_regression_monthly_np(
         intercept=intercept.values,
         slope=slope.transpose(..., gridpoint_dim).values,
-        covariance=covariance.values,
+        covariance=covariance,
         n_samples=n_realisations,
         n_ts=n_ts,
         seed=seed,
@@ -920,7 +912,7 @@ def _draw_auto_regression_monthly_np(
         Predicted time series of the specified AR(1) including spatially correllated innovations.
     """
     intercept = np.asarray(intercept)
-    covariance = np.atleast_3d(covariance)
+    # covariance = np.atleast_3d(covariance)
 
     _, n_gridcells = intercept.shape
 
@@ -929,11 +921,12 @@ def _draw_auto_regression_monthly_np(
 
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
-    for month in range(12):
-        cov_month = covariance[month, :, :]
-        innovations[:, :, month, :] = _draw_innovations_correlated_np(
-            cov_month, n_gridcells, n_samples, n_ts // 12, buffer
-        )
+    if not covariance is None:
+        for month in range(12):
+            cov_month = covariance[month, :, :]
+            innovations[:, :, month, :] = _draw_innovations_correlated_np(
+                cov_month, n_gridcells, n_samples, n_ts // 12, buffer
+            )
     # reshape innovations into continous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
