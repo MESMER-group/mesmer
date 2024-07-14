@@ -623,7 +623,6 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         ``slope`` for each month and gridpoint.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
-
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
 
@@ -631,18 +630,14 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            prev_month = monthly_data[12].isel(
-                time=slice(0, len(monthly_data[12].time) - 1)
-            )
-            cur_month = monthly_data[month].isel(
-                time=slice(1, len(monthly_data[1].time))
-            )
+            n_ts = monthly_data[12].sizes[time_dim]
+            prev_month = monthly_data[12].isel({time_dim: slice(0, n_ts - 1)})
+            
+            n_ts = monthly_data[month].sizes[time_dim]
+            cur_month = monthly_data[month].isel({time_dim:slice(1, n_ts)})
         else:
             prev_month = monthly_data[month - 1]
             cur_month = monthly_data[month]
-
-        # need to align time dimension for apply_ufunc
-        prev_month = prev_month.assign_coords({time_dim: cur_month[time_dim]})
 
         slope, intercept = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
@@ -650,6 +645,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             prev_month,
             input_core_dims=[[time_dim], [time_dim]],
             output_core_dims=[[], []],
+            exclude_dims={time_dim},
             vectorize=True,
         )
 
