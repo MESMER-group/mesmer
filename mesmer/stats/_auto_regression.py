@@ -648,7 +648,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
-            input_core_dims=[["time"], ["time"]],
+            input_core_dims=[[time_dim], [time_dim]],
             output_core_dims=[[], []],
             vectorize=True,
         )
