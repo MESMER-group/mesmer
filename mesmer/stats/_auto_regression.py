@@ -939,7 +939,7 @@ def _draw_auto_regression_monthly_np(
 
     # predict auto-regressive process using innovations
     out = np.zeros([n_samples, n_ts + buffer * 12, n_gridcells])
-    for t in range(n_ts + buffer * 12):
+    for t in range(1, n_ts + buffer * 12):
         month = t % 12
         out[:, t, :] = (
             intercept[month, :]
