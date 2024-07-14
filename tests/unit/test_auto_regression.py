@@ -683,6 +683,7 @@ def test_predict_auto_regression_monthly_intercept():
     result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, 0)
 
     expected = np.tile(np.arange(1, 13), [n_gridcells, n_years]).T
+    expected[0] = 0
     expected = xr.DataArray(
         expected,
         dims=("time", "gridcell"),
