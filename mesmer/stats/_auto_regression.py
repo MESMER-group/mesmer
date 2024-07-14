@@ -622,7 +622,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         Dataset containing the estimated parameters of the AR(1) process, the ``intercept``and the
         ``slope`` for each month and gridpoint.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2)
+    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
 
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
