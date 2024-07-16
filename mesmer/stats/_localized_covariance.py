@@ -143,6 +143,7 @@ def find_localized_empirical_covariance(
 
     return xr.Dataset(data_vars)
 
+
 def find_localized_empirical_covariance_monthly(
     data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
 ):
@@ -184,15 +185,23 @@ def find_localized_empirical_covariance_monthly(
     """
     localized_ecov = []
 
-    for mon in range(1,13):
-        data_mon = data.groupby(f'{dim}.month')[mon]
-        weights_mon = weights.groupby(f'{dim}.month')[mon]
-        
-        localized_ecov.append(find_localized_empirical_covariance(
-            data_mon, weights_mon, localizer, dim = dim, k_folds = k_folds, equal_dim_suffixes=equal_dim_suffixes
-        ))
+    for mon in range(1, 13):
+        data_mon = data.groupby(f"{dim}.month")[mon]
+        weights_mon = weights.groupby(f"{dim}.month")[mon]
 
-    return xr.concat(localized_ecov, dim = "month")
+        localized_ecov.append(
+            find_localized_empirical_covariance(
+                data_mon,
+                weights_mon,
+                localizer,
+                dim=dim,
+                k_folds=k_folds,
+                equal_dim_suffixes=equal_dim_suffixes,
+            )
+        )
+
+    return xr.concat(localized_ecov, dim="month")
+
 
 def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     """determine localized empirical covariance by cross validation

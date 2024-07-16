@@ -1,7 +1,7 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
-import pandas as pd
 
 import mesmer
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
@@ -102,19 +102,19 @@ def test_find_localized_empirical_covariance():
 @pytest.mark.filterwarnings("ignore:First element is local minimum.")
 def test_find_localized_empirical_covariance_monthly():
 
-    n_samples = 20*12
+    n_samples = 20 * 12
     n_gridpoints = 60
     time = pd.date_range("2000-01-01", periods=n_samples, freq="MS")
 
     data = get_random_data(n_samples, n_gridpoints)
-    data['samples'] = time
-    data.assign_coords({'samples':time})
+    data["samples"] = time
+    data.assign_coords({"samples": time})
 
     localizer = get_localizer_dict(n_gridpoints, as_dataarray=True)
-    
+
     weights = get_weights(n_samples)
-    weights['samples'] = time
-    weights.assign_coords({'samples':time})
+    weights["samples"] = time
+    weights.assign_coords({"samples": time})
 
     required_form = {
         "ndim": 3,
