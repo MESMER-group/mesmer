@@ -9,8 +9,10 @@ from mesmer.mesmer_m.harmonic_model import (
     fit_to_bic_np,
     fit_to_bic_xr,
     generate_fourier_series_np,
+    generate_fourier_series_xr
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
+from mesmer.core.utils import _check_dataarray_form
 
 
 def test_generate_fourier_series_np():
@@ -43,6 +45,24 @@ def test_generate_fourier_series_np():
     )
     expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
     np.testing.assert_allclose(result, expected, atol=1e-10)
+
+def test_generate_fourier_series_xr():
+    n_years = 10
+    n_lat, n_lon, n_gridcells = 2, 3, 2*3
+    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
+    time = xr.cftime_range(
+        start="2000-01-01", periods=n_years, freq=freq
+    )
+    yearly_predictor = xr.DataArray(np.zeros((n_years, n_gridcells)), dims=["time", "cells"], coords={"time": time})
+
+    time = xr.cftime_range(start="2000-01-01", periods=n_years * 12, freq="MS")
+    monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
+
+    coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
+
+    result = generate_fourier_series_xr(yearly_predictor, coeffs, monthly_time, time_dim="time")
+
+    _check_dataarray_form(result, "result", ndim = 2, required_dims=["time", "cells"], shape=(n_years * 12, n_gridcells))
 
 
 @pytest.mark.parametrize(

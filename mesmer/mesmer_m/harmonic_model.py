@@ -12,6 +12,7 @@ import scipy as sp
 import xarray as xr
 
 import mesmer
+from mesmer.core.utils import _check_dataarray_form
 
 
 def generate_fourier_series_np(yearly_T, coeffs, months):
@@ -50,6 +51,46 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
         axis=0,
     )
     return beta0 + beta1 * yearly_T + seasonal_cycle
+
+def generate_fourier_series_xr(yearly_predictor, coeffs, time, time_dim = "time"):
+    """construct the Fourier Series from yearly predictors with fitted coeffs
+
+    Parameters
+    ----------
+    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
+        Yearly temperature values used as predictors
+        Containing one value per year.
+    coeffs : xr.DataArray of shape (n_gridcells, n_coeffs)
+        coefficients of Fourier Series for each gridcell. Note that coeffs
+        may contain nans (for higher orders, that have not been fit).
+    time: xr.DataArray of shape (n_years * 12)
+        A ``xr.DataArray`` containing cfdatetime objects which will be used as coordinates
+        for the monthly output values
+    time_dim: str, default: "time"
+        Name for the time dimension of the output ``xr.DataArray``.
+
+    Returns
+    -------
+    predictions: xr.DataArray of shape (n_years * 12, n_gridcells)
+        Fourier Series calculated over yearly_predictor with coeffs.
+
+    """
+    _, n_gridcells = yearly_predictor.shape
+    _check_dataarray_form(yearly_predictor, "yearly_predictor", ndim=2, required_dims=time_dim, shape=(time.size // 12, n_gridcells))
+    upsampled_y = mesmer.core.utils.upsample_yearly_data(yearly_predictor, time, time_dim)
+    month_dummy = np.tile(np.arange(1,13), yearly_predictor[time_dim].size)
+
+    predictions = xr.apply_ufunc(
+        generate_fourier_series_np,
+        upsampled_y,
+        coeffs,
+        input_core_dims=[[time_dim], ["coeff"]],
+        output_core_dims=[[time_dim]],
+        vectorize=True,
+        output_dtypes=[float],
+        kwargs={"months": month_dummy})
+
+    return predictions.transpose(time_dim, ...)
 
 
 def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
