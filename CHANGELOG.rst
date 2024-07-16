@@ -94,6 +94,8 @@ that this led to some numerical changes compared to the MESMER-M publication
 -  add helper function to upsample yearly data to monthly resolution (
    `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
    `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+- de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
+- fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
 -  Refactor variable names, small code improvements, fixes and clean docstring (
    `#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
    `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_, and
