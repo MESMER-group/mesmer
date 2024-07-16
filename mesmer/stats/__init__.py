@@ -11,6 +11,7 @@ from mesmer.stats._linear_regression import LinearRegression
 from mesmer.stats._localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
+    find_localized_empirical_covariance_monthly,
 )
 from mesmer.stats._smoothing import lowess
 

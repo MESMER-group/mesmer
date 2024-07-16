@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import xarray as xr
+import pandas as pd
 
 import mesmer
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
@@ -94,6 +95,63 @@ def test_find_localized_empirical_covariance():
     required_form["required_dims"] = ("cell:j", "cell:i")
 
     assert result.localization_radius == 1
+    _check_dataarray_form(result.covariance, "covariance", **required_form)
+    _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
+
+
+@pytest.mark.filterwarnings("ignore:First element is local minimum.")
+def test_find_localized_empirical_covariance_monthly():
+
+    n_samples = 20*12
+    n_gridpoints = 60
+    time = pd.date_range("2000-01-01", periods=n_samples, freq="MS")
+
+    data = get_random_data(n_samples, n_gridpoints)
+    data['samples'] = time
+    data.assign_coords({'samples':time})
+
+    localizer = get_localizer_dict(n_gridpoints, as_dataarray=True)
+    
+    weights = get_weights(n_samples)
+    weights['samples'] = time
+    weights.assign_coords({'samples':time})
+
+    required_form = {
+        "ndim": 3,
+        "required_dims": ("month", "cell_i", "cell_j"),
+        "shape": (12, n_gridpoints, n_gridpoints),
+    }
+
+    result = mesmer.stats.find_localized_empirical_covariance_monthly(
+        data, weights, localizer, dim="samples", k_folds=2
+    )
+
+    np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
+    _check_dataarray_form(result.covariance, "covariance", **required_form)
+    _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
+
+    # ensure it works if data is transposed
+    result = mesmer.stats.find_localized_empirical_covariance_monthly(
+        data.T, weights, localizer, dim="samples", k_folds=3
+    )
+
+    np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
+    _check_dataarray_form(result.covariance, "covariance", **required_form)
+    _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
+
+    # ensure can pass equal_dim_suffixes
+    result = mesmer.stats.find_localized_empirical_covariance_monthly(
+        data,
+        weights,
+        localizer,
+        dim="samples",
+        k_folds=3,
+        equal_dim_suffixes=(":j", ":i"),
+    )
+
+    required_form["required_dims"] = ("cell:j", "cell:i")
+
+    np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
     _check_dataarray_form(result.covariance, "covariance", **required_form)
     _check_dataarray_form(result.covariance, "localized_covariance", **required_form)
 

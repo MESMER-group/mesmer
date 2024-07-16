@@ -84,7 +84,7 @@ def find_localized_empirical_covariance(
     Parameters
     ----------
     data : xr.DataArray
-        2D DataArray with with to calculate the covariance for.
+        2D DataArray with data to calculate the covariance for.
     weights : xr.DataArray
         Weights for the individual samples.
     localizer : dict of DataArray```
@@ -143,6 +143,56 @@ def find_localized_empirical_covariance(
 
     return xr.Dataset(data_vars)
 
+def find_localized_empirical_covariance_monthly(
+    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
+):
+    """determine localized empirical covariance by cross validation for each month
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        2D DataArray with monthly data to calculate the covariance for.
+    weights : xr.DataArray
+        Weights for the individual samples.
+    localizer : dict of DataArray```
+        Dictionary containing the localization radii as keys and the localization matrix
+        as values. The localization must be 2D and of shape n_gridpoints x n_gridpoints.
+        Currently only the Gaspari-Cohn localizer is implemented in MESMER.
+    dim : str
+        Dimension along which to calculate the covariance.
+    k_folds : int
+        Number of folds to use for cross validation.
+    equal_dim_suffixes : tuple of str, default: ("_i", "_j")
+        Suffixes to add to the the name of ``dim`` for the covariance array
+        (xr.DataArray cannot have two dimensions with the same name).
+
+    Returns
+    -------
+    localized_empirical_covariance : xr.Dataset
+        Dataset containing three DataArrays:
+    localization_radius : float
+        Selected localization radius.
+    covariance : xr.DataArray
+        Empirical covariance matrix.
+    localized_covariance : xr.DataArray
+        Localized empirical covariance matrix.
+
+    Notes
+    -----
+    Runs a k-fold cross validation if ``k_folds`` is smaller than the number of samples
+    and a leave-one-out cross validation otherwise.
+    """
+    localized_ecov = []
+
+    for mon in range(1,13):
+        data_mon = data.groupby(f'{dim}.month')[mon]
+        weights_mon = weights.groupby(f'{dim}.month')[mon]
+        
+        localized_ecov.append(find_localized_empirical_covariance(
+            data_mon, weights_mon, localizer, dim = dim, k_folds = k_folds, equal_dim_suffixes=equal_dim_suffixes
+        ))
+
+    return xr.concat(localized_ecov, dim = "month")
 
 def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     """determine localized empirical covariance by cross validation
