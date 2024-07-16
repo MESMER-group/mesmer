@@ -52,7 +52,8 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
     )
     return beta0 + beta1 * yearly_T + seasonal_cycle
 
-def generate_fourier_series_xr(yearly_predictor, coeffs, time, time_dim = "time"):
+
+def generate_fourier_series_xr(yearly_predictor, coeffs, time, time_dim="time"):
     """construct the Fourier Series from yearly predictors with fitted coeffs
 
     Parameters
@@ -76,9 +77,17 @@ def generate_fourier_series_xr(yearly_predictor, coeffs, time, time_dim = "time"
 
     """
     _, n_gridcells = yearly_predictor.shape
-    _check_dataarray_form(yearly_predictor, "yearly_predictor", ndim=2, required_dims=time_dim, shape=(time.size // 12, n_gridcells))
-    upsampled_y = mesmer.core.utils.upsample_yearly_data(yearly_predictor, time, time_dim)
-    month_dummy = np.tile(np.arange(1,13), yearly_predictor[time_dim].size)
+    _check_dataarray_form(
+        yearly_predictor,
+        "yearly_predictor",
+        ndim=2,
+        required_dims=time_dim,
+        shape=(time.size // 12, n_gridcells),
+    )
+    upsampled_y = mesmer.core.utils.upsample_yearly_data(
+        yearly_predictor, time, time_dim
+    )
+    month_dummy = np.tile(np.arange(1, 13), yearly_predictor[time_dim].size)
 
     predictions = xr.apply_ufunc(
         generate_fourier_series_np,
@@ -88,7 +97,8 @@ def generate_fourier_series_xr(yearly_predictor, coeffs, time, time_dim = "time"
         output_core_dims=[[time_dim]],
         vectorize=True,
         output_dtypes=[float],
-        kwargs={"months": month_dummy})
+        kwargs={"months": month_dummy},
+    )
 
     return predictions.transpose(time_dim, ...)
 
