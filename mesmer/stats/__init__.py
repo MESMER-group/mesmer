@@ -31,6 +31,7 @@ __all__ = [
     # localized covariance
     "adjust_covariance_ar1",
     "find_localized_empirical_covariance",
+    "find_localized_empirical_covariance_monthly",
     # smoothing
     "lowess",
 ]
