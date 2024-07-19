@@ -49,7 +49,7 @@ Internal Changes
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This version integrates MESMER-M into the remaining MESMER infrastructure. This includes
+This release integrates MESMER-M into the existing MESMER infrastructure. This includes
 some refactoring, bugfixes and enhancements of the MESMER-M functionality. Note
 that this led to some numerical changes compared to the MESMER-M publication
 (Nath et al., (2022)[https://doi.org/10.5194/esd-13-851-2022]).
