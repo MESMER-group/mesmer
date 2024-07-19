@@ -58,6 +58,12 @@ that this led to some numerical changes compared to the MESMER-M publication
   `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_, and
   `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
 
+**Auto-Regression**
+
+- Implement functions performing the monthly (cyclo-stationary) auto-regression and adapt these functions to 
+work with xarray (`#473 <https://github.com/MESMER-group/mesmer/pull/473>_`). This includes extracting the 
+drawing of spatially correlated innovations to a stand-alone function.
+
 **Yeo-Johnson power transformer**
 
 -  Ensure the power transformer yields the correct normalization for more cases (
