@@ -633,8 +633,8 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             n_ts = monthly_data[12].sizes[time_dim]
             prev_month = monthly_data[12].isel({time_dim: slice(0, n_ts - 1)})
 
-            n_ts = monthly_data[month].sizes[time_dim]
-            cur_month = monthly_data[month].isel({time_dim: slice(1, n_ts)})
+            n_ts = monthly_data[1].sizes[time_dim]
+            cur_month = monthly_data[1].isel({time_dim: slice(1, n_ts)})
         else:
             prev_month = monthly_data[month - 1]
             cur_month = monthly_data[month]
