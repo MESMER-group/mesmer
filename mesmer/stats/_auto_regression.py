@@ -798,10 +798,8 @@ def draw_auto_regression_monthly(
     """
     # check input
     _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
-    (month_dim, gridcell_dim), (n_months, size) = (
-        ar_params.intercept.dims,
-        ar_params.intercept.shape,
-    )
+    month_dim, gridcell_dim = ar_params.intercept.dims,
+    n_months, size = ar_params.intercept.shape
     _check_dataarray_form(
         ar_params.intercept,
         "intercept",
