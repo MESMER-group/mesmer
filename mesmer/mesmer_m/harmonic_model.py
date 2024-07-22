@@ -53,7 +53,7 @@ def generate_fourier_series_np(yearly_T, coeffs, months):
     return beta0 + beta1 * yearly_T + seasonal_cycle
 
 
-def generate_fourier_series_xr(yearly_predictor, coeffs, time, time_dim="time"):
+def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
     """construct the Fourier Series from yearly predictors with fitted coeffs
 
     Parameters
