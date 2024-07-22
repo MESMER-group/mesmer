@@ -184,15 +184,14 @@ def find_localized_empirical_covariance_monthly(
     and a leave-one-out cross validation otherwise.
     """
     localized_ecov = []
+    data_grouped = data.groupby(f"{dim}.month")
+    weights_grouped = weights.groupby(f"{dim}.month")
 
     for mon in range(1, 13):
-        data_mon = data.groupby(f"{dim}.month")[mon]
-        weights_mon = weights.groupby(f"{dim}.month")[mon]
-
         localized_ecov.append(
             find_localized_empirical_covariance(
-                data_mon,
-                weights_mon,
+                data_grouped[mon],
+                weights_grouped[mon],
                 localizer,
                 dim=dim,
                 k_folds=k_folds,
@@ -200,7 +199,8 @@ def find_localized_empirical_covariance_monthly(
             )
         )
 
-    return xr.concat(localized_ecov, dim="month")
+    month = xr.Variable("month", range(1, 13))
+    return xr.concat(localized_ecov, dim=month)
 
 
 def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
