@@ -680,7 +680,8 @@ def test_predict_auto_regression_monthly_intercept():
     n_years = 10
     time = pd.date_range("2000-01-01", periods=12 * n_years, freq="M")
     time = xr.DataArray(time, dims="time", coords={"time": time})
-    result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, 0)
+
+    result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, buffer=0)
 
     expected = np.tile(np.arange(1, 13), [n_gridcells, n_years]).T
     expected[0] = 0
