@@ -8,8 +8,8 @@ from mesmer.core.utils import _check_dataarray_form, upsample_yearly_data
 from mesmer.mesmer_m.harmonic_model import (
     fit_to_bic_np,
     fit_to_bic_xr,
-    generate_fourier_series_np,
-    generate_fourier_series_xr,
+    _generate_fourier_series_np,
+    generate_fourier_series,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -26,27 +26,27 @@ def test_generate_fourier_series_np():
     expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = generate_fourier_series_np(
+    result = _generate_fourier_series_np(
         yearly_predictor, np.array([0, -1, 0, -2]), months
     )
     np.testing.assert_equal(result, expected)
 
     yearly_predictor = np.ones(n_months)
-    result = generate_fourier_series_np(
+    result = _generate_fourier_series_np(
         yearly_predictor, np.array([0, -1, 0, -2]), months
     )
     # NOTE: yearly_predictor is added to the Fourier series
     expected += 1
     np.testing.assert_equal(result, expected)
 
-    result = generate_fourier_series_np(
+    result = _generate_fourier_series_np(
         yearly_predictor, np.array([3.14, -1, 1, -2]), months
     )
     expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
 
-def test_generate_fourier_series_xr():
+def test_generate_fourier_series():
     n_years = 10
     n_lat, n_lon, n_gridcells = 2, 3, 2 * 3
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
@@ -60,7 +60,7 @@ def test_generate_fourier_series_xr():
 
     coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
 
-    result = generate_fourier_series_xr(
+    result = generate_fourier_series(
         yearly_predictor, coeffs, monthly_time, time_dim="time"
     )
 
@@ -88,7 +88,7 @@ def test_fit_to_bic_np(coefficients):
     months = np.tile(np.arange(1, 13), n_years)
     yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
     yearly_predictor = np.repeat(yearly_predictor, 12)
-    monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
+    monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients, months)
 
     selected_order, estimated_coefficients, predictions = fit_to_bic_np(
         yearly_predictor, monthly_target, max_order=max_order
@@ -160,7 +160,7 @@ def test_fit_to_bic_xr():
 
     months = upsampled_yearly_predictor.time.dt.month
     monthly_target = xr.apply_ufunc(
-        generate_fourier_series_np,
+        _generate_fourier_series_np,
         upsampled_yearly_predictor,
         coefficients,
         input_core_dims=[["time"], ["coeff"]],
