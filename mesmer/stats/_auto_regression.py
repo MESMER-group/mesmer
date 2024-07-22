@@ -604,22 +604,39 @@ def _fit_auto_regression_np(data, lags):
 
 
 def fit_auto_regression_monthly(monthly_data, time_dim="time"):
-    """fit an auto regression of lag one (AR(1)) on monthly data
-    The parameters are estimated for each month and gridpoint separately.
+    """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly 
+    data. The parameters are estimated for each month and gridpoint separately.
     This is based on the assuption that e.g. June depends on May differently
     than July on June. The auto regression is fit along `time_dim`.
 
+    A cyclo-stationary AR(1) process is defined as follows:
+
+    .. math::
+
+        \\mathbf{X}_{t, \\tau} = \\alpha_{0, \\tau} + \\alpha_{1, \\tau} \\mathbf{X}_{t, \\tau -1} 
+        + \\epsilon_{t, \\tau}
+
+
+    where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal cycle, here the 
+    months of a year :math:`(N=12)` and :math:`t` counts the repetitions of this seasonal cycle,
+    here the years. Here :math:`\\epsilon` is a white noise process, i.e. :math:`\\epsilon \\sim N(0, \\sigma^2)`.
+    For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1].
+
+    [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research. 
+        **Cambridge University Press; 1999,** `DOI:10.1017/CBO9780511612336 <https://doi.org/10.1017/CBO9780511612336>`_. 
+
+
     Parameters
     ----------
-    monthly_data : `xr.DataArray` of shape (n_timesteps, n_gridpoints)
+    monthly_data : ``xr.DataArray`` of shape (n_timesteps, n_gridpoints)
         A ``xr.DataArray`` to estimate the auto regression over. Each month has a value.
     time_dim : str
         Name of the time dimension (dimension along which to fit the auto regression).
 
     Returns
     -------
-    ar_params : `xr.Dataset`
-        Dataset containing the estimated parameters of the AR(1) process, the ``intercept``and the
+    ar_params : ``xr.Dataset``
+        Dataset containing the estimated parameters of the AR(1) process, the ``intercept`` and the
         ``slope`` for each month and gridpoint.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
@@ -658,8 +675,8 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):
     """fit an auto regression of lag one (AR(1)) on monthly data - numpy wrapper
-    We use a linear function to relate the independent previous month's
-    data to the dependent current month's data.
+    We use a linear function to relate the previous month's
+    data (predictor/independent variable) to the current month's data (target/ dependent variable).
 
     Parameters
     ----------
