@@ -771,6 +771,7 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
 def draw_auto_regression_monthly(
     ar_params,
     covariance,
+    *,
     time,
     n_realisations,
     seed,

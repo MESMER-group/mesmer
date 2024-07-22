@@ -807,10 +807,10 @@ def test_draw_auto_regression_monthly():
     result = mesmer.stats.draw_auto_regression_monthly(
         ar_params,
         covariance,
-        time,
-        n_realisations,
-        seed,
-        buffer,
+        time = time,
+        n_realisations = n_realisations,
+        seed = seed,
+        buffer = buffer,
     )
 
     _check_dataarray_form(
