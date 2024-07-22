@@ -607,7 +607,7 @@ def test_fit_autoregression_monthly_np_no_noise(slope, intercept):
 
     result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
         cur_month, prev_month
-        )
+    )
     slope_fit, intercept_fit, residuals = result
     expected_resids = np.zeros_like(cur_month)
 
@@ -630,8 +630,8 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, variance):
     )
 
     result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
-            cur_month, prev_month
-        )
+        cur_month, prev_month
+    )
     slope_fit, intercept_fit, residuals = result
 
     np.testing.assert_allclose(slope, slope_fit, atol=1e-1)
