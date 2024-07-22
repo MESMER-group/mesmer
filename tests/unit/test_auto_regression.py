@@ -605,11 +605,10 @@ def test_fit_autoregression_monthly_np_no_noise(slope, intercept):
     prev_month = np.random.normal(size=n_ts)
     cur_month = prev_month * slope + intercept
 
-    slope_fit, intercept_fit, residuals = (
-        mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
-            cur_month, prev_month
+    result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
+        cur_month, prev_month
         )
-    )
+    slope_fit, intercept_fit, residuals = result
     expected_resids = np.zeros_like(cur_month)
 
     np.testing.assert_allclose(slope, slope_fit)
@@ -630,11 +629,10 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, variance):
         prev_month * slope + intercept + np.random.normal(0, variance, size=n_ts)
     )
 
-    slope_fit, intercept_fit, residuals = (
-        mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
+    result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
             cur_month, prev_month
         )
-    )
+    slope_fit, intercept_fit, residuals = result
 
     np.testing.assert_allclose(slope, slope_fit, atol=1e-1)
     np.testing.assert_allclose(intercept, intercept_fit, atol=1e-1)
