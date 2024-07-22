@@ -604,7 +604,7 @@ def _fit_auto_regression_np(data, lags):
 
 
 def fit_auto_regression_monthly(monthly_data, time_dim="time"):
-    """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly 
+    """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly
     data. The parameters are estimated for each month and gridpoint separately.
     This is based on the assuption that e.g. June depends on May differently
     than July on June. The auto regression is fit along `time_dim`.
@@ -613,17 +613,17 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
     .. math::
 
-        \\mathbf{X}_{t, \\tau} = \\alpha_{0, \\tau} + \\alpha_{1, \\tau} \\mathbf{X}_{t, \\tau -1} 
+        \\mathbf{X}_{t, \\tau} = \\alpha_{0, \\tau} + \\alpha_{1, \\tau} \\mathbf{X}_{t, \\tau -1}
         + \\epsilon_{t, \\tau}
 
 
-    where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal cycle, here the 
+    where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal cycle, here the
     months of a year :math:`(N=12)` and :math:`t` counts the repetitions of this seasonal cycle,
     here the years. Here :math:`\\epsilon` is a white noise process, i.e. :math:`\\epsilon \\sim N(0, \\sigma^2)`.
     For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1].
 
-    [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research. 
-        **Cambridge University Press; 1999,** `DOI:10.1017/CBO9780511612336 <https://doi.org/10.1017/CBO9780511612336>`_. 
+    [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research.
+        **Cambridge University Press; 1999,** `DOI:10.1017/CBO9780511612336 <https://doi.org/10.1017/CBO9780511612336>`_.
 
 
     Parameters
@@ -747,7 +747,10 @@ def predict_auto_regression_monthly(ar_params, time, buffer):
         required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
-        ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim),
+        ar_params.slope,
+        "slope",
+        ndim=2,
+        required_dims=(month_dim, gridcell_dim),
         shape=(n_months, n_gridpoints),
     )
     result = _draw_ar_corr_monthly_xr_internal(
