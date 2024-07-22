@@ -12,3 +12,4 @@ Collection of functions related to MESMER-X.
 from .temporary_support import *
 from .train_l_distrib_mesmerx import *
 from .train_utils_mesmerx import *
+from .load_cmip_mesmerx import *
