@@ -155,7 +155,7 @@ def find_localized_empirical_covariance_monthly(
         2D DataArray with monthly data to calculate the covariance for.
     weights : xr.DataArray
         Weights for the individual samples.
-    localizer : dict of DataArray```
+    localizer : dict of DataArray
         Dictionary containing the localization radii as keys and the localization matrix
         as values. The localization must be 2D and of shape n_gridpoints x n_gridpoints.
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
