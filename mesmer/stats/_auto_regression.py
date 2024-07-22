@@ -669,7 +669,6 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
         ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
         residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
-    
 
     month = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params, dim=month)
