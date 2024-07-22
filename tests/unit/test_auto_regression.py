@@ -712,7 +712,7 @@ def test_predict_auto_regression_monthly():
     time = pd.date_range("2000-01-01", periods=n_years * 12, freq="M")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
-    result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, 10)
+    result = mesmer.stats.predict_auto_regression_monthly(ar_params, time, buffer=10)
 
     _check_dataarray_form(
         result,
