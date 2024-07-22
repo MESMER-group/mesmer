@@ -6,9 +6,9 @@ from packaging.version import Version
 
 from mesmer.core.utils import _check_dataarray_form, upsample_yearly_data
 from mesmer.mesmer_m.harmonic_model import (
+    _generate_fourier_series_np,
     fit_to_bic_np,
     fit_to_bic_xr,
-    _generate_fourier_series_np,
     generate_fourier_series,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D

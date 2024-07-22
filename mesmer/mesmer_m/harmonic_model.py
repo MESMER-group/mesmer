@@ -143,7 +143,8 @@ def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
 
     def func(coeffs, yearly_predictor, mon_train, mon_target):
         return (
-            _generate_fourier_series_np(yearly_predictor, coeffs, mon_train) - mon_target
+            _generate_fourier_series_np(yearly_predictor, coeffs, mon_train)
+            - mon_target
         )
 
     minimize_result = sp.optimize.least_squares(
