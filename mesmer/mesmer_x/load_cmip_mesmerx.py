@@ -356,13 +356,13 @@ def load_cmip(targ, esm, scen, cfg):
             # Not removing anomaly or normalizing soil moisture.
             pass
             # Not removing anomaly or normalizing soil moisture. In SMA, normalizing
-            # if cfg.ref["type"] in ["all","first"]:## removing precalculated reference
+            # if cfg.ref["type"] in ["all","first"]:# removing precalculated reference
             #    var[run] -= var_ref[0]
             #    var[run] /= var_ref[1]
-            # elif cfg.ref["type"] == 'individ':## individual references
+            # elif cfg.ref["type"] == 'individ':# individual references
             #    var[run] -= refs[run][0]
             #    var[run] /= refs[run][1]
-            # elif cfg.ref["type"] == 'none':## not calculating anomalies
+            # elif cfg.ref["type"] == 'none':# not calculating anomalies
             #    pass
             # else:
             #    raise Exception('Unprepared reference type: '+cfg.ref["type"])
@@ -574,7 +574,7 @@ def test_combination_vars(list_vars, esm, scen, cfg):
     # looping on all variables to get their respective list of paths
     dico_paths = {}
     for targ in list_vars:
-        ## find the files which fulfill the specifications
+        # find the files which fulfill the specifications
         dico_paths[targ] = find_files_cmip(esm, targ, _scen, cfg)
 
     # deducing available runs for each
@@ -583,6 +583,7 @@ def test_combination_vars(list_vars, esm, scen, cfg):
         for targ in list_vars
     }
 
+    #
     # checking that at least one of the runs is available for all:
     common_runs = []
     for run in dico_runs[list_vars[0]]:
