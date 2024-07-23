@@ -9,7 +9,7 @@ import numpy as np
 # load in MESMER scripts for treatment of data
 # TODO: write the function test_combination_vars
 from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
-from mesmer.mesmer_x import load_cmip, load_phi_gc, load_regs_ls_wgt_lon_lat
+from mesmer.mesmer_x import load_cmip
 from mesmer.utils import convert_dict_to_arr, extract_land
 
 
@@ -145,9 +145,9 @@ def load_inputs_MESMERx(cfg, variables, esms):
             land_targ,
             land_pred,
             phi_gc,
-            ind,
-            gp2reg,
-            ww_reg,
+            # ind, these were only for regional aggregation
+            # gp2reg,
+            # ww_reg,
             used_esms,
             dico_gps_nan,
         )
@@ -164,9 +164,9 @@ def load_inputs_MESMERx(cfg, variables, esms):
             land_targ,
             land_pred,
             phi_gc,
-            ind,
-            gp2reg,
-            ww_reg,
+            # ind,
+            # gp2reg,
+            # ww_reg,
             used_esms,
             dico_gps_nan,
         )
