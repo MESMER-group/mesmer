@@ -245,15 +245,15 @@ def np_train_distrib(
     scores_fit=["func_optim", "NLL", "BIC"],
     first_guess=None,
 ):
-    self = distrib_cov(
+    dfit = distrib_cov(
         data_targ=targ_np,
         data_pred=pred_np,
         expr_fit=expr_fit,
         scores_fit=scores_fit,
         first_guess=first_guess,
     )
-    self.fit()
-    return self.coefficients_fit, self.quality_fit
+    dfit.fit()
+    return dfit.coefficients_fit, dfit.quality_fit
 
 
 class distrib_cov:
@@ -516,7 +516,7 @@ class distrib_cov:
         self.first_guess = first_guess
         self.func_first_guess = func_first_guess
         self.n_coeffs = len(self.expr_fit.coefficients_list)
-        if len(self.first_guess) != self.n_coeffs:
+        if (self.first_guess is not None) and (len(self.first_guess) != self.n_coeffs):
             raise ValueError(
                 f"The provided first guess does not have the correct shape: {self.n_coeffs}"
             )
@@ -1033,9 +1033,9 @@ class distrib_cov:
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
     def fg_fun_deriv01(self, x):
-        # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
+        distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
         loc_low = self.expr_fit.parameters_values["loc"]
-        # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
+        distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
         loc_high = self.expr_fit.parameters_values["loc"]
 
         deriv = {
@@ -1060,14 +1060,14 @@ class distrib_cov:
     def fg_fun_loc(self, x_loc):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
-        # distrib = self.expr_fit.evaluate(x, self.data_pred)
+        distrib = self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
         return np.sum((loc - self.smooth_data_targ) ** 2)
 
     def fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
-        # distrib = self.expr_fit.evaluate(x, self.data_pred)
+        distrib = self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
         sca = self.expr_fit.parameters_values["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
