@@ -52,6 +52,7 @@ def _generate_fourier_series_np(yearly_predictor, coeffs, months):
     )
     return beta0 + beta1 * yearly_predictor + seasonal_cycle
 
+
 def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
     """construct a Fourier Series from yearly predictors with fitted coeffs
 
@@ -102,7 +103,7 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
     return predictions.transpose(time_dim, ...)
 
 
-def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
+def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     """execute fitting of the harmonic model/fourier series
 
     Parameters
