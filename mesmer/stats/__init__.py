@@ -18,7 +18,14 @@ from mesmer.stats._localized_covariance import (
 from mesmer.stats._smoothing import lowess
 from mesmer.stats._harmonic_model import (
     fit_harmonic_model,
-    #generate_fourier_series,
+    generate_fourier_series,
+)
+from mesmer.stats._power_transformer import (
+    lambda_function,
+    get_lambdas_from_covariates,
+    fit_yeo_johnson_transform,
+    yeo_johnson_transform,
+    inverse_yeo_johnson_transform,
 )
 
 __all__ = [
@@ -42,4 +49,13 @@ __all__ = [
     "find_localized_empirical_covariance",
     # smoothing
     "lowess",
+    # harmonic model
+    "fit_harmonic_model",
+    "generate_fourier_series",
+    # power transformer
+    "lambda_function",
+    "get_lambdas_from_covariates",
+    "fit_yeo_johnson_transform",
+    "yeo_johnson_transform",
+    "inverse_yeo_johnson_transform",
 ]
