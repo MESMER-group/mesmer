@@ -188,16 +188,15 @@ def find_localized_empirical_covariance_monthly(
     weights_grouped = weights.groupby(f"{dim}.month")
 
     for mon in range(1, 13):
-        localized_ecov.append(
-            find_localized_empirical_covariance(
-                data_grouped[mon],
-                weights_grouped[mon],
-                localizer,
-                dim=dim,
-                k_folds=k_folds,
-                equal_dim_suffixes=equal_dim_suffixes,
-            )
+        res = find_localized_empirical_covariance(
+            data_grouped[mon],
+            weights_grouped[mon],
+            localizer,
+            dim=dim,
+            k_folds=k_folds,
+            equal_dim_suffixes=equal_dim_suffixes,
         )
+        localized_ecov.append(res)
 
     month = xr.Variable("month", range(1, 13))
     return xr.concat(localized_ecov, dim=month)
