@@ -12,14 +12,15 @@ import scipy as sp
 import xarray as xr
 
 import mesmer
+from mesmer.core.utils import _check_dataarray_form
 
 
-def _generate_fourier_series_np(yearly_T, coeffs, months):
-    """construct the Fourier Series
+def _generate_fourier_series_np(yearly_predictor, coeffs, months):
+    """construct a Fourier Series
 
     Parameters
     ----------
-    yearly_T : array-like of shape (n_years*12,)
+    yearly_predictor : array-like of shape (n_years*12,)
         yearly temperature values.
     coeffs : array-like of shape (4*order)
         coefficients of Fourier Series.
@@ -29,7 +30,7 @@ def _generate_fourier_series_np(yearly_T, coeffs, months):
     Returns
     -------
     predictions: array-like of shape (n_years*12,)
-        Fourier Series of order n calculated over yearly_T and months with coeffs.
+        Fourier Series of order n calculated over yearly_predictor and months with coeffs.
 
     """
     order = int(coeffs.size / 4)
@@ -41,18 +42,67 @@ def _generate_fourier_series_np(yearly_T, coeffs, months):
 
     seasonal_cycle = np.nansum(
         [
-            (coeffs[idx * 4] * yearly_T + coeffs[idx * 4 + 1])
+            (coeffs[idx * 4] * yearly_predictor + coeffs[idx * 4 + 1])
             * np.sin(np.pi * i * (months) / 6)
-            + (coeffs[idx * 4 + 2] * yearly_T + coeffs[idx * 4 + 3])
+            + (coeffs[idx * 4 + 2] * yearly_predictor + coeffs[idx * 4 + 3])
             * np.cos(np.pi * i * (months) / 6)
             for idx, i in enumerate(range(1, order + 1))
         ],
         axis=0,
     )
-    return beta0 + beta1 * yearly_T + seasonal_cycle
+    return beta0 + beta1 * yearly_predictor + seasonal_cycle
+
+def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
+    """construct a Fourier Series from yearly predictors with fitted coeffs
+
+    Parameters
+    ----------
+    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
+        Yearly temperature values used as predictors
+        Containing one value per year.
+    coeffs : xr.DataArray of shape (n_gridcells, n_coeffs)
+        coefficients of Fourier Series for each gridcell. Note that coeffs
+        may contain nans (for higher orders, that have not been fit).
+    time: xr.DataArray of shape (n_years * 12)
+        A ``xr.DataArray`` containing cftime objects which will be used as coordinates
+        for the monthly output values
+    time_dim: str, default: "time"
+        Name for the time dimension of the output ``xr.DataArray``.
+
+    Returns
+    -------
+    predictions: xr.DataArray of shape (n_years * 12, n_gridcells)
+        Fourier Series calculated over yearly_predictor with coeffs.
+
+    """
+    _, n_gridcells = yearly_predictor.shape
+    _check_dataarray_form(
+        yearly_predictor,
+        "yearly_predictor",
+        ndim=2,
+        required_dims=time_dim,
+        shape=(time.size // 12, n_gridcells),
+    )
+    upsampled_y = mesmer.core.utils.upsample_yearly_data(
+        yearly_predictor, time, time_dim
+    )
+    month_dummy = np.tile(np.arange(1, 13), yearly_predictor[time_dim].size)
+
+    predictions = xr.apply_ufunc(
+        _generate_fourier_series_np,
+        upsampled_y,
+        coeffs,
+        input_core_dims=[[time_dim], ["coeff"]],
+        output_core_dims=[[time_dim]],
+        vectorize=True,
+        output_dtypes=[float],
+        kwargs={"months": month_dummy},
+    )
+
+    return predictions.transpose(time_dim, ...)
 
 
-def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
+def fit_fourier_series_np(yearly_predictor, monthly_target, first_guess):
     """execute fitting of the harmonic model/fourier series
 
     Parameters
@@ -92,7 +142,8 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     def func(coeffs, yearly_predictor, mon_train, mon_target):
         return (
-            _generate_fourier_series_np(yearly_predictor, coeffs, mon_train) - mon_target
+            _generate_fourier_series_np(yearly_predictor, coeffs, mon_train)
+            - mon_target
         )
 
     minimize_result = sp.optimize.least_squares(
@@ -105,7 +156,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     coeffs = minimize_result.x
     mse = np.mean(minimize_result.fun**2)
     preds = _generate_fourier_series_np(
-        yearly_T=yearly_predictor, coeffs=coeffs, months=mon_train
+        yearly_predictor=yearly_predictor, coeffs=coeffs, months=mon_train
     )
 
     return coeffs, preds, mse
