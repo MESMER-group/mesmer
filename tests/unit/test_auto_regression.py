@@ -625,9 +625,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     n_ts = 5000
     np.random.seed(0)
     prev_month = np.random.normal(size=n_ts)
-    cur_month = (
-        prev_month * slope + intercept + np.random.normal(0, std, size=n_ts)
-    )
+    cur_month = prev_month * slope + intercept + np.random.normal(0, std, size=n_ts)
 
     result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
         cur_month, prev_month
