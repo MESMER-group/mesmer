@@ -33,7 +33,7 @@ def lambda_function(xi_0, xi_1, local_yearly_T):
 
 
 def _yeo_johnson_transform_np(data, lambdas):
-    """transform data using Yeo-Johnson transformation with variable lambda
+    """transform data using Yeo-Johnson transformation with variable lambda.
 
     Input is for one month and gridcell but all years. This function is adjusted
     from sklearn to accomodate variable lambdas for each residual.
@@ -65,20 +65,20 @@ def _yeo_johnson_transform_np(data, lambdas):
 
 
 def _yeo_johnson_inverse_transform_np(data, lambdas):
-    """invert residuals using Yeo-Johnson transformation with variable lambda
+    """invert residuals using Yeo-Johnson transformation with variable lambda.
 
     This function is adjusted from sklearn to accomodate variable lambdas for each
     residual.
 
     Notes
     -----
-    if X >= 0 and lambda_ == 0:
+    if X >= 0 and :math:`\\lambda` == 0:
         X = exp(X_trans) - 1
-    elif X >= 0 and lambda_ != 0:
-        X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
-    elif X < 0 and lambda_ != 2:
-        X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
-    elif X < 0 and lambda_ == 2:
+    elif X >= 0 and :math:`\\lambda` != 0:
+        X = (X_trans * :math:`\\lambda` + 1) ** (1 / :math:`\\lambda`) - 1
+    elif X < 0 and :math:`\\lambda` != 2:
+        X = 1 - (-(2 - :math:`\\lambda`) * X_trans + 1) ** (1 / (2 - :math:`\\lambda`))
+    elif X < 0 and :math:`\\lambda` == 2:
         X = 1 - exp(-X_trans)
     """
 
@@ -251,15 +251,15 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
         optimal transformation parameters (lambdas).
     coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
-        lambda_function.
+        ``lambda_function``.
     yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
 
     Returns
     -------
-    :obj:`xr.Dataset`
+    :obj:``xr.Dataset``
         Dataset containing the transformed monthly residuals and the parameters of the
-        power transformation for each gridcell, calculated using lambda_function.
+        power transformation for each gridcell, calculated using ``lambda_function``.
     """
     # NOTE: this is equivalent to using pt.transform with
     # pt = PowerTransformerVariableLambda(standardize = False)
@@ -296,30 +296,30 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
 
     Parameters
     ----------
-    monthly_residuals : xr.DataArray of shape (n_years, n_gridcells)
+    monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
         The transformed data.
     coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
-        lambda_function.
-    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
+        ``lambda_function``.
+    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
 
     Returns
     -------
-    :obj:`xr.Dataset`
+    :obj:``xr.Dataset``
         Dataset containing the inverted monthly residuals and the parameters of the
-        power transformation for each gridcell, calculated using lambda_function.
+        power transformation for each gridcell, calculated using ``lambda_function``.
 
     Notes
     -----
     The inverse of the Yeo-Johnson transformation is given by::
-        if X >= 0 and lambda_ == 0:
+        if X >= 0 and :math:`\\lambda` == 0:
             X = exp(X_trans) - 1
-        elif X >= 0 and lambda_ != 0:
-            X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
-        elif X < 0 and lambda_ != 2:
-            X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
-        elif X < 0 and lambda_ == 2:
+        elif X >= 0 and :math:`\\lambda` != 0:
+            X = (X_trans * :math:`\\lambda` + 1) ** (1 / :math:`\\lambda`) - 1
+        elif X < 0 and :math:`\\lambda` != 2:
+            X = 1 - (-(2 - :math:`\\lambda`) * X_trans + 1) ** (1 / (2 - :math:`\\lambda`))
+        elif X < 0 and :math:`\\lambda` == 2:
             X = 1 - exp(-X_trans)
     """
     if not isinstance(monthly_residuals, xr.DataArray):
