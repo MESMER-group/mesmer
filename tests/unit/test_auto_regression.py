@@ -618,7 +618,7 @@ def test_fit_autoregression_monthly_np_no_noise(slope, intercept):
 
 @pytest.mark.parametrize("intercept", [1.0, -4.0])
 @pytest.mark.parametrize("slope", [0.2, -0.3])
-@pytest.mark.parametrize("variance", [1, 0.5])
+@pytest.mark.parametrize("std", [1, 0.5])
 def test_fit_autoregression_monthly_np_with_noise(slope, intercept, variance):
     # test if autoregrerssion can fit using previous month as independent variable
     # and current month as dependent variable
