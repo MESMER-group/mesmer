@@ -144,7 +144,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     return xi_0, xi_1
 
 
-def get_lambdas_from_covariates_xr(coeffs, yearly_pred):
+def get_lambdas_from_covariates(coeffs, yearly_pred):
     """function that relates fitted coefficients and the yearly predictor
     to the lambdas. We usee a logistic function between 0 and 2 to estimate
     the lambdas.
@@ -273,7 +273,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     if not isinstance(coeffs, xr.Dataset):
         raise TypeError(f"Expected a `xr.Dataset`, got {type(monthly_residuals)}")
 
-    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename(
+    lambdas = get_lambdas_from_covariates(coeffs, yearly_pred).rename(
         {"time": "year"}
     )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
@@ -331,7 +331,7 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     if not isinstance(coeffs, xr.Dataset):
         raise TypeError(f"Expected a `xr.Dataset`, got {type(monthly_residuals)}")
 
-    lambdas = get_lambdas_from_covariates_xr(coeffs, yearly_pred).rename(
+    lambdas = get_lambdas_from_covariates(coeffs, yearly_pred).rename(
         {"time": "year"}
     )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
