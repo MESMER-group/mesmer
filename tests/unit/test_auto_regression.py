@@ -634,7 +634,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
 
     np.testing.assert_allclose(slope, slope_fit, atol=1e-1)
     np.testing.assert_allclose(intercept, intercept_fit, atol=1e-1)
-    np.testing.assert_allclose(np.std(residuals), std, rtol=1e-1)
+    np.testing.assert_allclose(np.std(residuals), std, atol=1e-1)
 
 
 def test_fit_auto_regression_monthly():
