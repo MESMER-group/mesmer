@@ -64,10 +64,11 @@ that this led to some numerical changes compared to the MESMER-M publication
   work with xarray. This includes extracting the drawing of spatially correlated innovations to a
   stand-alone function. (`#473 <https://github.com/MESMER-group/mesmer/pull/473>`_)
 - Remove the bounds of -1 and 1 on the slope of the cyclo-stationary AR(1) process. This bound is not necessary
-  since cyclo-stationarity is also given if the slopes of a few months are (slightly) larger than one. This however
-  leads to the fact that the adjustment of the covariance matrix with these slopes is not possible anymore. We
-  thus return the residuals of the cyclo-stationary AR(1) process to fit the covariance matrix on these residuals.
+  since cyclo-stationarity is also given if the slopes of a few months are (slightly) larger than one. We
+  now return the residuals of the cyclo-stationary AR(1) process to fit the covariance matrix on these residuals.
+  As a consequence, adjustment of the covariance matrix with the AR slopes is no longer necessary.
   After this, no adjustment is necessary anymore. (`#480 <https://github.com/MESMER-group/mesmer/pull/480>`_)
+  Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
 
 **Yeo-Johnson power transformer**
 
