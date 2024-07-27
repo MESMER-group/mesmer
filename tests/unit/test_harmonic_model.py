@@ -4,13 +4,9 @@ import pytest
 import xarray as xr
 from packaging.version import Version
 
+import mesmer
+from mesmer.stats._harmonic_model import _generate_fourier_series_np, _fit_fourier_order_np
 from mesmer.core.utils import _check_dataarray_form, upsample_yearly_data
-from mesmer.mesmer_m.harmonic_model import (
-    _generate_fourier_series_np,
-    fit_to_bic_np,
-    fit_to_bic_xr,
-    generate_fourier_series,
-)
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -60,7 +56,7 @@ def test_generate_fourier_series():
 
     coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
 
-    result = generate_fourier_series(
+    result = mesmer.stats.generate_fourier_series(
         yearly_predictor, coeffs, monthly_time, time_dim="time"
     )
 
@@ -81,7 +77,7 @@ def test_generate_fourier_series():
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
     ],
 )
-def test_fit_to_bic_np(coefficients):
+def test_fit_fourier_order_np(coefficients):
     # ensure original coeffs and series is recovered from noiseless fourier series
     max_order = 6
     n_years = 100
@@ -90,7 +86,7 @@ def test_fit_to_bic_np(coefficients):
     yearly_predictor = np.repeat(yearly_predictor, 12)
     monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients, months)
 
-    selected_order, estimated_coefficients, predictions = fit_to_bic_np(
+    selected_order, estimated_coefficients, predictions = _fit_fourier_order_np(
         yearly_predictor, monthly_target, max_order=max_order
     )
 
@@ -141,7 +137,7 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
     return xr.DataArray(coeffs, dims=("cells", "coeff"), coords=coords)
 
 
-def test_fit_to_bic_xr():
+def test_fit_harmonic_model():
     n_ts = 100
     orders = [1, 2, 3, 4, 5, 6]
 
@@ -171,7 +167,7 @@ def test_fit_to_bic_xr():
     )
 
     # test if the model can recover the monthly target from perfect fourier series
-    result = fit_to_bic_xr(yearly_predictor, monthly_target)
+    result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
     np.testing.assert_equal(result.n_sel.values, orders)
     xr.testing.assert_allclose(result["predictions"], monthly_target)
 
@@ -181,7 +177,7 @@ def test_fit_to_bic_xr():
         loc=0, scale=0.1, size=monthly_target.values.shape
     )
 
-    result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
+    result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
 
     # compare numerically one cell of one year
@@ -206,12 +202,12 @@ def test_fit_to_bic_xr():
     )
 
 
-def test_fit_to_bix_xr_instance_checks():
+def test_fit_harmonic_model_instance_checks():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
     with pytest.raises(TypeError):
-        fit_to_bic_xr(yearly_predictor.values, monthly_target)
+        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)
 
     with pytest.raises(TypeError):
-        fit_to_bic_xr(yearly_predictor, monthly_target.values)
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)
