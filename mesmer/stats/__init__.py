@@ -10,23 +10,20 @@ from mesmer.stats._auto_regression import (
     select_ar_order,
 )
 from mesmer.stats._gaspari_cohn import gaspari_cohn, gaspari_cohn_correlation_matrices
+from mesmer.stats._harmonic_model import fit_harmonic_model, generate_fourier_series
 from mesmer.stats._linear_regression import LinearRegression
 from mesmer.stats._localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
-from mesmer.stats._smoothing import lowess
-from mesmer.stats._harmonic_model import (
-    fit_harmonic_model,
-    generate_fourier_series,
-)
 from mesmer.stats._power_transformer import (
-    lambda_function,
-    get_lambdas_from_covariates,
     fit_yeo_johnson_transform,
-    yeo_johnson_transform,
+    get_lambdas_from_covariates,
     inverse_yeo_johnson_transform,
+    lambda_function,
+    yeo_johnson_transform,
 )
+from mesmer.stats._smoothing import lowess
 
 __all__ = [
     # auto regression
