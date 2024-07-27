@@ -80,7 +80,9 @@ def test_find_localized_empirical_covariance():
 
     assert result.localization_radius == 1
     _check_dataarray_form(result.covariance, "covariance", **required_form)
-    _check_dataarray_form(result.localized_covariance, "localized_covariance", **required_form)
+    _check_dataarray_form(
+        result.localized_covariance, "localized_covariance", **required_form
+    )
 
     # ensure can pass equal_dim_suffixes
     result = mesmer.stats.find_localized_empirical_covariance(
@@ -96,7 +98,9 @@ def test_find_localized_empirical_covariance():
 
     assert result.localization_radius == 1
     _check_dataarray_form(result.covariance, "covariance", **required_form)
-    _check_dataarray_form(result.localized_covariance, "localized_covariance", **required_form)
+    _check_dataarray_form(
+        result.localized_covariance, "localized_covariance", **required_form
+    )
 
 
 @pytest.mark.filterwarnings("ignore:First element is local minimum.")
@@ -126,7 +130,9 @@ def test_find_localized_empirical_covariance_monthly():
 
     np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
     _check_dataarray_form(result.covariance, "covariance", **required_form)
-    _check_dataarray_form(result.localized_covariance, "localized_covariance", **required_form)
+    _check_dataarray_form(
+        result.localized_covariance, "localized_covariance", **required_form
+    )
 
     # ensure it works if data is transposed
     result = mesmer.stats.find_localized_empirical_covariance_monthly(
@@ -135,7 +141,9 @@ def test_find_localized_empirical_covariance_monthly():
 
     np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
     _check_dataarray_form(result.covariance, "covariance", **required_form)
-    _check_dataarray_form(result.localized_covariance, "localized_covariance", **required_form)
+    _check_dataarray_form(
+        result.localized_covariance, "localized_covariance", **required_form
+    )
 
     # ensure can pass equal_dim_suffixes
     result = mesmer.stats.find_localized_empirical_covariance_monthly(
@@ -151,7 +159,9 @@ def test_find_localized_empirical_covariance_monthly():
 
     np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
     _check_dataarray_form(result.covariance, "covariance", **required_form)
-    _check_dataarray_form(result.localized_covariance, "localized_covariance", **required_form)
+    _check_dataarray_form(
+        result.localized_covariance, "localized_covariance", **required_form
+    )
 
 
 @pytest.mark.filterwarnings("ignore:First element is local minimum.")
