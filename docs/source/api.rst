@@ -35,6 +35,27 @@ Auto regression
    ~stats.draw_auto_regression_uncorrelated
    ~stats.draw_auto_regression_correlated
 
+Harmonic Model
+--------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.fit_harmonic_model,
+   ~stats.generate_fourier_series
+
+Power Transformer
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.lambda_function
+   ~stats.get_lambdas_from_covariates
+   ~stats.fit_yeo_johnson_transform
+   ~stats.yeo_johnson_transform
+   ~stats.inverse_yeo_johnson_transform
+
 Localized covariance
 --------------------
 
