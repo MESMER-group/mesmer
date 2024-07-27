@@ -619,14 +619,14 @@ def test_fit_autoregression_monthly_np_no_noise(slope, intercept):
 @pytest.mark.parametrize("intercept", [1.0, -4.0])
 @pytest.mark.parametrize("slope", [0.2, -0.3])
 @pytest.mark.parametrize("std", [1, 0.5])
-def test_fit_autoregression_monthly_np_with_noise(slope, intercept, variance):
+def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     # test if autoregrerssion can fit using previous month as independent variable
     # and current month as dependent variable
     n_ts = 5000
     np.random.seed(0)
     prev_month = np.random.normal(size=n_ts)
     cur_month = (
-        prev_month * slope + intercept + np.random.normal(0, variance, size=n_ts)
+        prev_month * slope + intercept + np.random.normal(0, std, size=n_ts)
     )
 
     result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
@@ -636,7 +636,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, variance):
 
     np.testing.assert_allclose(slope, slope_fit, atol=1e-1)
     np.testing.assert_allclose(intercept, intercept_fit, atol=1e-1)
-    np.testing.assert_allclose(np.var(residuals), variance, rtol=1)
+    np.testing.assert_allclose(np.std(residuals), std, rtol=1e-1)
 
 
 def test_fit_auto_regression_monthly():
