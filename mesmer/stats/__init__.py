@@ -16,6 +16,10 @@ from mesmer.stats._localized_covariance import (
     find_localized_empirical_covariance,
 )
 from mesmer.stats._smoothing import lowess
+from mesmer.stats._harmonic_model import (
+    fit_harmonic_model,
+    #generate_fourier_series,
+)
 
 __all__ = [
     # auto regression
