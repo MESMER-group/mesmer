@@ -109,6 +109,7 @@ that this led to some numerical changes compared to the MESMER-M publication
 - add tests (
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
+- add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
