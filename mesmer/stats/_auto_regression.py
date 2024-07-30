@@ -633,13 +633,14 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
     Returns
     -------
-    ar_params : ``xr.Dataset``
+    obj : ``xr.Dataset``
         Dataset containing the estimated parameters of the AR(1) process, the ``intercept`` and the
-        ``slope`` for each month and gridpoint.
+        ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
+    residuals = []
 
     for month in range(1, 13):
         if month == 1:
@@ -654,21 +655,24 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             prev_month = monthly_data[month - 1]
             cur_month = monthly_data[month]
 
-        slope, intercept = xr.apply_ufunc(
+        slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
             input_core_dims=[[time_dim], [time_dim]],
-            output_core_dims=[[], []],
+            output_core_dims=[[], [], [time_dim]],
             exclude_dims={time_dim},
             vectorize=True,
         )
 
         ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
+        residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
     month = xr.Variable("month", np.arange(1, 13))
+    ar_params = xr.concat(ar_params, dim=month)
+    residuals = xr.concat(residuals, dim=time_dim).rename("residuals")
 
-    return xr.concat(ar_params, dim=month)
+    return xr.merge([ar_params, residuals])
 
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):
@@ -698,72 +702,11 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
         lin_func,
         data_prev_month,  # independent variable
         data_month,  # dependent variable
-        bounds=([-1, -np.inf], [1, np.inf]),
     )[0]
 
-    return slope, intercept
+    residuals = data_month - lin_func(data_prev_month, slope, intercept)
 
-
-def predict_auto_regression_monthly(ar_params, time, buffer):
-    """deterministically predict time series of an auto regression process
-    with lag one (AR(1)) using individual parameters for each month.
-    This function is deterministic, i.e. does not produce random noise!
-
-    Parameters
-    ----------
-    ar_params : xr.Dataset
-        Dataset containing the estimated parameters of the AR1 process. Must contain the
-        following DataArray objects:
-
-        - intercept
-        - slope
-
-        both of shape (12, n_gridpoints).
-    time : xr.DataArray
-        The time coordinates that determines the length of the predicted timeseries and
-        that will be the assigned time dimension of the predictions.
-    buffer : int
-        Buffer to initialize the auto-regressive process (ensures that start at 0 does
-        not influence overall result).
-
-    Returns
-    -------
-    result : xr.DataArray
-        Predicted deterministic time series of the specified AR(1). The array has
-        shape n_timesteps x n_gridpoints.
-
-    """
-    _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
-
-    (month_dim, gridcell_dim) = ar_params.intercept.dims
-    (n_months, n_gridpoints) = ar_params.intercept.shape
-
-    _check_dataarray_form(
-        ar_params.intercept,
-        "intercept",
-        ndim=2,
-        required_dims=(month_dim, gridcell_dim),
-    )
-    _check_dataarray_form(
-        ar_params.slope,
-        "slope",
-        ndim=2,
-        required_dims=(month_dim, gridcell_dim),
-        shape=(n_months, n_gridpoints),
-    )
-    result = _draw_ar_corr_monthly_xr_internal(
-        intercept=ar_params.intercept,
-        slope=ar_params.slope,
-        covariance=None,
-        time=time,
-        realisation=1,
-        seed=0,
-        buffer=buffer,
-        time_dim="time",
-        realisation_dim="realisation",
-    ).squeeze("realisation", drop=True)
-
-    return result
+    return slope, intercept, residuals
 
 
 def draw_auto_regression_monthly(
@@ -872,13 +815,10 @@ def _draw_ar_corr_monthly_xr_internal(
     # make sure non-dimension coords are properly caught
     gridpoint_coords = dict(slope[gridpoint_dim].coords)
 
-    if covariance is not None:
-        covariance = covariance.values
-
     out = _draw_auto_regression_monthly_np(
         intercept=intercept.values,
         slope=slope.transpose(..., gridpoint_dim).values,
-        covariance=covariance,
+        covariance=covariance.values,
         n_samples=n_realisations,
         n_ts=n_ts,
         seed=seed,
@@ -926,7 +866,7 @@ def _draw_auto_regression_monthly_np(
         Predicted time series of the specified AR(1) including spatially correllated innovations.
     """
     intercept = np.asarray(intercept)
-    # covariance = np.atleast_3d(covariance)
+    covariance = np.atleast_3d(covariance)
 
     _, n_gridcells = intercept.shape
 
