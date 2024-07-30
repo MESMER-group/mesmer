@@ -69,6 +69,8 @@ that this led to some numerical changes compared to the MESMER-M publication
   As a consequence, adjustment of the covariance matrix with the AR slopes is no longer necessary.
   After this, no adjustment is necessary anymore. (`#480 <https://github.com/MESMER-group/mesmer/pull/480>`_)
   Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
+- Implement function to localize the empirical covarince matrix for each month individually to use in drawing
+  of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
 
 **Yeo-Johnson power transformer**
 
@@ -115,6 +117,7 @@ that this led to some numerical changes compared to the MESMER-M publication
 - add tests (
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
+- add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 

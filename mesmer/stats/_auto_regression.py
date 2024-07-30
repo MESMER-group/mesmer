@@ -412,9 +412,7 @@ def _draw_ar_corr_xr_internal(
 
     dims = (realisation_dim, time_dim, gridpoint_dim)
 
-    # TODO: use dict union once requiring py3.9+
-    # coords = gridpoint_coords | time_coords | realisation_coords
-    coords = {**time_coords, **realisation_coords, **gridpoint_coords}
+    coords = gridpoint_coords | time_coords | realisation_coords
 
     out = xr.DataArray(out, dims=dims, coords=coords)
 
@@ -829,9 +827,7 @@ def _draw_ar_corr_monthly_xr_internal(
 
     dims = (realisation_dim, time_dim, gridpoint_dim)
 
-    # TODO: use dict union once requiring py3.9+
-    # coords = gridpoint_coords | time_coords | realisation_coords
-    coords = {**time_coords, **realisation_coords, **gridpoint_coords}
+    coords = gridpoint_coords | time_coords | realisation_coords
 
     out = xr.DataArray(out, dims=dims, coords=coords)
 
