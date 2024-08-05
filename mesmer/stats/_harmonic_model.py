@@ -104,7 +104,7 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
 
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
-    """execute fitting of the harmonic model/fourier series
+    """fit the coefficients of a Fourier Series to the data using least squares
 
     Parameters
     ----------
@@ -238,7 +238,7 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
 
 def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="time"):
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
-    select order
+    select the order and least squares to fit the coefficients for each order.
 
     Parameters
     ----------
@@ -255,7 +255,7 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     Returns
     -------
     data_vars : `xr.Dataset`
-        Dataset containing the selected order of Fourier Series (n_sel), estimated
+        Dataset containing the selected order of Fourier Series (n_sel), the estimated
         coefficients of the Fourier Series (coeffs) and the resulting predictions for
         monthly temperatures (predictions).
 
