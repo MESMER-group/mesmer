@@ -231,7 +231,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
         dimensions (months, n_gridcells, n_years).
 
     """
-    # TODO allow passing func instead of our ifxed lambda_function?
+    # TODO allow passing func instead of our fixed lambda_function?
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
 
