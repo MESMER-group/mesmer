@@ -63,6 +63,14 @@ that this led to some numerical changes compared to the MESMER-M publication
 - Implement functions performing the monthly (cyclo-stationary) auto-regression and adapt these functions to
   work with xarray. This includes extracting the drawing of spatially correlated innovations to a
   stand-alone function. (`#473 <https://github.com/MESMER-group/mesmer/pull/473>`_)
+- Remove the bounds of -1 and 1 on the slope of the cyclo-stationary AR(1) process. This bound is not necessary
+  since cyclo-stationarity is also given if the slopes of a few months are (slightly) larger than one. We
+  now return the residuals of the cyclo-stationary AR(1) process to fit the covariance matrix on these residuals.
+  As a consequence, adjustment of the covariance matrix with the AR slopes is no longer necessary.
+  After this, no adjustment is necessary anymore. (`#480 <https://github.com/MESMER-group/mesmer/pull/480>`_)
+  Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
+- Implement function to localize the empirical covarince matrix for each month individually to use in drawing
+  of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
 
 **Yeo-Johnson power transformer**
 

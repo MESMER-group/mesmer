@@ -6,7 +6,6 @@ from mesmer.stats._auto_regression import (
     draw_auto_regression_uncorrelated,
     fit_auto_regression,
     fit_auto_regression_monthly,
-    predict_auto_regression_monthly,
     select_ar_order,
 )
 from mesmer.stats._gaspari_cohn import gaspari_cohn, gaspari_cohn_correlation_matrices
@@ -15,6 +14,7 @@ from mesmer.stats._linear_regression import LinearRegression
 from mesmer.stats._localized_covariance import (
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
+    find_localized_empirical_covariance_monthly,
 )
 from mesmer.stats._power_transformer import (
     fit_yeo_johnson_transform,
@@ -34,7 +34,6 @@ __all__ = [
     "fit_auto_regression",
     "select_ar_order",
     "fit_auto_regression_monthly",
-    "predict_auto_regression_monthly",
     "draw_auto_regression_monthly",
     # gaspari cohn
     "gaspari_cohn_correlation_matrices",
@@ -44,6 +43,7 @@ __all__ = [
     # localized covariance
     "adjust_covariance_ar1",
     "find_localized_empirical_covariance",
+    "find_localized_empirical_covariance_monthly",
     # smoothing
     "lowess",
     # harmonic model
