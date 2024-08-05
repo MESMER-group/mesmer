@@ -37,6 +37,22 @@ def _yeo_johnson_transform_np(data, lambdas):
 
     Input is for one month and gridcell but all years. This function is adjusted
     from sklearn to accomodate variable lambdas for each residual.
+
+    Notes
+    -----
+    The Yeo-Johnson transformation is given by:
+
+        if :math:`X \\leq 0` and :math:`\\lambda = 0`:
+            :math:`X_{trans} = log(X + 1)`
+        elif :math:`X \\leq 0` and :math:`\\lambda \\neq 0`:
+            :math:`X_{trans} = \\frac{(X + 1)^{\\lambda} - 1}{\\lambda}`
+        elif :math:`X < 0` and :math:`\\lambda \\neq 2`:
+            :math:`X_{trans} = - \\frac{(-X + 1)^{2 - \\lambda} - 1}{2 - \\lambda}`
+        elif :math:`X < 0` and :math:`\\lambda = 2`:
+            :math:`X_{trans} = - log(-X + 1)`
+
+    Note that :math:`X` and :math:`X_{trans}`have the same sign.
+    Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_
     """
 
     eps = np.finfo(np.float64).eps
@@ -72,14 +88,18 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
 
     Notes
     -----
-    if X >= 0 and :math:`\\lambda` == 0:
-        X = exp(X_trans) - 1
-    elif X >= 0 and :math:`\\lambda` != 0:
-        X = (X_trans * :math:`\\lambda` + 1) ** (1 / :math:`\\lambda`) - 1
-    elif X < 0 and :math:`\\lambda` != 2:
-        X = 1 - (-(2 - :math:`\\lambda`) * X_trans + 1) ** (1 / (2 - :math:`\\lambda`))
-    elif X < 0 and :math:`\\lambda` == 2:
-        X = 1 - exp(-X_trans)
+    The inverse of the Yeo-Johnson transformation is given by:
+
+        if :math:`X_{trans} \\leq 0` and :math:`\\lambda = 0`:
+            :math:`X_{inv} = exp(X_{trans}) - 1`
+        elif :math:`X_{trans} \\leq 0` and :math:`\\lambda \\neq 0`:
+            :math:`X_{inv} = (X_{trans} \\cdot \\lambda + 1)^{\\frac{1}{\\lambda} - 1}`
+        elif :math:`X_{trans} < 0` and :math:`\\lambda \\neq 2`:
+            :math:`X_{inv} = 1 - ((\\lambda - 2) \\cdot X_{trans} + 1)^{\\frac{1}{2 - \\lambda}}`
+        elif :math:`X_{trans} < 0` and :math:`\\lambda = 2`:
+            :math:`X_{inv} = 1 - exp(-X_{trans})`
+
+    Note that :math:`X_{inv}` and :math:`X_{trans}` have the same sign.
     """
 
     eps = np.finfo(np.float64).eps
@@ -97,7 +117,7 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
         np.power(data[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
     )
     transformed[pos_c] = 1 - np.power(
-        -(2 - lambdas[pos_c]) * data[pos_c] + 1, 1 / (2 - lambdas[pos_c])
+        (lambdas[pos_c] - 2) * data[pos_c] + 1, 1 / (2 - lambdas[pos_c])
     )
     transformed[pos_d] = 1 - np.exp(-data[pos_d])
 
@@ -147,19 +167,19 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 def get_lambdas_from_covariates(coeffs, yearly_pred):
     """function that relates fitted coefficients and the yearly predictor
     to the lambdas. We usee a logistic function between 0 and 2 to estimate
-    the lambdas.
+    the lambdas, see :func:`lambda_function <mesmer.stats.lambda_function>`.
 
     Parameters
     ----------
-    coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell and month, calculated
         using fit_yeo_johnson_transform.
-    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
+    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly values used as predictors for the lambdas.
 
     Returns
     -------
-    lambdas : xr.DataArray of shape (months, n_gridcells, n_years)
+    lambdas : ``xr.DataArray`` of shape (months, n_gridcells, n_years)
         The parameters of the power transformation for each gridcell month and year
 
     """
@@ -185,17 +205,19 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
 
 
 def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
-    """estimate the optimal coefficients for the parameters lambda for each gridcell,
-    to normalize monthly residuals conditional on yearly predictor.
+    """
+    estimate the optimal coefficients for the parameters :math:`\\lambda` for each gridcell,
+    to normalize monthly residuals conditional on yearly predictor. Here, :math:`\\lambda` 
+    depends on the yearly predictor according to :func:`lambda_function <mesmer.stats.lambda_function>`.
     The optimal coefficients for the lambda parameters for minimizing skewness are
     estimated on each gridcell independently using maximum likelihood.
 
     Parameters
     ----------
-    monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
+    monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the optimal
         transformation parameters (lambdas).
-    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
+    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly values used as predictors for the lambdas.
     time_dim : str, optional
         Name of the time dimension in the input data used to align monthly residuals and
@@ -209,6 +231,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
         dimensions (months, n_gridcells, n_years).
 
     """
+    # TODO allow passing func instead of our ifxed lambda_function?
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
 
@@ -242,28 +265,41 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
 def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     """
     transform monthly_residuals following Yeo-Johnson transformer
-    with parameters lambda, fit with fit_power_transformer_xr.
+    with parameters lambda, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.
 
     Parameters
     ----------
-    monthly_residuals : xr.DataArray of shape (n_years*12, n_gridcells)
+    monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
-    coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
-        ``lambda_function``.
-    yearly_pred : xr.DataArray of shape (n_years, n_gridcells)
+        :func:`lambda_function <mesmer.stats.lambda_function>`.
+    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
 
     Returns
     -------
-    :obj:``xr.Dataset``
+    :obj:`xr.Dataset`
         Dataset containing the transformed monthly residuals and the parameters of the
-        power transformation for each gridcell, calculated using ``lambda_function``.
-    """
-    # NOTE: this is equivalent to using pt.transform with
-    # pt = PowerTransformerVariableLambda(standardize = False)
+        power transformation for each gridcell.
 
+    Notes
+    -----
+    The Yeo-Johnson transformation is given by:
+
+        if :math:`X \\leq 0` and :math:`\\lambda = 0`:
+            :math:`X_{trans} = log(X + 1)`
+        elif :math:`X \\leq 0` and :math:`\\lambda \\neq 0`:
+            :math:`X_{trans} = \\frac{(X + 1)^{\\lambda} - 1}{\\lambda}`
+        elif :math:`X < 0` and :math:`\\lambda \\neq 2`:
+            :math:`X_{trans} = - \\frac{(-X + 1)^{2 - \\lambda} - 1}{2 - \\lambda}`
+        elif :math:`X < 0` and :math:`\\lambda = 2`:
+            :math:`X_{trans} = - log(-X + 1)`
+
+    Note that :math:`X` and :math:`X_{trans}` have the same sign.
+    Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_.
+    """
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
 
@@ -296,29 +332,32 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     ----------
     monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
         The transformed data.
-    coeffs : xr.Dataset containing xi_0 and xi_1 of shape (months, n_gridcells)
+    coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
-        ``lambda_function``.
+        :func:`lambda_function <mesmer.stats.lambda_function>`.
     yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly temperature values used as predictors for the lambdas.
 
     Returns
     -------
-    :obj:``xr.Dataset``
+    :obj:`xr.Dataset`
         Dataset containing the inverted monthly residuals and the parameters of the
-        power transformation for each gridcell, calculated using ``lambda_function``.
+        power transformation for each gridcell.
 
     Notes
     -----
-    The inverse of the Yeo-Johnson transformation is given by::
-        if X >= 0 and :math:`\\lambda` == 0:
-            X = exp(X_trans) - 1
-        elif X >= 0 and :math:`\\lambda` != 0:
-            X = (X_trans * :math:`\\lambda` + 1) ** (1 / :math:`\\lambda`) - 1
-        elif X < 0 and :math:`\\lambda` != 2:
-            X = 1 - (-(2 - :math:`\\lambda`) * X_trans + 1) ** (1 / (2 - :math:`\\lambda`))
-        elif X < 0 and :math:`\\lambda` == 2:
-            X = 1 - exp(-X_trans)
+    The inverse of the Yeo-Johnson transformation is given by:
+
+        if :math:`X_{trans} \\leq 0` and :math:`\\lambda = 0`:
+            :math:`X_{inv} = exp(X_{trans}) - 1`
+        elif :math:`X_{trans} \\leq 0` and :math:`\\lambda \\neq 0`:
+            :math:`X_{inv} = (X_{trans} \\cdot \\lambda + 1)^{\\frac{1}{\\lambda} - 1}`
+        elif :math:`X_{trans} < 0` and :math:`\\lambda \\neq 2`:
+            :math:`X_{inv} = 1 - ((\\lambda - 2) \\cdot X_{trans} + 1)^{\\frac{1}{2 - \\lambda}}`
+        elif :math:`X_{trans} < 0` and :math:`\\lambda = 2`:
+            :math:`X_{inv} = 1 - exp(-X_{trans})`
+
+    Note that :math:`X_{inv}` and :math:`X_{trans}` have the same sign.
     """
     if not isinstance(monthly_residuals, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
