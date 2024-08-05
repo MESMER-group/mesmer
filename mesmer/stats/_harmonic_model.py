@@ -238,8 +238,7 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
 
 def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="time"):
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
-    select order - xarray wrapper
-    Repeats yearly values for every month before passing to :func:`_fit_fourier_order_np`
+    select order
 
     Parameters
     ----------
