@@ -207,7 +207,7 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
 def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
     """
     estimate the optimal coefficients for the parameters :math:`\\lambda` for each gridcell,
-    to normalize monthly residuals conditional on yearly predictor. Here, :math:`\\lambda` 
+    to normalize monthly residuals conditional on yearly predictor. Here, :math:`\\lambda`
     depends on the yearly predictor according to :func:`lambda_function <mesmer.stats.lambda_function>`.
     The optimal coefficients for the lambda parameters for minimizing skewness are
     estimated on each gridcell independently using maximum likelihood.
