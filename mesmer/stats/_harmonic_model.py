@@ -35,7 +35,7 @@ def _generate_fourier_series_np(yearly_predictor, coeffs, months):
 
     """
     order = int(coeffs.size / 4)
-    # TODO: can also generate the month array here, that would be cleaner, 
+    # TODO: can also generate the month array here, that would be cleaner,
     # we assume that the data starts in January anyways
 
     # fix these parameters, according to paper
@@ -106,7 +106,7 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
 
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
-    """fit the coefficients of a Fourier Series to the data using least squares for the 
+    """fit the coefficients of a Fourier Series to the data using least squares for the
     given order of the Fourier Series, infered from the size of the `first_guess` array.
 
     Parameters
