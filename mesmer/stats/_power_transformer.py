@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 
 def lambda_function(xi_0, xi_1, local_yearly_T):
     r"""Use logistic function to calculate lambda depending on the local yearly
-    temperature. The function is defined as
+    values. The function is defined as
 
     .. math::
 
@@ -21,7 +21,7 @@ def lambda_function(xi_0, xi_1, local_yearly_T):
     xi_1 : float
         Second coefficient of the logistic function (controlling the slope).
     local_yearly_T : ndarray of shape (n_years,)
-            yearly temperature values of one gridcell and month used as predictor
+            yearly values of one gridcell and month used as predictor
             for lambda.
 
     Returns
@@ -36,7 +36,7 @@ def _yeo_johnson_transform_np(data, lambdas):
     """transform data using Yeo-Johnson transformation with variable lambda.
 
     Input is for one month and gridcell but all years. This function is adjusted
-    from sklearn to accomodate variable lambdas for each residual.
+    from sklearn to accomodate variable lambdas for each value.
 
     Notes
     -----
@@ -81,10 +81,10 @@ def _yeo_johnson_transform_np(data, lambdas):
 
 
 def _yeo_johnson_inverse_transform_np(data, lambdas):
-    """invert residuals using Yeo-Johnson transformation with variable lambda.
+    """invert data using the inverse Yeo-Johnson transformation with variable lambda.
 
     This function is adjusted from sklearn to accomodate variable lambdas for each
-    residual.
+    value. 
 
     Notes
     -----
@@ -133,8 +133,8 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     yearly_pred = yearly_pred[~isnan]
 
     def _neg_log_likelihood(coeffs):
-        """Return the negative log likelihood of the observed local monthly residual
-        temperatures as a function of lambda.
+        """Return the negative log likelihood of the observed local monthly residuals
+        as a function of lambda.
         """
         lambdas = lambda_function(coeffs[0], coeffs[1], yearly_pred)
 
@@ -264,8 +264,8 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
 
 def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     """
-    transform monthly_residuals following Yeo-Johnson transformer
-    with parameters lambda, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.
+    transform `monthly_residuals` following Yeo-Johnson transformer
+    with parameters :math:`\\lambda`, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.
 
     Parameters
     ----------
@@ -276,7 +276,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
         The parameters of the power transformation for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
     yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly temperature values used as predictors for the lambdas.
+        yearly values used as predictors for the lambdas.
 
     Returns
     -------
@@ -331,12 +331,12 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     Parameters
     ----------
     monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        The transformed data.
+        The data to be transformed back to the original scale.
     coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
         The parameters of the power transformation for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
     yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly temperature values used as predictors for the lambdas.
+        yearly values used as predictors for the lambdas.
 
     Returns
     -------
