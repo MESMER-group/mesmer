@@ -41,7 +41,7 @@ def test_generate_fourier_series_np():
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
 
-def test_generate_fourier_series():
+def test_predict_harmonic_model():
     n_years = 10
     n_lat, n_lon, n_gridcells = 2, 3, 2 * 3
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
@@ -55,7 +55,7 @@ def test_generate_fourier_series():
 
     coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
 
-    result = mesmer.stats.generate_fourier_series(
+    result = mesmer.stats.predict_harmonic_model(
         yearly_predictor, coeffs, monthly_time, time_dim="time"
     )
 
