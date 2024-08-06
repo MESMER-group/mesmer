@@ -191,7 +191,7 @@ def _calculate_bic(n_samples, order, mse):
 
 def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
     """choose order of Fourier Series to fit for by minimising BIC score.
-    For each order, the coefficients are fit using least squares internally.
+    For each order, the coefficients are fit using least squares.
 
     Parameters
     ----------
