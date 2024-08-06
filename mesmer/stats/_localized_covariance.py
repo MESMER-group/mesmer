@@ -326,9 +326,6 @@ def _get_neg_loglikelihood(data, covariance, weights):
     The mean is assumed to be zero for all points.
     """
 
-    # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
-    # optimizing the rest
-
     cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
     log_likelihood = scipy.stats.multivariate_normal.logpdf(data, cov=cov)
 
