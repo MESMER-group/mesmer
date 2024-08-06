@@ -618,7 +618,11 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal cycle, here the
     months of a year :math:`(N=12)` and :math:`t` counts the repetitions of this seasonal cycle,
     here the years. Here :math:`\\epsilon` is a white noise process, i.e. :math:`\\epsilon \\sim N(0, \\sigma^2)`.
-    For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1].
+    For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1]. 
+    
+    The covariance matrix of the driving white noise process should be estimated on the residuals of the AR(1) 
+    process. The residuals are returned here and should be passed to 
+    :func:`find_localized_empirical_covariance_monthly <mesmer.stats.find_localized_empirical_covariance_monthly>`.
 
     [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research.
         **Cambridge University Press; 1999,** `DOI:10.1017/CBO9780511612336 <https://doi.org/10.1017/CBO9780511612336>`_.
@@ -635,7 +639,8 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     -------
     obj : ``xr.Dataset``
         Dataset containing the estimated parameters of the AR(1) process, the ``intercept`` and the
-        ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned.
+        ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned. These 
+        are needed for the estimation of the covariance matrix.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
@@ -676,9 +681,10 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):
-    """fit an auto regression of lag one (AR(1)) on monthly data - numpy wrapper
-    We use a linear function to relate the previous month's
-    data (predictor/independent variable) to the current month's data (target/ dependent variable).
+    """fit an auto regression of lag one (AR(1)) on monthly data
+    We use a linear function to relate the previous month's data 
+    (predictor/independent variable) to the current month's data 
+    (target/ dependent variable).
 
     Parameters
     ----------
@@ -720,8 +726,10 @@ def draw_auto_regression_monthly(
     time_dim="time",
     realisation_dim="realisation",
 ):
-    """draw time series of an auto regression process with lag one
+    """draw time series of a cyclo-stationary auto-regressive process of lag one (AR(1))
     using individual parameters for each month including spatially-correlated innovations.
+    For more information on the cyclo-stationary AR(1) process please refer to the 
+    :func:`fitting method <mesmer.stats.fit_auto_regression_monthly>`.
 
     Parameters
     ----------
@@ -734,8 +742,9 @@ def draw_auto_regression_monthly(
 
         both of shape (12, n_gridpoints).
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
-        The covariance matrix representing spatial correlation between gridpoints for
-        each month. Must be symmetric and at least positive-semidefinite.
+        The covariance matrix representing the spatially correlated driving  
+        white noise process for each month. Must be symmetric and at least 
+        positive-semidefinite.
         Used to draw spatially-correlated innovations using a multivariate normal.
     time : xr.DataArray
         The time coordinates that determines the length of the predicted timeseries and

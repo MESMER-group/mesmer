@@ -147,12 +147,16 @@ def find_localized_empirical_covariance(
 def find_localized_empirical_covariance_monthly(
     data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
 ):
-    """determine localized empirical covariance by cross validation for each month
+    """determine localized empirical covariance by cross validation for each month. `data`
+    should be the residuals of the cyclo-stationary AR(1) process, see 
+    :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`. After this,
+    no additional adjustment is necessary.
 
     Parameters
     ----------
     data : xr.DataArray
-        2D DataArray with monthly data to calculate the covariance for.
+        2D DataArray with monthly data to calculate the covariance for (residuals of the AR(1) 
+        process).
     weights : xr.DataArray
         Weights for the individual samples.
     localizer : dict of DataArray

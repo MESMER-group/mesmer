@@ -32,8 +32,10 @@ Auto regression
    ~stats._fit_auto_regression_scen_ens
    ~stats.select_ar_order
    ~stats.fit_auto_regression
+   ~stats.fit_auto_regression_monthly
    ~stats.draw_auto_regression_uncorrelated
    ~stats.draw_auto_regression_correlated
+   ~stats.draw_auto_regression_monthly
 
 Harmonic Model
 --------------
@@ -64,6 +66,7 @@ Localized covariance
 
    ~stats.adjust_covariance_ar1
    ~stats.find_localized_empirical_covariance
+   ~stats.find_localized_empirical_covariance_monthly
 
 Smoothing
 ---------
