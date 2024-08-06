@@ -17,6 +17,7 @@ from mesmer.core.utils import _check_dataarray_form
 
 def _generate_fourier_series_np(yearly_predictor, coeffs, months):
     """construct a Fourier Series from the yearly predictor with given coeffs.
+
     The order of the Fourier series is inferred from the size of the coeffs array.
 
     Parameters
