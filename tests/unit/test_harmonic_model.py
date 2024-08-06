@@ -9,6 +9,7 @@ from mesmer.core.utils import _check_dataarray_form, upsample_yearly_data
 from mesmer.stats._harmonic_model import (
     _fit_fourier_order_np,
     _generate_fourier_series_np,
+    generate_fourier_series,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -18,24 +19,19 @@ def test_generate_fourier_series_np():
     n_years = 10
     n_months = n_years * 12
 
-    yearly_predictor = np.zeros(n_months)
+    yearly_predictor = np.ones(n_months)
     months = np.tile(np.arange(1, 13), n_years)
 
+    coeffs = np.array([0, -1, 0, -2])
+
     # dummy yearly cycle
-    expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
+    expected = coeffs[1] * np.sin(2 * np.pi * (months) / 12) + coeffs[3] * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
-    )
-    np.testing.assert_equal(result, expected)
 
-    yearly_predictor = np.ones(n_months)
     result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
-    )
-    # NOTE: yearly_predictor is added to the Fourier series
-    expected += 1
+        yearly_predictor, coeffs)
+    
     np.testing.assert_equal(result, expected)
 
     result = _generate_fourier_series_np(
@@ -146,7 +142,7 @@ def test_fit_harmonic_model():
 
     coefficients = get_2D_coefficients(order_per_cell=orders, n_lat=3, n_lon=2)
 
-    yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2)
+    yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2).transpose("time", "cells")
 
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
     yearly_predictor["time"] = xr.cftime_range(
@@ -155,19 +151,8 @@ def test_fit_harmonic_model():
 
     time = xr.cftime_range(start="2000-01-01", periods=n_ts * 12, freq="MS")
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
-    upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
 
-    months = upsampled_yearly_predictor.time.dt.month
-    monthly_target = xr.apply_ufunc(
-        _generate_fourier_series_np,
-        upsampled_yearly_predictor,
-        coefficients,
-        input_core_dims=[["time"], ["coeff"]],
-        output_core_dims=[["time"]],
-        vectorize=True,
-        output_dtypes=[float],
-        kwargs={"months": months},
-    )
+    monthly_target = generate_fourier_series(yearly_predictor, coefficients, time=monthly_time)
 
     # test if the model can recover the monthly target from perfect fourier series
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
@@ -186,22 +171,13 @@ def test_fit_harmonic_model():
     # compare numerically one cell of one year
     expected = np.array(
         [
-            9.99630445,
-            9.98829217,
-            7.32212458,
-            2.73123514,
-            -2.53876124,
-            -7.07931947,
-            -9.69283667,
-            -9.6945128,
-            -7.08035255,
-            -2.53178204,
-            2.74790275,
-            7.34046832,
+            9.975936,  9.968497,  7.32234 ,  2.750445, -2.520796, -7.081546,
+            -9.713699, -9.71333 , -7.077949, -2.509761,  2.76855 ,  7.340076,
         ]
     )
     np.testing.assert_allclose(
-        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected
+        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected,
+        atol=1e-6,
     )
 
 
