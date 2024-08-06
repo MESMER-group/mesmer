@@ -9,7 +9,7 @@ from mesmer.stats._auto_regression import (
     select_ar_order,
 )
 from mesmer.stats._gaspari_cohn import gaspari_cohn, gaspari_cohn_correlation_matrices
-from mesmer.stats._harmonic_model import fit_harmonic_model, generate_fourier_series
+from mesmer.stats._harmonic_model import fit_harmonic_model, predict_harmonic_model
 from mesmer.stats._linear_regression import LinearRegression
 from mesmer.stats._localized_covariance import (
     adjust_covariance_ar1,
@@ -48,7 +48,7 @@ __all__ = [
     "lowess",
     # harmonic model
     "fit_harmonic_model",
-    "generate_fourier_series",
+    "predict_harmonic_model",
     # power transformer
     "lambda_function",
     "get_lambdas_from_covariates",

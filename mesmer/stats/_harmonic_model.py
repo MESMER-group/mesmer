@@ -52,7 +52,7 @@ def _generate_fourier_series_np(yearly_predictor, coeffs, months):
     return seasonal_cycle
 
 
-def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
+def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
     """construct a Fourier Series from yearly predictors with fitted coeffs - numpy wrapper.
 
     Parameters

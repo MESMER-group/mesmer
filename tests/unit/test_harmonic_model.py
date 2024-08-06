@@ -9,7 +9,7 @@ from mesmer.core.utils import _check_dataarray_form, upsample_yearly_data
 from mesmer.stats._harmonic_model import (
     _fit_fourier_order_np,
     _generate_fourier_series_np,
-    generate_fourier_series,
+    predict_harmonic_model,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -152,7 +152,9 @@ def test_fit_harmonic_model():
     time = xr.cftime_range(start="2000-01-01", periods=n_ts * 12, freq="MS")
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
 
-    monthly_target = generate_fourier_series(yearly_predictor, coefficients, time=monthly_time)
+    monthly_target = predict_harmonic_model(
+        yearly_predictor, coefficients, time=monthly_time
+    )
 
     # test if the model can recover the monthly target from perfect fourier series
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
