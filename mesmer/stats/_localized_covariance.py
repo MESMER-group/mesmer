@@ -289,6 +289,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
             # sum log likelihood of all crossvalidation folds
             nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
         except np.linalg.LinAlgError:
+            # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
             warnings.warn(
                 f"Singular matrix for localization_radius of {localization_radius}."
                 " Skipping this radius.",
