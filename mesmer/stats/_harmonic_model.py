@@ -108,7 +108,7 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     """fit the coefficients of a Fourier Series to the data using least squares for the
-    given order of the Fourier Series, infered from the size of the `first_guess` array.
+    given order, which is inferred from the size of the `first_guess` array.
 
     Parameters
     ----------
