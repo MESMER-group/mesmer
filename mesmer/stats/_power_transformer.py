@@ -81,7 +81,7 @@ def _yeo_johnson_transform_np(data, lambdas):
 
 
 def _yeo_johnson_inverse_transform_np(data, lambdas):
-    """invert data using the inverse Yeo-Johnson transformation with variable lambda.
+    """inverse Yeo-Johnson transformation with variable lambda.
 
     This function is adjusted from sklearn to accomodate variable lambdas for each
     value.
