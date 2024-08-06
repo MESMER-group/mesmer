@@ -26,20 +26,20 @@ def test_generate_fourier_series_np():
         2 * np.pi * (months) / 12
     )
     result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
+        yearly_predictor, np.array([0, -1, 0, -2])
     )
     np.testing.assert_equal(result, expected)
 
     yearly_predictor = np.ones(n_months)
     result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
+        yearly_predictor, np.array([0, -1, 0, -2])
     )
     # NOTE: yearly_predictor is added to the Fourier series
     expected += 1
     np.testing.assert_equal(result, expected)
 
     result = _generate_fourier_series_np(
-        yearly_predictor, np.array([3.14, -1, 1, -2]), months
+        yearly_predictor, np.array([3.14, -1, 1, -2])
     )
     expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
     np.testing.assert_allclose(result, expected, atol=1e-10)
@@ -84,10 +84,9 @@ def test_fit_fourier_order_np(coefficients):
     # ensure original coeffs and series is recovered from noiseless fourier series
     max_order = 6
     n_years = 100
-    months = np.tile(np.arange(1, 13), n_years)
     yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
     yearly_predictor = np.repeat(yearly_predictor, 12)
-    monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients, months)
+    monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients)
 
     selected_order, estimated_coefficients, predictions = _fit_fourier_order_np(
         yearly_predictor, monthly_target, max_order=max_order
@@ -157,7 +156,6 @@ def test_fit_harmonic_model():
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
     upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
 
-    months = upsampled_yearly_predictor.time.dt.month
     monthly_target = xr.apply_ufunc(
         _generate_fourier_series_np,
         upsampled_yearly_predictor,
@@ -166,7 +164,6 @@ def test_fit_harmonic_model():
         output_core_dims=[["time"]],
         vectorize=True,
         output_dtypes=[float],
-        kwargs={"months": months},
     )
 
     # test if the model can recover the monthly target from perfect fourier series
