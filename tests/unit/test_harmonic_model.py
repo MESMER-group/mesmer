@@ -25,22 +25,16 @@ def test_generate_fourier_series_np():
     expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
-    )
+    result = _generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]))
     np.testing.assert_equal(result, expected)
 
     yearly_predictor = np.ones(n_months)
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
-    )
+    result = _generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]))
     # NOTE: yearly_predictor is added to the Fourier series
     expected += 1
     np.testing.assert_equal(result, expected)
 
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([3.14, -1, 1, -2]), months
-    )
+    result = _generate_fourier_series_np(yearly_predictor, np.array([3.14, -1, 1, -2]))
     expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
@@ -84,10 +78,9 @@ def test_fit_fourier_order_np(coefficients):
     # ensure original coeffs and series is recovered from noiseless fourier series
     max_order = 6
     n_years = 100
-    months = np.tile(np.arange(1, 13), n_years)
     yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
     yearly_predictor = np.repeat(yearly_predictor, 12)
-    monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients, months)
+    monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients)
 
     selected_order, estimated_coefficients, predictions = _fit_fourier_order_np(
         yearly_predictor, monthly_target, max_order=max_order
@@ -157,7 +150,6 @@ def test_fit_harmonic_model():
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
     upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
 
-    months = upsampled_yearly_predictor.time.dt.month
     monthly_target = xr.apply_ufunc(
         _generate_fourier_series_np,
         upsampled_yearly_predictor,
@@ -166,7 +158,6 @@ def test_fit_harmonic_model():
         output_core_dims=[["time"]],
         vectorize=True,
         output_dtypes=[float],
-        kwargs={"months": months},
     )
 
     # test if the model can recover the monthly target from perfect fourier series
@@ -205,7 +196,7 @@ def test_fit_harmonic_model():
     )
 
 
-def test_fit_harmonic_model_instance_checks():
+def test_fit_harmonic_model_checks():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
@@ -214,3 +205,21 @@ def test_fit_harmonic_model_instance_checks():
 
     with pytest.raises(TypeError):
         mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)
+
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="Y")
+    monthly_target["time"] = pd.date_range("2000-02-01", periods=10 * 12, freq="M")
+    with pytest.raises(ValueError, match="Monthly target data must start with January"):
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+
+
+def test_fit_harmonic_model_time_dim():
+    # test if the time dimension can be different from "time"
+    yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
+    monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="Y")
+    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="M")
+
+    time_dim = "dates"
+    monthly_target = monthly_target.rename({"time": time_dim})
+    yearly_predictor = yearly_predictor.rename({"time": time_dim})
+    mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target, time_dim=time_dim)

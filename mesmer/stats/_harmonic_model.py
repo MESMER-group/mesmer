@@ -15,7 +15,7 @@ import mesmer
 from mesmer.core.utils import _check_dataarray_form
 
 
-def _generate_fourier_series_np(yearly_predictor, coeffs, months):
+def _generate_fourier_series_np(yearly_predictor, coeffs):
     """construct a Fourier Series from the yearly predictor with given coeffs.
 
     The order of the Fourier series is inferred from the size of the coeffs array.
@@ -36,8 +36,8 @@ def _generate_fourier_series_np(yearly_predictor, coeffs, months):
 
     """
     order = int(coeffs.size / 4)
-    # TODO: can also generate the month array here, that would be cleaner,
-    # we assume that the data starts in January anyways
+    n_years = yearly_predictor.size // 12
+    months = np.tile(np.arange(1, 13), n_years)
 
     # fix these parameters, according to paper
     # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
@@ -90,7 +90,6 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
     upsampled_y = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, time, time_dim
     )
-    month_dummy = np.tile(np.arange(1, 13), yearly_predictor[time_dim].size)
 
     predictions = xr.apply_ufunc(
         _generate_fourier_series_np,
@@ -100,7 +99,6 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
         output_core_dims=[[time_dim]],
         vectorize=True,
         output_dtypes=[float],
-        kwargs={"months": month_dummy},
     )
 
     return predictions.transpose(time_dim, ...)
@@ -142,26 +140,20 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     """
 
-    # get monthly values
-    mon_train = np.tile(np.arange(1, 13), int(yearly_predictor.shape[0] / 12))
-
-    def func(coeffs, yearly_predictor, mon_train, mon_target):
-        return (
-            _generate_fourier_series_np(yearly_predictor, coeffs, mon_train)
-            - mon_target
-        )
+    def func(coeffs, yearly_predictor, mon_target):
+        return _generate_fourier_series_np(yearly_predictor, coeffs) - mon_target
 
     minimize_result = sp.optimize.least_squares(
         func,
         first_guess,
-        args=(yearly_predictor, mon_train, monthly_target),
+        args=(yearly_predictor, monthly_target),
         loss="linear",
     )
 
     coeffs = minimize_result.x
     mse = np.mean(minimize_result.fun**2)
     preds = _generate_fourier_series_np(
-        yearly_predictor=yearly_predictor, coeffs=coeffs, months=mon_train
+        yearly_predictor=yearly_predictor, coeffs=coeffs
     )
 
     return coeffs, preds, mse
@@ -250,8 +242,8 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
         Yearly values used as predictors, containing one value per year.
     monthly_target : xr.DataArray of shape (n_months, n_gridcells)
-        Monthly values to fit to, containing one value per month, for every year in ´yearly_predictor´.
-        So `n_months` = 12 :math:`\\cdot` `n_years`
+        Monthly values to fit to, containing one value per month, for every year in
+        ´yearly_predictor´ (starting with January!). So `n_months` = 12 :math:`\\cdot` `n_years`.
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
         maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
@@ -271,6 +263,9 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     if not isinstance(monthly_target, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
 
+    if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
+        raise ValueError("Monthly target data must start with January.")
+
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
@@ -279,8 +274,8 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
         _fit_fourier_order_np,
         yearly_predictor,
         monthly_target,
-        input_core_dims=[["time"], ["time"]],
-        output_core_dims=([], ["coeff"], ["time"]),
+        input_core_dims=[[time_dim], [time_dim]],
+        output_core_dims=([], ["coeff"], [time_dim]),
         vectorize=True,
         output_dtypes=[int, float, float],
         kwargs={"max_order": max_order},
