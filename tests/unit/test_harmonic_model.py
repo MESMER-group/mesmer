@@ -211,6 +211,7 @@ def test_fit_harmonic_model_checks():
     with pytest.raises(ValueError, match="Monthly target data must start with January"):
         mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
 
+
 def test_fit_harmonic_model_time_dim():
     # test if the time dimension can be different from "time"
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
