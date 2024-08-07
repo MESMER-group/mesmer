@@ -196,7 +196,7 @@ def test_fit_harmonic_model():
     )
 
 
-def test_fit_harmonic_model_instance_checks():
+def test_fit_harmonic_model_checks():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
@@ -205,3 +205,8 @@ def test_fit_harmonic_model_instance_checks():
 
     with pytest.raises(TypeError):
         mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)
+
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="Y")
+    monthly_target["time"] = pd.date_range("2000-02-01", periods=10 * 12, freq="M")
+    with pytest.raises(ValueError, match="Monthly target data must start with January"):
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
