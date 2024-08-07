@@ -302,13 +302,18 @@ def test_get_neg_loglikelihood(random_data_5x3):
     covariance = np.cov(random_data_5x3, rowvar=False)
 
     weights = np.full(5, fill_value=1)
-    result = _get_neg_loglikelihood(random_data_5x3, covariance, weights)
+    result = _get_neg_loglikelihood(random_data_5x3, covariance, weights, method = 'cholesky')
     expected = 343.29088073
     np.testing.assert_allclose(result, expected)
 
+    # test with non-uniform weights
     weights = np.array([0.5, 0.2, 0.3, 0.7, 1])
-    result = _get_neg_loglikelihood(random_data_5x3, covariance, weights)
+    result = _get_neg_loglikelihood(random_data_5x3, covariance, weights, method = 'cholesky')
     expected = 340.387267
+    np.testing.assert_allclose(result, expected)
+    
+    # test if method='eigh' gives same result
+    result = _get_neg_loglikelihood(random_data_5x3, covariance, weights, method = 'eigh')
     np.testing.assert_allclose(result, expected)
 
 
@@ -317,9 +322,13 @@ def test_get_neg_loglikelihood_singular(random_data_5x3):
     # select data that leads to singular covariance matrix
     data = random_data_5x3[1::2]
     covariance = np.cov(data, rowvar=False)
+    weights = np.full(2, fill_value=1)
 
     with pytest.raises(np.linalg.LinAlgError):
-        _get_neg_loglikelihood(random_data_5x3, covariance, None)
+        _get_neg_loglikelihood(data, covariance, weights, method='cholesky')
+
+    # works with eigh
+    _get_neg_loglikelihood(data, covariance, weights, method='eigh')
 
 
 def test_adjust_ecov_ar1_np_errors():
