@@ -39,11 +39,6 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     n_years = yearly_predictor.size // 12
     months = np.tile(np.arange(1, 13), n_years)
 
-    # fix these parameters, according to paper
-    # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
-    beta0 = 0
-    beta1 = 1
-
     seasonal_cycle = np.nansum(
         [
             (coeffs[idx * 4] * yearly_predictor + coeffs[idx * 4 + 1])
