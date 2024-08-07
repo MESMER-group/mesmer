@@ -25,22 +25,16 @@ def test_generate_fourier_series_np():
     expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
         2 * np.pi * (months) / 12
     )
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2])
-    )
+    result = _generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]))
     np.testing.assert_equal(result, expected)
 
     yearly_predictor = np.ones(n_months)
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2])
-    )
+    result = _generate_fourier_series_np(yearly_predictor, np.array([0, -1, 0, -2]))
     # NOTE: yearly_predictor is added to the Fourier series
     expected += 1
     np.testing.assert_equal(result, expected)
 
-    result = _generate_fourier_series_np(
-        yearly_predictor, np.array([3.14, -1, 1, -2])
-    )
+    result = _generate_fourier_series_np(yearly_predictor, np.array([3.14, -1, 1, -2]))
     expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
