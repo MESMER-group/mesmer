@@ -188,8 +188,10 @@ def test_fit_harmonic_model():
             7.340076,
         ]
     )
+
+    result_comp =  result.predictions.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(
-        result.predictions.isel(cells=0, time=slice(0, 12)).values,
+        result_comp,
         expected,
         atol=1e-6,
     )
