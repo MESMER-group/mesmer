@@ -53,7 +53,7 @@ def _generate_fourier_series_np(yearly_predictor, coeffs, months):
 
 
 def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
-    """construct a Fourier Series from yearly predictors with fitted coeffs - numpy wrapper.
+    """construct a Fourier Series from yearly predictors with fitted coeffs.
 
     Parameters
     ----------
