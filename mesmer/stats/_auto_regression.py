@@ -475,11 +475,8 @@ def _draw_auto_regression_correlated_np(
     # arbitrary lags? no, see: https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
-    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
-    np.random.seed(seed)
-
     innovations = _draw_innovations_correlated_np(
-        covariance, n_coeffs, n_samples, n_ts, buffer
+        seed, covariance, n_coeffs, n_samples, n_ts, buffer
     )
 
     out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
@@ -492,25 +489,30 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
-def _draw_innovations_correlated_np(covariance, n_gridcells, n_samples, n_ts, buffer):
+def _draw_innovations_correlated_np(seed, covariance, n_gridcells, n_samples, n_ts, buffer):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
+    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
+    rng = np.random.default_rng(seed=seed)
     try:
-        cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
-    except np.linalg.LinAlgError as e:
-        if "Matrix is not positive definite" in str(e):
-            w, v = np.linalg.eigh(covariance)
-            cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
-            warnings.warn(
-                "Covariance matrix is not positive definite, using eigh instead of cholesky.",
-                LinAlgWarning,
-            )
-
-    innovations = scipy.stats.multivariate_normal.rvs(
-        mean=np.zeros(n_gridcells),
-        cov=cov,
-        size=[n_samples, n_ts + buffer],
-    ).reshape(n_samples, n_ts + buffer, n_gridcells)
+        innovations = rng.multivariate_normal(
+            mean=np.zeros(n_gridcells),
+            cov=covariance,
+            size=[n_samples, n_ts + buffer],
+            method="cholesky",
+        ).reshape(n_samples, n_ts + buffer, n_gridcells)
+    
+    except np.linalg.LinAlgError:
+        warnings.warn(
+            "Covariance matrix is not positive definite, using eigh instead of cholesky.",
+            LinAlgWarning,
+        )
+        innovations = rng.multivariate_normal(
+            mean=np.zeros(n_gridcells),
+            cov=covariance,
+            size=[n_samples, n_ts + buffer],
+            method="eigh",
+        ).reshape(n_samples, n_ts + buffer, n_gridcells)
 
     return innovations
 
@@ -870,16 +872,13 @@ def _draw_auto_regression_monthly_np(
 
     _, n_gridcells = intercept.shape
 
-    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
-    np.random.seed(seed)
-
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
     if covariance is not None:
         for month in range(12):
             cov_month = covariance[month, :, :]
             innovations[:, :, month, :] = _draw_innovations_correlated_np(
-                cov_month, n_gridcells, n_samples, n_ts // 12, buffer
+                seed, cov_month, n_gridcells, n_samples, n_ts // 12, buffer
             )
     # reshape innovations into continous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
