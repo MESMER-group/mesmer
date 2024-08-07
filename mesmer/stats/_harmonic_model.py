@@ -242,8 +242,8 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
         Yearly values used as predictors, containing one value per year.
     monthly_target : xr.DataArray of shape (n_months, n_gridcells)
-        Monthly values to fit to, containing one value per month, for every year in ´yearly_predictor´.
-        So `n_months` = 12 :math:`\\cdot` `n_years`
+        Monthly values to fit to, containing one value per month, for every year in 
+        ´yearly_predictor´ (starting with January!). So `n_months` = 12 :math:`\\cdot` `n_years`. 
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
         maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
@@ -262,6 +262,9 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
 
     if not isinstance(monthly_target, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
+    
+    if not monthly_target[time_dim].isel({time_dim:0}).dt.month == 1:
+        raise ValueError("Monthly target data must start with January.")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
