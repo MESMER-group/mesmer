@@ -87,7 +87,7 @@ def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
     )
     month_dummy = np.tile(np.arange(1, 13), yearly_predictor[time_dim].size)
 
-    predictions =  upsampled_y + xr.apply_ufunc(
+    predictions = upsampled_y + xr.apply_ufunc(
         _generate_fourier_series_np,
         upsampled_y,
         coeffs,

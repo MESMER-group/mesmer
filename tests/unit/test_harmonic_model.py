@@ -29,9 +29,8 @@ def test_generate_fourier_series_np():
         2 * np.pi * (months) / 12
     )
 
-    result = _generate_fourier_series_np(
-        yearly_predictor, coeffs)
-    
+    result = _generate_fourier_series_np(yearly_predictor, coeffs)
+
     np.testing.assert_equal(result, expected)
 
     result = _generate_fourier_series_np(
@@ -142,7 +141,9 @@ def test_fit_harmonic_model():
 
     coefficients = get_2D_coefficients(order_per_cell=orders, n_lat=3, n_lon=2)
 
-    yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2).transpose("time", "cells")
+    yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2).transpose(
+        "time", "cells"
+    )
 
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
     yearly_predictor["time"] = xr.cftime_range(
@@ -173,12 +174,23 @@ def test_fit_harmonic_model():
     # compare numerically one cell of one year
     expected = np.array(
         [
-            9.975936,  9.968497,  7.32234 ,  2.750445, -2.520796, -7.081546,
-            -9.713699, -9.71333 , -7.077949, -2.509761,  2.76855 ,  7.340076,
+            9.975936,
+            9.968497,
+            7.32234,
+            2.750445,
+            -2.520796,
+            -7.081546,
+            -9.713699,
+            -9.71333,
+            -7.077949,
+            -2.509761,
+            2.76855,
+            7.340076,
         ]
     )
     np.testing.assert_allclose(
-        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected,
+        result.predictions.isel(cells=0, time=slice(0, 12)).values,
+        expected,
         atol=1e-6,
     )
 
