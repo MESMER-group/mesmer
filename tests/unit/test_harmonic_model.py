@@ -186,7 +186,7 @@ def test_fit_harmonic_model():
         ]
     )
 
-    result_comp =  result.predictions.isel(cells=0, time=slice(0, 12)).values
+    result_comp = result.predictions.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(
         result_comp,
         expected,
