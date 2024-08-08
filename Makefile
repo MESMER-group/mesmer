@@ -53,8 +53,8 @@ black: $(VENV_DIR)  ## auto-format the code using black
 	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON) docs/source/conf.py
 
 .PHONY: ruff
-flake8: $(VENV_DIR)  ## lint the code using flake8
-	$(VENV_DIR)/bin/ruff $(FILES_TO_FORMAT_PYTHON)
+ruff: $(VENV_DIR)  ## lint the code using ruff
+	$(VENV_DIR)/bin/ruff check $(FILES_TO_FORMAT_PYTHON)
 
 .PHONY: docs
 docs: $(VENV_DIR)  ## build the docs
