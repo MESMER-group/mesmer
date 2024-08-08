@@ -224,7 +224,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
             tmp_preds["transfo"] = descrip_fit["transfo"]
 
         # looping on every gridpoint
-        quality_fit = np.nan * np.ones((nr_gps))
+        quality_fit = np.nan * np.ones(nr_gps)
         sols = []
         for i_gp in np.arange(nr_gps):
             print(
@@ -489,8 +489,8 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
                 )
 
             # Setting unlikely values to the threshold
-            if np.any((transf_inputs[var_targ][scen] > threshold_sigma)) or np.any(
-                (transf_inputs[var_targ][scen] < -threshold_sigma)
+            if np.any(transf_inputs[var_targ][scen] > threshold_sigma) or np.any(
+                transf_inputs[var_targ][scen] < -threshold_sigma
             ):
                 test_unlikely_values = True
                 transf_inputs[var_targ][scen][

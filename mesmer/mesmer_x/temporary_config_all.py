@@ -80,7 +80,7 @@ class ConfigMesmerX:
         if "dir_cmipng" in self.paths:
             self.dir_cmipng = self.paths["dir_cmipng"]
         else:
-            self.dir_cmipng = os.path.join(TEST_DATA_ROOT, "cmip{}-ng/".format(gen))
+            self.dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng/")
             # TODO: remove need for trailing "/" here
 
         # cmip-x: climate extremes
