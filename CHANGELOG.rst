@@ -45,6 +45,8 @@ Internal Changes
 - Explicitly include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
 - Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
   By `Victoria Bauer`_.
+- Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
+  By `Mathias Hauser`_.
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^

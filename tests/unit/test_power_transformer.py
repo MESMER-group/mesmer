@@ -85,10 +85,10 @@ def test_yeo_johnson_transform_np_trivial():
 
     lambdas = np.tile([1], (n_ts))
 
-    monthly_residuals = np.ones((n_ts))
+    monthly_residuals = np.ones(n_ts)
 
     result = _yeo_johnson_transform_np(monthly_residuals, lambdas)
-    expected = np.ones((n_ts))
+    expected = np.ones(n_ts)
 
     np.testing.assert_equal(result, expected)
 

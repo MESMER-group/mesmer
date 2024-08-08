@@ -2,5 +2,4 @@
 
  - [ ] Closes #xxx
  - [ ] Tests added
- - [ ] Passes `isort . && black . && flake8`
  - [ ] Fully documented, including `CHANGELOG.rst`
