@@ -36,7 +36,7 @@ def _yeo_johnson_transform_np(data, lambdas):
     """transform data using Yeo-Johnson transformation with variable lambda.
 
     Input is for one month and gridcell but all years. This function is adjusted
-    from sklearn to accomodate variable lambdas for each value.
+    from sklearn to accommodate variable lambdas for each value.
 
     Notes
     -----
@@ -83,7 +83,7 @@ def _yeo_johnson_transform_np(data, lambdas):
 def _yeo_johnson_inverse_transform_np(data, lambdas):
     """inverse Yeo-Johnson transformation with variable lambda.
 
-    This function is adjusted from sklearn to accomodate variable lambdas for each
+    This function is adjusted from sklearn to accommodate variable lambdas for each
     value.
 
     Notes
