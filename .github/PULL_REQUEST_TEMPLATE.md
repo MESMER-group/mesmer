@@ -2,5 +2,4 @@
 
  - [ ] Closes #xxx
  - [ ] Tests added
- - [ ] Passes `ruff check . && black .`
  - [ ] Fully documented, including `CHANGELOG.rst`
