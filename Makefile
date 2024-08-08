@@ -45,21 +45,16 @@ help:
 
 .PHONY: format
 format: $(VENV_DIR)  ## auto-format the code using relevant tools
-	make isort
+	make ruff
 	make black
-	make flake8
 
 .PHONY: black
 black: $(VENV_DIR)  ## auto-format the code using black
 	$(VENV_DIR)/bin/black $(FILES_TO_FORMAT_PYTHON) docs/source/conf.py
 
-.PHONY: flake8
+.PHONY: ruff
 flake8: $(VENV_DIR)  ## lint the code using flake8
-	$(VENV_DIR)/bin/flake8 $(FILES_TO_FORMAT_PYTHON)
-
-.PHONY: isort
-isort: $(VENV_DIR)  ## lint the code using flake8
-	$(VENV_DIR)/bin/isort $(FILES_TO_FORMAT_PYTHON)
+	$(VENV_DIR)/bin/ruff $(FILES_TO_FORMAT_PYTHON)
 
 .PHONY: docs
 docs: $(VENV_DIR)  ## build the docs
