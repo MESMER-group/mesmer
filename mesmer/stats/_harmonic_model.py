@@ -39,11 +39,6 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     n_years = yearly_predictor.size // 12
     months = np.tile(np.arange(1, 13), n_years)
 
-    # fix these parameters, according to paper
-    # we could also fit them and give an initial guess of 0 and 1 in the coeffs array as before
-    beta0 = 0
-    beta1 = 1
-
     seasonal_cycle = np.nansum(
         [
             (coeffs[idx * 4] * yearly_predictor + coeffs[idx * 4 + 1])
@@ -54,11 +49,11 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
         ],
         axis=0,
     )
-    return beta0 + beta1 * yearly_predictor + seasonal_cycle
+    return seasonal_cycle
 
 
-def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
-    """construct a Fourier Series from yearly predictors with fitted coeffs - numpy wrapper.
+def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
+    """construct a Fourier Series from yearly predictors with fitted coeffs.
 
     Parameters
     ----------
@@ -91,7 +86,7 @@ def generate_fourier_series(yearly_predictor, coeffs, time, time_dim="time"):
         yearly_predictor, time, time_dim
     )
 
-    predictions = xr.apply_ufunc(
+    predictions = upsampled_y + xr.apply_ufunc(
         _generate_fourier_series_np,
         upsampled_y,
         coeffs,
@@ -270,10 +265,13 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
 
+    # subtract annual mean to have seasonal anomalies around 0
+    seasonal_deviations = monthly_target - yearly_predictor
+
     n_sel, coeffs, preds = xr.apply_ufunc(
         _fit_fourier_order_np,
         yearly_predictor,
-        monthly_target,
+        seasonal_deviations,
         input_core_dims=[[time_dim], [time_dim]],
         output_core_dims=([], ["coeff"], [time_dim]),
         vectorize=True,
@@ -281,10 +279,12 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
         kwargs={"max_order": max_order},
     )
 
+    preds = yearly_predictor + preds
+
     data_vars = {
         "n_sel": n_sel,
         "coeffs": coeffs,
-        "predictions": preds,
+        "predictions": preds.transpose(time_dim, ...),
     }
 
     return xr.Dataset(data_vars)
