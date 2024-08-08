@@ -25,8 +25,8 @@ ignore = [
 ]
 select = [
   "F", # Pyflakes
-  "E", # Pycodestyle
-  "W", # warnings
+  "E", # pycodestyle - Errors
+  "W", # pycodestyle - Warnings
   "I", # isort
   "UP", # Pyupgrade
 ]
