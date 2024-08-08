@@ -14,6 +14,9 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
+- Ensure the power transformer yields the correct normalization for more cases see `Yeo-Johnson power transformer`_.
+- The auto-regression for monthly variables now has no bounds anymore and the covariance is estimated on the residuals
+  of the AR(1) instead of adjusting the empirical covariance matrix with the AR slopes see `Auto-Regression`_.
 - The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_, `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_):
 
   ============ ============= =========
@@ -60,7 +63,8 @@ that this led to some numerical changes compared to the MESMER-M publication
 - move the harmonic model and power transformer functionalities to the stats module (
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
 
-**Auto-Regression**
+Auto-Regression
+~~~~~~~~~~~~~~~
 
 - Implement functions performing the monthly (cyclo-stationary) auto-regression and adapt these functions to
   work with xarray. This includes extracting the drawing of spatially correlated innovations to a
@@ -74,7 +78,8 @@ that this led to some numerical changes compared to the MESMER-M publication
 - Implement function to localize the empirical covarince matrix for each month individually to use in drawing
   of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
 
-**Yeo-Johnson power transformer**
+Yeo-Johnson power transformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Ensure the power transformer yields the correct normalization for more cases (
    `#440 <https://github.com/MESMER-group/mesmer/issues/440>`_):
@@ -100,17 +105,21 @@ that this led to some numerical changes compared to the MESMER-M publication
 - add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_)
 
 
-**Harmonic model**
+Harmonic model
+~~~~~~~~~~~~~~
 
 -  Performance and other optimizations:
 
    - only fit orders up to local minimum and use coeffs from precious order as first guess (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_)
    - infer the harmonic model order from the coefficients (`#434 <https://github.com/MESMER-group/mesmer/pull/434>`_)
 -  return residuals instead of the loss for the optimization (`#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
+-  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415/>_` and
+   `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 -  add helper function to upsample yearly data to monthly resolution (
    `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
    `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
+  and move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
 - fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
 -  Refactor variable names, small code improvements, fixes and clean docstring (
    `#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
