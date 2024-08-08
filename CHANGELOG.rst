@@ -119,7 +119,7 @@ Harmonic model
    `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
    `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
-  and move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
+  move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
 - fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
 -  Refactor variable names, small code improvements, fixes and clean docstring (
    `#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
