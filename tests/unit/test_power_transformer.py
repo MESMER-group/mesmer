@@ -106,7 +106,7 @@ def test_yeo_johnson_transform_np_all():
 
 
 def test_yeo_johnson_transform_np_sklearn():
-    # test if our power trasform is the same as sklearns
+    # test if our power transform is the same as sklearns
     np.random.seed(0)
     n_ts = 20
 
@@ -138,7 +138,7 @@ def test_transform_roundtrip():
 
 
 def test_yeo_johnson_inverse_transform_np_sklearn():
-    # test if our inverse power trasform is the same as sklearn's for constant lambda
+    # test if our inverse power transform is the same as sklearn's for constant lambda
     np.random.seed(0)
     n_ts = 20
 

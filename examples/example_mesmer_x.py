@@ -151,7 +151,7 @@ def main():
         dico_gps_nan,
     ) = load_inputs_MESMERx(cfg, [targ, pred, sub_pred], esms)
 
-    # just for readibility
+    # just for readability
     print(" ")
     # ==============================================================
     # ==============================================================
@@ -160,7 +160,7 @@ def main():
     # 3. EXAMPLE TO RUN MESMER-X
     # ==============================================================
     # --------------------------------------------------------------
-    # 3.1. PREPARING DATA FOR EXAMPLE: temporary reformating of data: based on list of xarrays, one per scenario
+    # 3.1. PREPARING DATA FOR EXAMPLE: temporary reformatting of data: based on list of xarrays, one per scenario
     # --------------------------------------------------------------
     # esm test
     esm = "CanESM5"
@@ -271,7 +271,7 @@ def main():
     # NEW CODE OF MESMER, output = 'transf_emus'
     transf_emus = []  # TODO
 
-    # probability integral transform: projection of the transformed data on the knwon distributions
+    # probability integral transform: projection of the transformed data on the known distributions
     emus = mesmer_x_train_utils.probability_integral_transform(
         data=transf_emus,
         expr_start="norm(loc=0, scale=1)",
