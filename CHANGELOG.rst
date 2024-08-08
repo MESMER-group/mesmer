@@ -14,9 +14,6 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
-- Ensure the power transformer yields the correct normalization for more cases see `Yeo-Johnson power transformer`_.
-- The auto-regression for monthly variables now has no bounds anymore and the covariance is estimated on the residuals
-  of the AR(1) instead of adjusting the empirical covariance matrix with the AR slopes see `Auto-Regression`_.
 - The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_, `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_):
 
   ============ ============= =========
