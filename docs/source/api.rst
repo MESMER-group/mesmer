@@ -43,7 +43,7 @@ Harmonic Model
 .. autosummary::
    :toctree: generated/
 
-   ~stats.predict_fourier_series
+   ~stats.predict_harmonic_model
    ~stats.fit_harmonic_model
 
 Power Transformer
