@@ -9,15 +9,19 @@ import mesmer
 def main():
     start = dt.datetime.now()
 
-    # load data
+    # some setup
     model = "IPSL-CM6A-LR"
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
-    path_tas = cmip6_data_path / "tas" / "ann" / "g025"
-    fN_hist = path_tas / f"tas_ann_{model}_historical_r1i1p1f1_g025.nc"
-    fN_proj = path_tas / f"tas_ann_{model}_ssp585_r1i1p1f1_g025.nc"
+    path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
+    fN_hist = path_tas_ann / f"tas_ann_{model}_historical_r1i1p1f1_g025.nc"
+    fN_proj = path_tas_ann / f"tas_ann_{model}_ssp585_r1i1p1f1_g025.nc"
 
+    LOCALISATION_RADII = list(range(1250, 6251, 250)) + list(range(6500, 8501, 500))
+    THRESHOLD_LAND = 1 / 3
+
+    # load data
     tas_y = xr.open_mfdataset(
         [fN_hist, fN_proj],
         combine="by_coords",
@@ -29,9 +33,9 @@ def main():
         drop_variables=["height", "file_qf"],
     ).load()
 
-    path_tas = cmip6_data_path / "tas" / "mon" / "g025"
-    fN_hist = path_tas / f"tas_mon_{model}_historical_r1i1p1f1_g025.nc"
-    fN_proj = path_tas / f"tas_mon_{model}_ssp585_r1i1p1f1_g025.nc"
+    path_tas_mon = cmip6_data_path / "tas" / "mon" / "g025"
+    fN_hist = path_tas_mon / f"tas_mon_{model}_historical_r1i1p1f1_g025.nc"
+    fN_proj = path_tas_mon / f"tas_mon_{model}_ssp585_r1i1p1f1_g025.nc"
     tas_m = xr.open_mfdataset(
         [fN_hist, fN_proj],
         combine="by_coords",
@@ -57,8 +61,8 @@ def main():
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked_y = mask_and_stack(tas_y, threshold_land=1 / 3)
-    tas_stacked_m = mask_and_stack(tas_m, threshold_land=1 / 3)
+    tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
+    tas_stacked_m = mask_and_stack(tas_m, threshold_land=THRESHOLD_LAND)
 
     # fit harmonic model
     harmonic_model_fit = mesmer.stats.fit_harmonic_model(
@@ -81,33 +85,7 @@ def main():
 
     # work out covariance matrix
     geodist = mesmer.geospatial.geodist_exact(tas_stacked_y.lon, tas_stacked_y.lat)
-    LOCALISATION_RADII = [
-        1250,
-        1500,
-        1750,
-        2000,
-        2250,
-        2500,
-        2750,
-        3000,
-        3250,
-        3500,
-        3750,
-        4000,
-        4250,
-        4500,
-        4750,
-        5000,
-        5250,
-        5500,
-        6000,
-        6250,
-        6500,
-        7000,
-        7500,
-        8000,
-        8500,
-    ]
+
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
     )
@@ -128,7 +106,7 @@ def main():
     # preprocess tas
     ref = tas_y.sel(time=ref_period).mean("time", keep_attrs=True)
     tas_y = tas_y - ref
-    tas_stacked_y = mask_and_stack(tas_y, threshold_land=1 / 3)
+    tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
 
     # we need to keep the original grid
     grid_orig = ref[["lat", "lon"]]
