@@ -82,7 +82,7 @@ class Expression:
         - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
         """
 
-        # basic initalization
+        # basic initialization
         self.expression = expr
         self.expression_name = expr_name
 
@@ -267,7 +267,7 @@ class Expression:
                         if t.startswith("np."):
                             if t[len("np.") :] not in vars(np):
                                 raise ValueError(
-                                    f"Proposed a numpy function that doesnt exist: {t}"
+                                    f"Proposed a numpy function that does not exist: {t}"
                                 )
                             else:
                                 # nothing to replace, can go with that
@@ -275,7 +275,7 @@ class Expression:
                         elif t.startswith("math."):
                             if t[len("math.") :] not in vars(math):
                                 raise ValueError(
-                                    f"Proposed a math function that doesnt exist: {t}"
+                                    f"Proposed a math function that does not exist: {t}"
                                 )
                             else:
                                 # nothing to replace, can go with that
@@ -287,7 +287,7 @@ class Expression:
                         else:
                             raise ValueError(
                                 f"The term {t} appears in {self.parameters_expressions[param]},"
-                                " but couldnt find an equivalent in numpy or math."
+                                " but couldn't find an equivalent in numpy or math."
                             )
                     else:
                         # was a readable character, is still a readable character,
@@ -580,7 +580,7 @@ def listxrds_to_np(listds, name_var, forcescen, coords=None):
         for item in listds:
 
             if item[1] == scen:
-                # for each scenario, creating one unique serie: consistency of members &
+                # for each scenario, creating one unique series: consistency of members &
                 # scenarios have to be ensured while loading data
                 if coords is not None:
                     tmp.append(item[0][name_var].loc[coords].values.flatten())

@@ -604,7 +604,7 @@ def _fit_auto_regression_np(data, lags):
 def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly
     data. The parameters are estimated for each month and gridpoint separately.
-    This is based on the assuption that e.g. June depends on May differently
+    This is based on the assumption that e.g. June depends on May differently
     than July on June. The auto regression is fit along `time_dim`.
 
     A cyclo-stationary AR(1) process is defined as follows:
@@ -698,7 +698,7 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
     slope : :obj:`np.array`
         The slope of the AR(1) process.
     intercept : :obj:`np.array`
-        The intercept of the AR(1) proces.
+        The intercept of the AR(1) process.
     """
 
     def lin_func(indep_var, slope, intercept):
@@ -890,7 +890,7 @@ def _draw_auto_regression_monthly_np(
             innovations[:, :, month, :] = _draw_innovations_correlated_np(
                 cov_month, n_gridcells, n_samples, n_ts // 12, buffer
             )
-    # reshape innovations into continous time series
+    # reshape innovations into continuous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
     # predict auto-regressive process using innovations

@@ -40,7 +40,7 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     months = np.tile(np.arange(1, 13), n_years)
 
     # fix these parameters, according to paper
-    # we could also fit them and give an inital guess of 0 and 1 in the coeffs array as before
+    # we could also fit them and give an initial guess of 0 and 1 in the coeffs array as before
     beta0 = 0
     beta1 = 1
 

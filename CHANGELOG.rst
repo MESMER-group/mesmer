@@ -42,7 +42,7 @@ Internal Changes
   By `Mathias Hauser`_.
 - Restore compatibility with pandas version v2.2 and xarray version v2024.02 (`#404 <https://github.com/MESMER-group/mesmer/pull/404>`_).
   By `Mathias Hauser`_.
-- Explicitely include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
+- Explicitly include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
 - Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
   By `Victoria Bauer`_.
 
@@ -84,7 +84,7 @@ that this led to some numerical changes compared to the MESMER-M publication
       `#446 <https://github.com/MESMER-group/mesmer/pull/446>`_)
    -  remove jacobian ``rosen_der`` from fit (
       `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_)
-   -  change opimization method from *SLSQP* to *Nelder-Mead* (
+   -  change optimization method from *SLSQP* to *Nelder-Mead* (
       `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_)
 -  adjust the first guess to assume the data is normally distributed (
    `#429 <https://github.com/MESMER-group/mesmer/pull/429>`_)
