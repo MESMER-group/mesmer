@@ -144,9 +144,9 @@ def main():
         land_targ,
         land_pred,
         phi_gc,
-        ind,
-        gp2reg,
-        ww_reg,
+        # ind, these were only for regional aggregation
+        # gp2reg,
+        # ww_reg,
         used_esms,
         dico_gps_nan,
     ) = load_inputs_MESMERx(cfg, [targ, pred, sub_pred], esms)
