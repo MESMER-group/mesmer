@@ -265,6 +265,7 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
 
+    # subtract annual mean to have seasonal anomalies around 0
     seasonal_deviations = monthly_target - yearly_predictor
 
     n_sel, coeffs, preds = xr.apply_ufunc(
