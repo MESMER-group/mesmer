@@ -250,9 +250,13 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     # start again. Better to stop once min is reached (to limit computational effort
     # and singular matrices).
 
+    # start with cholesky decomposition
+    # function returns method and can switch to eigh() if cov is singular
+    method = "cholesky"
     localization_radius = _minimize_local_discrete(
         _ecov_crossvalidation,
         localization_radii,
+        method,
         data=data,
         weights=weights,
         localizer=localizer,
@@ -265,7 +269,9 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
-def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
+def _ecov_crossvalidation(
+    localization_radius, method, *, data, weights, localizer, k_folds
+):
     """k-fold crossvalidation for a single localization radius"""
 
     n_samples, __ = data.shape
@@ -291,19 +297,22 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
 
         try:
             # sum log likelihood of all crossvalidation folds
-            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
+            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
         except np.linalg.LinAlgError:
+            # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
             warnings.warn(
                 f"Singular matrix for localization_radius of {localization_radius}."
-                " Skipping this radius.",
+                "\n Switching to eigh().",
                 LinAlgWarning,
             )
-            return float("inf")
+            # switch to eigh from now on
+            method = "eigh"
+            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
 
-    return nll
+    return nll, method
 
 
-def _get_neg_loglikelihood(data, covariance, weights):
+def _get_neg_loglikelihood(data, covariance, weights, method):
     """calculate weighted log likelihood for multivariate normal distribution
 
     Parameters
@@ -330,11 +339,15 @@ def _get_neg_loglikelihood(data, covariance, weights):
     The mean is assumed to be zero for all points.
     """
 
-    # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
-    # optimizing the rest
+    if method == "cholesky":
+        cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
+    else:
+        w, v = np.linalg.eigh(covariance)
+        cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
 
-    cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
-    log_likelihood = scipy.stats.multivariate_normal.logpdf(data, cov=cov)
+    log_likelihood = scipy.stats.multivariate_normal.logpdf(
+        data, cov=cov, allow_singular=True
+    )
 
     # logpdf can return a scalar, which np.average does not like
     log_likelihood = np.atleast_1d(log_likelihood)
