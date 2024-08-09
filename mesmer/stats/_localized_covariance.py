@@ -250,6 +250,8 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     # start again. Better to stop once min is reached (to limit computational effort
     # and singular matrices).
 
+    # start with cholesky decomposition
+    # function returns method and can switch to eigh() if cov is singular
     method = "cholesky"
     localization_radius = _minimize_local_discrete(
         _ecov_crossvalidation,
@@ -297,12 +299,13 @@ def _ecov_crossvalidation(localization_radius, method, *, data, weights, localiz
             nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
         except np.linalg.LinAlgError:
             # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
-            method = "eigh"
             warnings.warn(
                 f"Singular matrix for localization_radius of {localization_radius}."
                 "\n Switching to eigh().",
                 LinAlgWarning,
             )
+            # switch to eigh from now on
+            method = "eigh"
             nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
 
     return nll, method
