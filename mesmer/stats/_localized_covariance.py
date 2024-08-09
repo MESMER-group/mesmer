@@ -271,7 +271,6 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
 
 def _ecov_crossvalidation(localization_radius, method, *, data, weights, localizer, k_folds):
     """k-fold crossvalidation for a single localization radius"""
-    print(method)
 
     n_samples, __ = data.shape
     n_iterations = min(n_samples, k_folds)
