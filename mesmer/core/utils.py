@@ -75,6 +75,9 @@ def _minimize_local_discrete(func, sequence, changable, **kwargs):
             sel = i - 1
             if sel == 0:
                 warnings.warn("First element is local minimum.", OptimizeWarning)
+            elif sel == -1:
+                raise ValueError("First radius already inf.")
+
             return sequence[sel]
 
     warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
