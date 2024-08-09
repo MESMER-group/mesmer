@@ -246,9 +246,11 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     # start again. Better to stop once min is reached (to limit computational effort
     # and singular matrices).
 
+    method = "cholesky"
     localization_radius = _minimize_local_discrete(
         _ecov_crossvalidation,
         localization_radii,
+        method,
         data=data,
         weights=weights,
         localizer=localizer,
@@ -261,15 +263,15 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
-def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
+def _ecov_crossvalidation(localization_radius, method, *, data, weights, localizer, k_folds):
     """k-fold crossvalidation for a single localization radius"""
+    print(method)
 
     n_samples, __ = data.shape
     n_iterations = min(n_samples, k_folds)
 
     nll = 0  # negative log likelihood
 
-    method = "cholesky"
     for it in range(n_iterations):
 
         # every `k_folds` element for validation such that each is used exactly once
@@ -290,8 +292,8 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
             # sum log likelihood of all crossvalidation folds
             nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
         except np.linalg.LinAlgError:
-            method = "eigh"
             # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
+            method = "eigh"
             warnings.warn(
                 f"Singular matrix for localization_radius of {localization_radius}."
                 "\n Switching to eigh().",
@@ -299,7 +301,7 @@ def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_fo
             )
             nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
 
-    return nll
+    return nll, method
 
 
 def _get_neg_loglikelihood(data, covariance, weights, method):
