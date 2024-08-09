@@ -4,8 +4,13 @@ import scipy as sp
 import xarray as xr
 from sklearn.preprocessing import PowerTransformer
 
+import mesmer
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.mesmer_m import power_transformer
+from mesmer.stats._power_transformer import (
+    _yeo_johnson_inverse_transform_np,
+    _yeo_johnson_optimize_lambda_np,
+    _yeo_johnson_transform_np,
+)
 from mesmer.testing import trend_data_2D
 
 
@@ -25,7 +30,7 @@ from mesmer.testing import trend_data_2D
 )
 def test_lambda_function(coeffs, t, expected):
 
-    result = power_transformer.lambda_function(coeffs[0], coeffs[1], t)
+    result = mesmer.stats.lambda_function(coeffs[0], coeffs[1], t)
     np.testing.assert_allclose(result, expected)
 
 
@@ -37,9 +42,7 @@ def test_yeo_johnson_optimize_lambda_np_normal():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
-    result = power_transformer._yeo_johnson_optimize_lambda_np(
-        monthly_residuals, yearly_T
-    )
+    result = _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_T)
     # to test viability
     expected = np.array([1, 0])
     np.testing.assert_allclose(result, expected, atol=1e-2)
@@ -68,13 +71,9 @@ def test_yeo_johnson_optimize_lambda_np(skew, bounds):
     yearly_T = np.random.randn(n_years)
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
-    coeffs = power_transformer._yeo_johnson_optimize_lambda_np(
-        local_monthly_residuals, yearly_T
-    )
-    lmbda = power_transformer.lambda_function(coeffs[0], coeffs[1], yearly_T)
-    transformed = power_transformer._yeo_johnson_transform_np(
-        local_monthly_residuals, lmbda
-    )
+    coeffs = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
+    lmbda = mesmer.stats.lambda_function(coeffs[0], coeffs[1], yearly_T)
+    transformed = _yeo_johnson_transform_np(local_monthly_residuals, lmbda)
 
     assert (lmbda >= bounds[0]).all() & (lmbda <= bounds[1]).all()
     np.testing.assert_allclose(sp.stats.skew(transformed), 0, atol=0.1)
@@ -88,7 +87,7 @@ def test_yeo_johnson_transform_np_trivial():
 
     monthly_residuals = np.ones((n_ts))
 
-    result = power_transformer._yeo_johnson_transform_np(monthly_residuals, lambdas)
+    result = _yeo_johnson_transform_np(monthly_residuals, lambdas)
     expected = np.ones((n_ts))
 
     np.testing.assert_equal(result, expected)
@@ -100,23 +99,21 @@ def test_yeo_johnson_transform_np_all():
     local_monthly_residuals = np.array([0.0, 1.0, 0.0, 1.0, -1.0, -1.0])
     lambdas = np.array([1.0, 1.0, 0.0, 0.0, 1.0, 2.0])
 
-    result = power_transformer._yeo_johnson_transform_np(
-        local_monthly_residuals, lambdas
-    )
+    result = _yeo_johnson_transform_np(local_monthly_residuals, lambdas)
     expected = np.array([0.0, 1.0, 0.0, np.log1p(1.0), -1.0, -np.log1p(1.0)])
 
     np.testing.assert_equal(result, expected)
 
 
 def test_yeo_johnson_transform_np_sklearn():
-    # test if our power trasform is the same as sklearns
+    # test if our power transform is the same as sklearns
     np.random.seed(0)
     n_ts = 20
 
     lambdas = np.tile([2.0], (n_ts))
 
     monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
-    result = power_transformer._yeo_johnson_transform_np(monthly_residuals, lambdas)
+    result = _yeo_johnson_transform_np(monthly_residuals, lambdas)
 
     pt_sklearn = PowerTransformer(method="yeo-johnson", standardize=False)
     pt_sklearn.lambdas_ = np.array([2.0])
@@ -134,25 +131,21 @@ def test_transform_roundtrip():
     # lambda between 0 and 1 and lambda between 1 and 2 for concave and convex cases
     lambdas = np.array([0, 1, 2, 0.5, 1.5])
 
-    transformed = power_transformer._yeo_johnson_transform_np(
-        monthly_residuals, lambdas
-    )
-    result = power_transformer._yeo_johnson_inverse_transform_np(transformed, lambdas)
+    transformed = _yeo_johnson_transform_np(monthly_residuals, lambdas)
+    result = _yeo_johnson_inverse_transform_np(transformed, lambdas)
 
     np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
 
 
 def test_yeo_johnson_inverse_transform_np_sklearn():
-    # test if our inverse power trasform is the same as sklearn's for constant lambda
+    # test if our inverse power transform is the same as sklearn's for constant lambda
     np.random.seed(0)
     n_ts = 20
 
     lambdas = np.tile([2.0], (n_ts))
 
     monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
-    result = power_transformer._yeo_johnson_inverse_transform_np(
-        monthly_residuals, lambdas
-    )
+    result = _yeo_johnson_inverse_transform_np(monthly_residuals, lambdas)
 
     pt_sklearn = PowerTransformer(method="yeo-johnson", standardize=False)
     pt_sklearn.lambdas_ = np.array([2.0])
@@ -170,10 +163,8 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     yearly_T = np.ones(n_ts) * yearly_T_value
     local_monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
 
-    ourfit = power_transformer._yeo_johnson_optimize_lambda_np(
-        local_monthly_residuals, yearly_T
-    )
-    result = power_transformer.lambda_function(ourfit[0], ourfit[1], yearly_T_value)
+    ourfit = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
+    result = mesmer.stats.lambda_function(ourfit[0], ourfit[1], yearly_T_value)
     sklearnfit = PowerTransformer(method="yeo-johnson", standardize=False).fit(
         local_monthly_residuals.reshape(-1, 1), yearly_T.reshape(-1, 1)
     )
@@ -221,13 +212,13 @@ def test_power_transformer_xr():
     yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
 
     # new method
-    pt_coefficients = power_transformer.fit_yeo_johnson_transform(
+    pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
         monthly_residuals, yearly_T
     )
-    transformed = power_transformer.yeo_johnson_transform(
+    transformed = mesmer.stats.yeo_johnson_transform(
         monthly_residuals, pt_coefficients, yearly_T
     )
-    inverse_transformed = power_transformer.inverse_yeo_johnson_transform(
+    inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
         transformed.transformed, pt_coefficients, yearly_T
     )
     xr.testing.assert_allclose(

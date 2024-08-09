@@ -82,7 +82,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
     Parameters
     ----------
     preds : dict
-        dictionnary[target][name_covariant] = covariant. The covariants must be dictionnaries with scenarios as keys.
+        dictionary[target][name_covariant] = covariant. The covariants must be dictionaries with scenarios as keys.
     targs : dict
         nested dictionary of targets with keys
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
@@ -98,7 +98,7 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
     Returns
     -------
     params_l_distrib : dict
-        nested dictionary of local variability paramters. For each target of targs,
+        nested dictionary of local variability parameters. For each target of targs,
 
         - ["parameters"] (parameters for the fit, dict)
         - ["distribution"] (fitted distribution, str)
@@ -116,8 +116,8 @@ def train_l_distrib(preds, targs, cfg, form_fit_distrib, save_params=True, **kwa
     - Disclaimer:
     - TODO:
         Pass everything in xarray, especially to handle dimensions 'runs' and 'scenarios'
-        Write more explicitely on typo of form_fit_distrib.
-        Could simplify preds to have only one input for each variable, even if shared among parameters, handle explicitely things in _init_ of distrib_cov
+        Write more explicitly on typo of form_fit_distrib.
+        Could simplify preds to have only one input for each variable, even if shared among parameters, handle explicitly things in _init_ of distrib_cov
 
     """
 
@@ -306,7 +306,7 @@ def transf_distrib2normal(preds, targs, params_l_distrib, threshold_sigma=6.0):
         nested dictionary of targets with keys
         - [targ][scen] (3d array (run, time, gp) of target for specific scenario)
     params_l_distrib : dict
-        nested dictionary of local variability paramters. Result of the function 'train_l_distrib'.
+        nested dictionary of local variability parameters. Result of the function 'train_l_distrib'.
     threshold_sigma : float
         If a distribution is not correctly fitted, some values to transform may lead to unlikely values for a standard normal distribution. If above, they will be set to the threshold. Default : 6 (~happens once every 1e9 times)
 
@@ -541,7 +541,7 @@ class distrib_cov:
         Type of algorithm used during the optimization, using the function 'minimize'. Default: 'Nelder-Mead'. HIGHLY RECOMMENDED, for its stability.
 
     xtol_req : float
-        Accurracy of the fit. Interpreted differently depending on 'method_fit'. Default: 1e-3
+        Accuracy of the fit. Interpreted differently depending on 'method_fit'. Default: 1e-3
 
     maxiter : None or int
         Maximum number of iteration of the optimization. Default: 5000. Doubled if logistic asked.
@@ -552,8 +552,8 @@ class distrib_cov:
     fg_shape : float
         First guess for the semi-analytical optimization of the actual first guess of the distribution.
 
-    boundaries_params : dictionnary{'loc', 'scale', 'shape'} of list of two values
-        Interval for the parameters of the distribution to fit. Particulary important for positive scale and shape within ]-inf, 1/3]. Very little gridpoints have mean shape above 1/3. When using scipy, calculating an array of means of distributions with shapes > 1/3 causes an issue.
+    boundaries_params : dictionary{'loc', 'scale', 'shape'} of list of two values
+        Interval for the parameters of the distribution to fit. Particularly important for positive scale and shape within ]-inf, 1/3]. Very little gridpoints have mean shape above 1/3. When using scipy, calculating an array of means of distributions with shapes > 1/3 causes an issue.
 
     prior_shape : float or None
         sets a gaussian prior for the shape parameter. prior_shape /2 = standard deviation of this gaussian prior. Default: 0, equivalent to None.
@@ -741,9 +741,11 @@ class distrib_cov:
             self.boundaries_params = boundaries_params
         self.boundaries_coeffs = boundaries_coeffs  # this one is more technical
         self.xtol_req = xtol_req
-        self.maxiter = maxiter  # used to have np.inf, but sometimes, the fit doesnt work... and it is meant to.
+        # used to have np.inf, but sometimes, the fit does not work... and it is meant to.
+        self.maxiter = maxiter
         self.error_failedfit = error_failedfit
-        self.maxfev = maxfev  # used to have np.inf, but sometimes, the fit doesnt work... and it is meant to.
+        # used to have np.inf, but sometimes, the fit does not work... and it is meant to.
+        self.maxfev = maxfev
 
         # TNC and trust-constr: better to use xtol
         if method_fit in ["CG", "BFGS", "L-BFGS-B"]:
@@ -1120,7 +1122,7 @@ class distrib_cov:
         # INITIATING
         self.tmp_sol = {}
 
-        # TRANFORMATION?
+        # TRANSFORMATION?
         # using all inputs on location to identify correct boundaries. More statistical sense with only linear terms?
         if self.transfo[0]:
             inds_sigm = np.arange(len(self.cov["cov_loc_form"]))
@@ -1516,7 +1518,7 @@ class distrib_cov:
             low, top = self.boundaries_coeffs[coeff]
             cff = args[self.coeffs_names.index(coeff)]
 
-            # out of boundaries, strong signal to negative log likelyhood
+            # out of boundaries, strong signal to negative log likelihood
             if (
                 np.any(cff < low)
                 or np.any(top < cff)
@@ -1619,7 +1621,7 @@ class distrib_cov:
             if test:  # if false, no need to test
                 low, high = self.boundaries_params["shape"]
 
-                # out of boundaries, strong signal to negative log likelyhood
+                # out of boundaries, strong signal to negative log likelihood
                 if (
                     np.any(-c < low)
                     or np.any(high < -c)
@@ -1633,7 +1635,7 @@ class distrib_cov:
             if self.distrib in ["GEV", "gaussian"]:
                 low, high = self.boundaries_params["scale"]
 
-                # out of boundaries, strong signal to negative log likelyhood
+                # out of boundaries, strong signal to negative log likelihood
                 if np.any(scale < low) or np.any(high < scale):
                     # or np.any(np.isclose(scale , low)) or np.any(np.isclose(high , scale)):
                     # trying without the isclose, cases with no evolutions, ie scale~=0
@@ -1641,7 +1643,7 @@ class distrib_cov:
             elif self.distrib in ["poisson"]:
                 low, high = self.boundaries_params["mu"]
 
-                # out of boundaries, strong signal to negative log likelyhood
+                # out of boundaries, strong signal to negative log likelihood
                 if np.any(mu < low) or np.any(high < mu):
                     # or np.any(np.isclose(scale , low)) or np.any(np.isclose(high , scale)):
                     # trying without the isclose, cases with no evolutions, ie scale~=0
@@ -1651,7 +1653,7 @@ class distrib_cov:
         if test:  # if false, no need to test
             low, high = self.boundaries_params["loc"]
 
-            # out of boundaries, strong signal to negative log likelyhood
+            # out of boundaries, strong signal to negative log likelihood
             if np.any(loc < low) or np.any(high < loc):
                 # or np.any(np.isclose(loc , low)) or np.any(np.isclose(high , loc)):
                 test = False

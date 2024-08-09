@@ -101,7 +101,7 @@ class ConfigMesmerX:
         if "dir_aux" in self.paths:
             self.dir_aux = self.paths["dir_aux"]
         else:
-            self.dir_aux = "auxillary/"
+            self.dir_aux = "auxiliary/"
 
         # mesmer params
         if "dir_mesmer_params" in self.paths:
