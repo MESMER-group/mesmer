@@ -489,7 +489,9 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
-def _draw_innovations_correlated_np(seed, covariance, n_gridcells, n_samples, n_ts, buffer):
+def _draw_innovations_correlated_np(
+    seed, covariance, n_gridcells, n_samples, n_ts, buffer
+):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
@@ -501,7 +503,7 @@ def _draw_innovations_correlated_np(seed, covariance, n_gridcells, n_samples, n_
             size=[n_samples, n_ts + buffer],
             method="cholesky",
         ).reshape(n_samples, n_ts + buffer, n_gridcells)
-    
+
     except np.linalg.LinAlgError:
         warnings.warn(
             "Covariance matrix is not positive definite, using eigh instead of cholesky.",

@@ -444,7 +444,7 @@ def test_draw_auto_regression_numeric():
         buffer=3,
     )
 
-    expected = np.array([1.07417558, 1.0240404 , 1.77397341, 2.71531235])
+    expected = np.array([1.07417558, 1.0240404, 1.77397341, 2.71531235])
     expected = expected.reshape(1, 4, 1)
 
     np.testing.assert_allclose(result, expected)

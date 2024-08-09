@@ -34,7 +34,7 @@ def _minimize_local_discrete(func, sequence, changable, **kwargs):
     sequence : iterable
         An iterable with discrete values to evaluate func for.
     changable : str
-        changable parameter for the function, enables to feed back function 
+        changable parameter for the function, enables to feed back function
         output at input
     **kwargs : Mapping
         Keyword arguments passed to `func`.
