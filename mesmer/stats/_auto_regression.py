@@ -105,7 +105,6 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     coeffs, intercept = ar_params_scen.coeffs.mean("stack"), ar_params_scen.intercept.mean("stack")
   
     ar_params = xr.Dataset({"intercept": intercept, "coeffs": coeffs, "standard_deviation": standard_deviation})
-    #ar_params = ar_params.drop_vars("")
 
     return ar_params
 
