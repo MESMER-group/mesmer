@@ -57,7 +57,7 @@ def _yeo_johnson_transform_np(data, lambdas):
 
     eps = np.finfo(np.float64).eps
 
-    transformed = np.empty_like(data)
+    transformed = np.zeros_like(data)
     # get positions of four cases:
     # NOTE: this code is copied from sklearn's PowerTransformer, see
     # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
@@ -105,7 +105,7 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
 
     eps = np.finfo(np.float64).eps
 
-    transformed = np.empty_like(data)
+    transformed = np.zeros_like(data)
     # get positions of four cases:
     pos_a = (data >= 0) & (np.abs(lambdas) < eps)
     pos_b = (data >= 0) & (np.abs(lambdas) >= eps)
