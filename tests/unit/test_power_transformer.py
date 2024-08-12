@@ -119,6 +119,7 @@ def test_yeo_johnson_transform_np_sklearn():
     pt_sklearn.lambdas_ = np.array([2.0])
     expected = pt_sklearn.transform(monthly_residuals.reshape(-1, 1))
 
+    # only approximately the same due to #494
     np.testing.assert_allclose(result, expected.reshape(-1))
 
 
@@ -167,6 +168,7 @@ def test_yeo_johnson_inverse_transform_np_sklearn():
     pt_sklearn.lambdas_ = np.array([2.0])
     expected = pt_sklearn.inverse_transform(monthly_residuals.reshape(-1, 1))
 
+    # only approximately the same due to #494
     np.testing.assert_allclose(result, expected.reshape(-1))
 
 
