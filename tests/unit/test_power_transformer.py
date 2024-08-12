@@ -150,7 +150,7 @@ def test_transform_roundtrip_special_cases(value, lmbda, lambda_delta):
     transformed = _yeo_johnson_transform_np(x, lambdas)
     result = _yeo_johnson_inverse_transform_np(transformed, lambdas)
 
-    np.testing.assert_allclose(result, x, atol=1e-7)
+    np.testing.assert_allclose(result, x)
 
 
 def test_yeo_johnson_inverse_transform_np_sklearn():
