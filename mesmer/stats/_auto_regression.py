@@ -77,12 +77,11 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     -------
     :obj:`xr.Dataset`
         Dataset containing the estimated parameters of the ``intercept``, the AR
-        ``coeffs`` and the ``variance`` of the residuals.
+        ``coeffs`` and the ``standard deviation`` of the residuals.
 
     Notes
     -----
-    Calculates the mean auto regression, first over the ensemble members, then over all
-    scenarios.
+    Calculates the mean auto regression over all ensemble members and scenarios.
     """
 
     ar_params_scen = list()
@@ -90,17 +89,23 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
 
         # BUG/ TODO: fix for v1, see https://github.com/MESMER-group/mesmer/issues/307
-        ar_params["standard_deviation"] = np.sqrt(ar_params.variance)
+        #ar_params["standard_deviation"] = np.sqrt(ar_params.variance)
 
-        if ens_dim in ar_params.dims:
-            ar_params = ar_params.mean(ens_dim)
+        #if ens_dim in ar_params.dims:
+            #ar_params = ar_params.mean(ens_dim)
 
         ar_params_scen.append(ar_params)
 
     ar_params_scen = xr.concat(ar_params_scen, dim="scen")
+    ar_params_scen = ar_params_scen.stack(stack = ["scen", ens_dim])
 
     # return the mean over all scenarios
-    ar_params = ar_params_scen.mean("scen")
+    standard_deviation = np.sqrt(sum(ar_params_scen.variance * (ar_params_scen.nobs-1))/sum(ar_params_scen.nobs-1))
+    standard_deviation = standard_deviation.drop_vars(list(standard_deviation.coords))
+    coeffs, intercept = ar_params_scen.coeffs.mean("stack"), ar_params_scen.intercept.mean("stack")
+  
+    ar_params = xr.Dataset({"intercept": intercept, "coeffs": coeffs, "standard_deviation": standard_deviation})
+    #ar_params = ar_params.drop_vars("")
 
     return ar_params
 
@@ -594,9 +599,7 @@ def _fit_auto_regression_np(data, lags):
     coeffs = AR_result.params[1:]
 
     # variance of the residuals
-    variance = AR_result.sigma2
-
-    nobs = AR_result.nobs
+    variance, nobs = AR_result.sigma2, AR_result.nobs
 
     return intercept, coeffs, variance, nobs
 
