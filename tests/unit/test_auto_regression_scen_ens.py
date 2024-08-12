@@ -1,15 +1,16 @@
 import numpy as np
+import pytest
 import xarray as xr
 from statsmodels.tsa.arima_process import ArmaProcess
 
 import mesmer
 
 
-def generate_ar_samples(ar, n_timesteps=100, n_ens=4):
+def generate_ar_samples(ar, std = 1, n_timesteps=100, n_ens=4):
 
     np.random.seed(0)
 
-    data = ArmaProcess(ar, 0.1).generate_sample([n_timesteps, n_ens])
+    data = ArmaProcess(ar, 1).generate_sample([n_timesteps, n_ens], scale = std)
 
     ens = np.arange(n_ens)
 
@@ -61,19 +62,23 @@ def test_select_ar_order_scen_ens_no_ens_dim():
     xr.testing.assert_equal(result, expected)
 
 
-def test_fit_auto_regression_scen_ens_one_scen():
+@pytest.mark.parametrize("da_std", [1, 0.1, 0.5])
+def test_fit_auto_regression_scen_ens_one_scen(da_std):
 
-    da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
+    n_timesteps = 100
+    da = generate_ar_samples([1, 0.5, 0.3, 0.4], da_std, n_timesteps=n_timesteps, n_ens=4)
 
     result = mesmer.stats._fit_auto_regression_scen_ens(
         da, dim="time", ens_dim="ens", lags=3
     )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-    expected["standard_deviation"] = np.sqrt(expected.variance)
-    expected = expected.mean("ens")
+    expected["standard_deviation"] = np.sqrt(sum(expected.variance * (expected.nobs-1))/sum(expected.nobs-1))
+    expected["coeffs"], expected["intercept"] = expected.coeffs.mean("ens"), expected.intercept.mean("ens")
+    expected = expected.drop_vars(["nobs", "variance", "ens"])
 
     xr.testing.assert_equal(result, expected)
+    np.testing.assert_allclose(result.standard_deviation, da_std, rtol=1e-1)
 
 
 def test_fit_auto_regression_scen_ens_multi_scen():
