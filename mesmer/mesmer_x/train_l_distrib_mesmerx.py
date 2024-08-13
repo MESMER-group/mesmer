@@ -27,7 +27,7 @@ from mesmer.stats import gaspari_cohn_correlation_matrices
 
 def ignore_warnings(func):
     # adapted from https://stackoverflow.com/a/70292317
-    # TODO: don't supress all warnings
+    # TODO: don't suppress all warnings
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -245,15 +245,15 @@ def np_train_distrib(
     scores_fit=["func_optim", "NLL", "BIC"],
     first_guess=None,
 ):
-    self = distrib_cov(
+    dfit = distrib_cov(
         data_targ=targ_np,
         data_pred=pred_np,
         expr_fit=expr_fit,
         scores_fit=scores_fit,
         first_guess=first_guess,
     )
-    self.fit()
-    return self.coefficients_fit, self.quality_fit
+    dfit.fit()
+    return dfit.coefficients_fit, dfit.quality_fit
 
 
 class distrib_cov:
@@ -386,7 +386,7 @@ class distrib_cov:
                 stability & speed.
 
             * xtol_req: float, default: 1e-3
-                Accurracy of the fit in coefficients. Interpreted differently depending
+                Accuracy of the fit in coefficients. Interpreted differently depending
                 on 'method_fit'.
 
             * ftol_req: float, default: 1e-6
@@ -428,7 +428,7 @@ class distrib_cov:
         - Removed
           - In tests, was checking not only whether the coefficients or parameters were
             exceeding boundaries, but also were close. Removed because of modifications
-            in first guess didnt work with situations with scale=0.
+            in first guess didn't work with situations with scale=0.
           - Forcing values of certain parameters (eg mu for poisson) to be integers: to
             implement in class 'expression'?
 
@@ -516,7 +516,7 @@ class distrib_cov:
         self.first_guess = first_guess
         self.func_first_guess = func_first_guess
         self.n_coeffs = len(self.expr_fit.coefficients_list)
-        if len(self.first_guess) != self.n_coeffs:
+        if (self.first_guess is not None) and (len(self.first_guess) != self.n_coeffs):
             raise ValueError(
                 f"The provided first guess does not have the correct shape: {self.n_coeffs}"
             )
@@ -664,13 +664,13 @@ class distrib_cov:
             bottom, top = self.boundaries_coeffs[coeff]
 
             # TODO: move this check to __init__
-            if coeff not in self.expr_fit.list_coefficients:
+            if coeff not in self.expr_fit.coefficients_list:
                 raise ValueError(
                     f"Provided wrong boundaries on coefficient, {coeff}"
                     " does not exist in expr_fit"
                 )
             else:
-                values = values_coeffs[self.expr_fit.list_coefficients.index(coeff)]
+                values = values_coeffs[self.expr_fit.coefficients_list.index(coeff)]
             if np.any(values < bottom) or np.any(top < values):
                 test = False  # out of boundaries
         return test
@@ -706,7 +706,7 @@ class distrib_cov:
         return test
 
     def _test_proba_value(self, distrib, data):
-        # tested values must have a minimum probability of occuring, i.e. be in a
+        # tested values must have a minimum probability of occurring, i.e. be in a
         # confidence interval
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
@@ -720,7 +720,7 @@ class distrib_cov:
     def test_all(self, coefficients):
         test_coeff = self._test_coeffs(coefficients)
 
-        # tests on coeffs show already that it wont work: fill in the rest with NaN
+        # tests on coeffs show already that it won't work: fill in the rest with NaN
         if not test_coeff:
             return test_coeff, False, False, False
 
@@ -740,7 +740,7 @@ class distrib_cov:
             else:
                 test_param = self._test_evol_params(distrib, self.data_targ)
 
-            # tests on params show already that it wont work: fill in the rest with NaN
+            # tests on params show already that it won't work: fill in the rest with NaN
             if not test_param:
                 return test_coeff, test_param, False, False
 
@@ -760,7 +760,7 @@ class distrib_cov:
                 # evaluated
                 return test_coeff, test_param, test_proba, distrib
 
-    # supress nan & inf warnings
+    # suppress nan & inf warnings
     @ignore_warnings
     def find_fg(self):
         """
@@ -770,9 +770,9 @@ class distrib_cov:
         Motivation:
             In many situations, the fit may be complex because of complex expressions
             for the conditional distributions & because large domains in the set of
-            coefficients lead to unvalid fits (e.g. sample out of support).
+            coefficients lead to invalid fits (e.g. sample out of support).
 
-        Criterias:
+        Criteria:
             The method must return a first guess that is ROBUST (close to the global
             minimum) & VALID (respect all conditions implemented in the tests), must be
             FLEXIBLE (any sample, any distribution & any expression).
@@ -791,7 +791,7 @@ class distrib_cov:
                support of the distribution. Two possibilities tried:
                (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
-               extremly unlikely values, that lead to division by 0 with CDF)
+               extremely unlikely values, that lead to division by 0 with CDF)
                (step 5 still not always working, trying without?)
 
         Risks for the method:
@@ -800,7 +800,7 @@ class distrib_cov:
             the next local minimum is far away.
 
         Justification for the method:
-            This is a surprisingly complex problem to satisfy the criterias of
+            This is a surprisingly complex problem to satisfy the criteria of
             robustness, validity & flexibility.
 
             a. In theory, this problem could be solved with a global optimization. Among
@@ -814,7 +814,7 @@ class distrib_cov:
                  - brute, dual_annealing, direct: performances too low & too slow
                  - differential_evolution: lacks in reproductibility & stability
                  - shgo: good performances with the right sampling method, relatively
-                   fast, but still adds ~10s. Highly dependant on the bounds, must not
+                   fast, but still adds ~10s. Highly dependent on the bounds, must not
                    be too large.
                The best global optimizer, shgo, would then require bounds that are not
                too large.
@@ -848,7 +848,7 @@ class distrib_cov:
         --------
         To anyone trying to improve this part:
         If you attempt to modify the calculation of the first guess, it is *absolutely
-        mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY,
+        mandatory* to test the new code on all criteria: ROBUSTNESS, VALIDITY,
         FLEXIBILITY. In particular, it is mandatory to test it for different
         situations: variables, grid points, distributions & expressions.
         """
@@ -890,7 +890,7 @@ class distrib_cov:
             globalfit_d01 = basinhopping(
                 func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
             )
-            # warning, basinhopping tends to indroduce non-reproductibility in fits,
+            # warning, basinhopping tends to introduce non-reproductibility in fits,
             # reduced when using 2nd round of fits
 
             self.fg_coeffs = globalfit_d01.x
@@ -950,7 +950,7 @@ class distrib_cov:
         self.fg_coeffs = localfit_nll.x
 
         # Step 5: fit on CDF or LL^n (objective: improving all coefficients, necessary
-        # to have all points within support. NB: NLL doesnt behave well enough here)
+        # to have all points within support. NB: NLL does not behave well enough here)
         if False:
             # TODO: unreachable code?
             # fit coefficients on CDFs
@@ -1033,9 +1033,9 @@ class distrib_cov:
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
     def fg_fun_deriv01(self, x):
-        # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
+        self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
         loc_low = self.expr_fit.parameters_values["loc"]
-        # distrib = self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
+        self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
         loc_high = self.expr_fit.parameters_values["loc"]
 
         deriv = {
@@ -1060,14 +1060,14 @@ class distrib_cov:
     def fg_fun_loc(self, x_loc):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
-        # distrib = self.expr_fit.evaluate(x, self.data_pred)
+        self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
         return np.sum((loc - self.smooth_data_targ) ** 2)
 
     def fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
-        # distrib = self.expr_fit.evaluate(x, self.data_pred)
+        self.expr_fit.evaluate(x, self.data_pred)
         loc = self.expr_fit.parameters_values["loc"]
         sca = self.expr_fit.parameters_values["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
@@ -1112,7 +1112,7 @@ class distrib_cov:
 
     # OPTIMIZATION FUNCTIONS & SCORES
     def func_optim(self, coefficients):
-        # check wheter these coefficients respect all conditions: if so, can compute a
+        # check whether these coefficients respect all conditions: if so, can compute a
         # value for the optimization
         test_coeff, test_param, test_proba, distrib = self.test_all(coefficients)
         if test_coeff and test_param and test_proba:
@@ -1214,7 +1214,7 @@ class distrib_cov:
         # averaging
         return np.sum(self.weights_driver * np.array(tmp_cprs))
 
-    @ignore_warnings  # supress nan & inf warnings
+    @ignore_warnings  # suppress nan & inf warnings
     def fit(self):
         # Before fitting, need a good first guess, using 'find_fg'.
         if self.func_first_guess is not None:
