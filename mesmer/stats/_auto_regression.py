@@ -497,25 +497,23 @@ def _draw_innovations_correlated_np(
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     rng = np.random.default_rng(seed=seed)
     try:
-        innovations = rng.multivariate_normal(
-            mean=np.zeros(n_gridcells),
-            cov=covariance,
-            size=[n_samples, n_ts + buffer],
-            method="cholesky",
-        ).reshape(n_samples, n_ts + buffer, n_gridcells)
+         cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
 
     except np.linalg.LinAlgError:
+        w, v = np.linalg.eigh(covariance)
+        cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
         warnings.warn(
             "Covariance matrix is not positive definite, using eigh instead of cholesky.",
             LinAlgWarning,
         )
-        innovations = rng.multivariate_normal(
-            mean=np.zeros(n_gridcells),
-            cov=covariance,
-            size=[n_samples, n_ts + buffer],
-            method="eigh",
-        ).reshape(n_samples, n_ts + buffer, n_gridcells)
 
+    innovations = scipy.stats.multivariate_normal.rvs(
+         mean=np.zeros(n_gridcells),
+         cov=cov,
+         size=[n_samples, n_ts + buffer],
+         random_state=rng,
+     ).reshape(n_samples, n_ts + buffer, n_gridcells)
+    
     return innovations
 
 
