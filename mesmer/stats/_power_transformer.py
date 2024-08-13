@@ -29,7 +29,7 @@ def lambda_function(xi_0, xi_1, local_yearly_T):
     lambdas : ndarray of float of shape (n_years,)
         The parameters of the power transformation for each gridcell and month
     """
-    return 2 / (1 + xi_0 * np.exp(local_yearly_T * xi_1))
+    return 2 / (1 + np.exp((xi_0[0] + local_yearly_T * xi_1[1])))
 
 
 def _yeo_johnson_transform_np(data, lambdas):
@@ -153,14 +153,14 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
         return -loglikelihood
 
-    bounds = np.array([[0, np.inf], [-0.1, 0.1]])
-    first_guess = np.array([1, 0])
+    # bounds = np.array([[0, np.inf], [-0.1, 0.1]])
+    first_guess = np.array([0, 0])
 
     xi_0, xi_1 = minimize(
         _neg_log_likelihood,
         x0=first_guess,
-        bounds=bounds,
-        method="Nelder-Mead",
+        # bounds=bounds,
+        method="BFGS",
     ).x
 
     return xi_0, xi_1
