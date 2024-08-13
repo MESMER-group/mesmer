@@ -29,7 +29,7 @@ def lambda_function(xi_0, xi_1, local_yearly_T):
     lambdas : ndarray of float of shape (n_years,)
         The parameters of the power transformation for each gridcell and month
     """
-    return 2 / (1 + np.exp((xi_0[0] + local_yearly_T * xi_1[1])))
+    return 2 / (1 + np.exp(xi_0) * np.exp(local_yearly_T * xi_1))
 
 
 def _yeo_johnson_transform_np(data, lambdas):
