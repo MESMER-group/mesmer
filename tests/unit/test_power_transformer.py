@@ -48,7 +48,7 @@ from mesmer.testing import trend_data_2D
 )
 def test_lambda_function(coeffs, T, expected):
 
-    result = mesmer.stats.lambda_function(coeffs[0], coeffs[1], t)
+    result = mesmer.stats.lambda_function(coeffs[0], coeffs[1], T)
     np.testing.assert_allclose(result, expected)
 
     def old_lambda_function(coeffs, T):
@@ -68,11 +68,11 @@ def test_yeo_johnson_optimize_lambda_np_normal():
 
     result = _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_T)
     # to test viability
-    expected = np.array([[0, 0]])
+    expected = np.array([0, 0])
     np.testing.assert_allclose(result, expected, atol=1e-2)
 
     # to test numerical stability
-    expected_exact = np.array([[-0.001162, -0.001162]])  # [[-0.001099, -0.001224]])
+    expected_exact = np.array([-0.001162, -0.001162])  # [[-0.001099, -0.001224]])
     np.testing.assert_allclose(result, expected_exact, atol=1e-6)
 
 
