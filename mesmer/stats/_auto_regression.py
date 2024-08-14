@@ -489,7 +489,9 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
-def _draw_innovations_correlated_np(covariance, seed, n_gridcells, n_samples, n_ts, buffer):
+def _draw_innovations_correlated_np(
+    covariance, seed, n_gridcells, n_samples, n_ts, buffer
+):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
     try:
