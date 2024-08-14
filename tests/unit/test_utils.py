@@ -120,7 +120,7 @@ def test_minimize_local_discrete_warning():
     def func(i, data_dict):
         return data_dict[i]
 
-    data_dict = {key: value for key, value in enumerate((3, 2, 1))}
+    data_dict = {key: value for key, value in enumerate((30, 20, 10))}
 
     with pytest.warns(mesmer.core.utils.OptimizeWarning, match="No local minimum"):
         result = mesmer.core.utils._minimize_local_discrete(
@@ -129,7 +129,7 @@ def test_minimize_local_discrete_warning():
 
     assert result == 2
 
-    data_dict = {key: value for key, value in enumerate((1, 2, 3))}
+    data_dict = {key: value for key, value in enumerate((10, 20, 30))}
 
     with pytest.warns(
         mesmer.core.utils.OptimizeWarning, match="First element is local minimum."
@@ -140,22 +140,51 @@ def test_minimize_local_discrete_warning():
 
     assert result == 0
 
-    data_dict = {key: value for key, value in enumerate((5, 2, np.inf, 3))}
+    data_dict = {key: value for key, value in enumerate((50, 20, np.inf, 30))}
 
-    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` returned `inf`"):
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`func` returned `inf`"):
         result = mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )
 
     assert result == 1
 
+    data_dict = {key: value for key, value in enumerate((50, 20, np.inf, 0))}
 
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`func` returned `inf`"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 3
+
+    data_dict = {key: value for key, value in enumerate((np.inf, 20, 0, 10))}
+
+    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`func` returned `inf` for element"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 2
+
+
+@pytest.mark.filterwarnings("ignore:`fun` returned `inf`, skipping this radius.")
 def test_minimize_local_discrete_error():
     def func(i):
         return float("-inf")
 
-    with pytest.raises(ValueError, match=r"`fun` returned `\-inf`"):
+    with pytest.raises(ValueError, match=r"`func` returned `-inf`"):
         mesmer.core.utils._minimize_local_discrete(func, [0])
+
+    def func(i, data_dict):
+        return data_dict[i]
+    
+    data_dict = {key: value for key, value in enumerate((np.inf, np.inf, np.inf, np.inf))}
+
+    with pytest.raises(ValueError, match="No valid values were found"):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
 
 
 @pytest.mark.parametrize("obj", (None, xr.DataArray()))

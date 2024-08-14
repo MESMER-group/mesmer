@@ -54,32 +54,31 @@ def _minimize_local_discrete(func, sequence, **kwargs):
     current_min = float("inf")
     # ensure it's a list because we cannot get an item from an iterable
     sequence = list(sequence)
+    last_valid_element = None
 
     for i, element in enumerate(sequence):
-
         res = func(element, **kwargs)
 
         if np.isneginf(res):
-            raise ValueError("`fun` returned `-inf`")
-        # skip element if inf is returned - not sure about this?
+            raise ValueError("`func` returned `-inf`")
         elif np.isinf(res):
-            warnings.warn("`fun` returned `inf`", OptimizeWarning)
+            warnings.warn(f"`func` returned `inf` for element {element}, skipping.", OptimizeWarning)
+            continue  # Skip this element and move to the next
 
         if res < current_min:
             current_min = res
+            last_valid_element = element
         else:
-            # need to return element from the previous iteration
-            sel = i - 1
-            if sel == 0:
-                warnings.warn("First element is local minimum.", OptimizeWarning)
-            elif sel == -1:
-                raise ValueError("First radius already inf.")
+            if last_valid_element is not None:
+                if last_valid_element == sequence[0]:
+                    warnings.warn("First element is local minimum.", OptimizeWarning)
+                return last_valid_element
+            
+    if last_valid_element is None:
+        raise ValueError("No valid values were found in the sequence.")
 
-            return sequence[sel]
-
-    warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
-
-    return element
+    warnings.warn("No local minimum found, returning the last valid element.", OptimizeWarning)
+    return last_valid_element
 
 
 def _to_set(arg):
