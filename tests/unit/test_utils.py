@@ -160,7 +160,9 @@ def test_minimize_local_discrete_warning():
 
     data_dict = {key: value for key, value in enumerate((np.inf, 20, 0, 10))}
 
-    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`func` returned `inf` for element"):
+    with pytest.warns(
+        mesmer.core.utils.OptimizeWarning, match="`func` returned `inf` for element"
+    ):
         result = mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )
@@ -178,8 +180,10 @@ def test_minimize_local_discrete_error():
 
     def func(i, data_dict):
         return data_dict[i]
-    
-    data_dict = {key: value for key, value in enumerate((np.inf, np.inf, np.inf, np.inf))}
+
+    data_dict = {
+        key: value for key, value in enumerate((np.inf, np.inf, np.inf, np.inf))
+    }
 
     with pytest.raises(ValueError, match="No valid values were found"):
         result = mesmer.core.utils._minimize_local_discrete(

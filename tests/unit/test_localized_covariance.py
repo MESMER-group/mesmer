@@ -350,7 +350,7 @@ def test_ecov_crossvalidation_singular(random_data_5x3):
     # trivial localizer
     localizer = {250: np.ones((3, 3))}
 
-    nll = _EcovCrossvalidation(method = "cholesky")
+    nll = _EcovCrossvalidation(method="cholesky")
     with pytest.warns(LinAlgWarning, match="Singular matrix"):
         result = nll.crossvalidate(
             250,
@@ -359,7 +359,7 @@ def test_ecov_crossvalidation_singular(random_data_5x3):
             localizer=localizer,
             k_folds=2,
         )
-        
+
     expected = float("inf")
     np.testing.assert_allclose(result, expected)
     assert nll.method == "eigh"

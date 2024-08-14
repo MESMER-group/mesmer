@@ -497,7 +497,7 @@ def _draw_innovations_correlated_np(
     # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
     rng = np.random.default_rng(seed=seed)
     try:
-         cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
+        cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
 
     except np.linalg.LinAlgError:
         w, v = np.linalg.eigh(covariance)
@@ -508,12 +508,12 @@ def _draw_innovations_correlated_np(
         )
 
     innovations = scipy.stats.multivariate_normal.rvs(
-         mean=np.zeros(n_gridcells),
-         cov=cov,
-         size=[n_samples, n_ts + buffer],
-         random_state=rng,
-     ).reshape(n_samples, n_ts + buffer, n_gridcells)
-    
+        mean=np.zeros(n_gridcells),
+        cov=cov,
+        size=[n_samples, n_ts + buffer],
+        random_state=rng,
+    ).reshape(n_samples, n_ts + buffer, n_gridcells)
+
     return innovations
 
 

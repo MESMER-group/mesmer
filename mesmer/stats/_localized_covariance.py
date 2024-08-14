@@ -253,7 +253,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     # start with cholesky decomposition
     # function returns method and can switch to eigh() if cov is singular
     localization_radius = _minimize_local_discrete(
-        _EcovCrossvalidation(method = "cholesky").crossvalidate,
+        _EcovCrossvalidation(method="cholesky").crossvalidate,
         localization_radii,
         data=data,
         weights=weights,
@@ -271,7 +271,7 @@ class _EcovCrossvalidation:
 
     def __init__(self, method=None):
 
-       self.method = method or "cholesky"
+        self.method = method or "cholesky"
 
     def crossvalidate(self, localization_radius, *, data, weights, localizer, k_folds):
         """k-fold crossvalidation for a single localization radius"""
@@ -299,7 +299,9 @@ class _EcovCrossvalidation:
 
             try:
                 # sum log likelihood of all crossvalidation folds
-                nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, self.method)
+                nll += _get_neg_loglikelihood(
+                    data_cv, localized_cov, weights_cv, self.method
+                )
             except np.linalg.LinAlgError:
                 # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
                 warnings.warn(
@@ -309,7 +311,9 @@ class _EcovCrossvalidation:
                 )
                 # switch to eigh from now on
                 self.method = "eigh"
-                nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, self.method)
+                nll += _get_neg_loglikelihood(
+                    data_cv, localized_cov, weights_cv, self.method
+                )
 
         return nll
 

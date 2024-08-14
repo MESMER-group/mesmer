@@ -62,7 +62,10 @@ def _minimize_local_discrete(func, sequence, **kwargs):
         if np.isneginf(res):
             raise ValueError("`func` returned `-inf`")
         elif np.isinf(res):
-            warnings.warn(f"`func` returned `inf` for element {element}, skipping.", OptimizeWarning)
+            warnings.warn(
+                f"`func` returned `inf` for element {element}, skipping.",
+                OptimizeWarning,
+            )
             continue  # Skip this element and move to the next
 
         if res < current_min:
@@ -73,11 +76,13 @@ def _minimize_local_discrete(func, sequence, **kwargs):
                 if last_valid_element == sequence[0]:
                     warnings.warn("First element is local minimum.", OptimizeWarning)
                 return last_valid_element
-            
+
     if last_valid_element is None:
         raise ValueError("No valid values were found in the sequence.")
 
-    warnings.warn("No local minimum found, returning the last valid element.", OptimizeWarning)
+    warnings.warn(
+        "No local minimum found, returning the last valid element.", OptimizeWarning
+    )
     return last_valid_element
 
 
