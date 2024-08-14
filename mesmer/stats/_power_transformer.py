@@ -89,10 +89,10 @@ def _yeo_johnson_transform_split(data):
         transf[sel_a] = data_log1p[sel_a]
 
         lmbds = lambdas[sel_b]
-        transf[sel_b] = (np.expm1(data_log1p[sel_b] * lmbds)) / lmbds
+        transf[sel_b] = np.expm1(data_log1p[sel_b] * lmbds) / lmbds
 
         lmbds = 2 - lambdas[sel_c]
-        transf[sel_c] = -(np.expm1(data_log1p[sel_c] * lmbds)) / lmbds
+        transf[sel_c] = -np.expm1(data_log1p[sel_c] * lmbds) / lmbds
 
         transf[sel_d] = -data_log1p[sel_d]
 
@@ -127,20 +127,20 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
 
     transf = np.empty_like(data)
     # get positions of four cases:
-    pos_a = (data >= 0) & (np.abs(lambdas) < eps)
-    pos_b = (data >= 0) & (np.abs(lambdas) >= eps)
-    pos_c = (data < 0) & (np.abs(lambdas - 2) > eps)
-    pos_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
+    sel_a = (data >= 0) & (np.abs(lambdas) < eps)
+    sel_b = (data >= 0) & (np.abs(lambdas) >= eps)
+    sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
+    sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
     # assign values for the four cases
-    transf[pos_a] = np.expm1(data[pos_a])
+    transf[sel_a] = np.expm1(data[sel_a])
 
-    lmbds = lambdas[pos_b]
-    transf[pos_b] = np.expm1(np.log1p(data[pos_b] * lmbds) / lmbds)
+    lmbds = lambdas[sel_b]
+    transf[sel_b] = np.expm1(np.log1p(data[sel_b] * lmbds) / lmbds)
 
-    lmbds = 2 - lambdas[pos_c]
-    transf[pos_c] = -np.expm1(np.log1p(-lmbds * data[pos_c]) / lmbds)
-    transf[pos_d] = -np.expm1(-data[pos_d])
+    lmbds = 2 - lambdas[sel_c]
+    transf[sel_c] = -np.expm1(np.log1p(-lmbds * data[sel_c]) / lmbds)
+    transf[sel_d] = -np.expm1(-data[sel_d])
 
     return transf
 
@@ -153,6 +153,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     monthly_residuals = monthly_residuals[~isnan]
     yearly_pred = yearly_pred[~isnan]
 
+    # initialize constant arrays
     jy_func = _yeo_johnson_transform_split(monthly_residuals)
 
     data_log1p = np.sign(monthly_residuals) * np.log1p(np.abs(monthly_residuals))
