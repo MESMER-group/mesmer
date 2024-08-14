@@ -252,11 +252,9 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
 
     # start with cholesky decomposition
     # function returns method and can switch to eigh() if cov is singular
-    method = "cholesky"
     localization_radius = _minimize_local_discrete(
-        _ecov_crossvalidation,
+        _EcovCrossvalidation(method = "cholesky").crossvalidate,
         localization_radii,
-        method,
         data=data,
         weights=weights,
         localizer=localizer,
@@ -269,47 +267,51 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
-def _ecov_crossvalidation(
-    localization_radius, method, *, data, weights, localizer, k_folds
-):
-    """k-fold crossvalidation for a single localization radius"""
+class _EcovCrossvalidation:
 
-    n_samples, __ = data.shape
-    n_iterations = min(n_samples, k_folds)
+    def __init__(self, method=None):
 
-    nll = 0  # negative log likelihood
+       self.method = method or "cholesky"
 
-    for it in range(n_iterations):
+    def crossvalidate(self, localization_radius, *, data, weights, localizer, k_folds):
+        """k-fold crossvalidation for a single localization radius"""
 
-        # every `k_folds` element for validation such that each is used exactly once
-        sel = np.ones(n_samples, dtype=bool)
-        sel[it::k_folds] = False
+        n_samples, __ = data.shape
+        n_iterations = min(n_samples, k_folds)
 
-        # extract training set
-        data_train, weights_train = data[sel, :], weights[sel]
+        nll = 0  # negative log likelihood
 
-        # extract validation set
-        data_cv, weights_cv = data[~sel, :], weights[~sel]
+        for it in range(n_iterations):
 
-        # compute (localized) empirical covariance
-        cov = np.cov(data_train, rowvar=False, aweights=weights_train)
-        localized_cov = localizer[localization_radius] * cov
+            # every `k_folds` element for validation such that each is used exactly once
+            sel = np.ones(n_samples, dtype=bool)
+            sel[it::k_folds] = False
 
-        try:
-            # sum log likelihood of all crossvalidation folds
-            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
-        except np.linalg.LinAlgError:
-            # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
-            warnings.warn(
-                f"Singular matrix for localization_radius of {localization_radius}."
-                "\n Switching to eigh().",
-                LinAlgWarning,
-            )
-            # switch to eigh from now on
-            method = "eigh"
-            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, method)
+            # extract training set
+            data_train, weights_train = data[sel, :], weights[sel]
 
-    return nll, method
+            # extract validation set
+            data_cv, weights_cv = data[~sel, :], weights[~sel]
+
+            # compute (localized) empirical covariance
+            cov = np.cov(data_train, rowvar=False, aweights=weights_train)
+            localized_cov = localizer[localization_radius] * cov
+
+            try:
+                # sum log likelihood of all crossvalidation folds
+                nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, self.method)
+            except np.linalg.LinAlgError:
+                # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
+                warnings.warn(
+                    f"Singular matrix for localization_radius of {localization_radius}."
+                    "\n Switching to eigh().",
+                    LinAlgWarning,
+                )
+                # switch to eigh from now on
+                self.method = "eigh"
+                nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv, self.method)
+
+        return nll
 
 
 def _get_neg_loglikelihood(data, covariance, weights, method):

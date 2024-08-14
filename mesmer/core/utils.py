@@ -23,7 +23,7 @@ def create_equal_dim_names(dim, suffixes):
     return tuple(f"{dim}{suffix}" for suffix in suffixes)
 
 
-def _minimize_local_discrete(func, sequence, changable, **kwargs):
+def _minimize_local_discrete(func, sequence, **kwargs):
     """find the local minimum for a function that consumes discrete input
 
     Parameters
@@ -33,9 +33,6 @@ def _minimize_local_discrete(func, sequence, changable, **kwargs):
         as input and return a float that is to be minimized.
     sequence : iterable
         An iterable with discrete values to evaluate func for.
-    changable : str
-        changable parameter for the function, enables to feed back function
-        output at input
     **kwargs : Mapping
         Keyword arguments passed to `func`.
 
@@ -60,7 +57,7 @@ def _minimize_local_discrete(func, sequence, changable, **kwargs):
 
     for i, element in enumerate(sequence):
 
-        res, changable = func(element, changable, **kwargs)
+        res = func(element, **kwargs)
 
         if np.isneginf(res):
             raise ValueError("`fun` returned `-inf`")
