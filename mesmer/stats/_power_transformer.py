@@ -55,10 +55,10 @@ def _yeo_johnson_transform_np(data, lambdas):
     Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_
     """
 
-    return _yeo_johnson_transform_split(data)(lambdas)
+    return _yeo_johnson_transform_optimized(data)(lambdas)
 
 
-def _yeo_johnson_transform_split(data):
+def _yeo_johnson_transform_optimized(data):
     """performance-optimize yeo-johnson transformation - for the inner loop of minimize"""
 
     # pre-compute constant values
@@ -154,7 +154,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     yearly_pred = yearly_pred[~isnan]
 
     # initialize constant arrays
-    jy_func = _yeo_johnson_transform_split(monthly_residuals)
+    _yeo_johnson_transform = _yeo_johnson_transform_optimized(monthly_residuals)
 
     data_log1p = np.sign(monthly_residuals) * np.log1p(np.abs(monthly_residuals))
 
@@ -165,7 +165,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         lambdas = lambda_function(coeffs[0], coeffs[1], yearly_pred)
 
         # version with own power transform
-        transformed_resids = jy_func(lambdas)
+        transformed_resids = _yeo_johnson_transform(lambdas)
 
         n_samples = monthly_residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_resids.var())
