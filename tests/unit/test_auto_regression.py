@@ -694,6 +694,38 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     )
 
 
+def test_draw_autoregression_monthly_np_rng():
+    n_realisations = 1
+    n_gridcells = 10
+    n_ts = 120
+
+    seed = 0
+
+    # zero slope and intercept to only get innovations
+    slope = np.zeros((12, n_gridcells))
+    intercept = np.zeros((12, n_gridcells))
+
+    covariance = np.tile(np.eye(n_gridcells), [12, 1, 1])
+
+    # ensure reproducibility, i.e. reinitializing yields the same results
+    res = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
+        intercept, slope, covariance, n_realisations, n_ts, seed, buffer=1
+    )
+
+    res2 = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
+        intercept, slope, covariance, n_realisations, n_ts, seed, buffer=1
+    )
+
+    np.testing.assert_equal(res, res2)
+
+    # ensure that innovations for each month are different though 
+    # (even with the same covariance matrix)
+    jan = res[:, 0::12, :]
+    feb = res[:, 1::12, :]
+    
+    np.testing.assert_raises(AssertionError, np.testing.assert_equal, jan, feb) 
+
+
 def test_draw_auto_regression_monthly():
     n_gridcells = 10
     n_realisations = 5
