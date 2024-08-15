@@ -505,7 +505,7 @@ def _draw_innovations_correlated_np(
                 LinAlgWarning,
             )
 
-    # ensure reproducibility        
+    # ensure reproducibility
     rng = np.random.default_rng(seed)
     innovations = scipy.stats.multivariate_normal.rvs(
         mean=np.zeros(n_gridcells),
