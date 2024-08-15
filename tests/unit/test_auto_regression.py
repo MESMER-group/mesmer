@@ -723,7 +723,7 @@ def test_draw_autoregression_monthly_np_rng():
     jan = res[:, 0::12, :]
     feb = res[:, 1::12, :]
 
-    np.testing.assert_raises(AssertionError, np.testing.assert_equal, jan, feb)
+    assert np.not_equal(jan, feb).any()
 
 
 def test_draw_auto_regression_monthly():
