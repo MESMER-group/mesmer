@@ -504,6 +504,8 @@ def _draw_innovations_correlated_np(
                 "Covariance matrix is not positive definite, using eigh instead of cholesky.",
                 LinAlgWarning,
             )
+
+    # ensure reproducibility        
     rng = np.random.default_rng(seed)
     innovations = scipy.stats.multivariate_normal.rvs(
         mean=np.zeros(n_gridcells),
