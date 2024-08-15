@@ -718,12 +718,12 @@ def test_draw_autoregression_monthly_np_rng():
 
     np.testing.assert_equal(res, res2)
 
-    # ensure that innovations for each month are different though 
+    # ensure that innovations for each month are different though
     # (even with the same covariance matrix)
     jan = res[:, 0::12, :]
     feb = res[:, 1::12, :]
-    
-    np.testing.assert_raises(AssertionError, np.testing.assert_equal, jan, feb) 
+
+    np.testing.assert_raises(AssertionError, np.testing.assert_equal, jan, feb)
 
 
 def test_draw_auto_regression_monthly():
