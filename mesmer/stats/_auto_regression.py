@@ -86,18 +86,20 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
 
     ar_params_scen = list()
     for obj in objs:
-        ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
+        intercept, coeffs, variance, _, nobs = fit_auto_regression(obj, dim=dim, lags=int(lags))
 
         # BUG/ TODO: fix for v1, see https://github.com/MESMER-group/mesmer/issues/307
         #ar_params["standard_deviation"] = np.sqrt(ar_params.variance)
 
-        #if ens_dim in ar_params.dims:
-            #ar_params = ar_params.mean(ens_dim)
-
-        ar_params_scen.append(ar_params)
+        if ens_dim in intercept.dims:
+            intercept = intercept.mean(ens_dim)
+            coeffs = coeffs.mean(ens_dim)
+            variance = (ar_params_scen.variance * (ar_params_scen.nobs-1)).sum(dim = ens_dim)/(ar_params_scen.nobs-1).sum(dim = ens_dim)
+            
+        ar_params_scen.append(intercept, coeffs, variance)
 
     ar_params_scen = xr.concat(ar_params_scen, dim="scen")
-    ar_params_scen = ar_params_scen.stack(stack = ["scen", ens_dim])
+    # ar_params_scen = ar_params_scen.stack(stack = ["scen", ens_dim])
 
     # return the mean over all scenarios
     standard_deviation = np.sqrt(sum(ar_params_scen.variance * (ar_params_scen.nobs-1))/sum(ar_params_scen.nobs-1))
@@ -554,16 +556,18 @@ def fit_auto_regression(data, dim, lags):
 
     if np.ndim(lags) == 0:
         lags = np.arange(lags) + 1
+    
+    return intercept, coeffs, variance, lags, nobs
 
-    data_vars = {
-        "intercept": intercept,
-        "coeffs": coeffs,
-        "variance": variance,
-        "lags": lags,
-        "nobs": nobs,
-    }
+    # data_vars = {
+    #     "intercept": intercept,
+    #     "coeffs": coeffs,
+    #     "variance": variance,
+    #     "lags": lags,
+    #     "nobs": nobs,
+    # }
 
-    return xr.Dataset(data_vars)
+    # return xr.Dataset(data_vars)
 
 
 def _fit_auto_regression_np(data, lags):
