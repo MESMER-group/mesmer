@@ -12,6 +12,9 @@ New Features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the 
+  variances also considering the number of observations (`#499 <https://github.com/MESMER-group/mesmer/pull/499>`_).
+  By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
 - The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_, `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_):
