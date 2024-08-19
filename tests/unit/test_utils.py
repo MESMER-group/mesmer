@@ -186,7 +186,7 @@ def test_minimize_local_discrete_error():
     }
 
     with pytest.raises(ValueError, match="No valid values were found"):
-        result = mesmer.core.utils._minimize_local_discrete(
+        mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )
 

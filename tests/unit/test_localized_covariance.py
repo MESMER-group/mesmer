@@ -226,7 +226,6 @@ def test_ecov_crossvalidation_k_folds(random_data_5x3):
 
     # trivial localizer
     localizer = {250: np.diag(np.ones(3))}
-    method = "cholesky"
 
     result = _EcovCrossvalidation().crossvalidate(
         250,
