@@ -12,10 +12,6 @@ New Features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the
-  variances also considering the number of observations (`#499 <https://github.com/MESMER-group/mesmer/pull/499>`_).
-  By `Victoria Bauer`_.
-
 - Switch random number generation for drawing emulations from np.random.seed() to np.random.default_rng()
   (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
@@ -37,6 +33,9 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
+- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the 
+  variances also considering the number of observations (`#499 <https://github.com/MESMER-group/mesmer/pull/499>`_).
+  By `Victoria Bauer`_.
 
 Documentation
 ^^^^^^^^^^^^^
