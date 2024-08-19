@@ -90,9 +90,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     geodist_name = f"geodist_landthres_{threshold_land:1.2f}.pkl"
 
     # gaspari-cohn correlation function phi
-    phi_gc_name = "phi_gaspari-cohn_landthres_{tl:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl".format(
-        tl=threshold_land, L_start=L_start, L_interval=L_interval, L_end=L_end
-    )
+    phi_gc_name = f"phi_gaspari-cohn_landthres_{threshold_land:1.2f}_Lset_{L_start}-{L_interval}-{L_end}.pkl"
 
     fullname_geodist = os.path.join(dir_aux, geodist_name)
     fullname_phi_gc = os.path.join(dir_aux, phi_gc_name)

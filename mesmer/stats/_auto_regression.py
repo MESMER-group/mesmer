@@ -475,8 +475,11 @@ def _draw_auto_regression_correlated_np(
     # arbitrary lags? no, see: https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
+    # ensure reproducibility
+    rng = np.random.default_rng(seed)
+
     innovations = _draw_innovations_correlated_np(
-        seed, covariance, n_coeffs, n_samples, n_ts, buffer
+        covariance, rng, n_coeffs, n_samples, n_ts, buffer
     )
 
     out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
@@ -490,12 +493,11 @@ def _draw_auto_regression_correlated_np(
 
 
 def _draw_innovations_correlated_np(
-    seed, covariance, n_gridcells, n_samples, n_ts, buffer
+    covariance, rng, n_gridcells, n_samples, n_ts, buffer
 ):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
-    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
-    rng = np.random.default_rng(seed=seed)
+
     try:
         cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
 
@@ -881,13 +883,16 @@ def _draw_auto_regression_monthly_np(
 
     _, n_gridcells = intercept.shape
 
+    # ensure reproducibility
+    rng = np.random.default_rng(seed)
+
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
     if covariance is not None:
         for month in range(12):
             cov_month = covariance[month, :, :]
             innovations[:, :, month, :] = _draw_innovations_correlated_np(
-                seed, cov_month, n_gridcells, n_samples, n_ts // 12, buffer
+                cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
             )
     # reshape innovations into continuous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)

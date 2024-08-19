@@ -55,29 +55,50 @@ def _yeo_johnson_transform_np(data, lambdas):
     Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_
     """
 
+    return _yeo_johnson_transform_optimized(data)(lambdas)
+
+
+def _yeo_johnson_transform_optimized(data):
+    """performance-optimize yeo-johnson transformation - for the inner loop of minimize"""
+
+    # pre-compute constant values
+
     eps = np.finfo(np.float64).eps
 
-    transformed = np.zeros_like(data)
-    # get positions of four cases:
-    # NOTE: this code is copied from sklearn's PowerTransformer, see
-    # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
-    # we acknowledge there is an inconsistency in the comparison of lambdas
-    sel_a = (data >= 0) & (np.abs(lambdas) < eps)
-    sel_b = (data >= 0) & (np.abs(lambdas) >= eps)
-    sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
-    sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
+    transf = np.empty_like(data)
 
-    # assign values for the four cases
-    transformed[sel_a] = np.log1p(data[sel_a])
-    transformed[sel_b] = (np.power(data[sel_b] + 1, lambdas[sel_b]) - 1) / lambdas[
-        sel_b
-    ]
-    transformed[sel_c] = -(np.power(-data[sel_c] + 1, 2 - lambdas[sel_c]) - 1) / (
-        2 - lambdas[sel_c]
-    )
-    transformed[sel_d] = -np.log1p(-data[sel_d])
+    data_log1p = np.log1p(np.abs(data))
 
-    return transformed
+    pos = data >= 0
+    neg = ~pos
+
+    def _inner(lambdas):
+
+        # NOTE: this code is copied from sklearn's PowerTransformer, see
+        # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
+        # we acknowledge there is an inconsistency in the comparison of lambdas
+
+        lambda_eq_0 = np.abs(lambdas) < eps
+        lambda_eq_2 = np.abs(lambdas - 2) <= eps
+
+        sel_a = pos & lambda_eq_0
+        sel_b = pos & ~lambda_eq_0
+        sel_c = neg & ~lambda_eq_2
+        sel_d = neg & lambda_eq_2
+
+        transf[sel_a] = data_log1p[sel_a]
+
+        lmbds = lambdas[sel_b]
+        transf[sel_b] = np.expm1(data_log1p[sel_b] * lmbds) / lmbds
+
+        lmbds = 2 - lambdas[sel_c]
+        transf[sel_c] = -np.expm1(data_log1p[sel_c] * lmbds) / lmbds
+
+        transf[sel_d] = -data_log1p[sel_d]
+
+        return transf
+
+    return _inner
 
 
 def _yeo_johnson_inverse_transform_np(data, lambdas):
@@ -104,24 +125,24 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
 
     eps = np.finfo(np.float64).eps
 
-    transformed = np.zeros_like(data)
+    transf = np.empty_like(data)
     # get positions of four cases:
-    pos_a = (data >= 0) & (np.abs(lambdas) < eps)
-    pos_b = (data >= 0) & (np.abs(lambdas) >= eps)
-    pos_c = (data < 0) & (np.abs(lambdas - 2) > eps)
-    pos_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
+    sel_a = (data >= 0) & (np.abs(lambdas) < eps)
+    sel_b = (data >= 0) & (np.abs(lambdas) >= eps)
+    sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
+    sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
     # assign values for the four cases
-    transformed[pos_a] = np.exp(data[pos_a]) - 1
-    transformed[pos_b] = (
-        np.power(data[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
-    )
-    transformed[pos_c] = 1 - np.power(
-        (lambdas[pos_c] - 2) * data[pos_c] + 1, 1 / (2 - lambdas[pos_c])
-    )
-    transformed[pos_d] = 1 - np.exp(-data[pos_d])
+    transf[sel_a] = np.expm1(data[sel_a])
 
-    return transformed
+    lmbds = lambdas[sel_b]
+    transf[sel_b] = np.expm1(np.log1p(data[sel_b] * lmbds) / lmbds)
+
+    lmbds = 2 - lambdas[sel_c]
+    transf[sel_c] = -np.expm1(np.log1p(-lmbds * data[sel_c]) / lmbds)
+    transf[sel_d] = -np.expm1(-data[sel_d])
+
+    return transf
 
 
 def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
@@ -132,6 +153,11 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     monthly_residuals = monthly_residuals[~isnan]
     yearly_pred = yearly_pred[~isnan]
 
+    # initialize constant arrays
+    _yeo_johnson_transform = _yeo_johnson_transform_optimized(monthly_residuals)
+
+    data_log1p = np.sign(monthly_residuals) * np.log1p(np.abs(monthly_residuals))
+
     def _neg_log_likelihood(coeffs):
         """Return the negative log likelihood of the observed local monthly residuals
         as a function of lambda.
@@ -139,15 +165,11 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         lambdas = lambda_function(coeffs[0], coeffs[1], yearly_pred)
 
         # version with own power transform
-        transformed_resids = _yeo_johnson_transform_np(monthly_residuals, lambdas)
+        transformed_resids = _yeo_johnson_transform(lambdas)
 
         n_samples = monthly_residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_resids.var())
-        loglikelihood += (
-            (lambdas - 1)
-            * np.sign(monthly_residuals)
-            * np.log1p(np.abs(monthly_residuals))
-        ).sum()
+        loglikelihood += ((lambdas - 1) * data_log1p).sum()
 
         return -loglikelihood
 
