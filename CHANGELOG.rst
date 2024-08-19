@@ -49,6 +49,9 @@ Internal Changes
   By `Victoria Bauer`_.
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
+- Allow singular covariance matrices for localization radius selection. For this purpose, eigenvalue decomposition is implemented 
+  as fallback for singular matrices also in the crossvalidation of localization radii (`#493 <https://github.com/MESMER-group/mesmer/pull/493>`_).
+  By `Victoria Bauer`_.
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
