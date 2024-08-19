@@ -85,10 +85,10 @@ def test_yeo_johnson_transform_np_trivial():
 
     lambdas = np.tile([1], (n_ts))
 
-    monthly_residuals = np.ones((n_ts))
+    monthly_residuals = np.ones(n_ts)
 
     result = _yeo_johnson_transform_np(monthly_residuals, lambdas)
-    expected = np.ones((n_ts))
+    expected = np.ones(n_ts)
 
     np.testing.assert_equal(result, expected)
 
@@ -119,7 +119,8 @@ def test_yeo_johnson_transform_np_sklearn():
     pt_sklearn.lambdas_ = np.array([2.0])
     expected = pt_sklearn.transform(monthly_residuals.reshape(-1, 1))
 
-    np.testing.assert_equal(result, expected.reshape(-1))
+    # only approximately the same due to #494
+    np.testing.assert_allclose(result, expected.reshape(-1))
 
 
 def test_transform_roundtrip():
@@ -137,6 +138,22 @@ def test_transform_roundtrip():
     np.testing.assert_allclose(result, monthly_residuals, atol=1e-7)
 
 
+@pytest.mark.parametrize("value", (-2, -1, 0, 1, 2))
+@pytest.mark.parametrize("lmbda", (0, 1, 2))
+@pytest.mark.parametrize("lambda_delta", (-4e-16, 0, 4e-16))
+def test_transform_roundtrip_special_cases(value, lmbda, lambda_delta):
+    # test yeo_johnson for lambdas close to the boundary points
+
+    x = np.array([value], dtype=float)
+
+    lambdas = np.array([lmbda + lambda_delta], dtype=float)
+
+    transformed = _yeo_johnson_transform_np(x, lambdas)
+    result = _yeo_johnson_inverse_transform_np(transformed, lambdas)
+
+    np.testing.assert_allclose(result, x)
+
+
 def test_yeo_johnson_inverse_transform_np_sklearn():
     # test if our inverse power transform is the same as sklearn's for constant lambda
     np.random.seed(0)
@@ -151,7 +168,8 @@ def test_yeo_johnson_inverse_transform_np_sklearn():
     pt_sklearn.lambdas_ = np.array([2.0])
     expected = pt_sklearn.inverse_transform(monthly_residuals.reshape(-1, 1))
 
-    np.testing.assert_equal(result, expected.reshape(-1))
+    # only approximately the same due to #494
+    np.testing.assert_allclose(result, expected.reshape(-1))
 
 
 def test_yeo_johnson_optimize_lambda_sklearn():
