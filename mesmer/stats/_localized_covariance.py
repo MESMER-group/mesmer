@@ -305,7 +305,7 @@ class _EcovCrossvalidation:
             except np.linalg.LinAlgError as e:
                 if self.method == "eigh":
                     raise e
-                
+
                 # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
                 warnings.warn(
                     f"Singular matrix for localization_radius of {localization_radius}."
