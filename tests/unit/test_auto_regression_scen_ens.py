@@ -6,11 +6,11 @@ from statsmodels.tsa.arima_process import ArmaProcess
 import mesmer
 
 
-def generate_ar_samples(ar, std = 1, n_timesteps=100, n_ens=4):
+def generate_ar_samples(ar, std=1, n_timesteps=100, n_ens=4):
 
     np.random.seed(0)
 
-    data = ArmaProcess(ar, 1).generate_sample([n_timesteps, n_ens], scale = std)
+    data = ArmaProcess(ar, 1).generate_sample([n_timesteps, n_ens], scale=std)
 
     ens = np.arange(n_ens)
 
@@ -66,15 +66,21 @@ def test_select_ar_order_scen_ens_no_ens_dim():
 def test_fit_auto_regression_scen_ens_one_scen(da_std):
 
     n_timesteps = 100
-    da = generate_ar_samples([1, 0.5, 0.3, 0.4], da_std, n_timesteps=n_timesteps, n_ens=4)
+    da = generate_ar_samples(
+        [1, 0.5, 0.3, 0.4], da_std, n_timesteps=n_timesteps, n_ens=4
+    )
 
     result = mesmer.stats._fit_auto_regression_scen_ens(
         da, dim="time", ens_dim="ens", lags=3
     )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-    expected["standard_deviation"] = np.sqrt(sum(expected.variance * (expected.nobs-1))/sum(expected.nobs-1))
-    expected["coeffs"], expected["intercept"] = expected.coeffs.mean("ens"), expected.intercept.mean("ens")
+    expected["standard_deviation"] = np.sqrt(
+        sum(expected.variance * (expected.nobs - 1)) / sum(expected.nobs - 1)
+    )
+    expected["coeffs"], expected["intercept"] = expected.coeffs.mean(
+        "ens"
+    ), expected.intercept.mean("ens")
     expected = expected.drop_vars(["nobs", "variance", "ens"])
 
     xr.testing.assert_equal(result, expected)
@@ -82,7 +88,8 @@ def test_fit_auto_regression_scen_ens_one_scen(da_std):
 
 
 def test_fit_auto_regression_scen_ens_multi_scen():
-
+    n_timesteps = 100
+    n_ens = xr.DataArray([4, 5], dims="scen")
     da1 = generate_ar_samples([1, 0.5, 0.3], n_timesteps=100, n_ens=4)
     da2 = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=5)
 
@@ -94,10 +101,17 @@ def test_fit_auto_regression_scen_ens_multi_scen():
     da = da.stack(scen_ens=("scen", "ens")).dropna("scen_ens")
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
     expected = expected.unstack()
-    expected["standard_deviation"] = np.sqrt(expected.variance)
-    expected = expected.mean("ens").mean("scen")
+    expected_coeffs = expected.coeffs.mean("ens").mean("scen")
+    expected_intercept = expected.intercept.mean("ens").mean("scen")
+    ens_variance = (expected.variance * (expected.nobs)).sum(dim="ens") / (
+        expected.nobs
+    ).sum(dim="ens")
+    scen_variance = (ens_variance * (n_ens)).sum(dim="scen") / (n_ens).sum(dim="scen")
+    expected_standard_deviation = np.sqrt(scen_variance)
 
-    xr.testing.assert_equal(result, expected)
+    xr.testing.assert_equal(result.coeffs, expected_coeffs)
+    xr.testing.assert_equal(result.intercept, expected_intercept)
+    xr.testing.assert_equal(result.standard_deviation, expected_standard_deviation)
 
 
 def test_fit_auto_regression_scen_ens_no_ens_dim():
@@ -111,5 +125,6 @@ def test_fit_auto_regression_scen_ens_no_ens_dim():
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
 
     expected["standard_deviation"] = np.sqrt(expected.variance)
+    expected = expected.drop_vars(["nobs", "variance"])
 
     xr.testing.assert_allclose(result, expected)
