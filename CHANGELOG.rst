@@ -33,7 +33,7 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
-- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the 
+- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the
   variances also considering the number of observations (`#499 <https://github.com/MESMER-group/mesmer/pull/499>`_).
   By `Victoria Bauer`_.
 
