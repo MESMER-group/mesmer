@@ -117,6 +117,7 @@ def test_fit_auto_regression_scen_ens_no_ens_dim():
 
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
+    # simply fits each ens individually, no averaging
     result = mesmer.stats._fit_auto_regression_scen_ens(
         da, dim="time", ens_dim=None, lags=3
     )
