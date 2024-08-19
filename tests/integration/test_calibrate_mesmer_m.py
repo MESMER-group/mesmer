@@ -71,6 +71,9 @@ def test_calibrate_mesmer_m(save_params=False):
     tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
     tas_stacked_m = mask_and_stack(tas_m, threshold_land=THRESHOLD_LAND)
 
+    # we need to get the original time coordinate to be able to validate our results
+    m_time = tas_stacked_m.time
+
     # fit harmonic model
     harmonic_model_fit = mesmer.stats.fit_harmonic_model(
         tas_stacked_y.tas, tas_stacked_m.tas
@@ -111,6 +114,7 @@ def test_calibrate_mesmer_m(save_params=False):
             "pt_coefficients": pt_coefficients,
             "AR1_fit": AR1_fit,
             "localized_ecov": localized_ecov,
+            "monthly_time": m_time, # needed emulations
         }
         joblib.dump(params, TEST_PATH / "test-mesmer_m-params.pkl")
 
