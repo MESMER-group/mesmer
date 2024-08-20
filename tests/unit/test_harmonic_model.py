@@ -65,6 +65,9 @@ def test_predict_harmonic_model():
     )
 
 
+@pytest.mark.filterwarnings(
+    "ignore:divide by zero encountered in log"
+)
 @pytest.mark.parametrize(
     "coefficients",
     [
