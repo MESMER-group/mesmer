@@ -1,4 +1,3 @@
-import datetime as dt
 import importlib
 
 import pytest
@@ -8,7 +7,7 @@ import xarray as xr
 import mesmer
 
 
-def test_calibrate_mesmer_m(save_params=False):
+def test_calibrate_mesmer_m(update_expected_files=False):
     # define config values
     THRESHOLD_LAND = 1 / 3
 
@@ -21,8 +20,6 @@ def test_calibrate_mesmer_m(save_params=False):
     # define paths and load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
-
-
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
@@ -108,7 +105,7 @@ def test_calibrate_mesmer_m(save_params=False):
     )
 
     # save params
-    if save_params:
+    if update_expected_files:
         params = {
             "harmonic_model_fit": harmonic_model_fit,
             "pt_coefficients": pt_coefficients,
@@ -117,17 +114,18 @@ def test_calibrate_mesmer_m(save_params=False):
             "monthly_time": m_time, # needed emulations
         }
         joblib.dump(params, TEST_PATH / "test-mesmer_m-params.pkl")
+        pytest.skip("Updated test-mesmer_m-params.pkl")
 
     # testing
-    assert_params_allclose(
-        TEST_PATH,
-        harmonic_model_fit,
-        pt_coefficients,
-        AR1_fit,
-        localized_ecov,
-    )
-
-    
+    else:
+        assert_params_allclose(
+            TEST_PATH,
+            harmonic_model_fit,
+            pt_coefficients,
+            AR1_fit,
+            localized_ecov,
+            m_time,
+        )
 
 
 def assert_params_allclose(
@@ -136,6 +134,7 @@ def assert_params_allclose(
     pt_coefficients,
     AR1_fit,
     localized_ecov,
+    m_time,
 ):
     # load expected values
     expected_params = joblib.load(TEST_PATH / "test-mesmer_m-params.pkl")
@@ -145,3 +144,4 @@ def assert_params_allclose(
     xr.testing.assert_identical(expected_params["pt_coefficients"], pt_coefficients)
     xr.testing.assert_identical(expected_params["AR1_fit"], AR1_fit)
     xr.testing.assert_identical(expected_params["localized_ecov"], localized_ecov)
+    xr.testing.assert_identical(expected_params["monthly_time"], m_time)
