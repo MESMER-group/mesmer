@@ -215,7 +215,7 @@ def test_find_localized_empirical_covariance_method(random_data_5x3):
     localizer = {100: np.ones(30), 200: np.eye(30), 300: np.eye(30)}
     with pytest.warns(LinAlgWarning, match="Singular matrix"):
         result, __, __ = _find_localized_empirical_covariance_np(
-            data, weights, localizer, 3
+            data, weights, localizer, 5
         )
     assert result == 200
 
