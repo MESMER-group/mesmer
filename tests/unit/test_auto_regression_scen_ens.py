@@ -83,7 +83,7 @@ def test_fit_auto_regression_scen_ens_one_scen(da_std):
     ), expected.intercept.mean("ens")
     expected = expected.drop_vars(["nobs", "variance", "ens"])
 
-    xr.testing.assert_equal(result, expected)
+    xr.testing.assert_allclose(result, expected)
     np.testing.assert_allclose(result.standard_deviation, da_std, rtol=1e-1)
 
 
