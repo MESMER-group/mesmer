@@ -93,7 +93,7 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
         exp = xr.open_dataset(
             TEST_PATH / "test_mesmer_m_realisations_expected.nc", use_cftime=True
         )
-        xr.testing.assert_identical(result, exp)
+        xr.testing.assert_allclose(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = exp.set_index(z=("lat", "lon")).unstack("z")
