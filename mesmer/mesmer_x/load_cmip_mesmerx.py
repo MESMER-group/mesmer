@@ -63,7 +63,7 @@ def extract_time_lon_lat_wgt3d(data):
     return time, lon, lat, wgt3d
 
 
-def find_files_cmip(esm, var, scenario, cfg):
+def find_files_cmip(esm, var, scenario, cfg, prescribed_members=None):
     """Find filename in ETHZ cmip-ng or any required archive.
 
     Parameters
@@ -99,7 +99,8 @@ def find_files_cmip(esm, var, scenario, cfg):
 
             # preparing search of files
             prefix_path_file = dir_name + var + "_ann_" + esm + "_"
-            suffix_path_file = "_" + "r*i1p1" + "_g025.nc"
+            memb_style = "r*i1p1"
+            suffix_path_file = "_" + memb_style + "_g025.nc"
 
             # exclusions CMIP5-ng
             if var == "tas":
@@ -118,7 +119,8 @@ def find_files_cmip(esm, var, scenario, cfg):
 
             # preparing search of files
             prefix_path_file = dir_name + var + "_ann_" + esm + "_"
-            suffix_path_file = "_" + "r*i1p1f*" + "_g025.nc"
+            memb_style = "r*i1p1f*"
+            suffix_path_file = "_" + memb_style + "_g025.nc"
 
             # exclusions CMIP6-ng
             if var == "tas":
@@ -202,6 +204,15 @@ def find_files_cmip(esm, var, scenario, cfg):
         if run_hist in path_runs_list_hist:
             path_runs_list.append(run)
 
+    # selecting runs if prescribed selection
+    if prescribed_members is not None:
+        tmp = []
+        for member in prescribed_members:
+            check_runs = [member in run for run in path_runs_list]
+            if np.any(check_runs):
+                tmp.append( np.array(path_runs_list)[check_runs][0] )
+        path_runs_list = tmp        
+
     if len(path_runs_list) == 0:  # if no entries found, return the empty list
         return path_runs_list
 
@@ -227,7 +238,7 @@ def find_files_cmip(esm, var, scenario, cfg):
     return path_runs_list
 
 
-def load_cmip(targ, esm, scen, cfg):
+def load_cmip(targ, esm, scen, cfg, prescribed_members=None):
     """Load ESM VAR runs from cmip archives at ETHZ.
 
     Parameters
@@ -272,7 +283,7 @@ def load_cmip(targ, esm, scen, cfg):
         )
 
     # find the files which fulfill the specifications
-    path_runs_list = find_files_cmip(esm, targ, _scen, cfg)
+    path_runs_list = find_files_cmip(esm, targ, _scen, cfg, prescribed_members=prescribed_members)
 
     # exit function in case path_runs_list is empty (ie no file matches the search criterion)
     if len(path_runs_list) == 0:
