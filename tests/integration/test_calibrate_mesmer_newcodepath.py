@@ -265,10 +265,6 @@ def assert_params_allclose(
         bundle["params_gv"]["AR_std_innovs"], global_ar_params.standard_deviation
     )
 
-    np.testing.assert_allclose(  # this is not necessarily the same
-        bundle["params_gv"]["AR_std_innovs"] ** 2, global_ar_params.variance, atol=2e-5
-    )
-
     # local forced response
     np.testing.assert_allclose(
         bundle["params_lt"]["intercept"]["tas"],
