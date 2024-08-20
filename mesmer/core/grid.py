@@ -1,7 +1,5 @@
 import pandas as pd
 import xarray as xr
-from packaging.version import Version
-
 
 def _lon_to_180(lon):
 
@@ -112,10 +110,6 @@ def stack_lat_lon(
     data = data.stack(dims)
 
     if not multiindex:
-        # there is a bug in xarray v2022.06 (Index refactor)
-        if Version(xr.__version__) == Version("2022.6"):
-            raise TypeError("There is a bug in xarray v2022.06. Please update xarray.")
-
         data = data.reset_index(stack_dim)
 
     if dropna:

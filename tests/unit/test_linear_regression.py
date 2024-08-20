@@ -225,13 +225,7 @@ def test_linear_regression_errors(lr_method_or_function):
 
     def test_unequal_coords(pred0, pred1, tgt, weights):
 
-        # updated error message with the indexing refactor
-        if Version(xr.__version__) >= Version("2022.06"):
-            match = "cannot align objects"
-        else:
-            match = "indexes along dimension 'time' are not equal"
-
-        with pytest.raises(ValueError, match=match):
+         with pytest.raises(ValueError, match="cannot align objects"):
             lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
