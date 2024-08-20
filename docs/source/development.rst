@@ -119,7 +119,7 @@ Formatting
 
 To help us focus on what the code does, not how it looks, we use a couple of automatic formatting tools.
 We use the following tools:
-- `ruff check<https://docs.astral.sh/ruff/>`_ to check and fix small code errors
+- `ruff check <https://docs.astral.sh/ruff/>`_ to check and fix small code errors
 - `black <https://github.com/psf/black>`_ to auto-format the code
 
 These automatically format the code for us and tell use where the errors are.
