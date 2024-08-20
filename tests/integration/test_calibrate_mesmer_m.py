@@ -1,7 +1,7 @@
 import importlib
 
-import pytest
 import joblib
+import pytest
 import xarray as xr
 
 import mesmer
@@ -111,7 +111,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
             "pt_coefficients": pt_coefficients,
             "AR1_fit": AR1_fit,
             "localized_ecov": localized_ecov,
-            "monthly_time": m_time, # needed emulations
+            "monthly_time": m_time,  # needed emulations
         }
         joblib.dump(params, TEST_PATH / "test-mesmer_m-params.pkl")
         pytest.skip("Updated test-mesmer_m-params.pkl")
@@ -140,7 +140,9 @@ def assert_params_allclose(
     expected_params = joblib.load(TEST_PATH / "test-mesmer_m-params.pkl")
 
     # test
-    xr.testing.assert_identical(expected_params["harmonic_model_fit"], harmonic_model_fit)
+    xr.testing.assert_identical(
+        expected_params["harmonic_model_fit"], harmonic_model_fit
+    )
     xr.testing.assert_identical(expected_params["pt_coefficients"], pt_coefficients)
     xr.testing.assert_identical(expected_params["AR1_fit"], AR1_fit)
     xr.testing.assert_identical(expected_params["localized_ecov"], localized_ecov)

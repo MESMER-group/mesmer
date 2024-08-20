@@ -1,10 +1,11 @@
 import importlib
 
-import pytest
 import joblib
+import pytest
 import xarray as xr
 
 import mesmer
+
 
 def test_make_emulations_mesmer_m(update_expected_files=False):
 
@@ -53,7 +54,7 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
         ds = mesmer.mask.mask_antarctica(ds)
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
-    
+
     ref = tas_y.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
     tas_y = tas_y - ref
     tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
@@ -89,7 +90,9 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
 
     # testing
     else:
-        exp = xr.open_dataset(TEST_PATH / "test_mesmer_m_realisations_expected.nc", use_cftime=True)
+        exp = xr.open_dataset(
+            TEST_PATH / "test_mesmer_m_realisations_expected.nc", use_cftime=True
+        )
         xr.testing.assert_identical(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved
