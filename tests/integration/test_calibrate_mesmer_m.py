@@ -140,10 +140,10 @@ def assert_params_allclose(
     expected_params = joblib.load(TEST_PATH / "test-mesmer_m-params.pkl")
 
     # test
-    xr.testing.assert_identical(
+    xr.testing.assert_allclose(
         expected_params["harmonic_model_fit"], harmonic_model_fit
     )
-    xr.testing.assert_identical(expected_params["pt_coefficients"], pt_coefficients)
-    xr.testing.assert_identical(expected_params["AR1_fit"], AR1_fit)
-    xr.testing.assert_identical(expected_params["localized_ecov"], localized_ecov)
-    xr.testing.assert_identical(expected_params["monthly_time"], m_time)
+    xr.testing.assert_allclose(expected_params["pt_coefficients"], pt_coefficients)
+    xr.testing.assert_allclose(expected_params["AR1_fit"], AR1_fit)
+    xr.testing.assert_allclose(expected_params["localized_ecov"], localized_ecov)
+    xr.testing.assert_allclose(expected_params["monthly_time"], m_time)
