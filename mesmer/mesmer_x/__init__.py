@@ -6,6 +6,8 @@
 Collection of functions related to MESMER-X.
 """
 
+from .load_cmip_mesmerx import *
+
 # flake8: noqa
 # TODO: replace * imports
 # from .create_emus_l_distrib import *

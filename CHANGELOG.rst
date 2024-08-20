@@ -45,6 +45,8 @@ Internal Changes
 - Explicitly include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
 - Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
   By `Victoria Bauer`_.
+- Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
+  By `Mathias Hauser`_.
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -91,6 +93,8 @@ Yeo-Johnson power transformer
       `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_)
 -  adjust the first guess to assume the data is normally distributed (
    `#429 <https://github.com/MESMER-group/mesmer/pull/429>`_)
+-  make (back-) transformations more stable by using `np.expm1` and `np.log1p`
+   (`#494 <https://github.com/MESMER-group/mesmer/pull/494>`_)
 -  rewrite power transformer to work with xarray, and refactor from a class structure to functions (
    `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_, and
    `#474 <https://github.com/MESMER-group/mesmer/pull/474>`_)

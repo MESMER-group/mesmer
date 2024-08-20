@@ -69,10 +69,11 @@ def _yeo_johnson_transform_np(data, lambdas):
 
     # assign values for the four cases
     transformed[sel_a] = np.log1p(data[sel_a])
-    transformed[sel_b] = (np.power(data[sel_b] + 1, lambdas[sel_b]) - 1) / lambdas[
+    transformed[sel_b] = (np.expm1(np.log1p(data[sel_b]) * lambdas[sel_b])) / lambdas[
         sel_b
     ]
-    transformed[sel_c] = -(np.power(-data[sel_c] + 1, 2 - lambdas[sel_c]) - 1) / (
+
+    transformed[sel_c] = -(np.expm1(np.log1p(-data[sel_c]) * (2 - lambdas[sel_c]))) / (
         2 - lambdas[sel_c]
     )
     transformed[sel_d] = -np.log1p(-data[sel_d])
@@ -114,10 +115,11 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
     # assign values for the four cases
     transformed[pos_a] = np.exp(data[pos_a]) - 1
     transformed[pos_b] = (
-        np.power(data[pos_b] * lambdas[pos_b] + 1, 1 / lambdas[pos_b]) - 1
+        np.exp(np.log1p(data[pos_b] * lambdas[pos_b]) / lambdas[pos_b]) - 1
     )
-    transformed[pos_c] = 1 - np.power(
-        (lambdas[pos_c] - 2) * data[pos_c] + 1, 1 / (2 - lambdas[pos_c])
+
+    transformed[pos_c] = 1 - np.exp(
+        np.log1p(-(2 - lambdas[pos_c]) * data[pos_c]) / (2 - lambdas[pos_c])
     )
     transformed[pos_d] = 1 - np.exp(-data[pos_d])
 
