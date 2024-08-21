@@ -72,7 +72,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         Dimension along which to fit the auto regression.
     ens_dim : str
         Dimension name of the ensemble members, None if no ensemble is provided.
-        If provided, needs to be coord too.
+        If provided, needs to have coords too.
     lags : int
         The number of lags to include in the model.
 
