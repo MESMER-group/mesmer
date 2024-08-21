@@ -60,7 +60,7 @@ def _minimize_local_discrete(func, sequence, **kwargs):
         res = func(element, **kwargs)
 
         if np.isneginf(res):
-            raise ValueError("`func` returned `-inf`")
+            raise ValueError(f"`func` returned `-inf` for element {element}")
         elif np.isinf(res):
             warnings.warn(
                 f"`func` returned `inf` for element {element}, skipping.",
