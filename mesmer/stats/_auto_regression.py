@@ -72,7 +72,6 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         Dimension along which to fit the auto regression.
     ens_dim : str
         Dimension name of the ensemble members, None if no ensemble is provided.
-        If provided, needs to have coords too.
     lags : int
         The number of lags to include in the model.
 
@@ -89,12 +88,6 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     ensemble members are not weighted equally, if the number of members differs between scenarios.
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
-    # check if ens_dim has coordinates
-    if ens_dim is not None:
-        if not objs[0][ens_dim].coords:
-            raise ValueError(
-                f"Dimension '{ens_dim}' must have coordinates, but none are provided."
-            )
 
     def _avg_ar_params(ar_params, dim, nobs):
         ar_params["coeffs"] = ar_params.coeffs.mean(dim)
@@ -115,10 +108,9 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
             ar_params = _avg_ar_params(ar_params, ens_dim, ar_params.nobs)
             n_ens[o] = obj[ens_dim].size
 
-            # need to drop ens coord so it is not left on the final result
-            ar_params = ar_params.drop_vars(ens_dim)
-
-        # nobs is not needed in the final result (now also ens_dim is dropped completely)
+        # don't need nobs anymore, and don't want it on the final result
+        # also if ens_dim does not have coords concat does not work if there 
+        # is still a variable with values along ens_dim
         ar_params = ar_params.drop_vars("nobs")
         ar_params_scen.append(ar_params)
 
@@ -127,6 +119,10 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
 
     # mean over all scenarios
     ar_params = _avg_ar_params(ar_params_scen, "scen", n_ens_scen)
+
+    # clean up
+    if ens_dim in ar_params.dims:
+        ar_params = ar_params.drop_dims(ens_dim)
 
     return ar_params
 
