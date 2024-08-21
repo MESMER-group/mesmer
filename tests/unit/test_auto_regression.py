@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 import mesmer
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
@@ -638,6 +639,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
 
 
 def test_fit_auto_regression_monthly():
+    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
     n_years = 20
     n_gridcells = 10
     np.random.seed(0)
@@ -645,7 +647,7 @@ def test_fit_auto_regression_monthly():
         np.random.normal(size=(n_years * 12, n_gridcells)),
         dims=("time", "gridcell"),
         coords={
-            "time": pd.date_range("2000-01-01", periods=n_years * 12, freq="M"),
+            "time": pd.date_range("2000-01-01", periods=n_years * 12, freq=freq),
             "gridcell": np.arange(n_gridcells),
         },
     )
@@ -728,6 +730,8 @@ def test_draw_autoregression_monthly_np_rng():
 
 
 def test_draw_auto_regression_monthly():
+    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+
     n_gridcells = 10
     n_realisations = 5
     n_years = 10
@@ -756,7 +760,7 @@ def test_draw_auto_regression_monthly():
         },
     )
 
-    time = pd.date_range("2000-01-01", periods=n_years * 12, freq="M")
+    time = pd.date_range("2000-01-01", periods=n_years * 12, freq=freq)
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     result = mesmer.stats.draw_auto_regression_monthly(
