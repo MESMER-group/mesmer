@@ -109,7 +109,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
             n_ens[o] = obj[ens_dim].size
 
         # don't need nobs anymore, and don't want it on the final result
-        # also if ens_dim does not have coords concat does not work if there 
+        # also if ens_dim does not have coords concat does not work if there
         # is still a variable with values along ens_dim
         ar_params = ar_params.drop_vars("nobs")
         ar_params_scen.append(ar_params)

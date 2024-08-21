@@ -6,7 +6,6 @@
 Functions to train local variability module of MESMER.
 """
 
-import numpy as np
 import xarray as xr
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
@@ -232,7 +231,13 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
         # create temporary DataArray
         dims = ("run", "time", "cell")
-        data = [xr.DataArray(data, dims=dims,) for data in targ.values()]
+        data = [
+            xr.DataArray(
+                data,
+                dims=dims,
+            )
+            for data in targ.values()
+        ]
 
         params = _fit_auto_regression_scen_ens(*data, dim="time", ens_dim="run", lags=1)
 
