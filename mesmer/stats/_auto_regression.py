@@ -89,6 +89,12 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     ensemble members are not weighted equally, if the number of members differs between scenarios.
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
+    # check if ens_dim has coordinates
+    if ens_dim is not None:
+        if not objs[0][ens_dim].coords:
+            raise ValueError(
+                f"Dimension '{ens_dim}' must have coordinates, but none are provided."
+            )
 
     def _avg_ar_params(ar_params, dim, nobs):
         ar_params["coeffs"] = ar_params.coeffs.mean(dim)
