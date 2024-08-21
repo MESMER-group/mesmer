@@ -65,11 +65,13 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     Parameters
     ----------
     *objs : iterable of DataArray
-        A list of ``xr.DataArray`` to estimate the auto regression over.
+        A list of ``xr.DataArray`` to estimate the auto regression over, each
+        representing one scenario, potentially with several ensemble members
+        along `ens_dim`.
     dim : str
         Dimension along which to fit the auto regression.
     ens_dim : str
-        Dimension name of the ensemble members.
+        Dimension name of the ensemble members, None if no ensemble is provided.
     lags : int
         The number of lags to include in the model.
 
@@ -81,7 +83,10 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
 
     Notes
     -----
-    Calculates the mean auto regression over all ensemble members and scenarios.
+    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
+    members and then over scenarios. This is done to weight scenarios equally, consequently
+    ensemble members are not weighted equally, if the number of members differs between scenarios.
+    If no ensemble members are provided, the mean is calculated over scenarios only.
     """
 
     def _avg_ar_params(ar_params, dim, nobs):
