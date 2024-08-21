@@ -183,7 +183,7 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     params_gv["AR_order_sel"] = AR_order.item()
     params_gv["AR_int"] = np.float64(params.intercept.values)
     params_gv["AR_coefs"] = params.coeffs.values.squeeze()
-    params_gv["AR_std_innovs"] = np.float64(params.standard_deviation.values)
+    params_gv["AR_var_innovs"] = np.float64(params.variance.values)
 
     # check if fitted AR process is stationary
     # (highly unlikely this test will ever fail but better safe than sorry)

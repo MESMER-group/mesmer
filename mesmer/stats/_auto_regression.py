@@ -77,7 +77,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     -------
     :obj:`xr.Dataset`
         Dataset containing the estimated parameters of the ``intercept``, the AR
-        ``coeffs`` and the ``standard deviation`` of the residuals.
+        ``coeffs`` and the ``variance`` of the residuals.
 
     Notes
     -----
@@ -102,8 +102,9 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
             # mean over ensemble members
             ar_params = _avg_ar_params(ar_params, ens_dim, ar_params.nobs)
             n_ens[o] = obj[ens_dim].size
-            ar_params = ar_params.drop_vars("nobs")
-
+            # ar_params = ar_params.drop_vars(ens_dim)
+        
+        ar_params = ar_params.drop_vars("nobs")
         ar_params_scen.append(ar_params)
 
     ar_params_scen = xr.concat(ar_params_scen, dim="scen", fill_value=np.nan)
@@ -112,16 +113,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     # mean over all scenarios
     ar_params = _avg_ar_params(ar_params_scen, "scen", n_ens_scen)
 
-    standard_deviation = np.sqrt(ar_params.variance)
-    standard_deviation = standard_deviation.drop_vars(list(standard_deviation.coords))
-
-    return xr.Dataset(
-        {
-            "intercept": ar_params.intercept,
-            "coeffs": ar_params.coeffs,
-            "standard_deviation": standard_deviation,
-        }
-    )
+    return ar_params
 
 
 # ======================================================================================

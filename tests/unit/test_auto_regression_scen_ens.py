@@ -75,16 +75,13 @@ def test_fit_auto_regression_scen_ens_one_scen(da_std):
     )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-    expected["standard_deviation"] = np.sqrt(
-        sum(expected.variance * (expected.nobs - 1)) / sum(expected.nobs - 1)
-    )
-    expected["coeffs"], expected["intercept"] = expected.coeffs.mean(
-        "ens"
-    ), expected.intercept.mean("ens")
-    expected = expected.drop_vars(["nobs", "variance", "ens"])
+    expected["variance"] = sum(expected.variance * (expected.nobs - 1)) / sum(expected.nobs - 1)
+    expected["coeffs"] = expected.coeffs.mean("ens")
+    expected["intercept"] = expected.intercept.mean("ens")
+    expected = expected.drop_vars(["nobs", "ens"])
 
     xr.testing.assert_allclose(result, expected)
-    np.testing.assert_allclose(result.standard_deviation, da_std, rtol=1e-1)
+    np.testing.assert_allclose(np.sqrt(result.variance), da_std, rtol=1e-1)
 
 
 def test_fit_auto_regression_scen_ens_multi_scen():
@@ -105,12 +102,11 @@ def test_fit_auto_regression_scen_ens_multi_scen():
     ens_variance = (expected.variance * (expected.nobs)).sum(dim="ens") / (
         expected.nobs
     ).sum(dim="ens")
-    scen_variance = (ens_variance * (n_ens)).sum(dim="scen") / (n_ens).sum(dim="scen")
-    expected_standard_deviation = np.sqrt(scen_variance)
+    expected_variance = (ens_variance * (n_ens)).sum(dim="scen") / (n_ens).sum(dim="scen")
 
     xr.testing.assert_equal(result.coeffs, expected_coeffs)
     xr.testing.assert_equal(result.intercept, expected_intercept)
-    xr.testing.assert_equal(result.standard_deviation, expected_standard_deviation)
+    xr.testing.assert_equal(result.variance, expected_variance)
 
 
 def test_fit_auto_regression_scen_ens_no_ens_dim():
@@ -123,8 +119,6 @@ def test_fit_auto_regression_scen_ens_no_ens_dim():
     )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-
-    expected["standard_deviation"] = np.sqrt(expected.variance)
-    expected = expected.drop_vars(["nobs", "variance"])
+    expected = expected.drop_vars(["nobs"])
 
     xr.testing.assert_allclose(result, expected)

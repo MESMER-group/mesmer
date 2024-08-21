@@ -126,7 +126,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
         - ["AR_coefs"] (coefficients of the AR model for the lags which are contained in
           the selected AR model, list of floats)
         - ["AR_order_sel"] (selected AR order, int)
-        - ["AR_std_innovs"] (standard deviation of the innovations of the selected AR
+        - ["AR_var_innovs"] (standard deviation of the innovations of the selected AR
           model, float)
 
     nr_emus_v : int
@@ -155,7 +155,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     ar_int = params_gv["AR_int"]
     ar_coefs = params_gv["AR_coefs"]
     AR_order_sel = params_gv["AR_order_sel"]
-    AR_std_innovs = params_gv["AR_std_innovs"]
+    AR_var_innovs = params_gv["AR_var_innovs"]
 
     # ensure ar_coefs are not a scalar
     ar_coefs = np.atleast_1d(ar_coefs)
@@ -173,7 +173,7 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     # the variables are 1D (except coeffs)
     intercept = xr.DataArray(ar_int)
     coeffs = xr.DataArray(ar_coefs, dims="lags")
-    variance = xr.DataArray(AR_std_innovs**2)
+    variance = xr.DataArray(AR_var_innovs)
 
     ar_params = xr.Dataset(
         {"intercept": intercept, "coeffs": coeffs, "variance": variance}

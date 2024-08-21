@@ -262,7 +262,7 @@ def assert_params_allclose(
     )
     np.testing.assert_allclose(bundle["params_gv"]["AR_coefs"], global_ar_params.coeffs)
     np.testing.assert_allclose(
-        bundle["params_gv"]["AR_std_innovs"], global_ar_params.standard_deviation
+        bundle["params_gv"]["AR_var_innovs"], global_ar_params.variance
     )
 
     # local forced response
@@ -290,8 +290,8 @@ def assert_params_allclose(
         bundle["params_lv"]["AR1_int"]["tas"], local_ar_params.intercept.squeeze()
     )
     np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_std_innovs"]["tas"],
-        local_ar_params.standard_deviation.squeeze(),
+        bundle["params_lv"]["AR1_var_innovs"]["tas"],
+        local_ar_params.variance.squeeze(),
     )
 
     # covariance
