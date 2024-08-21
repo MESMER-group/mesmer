@@ -268,7 +268,9 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
 
 
 class _EcovCrossvalidation:
-
+    # we organize this as a class so we can store `method` as state
+    # ensures we use `eigh` after `cholesky` fails for one localization
+    # radius
     def __init__(self, method=None):
 
         self.method = method or "cholesky"
