@@ -103,7 +103,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
             ar_params = _avg_ar_params(ar_params, ens_dim, ar_params.nobs)
             n_ens[o] = obj[ens_dim].size
             # ar_params = ar_params.drop_vars(ens_dim)
-        
+
         ar_params = ar_params.drop_vars("nobs")
         ar_params_scen.append(ar_params)
 
