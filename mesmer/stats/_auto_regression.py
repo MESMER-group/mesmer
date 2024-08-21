@@ -72,6 +72,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         Dimension along which to fit the auto regression.
     ens_dim : str
         Dimension name of the ensemble members, None if no ensemble is provided.
+        If provided, needs to be coord too.
     lags : int
         The number of lags to include in the model.
 
@@ -92,7 +93,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     def _avg_ar_params(ar_params, dim, nobs):
         ar_params["coeffs"] = ar_params.coeffs.mean(dim)
         ar_params["intercept"] = ar_params.intercept.mean(dim)
-        ar_params["variance"] = (ar_params.variance * (nobs)).sum(dim=dim) / (nobs).sum(
+        ar_params["variance"] = (ar_params.variance * nobs).sum(dim=dim) / nobs.sum(
             dim=dim
         )
         return ar_params
@@ -107,8 +108,11 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
             # mean over ensemble members
             ar_params = _avg_ar_params(ar_params, ens_dim, ar_params.nobs)
             n_ens[o] = obj[ens_dim].size
-            # ar_params = ar_params.drop_vars(ens_dim)
 
+            # need to drop ens coord so it is not left on the final result
+            ar_params = ar_params.drop_vars(ens_dim)
+
+        # nobs is not needed in the final result (now also ens_dim is dropped completely)
         ar_params = ar_params.drop_vars("nobs")
         ar_params_scen.append(ar_params)
 
