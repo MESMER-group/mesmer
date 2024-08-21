@@ -273,7 +273,8 @@ def draw_auto_regression_uncorrelated(
         n_time x n_coeffs x n_realisations.
 
     """
-
+    # NOTE: we use variance and not std since we use multivariate normal
+    # also to draw univariate realizations
     # check the input
     _check_dataset_form(
         ar_params, "ar_params", required_vars=("intercept", "coeffs", "variance")
