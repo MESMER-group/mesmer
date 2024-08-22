@@ -63,6 +63,7 @@ that this led to some numerical changes compared to the MESMER-M publication
   `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
 - move the harmonic model and power transformer functionalities to the stats module (
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
+- add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
 
 Auto-Regression
 ~~~~~~~~~~~~~~~
