@@ -106,7 +106,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         if ens_dim in ar_params.dims:
             # mean over ensemble members
             ar_params = _avg_ar_params(ar_params, ens_dim, ar_params.nobs)
-            n_ens[o] = obj[ens_dim].size
+            n_ens[i] = obj[ens_dim].size
 
         # don't need nobs anymore, and don't want it on the final result
         # also if ens_dim does not have coords concat does not work if there
