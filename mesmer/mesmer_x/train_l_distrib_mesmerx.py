@@ -901,7 +901,7 @@ class distrib_cov:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
         self.mem = np.copy(self.fg_coeffs)
-        
+
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
         self.fg_ind_loc = np.array(
@@ -944,13 +944,15 @@ class distrib_cov:
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
-        other_params = [p for p in self.expr_fit.parameters_list if p not in ['loc', 'scale']]
+        other_params = [
+            p for p in self.expr_fit.parameters_list if p not in ["loc", "scale"]
+        ]
         if len(other_params) > 0:
             self.fg_ind_others = []
             for param in other_params:
                 for c in self.expr_fit.coefficients_dict[param]:
-                    self.fg_ind_others.append( self.expr_fit.coefficients_list.index(c) )
-            self.fg_ind_others = np.array( self.fg_ind_others )
+                    self.fg_ind_others.append(self.expr_fit.coefficients_list.index(c))
+            self.fg_ind_others = np.array(self.fg_ind_others)
             localfit_others = self.minimize(
                 func=self.fg_fun_others,
                 x0=self.fg_coeffs[self.fg_ind_others],
@@ -958,7 +960,7 @@ class distrib_cov:
                 option_NelderMead="best_run",
             )
             self.fg_coeffs[self.fg_ind_others] = localfit_others.x
-        
+
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
         localfit_nll = self.minimize(
@@ -980,7 +982,7 @@ class distrib_cov:
             else:
                 # fit coefficients on log-likelihood to the power n
                 fun_opti_prob = self.fg_fun_LL_n
-    
+
             localfit_opti = self.minimize(
                 func=fun_opti_prob,
                 x0=self.fg_coeffs,
@@ -1103,24 +1105,28 @@ class distrib_cov:
         x[self.fg_ind_others] = x_others
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         bottom, top = distrib.support()
-        val_bottom = np.min( self.data_targ - bottom )
-        val_top = np.min( top - self.data_targ )
+        val_bottom = np.min(self.data_targ - bottom)
+        val_top = np.min(top - self.data_targ)
         # preparing margin on support
         m = np.mean(self.data_targ)
         s = np.std(self.data_targ - m)
         # optimization
         if val_bottom < 0:
-            return np.exp( -val_bottom ) * 1 / (margin0*s) # limit of val_bottom --> 0- = 1/margin0*s
+            return (
+                np.exp(-val_bottom) * 1 / (margin0 * s)
+            )  # limit of val_bottom --> 0- = 1/margin0*s
         elif val_top < 0:
-            return np.exp( -val_top ) * 1 / (margin0*s) # limit of val_top --> 0+ = 1/margin0*s
+            return (
+                np.exp(-val_top) * 1 / (margin0 * s)
+            )  # limit of val_top --> 0+ = 1/margin0*s
         else:
-            return 1 / (val_bottom + margin0*s) + 1 / (val_top + margin0*s)
-    
+            return 1 / (val_bottom + margin0 * s) + 1 / (val_top + margin0 * s)
+
     def fg_fun_NLL_notests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
         self.ind_ok_data = np.arange(self.data_targ.size)
         return self.neg_loglike(distrib)
-    
+
     def fg_fun_cdfs(self, x):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         cdf = distrib.cdf(self.data_targ)

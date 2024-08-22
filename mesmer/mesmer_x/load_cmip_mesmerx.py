@@ -210,8 +210,8 @@ def find_files_cmip(esm, var, scenario, cfg, prescribed_members=None):
         for member in prescribed_members:
             check_runs = [member in run for run in path_runs_list]
             if np.any(check_runs):
-                tmp.append( np.array(path_runs_list)[check_runs][0] )
-        path_runs_list = tmp        
+                tmp.append(np.array(path_runs_list)[check_runs][0])
+        path_runs_list = tmp
 
     if len(path_runs_list) == 0:  # if no entries found, return the empty list
         return path_runs_list
@@ -283,7 +283,9 @@ def load_cmip(targ, esm, scen, cfg, prescribed_members=None):
         )
 
     # find the files which fulfill the specifications
-    path_runs_list = find_files_cmip(esm, targ, _scen, cfg, prescribed_members=prescribed_members)
+    path_runs_list = find_files_cmip(
+        esm, targ, _scen, cfg, prescribed_members=prescribed_members
+    )
 
     # exit function in case path_runs_list is empty (ie no file matches the search criterion)
     if len(path_runs_list) == 0:
