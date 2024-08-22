@@ -100,7 +100,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     ar_params_scen = list()
     n_ens = np.ones(len(objs))
 
-    for o, obj in enumerate(objs):
+    for i, obj in enumerate(objs):
         ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
 
         if ens_dim in ar_params.dims:
