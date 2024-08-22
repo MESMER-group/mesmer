@@ -80,7 +80,6 @@ def test_fit_auto_regression_scen_ens_one_scen(std):
 
 
 def test_fit_auto_regression_scen_ens_multi_scen():
-    n_ens = xr.DataArray([4, 5], dims="scen")
     da1 = generate_ar_samples([1, 0.5, 0.3], n_timesteps=100, n_ens=4)
     da2 = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=5)
 
