@@ -83,7 +83,7 @@ def test_fit_auto_regression_scen_ens_one_scen(std):
     expected = expected.drop_vars(["nobs", "ens"])
 
     xr.testing.assert_allclose(result, expected)
-    np.testing.assert_allclose(np.sqrt(result.variance), da_std, rtol=1e-1)
+    np.testing.assert_allclose(np.sqrt(result.variance), std, rtol=1e-1)
 
 
 def test_fit_auto_regression_scen_ens_multi_scen():
