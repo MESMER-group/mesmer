@@ -72,7 +72,6 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         Dimension along which to fit the auto regression.
     ens_dim : str
         Dimension name of the ensemble members, None if no ensemble is provided.
-        If provided, must also have coordinates.
     lags : int
         The number of lags to include in the model.
 
@@ -91,25 +90,19 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     """
 
     ar_params_scen = list()
-
     for obj in objs:
         ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
+
+        #TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
+        if ens_dim in ar_params.dims:
+            ar_params = ar_params.mean(ens_dim)
+
         ar_params_scen.append(ar_params)
 
     ar_params_scen = xr.concat(ar_params_scen, dim="scen")
-    
-    # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
-    if ens_dim in ar_params.dims:
-            # mean over ensemble members
-            ar_params_scen = ar_params_scen.mean(dim=ens_dim)
-    
-    # mean over scenarios
-    ar_params = ar_params_scen.mean(dim="scen")
 
-    # clean up
-    ar_params = ar_params.drop_vars("nobs") # don't need it in the result
-    if ens_dim in ar_params.dims:
-        ar_params = ar_params.drop_dims(ens_dim)
+    # return the mean over all scenarios
+    ar_params = ar_params_scen.mean("scen")
 
     return ar_params
 

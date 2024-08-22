@@ -73,12 +73,7 @@ def test_fit_auto_regression_scen_ens_one_scen(std):
     )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-    expected["variance"] = sum(expected.variance * (expected.nobs - 1)) / sum(
-        expected.nobs - 1
-    )
-    expected["coeffs"] = expected.coeffs.mean("ens")
-    expected["intercept"] = expected.intercept.mean("ens")
-    expected = expected.drop_vars(["nobs", "ens"])
+    expected = expected.mean("ens")
 
     xr.testing.assert_allclose(result, expected)
     np.testing.assert_allclose(np.sqrt(result.variance), std, rtol=1e-1)
@@ -98,7 +93,6 @@ def test_fit_auto_regression_scen_ens_multi_scen():
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
     expected = expected.unstack("scen_ens")
     expected = expected.mean("ens").mean("scen")
-    expected = expected.drop_vars(["nobs"])
 
     xr.testing.assert_equal(result, expected)
 
@@ -112,6 +106,5 @@ def test_fit_auto_regression_scen_ens_no_ens_dim():
     )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-    expected = expected.drop_vars(["nobs"])
 
     xr.testing.assert_allclose(result, expected)
