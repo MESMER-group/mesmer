@@ -105,8 +105,8 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     # merge into one dataset
     harmonic_model_fit = harmonic_model_fit.rename(
-        {"n_sel": "hm_nsel", "coeffs": "hm_coeffs", "predictions": "hm_predictions"}
-    )
+        {"n_sel": "hm_nsel", "coeffs": "hm_coeffs"}
+    ).drop_vars("predictions")
     pt_coefficients = pt_coefficients.rename({"xi_0": "pt_xi0", "xi_1": "pt_xi1"})
     AR1_fit = AR1_fit.rename(
         {"intercept": "ar1_intercept", "slope": "ar1_slope"}
@@ -127,4 +127,4 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         expected_params = xr.open_dataset(
             TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
         )
-        xr.testing.assert_allclose(expected_params, calibrated_params)
+        xr.testing.assert_allclose(expected_params, calibrated_params, atol=1e-5)

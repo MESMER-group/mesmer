@@ -1,6 +1,5 @@
 import importlib
 
-import joblib
 import pytest
 import xarray as xr
 
@@ -41,12 +40,7 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     ).load()
 
     # load parameters
-    params = joblib.load(TEST_PATH / "test-mesmer_m-params.pkl")
-    harmonic_model_fit = params["harmonic_model_fit"]
-    pt_coefficients = params["pt_coefficients"]
-    AR1_fit = params["AR1_fit"]
-    localized_ecov = params["localized_ecov"]
-    m_time = params["monthly_time"]
+    params = xr.open_dataset(TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True)
 
     # preprocess yearly data
     def mask_and_stack(ds, threshold_land):
@@ -61,22 +55,30 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
 
     # generate monthly data with harmonic model
     monthly_harmonic_emu = mesmer.stats.predict_harmonic_model(
-        tas_stacked_y.tas, harmonic_model_fit.coeffs, m_time
+        tas_stacked_y.tas, params.hm_coeffs, params.monthly_time
     )
 
     # generate variability around 0 with AR(1) model
+    AR1_fit = xr.merge([params.ar1_slope, params.ar1_intercept]).rename(
+        {"ar1_slope": "slope", "ar1_intercept": "intercept"}
+    )
     local_variability_transformed = mesmer.stats.draw_auto_regression_monthly(
         AR1_fit,
-        localized_ecov.localized_covariance,
-        time=m_time,
+        params.localized_covariance,
+        time=params.monthly_time,
         n_realisations=nr_emus,
         seed=seed,
         buffer=buffer,
     )
 
     # invert the power transformation
+    pt_coeffs = xr.merge([params.pt_xi0, params.pt_xi1]).rename(
+        {"pt_xi0": "xi_0", "pt_xi1": "xi_1"}
+    )
     local_variability_inverted = mesmer.stats.inverse_yeo_johnson_transform(
-        local_variability_transformed, pt_coefficients, tas_stacked_y.tas
+        local_variability_transformed,
+        pt_coeffs,
+        tas_stacked_y.tas,
     )
 
     # add the local variability to the monthly harmonic
