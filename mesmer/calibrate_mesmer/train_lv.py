@@ -234,7 +234,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         data = [
             xr.DataArray(
                 data,
-                dims=dims,
+                dims=dims
             )
             for data in targ.values()
         ]
