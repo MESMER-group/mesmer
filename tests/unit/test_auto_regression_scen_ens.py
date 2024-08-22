@@ -96,6 +96,7 @@ def test_fit_auto_regression_scen_ens_multi_scen():
 
     xr.testing.assert_equal(result, expected)
 
+
 def test_fit_auto_regression_scen_ens_no_ens_dim():
 
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)

@@ -171,13 +171,13 @@ def train_gv_AR(params_gv, gv, max_lag, sel_crit):
 
     # create temporary DataArray objects
     data = [
-         xr.DataArray(
-             data,
-             dims=["run", "time"],
-             coords=[np.arange(data.shape[0]), np.arange(data.shape[1])],
-         )
-         for data in gv.values()
-     ]
+        xr.DataArray(
+            data,
+            dims=["run", "time"],
+            coords=[np.arange(data.shape[0]), np.arange(data.shape[1])],
+        )
+        for data in gv.values()
+    ]
 
     AR_order = _select_ar_order_scen_ens(
         *data, dim="time", ens_dim="run", maxlag=max_lag, ic=sel_crit

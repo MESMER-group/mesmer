@@ -93,7 +93,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     for obj in objs:
         ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
 
-        #TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
+        # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
         if ens_dim in ar_params.dims:
             ar_params = ar_params.mean(ens_dim)
 
