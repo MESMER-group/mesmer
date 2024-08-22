@@ -56,13 +56,14 @@ Integration of MESMER-M
 This release integrates MESMER-M into the existing MESMER infrastructure. This includes
 some refactoring, bugfixes and enhancements of the MESMER-M functionality. Note
 that this led to some numerical changes compared to the MESMER-M publication
-(`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
+(Nath et al., `2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 
 - move MESMER-M scripts into mesmer (
   `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_, and
   `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
 - move the harmonic model and power transformer functionalities to the stats module (
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
+- add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
 
 Auto-Regression
 ~~~~~~~~~~~~~~~
