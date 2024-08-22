@@ -92,9 +92,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     def _avg_ar_params(ar_params, dim, nobs):
         ar_params["coeffs"] = ar_params.coeffs.mean(dim)
         ar_params["intercept"] = ar_params.intercept.mean(dim)
-        ar_params["variance"] = (ar_params.variance * nobs).sum(dim=dim) / nobs.sum(
-            dim=dim
-        )
+        ar_params["variance"] = ar_params.variance.weighted(nobs).mean(dim)
         return ar_params
 
     ar_params_scen = list()
