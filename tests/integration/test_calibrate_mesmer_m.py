@@ -1,6 +1,5 @@
 import importlib
 
-import joblib
 import pytest
 import xarray as xr
 
@@ -104,46 +103,28 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         AR1_fit.residuals, weights, phi_gc_localizer, "time", 30
     )
 
+    # merge into one dataset
+    harmonic_model_fit = harmonic_model_fit.rename(
+        {"n_sel": "hm_nsel", "coeffs": "hm_coeffs", "predictions": "hm_predictions"}
+    )
+    pt_coefficients = pt_coefficients.rename({"xi_0": "pt_xi0", "xi_1": "pt_xi1"})
+    AR1_fit = AR1_fit.rename(
+        {"intercept": "ar1_intercept", "slope": "ar1_slope"}
+    ).drop_vars("residuals")
+    m_time = m_time.rename("monthly_time")
+    calibrated_params = xr.merge(
+        [harmonic_model_fit, pt_coefficients, AR1_fit, localized_ecov, m_time]
+    )
+
     # save params
     if update_expected_files:
-        params = {
-            "harmonic_model_fit": harmonic_model_fit,
-            "pt_coefficients": pt_coefficients,
-            "AR1_fit": AR1_fit,
-            "localized_ecov": localized_ecov,
-            "monthly_time": m_time,  # needed emulations
-        }
-        joblib.dump(params, TEST_PATH / "test-mesmer_m-params.pkl")
-        pytest.skip("Updated test-mesmer_m-params.pkl")
+        calibrated_params.to_netcdf(TEST_PATH / "test-mesmer_m-params.nc")
+        pytest.skip("Updated test-mesmer_m-params.nc")
 
     # testing
     else:
-        assert_params_allclose(
-            TEST_PATH,
-            harmonic_model_fit,
-            pt_coefficients,
-            AR1_fit,
-            localized_ecov,
-            m_time,
+        # load expected values
+        expected_params = xr.open_dataset(
+            TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
         )
-
-
-def assert_params_allclose(
-    TEST_PATH,
-    harmonic_model_fit,
-    pt_coefficients,
-    AR1_fit,
-    localized_ecov,
-    m_time,
-):
-    # load expected values
-    expected_params = joblib.load(TEST_PATH / "test-mesmer_m-params.pkl")
-
-    # test
-    xr.testing.assert_allclose(
-        expected_params["harmonic_model_fit"], harmonic_model_fit
-    )
-    xr.testing.assert_allclose(expected_params["pt_coefficients"], pt_coefficients)
-    xr.testing.assert_allclose(expected_params["AR1_fit"], AR1_fit)
-    xr.testing.assert_allclose(expected_params["localized_ecov"], localized_ecov)
-    xr.testing.assert_allclose(expected_params["monthly_time"], m_time)
+        xr.testing.assert_allclose(expected_params, calibrated_params)
