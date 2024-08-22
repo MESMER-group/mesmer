@@ -96,20 +96,11 @@ def test_fit_auto_regression_scen_ens_multi_scen():
     da = xr.concat([da1, da2], dim="scen")
     da = da.stack(scen_ens=("scen", "ens")).dropna("scen_ens")
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
-    expected = expected.unstack()
-    expected_coeffs = expected.coeffs.mean("ens").mean("scen")
-    expected_intercept = expected.intercept.mean("ens").mean("scen")
-    ens_variance = (expected.variance * (expected.nobs)).sum(dim="ens") / (
-        expected.nobs
-    ).sum(dim="ens")
-    expected_variance = (ens_variance * (n_ens)).sum(dim="scen") / (n_ens).sum(
-        dim="scen"
-    )
+    expected = expected.unstack("scen_ens")
+    expected = expected.mean("ens").mean("scen")
+    expected = expected.drop_vars(["nobs"])
 
-    xr.testing.assert_equal(result.coeffs, expected_coeffs)
-    xr.testing.assert_equal(result.intercept, expected_intercept)
-    xr.testing.assert_equal(result.variance, expected_variance)
-
+    xr.testing.assert_equal(result, expected)
 
 def test_fit_auto_regression_scen_ens_no_ens_dim():
 

@@ -72,6 +72,7 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
         Dimension along which to fit the auto regression.
     ens_dim : str
         Dimension name of the ensemble members, None if no ensemble is provided.
+        If provided, must also have coordinates.
     lags : int
         The number of lags to include in the model.
 
@@ -89,36 +90,24 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
 
-    def _avg_ar_params(ar_params, dim, nobs):
-        ar_params["coeffs"] = ar_params.coeffs.mean(dim)
-        ar_params["intercept"] = ar_params.intercept.mean(dim)
-        ar_params["variance"] = ar_params.variance.weighted(nobs).mean(dim)
-        return ar_params
-
     ar_params_scen = list()
-    n_ens = np.ones(len(objs))
 
-    for i, obj in enumerate(objs):
+    for obj in objs:
         ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
-
-        if ens_dim in ar_params.dims:
-            # mean over ensemble members
-            ar_params = _avg_ar_params(ar_params, ens_dim, ar_params.nobs)
-            n_ens[i] = obj[ens_dim].size
-
-        # don't need nobs anymore, and don't want it on the final result
-        # also if ens_dim does not have coords concat does not work if there
-        # is still a variable with values along ens_dim
-        ar_params = ar_params.drop_vars("nobs")
         ar_params_scen.append(ar_params)
 
-    ar_params_scen = xr.concat(ar_params_scen, dim="scen", fill_value=np.nan)
-    n_ens_scen = xr.DataArray(n_ens, dims="scen")
-
-    # mean over all scenarios
-    ar_params = _avg_ar_params(ar_params_scen, "scen", n_ens_scen)
+    ar_params_scen = xr.concat(ar_params_scen, dim="scen")
+    
+    # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
+    if ens_dim in ar_params.dims:
+            # mean over ensemble members
+            ar_params_scen = ar_params_scen.mean(dim=ens_dim)
+    
+    # mean over scenarios
+    ar_params = ar_params_scen.mean(dim="scen")
 
     # clean up
+    ar_params = ar_params.drop_vars("nobs") # don't need it in the result
     if ens_dim in ar_params.dims:
         ar_params = ar_params.drop_dims(ens_dim)
 

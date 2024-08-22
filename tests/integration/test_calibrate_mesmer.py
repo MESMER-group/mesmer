@@ -78,7 +78,7 @@ def test_calibrate_mesmer(
     outname,
     test_data_root_dir,
     tmpdir,
-    update_expected_files=False,
+    update_expected_files,
 ):
 
     ouput_dir = os.path.join(test_data_root_dir, "output", outname)
