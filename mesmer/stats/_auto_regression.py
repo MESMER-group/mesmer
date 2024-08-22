@@ -578,7 +578,6 @@ def fit_auto_regression(data, dim, lags):
         lags = np.arange(lags) + 1
 
     # return intercept, coeffs, variance, lags, nobs
-
     data_vars = {
         "intercept": intercept,
         "coeffs": coeffs,
