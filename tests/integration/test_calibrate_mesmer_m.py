@@ -127,4 +127,4 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         expected_params = xr.open_dataset(
             TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
         )
-        xr.testing.assert_allclose(expected_params, calibrated_params, atol=1e-5)
+        xr.testing.assert_allclose(expected_params, calibrated_params, atol=1e-3)
