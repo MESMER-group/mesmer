@@ -27,7 +27,7 @@ from mesmer.stats import gaspari_cohn_correlation_matrices
 
 def ignore_warnings(func):
     # adapted from https://stackoverflow.com/a/70292317
-    # TODO: don't supress all warnings
+    # TODO: don't suppress all warnings
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -386,7 +386,7 @@ class distrib_cov:
                 stability & speed.
 
             * xtol_req: float, default: 1e-3
-                Accurracy of the fit in coefficients. Interpreted differently depending
+                Accuracy of the fit in coefficients. Interpreted differently depending
                 on 'method_fit'.
 
             * ftol_req: float, default: 1e-6
@@ -428,7 +428,7 @@ class distrib_cov:
         - Removed
           - In tests, was checking not only whether the coefficients or parameters were
             exceeding boundaries, but also were close. Removed because of modifications
-            in first guess didnt work with situations with scale=0.
+            in first guess didn't work with situations with scale=0.
           - Forcing values of certain parameters (eg mu for poisson) to be integers: to
             implement in class 'expression'?
 
@@ -706,7 +706,7 @@ class distrib_cov:
         return test
 
     def _test_proba_value(self, distrib, data):
-        # tested values must have a minimum probability of occuring, i.e. be in a
+        # tested values must have a minimum probability of occurring, i.e. be in a
         # confidence interval
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
@@ -720,7 +720,7 @@ class distrib_cov:
     def test_all(self, coefficients):
         test_coeff = self._test_coeffs(coefficients)
 
-        # tests on coeffs show already that it wont work: fill in the rest with NaN
+        # tests on coeffs show already that it won't work: fill in the rest with NaN
         if not test_coeff:
             return test_coeff, False, False, False
 
@@ -740,7 +740,7 @@ class distrib_cov:
             else:
                 test_param = self._test_evol_params(distrib, self.data_targ)
 
-            # tests on params show already that it wont work: fill in the rest with NaN
+            # tests on params show already that it won't work: fill in the rest with NaN
             if not test_param:
                 return test_coeff, test_param, False, False
 
@@ -760,7 +760,7 @@ class distrib_cov:
                 # evaluated
                 return test_coeff, test_param, test_proba, distrib
 
-    # supress nan & inf warnings
+    # suppress nan & inf warnings
     @ignore_warnings
     def find_fg(self):
         """
@@ -770,9 +770,9 @@ class distrib_cov:
         Motivation:
             In many situations, the fit may be complex because of complex expressions
             for the conditional distributions & because large domains in the set of
-            coefficients lead to unvalid fits (e.g. sample out of support).
+            coefficients lead to invalid fits (e.g. sample out of support).
 
-        Criterias:
+        Criteria:
             The method must return a first guess that is ROBUST (close to the global
             minimum) & VALID (respect all conditions implemented in the tests), must be
             FLEXIBLE (any sample, any distribution & any expression).
@@ -793,7 +793,7 @@ class distrib_cov:
                support of the distribution. Two possibilities tried:
                (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
-               extremly unlikely values, that lead to division by 0 with CDF)
+               extremely unlikely values, that lead to division by 0 with CDF)
                (step 5 still not always working, trying without?)
 
         Risks for the method:
@@ -802,7 +802,7 @@ class distrib_cov:
             the next local minimum is far away.
 
         Justification for the method:
-            This is a surprisingly complex problem to satisfy the criterias of
+            This is a surprisingly complex problem to satisfy the criteria of
             robustness, validity & flexibility.
 
             a. In theory, this problem could be solved with a global optimization. Among
@@ -816,7 +816,7 @@ class distrib_cov:
                  - brute, dual_annealing, direct: performances too low & too slow
                  - differential_evolution: lacks in reproductibility & stability
                  - shgo: good performances with the right sampling method, relatively
-                   fast, but still adds ~10s. Highly dependant on the bounds, must not
+                   fast, but still adds ~10s. Highly dependent on the bounds, must not
                    be too large.
                The best global optimizer, shgo, would then require bounds that are not
                too large.
@@ -850,7 +850,7 @@ class distrib_cov:
         --------
         To anyone trying to improve this part:
         If you attempt to modify the calculation of the first guess, it is *absolutely
-        mandatory* to test the new code on all criterias: ROBUSTNESS, VALIDITY,
+        mandatory* to test the new code on all criteria: ROBUSTNESS, VALIDITY,
         FLEXIBILITY. In particular, it is mandatory to test it for different
         situations: variables, grid points, distributions & expressions.
         """
@@ -892,7 +892,7 @@ class distrib_cov:
             globalfit_d01 = basinhopping(
                 func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
             )
-            # warning, basinhopping tends to indroduce non-reproductibility in fits,
+            # warning, basinhopping tends to introduce non-reproductibility in fits,
             # reduced when using 2nd round of fits
 
             self.fg_coeffs = globalfit_d01.x
@@ -1154,7 +1154,7 @@ class distrib_cov:
 
     # OPTIMIZATION FUNCTIONS & SCORES
     def func_optim(self, coefficients):
-        # check wheter these coefficients respect all conditions: if so, can compute a
+        # check whether these coefficients respect all conditions: if so, can compute a
         # value for the optimization
         test_coeff, test_param, test_proba, distrib = self.test_all(coefficients)
         if test_coeff and test_param and test_proba:
@@ -1256,7 +1256,7 @@ class distrib_cov:
         # averaging
         return np.sum(self.weights_driver * np.array(tmp_cprs))
 
-    @ignore_warnings  # supress nan & inf warnings
+    @ignore_warnings  # suppress nan & inf warnings
     def fit(self):
         # Before fitting, need a good first guess, using 'find_fg'.
         if self.func_first_guess is not None:

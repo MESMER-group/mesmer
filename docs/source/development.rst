@@ -119,9 +119,8 @@ Formatting
 
 To help us focus on what the code does, not how it looks, we use a couple of automatic formatting tools.
 We use the following tools:
-- `isort <https://github.com/PyCQA/isort>`_ to sort import statements
+- `ruff check<https://docs.astral.sh/ruff/>`_ to check and fix small code errors
 - `black <https://github.com/psf/black>`_ to auto-format the code
-- `flake8 <https://flake8.pycqa.org/en/latest/>`_ to check the format and small errors
 
 These automatically format the code for us and tell use where the errors are.
 To use them, after setting yourself up (see `Development setup`_), simply run ``make format``.

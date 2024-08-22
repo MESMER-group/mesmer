@@ -475,11 +475,11 @@ def _draw_auto_regression_correlated_np(
     # arbitrary lags? no, see: https://github.com/MESMER-group/mesmer/issues/164
     ar_lags = np.arange(1, ar_order + 1, dtype=int)
 
-    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
-    np.random.seed(seed)
+    # ensure reproducibility
+    rng = np.random.default_rng(seed)
 
     innovations = _draw_innovations_correlated_np(
-        covariance, n_coeffs, n_samples, n_ts, buffer
+        covariance, rng, n_coeffs, n_samples, n_ts, buffer
     )
 
     out = np.zeros([n_samples, n_ts + buffer, n_coeffs])
@@ -492,7 +492,9 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
-def _draw_innovations_correlated_np(covariance, n_gridcells, n_samples, n_ts, buffer):
+def _draw_innovations_correlated_np(
+    covariance, rng, n_gridcells, n_samples, n_ts, buffer
+):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
     try:
@@ -510,6 +512,7 @@ def _draw_innovations_correlated_np(covariance, n_gridcells, n_samples, n_ts, bu
         mean=np.zeros(n_gridcells),
         cov=cov,
         size=[n_samples, n_ts + buffer],
+        random_state=rng,
     ).reshape(n_samples, n_ts + buffer, n_gridcells)
 
     return innovations
@@ -604,7 +607,7 @@ def _fit_auto_regression_np(data, lags):
 def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly
     data. The parameters are estimated for each month and gridpoint separately.
-    This is based on the assuption that e.g. June depends on May differently
+    This is based on the assumption that e.g. June depends on May differently
     than July on June. The auto regression is fit along `time_dim`.
 
     A cyclo-stationary AR(1) process is defined as follows:
@@ -618,6 +621,10 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
     where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal cycle, here the
     months of a year :math:`(N=12)` and :math:`t` counts the repetitions of this seasonal cycle,
     here the years. Here :math:`\\epsilon` is a white noise process, i.e. :math:`\\epsilon \\sim N(0, \\sigma^2)`.
+    The covariance matrix of the driving white noise process should be estimated on the residuals of the AR(1)
+    process. The residuals are returned here and should be passed to
+    :func:`find_localized_empirical_covariance_monthly <mesmer.stats.find_localized_empirical_covariance_monthly>`.
+
     For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1].
 
     [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research.
@@ -633,13 +640,15 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
     Returns
     -------
-    ar_params : ``xr.Dataset``
+    obj : ``xr.Dataset``
         Dataset containing the estimated parameters of the AR(1) process, the ``intercept`` and the
-        ``slope`` for each month and gridpoint.
+        ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned. These
+        are needed for the estimation of the covariance matrix.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
+    residuals = []
 
     for month in range(1, 13):
         if month == 1:
@@ -654,27 +663,31 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             prev_month = monthly_data[month - 1]
             cur_month = monthly_data[month]
 
-        slope, intercept = xr.apply_ufunc(
+        slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
             input_core_dims=[[time_dim], [time_dim]],
-            output_core_dims=[[], []],
+            output_core_dims=[[], [], [time_dim]],
             exclude_dims={time_dim},
             vectorize=True,
         )
 
         ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
+        residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
     month = xr.Variable("month", np.arange(1, 13))
+    ar_params = xr.concat(ar_params, dim=month)
+    residuals = xr.concat(residuals, dim=time_dim).rename("residuals")
 
-    return xr.concat(ar_params, dim=month)
+    return xr.merge([ar_params, residuals])
 
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):
-    """fit an auto regression of lag one (AR(1)) on monthly data - numpy wrapper
-    We use a linear function to relate the previous month's
-    data (predictor/independent variable) to the current month's data (target/ dependent variable).
+    """fit an auto regression of lag one (AR(1)) on monthly data
+    We use a linear function to relate the previous month's data
+    (predictor/independent variable) to the current month's data
+    (target/ dependent variable).
 
     Parameters
     ----------
@@ -688,7 +701,7 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
     slope : :obj:`np.array`
         The slope of the AR(1) process.
     intercept : :obj:`np.array`
-        The intercept of the AR(1) proces.
+        The intercept of the AR(1) process.
     """
 
     def lin_func(indep_var, slope, intercept):
@@ -698,72 +711,11 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
         lin_func,
         data_prev_month,  # independent variable
         data_month,  # dependent variable
-        bounds=([-1, -np.inf], [1, np.inf]),
     )[0]
 
-    return slope, intercept
+    residuals = data_month - lin_func(data_prev_month, slope, intercept)
 
-
-def predict_auto_regression_monthly(ar_params, time, buffer):
-    """deterministically predict time series of an auto regression process
-    with lag one (AR(1)) using individual parameters for each month.
-    This function is deterministic, i.e. does not produce random noise!
-
-    Parameters
-    ----------
-    ar_params : xr.Dataset
-        Dataset containing the estimated parameters of the AR1 process. Must contain the
-        following DataArray objects:
-
-        - intercept
-        - slope
-
-        both of shape (12, n_gridpoints).
-    time : xr.DataArray
-        The time coordinates that determines the length of the predicted timeseries and
-        that will be the assigned time dimension of the predictions.
-    buffer : int
-        Buffer to initialize the auto-regressive process (ensures that start at 0 does
-        not influence overall result).
-
-    Returns
-    -------
-    result : xr.DataArray
-        Predicted deterministic time series of the specified AR(1). The array has
-        shape n_timesteps x n_gridpoints.
-
-    """
-    _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
-
-    (month_dim, gridcell_dim) = ar_params.intercept.dims
-    (n_months, n_gridpoints) = ar_params.intercept.shape
-
-    _check_dataarray_form(
-        ar_params.intercept,
-        "intercept",
-        ndim=2,
-        required_dims=(month_dim, gridcell_dim),
-    )
-    _check_dataarray_form(
-        ar_params.slope,
-        "slope",
-        ndim=2,
-        required_dims=(month_dim, gridcell_dim),
-        shape=(n_months, n_gridpoints),
-    )
-    result = _draw_ar_corr_monthly_xr_internal(
-        intercept=ar_params.intercept,
-        slope=ar_params.slope,
-        covariance=None,
-        time=time,
-        realisation=1,
-        seed=0,
-        buffer=buffer,
-        time_dim="time",
-        realisation_dim="realisation",
-    ).squeeze("realisation", drop=True)
-
-    return result
+    return slope, intercept, residuals
 
 
 def draw_auto_regression_monthly(
@@ -777,8 +729,10 @@ def draw_auto_regression_monthly(
     time_dim="time",
     realisation_dim="realisation",
 ):
-    """draw time series of an auto regression process with lag one
+    """draw time series of a cyclo-stationary auto-regressive process of lag one (AR(1))
     using individual parameters for each month including spatially-correlated innovations.
+    For more information on the cyclo-stationary AR(1) process please refer to
+    :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`.
 
     Parameters
     ----------
@@ -791,8 +745,9 @@ def draw_auto_regression_monthly(
 
         both of shape (12, n_gridpoints).
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
-        The covariance matrix representing spatial correlation between gridpoints for
-        each month. Must be symmetric and at least positive-semidefinite.
+        The covariance matrix representing the spatially correlated driving
+        white noise process for each month. Must be symmetric and at least
+        positive-semidefinite.
         Used to draw spatially-correlated innovations using a multivariate normal.
     time : xr.DataArray
         The time coordinates that determines the length of the predicted timeseries and
@@ -872,13 +827,10 @@ def _draw_ar_corr_monthly_xr_internal(
     # make sure non-dimension coords are properly caught
     gridpoint_coords = dict(slope[gridpoint_dim].coords)
 
-    if covariance is not None:
-        covariance = covariance.values
-
     out = _draw_auto_regression_monthly_np(
         intercept=intercept.values,
         slope=slope.transpose(..., gridpoint_dim).values,
-        covariance=covariance,
+        covariance=covariance.values,
         n_samples=n_realisations,
         n_ts=n_ts,
         seed=seed,
@@ -926,12 +878,12 @@ def _draw_auto_regression_monthly_np(
         Predicted time series of the specified AR(1) including spatially correllated innovations.
     """
     intercept = np.asarray(intercept)
-    # covariance = np.atleast_3d(covariance)
+    covariance = np.atleast_3d(covariance)
 
     _, n_gridcells = intercept.shape
 
-    # ensure reproducibility (TODO: https://github.com/MESMER-group/mesmer/issues/35)
-    np.random.seed(seed)
+    # ensure reproducibility
+    rng = np.random.default_rng(seed)
 
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
@@ -939,9 +891,9 @@ def _draw_auto_regression_monthly_np(
         for month in range(12):
             cov_month = covariance[month, :, :]
             innovations[:, :, month, :] = _draw_innovations_correlated_np(
-                cov_month, n_gridcells, n_samples, n_ts // 12, buffer
+                cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
             )
-    # reshape innovations into continous time series
+    # reshape innovations into continuous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
     # predict auto-regressive process using innovations
