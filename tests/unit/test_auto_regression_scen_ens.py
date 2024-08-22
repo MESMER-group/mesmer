@@ -62,8 +62,8 @@ def test_select_ar_order_scen_ens_no_ens_dim():
     xr.testing.assert_equal(result, expected)
 
 
-@pytest.mark.parametrize("da_std", [1, 0.1, 0.5])
-def test_fit_auto_regression_scen_ens_one_scen(da_std):
+@pytest.mark.parametrize("std", [1, 0.1, 0.5])
+def test_fit_auto_regression_scen_ens_one_scen(std):
 
     n_timesteps = 100
     da = generate_ar_samples(
