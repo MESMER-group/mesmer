@@ -144,9 +144,9 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
         args=(yearly_predictor, monthly_target),
         loss="linear",
         jac="cs",
-        xtol=1e-10,
-        ftol=1e-10,
-        gtol=1e-10,
+        xtol=1e-15,
+        ftol=1e-15,
+        gtol=1e-15,
     )
 
     coeffs = minimize_result.x
