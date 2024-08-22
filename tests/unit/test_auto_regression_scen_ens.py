@@ -67,7 +67,7 @@ def test_fit_auto_regression_scen_ens_one_scen(std):
 
     n_timesteps = 100
     da = generate_ar_samples(
-        [1, 0.5, 0.3, 0.4], da_std, n_timesteps=n_timesteps, n_ens=4
+        [1, 0.5, 0.3, 0.4], std, n_timesteps=n_timesteps, n_ens=4
     )
 
     result = mesmer.stats._fit_auto_regression_scen_ens(
