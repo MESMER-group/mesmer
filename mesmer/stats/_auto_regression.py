@@ -65,11 +65,13 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
     Parameters
     ----------
     *objs : iterable of DataArray
-        A list of ``xr.DataArray`` to estimate the auto regression over.
+        A list of ``xr.DataArray`` to estimate the auto regression over, each
+        representing one scenario, potentially with several ensemble members
+        along `ens_dim`.
     dim : str
         Dimension along which to fit the auto regression.
     ens_dim : str
-        Dimension name of the ensemble members.
+        Dimension name of the ensemble members, None if no ensemble is provided.
     lags : int
         The number of lags to include in the model.
 
@@ -81,17 +83,17 @@ def _fit_auto_regression_scen_ens(*objs, dim, ens_dim, lags):
 
     Notes
     -----
-    Calculates the mean auto regression, first over the ensemble members, then over all
-    scenarios.
+    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
+    members and then over scenarios. This is done to weight scenarios equally, consequently
+    ensemble members are not weighted equally, if the number of members differs between scenarios.
+    If no ensemble members are provided, the mean is calculated over scenarios only.
     """
 
     ar_params_scen = list()
     for obj in objs:
         ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
 
-        # BUG/ TODO: fix for v1, see https://github.com/MESMER-group/mesmer/issues/307
-        ar_params["standard_deviation"] = np.sqrt(ar_params.variance)
-
+        # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
         if ens_dim in ar_params.dims:
             ar_params = ar_params.mean(ens_dim)
 
@@ -257,7 +259,8 @@ def draw_auto_regression_uncorrelated(
         n_time x n_coeffs x n_realisations.
 
     """
-
+    # NOTE: we use variance and not std since we use multivariate normal
+    # also to draw univariate realizations
     # check the input
     _check_dataset_form(
         ar_params, "ar_params", required_vars=("intercept", "coeffs", "variance")
@@ -554,6 +557,7 @@ def fit_auto_regression(data, dim, lags):
     if np.ndim(lags) == 0:
         lags = np.arange(lags) + 1
 
+    # return intercept, coeffs, variance, lags, nobs
     data_vars = {
         "intercept": intercept,
         "coeffs": coeffs,
@@ -597,9 +601,7 @@ def _fit_auto_regression_np(data, lags):
     coeffs = AR_result.params[1:]
 
     # variance of the residuals
-    variance = AR_result.sigma2
-
-    nobs = AR_result.nobs
+    variance, nobs = AR_result.sigma2, AR_result.nobs
 
     return intercept, coeffs, variance, nobs
 
