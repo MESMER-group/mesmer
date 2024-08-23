@@ -4,7 +4,6 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 from mesmer.testing import trend_data_1D, trend_data_2D
@@ -225,7 +224,7 @@ def test_linear_regression_errors(lr_method_or_function):
 
     def test_unequal_coords(pred0, pred1, tgt, weights):
 
-         with pytest.raises(ValueError, match="cannot align objects"):
+        with pytest.raises(ValueError, match="cannot align objects"):
             lr_method_or_function(
                 {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
             )
