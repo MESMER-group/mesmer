@@ -196,30 +196,27 @@ def test_find_localized_empirical_covariance_np():
     assert result == expected
 
 
-def normal_data_50x30(covariance):
-    rng = np.random.default_rng(0)
-    data = rng.multivariate_normal(
-        mean=np.zeros(30),
-        cov=covariance,
-        size=[50],
-        method="eigh",
-    ).reshape(50, 30)
-    return data
-
-
-
-@pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt")
+@pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt", 
+                            "ignore:`func` returned `inf` for element")
 def test_find_localized_empirical_covariance_method(random_data_5x3):
-    cov = np.full((30, 30), fill_value=0.1)
-    data = normal_data_50x30(cov)
-    weights = np.full(50, fill_value=1)
+    cov = np.eye(50)
+    rng = np.random.default_rng(0)
 
-    localizer = {100: np.ones(30), 200: np.eye(30), 300: np.eye(30)}
+    # generate data that leads to rank deficient covariance matrix
+    data = rng.multivariate_normal(
+        mean=np.zeros(50),
+        cov=cov,
+        size=[30],
+        method="cholesky",
+    ).reshape(30, 50)
+    weights = np.full(30, fill_value=1)
+
+    localizer = {1: np.ones((50,50)), 2: np.eye(50), 3: np.eye(50)*0.5}
     with pytest.warns(LinAlgWarning, match="Singular matrix"):
-        result, __, __ = _find_localized_empirical_covariance_np(
+        result, cov, lcov = _find_localized_empirical_covariance_np(
             data, weights, localizer, 5
         )
-    assert result == 200
+    assert result == 2
 
 
 def test_ecov_crossvalidation_k_folds(random_data_5x3):
