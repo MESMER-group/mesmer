@@ -351,7 +351,8 @@ def _get_neg_loglikelihood(data, covariance, weights, method):
     """
 
     if method == "cholesky":
-        cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
+        L = np.linalg.cholesky(covariance)
+        cov = scipy.stats.Covariance.from_cholesky(L)
     else:
         w, v = np.linalg.eigh(covariance)
         cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
