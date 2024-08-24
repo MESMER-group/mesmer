@@ -197,7 +197,7 @@ def test_find_localized_empirical_covariance_np():
 
 
 @pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt", 
-                            "ignore:`func` returned `inf` for element")
+                            "ignore:`func` returned `inf` for element 1")
 def test_find_localized_empirical_covariance_method(random_data_5x3):
     cov = np.eye(50)
     rng = np.random.default_rng(0)
