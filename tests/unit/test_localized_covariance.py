@@ -196,8 +196,10 @@ def test_find_localized_empirical_covariance_np():
     assert result == expected
 
 
-@pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt", 
-                            "ignore:`func` returned `inf` for element 1")
+@pytest.mark.filterwarnings(
+    "ignore:invalid value encountered in sqrt",
+    "ignore:`func` returned `inf` for element 1",
+)
 def test_find_localized_empirical_covariance_method(random_data_5x3):
     cov = np.eye(50)
     rng = np.random.default_rng(0)
@@ -211,7 +213,7 @@ def test_find_localized_empirical_covariance_method(random_data_5x3):
     ).reshape(30, 50)
     weights = np.full(30, fill_value=1)
 
-    localizer = {1: np.ones((50,50)), 2: np.eye(50), 3: np.eye(50)*0.5}
+    localizer = {1: np.ones((50, 50)), 2: np.eye(50), 3: np.eye(50) * 0.5}
     with pytest.warns(LinAlgWarning, match="Singular matrix"):
         result, cov, lcov = _find_localized_empirical_covariance_np(
             data, weights, localizer, 5

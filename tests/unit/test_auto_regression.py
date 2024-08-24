@@ -673,6 +673,7 @@ def test_fit_auto_regression_monthly():
     with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
         mesmer.stats.fit_auto_regression_monthly(data.values)
 
+
 @pytest.mark.filterwarnings("ignore:Covariance matrix is not positive definite")
 @pytest.mark.parametrize("buffer", [1, 10, 20])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
