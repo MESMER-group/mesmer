@@ -207,6 +207,8 @@ def normal_data_50x30(covariance):
     return data
 
 
+
+@pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt")
 def test_find_localized_empirical_covariance_method(random_data_5x3):
     cov = np.full((30, 30), fill_value=0.1)
     data = normal_data_50x30(cov)
@@ -342,6 +344,7 @@ def test_ecov_crossvalidation_weights(random_data_5x3):
     np.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt")
 def test_ecov_crossvalidation_singular(random_data_5x3):
 
     weights = np.array([1, 1, 1, 1, 1])
@@ -388,6 +391,7 @@ def test_get_neg_loglikelihood(random_data_5x3):
     np.testing.assert_allclose(result, expected)
 
 
+@pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt")
 def test_get_neg_loglikelihood_singular(random_data_5x3):
 
     # select data that leads to singular covariance matrix

@@ -149,7 +149,7 @@ def test_minimize_local_discrete_warning():
 
     assert result == 1
 
-    data_dict = {key: value for key, value in enumerate((50, 20, np.inf, 0))}
+    data_dict = {key: value for key, value in enumerate((50, 20, np.inf, 0, 10))}
 
     with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`func` returned `inf`"):
         result = mesmer.core.utils._minimize_local_discrete(
@@ -170,7 +170,7 @@ def test_minimize_local_discrete_warning():
     assert result == 2
 
 
-@pytest.mark.filterwarnings("ignore:`fun` returned `inf`, skipping this radius.")
+@pytest.mark.filterwarnings("ignore:`func` returned `inf` for element")
 def test_minimize_local_discrete_error():
     def func(i):
         return float("-inf")

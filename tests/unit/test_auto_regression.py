@@ -645,7 +645,7 @@ def test_fit_auto_regression_monthly():
         np.random.normal(size=(n_years * 12, n_gridcells)),
         dims=("time", "gridcell"),
         coords={
-            "time": pd.date_range("2000-01-01", periods=n_years * 12, freq="M"),
+            "time": pd.date_range("2000-01-01", periods=n_years * 12, freq="ME"),
             "gridcell": np.arange(n_gridcells),
         },
     )
@@ -671,7 +671,7 @@ def test_fit_auto_regression_monthly():
     with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
         mesmer.stats.fit_auto_regression_monthly(data.values)
 
-
+@pytest.mark.filterwarnings("ignore:Covariance matrix is not positive definite")
 @pytest.mark.parametrize("buffer", [1, 10, 20])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
@@ -756,7 +756,7 @@ def test_draw_auto_regression_monthly():
         },
     )
 
-    time = pd.date_range("2000-01-01", periods=n_years * 12, freq="M")
+    time = pd.date_range("2000-01-01", periods=n_years * 12, freq="ME")
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
     result = mesmer.stats.draw_auto_regression_monthly(
