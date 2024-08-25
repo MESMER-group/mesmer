@@ -146,7 +146,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
         monthly_target,
         p0=first_guess,
         method="trf",
-        jac = "3-point",
+        jac="3-point",
     )
 
     # Generate the predictions with the fitted coefficients
