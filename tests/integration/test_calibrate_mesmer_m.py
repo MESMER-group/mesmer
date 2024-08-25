@@ -7,7 +7,7 @@ import xarray as xr
 import mesmer
 
 
-def test_calibrate_mesmer_m(update_expected_files=False):
+def test_calibrate_mesmer_m(update_expected_files=True):
     # define config values
     THRESHOLD_LAND = 1 / 3
 

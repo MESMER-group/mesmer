@@ -135,24 +135,23 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     """
 
-    def func(coeffs, yearly_predictor, mon_target):
-        return _generate_fourier_series_np(yearly_predictor, coeffs) - mon_target
+    # Define the function to pass to curve_fit
+    def func(yearly_predictor, *coeffs):
+        return _generate_fourier_series_np(yearly_predictor, np.array(coeffs))
 
-    minimize_result = sp.optimize.least_squares(
+    # Use curve_fit to optimize the coefficients
+    coeffs, covariance = sp.optimize.curve_fit(
         func,
-        first_guess,
-        args=(yearly_predictor, monthly_target),
-        loss="linear",
-        method="trf",
-        jac="cs",
-        tr_solver="lsmr",
+        yearly_predictor,
+        monthly_target,
+        p0=first_guess,
     )
 
-    coeffs = minimize_result.x
-    mse = np.mean(minimize_result.fun**2)
-    preds = _generate_fourier_series_np(
-        yearly_predictor=yearly_predictor, coeffs=coeffs
-    )
+    # Generate the predictions with the fitted coefficients
+    preds = _generate_fourier_series_np(yearly_predictor=yearly_predictor, coeffs=coeffs)
+
+    # Calculate the Mean Squared Error
+    mse = np.mean((preds - monthly_target) ** 2)
 
     return coeffs, preds, mse
 
