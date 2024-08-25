@@ -140,11 +140,13 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
         return _generate_fourier_series_np(yearly_predictor, np.array(coeffs))
 
     # Use curve_fit to optimize the coefficients
-    coeffs, covariance = sp.optimize.curve_fit(
+    coeffs, _ = sp.optimize.curve_fit(
         func,
         yearly_predictor,
         monthly_target,
         p0=first_guess,
+        method="trf",
+        jac = "3-point",
     )
 
     # Generate the predictions with the fitted coefficients
