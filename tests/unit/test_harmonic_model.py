@@ -86,7 +86,7 @@ def test_fit_fourier_order_np(coefficients):
         yearly_predictor, monthly_target, max_order=max_order
     )
 
-    # np.testing.assert_equal(selected_order, int(len(coefficients) / 4))
+    np.testing.assert_equal(selected_order, int(len(coefficients) / 4))
 
     # fill up all coefficient arrays with zeros to have the same length 4*max_order
     # to also be able to compare coefficients of higher orders than the original one
@@ -98,7 +98,7 @@ def test_fit_fourier_order_np(coefficients):
         0,
     )
 
-    # np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-7)
+    np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-7)
     np.testing.assert_allclose(predictions, monthly_target, atol=1e-7)
 
 
