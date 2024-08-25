@@ -1,5 +1,6 @@
 import importlib
 
+import numpy as np
 import pytest
 import xarray as xr
 
@@ -126,5 +127,8 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         # load expected values
         expected_params = xr.open_dataset(
             TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
+        )
+        np.testing.assert_allclose(
+            expected_params["hm_coeffs"], calibrated_params["hm_coeffs"]
         )
         xr.testing.assert_allclose(expected_params, calibrated_params, rtol=1e-5)
