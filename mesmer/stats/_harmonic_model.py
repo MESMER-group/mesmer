@@ -42,9 +42,9 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     seasonal_cycle = np.nansum(
         [
             (coeffs[idx * 4] * yearly_predictor + coeffs[idx * 4 + 1])
-            * np.sin(np.pi * i * (months) / 6)
+            * np.sin(np.pi * i * months / 6)
             + (coeffs[idx * 4 + 2] * yearly_predictor + coeffs[idx * 4 + 3])
-            * np.cos(np.pi * i * (months) / 6)
+            * np.cos(np.pi * i * months / 6)
             for idx, i in enumerate(range(1, order + 1))
         ],
         axis=0,
@@ -144,6 +144,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
         args=(yearly_predictor, monthly_target),
         loss="linear",
         jac="cs",
+        tr_solver="exact",
     )
 
     coeffs = minimize_result.x
