@@ -148,7 +148,9 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     )
 
     # Generate the predictions with the fitted coefficients
-    preds = _generate_fourier_series_np(yearly_predictor=yearly_predictor, coeffs=coeffs)
+    preds = _generate_fourier_series_np(
+        yearly_predictor=yearly_predictor, coeffs=coeffs
+    )
 
     # Calculate the Mean Squared Error
     mse = np.mean((preds - monthly_target) ** 2)
