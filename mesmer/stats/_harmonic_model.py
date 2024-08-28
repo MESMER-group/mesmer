@@ -149,11 +149,8 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     coeffs = minimize_result.x
     mse = np.mean(minimize_result.fun**2)
-    preds = _generate_fourier_series_np(
-         yearly_predictor=yearly_predictor, coeffs=coeffs
-     )
 
-    return coeffs, preds, mse
+    return coeffs, mse
 
 
 def _calculate_bic(n_samples, order, mse):
@@ -208,7 +205,7 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
 
     for i_order in range(1, max_order + 1):
 
-        coeffs, predictions, mse = _fit_fourier_coeffs_np(
+        coeffs, mse = _fit_fourier_coeffs_np(
             yearly_predictor,
             monthly_target,
             # use coeffs from last iteration as first guess
@@ -222,6 +219,10 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
             selected_order = i_order
         else:
             break
+
+    predictions = _generate_fourier_series_np(
+        yearly_predictor=yearly_predictor, coeffs=last_coeffs
+    )
 
     # need the coeff array to be the same size for all orders
     coeffs = np.full(max_order * 4, fill_value=np.nan)

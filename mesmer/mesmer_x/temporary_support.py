@@ -7,9 +7,8 @@ sys.path.append("../")
 import numpy as np
 
 # load in MESMER scripts for treatment of data
-# TODO: write the function test_combination_vars
 from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
-from mesmer.mesmer_x import load_cmip
+from mesmer.mesmer_x import load_cmip, test_combination_vars
 from mesmer.utils import convert_dict_to_arr, extract_land
 
 
@@ -51,25 +50,25 @@ def load_inputs_MESMERx(cfg, variables, esms):
 
         for scen in cfg.scenarios:
 
-            # TODO: checking if this (esm, scen) combination has compatible runs.
-            # if sub_pred is not None:
-            #     available_runs, _ = test_combination_vars(
-            #         [targ, pred, sub_pred], esm, scen, cfg
-            #     )
-            # else:
-            #     available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
+            # Checking if this (esm, scen) combination has compatible runs.
+            if sub_pred is not None:
+                available_runs, _ = test_combination_vars(
+                    [targ, pred, sub_pred], esm, scen, cfg
+                )
+            else:
+                available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
 
-            available_runs = ["all"]
+            # available_runs = ["all"]
             if len(available_runs) > 0:
                 targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmip(
-                    targ, esm, scen, cfg
+                    targ, esm, scen, cfg, prescribed_members=available_runs
                 )
                 pred_g_dict[esm][scen], PRED_dict[esm][scen], _, _, _ = load_cmip(
-                    pred, esm, scen, cfg
+                    pred, esm, scen, cfg, prescribed_members=available_runs
                 )
                 if sub_pred is not None:
                     _, SUB_PRED_dict[esm][scen], _, _, _ = load_cmip(
-                        sub_pred, esm, scen, cfg
+                        sub_pred, esm, scen, cfg, prescribed_members=available_runs
                     )
 
         # grouping the level [run] of dict[esm][scen][run] into a single array

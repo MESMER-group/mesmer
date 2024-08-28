@@ -163,7 +163,7 @@ def test_fit_harmonic_model():
     # test if the model can recover the underlying cycle with noise on top of monthly target
     rng = np.random.default_rng(0)
     noisy_monthly_target = monthly_target + rng.normal(
-        loc=0, scale=0.1, size=monthly_target.values.shape
+        loc=0, scale=0.1, size=monthly_target.shape
     )
 
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
@@ -172,27 +172,30 @@ def test_fit_harmonic_model():
     # compare numerically one cell of one year
     expected = np.array(
         [
-            9.975936,
-            9.968497,
-            7.32234,
-            2.750445,
-            -2.520796,
-            -7.081546,
-            -9.713699,
-            -9.71333,
-            -7.077949,
-            -2.509761,
-            2.76855,
-            7.340076,
+            9.970548,
+            9.966644,
+            7.325875,
+            2.755833,
+            -2.518943,
+            -7.085081,
+            -9.719088,
+            -9.715184,
+            -7.074415,
+            -2.504373,
+            2.770403,
+            7.336541,
         ]
     )
 
     result_comp = result.predictions.isel(cells=0, time=slice(0, 12)).values
-    np.testing.assert_allclose(
-        result_comp,
-        expected,
-        atol=1e-6,
+    np.testing.assert_allclose(result_comp, expected, atol=1e-6)
+
+    # ensure coeffs and predictions are consistent
+    expected = mesmer.stats.predict_harmonic_model(
+        yearly_predictor, result.coeffs, result.time
     )
+
+    xr.testing.assert_equal(expected, result.predictions)
 
 
 def test_fit_harmonic_model_checks():

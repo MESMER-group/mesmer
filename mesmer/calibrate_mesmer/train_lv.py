@@ -215,7 +215,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     # AR(1)
     params_lv["AR1_int"] = {}
     params_lv["AR1_coef"] = {}
-    params_lv["AR1_std_innovs"] = {}
+    params_lv["AR1_var_innovs"] = {}
     params_lv["L"] = {}  # localisation radius
     # empirical cov matrix of the local variability trained on here
     params_lv["ecov"] = {}
@@ -237,7 +237,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
 
         params_lv["AR1_int"][targ_name] = params.intercept.values
         params_lv["AR1_coef"][targ_name] = params.coeffs.values.squeeze()
-        params_lv["AR1_std_innovs"][targ_name] = params.standard_deviation.values
+        params_lv["AR1_var_innovs"][targ_name] = params.variance.values
 
         # determine localization radius, empirical cov matrix, and localized ecov matrix
 

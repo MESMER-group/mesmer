@@ -784,10 +784,12 @@ class distrib_cov:
                distribution should be close from its location.
             3. Fit of the coefficients of the scale, assuming that the deviation of the
                distribution should be close from its scale.
-            4. Improvement of all coefficients: better coefficients on location & scale,
+            4. Fit of remaining coefficients, assuming that the sample must be within
+               the support of the distribution, with some margin.
+            5. Improvement of all coefficients: better coefficients on location & scale,
                and especially estimating those on shape. Based on the Negative Log
                Likelihoog, albeit without the validity of the coefficients.
-            5. Improvement of coefficients: ensuring that all points are within a likely
+            6. Improvement of coefficients: ensuring that all points are within a likely
                support of the distribution. Two possibilities tried:
                (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
@@ -898,6 +900,7 @@ class distrib_cov:
         else:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
+        self.mem = np.copy(self.fg_coeffs)
 
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
@@ -939,7 +942,26 @@ class distrib_cov:
         )
         self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
 
-        # Step 4: fit coefficients using NLL (objective: improving all coefficients,
+        # Step 4: fit other coefficients (objective: improving the subset of
+        # other coefficients. May use multiple coefficients, eg beta distribution)
+        other_params = [
+            p for p in self.expr_fit.parameters_list if p not in ["loc", "scale"]
+        ]
+        if len(other_params) > 0:
+            self.fg_ind_others = []
+            for param in other_params:
+                for c in self.expr_fit.coefficients_dict[param]:
+                    self.fg_ind_others.append(self.expr_fit.coefficients_list.index(c))
+            self.fg_ind_others = np.array(self.fg_ind_others)
+            localfit_others = self.minimize(
+                func=self.fg_fun_others,
+                x0=self.fg_coeffs[self.fg_ind_others],
+                fact_maxfev_iter=len(self.fg_ind_others) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_others] = localfit_others.x
+
+        # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
         localfit_nll = self.minimize(
             func=self.fg_fun_NLL_notests,
@@ -949,25 +971,28 @@ class distrib_cov:
         )
         self.fg_coeffs = localfit_nll.x
 
-        # Step 5: fit on CDF or LL^n (objective: improving all coefficients, necessary
-        # to have all points within support. NB: NLL does not behave well enough here)
-        if False:
-            # TODO: unreachable code?
-            # fit coefficients on CDFs
-            fun_opti_prob = self.fg_fun_cdfs
-        else:
-            # fit coefficients on log-likelihood to the power n
-            fun_opti_prob = self.fg_fun_LL_n
+        test_coeff, test_param, test_proba, _ = self.test_all(self.fg_coeffs)
+        if ~(test_coeff and test_param and test_proba):
+            # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
+            # to have all points within support. NB: NLL doesnt behave well enough here)
+            # two potential functions:
+            if False:
+                # fit coefficients on CDFs
+                fun_opti_prob = self.fg_fun_cdfs
+            else:
+                # fit coefficients on log-likelihood to the power n
+                fun_opti_prob = self.fg_fun_LL_n
 
-        localfit_opti = self.minimize(
-            func=fun_opti_prob,
-            x0=self.fg_coeffs,
-            fact_maxfev_iter=1,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs = localfit_opti.x
+            localfit_opti = self.minimize(
+                func=fun_opti_prob,
+                x0=self.fg_coeffs,
+                fact_maxfev_iter=1,
+                option_NelderMead="best_run",
+            )
+            if ~np.any(np.isnan(localfit_opti.x)):
+                self.fg_coeffs = localfit_opti.x
 
-        # Step 6: if required, global fit within boundaries
+        # Step 7: if required, global fit within boundaries
         if self.fg_with_global_opti:
             # find boundaries on each coefficient
             bounds = []
@@ -1073,6 +1098,29 @@ class distrib_cov:
         # ^ better to use that one instead of deviation, which is affected by the scale
         dev = np.abs(self.data_targ - loc)
         return np.sum((dev - sca) ** 2)
+
+    def fg_fun_others(self, x_others, margin0=0.05):
+        # preparing support
+        x = np.copy(self.fg_coeffs)
+        x[self.fg_ind_others] = x_others
+        distrib = self.expr_fit.evaluate(x, self.data_pred)
+        bottom, top = distrib.support()
+        val_bottom = np.min(self.data_targ - bottom)
+        val_top = np.min(top - self.data_targ)
+        # preparing margin on support
+        m = np.mean(self.data_targ)
+        s = np.std(self.data_targ - m)
+        # optimization
+        if val_bottom < 0:
+            return (
+                np.exp(-val_bottom) * 1 / (margin0 * s)
+            )  # limit of val_bottom --> 0- = 1/margin0*s
+        elif val_top < 0:
+            return (
+                np.exp(-val_top) * 1 / (margin0 * s)
+            )  # limit of val_top --> 0+ = 1/margin0*s
+        else:
+            return 1 / (val_bottom + margin0 * s) + 1 / (val_top + margin0 * s)
 
     def fg_fun_NLL_notests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
