@@ -76,14 +76,18 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     #     tas_stacked_y.tas, tas_stacked_m.tas
     # )
     expected_params = xr.open_dataset(
-            TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
-        )
-    hm_preds = mesmer.stats.predict_harmonic_model(tas_stacked_y.tas, 
-                                                   expected_params.hm_coeffs,
-                                                   expected_params.monthly_time)
-    harmonic_model_fit = xr.merge([expected_params.hm_coeffs.rename("coeffs"),
-                                   expected_params.hm_nsel.rename("n_sel"),
-                                   hm_preds.rename("predictions")])
+        TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
+    )
+    hm_preds = mesmer.stats.predict_harmonic_model(
+        tas_stacked_y.tas, expected_params.hm_coeffs, expected_params.monthly_time
+    )
+    harmonic_model_fit = xr.merge(
+        [
+            expected_params.hm_coeffs.rename("coeffs"),
+            expected_params.hm_nsel.rename("n_sel"),
+            hm_preds.rename("predictions"),
+        ]
+    )
 
     # train power transformer
     resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
