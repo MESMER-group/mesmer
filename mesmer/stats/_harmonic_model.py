@@ -145,7 +145,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
         args=(yearly_predictor, monthly_target),
     )
 
-    mse = np.mean(_generate_fourier_series_np(yearly_predictor, coeffs)**2)
+    mse = np.mean(_generate_fourier_series_np(yearly_predictor, coeffs) ** 2)
 
     return coeffs, mse
 
