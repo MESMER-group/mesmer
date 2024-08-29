@@ -1,6 +1,6 @@
 .. development:
 
-Development
+Contributing to MESMER
 ===========
 
 Thanks for your interest in contributing to MESMER, we're excited to have you on board!
@@ -8,7 +8,7 @@ This section of the docs details how to get up to contribute and how best to com
 
 .. contents:: :local:
 
-Contributing
+Some general information
 ------------
 
 All contributions are welcome, some possible suggestions include:
@@ -30,9 +30,29 @@ As a contributor, please follow a couple of conventions:
 - Start all pull requests as draft pull requests and only mark them as ready for review once they've had main merged into them, this makes it much simpler for reviewers
 - Several small pull requests are preferred over one large PR, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
 
-Development setup
------------------
+Getting started
+---------------
+This section deals with how to contribute to the MESMER codebase by submitting a pull request to the Github repository.
+#. **Fork the Repository**: Fork the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ to your GitHub account (click the `fork` 
+    button on the MESMER landing page). Now you have a personal copy of the MESMER repository in your GitHub account.
 
+#. **Clone the Repository**: Clone your forked repository to your local machine.
+    For this step you must be able to establish a connection from your local machine to your GitHub account. To this end,
+    it might be necessary to set up an SSH key, please consult the `GitHub documentation <https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ 
+    for more details.
+
+   - `git clone https://github.com/yourusername/mesmer`
+      You should now have a `mesmer` folder in your current directory.
+   - Switch to the `mesmer` directory: `cd mesmer`
+
+#. **Create an environment and activate it** to work with MESMER, the steps for this are listed in the `Development setup`_ section.
+   This installs MESMER in development mode and all dependencies needed to use and develop MESMER.
+
+Now you are ready to work on MESMER. If you want to contribute to the codebase, you can sumbit a pull request (PR) to the MESMER repository. On how to do this,
+pleas consult the section `Submitting a Pull Request`_.
+
+Development setup
+~~~~~~~~~~~~~~~~~
 To get setup as a developer, we recommend the following steps (if any of these tools are unfamiliar, please see the resources we recommend in `Development tools`_):
 
 #. Install conda and the Make tool
@@ -43,10 +63,68 @@ To get setup as a developer, we recommend the following steps (if any of these t
     #. Activate your conda environment ``conda activate mesmer``
     #. Install the development dependencies (very important, make sure your conda environment is active before doing this) ``conda install -y --file environment.yml && pip install -e .[dev]``
 
-#. Make sure the tests pass by running ``make test``, if that fails the commands are
+#. Make sure that mesmer was correctly installed and the tests pass by running ``make test``, if that fails the commands are
 
     #. Activate your conda environment ``conda activate mesmer``
     #. Run the unit and integration tests ``pytest --cov -r a --cov-report term-missing``
+
+Pull Request process
+-------------------------
+If you want to contribute new features, fixes or other changes to the MESMER codebase, you can do so by submitting a pull request (PR) to the MESMER repository.
+Please follow the steps below to submit a PR after having set up MESMER lcoally, following the steps in `Getting started`_:
+
+#. **Create a Branch**: Create a new branch for your feature or bugfix.
+
+   ```bash
+   git checkout -b your-feature
+   ```
+
+#. **Make Changes**: Implement your changes in the new branch.
+
+#. **Commit Changes**: Commit your changes with a clear and descriptive message.
+
+   ```bash
+   git commit -m "Description of your changes"
+   ```
+
+#. **Push to GitHub**: Push your changes to your forked repository.
+
+   ```bash
+   git push origin your-feature
+   ```
+   `origin` is the default name of the remote repository you cloned from, so in this case your forked repository.
+
+#. **Create a Pull Request**: Open a pull request on the [MESMER repository](https://github.com/yourusername/MESMER) on GitHub.
+
+#. **Review Process**: each pull request needs approval from a core contributer. Please be available for comments and discussion about your contribution to make sure your changes can me implemented
+
+   ​	Potentially some thing change in the main repository change while your PR is reviewed / you are 	working on it. Please regularly update your main remotely and locally. Remotely you can do this	by clicking on `sync` in your fork. Afterwards go to you local main and
+
+   ```
+   git pull --rebase origin main
+   git switch your-feature
+   git merge main
+   ```
+
+   
+
+#. **Merge**. After a successful review your request can be merged :tada: :tada:
+
+#. After the merge, **delete** the PR from your remote and local repository.
+
+   For your remote you can just klick delete under your merged PR, locally you should switch to main and
+
+   ```bash
+   git branch -D your-feature
+   ```
+
+   and update your main remotely (go onto your fork and click `sync`, and then to this locally:
+
+   ```bash
+   git pull --rebase origin main
+   ```
+
+   If you want to contribute more, please open a **new** branch and reiterate the steps above.
 
 Getting help
 ~~~~~~~~~~~~
