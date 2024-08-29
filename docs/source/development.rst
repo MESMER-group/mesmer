@@ -1,15 +1,13 @@
 .. development:
 
 Contributing to MESMER
-===========
-
-Thanks for your interest in contributing to MESMER, we're excited to have you on board!
-This section of the docs details how to get up to contribute and how best to communicate.
-
+======================
 .. contents:: :local:
 
-Some general information
-------------
+Overview
+--------
+Thanks for your interest in contributing to MESMER, we're excited to have you on board!
+This section of the docs details how to get up to contribute and how best to communicate.
 
 All contributions are welcome, some possible suggestions include:
 
@@ -30,26 +28,28 @@ As a contributor, please follow a couple of conventions:
 - Start all pull requests as draft pull requests and only mark them as ready for review once they've had main merged into them, this makes it much simpler for reviewers
 - Several small pull requests are preferred over one large PR, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
 
+Development Workflow
+--------------------
+
 Getting started
----------------
-This section deals with how to contribute to the MESMER codebase by submitting a pull request to the Github repository.
-#. **Fork the Repository**: Fork the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ to your GitHub account (click the `fork` 
-    button on the MESMER landing page). Now you have a personal copy of the MESMER repository in your GitHub account.
+~~~~~~~~~~~~~~~
+We are using Github to manage the MESMER codebase. If you are new to git or github, go and checkout the resources linked in the `Development tools`_ section.
+Here is what you need to do to get started with MESMER:
 
-#. **Clone the Repository**: Clone your forked repository to your local machine.
-    For this step you must be able to establish a connection from your local machine to your GitHub account. To this end,
-    it might be necessary to set up an SSH key, please consult the `GitHub documentation <https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ 
-    for more details.
+#. **Fork the Repository**: Fork the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ to your GitHub account (click the `fork` button on the MESMER landing page). Now you have a personal copy of the MESMER repository in your GitHub account.
+#. **Clone the Repository**: Clone your forked repository to your local machine. For this step you must be able to establish a connection from your local machine to your GitHub account. To this end, it might be necessary to set up an SSH key, please consult the `GitHub documentation <https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ for more details.
 
-   - `git clone https://github.com/yourusername/mesmer`
-      You should now have a `mesmer` folder in your current directory.
-   - Switch to the `mesmer` directory: `cd mesmer`
+    .. code-block:: bash
+        
+      git clone https://github.com/yourusername/mesmer
 
+You should now have a `mesmer` folder in your current directory.
+- Switch to the `mesmer` directory: `cd mesmer`
 #. **Create an environment and activate it** to work with MESMER, the steps for this are listed in the `Development setup`_ section.
-   This installs MESMER in development mode and all dependencies needed to use and develop MESMER.
+This installs MESMER in development mode and all dependencies needed to use and develop MESMER.
 
 Now you are ready to work on MESMER. If you want to contribute to the codebase, you can sumbit a pull request (PR) to the MESMER repository. On how to do this,
-pleas consult the section `Submitting a Pull Request`_.
+pleas consult the section `Pull Request Process`_.
 
 Development setup
 ~~~~~~~~~~~~~~~~~
@@ -68,63 +68,64 @@ To get setup as a developer, we recommend the following steps (if any of these t
     #. Activate your conda environment ``conda activate mesmer``
     #. Run the unit and integration tests ``pytest --cov -r a --cov-report term-missing``
 
-Pull Request process
--------------------------
+Pull Request Process
+~~~~~~~~~~~~~~~~~~~~
 If you want to contribute new features, fixes or other changes to the MESMER codebase, you can do so by submitting a pull request (PR) to the MESMER repository.
 Please follow the steps below to submit a PR after having set up MESMER lcoally, following the steps in `Getting started`_:
 
 #. **Create a Branch**: Create a new branch for your feature or bugfix.
 
-   ```bash
-   git checkout -b your-feature
-   ```
+    .. code-block:: bash
+
+      git checkout -b your-feature
 
 #. **Make Changes**: Implement your changes in the new branch.
-
 #. **Commit Changes**: Commit your changes with a clear and descriptive message.
 
-   ```bash
-   git commit -m "Description of your changes"
-   ```
+    .. code-block:: bash
+
+      git commit -m "Description of your changes"
 
 #. **Push to GitHub**: Push your changes to your forked repository.
 
-   ```bash
-   git push origin your-feature
-   ```
-   `origin` is the default name of the remote repository you cloned from, so in this case your forked repository.
+    .. code-block:: bash
 
-#. **Create a Pull Request**: Open a pull request on the [MESMER repository](https://github.com/yourusername/MESMER) on GitHub.
+      git push origin your-feature
 
-#. **Review Process**: each pull request needs approval from a core contributer. Please be available for comments and discussion about your contribution to make sure your changes can me implemented
+    `origin` is the default name of the remote repository you cloned from, so in this case your forked repository.
+#. **Create a Pull Request**: Open a pull request on the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ 
+    on GitHub by clicking on "Compare and pull request" on the PR page.
+#. **Review Process**: each pull request needs approval from a core contributer.
+    Please be available for comments and discussion about your contribution to make sure your changes
+    can be implemented.
+    
+    ​Potentially, some things change in the main repository change while your PR is reviewed / you are
+    working on it. Please regularly update your main remotely and locally. Remotely you can do this
+    by clicking on `sync` in your fork. Afterwards go to you local main and do:
 
-   ​	Potentially some thing change in the main repository change while your PR is reviewed / you are 	working on it. Please regularly update your main remotely and locally. Remotely you can do this	by clicking on `sync` in your fork. Afterwards go to you local main and
+    .. code-block:: shell
 
-   ```
-   git pull --rebase origin main
-   git switch your-feature
-   git merge main
-   ```
+      git pull --rebase origin main
+      git switch your-feature
+      git merge main
 
-   
-
-#. **Merge**. After a successful review your request can be merged :tada: :tada:
-
+#. **Merge**. After a successful review your request can be merged (by clicking on the merge button under
+    the pull request webpage) :tada: :tada:
 #. After the merge, **delete** the PR from your remote and local repository.
+    For your remote you can just klick delete under your merged PR, locally you should switch to main and
 
-   For your remote you can just klick delete under your merged PR, locally you should switch to main and
+    .. code-block:: shell
 
-   ```bash
-   git branch -D your-feature
-   ```
+      git branch -D your-feature
 
-   and update your main remotely (go onto your fork and click `sync`, and then to this locally:
+    and update your main remotely (go onto your fork and click `sync`, and then to this locally:
 
-   ```bash
-   git pull --rebase origin main
-   ```
+    .. code-block:: shell
+        
+      git pull --rebase origin main
 
-   If you want to contribute more, please open a **new** branch and reiterate the steps above.
+
+If you want to contribute more, please open a **new** branch and reiterate the steps above.
 
 Getting help
 ~~~~~~~~~~~~
@@ -178,26 +179,29 @@ Here we provide a list of these along with useful resources.
 Testing philosophy
 ------------------
 
-When writing tests, we try to put them in one of two categories: integration and regression.
-Integration tests run bits of the code and assert the correct behaviour was achieved.
-Some of the integration tests might run fairly big bits of code, others will be more targeted.
-Try to keep integration test files targeted and fairly small.
-We can always create `fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`__ to aid code reuse.
-The aim is to avoid testing files with thousands of lines of code as such files quickly become hard to rationalise or understand.
+Please ensure that any new functionality is covered by tests.
+When writing tests, we try to put them in one of two categories: integration and unit tests.
+- unit tests test the functionality of each function - check you function actually does what you intend it to do by testing on (simple) examples
+- integration tests test for numerical reproducability - write tests that will flag when someone makes numerically alterning changes to your code.
+Note that we want to keep the data needed to be shipped with MESMER to a minimum. Please consider reusing the datasets already included in MESMER
+to test numerical stability.
 
-In contrast, regression tests run bits of the code and assert the output matches a saved, known output.
-Regression tests are there to ensure that we know when outputs will change (sometimes they should change, we just want to make sure that this change is deliberate not accidental).
-Regression tests don't require too much code generally, but they may run lots of the code base and hence take a little while to run.
+Try to keep the test files targeted and fairly small. You can always create
+`fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`__ to aid code reuse.
+The aim is to avoid testing files with thousands of lines of code as such files quickly become hard to
+rationalise or understand.
+Please frquently run the tests to ensure your changes do not break existing functionality.
 
-(We are in the process of making the distinction between regression and integration tests clearer, see `#120 <https://github.com/MESMER-group/mesmer/issues/120>`_).
-
+.. code-block:: shell
+    
+    pytest tests/unit/test_yourtest.py
 
 Formatting
 ----------
 
 To help us focus on what the code does, not how it looks, we use a couple of automatic formatting tools.
 We use the following tools:
-- `ruff check<https://docs.astral.sh/ruff/>`_ to check and fix small code errors
+- `ruff check <https://docs.astral.sh/ruff/>`_ to check and fix small code errors
 - `black <https://github.com/psf/black>`_ to auto-format the code
 
 These automatically format the code for us and tell use where the errors are.
@@ -216,6 +220,8 @@ You can preview them by opening ``docs/build/html/index.html`` in a browser.
 For documentation we use Sphinx_.
 To get ourselves started with Sphinx, we started with `this example <https://pythonhosted.org/an_example_pypi_project/sphinx.html>`_ then used `Sphinx's getting started guide <http://www.sphinx-doc.org/en/master/usage/quickstart.html>`_.
 
+Please update the documentation to reflect any changes or additions to the code. Follow the structure and style of the existing documentation and lastly,
+update the `CHANGELOG` with your changes.
 
 Docstring style
 ~~~~~~~~~~~~~~~
