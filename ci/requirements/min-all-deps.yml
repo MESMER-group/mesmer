@@ -6,22 +6,22 @@ channels:
 
 dependencies:
  - python=3.9
- - cartopy
- - dask
- - joblib
- - netcdf4
- - numpy
- - packaging
+ - cartopy=0.22
+ - dask=2023.8
+ - joblib=1.3
+ - netcdf4=1.6
+ - numpy=1.24
+ - packaging=23.1
  - pandas=2.0
- - pooch
- - properscoring
- - pyproj
- - regionmask=0.9
- - scikit-learn
- - scipy
- - shapely=1.8 # required by regionmask < 0.10
- - statsmodels=0.13
- - xarray=2023.04
+ - pooch=1.7
+ - properscoring=0.1
+ - pyproj=3.6
+ - regionmask=0.10
+ - scikit-learn=1.3
+ - scipy=1.11
+ - shapely=2.0
+ - statsmodels=0.14
+ - xarray=2023.7
 # for testing
  - pytest
  - pytest-cov
