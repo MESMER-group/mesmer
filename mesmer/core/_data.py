@@ -1,5 +1,4 @@
-# TODO: use cache instead of lru_cache once requiring python 3.9+
-from functools import lru_cache
+from functools import cache
 
 import pandas as pd
 import pooch
@@ -31,7 +30,7 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 
 
 # use an inner function as @cache does not nicely preserve the signature
-@lru_cache(None)
+@cache(None)
 def _load_aod_obs(*, version, resample):
 
     filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
