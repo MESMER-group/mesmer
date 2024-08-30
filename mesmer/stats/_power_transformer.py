@@ -177,7 +177,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     first_guess = np.array([1, 0])
 
     xi_0, xi_1 = minimize(
-        _neg_log_likelihood, x0=first_guess, bounds=bounds, method="L-BFGS-B", jac="cs"
+        _neg_log_likelihood, x0=first_guess, bounds=bounds, method="Powell"
     ).x
 
     return xi_0, xi_1
