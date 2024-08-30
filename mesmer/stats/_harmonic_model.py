@@ -143,11 +143,12 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
         residuals_from_fourier_series,
         first_guess,
         args=(yearly_predictor, monthly_target),
+        loss="linear",
         method="lm",
     )
 
     coeffs = minimize_result.x
-    mse = np.mean(minimize_result.func**2)
+    mse = np.mean(minimize_result.fun**2)
 
     return coeffs, mse
 

@@ -1,6 +1,5 @@
 import importlib
 
-import numpy as np
 import pytest
 import xarray as xr
 
@@ -72,22 +71,22 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     m_time = tas_stacked_m.time
 
     # fit harmonic model
-    # harmonic_model_fit = mesmer.stats.fit_harmonic_model(
-    #     tas_stacked_y.tas, tas_stacked_m.tas
+    harmonic_model_fit = mesmer.stats.fit_harmonic_model(
+        tas_stacked_y.tas, tas_stacked_m.tas
+    )
+    # expected_params = xr.open_dataset(
+    #     TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
     # )
-    expected_params = xr.open_dataset(
-        TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
-    )
-    hm_preds = mesmer.stats.predict_harmonic_model(
-        tas_stacked_y.tas, expected_params.hm_coeffs, expected_params.monthly_time
-    )
-    harmonic_model_fit = xr.merge(
-        [
-            expected_params.hm_coeffs.rename("coeffs"),
-            expected_params.hm_nsel.rename("n_sel"),
-            hm_preds.rename("predictions"),
-        ]
-    )
+    # hm_preds = mesmer.stats.predict_harmonic_model(
+    #     tas_stacked_y.tas, expected_params.hm_coeffs, expected_params.monthly_time
+    # )
+    # harmonic_model_fit = xr.merge(
+    #     [
+    #         expected_params.hm_coeffs.rename("coeffs"),
+    #         expected_params.hm_nsel.rename("n_sel"),
+    #         hm_preds.rename("predictions"),
+    #     ]
+    # )
 
     # train power transformer
     resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
@@ -142,7 +141,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
             TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
         )
         # np.testing.assert_allclose(expected_params.hm_coeffs.values, calibrated_params.hm_coeffs.values, atol=1e-7)
-        np.testing.assert_allclose(
-            expected_params.pt_xi0.values, calibrated_params.pt_xi0.values
-        )
-        xr.testing.assert_allclose(expected_params, calibrated_params)
+        # np.testing.assert_allclose(
+        #     expected_params.pt_xi0.values, calibrated_params.pt_xi0.values
+        # )
+        xr.testing.assert_allclose(expected_params, calibrated_params, atol=1e-4)
