@@ -30,7 +30,7 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 
 
 # use an inner function as @cache does not nicely preserve the signature
-@cache(None)
+@cache
 def _load_aod_obs(*, version, resample):
 
     filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
