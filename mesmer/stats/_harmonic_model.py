@@ -191,7 +191,7 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
     -------
     selected_order : Integer
         Selected order of Fourier Series.
-    coeffs : array-like of size (4*n_sel,)
+    coeffs : array-like of size (4 * max_order,)
         Fitted coefficients for the selected order of Fourier Series.
     predictions : array-like of size (n_years*12,)
         Predicted monthly values from final model.
@@ -248,9 +248,9 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     Returns
     -------
     data_vars : `xr.Dataset`
-        Dataset containing the selected order of Fourier Series (n_sel), the estimated
-        coefficients of the Fourier Series (coeffs) and the resulting predictions for
-        monthly values (predictions).
+        Dataset containing the selected order of Fourier Series (selected_order),
+        the estimated coefficients of the Fourier Series (coeffs) and the resulting
+        predictions for monthly values (predictions).
 
     """
 
@@ -270,7 +270,7 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     # subtract annual mean to have seasonal anomalies around 0
     seasonal_deviations = monthly_target - yearly_predictor
 
-    n_sel, coeffs, preds = xr.apply_ufunc(
+    selected_order, coeffs, preds = xr.apply_ufunc(
         _fit_fourier_order_np,
         yearly_predictor,
         seasonal_deviations,
@@ -284,7 +284,7 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     preds = yearly_predictor + preds
 
     data_vars = {
-        "n_sel": n_sel,
+        "selected_order": selected_order,
         "coeffs": coeffs,
         "predictions": preds.transpose(time_dim, ...),
     }

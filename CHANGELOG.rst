@@ -16,14 +16,31 @@ Breaking changes
   (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
-- The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_, `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_):
+- The supported versions of some dependencies were changed
+  (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
+  `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_, and
+  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_):
 
-  ============ ============= =========
-  Package      Old           New
-  ============ ============= =========
-  regionmask    >=0.8        >=0.9
-  statsmodels  not specified >=0.13
-  ============ ============= =========
+  ================= ============= =========
+  Package           Old           New
+  ================= ============= =========
+  **cartopy**       not specified 0.22
+  **dask**          not specified 2023.8
+  **joblib**        not specified 1.3
+  **netcdf4**       not specified 1.6
+  **numpy**         not specified 1.24
+  **packaging**     not specified 23.1
+  **pandas**        2.0           no change
+  **pooch**         not specified 1.7
+  **properscoring** not specified 0.1
+  **pyproj**        not specified 3.6
+  **regionmask**    0.8           0.10
+  **scikit-learn**  not specified 1.3
+  **scipy**         not specified 1.11
+  **shapely**       not specified 2.0
+  **statsmodels**   not specified 0.14
+  **xarray**        2023.04       2023.7
+  ================= ============= =========
 
 Deprecations
 ^^^^^^^^^^^^
