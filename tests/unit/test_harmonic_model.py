@@ -156,7 +156,7 @@ def test_fit_harmonic_model():
 
     # test if the model can recover the monthly target from perfect fourier series
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
-    np.testing.assert_equal(result.n_sel.values, orders)
+    np.testing.assert_equal(result.selected_order.values, orders)
     xr.testing.assert_allclose(result["predictions"], monthly_target)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
