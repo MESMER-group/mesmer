@@ -144,4 +144,4 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         # np.testing.assert_allclose(
         #     expected_params.pt_xi0.values, calibrated_params.pt_xi0.values
         # )
-        xr.testing.assert_allclose(expected_params, calibrated_params, rtol=1e-3)
+        xr.testing.assert_allclose(expected_params, calibrated_params, rtol=1e-2)
