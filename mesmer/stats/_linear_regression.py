@@ -1,5 +1,4 @@
 from collections.abc import Mapping
-from typing import Optional
 
 import numpy as np
 import xarray as xr
@@ -18,7 +17,7 @@ class LinearRegression:
         predictors: Mapping[str, xr.DataArray],
         target: xr.DataArray,
         dim: str,
-        weights: Optional[xr.DataArray] = None,
+        weights: xr.DataArray | None = None,
         fit_intercept: bool = True,
     ):
         """
@@ -191,7 +190,7 @@ def _fit_linear_regression_xr(
     predictors: Mapping[str, xr.DataArray],
     target: xr.DataArray,
     dim: str,
-    weights: Optional[xr.DataArray] = None,
+    weights: xr.DataArray | None = None,
     fit_intercept: bool = True,
 ) -> xr.Dataset:
     """
