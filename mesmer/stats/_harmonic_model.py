@@ -35,22 +35,33 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
         Fourier Series of order n calculated over yearly_predictor and months with coeffs.
 
     """
-    order = int(coeffs.size / 4)
-    n_years = yearly_predictor.size // 12
-    # NOTE: months from 0..11 for consistency with standard fourier series and fft
-    months = np.tile(np.arange(12), n_years)
 
-    seasonal_cycle = np.nansum(
-        [
-            (coeffs[idx * 4] * yearly_predictor + coeffs[idx * 4 + 1])
-            * np.cos(2 * np.pi * i * months / 12)
-            + (coeffs[idx * 4 + 2] * yearly_predictor + coeffs[idx * 4 + 3])
-            * np.sin(2 * np.pi * i * months / 12)
-            for idx, i in enumerate(range(1, order + 1))
-        ],
-        axis=0,
-    )
-    return seasonal_cycle
+    # NOTE: performance-optimized fourier series generation
+
+    coeffs = coeffs[~np.isnan(coeffs)]
+    order = coeffs.size // 4
+
+    # create 2D array of angles with shape (months, order)
+    # as 2 * np.pi * k * np.arange(12).reshape(-1, 1) / 12 but faster
+
+    factor = 2 * np.pi / 12
+    k = np.arange(1.0, order + 1)
+    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
+
+    yearly_predictor = yearly_predictor.reshape(-1, 12)
+
+    # combine cosine and sine into one array
+    cos_sin = np.empty((12, order * 2))
+    cos_sin[:, :order] = np.cos(alpha)
+    cos_sin[:, order:] = np.sin(alpha)
+
+    # sum coefficients - equivalent to np.sum(cos_sin * coeffs[0::2], axis=1)
+    coeff_a = cos_sin @ coeffs[0::2]
+    coeff_b = cos_sin @ coeffs[1::2]
+
+    seasonal_cycle = coeff_a * yearly_predictor + coeff_b
+
+    return seasonal_cycle.flatten()
 
 
 def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
@@ -171,6 +182,10 @@ def _calculate_bic(n_samples, order, mse):
     """
 
     n_params = order * 4
+
+    # assume mse smaller eps is 'perfect' - only relevant for noiseless test data
+    mse = mse if mse > np.finfo(float).eps else 0.0
+
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
 

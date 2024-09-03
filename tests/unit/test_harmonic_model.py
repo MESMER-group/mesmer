@@ -30,7 +30,7 @@ def test_generate_fourier_series_np():
 
     result = _generate_fourier_series_np(yearly_predictor, coeffs)
 
-    np.testing.assert_equal(result, expected)
+    np.testing.assert_allclose(result, expected, rtol=1e-13)
 
     coeffs = np.array([1, -2, 3.14, -1])
     result = _generate_fourier_series_np(yearly_predictor, coeffs)
