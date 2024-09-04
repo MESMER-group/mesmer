@@ -3,7 +3,7 @@ import xarray as xr
 from scipy.optimize import minimize
 
 
-def lambda_function(xi_0, xi_1, local_yearly_T):
+def lambda_function(coeffs, local_yearly_T):
     r"""Use logistic function to calculate lambda depending on the local yearly
     values. The function is defined as
 
@@ -29,7 +29,7 @@ def lambda_function(xi_0, xi_1, local_yearly_T):
     lambdas : ndarray of float of shape (n_years,)
         The parameters of the power transformation for each gridcell and month
     """
-    return 2 / (1 + xi_0 * np.exp(local_yearly_T * xi_1))
+    return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
 
 
 def _yeo_johnson_transform_np(data, lambdas):
@@ -162,7 +162,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         """Return the negative log likelihood of the observed local monthly residuals
         as a function of lambda.
         """
-        lambdas = lambda_function(coeffs[0], coeffs[1], yearly_pred)
+        lambdas = lambda_function(coeffs, yearly_pred)
 
         # version with own power transform
         transformed_resids = _yeo_johnson_transform(lambdas)
@@ -176,14 +176,14 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     bounds = np.array([[0, np.inf], [-0.1, 0.1]])
     first_guess = np.array([1, 0])
 
-    xi_0, xi_1 = minimize(
+    res = minimize(
         _neg_log_likelihood,
         x0=first_guess,
         bounds=bounds,
         method="Nelder-Mead",
     ).x
 
-    return xi_0, xi_1
+    return res
 
 
 def get_lambdas_from_covariates(coeffs, yearly_pred):
@@ -213,10 +213,9 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
 
     lambdas = xr.apply_ufunc(
         lambda_function,
-        coeffs.xi_0,
-        coeffs.xi_1,
+        coeffs.coeffs,
         yearly_pred,
-        input_core_dims=[[], [], []],
+        input_core_dims=[("coeff",), []],
         output_core_dims=[[]],
         vectorize=True,
         dask="parallelized",
@@ -269,17 +268,17 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
         monthly_data = monthly_resids_grouped[month]
         monthly_data[time_dim] = yearly_pred[time_dim]
 
-        xi_0, xi_1 = xr.apply_ufunc(
+        res = xr.apply_ufunc(
             _yeo_johnson_optimize_lambda_np,
             monthly_data,
             yearly_pred,
             input_core_dims=[[time_dim], [time_dim]],
-            output_core_dims=[[], []],
-            output_dtypes=[float, float],
+            output_core_dims=[["coeff"]],
+            output_dtypes=[float],
             vectorize=True,
         )
 
-        coeffs.append(xr.Dataset({"xi_0": xi_0, "xi_1": xi_1}))
+        coeffs.append(xr.Dataset({"coeffs": res}))
 
     return xr.concat(coeffs, dim="month")
 
