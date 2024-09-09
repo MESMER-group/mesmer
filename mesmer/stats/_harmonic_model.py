@@ -37,14 +37,15 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     """
     order = int(coeffs.size / 4)
     n_years = yearly_predictor.size // 12
-    months = np.tile(np.arange(1, 13), n_years)
+    # NOTE: months from 0..11 for consistency with standard fourier series and fft
+    months = np.tile(np.arange(12), n_years)
 
     seasonal_cycle = np.nansum(
         [
             (coeffs[idx * 4] * yearly_predictor + coeffs[idx * 4 + 1])
-            * np.sin(np.pi * i * (months) / 6)
+            * np.cos(2 * np.pi * i * months / 12)
             + (coeffs[idx * 4 + 2] * yearly_predictor + coeffs[idx * 4 + 3])
-            * np.cos(np.pi * i * (months) / 6)
+            * np.sin(2 * np.pi * i * months / 12)
             for idx, i in enumerate(range(1, order + 1))
         ],
         axis=0,
