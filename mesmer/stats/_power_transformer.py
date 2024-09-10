@@ -176,14 +176,14 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     bounds = np.array([[0, np.inf], [-0.1, 0.1]])
     first_guess = np.array([1, 0])
 
-    res = minimize(
+    coeffs = minimize(
         _neg_log_likelihood,
         x0=first_guess,
         bounds=bounds,
         method="Nelder-Mead",
     ).x
 
-    return res
+    return coeffs
 
 
 def get_lambdas_from_covariates(coeffs, yearly_pred):
@@ -193,11 +193,13 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
 
     Parameters
     ----------
-    coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
-        The parameters of the power transformation for each gridcell and month, calculated
-        using fit_yeo_johnson_transform.
-    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly values used as predictors for the lambdas.
+    lambda_coeffs : ``xr.Dataset``
+        The parameters of the power transformation for each gridcell and month,
+        containing ``lambda_coeffs`` with dims (months, n_gridcells, coeff) calculated
+        using ``fit_yeo_johnson_transform``.
+    yearly_pred : ``xr.DataArray``
+        yearly values used as predictors for the lambdas. Must have shape shape
+        (n_years, n_gridcells).
 
     Returns
     -------
@@ -213,7 +215,7 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
 
     lambdas = xr.apply_ufunc(
         lambda_function,
-        coeffs.coeffs,
+        coeffs.lambda_coeffs,
         yearly_pred,
         input_core_dims=[("coeff",), []],
         output_core_dims=[[]],
@@ -278,7 +280,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
             vectorize=True,
         )
 
-        coeffs.append(xr.Dataset({"coeffs": res}))
+        coeffs.append(xr.Dataset({"lambda_coeffs": res}))
 
     return xr.concat(coeffs, dim="month")
 
@@ -293,8 +295,9 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
-    coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
-        The parameters of the power transformation for each gridcell, calculated using
+    coeffs : ``xr.Dataset``
+        The parameters of the power transformation containing ``lambda_coeffs`` of shape
+        (months, n_gridcells, coeff) for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
     yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly values used as predictors for the lambdas.
@@ -353,8 +356,9 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     ----------
     monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
         The data to be transformed back to the original scale.
-    coeffs : ``xr.Dataset`` containing xi_0 and xi_1 of shape (months, n_gridcells)
-        The parameters of the power transformation for each gridcell, calculated using
+    coeffs : ``xr.Dataset``
+        The parameters of the power transformation containing ``lambda_coeffs`` of shape
+        (months, n_gridcells, coeff) for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
     yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly values used as predictors for the lambdas.

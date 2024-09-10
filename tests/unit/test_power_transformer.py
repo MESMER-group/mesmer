@@ -258,11 +258,11 @@ def test_power_transformer_xr():
         shape=(n_gridcells, n_years * 12),
     )
     _check_dataset_form(
-        pt_coefficients, name="pt_coefficients", required_vars=("coeffs")
+        pt_coefficients, name="pt_coefficients", required_vars=("lambda_coeffs")
     )
     _check_dataarray_form(
-        pt_coefficients.coeffs,
-        name="coeffs",
+        pt_coefficients.lambda_coeffs,
+        name="lambda_coeffs",
         ndim=3,
         required_dims=("cells", "coeff", "month"),
         shape=(12, n_gridcells, 2),
