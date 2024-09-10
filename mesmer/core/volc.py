@@ -71,12 +71,12 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
     Returns
     -------
-    parmams : xr.Dataset
+    params : xr.Dataset
         Parameters of the linear regression fit to the residuals.
     """
 
     _check_dataarray_form(
-        tas_residuals, ndim=(1, 2), required_dims=dim, name="tas_residuals"
+        tas_residuals, ndim=(1, 2, 3), required_dims=dim, name="tas_residuals"
     )
 
     aod = _load_and_align_strat_aod_obs(
@@ -84,7 +84,8 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
     )
 
     # TODO: extract this out of the function?
-    if tas_residuals.ndim == 2:
+    # stack ensemble members and potentially scenarios
+    if tas_residuals.ndim > 1:
 
         aod, __ = xr.broadcast(aod, tas_residuals)
 
@@ -92,6 +93,12 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
         tas_residuals = tas_residuals.stack(__sample__=dims)
         aod = aod.stack(__sample__=dims)
+
+        # drop nans that might have been introduced by the stacking
+        # from both, aod and tas_residuals
+        data = xr.merge([tas_residuals, aod])
+        data = data.dropna(dim="__sample__")
+        tas_residuals, aod = data.data_vars.values()
         dim = "__sample__"
 
     lr = LinearRegression()
