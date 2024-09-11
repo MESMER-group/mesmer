@@ -7,7 +7,7 @@ Contributing to MESMER
 
 Overview
 --------
-Thanks for your interest in contributing to MESMER! We're excited to have you on board! This section of the documentation details how to get started with contributing and how best to communicate.
+Thanks for your interest in contributing to MESMER! We're excited to have you on board! This section of the documentation details how to get started with contributing and how best to communicate. If something is unclear or you are stuck, never hestiate to contact the maintainers (`Mathias Hauser`_ and `Victoria Bauer`_) or open an issue on the `MESMER issue tracker`_.
 
 All contributions are welcome. Some possible suggestions include:
 
@@ -25,6 +25,7 @@ As a contributor, please follow a few conventions:
 - Create issues in the `MESMER issue tracker`_ for changes and enhancements. This ensures that everyone in the community has a chance to comment.
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_.
 - Only push to your own branches. This allows people to force push to their own branches as they need without fear of causing others headaches.
+- Never commit directly to the main branch (neither the one of main MESMER repo nor your own fork's). This is to ensure that the main branch is always stable and that all changes are reviewed.
 - Start all pull requests as draft pull requests and only mark them as ready for review once they've had `main` merged into them. This makes it easier for reviewers to manage their time. If you are afraid your PR has been overlooked you can also actively assign a reviewer on the Github page of your PR.
 - Several small pull requests are preferred over one large PR. This makes it easier for reviewers and faster for everyone, as review time grows exponentially with the number of lines in a pull request.
 
@@ -132,30 +133,24 @@ If you want to contribute more, please open a **new** branch and repeat the step
 
 Getting help
 ~~~~~~~~~~~~
-While developing, unexpected things can go wrong (that's why it's called 'developing'; if we knew what we were doing, it would already be 'developed'). Normally, the fastest way to solve an issue is to contact us via the `MESMER issue tracker`_. The other option is to debug yourself. For this purpose, we provide a list of the tools we use during our development as starting points for your search to find what has gone wrong.
+While developing, unexpected things can go wrong. Normally, the fastest way to solve an issue is to contact us via the `MESMER issue tracker`_. The other option is to debug yourself. For this purpose, we provide a list of the tools we use during our development as starting points for your search to find what has gone wrong.
 
 Development tools
 +++++++++++++++++
-This list of development tools is what we rely on to develop MESMER reliably and reproducibly. It gives you a few starting points in case things do go inexplicably wrong and you want to work out why. We include links with each of these tools to starting points that we think are useful, in case you want to learn more.
+This list of development tools is what we rely on to develop MESMER reliably and reproducibly. It gives you a few starting points in case things do go wrong and you want to work out why. We include links with each of these tools to starting points that we think are useful, in case you want to learn more.
 
 - `Git <http://swcarpentry.github.io/git-novice/>`_
-- `Make <https://swcarpentry.github.io/make-novice/>`_
 - `Conda virtual environments <https://medium.freecodecamp.org/why-you-need-python-environments-and-how-to-manage-them-with-conda-85f155f4353c>`_
 - `Tests <https://semaphoreci.com/community/tutorials/testing-python-applications-with-pytest>`_ - We use a blend of `pytest <https://docs.pytest.org/en/latest/>`_ and the inbuilt Python testing capabilities for our tests. Check out what we've already done in ``tests`` to get a feel for how it works.
 
 - `Continuous integration (CI) <https://docs.travis-ci.com/user/for-beginners/>`_ - We use `GitHub actions <https://docs.github.com/en/actions/quickstart>`_ for our CI, but there are a number of good options.
 
-- `Jupyter Notebooks <https://medium.com/codingthesmartway-com-blog/getting-started-with-jupyter-notebook-for-python-4e7082bd5d46>`_ - Jupyter is automatically included in your virtual environment if you follow our `Development setup`_ instructions.
+- `Jupyter Notebooks <https://medium.com/velotio-perspectives/the-ultimate-beginners-guide-to-jupyter-notebooks-6b00846ed2af>`_ - Jupyter is automatically included in your virtual environment if you follow our `Development setup`_ instructions.
 
 - Sphinx_
 
-Other tools
-+++++++++++
-We also use some other tools that aren't necessarily the most familiar. Here we provide a list of these along with useful resources.
-
 - Mocking in tests (see e.g., `this intro <https://www.toptal.com/python/an-introduction-to-mocking-in-python>`_, there are many other good resources out there if you simply Google "python intro to mocking"). Note that mocking can take some time to get used to. Feel free to raise questions in issues or the relevant PR.
 
-- `Regular expressions <https://www.oreilly.com/ideas/an-introduction-to-regular-expressions>`_ You can use `regex101.com <https://regex101.com>`_ to help write and check regular expressions. Make sure the language is set to Python to make your life easy!
 
 Testing philosophy
 ------------------
@@ -175,7 +170,7 @@ Formatting
 To help us focus on what the code does, not how it looks, we use a couple of automatic formatting tools. We use the following tools:
 
 - `ruff check <https://docs.astral.sh/ruff/>`_ to check and fix small code errors.
-- `black <https://github.com/psf/black>`_ to auto-format the code.
+- `black <https://black.readthedocs.io/en/stable/>`_ to auto-format the code.
 
 These tools automatically format the code for us and tell us where the errors are. To use them, after setting yourself up (see `Development setup`_), simply run ``make format``. Note that ``make format`` can only be run if you have committed all your work, i.e., your working directory is 'clean'. This restriction ensures that you don't format code without being able to undo it, just in case something goes wrong.
 
@@ -197,3 +192,5 @@ While it may not be standard practice, a ``Makefile`` is a way to automate gener
 
 .. _Sphinx: http://www.sphinx-doc.org
 .. _MESMER issue tracker: https://github.com/MESMER-group/mesmer/issues
+.. _`Mathias Hauser`: https://github.com/mathause
+.. _`Victoria Bauer`: https://github.com/veni-vidi-vici-dormivi
