@@ -26,7 +26,7 @@ As a contributor, please follow a few conventions:
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_.
 - Only push to your own branches. This allows people to force push to their own branches as they need without fear of causing others headaches.
 - Never commit directly to the main branch (neither the one of main MESMER repo nor your own fork's). This is to ensure that the main branch is always stable and that all changes are reviewed.
-- Start all pull requests as draft pull requests and only mark them as ready for review once they've had `main` merged into them. This makes it easier for reviewers to manage their time. If you are afraid your PR has been overlooked you can also actively assign a reviewer on the Github page of your PR.
+- Start all pull requests as draft pull requests and only mark them as ready for review once they've had ``main`` merged into them. This makes it easier for reviewers to manage their time. If you are afraid your PR has been overlooked you can also actively assign a reviewer on the Github page of your PR.
 - Several small pull requests are preferred over one large PR. This makes it easier for reviewers and faster for everyone, as review time grows exponentially with the number of lines in a pull request.
 
 Development Workflow
@@ -36,15 +36,15 @@ Getting started
 ~~~~~~~~~~~~~~~
 We are using GitHub to manage the MESMER codebase. If you are new to git or GitHub, check out the resources linked in the `Development tools`_ section. Here is what you need to do to get started with MESMER:
 
-1. **Fork the Repository**: Fork the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ to your GitHub account (click the `fork` button on the MESMER landing page). Now you have a personal copy of the MESMER repository in your GitHub account.
+1. **Fork the Repository**: Fork the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ to your GitHub account (click the ``fork`` button on the MESMER landing page). Now you have a personal copy of the MESMER repository in your GitHub account.
 2. **Clone the Repository**: Clone your forked repository to your local machine. For this step, you must be able to establish a connection from your local machine to your GitHub account. It might be necessary to set up an SSH key; please consult the `GitHub documentation <https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ for more details.
 
-   .. code-block:: bash
+   .. code-block:: shell
 
       git clone git@github.com:yourusername/mesmer.git
 
-   You should now have a `mesmer` folder in your current directory.
-   - Switch to the `mesmer` directory: `cd mesmer`
+   You should now have a ``mesmer`` folder in your current directory.
+   - Switch to the ``mesmer`` directory: ``cd mesmer``
 3. **Create an environment and activate it** to work with MESMER. The steps for this are listed in the `Development setup`_ section.
    This installs MESMER in development mode and all dependencies needed to use and develop MESMER.
 
@@ -81,7 +81,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 
 1. **Create a Branch**: Create a new branch for your feature or bugfix.
 
-   .. code-block:: bash
+   .. code-block:: shell
 
       git checkout -b your-feature
 
@@ -89,14 +89,14 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
    If you want to make sure your files are clean and adhere to our pre-commit hooks, run ``pre-commit run --all-files``. This will run all the checks we have set up for you. For an intro to pre-commit, see the `pre-commit documentation <https://pre-commit.com/>`_ and our .pre-commit-config.yml.
 3. **Commit Changes**: Add and commit your changes with a clear and descriptive message.
 
-   .. code-block:: bash
+   .. code-block:: shell
 
       git add changed_file
       git commit -m "Description of your changes"
 
 4. **Push to GitHub**: Push your changes to your forked repository.
 
-   .. code-block:: bash
+   .. code-block:: shell
 
       git push origin your-feature
 
@@ -104,7 +104,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 5. **Create a Pull Request**: Open a pull request on the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ on GitHub by clicking on "Compare and pull request" on the PR page.
 6. **Review Process**: Each pull request needs approval from a core contributor. Please be available for comments and discussion about your contribution to ensure your changes can be implemented.
 
-   ​Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on `sync` in your fork. Afterwards, go to your local main branch and do:
+   ​Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on ``sync`` in your fork. Afterwards, go to your local main branch and do:
 
    .. code-block:: shell
 
@@ -125,7 +125,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 
       git branch -D your-feature
 
-   And update your main remotely (go onto your fork and click `sync`, and then do this locally):
+   And update your main remotely (go onto your fork and click ``sync``, and then do this locally):
 
    .. code-block:: shell
 
