@@ -40,7 +40,7 @@ We are using GitHub to manage the MESMER codebase. If you are new to git or GitH
 
    .. code-block:: bash
 
-      git clone https://github.com/yourusername/mesmer
+      git clone git@github.com:yourusername/mesmer.git
 
    You should now have a `mesmer` folder in your current directory.
    - Switch to the `mesmer` directory: `cd mesmer`
@@ -54,8 +54,8 @@ Development setup
 To get set up as a developer, we recommend setting up an environment that holds all the tools for developing the MESMER Codebase.
 Follow the steps below (if any of these tools are unfamiliar, please see the resources we recommend in `Development tools`_):
 
-1. Install conda and the Make tool.
-2. Run ``make conda-environment``. If that fails, you can try doing it manually:
+1. Install conda (see a Guide for this `here <https://conda.io/projects/conda/en/latest/user-guide/install/index.html>`_)
+2. Create the environment:
 
    a. Change your current directory to MESMER's root directory (i.e., the one that contains ``README.rst``), ``cd mesmer``.
 
@@ -66,11 +66,11 @@ Follow the steps below (if any of these tools are unfamiliar, please see the res
    d. Install the all the dependencies for running mesmer: ``conda install -y --file environment.yml```
 
    e. Install mesmer itself and packages needed for development (pytest, sphinx, etc.) ``pip install -e .[dev]``.
-      The flag `-e` installs MESMER in development (**e**ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
+      The flag ``-e`` installs MESMER in development (**e**\ ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
 
-3. Make sure that MESMER was correctly installed and the tests pass by running ``make test``. If that fails, the commands are:
+3. Make sure that MESMER was correctly installed by running the test suite:
 
-   a. (Re)activate your conda environment: ``conda activate mesmer``.
+   a. (Re)activate your conda environment just to be sure: ``conda activate mesmer``.
 
    b. Run the unit and integration tests: ``pytest --cov -r a --cov-report term-missing``.
 
@@ -85,10 +85,10 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
       git checkout -b your-feature
 
 2. **Make Changes**: Implement your changes in the new branch.
-3. **Commit Changes**: Commit your changes with a clear and descriptive message.
+3. **Commit Changes**: Add and commit your changes with a clear and descriptive message.
 
    .. code-block:: bash
-
+      git add changed_file
       git commit -m "Description of your changes"
 
 4. **Push to GitHub**: Push your changes to your forked repository.
@@ -105,9 +105,15 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 
    .. code-block:: shell
 
-      git pull --rebase origin main
+      git pull origin main
       git switch your-feature
       git merge main
+
+   Moreover, reviewers or our precommit checks might push changes to your pull request. You can pull these into your local branch by doing:
+
+   .. code-block:: shell
+
+      git pull --rebase origin your-feature
 
 7. **Merge**: After a successful review, your request can be merged (by clicking on the merge button under the pull request webpage) :tada: :tada:
 8. After the merge, **delete** the PR from your remote and local repository. For your remote, you can just click delete under your merged PR. Locally, you should switch to main and:
@@ -120,9 +126,9 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 
    .. code-block:: shell
 
-      git pull --rebase origin main
+      git pull origin main
 
-If you want to contribute more, please open a **new** branch and reiterate the steps above.
+If you want to contribute more, please open a **new** branch and repeat the steps above.
 
 Getting help
 ~~~~~~~~~~~~
