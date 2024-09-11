@@ -55,7 +55,7 @@ Development setup
 To get set up as a developer, we recommend setting up an environment that holds all the tools for developing the MESMER Codebase.
 Follow the steps below (if any of these tools are unfamiliar, please see the resources we recommend in `Development tools`_):
 
-1. Install conda (see a Guide for this `here <https://conda.io/projects/conda/en/latest/user-guide/install/index.html>`_)
+1. Install conda (see the `Guide <https://conda.io/projects/conda/en/latest/user-guide/install/index.html>`_)
 2. Create the environment:
 
    a. Change your current directory to MESMER's root directory (i.e., the one that contains ``README.rst``), ``cd mesmer``.
@@ -86,10 +86,11 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
       git checkout -b your-feature
 
 2. **Make Changes**: Implement your changes in the new branch.
-   If you want to make sure your files are clean and adhere to our pre-commit hooks, run ``pre-commit run --all-files``. This will run all the checks we have set up for you. For an intro to pre-commit, see `here <https://pre-commit.com/>`_ and our .pre-commit-config.yml.
+   If you want to make sure your files are clean and adhere to our pre-commit hooks, run ``pre-commit run --all-files``. This will run all the checks we have set up for you. For an intro to pre-commit, see the `pre-commit documentation <https://pre-commit.com/>`_ and our .pre-commit-config.yml.
 3. **Commit Changes**: Add and commit your changes with a clear and descriptive message.
 
    .. code-block:: bash
+
       git add changed_file
       git commit -m "Description of your changes"
 
