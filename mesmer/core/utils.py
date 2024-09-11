@@ -1,5 +1,4 @@
 import warnings
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -151,8 +150,8 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: Union[str, set[str]] = set(),
-    optional_vars: Union[str, set[str]] = set(),
+    required_vars: str | set[str] = set(),
+    optional_vars: str | set[str] = set(),
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
@@ -201,7 +200,7 @@ def _check_dataarray_form(
     name: str = "obj",
     *,
     ndim: int = None,
-    required_dims: Union[str, set[str]] = set(),
+    required_dims: str | set[str] = set(),
     shape=None,
 ):
     """check if a dataset conforms to some conditions
