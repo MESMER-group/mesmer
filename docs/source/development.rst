@@ -86,6 +86,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
       git checkout -b your-feature
 
 2. **Make Changes**: Implement your changes in the new branch.
+   If you want to make sure your files are clean and adhere to our pre-commit hooks, run ``pre-commit run --all-files``. This will run all the checks we have set up for you. For an intro to pre-commit, see `here <https://pre-commit.com/>`_ and our .pre-commit-config.yml.
 3. **Commit Changes**: Add and commit your changes with a clear and descriptive message.
 
    .. code-block:: bash
@@ -172,11 +173,11 @@ To help us focus on what the code does, not how it looks, we use a couple of aut
 - `ruff check <https://docs.astral.sh/ruff/>`_ to check and fix small code errors.
 - `black <https://black.readthedocs.io/en/stable/>`_ to auto-format the code.
 
-These tools automatically format the code for us and tell us where the errors are. To use them, after setting yourself up (see `Development setup`_), simply run ``make format``. Note that ``make format`` can only be run if you have committed all your work, i.e., your working directory is 'clean'. This restriction ensures that you don't format code without being able to undo it, just in case something goes wrong.
+These tools automatically format the code for us and tell us where the errors are. To use them, after setting up the development environment (see `Development setup`_), run ``ruff check . --fix ; black .;``. If you run these commands after committing all your work, i.e., your working directory is 'clean'. This ensures that you don't format code without being able to undo it, just in case something goes wrong.
 
 Building the docs
 -----------------
-After setting yourself up (see `Development setup`_), building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
+After setting up the development environment (see `Development setup`_), building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
 
 For documentation, we use Sphinx_. To get started with Sphinx, we began with `this example <https://pythonhosted.org/an_example_pypi_project/sphinx.html>`_ and then used `Sphinx's getting started guide <http://www.sphinx-doc.org/en/master/usage/quickstart.html>`_.
 
@@ -185,10 +186,6 @@ Please update the documentation to reflect any changes or additions to the code.
 Docstring style
 ~~~~~~~~~~~~~~~
 For our docstrings, we use numpy style docstrings. For more information on these, `here is the full guide <https://numpydoc.readthedocs.io/en/latest/format.html>`_ and `the quick reference we also use <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`_.
-
-Why is there a ``Makefile`` in a pure Python repository?
---------------------------------------------------------
-While it may not be standard practice, a ``Makefile`` is a way to automate general setup (environment setup in particular). Hence, we have one here, which basically acts as a notes file for how to do all those little jobs we often forget, e.g., setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxiliary bits and pieces.
 
 .. _Sphinx: http://www.sphinx-doc.org
 .. _MESMER issue tracker: https://github.com/MESMER-group/mesmer/issues
