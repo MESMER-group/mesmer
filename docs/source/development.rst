@@ -25,7 +25,7 @@ As a contributor, please follow a few conventions:
 - Create issues in the `MESMER issue tracker`_ for changes and enhancements. This ensures that everyone in the community has a chance to comment.
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_.
 - Only push to your own branches. This allows people to force push to their own branches as they need without fear of causing others headaches.
-- Start all pull requests as draft pull requests and only mark them as ready for review once they've had `main` merged into them. This makes it much simpler for reviewers.
+- Start all pull requests as draft pull requests and only mark them as ready for review once they've had `main` merged into them. This makes it easier for reviewers to manage their time. If you are afraid your PR has been overlooked you can also actively assign a reviewer on the Github page of your PR.
 - Several small pull requests are preferred over one large PR. This makes it easier for reviewers and faster for everyone, as review time grows exponentially with the number of lines in a pull request.
 
 Development Workflow
@@ -51,7 +51,8 @@ Now you are ready to work on MESMER. If you want to contribute to the codebase, 
 
 Development setup
 ~~~~~~~~~~~~~~~~~
-To get set up as a developer, we recommend the following steps (if any of these tools are unfamiliar, please see the resources we recommend in `Development tools`_):
+To get set up as a developer, we recommend setting up an environment that holds all the tools for developing the MESMER Codebase.
+Follow the steps below (if any of these tools are unfamiliar, please see the resources we recommend in `Development tools`_):
 
 1. Install conda and the Make tool.
 2. Run ``make conda-environment``. If that fails, you can try doing it manually:
@@ -60,13 +61,16 @@ To get set up as a developer, we recommend the following steps (if any of these 
 
    b. Create a conda environment to use with MESMER: ``conda create --name mesmer``.
 
-   c. Activate your conda environment: ``conda activate mesmer``.
+   c. Activate your conda environment: ``conda activate mesmer``. This is important for the next step, otherwise the packages will be installed in your base environment.
 
-   d. Install the development dependencies (very important, make sure your conda environment is active before doing this): ``conda install -y --file environment.yml && pip install -e .[dev]``.
+   d. Install the all the dependencies for running mesmer: ``conda install -y --file environment.yml```
+
+   e. Install mesmer itself and packages needed for development (pytest, sphinx, etc.) ``pip install -e .[dev]``.
+      The flag `-e` installs MESMER in development (**e**ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
 
 3. Make sure that MESMER was correctly installed and the tests pass by running ``make test``. If that fails, the commands are:
 
-   a. Activate your conda environment: ``conda activate mesmer``.
+   a. (Re)activate your conda environment: ``conda activate mesmer``.
 
    b. Run the unit and integration tests: ``pytest --cov -r a --cov-report term-missing``.
 
@@ -151,7 +155,7 @@ Testing philosophy
 ------------------
 Please ensure that any new functionality is covered by tests. When writing tests, we try to put them in one of two categories: integration and unit tests.
 
-- Unit tests check the functionality of each function - ensure your function actually does what you intend it to do by testing on (simple) examples.
+- Unit tests check the functionality of each function - ensure your function actually does what you intend it to do by testing on small examples.
 - Integration tests test for numerical reproducibility - write tests that will flag when someone makes numerically altering changes to your code. Note that we want to keep the data needed to be shipped with MESMER to a minimum. Please consider reusing the datasets already included in MESMER to test numerical stability.
 
 Try to keep the test files targeted and fairly small. You can always create `fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`__ to aid code reuse. The aim is to avoid testing files with thousands of lines of code as such files quickly become hard to rationalize or understand. Please frequently run the tests to ensure your changes do not break existing functionality.
@@ -171,7 +175,7 @@ These tools automatically format the code for us and tell us where the errors ar
 
 Building the docs
 -----------------
-After setting yourself up (see `Development setup`_), building the docs is as simple as running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
+After setting yourself up (see `Development setup`_), building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
 
 For documentation, we use Sphinx_. To get started with Sphinx, we began with `this example <https://pythonhosted.org/an_example_pypi_project/sphinx.html>`_ and then used `Sphinx's getting started guide <http://www.sphinx-doc.org/en/master/usage/quickstart.html>`_.
 
@@ -183,7 +187,7 @@ For our docstrings, we use numpy style docstrings. For more information on these
 
 Why is there a ``Makefile`` in a pure Python repository?
 --------------------------------------------------------
-While it may not be standard practice, a ``Makefile`` is a simple way to automate general setup (environment setup in particular). Hence, we have one here, which basically acts as a notes file for how to do all those little jobs we often forget, e.g., setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxiliary bits and pieces.
+While it may not be standard practice, a ``Makefile`` is a way to automate general setup (environment setup in particular). Hence, we have one here, which basically acts as a notes file for how to do all those little jobs we often forget, e.g., setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxiliary bits and pieces.
 
 .. _Sphinx: http://www.sphinx-doc.org
 .. _MESMER issue tracker: https://github.com/MESMER-group/mesmer/issues
