@@ -22,7 +22,7 @@ from mesmer.mesmer_x.train_utils_mesmerx import (
     listxrds_to_np,
     weighted_median,
 )
-from mesmer.stats import gaspari_cohn_correlation_matrices
+from mesmer.stats import gaspari_cohn
 
 
 def ignore_warnings(func):
@@ -184,12 +184,13 @@ def xr_train_distrib(
 
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
-        corr_gc = gaspari_cohn_correlation_matrices(geodist, [r_gasparicohn_2ndfit])[
-            r_gasparicohn_2ndfit
-        ]
-        ind_nonan = np.where(
-            ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
-        )[0]
+        corr_gc = gaspari_cohn(geodist / r_gasparicohn_2ndfit)
+
+        sel_nonan = ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
+
+        print(
+            f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
+        )
 
         print(
             f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
@@ -207,8 +208,8 @@ def xr_train_distrib(
             fg = np.zeros(len(expression_fit.coefficients_list))
             for ic, coef in enumerate(expression_fit.coefficients_list):
                 fg[ic] = weighted_median(
-                    data=coefficients_xr[coef].values[ind_nonan],
-                    weights=corr_gc[igp, ind_nonan],
+                    data=coefficients_xr[coef].values[sel_nonan],
+                    weights=corr_gc[igp, sel_nonan],
                 )
 
             # shaping target for this gridpoint
@@ -263,8 +264,8 @@ class distrib_cov:
         data_targ,
         data_pred,
         expr_fit,
-        data_targ_addtest=None,  # TODO: rename to data_targ_validation?
-        data_preds_addtest=None,  # TODO: rename to data_preds_validation?
+        data_targ_addtest=None,  # TODO: rename to data_targ_verification?
+        data_preds_addtest=None,  # TODO: rename to data_preds_verification?
         threshold_min_proba=1.0e-9,
         boundaries_params=None,
         boundaries_coeffs=None,
@@ -492,21 +493,23 @@ class distrib_cov:
 
         if (threshold_min_proba <= 0) or (1 < threshold_min_proba):
             raise ValueError("`threshold_min_proba` must be in [0;1[")
-        else:
-            self.threshold_min_proba = threshold_min_proba
+
+        self.threshold_min_proba = threshold_min_proba
 
         # preparing information on boundaries
         self.boundaries_params = self.expr_fit.boundaries_parameters
         if boundaries_params is not None:
             for param in boundaries_params:
-                self.boundaries_params[param] = [
-                    np.max(
-                        [boundaries_params[param][0], self.boundaries_params[param][0]]
-                    ),
-                    np.min(
-                        [boundaries_params[param][1], self.boundaries_params[param][1]]
-                    ),
-                ]
+
+                lower_bound = np.max(
+                    [boundaries_params[param][0], self.boundaries_params[param][0]]
+                )
+                upper_bound = np.min(
+                    [boundaries_params[param][1], self.boundaries_params[param][1]]
+                )
+
+                self.boundaries_params[param] = [lower_bound, upper_bound]
+
         if boundaries_coeffs is not None:
             self.boundaries_coeffs = boundaries_coeffs
         else:
@@ -591,7 +594,7 @@ class distrib_cov:
 
         # preparing weights
         self.weighted_NLL = default_options_optim["weighted_NLL"]
-        self.weights_driver = self.eval_weights()
+        self.weights_driver = self.get_weights()
 
         # preparing information for the stopping rule
         self.type_fun_optim = default_options_optim["type_fun_optim"]
@@ -615,49 +618,44 @@ class distrib_cov:
                 " stopping rule will be employed"
             )
 
-    def eval_weights(self, n_bins_density=40):
+    def get_weights(self, n_bins_density=40):
+
         if self.weighted_NLL:
-
-            # if no predictors, straightforward
-            if len(self.data_pred) == 0:
-                weights_driver = np.ones(self.data_pred.shape)
-
-            # preparing a single array for all predictors
-            else:
-                tmp = np.array([val for val in self.data_pred.values()]).T
-
-                # assessing limits on each axis
-                m1, m2 = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
-
-                # interpolating over whole region
-                n_points, n_preds = tmp.shape
-                gmt_hist, tmpb = np.histogramdd(
-                    sample=tmp,
-                    bins=[
-                        np.linspace(
-                            (m1 - 0.05 * (m2 - m1))[i],
-                            (m2 + 0.05 * (m2 - m1))[i],
-                            n_bins_density,
-                        )
-                        for i in range(n_preds)
-                    ],
-                )
-                gmt_bins_center = [
-                    0.5 * (tmpb[i][1:] + tmpb[i][:-1]) for i in range(n_preds)
-                ]
-                interp = RegularGridInterpolator(
-                    points=gmt_bins_center, values=gmt_hist
-                )
-                weights_driver = 1 / interp(tmp)  # inverse of density
-
+            weights_driver = self._get_weights_nll(n_bins_density=n_bins_density)
         else:
             weights_driver = np.ones(self.data_targ.shape)
 
         return weights_driver / np.sum(weights_driver)
 
-    def _test_coeffs(self, values_coeffs):
-        # initialize test
-        test = True
+    def _get_weights_nll(self, n_bins_density=40):
+
+        # if no predictors, straightforward
+        if len(self.data_pred) == 0:
+            # TODO: isn't data_pred a dict and does therefore not have a shape?
+            return np.ones(self.data_pred.shape)
+
+        # explode data_pred dictionary into a single array for all predictors
+        tmp = np.array(list(self.data_pred.values())).T
+
+        # assessing limits on each axis
+        mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
+
+        bins = np.linspace(
+            (mn - 0.05 * (mx - mn)),
+            (mx + 0.05 * (mx - mn)),
+            n_bins_density,
+        )
+
+        # interpolating over whole region
+        gmt_hist, edges = np.histogramdd(sample=tmp, bins=bins.T)
+
+        gmt_bins_center = [0.5 * (edge[1:] + edges[:-1]) for edge in edges]
+        interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist)
+        weights_driver = 1 / interp(tmp)  # inverse of density
+
+        return weights_driver
+
+    def _test_coeffs_in_bounds(self, values_coeffs):
 
         # checking set boundaries on coefficients
         for coeff in self.boundaries_coeffs:
@@ -669,11 +667,14 @@ class distrib_cov:
                     f"Provided wrong boundaries on coefficient, {coeff}"
                     " does not exist in expr_fit"
                 )
-            else:
-                values = values_coeffs[self.expr_fit.coefficients_list.index(coeff)]
+
+            values = values_coeffs[self.expr_fit.list_coefficients.index(coeff)]
+
             if np.any(values < bottom) or np.any(top < values):
-                test = False  # out of boundaries
-        return test
+                # out of boundaries
+                return False
+
+        return True
 
     def _test_evol_params(self, distrib, data):
         # initialize test
@@ -716,49 +717,51 @@ class distrib_cov:
             cdf >= self.threshold_min_proba
         )
 
-    # test for the validity of the coefficients
-    def test_all(self, coefficients):
-        test_coeff = self._test_coeffs(coefficients)
+    def validate_coefficients(self, coefficients):
+        """validate coefficients
 
-        # tests on coeffs show already that it won't work: fill in the rest with NaN
+        Validate estimated coefficients
+        1. using the target data and predictors and
+        2. potentially the cross-validaten data
+        """
+
+        test_coeff = self._test_coeffs_in_bounds(coefficients)
+
+        # tests on coeffs show already that it wont work: fill in the rest with Fals
         if not test_coeff:
             return test_coeff, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
+        distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
+        if self.add_test:
+            distrib_add = self.expr_fit.evaluate(coefficients, self.data_preds_addtest)
+
+        # test for the validity of the parameters
+        if self.add_test:
+            test_param = self._test_evol_params(
+                distrib, self.data_targ
+            ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
         else:
-            distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
-            if self.add_test:
-                distrib_add = self.expr_fit.evaluate(
-                    coefficients, self.data_preds_addtest
-                )
+            test_param = self._test_evol_params(distrib, self.data_targ)
 
-            # test for the validity of the parameters
+        # tests on params show already that it wont work: fill in the rest with False
+        if not test_param:
+            return test_coeff, test_param, False, False
+
+        # test for the probability of the values
+        if self.threshold_min_proba is None:
+            test_proba = True
+        else:
             if self.add_test:
-                test_param = self._test_evol_params(
+                test_proba = self._test_proba_value(
                     distrib, self.data_targ
-                ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
+                ) * self._test_proba_value(distrib_add, self.data_targ_addtest)
             else:
-                test_param = self._test_evol_params(distrib, self.data_targ)
+                test_proba = self._test_proba_value(distrib, self.data_targ)
 
-            # tests on params show already that it won't work: fill in the rest with NaN
-            if not test_param:
-                return test_coeff, test_param, False, False
-
-            else:
-                # test for the probability of the values
-                if self.threshold_min_proba is None:
-                    test_proba = True
-                else:
-                    if self.add_test:
-                        test_proba = self._test_proba_value(
-                            distrib, self.data_targ
-                        ) * self._test_proba_value(distrib_add, self.data_targ_addtest)
-                    else:
-                        test_proba = self._test_proba_value(distrib, self.data_targ)
-
-                # return values for each test and the distribution that has already been
-                # evaluated
-                return test_coeff, test_param, test_proba, distrib
+        # return values for each test and the distribution that has already been
+        # evaluated
+        return test_coeff, test_param, test_proba, distrib
 
     # suppress nan & inf warnings
     @ignore_warnings
@@ -1152,7 +1155,7 @@ class distrib_cov:
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
-            test_c, test_p, test_v, _ = self.test_all(x)
+            test_c, test_p, test_v, _ = self.validate_coefficients(x)
             test = test_c * test_p * test_v
             x[i_c] += fact_coeff * x[i_c]
             iter += 1
@@ -1162,7 +1165,9 @@ class distrib_cov:
     def func_optim(self, coefficients):
         # check whether these coefficients respect all conditions: if so, can compute a
         # value for the optimization
-        test_coeff, test_param, test_proba, distrib = self.test_all(coefficients)
+        test_coeff, test_param, test_proba, distrib = self.validate_coefficients(
+            coefficients
+        )
         if test_coeff and test_param and test_proba:
 
             # check for the stopping rule

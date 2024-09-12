@@ -347,7 +347,7 @@ class Expression:
         # - don't allow list of coefficients_values
 
         # Check 1: are all the coefficients provided?
-        if type(coefficients_values) in [dict, xr.Dataset]:
+        if isinstance(coefficients_values, dict | xr.Dataset):
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
@@ -357,11 +357,10 @@ class Expression:
             # during the training
             if len(coefficients_values) != len(self.coefficients_list):
                 raise ValueError("Inconsistent information for the coefficients_values")
-            else:
-                coefficients_values = {
-                    c: coefficients_values[i]
-                    for i, c in enumerate(self.coefficients_list)
-                }
+
+            coefficients_values = {
+                c: coefficients_values[i] for i, c in enumerate(self.coefficients_list)
+            }
 
         # Check 2: are all the inputs provided?
         for i in self.inputs_list:
@@ -391,32 +390,33 @@ class Expression:
         if len(self.inputs_list) > 0:
 
             for param in self.parameters_list:
-                if (type(self.parameters_values[param]) in [int, float]) or (
-                    self.parameters_values[param].ndim == 0
-                ):
+                param_value = self.parameters_values[param]
+
+                # TODO: use np.ndim(param_value) ==  0? (i.e. isscalar)
+                if isinstance(param_value, int | float) or param_value.ndim == 0:
                     if isinstance(coefficients_values, xr.Dataset) and (
                         isinstance(inputs_values, xr.Dataset)
                     ):
-                        self.parameters_values[param] = self.parameters_values[
-                            param
-                        ] * xr.ones_like(inputs_values[self.inputs_list[0]])
+                        param_value = param_value * xr.ones_like(
+                            inputs_values[self.inputs_list[0]]
+                        )
                     else:
-                        self.parameters_values[param] = self.parameters_values[
-                            param
-                        ] * np.ones(inputs_values[self.inputs_list[0]].shape)
+                        param_value = param_value * np.ones(
+                            inputs_values[self.inputs_list[0]].shape
+                        )
 
-        # Correcting shapes 2: eventually forcing shape
-        if len(self.inputs_list) > 0:
-            if forced_shape is not None:
-                for param in self.parameters_list:
-                    dims_param = [
-                        d
-                        for d in forced_shape
-                        if d in self.parameters_values[param].dims
-                    ]
-                    self.parameters_values[param] = self.parameters_values[
-                        param
-                    ].transpose(*dims_param)
+                self.parameters_values[param] = param_value
+
+        # Correcting shapes 2: possibly forcing shape
+        if len(self.inputs_list) > 0 and forced_shape is not None:
+
+            for param in self.parameters_list:
+                dims_param = [
+                    d for d in forced_shape if d in self.parameters_values[param].dims
+                ]
+                self.parameters_values[param] = self.parameters_values[param].transpose(
+                    *dims_param
+                )
 
         # evaluation of the distribution
         return self.distrib(**self.parameters_values)
