@@ -347,7 +347,7 @@ class Expression:
         # - don't allow list of coefficients_values
 
         # Check 1: are all the coefficients provided?
-        if isinstance(coefficients_values, (dict, xr.Dataset)):
+        if isinstance(coefficients_values, dict | xr.Dataset):
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
@@ -393,7 +393,7 @@ class Expression:
                 param_value = self.parameters_values[param]
 
                 # TODO: use np.ndim(param_value) ==  0? (i.e. isscalar)
-                if isinstance(param_value, (int, float)) or param_value.ndim == 0:
+                if isinstance(param_value, int | float) or param_value.ndim == 0:
                     if isinstance(coefficients_values, xr.Dataset) and (
                         isinstance(inputs_values, xr.Dataset)
                     ):
