@@ -7,8 +7,8 @@ sys.path.append("../")
 import numpy as np
 
 # load in MESMER scripts for treatment of data
-# TODO: write the function test_combination_vars
-from mesmer.io import load_cmipng, load_phi_gc, load_regs_ls_wgt_lon_lat
+from mesmer.io import load_phi_gc, load_regs_ls_wgt_lon_lat
+from mesmer.mesmer_x import load_cmip, test_combination_vars
 from mesmer.utils import convert_dict_to_arr, extract_land
 
 
@@ -50,25 +50,25 @@ def load_inputs_MESMERx(cfg, variables, esms):
 
         for scen in cfg.scenarios:
 
-            # TODO: checking if this (esm, scen) combination has compatible runs.
-            # if sub_pred is not None:
-            #     available_runs, _ = test_combination_vars(
-            #         [targ, pred, sub_pred], esm, scen, cfg
-            #     )
-            # else:
-            #     available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
-
-            available_runs = ["all"]
-            if len(available_runs) > 0:
-                targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmipng(
-                    targ, esm, scen, cfg
+            # Checking if this (esm, scen) combination has compatible runs.
+            if sub_pred is not None:
+                available_runs, _ = test_combination_vars(
+                    [targ, pred, sub_pred], esm, scen, cfg
                 )
-                pred_g_dict[esm][scen], PRED_dict[esm][scen], _, _, _ = load_cmipng(
-                    pred, esm, scen, cfg
+            else:
+                available_runs, _ = test_combination_vars([targ, pred], esm, scen, cfg)
+
+            # available_runs = ["all"]
+            if len(available_runs) > 0:
+                targ_g_dict[esm][scen], _, lon, lat, time[esm][scen] = load_cmip(
+                    targ, esm, scen, cfg, prescribed_members=available_runs
+                )
+                pred_g_dict[esm][scen], PRED_dict[esm][scen], _, _, _ = load_cmip(
+                    pred, esm, scen, cfg, prescribed_members=available_runs
                 )
                 if sub_pred is not None:
-                    _, SUB_PRED_dict[esm][scen], _, _, _ = load_cmipng(
-                        sub_pred, esm, scen, cfg
+                    _, SUB_PRED_dict[esm][scen], _, _, _ = load_cmip(
+                        sub_pred, esm, scen, cfg, prescribed_members=available_runs
                     )
 
         # grouping the level [run] of dict[esm][scen][run] into a single array
@@ -104,10 +104,11 @@ def load_inputs_MESMERx(cfg, variables, esms):
 
     lon_mesh, lat_mesh = np.meshgrid(lon["c"], lat["c"])
 
+    # These lines were useful only for regional aggregations of results
     # adding few lines for future regional calculations (used for tests)
-    ind = np.where(ls["idx_grid_l"])
-    gp2reg = reg_dict["grids"][:, ind[0], ind[1]]  # grid points to regions
-    ww_reg = np.nansum((ls["wgt_gp_l"] * gp2reg).T, axis=0)
+    # ind = np.where(ls["idx_grid_l"])
+    # gp2reg = reg_dict["grids"][:, ind[0], ind[1]]  # grid points to regions
+    # ww_reg = np.nansum((ls["wgt_gp_l"] * gp2reg).T, axis=0)
 
     # Just checking what ESMs are actually used. Some are removed because not having all
     # drivers
@@ -143,9 +144,9 @@ def load_inputs_MESMERx(cfg, variables, esms):
             land_targ,
             land_pred,
             phi_gc,
-            ind,
-            gp2reg,
-            ww_reg,
+            # ind, these were only for regional aggregation
+            # gp2reg,
+            # ww_reg,
             used_esms,
             dico_gps_nan,
         )
@@ -162,9 +163,9 @@ def load_inputs_MESMERx(cfg, variables, esms):
             land_targ,
             land_pred,
             phi_gc,
-            ind,
-            gp2reg,
-            ww_reg,
+            # ind,
+            # gp2reg,
+            # ww_reg,
             used_esms,
             dico_gps_nan,
         )

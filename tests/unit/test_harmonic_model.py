@@ -4,11 +4,12 @@ import pytest
 import xarray as xr
 from packaging.version import Version
 
-from mesmer.core.utils import upsample_yearly_data
-from mesmer.mesmer_m.harmonic_model import (
-    fit_to_bic_np,
-    fit_to_bic_xr,
-    generate_fourier_series_np,
+import mesmer
+from mesmer.core.utils import _check_dataarray_form
+from mesmer.stats._harmonic_model import (
+    _fit_fourier_order_np,
+    _generate_fourier_series_np,
+    predict_harmonic_model,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -18,31 +19,50 @@ def test_generate_fourier_series_np():
     n_years = 10
     n_months = n_years * 12
 
-    yearly_predictor = np.zeros(n_months)
-    months = np.tile(np.arange(1, 13), n_years)
+    yearly_predictor = np.ones(n_months)
+    months = np.tile(np.arange(12), n_years)
+    alpha = 2 * np.pi * months / 12
+
+    coeffs = np.array([0, -2, 0, -1])
 
     # dummy yearly cycle
-    expected = -np.sin(2 * np.pi * (months) / 12) - 2 * np.cos(
-        2 * np.pi * (months) / 12
-    )
-    result = generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
-    )
-    np.testing.assert_equal(result, expected)
+    expected = coeffs[1] * np.cos(alpha) + coeffs[3] * np.sin(alpha)
 
-    yearly_predictor = np.ones(n_months)
-    result = generate_fourier_series_np(
-        yearly_predictor, np.array([0, -1, 0, -2]), months
-    )
-    # NOTE: yearly_predictor is added to the Fourier series
-    expected += 1
-    np.testing.assert_equal(result, expected)
+    result = _generate_fourier_series_np(yearly_predictor, coeffs)
 
-    result = generate_fourier_series_np(
-        yearly_predictor, np.array([3.14, -1, 1, -2]), months
-    )
-    expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
+    np.testing.assert_allclose(result, expected, rtol=1e-13)
+
+    coeffs = np.array([1, -2, 3.14, -1])
+    result = _generate_fourier_series_np(yearly_predictor, coeffs)
+    expected += 1 * np.cos(alpha) + 3.14 * np.sin(alpha)
     np.testing.assert_allclose(result, expected, atol=1e-10)
+
+
+def test_predict_harmonic_model():
+    n_years = 10
+    n_lat, n_lon, n_gridcells = 2, 3, 2 * 3
+    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
+    time = xr.cftime_range(start="2000-01-01", periods=n_years, freq=freq)
+    yearly_predictor = xr.DataArray(
+        np.zeros((n_years, n_gridcells)), dims=["time", "cells"], coords={"time": time}
+    )
+
+    time = xr.cftime_range(start="2000-01-01", periods=n_years * 12, freq="MS")
+    monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
+
+    coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
+
+    result = mesmer.stats.predict_harmonic_model(
+        yearly_predictor, coeffs, monthly_time, time_dim="time"
+    )
+
+    _check_dataarray_form(
+        result,
+        "result",
+        ndim=2,
+        required_dims=["time", "cells"],
+        shape=(n_years * 12, n_gridcells),
+    )
 
 
 @pytest.mark.parametrize(
@@ -53,16 +73,15 @@ def test_generate_fourier_series_np():
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
     ],
 )
-def test_fit_to_bic_np(coefficients):
+def test_fit_fourier_order_np(coefficients):
     # ensure original coeffs and series is recovered from noiseless fourier series
     max_order = 6
     n_years = 100
-    months = np.tile(np.arange(1, 13), n_years)
     yearly_predictor = trend_data_1D(n_timesteps=n_years, intercept=0, slope=1).values
     yearly_predictor = np.repeat(yearly_predictor, 12)
-    monthly_target = generate_fourier_series_np(yearly_predictor, coefficients, months)
+    monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients)
 
-    selected_order, estimated_coefficients, predictions = fit_to_bic_np(
+    selected_order, estimated_coefficients, predictions = _fit_fourier_order_np(
         yearly_predictor, monthly_target, max_order=max_order
     )
 
@@ -113,13 +132,15 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
     return xr.DataArray(coeffs, dims=("cells", "coeff"), coords=coords)
 
 
-def test_fit_to_bic_xr():
+def test_fit_harmonic_model():
     n_ts = 100
     orders = [1, 2, 3, 4, 5, 6]
 
     coefficients = get_2D_coefficients(order_per_cell=orders, n_lat=3, n_lon=2)
 
-    yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2)
+    yearly_predictor = trend_data_2D(n_timesteps=n_ts, n_lat=3, n_lon=2).transpose(
+        "time", "cells"
+    )
 
     freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
     yearly_predictor["time"] = xr.cftime_range(
@@ -128,62 +149,85 @@ def test_fit_to_bic_xr():
 
     time = xr.cftime_range(start="2000-01-01", periods=n_ts * 12, freq="MS")
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
-    upsampled_yearly_predictor = upsample_yearly_data(yearly_predictor, monthly_time)
 
-    months = upsampled_yearly_predictor.time.dt.month
-    monthly_target = xr.apply_ufunc(
-        generate_fourier_series_np,
-        upsampled_yearly_predictor,
-        coefficients,
-        input_core_dims=[["time"], ["coeff"]],
-        output_core_dims=[["time"]],
-        vectorize=True,
-        output_dtypes=[float],
-        kwargs={"months": months},
+    monthly_target = predict_harmonic_model(
+        yearly_predictor, coefficients, time=monthly_time
     )
 
     # test if the model can recover the monthly target from perfect fourier series
-    result = fit_to_bic_xr(yearly_predictor, monthly_target)
-    np.testing.assert_equal(result.n_sel.values, orders)
+    result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+    np.testing.assert_equal(result.selected_order.values, orders)
     xr.testing.assert_allclose(result["predictions"], monthly_target)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
     rng = np.random.default_rng(0)
     noisy_monthly_target = monthly_target + rng.normal(
-        loc=0, scale=0.1, size=monthly_target.values.shape
+        loc=0, scale=0.1, size=monthly_target.shape
     )
 
-    result = fit_to_bic_xr(yearly_predictor, noisy_monthly_target)
+    result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
     xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
 
     # compare numerically one cell of one year
     expected = np.array(
         [
-            9.99630445,
-            9.98829217,
-            7.32212458,
-            2.73123514,
-            -2.53876124,
-            -7.07931947,
-            -9.69283667,
-            -9.6945128,
-            -7.08035255,
-            -2.53178204,
-            2.74790275,
-            7.34046832,
+            7.324277,
+            9.966644,
+            9.972146,
+            7.33931,
+            2.7736,
+            -2.501604,
+            -7.072816,
+            -9.715184,
+            -9.720686,
+            -7.087849,
+            -2.52214,
+            2.753065,
         ]
     )
-    np.testing.assert_allclose(
-        result.predictions.isel(cells=0, time=slice(0, 12)).values, expected
+
+    result_comp = result.predictions.isel(cells=0, time=slice(0, 12)).values
+    np.testing.assert_allclose(result_comp, expected, atol=1e-6)
+
+    # ensure coeffs and predictions are consistent
+    expected = mesmer.stats.predict_harmonic_model(
+        yearly_predictor, result.coeffs, result.time
     )
 
+    xr.testing.assert_equal(expected, result.predictions)
 
-def test_fit_to_bix_xr_instance_checks():
+
+def test_fit_harmonic_model_checks():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
     with pytest.raises(TypeError):
-        fit_to_bic_xr(yearly_predictor.values, monthly_target)
+        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)
 
     with pytest.raises(TypeError):
-        fit_to_bic_xr(yearly_predictor, monthly_target.values)
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)
+
+    freq = "YE" if Version(pd.__version__) >= Version("2.2") else "Y"
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq=freq)
+
+    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+    monthly_target["time"] = pd.date_range("2000-02-01", periods=10 * 12, freq=freq)
+    with pytest.raises(ValueError, match="Monthly target data must start with January"):
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+
+
+def test_fit_harmonic_model_time_dim():
+    # test if the time dimension can be different from "time"
+    yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
+    monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
+
+    freq = "YE" if Version(pd.__version__) >= Version("2.2") else "Y"
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq=freq)
+
+    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq=freq)
+
+    time_dim = "dates"
+    monthly_target = monthly_target.rename({"time": time_dim})
+    yearly_predictor = yearly_predictor.rename({"time": time_dim})
+    mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target, time_dim=time_dim)

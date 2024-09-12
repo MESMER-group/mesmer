@@ -6,21 +6,43 @@ v0.11.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
+- Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+- Switch random number generation for drawing emulations from np.random.seed() to np.random.default_rng()
+  (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
-- The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_, `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_):
+- Removed support for python 3.9 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
+  By `Mathias Hauser`_.
+- The supported versions of some dependencies were changed
+  (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
+  `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_, and
+  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_):
 
-  ============ ============= =========
-  Package      Old           New
-  ============ ============= =========
-  regionmask    >=0.8        >=0.9
-  statsmodels  not specified >=0.13
-  ============ ============= =========
+  ================= ============= =========
+  Package           Old           New
+  ================= ============= =========
+  **cartopy**       not specified 0.22
+  **dask**          not specified 2023.8
+  **joblib**        not specified 1.3
+  **netcdf4**       not specified 1.6
+  **numpy**         not specified 1.24
+  **packaging**     not specified 23.1
+  **pandas**        2.0           no change
+  **pooch**         not specified 1.7
+  **properscoring** not specified 0.1
+  **pyproj**        not specified 3.6
+  **regionmask**    0.8           0.10
+  **scikit-learn**  not specified 1.3
+  **scipy**         not specified 1.11
+  **shapely**       not specified 2.0
+  **statsmodels**   not specified 0.14
+  **xarray**        2023.04       2023.7
+  ================= ============= =========
 
 Deprecations
 ^^^^^^^^^^^^
@@ -30,6 +52,9 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
+- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the
+  variances (`#499 <https://github.com/MESMER-group/mesmer/pull/499>`_).
+  By `Victoria Bauer`_.
 
 Documentation
 ^^^^^^^^^^^^^
@@ -41,10 +66,99 @@ Internal Changes
   By `Mathias Hauser`_.
 - Restore compatibility with pandas version v2.2 and xarray version v2024.02 (`#404 <https://github.com/MESMER-group/mesmer/pull/404>`_).
   By `Mathias Hauser`_.
-- Explicitely include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
+- Explicitly include all required dependencies (`#448 <https://github.com/MESMER-group/mesmer/pull/448>`_).
 - Unshallow the mesmer git repository on rtd (`#456 <https://github.com/MESMER-group/mesmer/pull/456>`_).
   By `Victoria Bauer`_.
+- Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
+  By `Mathias Hauser`_.
 
+Integration of MESMER-M
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This release integrates MESMER-M into the existing MESMER infrastructure. This includes
+some refactoring, bugfixes and enhancements of the MESMER-M functionality. Note
+that this led to some numerical changes compared to the MESMER-M publication
+(Nath et al., `2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
+
+- move MESMER-M scripts into mesmer (
+  `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_, and
+  `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
+- move the harmonic model and power transformer functionalities to the stats module (
+  `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
+- add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
+
+Auto-Regression
+~~~~~~~~~~~~~~~
+
+- Implement functions performing the monthly (cyclo-stationary) auto-regression and adapt these functions to
+  work with xarray. This includes extracting the drawing of spatially correlated innovations to a
+  stand-alone function. (`#473 <https://github.com/MESMER-group/mesmer/pull/473>`_)
+- Remove the bounds of -1 and 1 on the slope of the cyclo-stationary AR(1) process. This bound is not necessary
+  since cyclo-stationarity is also given if the slopes of a few months are (slightly) larger than one. We
+  now return the residuals of the cyclo-stationary AR(1) process to fit the covariance matrix on these residuals.
+  As a consequence, adjustment of the covariance matrix with the AR slopes is no longer necessary.
+  After this, no adjustment is necessary anymore. (`#480 <https://github.com/MESMER-group/mesmer/pull/480>`_)
+  Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
+- Implement function to localize the empirical covarince matrix for each month individually to use in drawing
+  of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
+
+Yeo-Johnson power transformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Ensure the power transformer yields the correct normalization for more cases (
+   `#440 <https://github.com/MESMER-group/mesmer/issues/440>`_):
+
+   -  expand the upper bound of the first coefficient from :math:`1` to :math:`\infty`,
+      i.e. to all positive numbers  (
+      `#446 <https://github.com/MESMER-group/mesmer/pull/446>`_)
+   -  remove jacobian ``rosen_der`` from fit (
+      `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_)
+   -  change optimization method from *SLSQP* to *Nelder-Mead* (
+      `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_)
+-  adjust the first guess to assume the data is normally distributed (
+   `#429 <https://github.com/MESMER-group/mesmer/pull/429>`_)
+-  make (back-) transformations more stable by using `np.expm1` and `np.log1p`
+   (`#494 <https://github.com/MESMER-group/mesmer/pull/494>`_)
+-  rewrite power transformer to work with xarray, and refactor from a class structure to functions (
+   `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_, and
+   `#474 <https://github.com/MESMER-group/mesmer/pull/474>`_)
+-  fix small code issues and clean the docstrings (
+   `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_,
+   `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_,
+   `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_,
+   `#475 <https://github.com/MESMER-group/mesmer/pull/475>`_, and
+   `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
+- add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_)
+
+
+Harmonic model
+~~~~~~~~~~~~~~
+
+-  Performance and other optimizations:
+
+   - only fit orders up to local minimum and use coeffs from precious order as first guess (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_)
+   - infer the harmonic model order from the coefficients (`#434 <https://github.com/MESMER-group/mesmer/pull/434>`_)
+-  return residuals instead of the loss for the optimization (`#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
+-  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415/>_` and
+   `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
+-  add helper function to upsample yearly data to monthly resolution (
+   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
+   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+- de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
+  move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
+- fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
+-  Refactor variable names, small code improvements, optimization, fixes and clean docstring
+   (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
+   `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
+   `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_, and
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_).
+- add tests (
+  `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
+  `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
+- add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
+
+By `Victoria Bauer`_ and `Mathias Hauser`_.
 
 v0.10.0 - 2024.01.04
 --------------------
