@@ -178,7 +178,7 @@ These tools automatically format the code for us and tell us where the errors ar
 
 Documenting
 -----------
-We strongly encourage you to document your code. By this we mean mainting a transparent workflow via git and github and commenting your code lines but above all we want to encourage documenting your new functions via a docstring, explaining what the function does and how it can be used. This makes it easier for others to understand what you have done and how to use it. 
+We strongly encourage you to document your code. By this we mean mainting a transparent workflow via git and github and commenting your code lines but above all we want to encourage documenting your new functions via a docstring, explaining what the function does and how it can be used. This makes it easier for others to understand what you have done and how to use it.
 
 We use Sphinx_ to generate our documentation. To get started with Sphinx, we began with `this example <https://pythonhosted.org/an_example_pypi_project/sphinx.html>`_ and then used `Sphinx's getting started guide <http://www.sphinx-doc.org/en/master/usage/quickstart.html>`_.
 After setting up the development environment (see `Development setup`_) and adding your documentation, building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
