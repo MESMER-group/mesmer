@@ -35,4 +35,6 @@ Alternately, mesmer can be installed with pip:
 Development installation
 ------------------------
 
-See instructions on github: `#315 <https://github.com/MESMER-group/mesmer/issues/315>`__.
+See instructions under `development`_.
+
+.. _development: development.html
