@@ -58,6 +58,7 @@ Bug fixes
 
 Documentation
 ^^^^^^^^^^^^^
+- Updated and extended the development Guide (`#511 <https://github.com/MESMER-group/mesmer/pull/511>`_, `#523 <https://github.com/MESMER-group/mesmer/pull/523>`_)
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
