@@ -2,24 +2,21 @@ import importlib
 
 import pytest
 import xarray as xr
-# from datatree import Datatree, map_over_subtree
 
+# from datatree import Datatree, map_over_subtree
 import mesmer
 import mesmer.mesmer_x
+
 
 @pytest.mark.parametrize(
     ("expr", "outname", "update_expected_files"),
     [
-        pytest.param(
-            "norm(loc=c1 + c2 * __tas__, scale=c3)",
-            "exp1",
-            False
-        ),
+        pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", "exp1", False),
     ],
 )
 def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     # set some configuration parameters
-    THRESHOLD_LAND = 1/3
+    THRESHOLD_LAND = 1 / 3
     HIST_PERIOD = slice("1850", "2014")
     PROJ_PERIOD = slice("2015", "2100")
 
@@ -34,8 +31,12 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     fN_hist = path_tas / "tas_ann_IPSL-CM6A-LR_historical_r1i1p1f1_g025.nc"
     fN_ssp585 = path_tas / "tas_ann_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc"
 
-    tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(["height", "file_qf", "time_bnds"])
-    tas_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True).drop_vars(["height", "file_qf", "time_bnds"])
+    tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(
+        ["height", "file_qf", "time_bnds"]
+    )
+    tas_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True).drop_vars(
+        ["height", "file_qf", "time_bnds"]
+    )
 
     # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
 
@@ -61,7 +62,7 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
         ds = mesmer.mask.mask_antarctica(ds)
         ds = mesmer.grid.stack_lat_lon(ds, stack_dim="gridpoint")
         return ds
-    
+
     # mask_and_stack_dt = map_over_subtree(mask_and_stack)
     txx_stacked_hist = mask_and_stack(txx_hist, threshold_land=THRESHOLD_LAND)
     txx_stacked_ssp585 = mask_and_stack(txx_ssp585, threshold_land=THRESHOLD_LAND)
@@ -70,7 +71,7 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     # NOTE: each of the datasets below could have a dimension along member
     predictor = ((tas_glob_mean_hist, "hist"), (tas_glob_mean_ssp585, "ssp585"))
     target = ((txx_stacked_hist, "hist"), (txx_stacked_ssp585, "ssp585"))
-    
+
     # do the training
     result, _ = mesmer.mesmer_x.xr_train_distrib(
         predictors=predictor,
@@ -101,4 +102,3 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
         # load the parameters
         expected = xr.open_dataset(TEST_PATH / f"test-mesmer_x-params_{outname}.nc")
         xr.testing.assert_allclose(result, expected)
-
