@@ -9,12 +9,13 @@ import mesmer.mesmer_x
 
 
 @pytest.mark.parametrize(
-    ("expr", "outname", "update_expected_files"),
+    ("expr", "option_2ndfit", "outname", "update_expected_files"),
     [
-        pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", "exp1", False),
+        pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", False, "exp1", False),
+        # pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", True, "exp1_2ndfit", True),
     ],
 )
-def test_calibrate_mesmer_x(expr, outname, update_expected_files):
+def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
 
@@ -77,7 +78,7 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
         target_name="tasmax",
         expr=expr,
         expr_name=outname,
-        option_2ndfit=False,
+        option_2ndfit=option_2ndfit,
         r_gasparicohn_2ndfit=500,
         scores_fit=["func_optim", "NLL", "BIC"],
     )
