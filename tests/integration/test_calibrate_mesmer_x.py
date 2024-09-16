@@ -17,8 +17,6 @@ import mesmer.mesmer_x
 def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
-    HIST_PERIOD = slice("1850", "2014")
-    PROJ_PERIOD = slice("2015", "2100")
 
     # load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
@@ -52,7 +50,7 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     fN_ssp585 = path_txx / "txx_ann_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc"
 
     txx_hist = xr.open_dataset(fN_hist, use_cftime=True)
-    txx_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True).sel(time=PROJ_PERIOD)
+    txx_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True)
 
     # txx = DataTree({"hist": txx_hist, "ssp585": txx_ssp585})
 
