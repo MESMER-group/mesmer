@@ -179,8 +179,8 @@ def xr_train_distrib(
         quality_xr2 = quality_xr.copy()
 
         # remnants of MESMERv0, because stuck with its format...
-        lon_l_vec = predictors.lon
-        lat_l_vec = predictors.lat
+        lon_l_vec = target[0][0][target_name].lon
+        lat_l_vec = target[0][0][target_name].lat
 
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
@@ -198,7 +198,7 @@ def xr_train_distrib(
 
         for igp, gp in enumerate(gridpoints):
             fraction = (igp + 1) / gridpoints.size
-            print(f"{fraction:0.1%}", end="\r")
+            print(f"{fraction:0.1%}", end="\n")
 
             # calculate first guess, with a weighted median based on Gaspari-Cohn
             # matrix, while avoiding NaN values. Warning, weighted mean does not work
@@ -209,7 +209,7 @@ def xr_train_distrib(
             for ic, coef in enumerate(expression_fit.coefficients_list):
                 fg[ic] = weighted_median(
                     data=coefficients_xr[coef].values[sel_nonan],
-                    weights=corr_gc[igp, sel_nonan],
+                    weights=corr_gc[igp, sel_nonan], # this cannot work?
                 )
 
             # shaping target for this gridpoint
