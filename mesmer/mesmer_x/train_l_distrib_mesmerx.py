@@ -974,7 +974,8 @@ class distrib_cov:
         )
         self.fg_coeffs = localfit_nll.x
 
-        test_coeff, test_param, test_proba, _ = self.test_all(self.fg_coeffs)
+        test_coeff, test_param, test_proba, _ = self.validate_coefficients(self.fg_coeffs)
+        
         if ~(test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL doesnt behave well enough here)
