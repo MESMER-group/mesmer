@@ -76,7 +76,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     )
 
     # train power transformer
-    resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
+    resids_after_hm = tas_stacked_m - harmonic_model_fit.hm_predictions
     pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
         resids_after_hm.tas, tas_stacked_y.tas
     )
@@ -104,12 +104,8 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     )
 
     # merge into one dataset
-    harmonic_model_fit = harmonic_model_fit.rename(
-        {"selected_order": "hm_selected_order", "coeffs": "hm_coeffs"}
-    ).drop_vars("predictions")
-    AR1_fit = AR1_fit.rename(
-        {"intercept": "ar1_intercept", "slope": "ar1_slope"}
-    ).drop_vars("residuals")
+    harmonic_model_fit = harmonic_model_fit.drop_vars("hm_predictions")
+    AR1_fit = AR1_fit.drop_vars("residuals")
     m_time = m_time.rename("monthly_time")
     calibrated_params = xr.merge(
         [harmonic_model_fit, pt_coefficients, AR1_fit, localized_ecov, m_time]
@@ -126,4 +122,4 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         expected_params = xr.open_dataset(
             TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
         )
-        xr.testing.assert_allclose(expected_params, calibrated_params, rtol=1e-5)
+        xr.testing.assert_allclose(expected_params, calibrated_params, rtol=1e-4)

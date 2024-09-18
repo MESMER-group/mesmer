@@ -59,9 +59,7 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     )
 
     # generate variability around 0 with AR(1) model
-    AR1_fit = xr.merge([params.ar1_slope, params.ar1_intercept]).rename(
-        {"ar1_slope": "slope", "ar1_intercept": "intercept"}
-    )
+    AR1_fit = xr.merge([params.ar1_slope, params.ar1_intercept])
     local_variability_transformed = mesmer.stats.draw_auto_regression_monthly(
         AR1_fit,
         params.localized_covariance,
