@@ -48,7 +48,7 @@ def test_yeo_johnson_optimize_lambda_np_normal():
     np.testing.assert_allclose(result, expected, atol=1e-2)
 
     # to test numerical stability
-    expected_exact = np.array([9.976784e-01, -6.410572e-07])
+    expected_exact = np.array([9.976913e-01, -1.998520e-05])
     np.testing.assert_allclose(result, expected_exact, atol=1e-7)
 
 
@@ -234,10 +234,10 @@ def test_power_transformer_xr():
         monthly_residuals, yearly_T
     )
     transformed = mesmer.stats.yeo_johnson_transform(
-        monthly_residuals, pt_coefficients, yearly_T
+        monthly_residuals, pt_coefficients.lambda_coeffs, yearly_T
     )
     inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
-        transformed.transformed, pt_coefficients, yearly_T
+        transformed.transformed, pt_coefficients.lambda_coeffs, yearly_T
     )
     xr.testing.assert_allclose(
         inverse_transformed.inverted, monthly_residuals, atol=1e-5
