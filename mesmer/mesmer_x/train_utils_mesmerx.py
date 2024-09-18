@@ -87,22 +87,22 @@ class Expression:
         self.expression_name = expr_name
 
         # identify distribution
-        self.interpret_distrib()
+        self._interpret_distrib()
 
         # identify parameters
-        self.find_parameters_list()
-        self.find_expr_parameters()
+        self._find_parameters_list()
+        self._find_expr_parameters()
 
         # identify coefficients
-        self.find_coefficients()
+        self._find_coefficients()
 
         # identify inputs
-        self.find_inputs()
+        self._find_inputs()
 
         # correct expressions of parameters
-        self.correct_expr_parameters()
+        self._correct_expr_parameters()
 
-    def interpret_distrib(self):
+    def _interpret_distrib(self):
         """interpreting the expression"""
 
         dist = str.split(self.expression, "(")[0]
@@ -114,20 +114,20 @@ class Expression:
                 " https://docs.scipy.org/doc/scipy/reference/stats.html"
             )
 
-        self.distrib = getattr(sp.stats, dist)
         self.is_distrib_discrete = self.distrib in _DISCRETE_DISTRIBUTIONS
+        self.distrib = getattr(sp.stats, dist)
 
-    def find_expr_parameters(self):
+    def _find_expr_parameters(self):
 
         # removing spaces that would hinder the identification
-        tmp_expression = self.expression.replace(" ", "")
+        expression = self.expression.replace(" ", "")
 
         # removing distribution part
-        tmp_expression = "(".join(str.split(tmp_expression, "(")[1:])
-        tmp_expression = ")".join(str.split(tmp_expression, ")")[:-1])
+        expression = "(".join(str.split(expression, "(")[1:])
+        expression = ")".join(str.split(expression, ")")[:-1])
 
         # identifying groups
-        sub_expressions = str.split(tmp_expression, ",")
+        sub_expressions = str.split(expression, ",")
 
         self.parameters_expressions = {}
         for sub_exp in sub_expressions:
@@ -136,18 +136,18 @@ class Expression:
                 self.parameters_expressions[param] = sub
             else:
                 raise ValueError(
-                    f"The parameter {param} is not part of prepared expression in scipy.stats:"
+                    f"The parameter '{param}' is not part of prepared expression in scipy.stats:"
                     " https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
                     f" of the distribution '{self.distrib.name}'"
                 )
 
         # recommend not to try to fill in missing information on parameters with
         # constant parameters, but to raise a ValueError instead.
-        for pot_param in self.parameters_list:
-            if pot_param not in self.parameters_expressions.keys():
-                raise ValueError(f"No information provided for `{pot_param}`")
+        for param in self.parameters_list:
+            if param not in self.parameters_expressions.keys():
+                raise ValueError(f"No information provided for `{param}`")
 
-    def find_parameters_list(self):
+    def _find_parameters_list(self):
         """
         List parameters for scipy.stats.distribution.
             distribution: a string or scipy.stats distribution object.
@@ -157,25 +157,18 @@ class Expression:
 
         Based on the code available at: https://github.com/scipy/scipy/issues/9575
         """
-        # identifies parameters of the distribution
-        if isinstance(self.distrib, str):
-            self.distrib = getattr(sp.stats, self.distrib)
+
+        parameters_list = []
 
         if self.distrib.shapes:
-            self.parameters_list = [
-                name.strip() for name in self.distrib.shapes.split(",")
-            ]
-        else:
-            self.parameters_list = []
+            parameters_list = [name.strip() for name in self.distrib.shapes.split(",")]
 
-        if self.distrib.name in _DISCRETE_DISTRIBUTIONS:
-            self.parameters_list += ["loc"]
-        elif self.distrib.name in _CONTINUOUS_DISTRIBUTIONS:
-            self.parameters_list += ["loc", "scale"]
-        else:
-            raise AttributeError(
-                "Distribution name not found in discrete or continuous lists."
-            )
+        parameters_list += ["loc"]
+
+        if self.distrib.name in _CONTINUOUS_DISTRIBUTIONS:
+            parameters_list += ["scale"]
+
+        self.parameters_values = parameters_list
 
         # prepary basic boundaries on parameters: incomplete, did not find a way to
         # evaluate automatically the limits on shape parameters
@@ -188,7 +181,7 @@ class Expression:
         if "scale" in self.boundaries_parameters:
             self.boundaries_parameters["scale"][0] = 0
 
-    def find_coefficients(self):
+    def _find_coefficients(self):
         """
         coefficients are supposed to be written as "c#", with "#" being a number.
         """
@@ -222,7 +215,7 @@ class Expression:
                         # not a coefficient, move to the next
                         pass
 
-    def find_inputs(self):
+    def _find_inputs(self):
 
         self.inputs_list = []
 
@@ -235,7 +228,7 @@ class Expression:
         # require a specific order for use in correct_expr_parameters
         self.inputs_list.sort(key=len, reverse=True)
 
-    def correct_expr_parameters(self):
+    def _correct_expr_parameters(self):
         # list of inputs and coefficients, sorted by descending length, to be sure that
         # when removing them, will remove the good ones and not those with their short
         # name contained in the long name of another
@@ -286,8 +279,10 @@ class Expression:
                             dico_replace[t] = "math." + t
                         else:
                             raise ValueError(
-                                f"The term {t} appears in {self.parameters_expressions[param]},"
-                                " but couldn't find an equivalent in numpy or math."
+                                f"The term '{t}' appears in the expression"
+                                f" '{self.parameters_expressions[param]}' for"
+                                f" '{param}', but couldn't find an equivalent in numpy"
+                                " or math."
                             )
                     else:
                         # was a readable character, is still a readable character,
@@ -313,7 +308,7 @@ class Expression:
             for i in self.inputs_list:
                 self.parameters_expressions[param] = self.parameters_expressions[
                     param
-                ].replace("__" + i + "__", i)
+                ].replace(f"__{i}__", i)
 
     def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
         """
