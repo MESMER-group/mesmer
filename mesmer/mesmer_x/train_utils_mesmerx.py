@@ -120,14 +120,14 @@ class Expression:
     def _find_expr_parameters(self):
 
         # removing spaces that would hinder the identification
-        expression = self.expression.replace(" ", "")
+        tmp_expression = self.expression.replace(" ", "")
 
         # removing distribution part
-        expression = "(".join(str.split(expression, "(")[1:])
-        expression = ")".join(str.split(expression, ")")[:-1])
+        tmp_expression = "(".join(str.split(tmp_expression, "(")[1:])
+        tmp_expression = ")".join(str.split(tmp_expression, ")")[:-1])
 
         # identifying groups
-        sub_expressions = str.split(expression, ",")
+        sub_expressions = str.split(tmp_expression, ",")
 
         self.parameters_expressions = {}
         for sub_exp in sub_expressions:
@@ -143,9 +143,9 @@ class Expression:
 
         # recommend not to try to fill in missing information on parameters with
         # constant parameters, but to raise a ValueError instead.
-        for param in self.parameters_list:
-            if param not in self.parameters_expressions.keys():
-                raise ValueError(f"No information provided for `{param}`")
+        for pot_param in self.parameters_list:
+            if pot_param not in self.parameters_expressions.keys():
+                raise ValueError(f"No information provided for `{pot_param}`")
 
     def _find_parameters_list(self):
         """
