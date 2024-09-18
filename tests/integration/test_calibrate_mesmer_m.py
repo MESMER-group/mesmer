@@ -154,7 +154,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
             rtol=1 / 3,
         )
         np.testing.assert_allclose(
-            expected_params.lambda_coeffs, calibrated_params.lambda_coeffs, rtol=1/5
+            expected_params.lambda_coeffs, calibrated_params.lambda_coeffs, rtol=1 / 5
         )
         np.testing.assert_allclose(
             expected_params.ar1_slope, calibrated_params.ar1_slope, atol=1e-7
