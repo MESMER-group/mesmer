@@ -6,6 +6,51 @@ from mesmer.mesmer_x import Expression
 inf = float("inf")
 
 
+def test_expression_wrong_distr():
+
+    with pytest.raises(AttributeError, match="Could not find distribution 'wrong'"):
+        Expression("wrong()", expr_name="name")
+
+
+def test_expression_wrong_param():
+
+    with pytest.raises(ValueError, match="The parameter 'wrong' is not part"):
+        Expression("norm(wrong=5)", expr_name="name")
+
+
+def test_expression_missing_param():
+
+    with pytest.raises(ValueError, match="No information provided for `loc`"):
+        Expression("norm(scale=5)", expr_name="name")
+
+
+def test_expression_wrong_np_function():
+
+    with pytest.raises(
+        ValueError, match="Proposed a numpy function that does not exist: np.wrong"
+    ):
+        Expression("norm(scale=5, loc=np.wrong())", expr_name="name")
+
+
+def test_expression_wrong_math_function():
+
+    with pytest.raises(
+        ValueError, match="Proposed a math function that does not exist: math.wrong"
+    ):
+        Expression("norm(scale=5, loc=math.wrong())", expr_name="name")
+
+
+def test_expression_wrong_numpy_or_math_function():
+
+    match = (
+        "The term 'wrong' appears in the expression 'wrong(c1)' for 'loc', but couldn't"
+        " find an equivalent in numpy or math."
+    )
+
+    with pytest.raises(ValueError, match=match):
+        Expression("norm(scale=5, loc=wrong(c1))", expr_name="name")
+
+
 def test_expression_genextreme():
 
     expression_str = (
