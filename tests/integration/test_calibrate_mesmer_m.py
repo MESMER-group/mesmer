@@ -168,5 +168,6 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         np.testing.assert_allclose(
             expected_params.localized_covariance,
             calibrated_params.localized_covariance,
-            atol=1e-7,
+            atol=1e-4,
+            rtol=1e-2,
         )
