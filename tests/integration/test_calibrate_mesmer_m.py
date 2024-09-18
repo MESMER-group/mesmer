@@ -143,6 +143,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         xr.testing.assert_equal(exact_exp_params, exact_cal_params)
 
         # compare the rest
+        # using numpy because it outputs the differences and how many values are off
         import numpy as np
 
         # the tols are set to the best we can do
