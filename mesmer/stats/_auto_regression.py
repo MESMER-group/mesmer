@@ -675,7 +675,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             vectorize=True,
         )
 
-        ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
+        ar_params.append(xr.Dataset({"ar1_slope": slope, "ar1_intercept": intercept}))
         residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
     month = xr.Variable("month", np.arange(1, 13))
@@ -742,8 +742,8 @@ def draw_auto_regression_monthly(
         Dataset containing the estimated parameters of the AR1 process. Must contain the
         following DataArray objects:
 
-        - intercept
-        - slope
+        - ar1_intercept
+        - ar1_slope
 
         both of shape (12, n_gridpoints).
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
@@ -774,25 +774,25 @@ def draw_auto_regression_monthly(
 
     """
     # check input
-    _check_dataset_form(ar_params, "ar_params", required_vars=("intercept", "slope"))
-    month_dim, gridcell_dim = ar_params.intercept.dims
-    n_months, size = ar_params.intercept.shape
+    _check_dataset_form(ar_params, "ar_params", required_vars=("ar1_intercept", "ar1_slope"))
+    month_dim, gridcell_dim = ar_params.ar1_intercept.dims
+    n_months, size = ar_params.ar1_intercept.shape
     _check_dataarray_form(
-        ar_params.intercept,
+        ar_params.ar1_intercept,
         "intercept",
         ndim=2,
         required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
-        ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.ar1_slope, "ar1_slope", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
     _check_dataarray_form(
         covariance, "covariance", ndim=3, shape=(n_months, size, size)
     )
 
     result = _draw_ar_corr_monthly_xr_internal(
-        intercept=ar_params.intercept,
-        slope=ar_params.slope,
+        intercept=ar_params.ar1_intercept,
+        slope=ar_params.ar1_slope,
         covariance=covariance,
         time=time,
         realisation=n_realisations,

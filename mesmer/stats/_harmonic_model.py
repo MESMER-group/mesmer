@@ -303,9 +303,9 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     preds = yearly_predictor + preds
 
     data_vars = {
-        "selected_order": selected_order,
-        "coeffs": coeffs,
-        "predictions": preds.transpose(time_dim, ...),
+        "hm_selected_order": selected_order,
+        "hm_coeffs": coeffs,
+        "hm_predictions": preds.transpose(time_dim, ...),
     }
 
     return xr.Dataset(data_vars)
