@@ -81,7 +81,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         resids_after_hm.tas, tas_stacked_y.tas
     )
     transformed_hm_resids = mesmer.stats.yeo_johnson_transform(
-        resids_after_hm.tas, pt_coefficients, tas_stacked_y.tas
+        resids_after_hm.tas, pt_coefficients.lambda_coeffs, tas_stacked_y.tas
     )
 
     # fit cyclo-stationary AR(1) process
@@ -105,9 +105,8 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     # merge into one dataset
     harmonic_model_fit = harmonic_model_fit.rename(
-        {"n_sel": "hm_nsel", "coeffs": "hm_coeffs"}
+        {"selected_order": "hm_selected_order", "coeffs": "hm_coeffs"}
     ).drop_vars("predictions")
-    pt_coefficients = pt_coefficients.rename({"xi_0": "pt_xi0", "xi_1": "pt_xi1"})
     AR1_fit = AR1_fit.rename(
         {"intercept": "ar1_intercept", "slope": "ar1_slope"}
     ).drop_vars("residuals")

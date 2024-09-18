@@ -72,12 +72,9 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     )
 
     # invert the power transformation
-    pt_coeffs = xr.merge([params.pt_xi0, params.pt_xi1]).rename(
-        {"pt_xi0": "xi_0", "pt_xi1": "xi_1"}
-    )
     local_variability_inverted = mesmer.stats.inverse_yeo_johnson_transform(
         local_variability_transformed,
-        pt_coeffs,
+        params.lambda_coeffs,
         tas_stacked_y.tas,
     )
 
