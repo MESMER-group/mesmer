@@ -136,9 +136,9 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     """
 
     def residuals_from_fourier_series(coeffs, yearly_predictor, mon_target):
-        return mon_target - _generate_fourier_series_np(yearly_predictor, coeffs)
+        return _generate_fourier_series_np(yearly_predictor, coeffs) - mon_target
 
-    # Use curve_fit to optimize the coefficients
+    # use least_squares to optimize the coefficients
     minimize_result = sp.optimize.least_squares(
         residuals_from_fourier_series,
         first_guess,

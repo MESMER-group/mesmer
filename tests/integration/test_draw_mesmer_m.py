@@ -86,15 +86,14 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     result = result.to_dataset(name="tas")
 
     # save
+    test_file = TEST_PATH / "test_mesmer_m_realisations_expected.nc"
     if update_expected_files:
-        result.to_netcdf(TEST_PATH / "test_mesmer_m_realisations_expected.nc")
+        result.to_netcdf(test_file)
         pytest.skip("Updated emulations.")
 
     # testing
     else:
-        exp = xr.open_dataset(
-            TEST_PATH / "test_mesmer_m_realisations_expected.nc", use_cftime=True
-        )
+        exp = xr.open_dataset(test_file, use_cftime=True)
         xr.testing.assert_allclose(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved
