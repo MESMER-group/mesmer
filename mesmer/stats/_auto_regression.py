@@ -774,7 +774,9 @@ def draw_auto_regression_monthly(
 
     """
     # check input
-    _check_dataset_form(ar_params, "ar_params", required_vars=("ar1_intercept", "ar1_slope"))
+    _check_dataset_form(
+        ar_params, "ar_params", required_vars=("ar1_intercept", "ar1_slope")
+    )
     month_dim, gridcell_dim = ar_params.ar1_intercept.dims
     n_months, size = ar_params.ar1_intercept.shape
     _check_dataarray_form(
@@ -784,7 +786,10 @@ def draw_auto_regression_monthly(
         required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
-        ar_params.ar1_slope, "ar1_slope", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.ar1_slope,
+        "ar1_slope",
+        ndim=2,
+        required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
         covariance, "covariance", ndim=3, shape=(n_months, size, size)
