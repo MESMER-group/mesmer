@@ -114,7 +114,7 @@ class Expression:
                 " https://docs.scipy.org/doc/scipy/reference/stats.html"
             )
 
-        self.is_distrib_discrete = self.distrib in _DISCRETE_DISTRIBUTIONS
+        self.is_distrib_discrete = dist in _DISCRETE_DISTRIBUTIONS
         self.distrib = getattr(sp.stats, dist)
 
     def _find_expr_parameters(self):
@@ -168,7 +168,7 @@ class Expression:
         if self.distrib.name in _CONTINUOUS_DISTRIBUTIONS:
             parameters_list += ["scale"]
 
-        self.parameters_values = parameters_list
+        self.parameters_list = parameters_list
 
         # prepary basic boundaries on parameters: incomplete, did not find a way to
         # evaluate automatically the limits on shape parameters

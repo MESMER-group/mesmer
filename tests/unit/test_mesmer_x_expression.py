@@ -43,8 +43,8 @@ def test_expression_wrong_math_function():
 def test_expression_wrong_numpy_or_math_function():
 
     match = (
-        "The term 'wrong' appears in the expression 'wrong(c1)' for 'loc', but couldn't"
-        " find an equivalent in numpy or math."
+        "The term 'wrong' appears in the expression 'wrong\(c1\)' for 'loc', but"
+        " couldn't find an equivalent in numpy or math."
     )
 
     with pytest.raises(ValueError, match=match):
@@ -118,7 +118,7 @@ def test_expression_binom():
     assert expr.expression_name == "name"
 
     assert expr.distrib == sp.stats.binom
-    assert not expr.is_distrib_discrete
+    assert expr.is_distrib_discrete
 
     assert expr.parameters_list == ["n", "p", "loc"]
 
