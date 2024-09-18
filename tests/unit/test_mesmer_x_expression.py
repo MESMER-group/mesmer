@@ -43,7 +43,7 @@ def test_expression_wrong_math_function():
 def test_expression_wrong_numpy_or_math_function():
 
     match = (
-        "The term 'wrong' appears in the expression 'wrong\(c1\)' for 'loc', but"
+        r"The term 'wrong' appears in the expression 'wrong\(c1\)' for 'loc', but"
         " couldn't find an equivalent in numpy or math."
     )
 
