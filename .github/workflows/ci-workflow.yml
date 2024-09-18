@@ -22,11 +22,11 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.9", "3.11", "3.12"]
+        python-version: ["3.10", "3.12"]
         env: [""]
         include:
           - env: "min-all-deps"
-            python-version: "3.9"
+            python-version: "3.10"
             os: "ubuntu-latest"
           - env: ""
             python-version: "3.12"
@@ -86,3 +86,32 @@ jobs:
           env_vars: RUNNER_OS,PYTHON_VERSION
           name: codecov-umbrella
           fail_ci_if_error: false
+
+  # ====================================================================================
+
+  min-version-policy:
+    name: Minimum Version Policy
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags.
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: min-version-policy
+          micromamba-version: 'latest'
+          create-args: >-
+            python=3.10
+            pyyaml
+            conda
+            python-dateutil
+          channels: conda-forge
+
+      - name: minimum versions policy
+        run: |
+          python ci/min_deps_check.py ci/requirements/min-all-deps.yml

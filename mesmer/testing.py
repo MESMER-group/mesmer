@@ -30,7 +30,7 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
             assert_dict_allclose(first_val, second_val, first_name, second_name)
         elif isinstance(first_val, np.ndarray):
             np.testing.assert_allclose(first_val, second_val, err_msg=key)
-        elif isinstance(first_val, (xr.DataArray, xr.Dataset)):
+        elif isinstance(first_val, xr.DataArray | xr.Dataset):
             xr.testing.assert_allclose(first_val, second_val)
         elif np.issubdtype(np.array(first_val).dtype, np.number):
             np.testing.assert_allclose(first_val, second_val, err_msg=key)

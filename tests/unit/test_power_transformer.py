@@ -30,7 +30,7 @@ from mesmer.testing import trend_data_2D
 )
 def test_lambda_function(coeffs, t, expected):
 
-    result = mesmer.stats.lambda_function(coeffs[0], coeffs[1], t)
+    result = mesmer.stats.lambda_function(coeffs, t)
     np.testing.assert_allclose(result, expected)
 
 
@@ -72,7 +72,7 @@ def test_yeo_johnson_optimize_lambda_np(skew, bounds):
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
     coeffs = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
-    lmbda = mesmer.stats.lambda_function(coeffs[0], coeffs[1], yearly_T)
+    lmbda = mesmer.stats.lambda_function(coeffs, yearly_T)
     transformed = _yeo_johnson_transform_np(local_monthly_residuals, lmbda)
 
     assert (lmbda >= bounds[0]).all() & (lmbda <= bounds[1]).all()
@@ -182,7 +182,7 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     local_monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
 
     ourfit = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
-    result = mesmer.stats.lambda_function(ourfit[0], ourfit[1], yearly_T_value)
+    result = mesmer.stats.lambda_function(ourfit, yearly_T_value)
     sklearnfit = PowerTransformer(method="yeo-johnson", standardize=False).fit(
         local_monthly_residuals.reshape(-1, 1), yearly_T.reshape(-1, 1)
     )
@@ -258,12 +258,12 @@ def test_power_transformer_xr():
         shape=(n_gridcells, n_years * 12),
     )
     _check_dataset_form(
-        pt_coefficients, name="pt_coefficients", required_vars=("xi_0", "xi_1")
+        pt_coefficients, name="pt_coefficients", required_vars=("lambda_coeffs")
     )
     _check_dataarray_form(
-        pt_coefficients.xi_0,
-        name="xi_0",
-        ndim=2,
-        required_dims=("cells",),
-        shape=(12, n_gridcells),
+        pt_coefficients.lambda_coeffs,
+        name="lambda_coeffs",
+        ndim=3,
+        required_dims=("cells", "coeff", "month"),
+        shape=(12, n_gridcells, 2),
     )

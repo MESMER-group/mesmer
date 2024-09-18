@@ -20,21 +20,21 @@ def test_generate_fourier_series_np():
     n_months = n_years * 12
 
     yearly_predictor = np.ones(n_months)
-    months = np.tile(np.arange(1, 13), n_years)
+    months = np.tile(np.arange(12), n_years)
+    alpha = 2 * np.pi * months / 12
 
-    coeffs = np.array([0, -1, 0, -2])
+    coeffs = np.array([0, -2, 0, -1])
 
     # dummy yearly cycle
-    expected = coeffs[1] * np.sin(2 * np.pi * (months) / 12) + coeffs[3] * np.cos(
-        2 * np.pi * (months) / 12
-    )
+    expected = coeffs[1] * np.cos(alpha) + coeffs[3] * np.sin(alpha)
 
     result = _generate_fourier_series_np(yearly_predictor, coeffs)
 
-    np.testing.assert_equal(result, expected)
+    np.testing.assert_allclose(result, expected, rtol=1e-13)
 
-    result = _generate_fourier_series_np(yearly_predictor, np.array([3.14, -1, 1, -2]))
-    expected += 3.14 * np.sin(np.pi * months / 6) + 1 * np.cos(np.pi * months / 6)
+    coeffs = np.array([1, -2, 3.14, -1])
+    result = _generate_fourier_series_np(yearly_predictor, coeffs)
+    expected += 1 * np.cos(alpha) + 3.14 * np.sin(alpha)
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
 
@@ -157,7 +157,7 @@ def test_fit_harmonic_model():
 
     # test if the model can recover the monthly target from perfect fourier series
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
-    np.testing.assert_equal(result.n_sel.values, orders)
+    np.testing.assert_equal(result.selected_order.values, orders)
     xr.testing.assert_allclose(result["predictions"], monthly_target)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
@@ -172,18 +172,18 @@ def test_fit_harmonic_model():
     # compare numerically one cell of one year
     expected = np.array(
         [
-            9.970548,
+            7.324277,
             9.966644,
-            7.325875,
-            2.755833,
-            -2.518943,
-            -7.085081,
-            -9.719088,
+            9.972146,
+            7.33931,
+            2.7736,
+            -2.501604,
+            -7.072816,
             -9.715184,
-            -7.074415,
-            -2.504373,
-            2.770403,
-            7.336541,
+            -9.720686,
+            -7.087849,
+            -2.52214,
+            2.753065,
         ]
     )
 
