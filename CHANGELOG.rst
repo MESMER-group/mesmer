@@ -16,14 +16,33 @@ Breaking changes
   (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
-- The supported versions of some dependencies were changed (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_, `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_):
+- Removed support for python 3.9 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
+  By `Mathias Hauser`_.
+- The supported versions of some dependencies were changed
+  (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
+  `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_, and
+  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_):
 
-  ============ ============= =========
-  Package      Old           New
-  ============ ============= =========
-  regionmask    >=0.8        >=0.9
-  statsmodels  not specified >=0.13
-  ============ ============= =========
+  ================= ============= =========
+  Package           Old           New
+  ================= ============= =========
+  **cartopy**       not specified 0.22
+  **dask**          not specified 2023.8
+  **joblib**        not specified 1.3
+  **netcdf4**       not specified 1.6
+  **numpy**         not specified 1.24
+  **packaging**     not specified 23.1
+  **pandas**        2.0           no change
+  **pooch**         not specified 1.7
+  **properscoring** not specified 0.1
+  **pyproj**        not specified 3.6
+  **regionmask**    0.8           0.10
+  **scikit-learn**  not specified 1.3
+  **scipy**         not specified 1.11
+  **shapely**       not specified 2.0
+  **statsmodels**   not specified 0.14
+  **xarray**        2023.04       2023.7
+  ================= ============= =========
 
 Deprecations
 ^^^^^^^^^^^^
@@ -33,9 +52,13 @@ Deprecations
 
 Bug fixes
 ^^^^^^^^^
+- Averaging standard deviations for the AR parameters of global variability over several ensemble members and scenarios now averages the
+  variances (`#499 <https://github.com/MESMER-group/mesmer/pull/499>`_).
+  By `Victoria Bauer`_.
 
 Documentation
 ^^^^^^^^^^^^^
+- Updated and extended the development Guide (`#511 <https://github.com/MESMER-group/mesmer/pull/511>`_, `#523 <https://github.com/MESMER-group/mesmer/pull/523>`_)
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
@@ -52,6 +75,22 @@ Internal Changes
 - Allow singular covariance matrices for localization radius selection. For this purpose, eigenvalue decomposition is implemented
   as fallback for singular matrices also in the crossvalidation of localization radii (`#493 <https://github.com/MESMER-group/mesmer/pull/493>`_).
   By `Victoria Bauer`_.
+
+Integration of MESMER-X
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In the release the MESMER-X functionality is integrated into the MESMER Codebase.
+
+- Add MESMER-X functionality to the code base (`#432 <https://github.com/MESMER-group/mesmer/pull/432>`_)
+- Some general refactoring and clean-up (`#437 <https://github.com/MESMER-group/mesmer/pull/437>`_,
+  `#465 <https://github.com/MESMER-group/mesmer/pull/465>`_,
+  `#466 <https://github.com/MESMER-group/mesmer/pull/466>`_,
+  `#467 <https://github.com/MESMER-group/mesmer/pull/467>`_,
+  `#468 <https://github.com/MESMER-group/mesmer/pull/468>`_,
+  `#469 <https://github.com/MESMER-group/mesmer/pull/469>`_,
+  `#470 <https://github.com/MESMER-group/mesmer/pull/470>`_,
+  `#502 <https://github.com/MESMER-group/mesmer/pull/502>`_)
+- Add tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_)
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -128,10 +167,12 @@ Harmonic model
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
   move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
 - fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
--  Refactor variable names, small code improvements, fixes and clean docstring (
-   `#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
-   `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_, and
-   `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_)
+-  Refactor variable names, small code improvements, optimization, fixes and clean docstring
+   (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
+   `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
+   `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_, and
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_).
 - add tests (
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
