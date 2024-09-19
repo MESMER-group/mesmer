@@ -179,8 +179,8 @@ def xr_train_distrib(
         quality_xr2 = quality_xr.copy()
 
         # remnants of MESMERv0, because stuck with its format...
-        lon_l_vec = predictors.lon
-        lat_l_vec = predictors.lat
+        lon_l_vec = target[0][0][target_name].lon
+        lat_l_vec = target[0][0][target_name].lat
 
         geodist = geodist_exact(lon_l_vec, lat_l_vec)
 
@@ -209,7 +209,7 @@ def xr_train_distrib(
             for ic, coef in enumerate(expression_fit.coefficients_list):
                 fg[ic] = weighted_median(
                     data=coefficients_xr[coef].values[sel_nonan],
-                    weights=corr_gc[igp, sel_nonan],
+                    weights=corr_gc[igp, sel_nonan.values],
                 )
 
             # shaping target for this gridpoint
@@ -974,7 +974,10 @@ class distrib_cov:
         )
         self.fg_coeffs = localfit_nll.x
 
-        test_coeff, test_param, test_proba, _ = self.test_all(self.fg_coeffs)
+        test_coeff, test_param, test_proba, _ = self.validate_coefficients(
+            self.fg_coeffs
+        )
+
         if ~(test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL doesnt behave well enough here)
