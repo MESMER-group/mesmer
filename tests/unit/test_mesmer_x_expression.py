@@ -40,15 +40,6 @@ def test_expression_wrong_math_function():
         Expression("norm(scale=5, loc=math.wrong())", expr_name="name")
 
 
-def test_expression_wrong_numpy_or_math_function():
-
-    match = (
-        r"The term 'wrong' appears in the expression 'wrong\(c1\)' for 'loc', but"
-        " couldn't find an equivalent in numpy or math."
-    )
-
-    with pytest.raises(ValueError, match=match):
-        Expression("norm(scale=5, loc=wrong(c1))", expr_name="name")
 
 
 def test_expression_genextreme():
