@@ -77,7 +77,13 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
 
 
 def find_localized_empirical_covariance(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
+    data,
+    weights,
+    localizer,
+    dim,
+    k_folds,
+    equal_dim_suffixes=("_i", "_j"),
+    allow_singluar=False,
 ):
     """determine localized empirical covariance by cross validation
 
@@ -129,7 +135,11 @@ def find_localized_empirical_covariance(
         _find_localized_empirical_covariance_np,
         data,
         weights,
-        kwargs={"localizer": localizer, "k_folds": k_folds},
+        kwargs={
+            "localizer": localizer,
+            "k_folds": k_folds,
+            "allow_singluar": allow_singluar,
+        },
         input_core_dims=[all_dims, [dim]],
         output_core_dims=([], out_dims, out_dims),
     )
@@ -145,7 +155,13 @@ def find_localized_empirical_covariance(
 
 
 def find_localized_empirical_covariance_monthly(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
+    data,
+    weights,
+    localizer,
+    dim,
+    k_folds,
+    equal_dim_suffixes=("_i", "_j"),
+    allow_singluar=False,
 ):
     """determine localized empirical covariance by cross validation for each month. `data`
     should be the residuals of the cyclo-stationary AR(1) process, see
@@ -199,6 +215,7 @@ def find_localized_empirical_covariance_monthly(
             dim=dim,
             k_folds=k_folds,
             equal_dim_suffixes=equal_dim_suffixes,
+            allow_singluar=allow_singluar,
         )
         localized_ecov.append(res)
 
@@ -206,7 +223,9 @@ def find_localized_empirical_covariance_monthly(
     return xr.concat(localized_ecov, dim=month)
 
 
-def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
+def _find_localized_empirical_covariance_np(
+    data, weights, localizer, k_folds, allow_singluar
+):
     """determine localized empirical covariance by cross validation
 
     Parameters
@@ -259,6 +278,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
         weights=weights,
         localizer=localizer,
         k_folds=k_folds,
+        allow_singluar=allow_singluar,
     )
 
     covariance = np.cov(data, rowvar=False, aweights=weights)
@@ -275,7 +295,9 @@ class _EcovCrossvalidation:
 
         self.method = method or "cholesky"
 
-    def crossvalidate(self, localization_radius, *, data, weights, localizer, k_folds):
+    def crossvalidate(
+        self, localization_radius, *, data, weights, localizer, k_folds, allow_singluar
+    ):
         """k-fold crossvalidation for a single localization radius"""
 
         n_samples, __ = data.shape
@@ -304,18 +326,24 @@ class _EcovCrossvalidation:
                 nll += _get_neg_loglikelihood(
                     data_cv, localized_cov, weights_cv, self.method
                 )
+
             except np.linalg.LinAlgError as e:
+                if not allow_singluar:
+                    raise np.linalg.LinAlgError(
+                        f"Singular matrix for localization_radius of {localization_radius}."
+                    )
+
                 if self.method == "eigh":
                     raise e
 
-                # NOTE: this error is thrown by np.linalg.cholesky not by the logpdf anymore
+                # switch to eigh from now on
+                self.method = "eigh"
                 warnings.warn(
                     f"Singular matrix for localization_radius of {localization_radius}."
                     "\n Switching to eigh().",
                     LinAlgWarning,
                 )
-                # switch to eigh from now on
-                self.method = "eigh"
+
                 nll += _get_neg_loglikelihood(
                     data_cv, localized_cov, weights_cv, self.method
                 )

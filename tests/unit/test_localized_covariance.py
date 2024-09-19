@@ -175,7 +175,7 @@ def test_find_localized_empirical_covariance_np():
     weights = get_weights(n_samples).values
 
     result, cov, loc_cov = _find_localized_empirical_covariance_np(
-        data, weights, localizer, k_folds=2
+        data, weights, localizer, k_folds=2, allow_singluar=False
     )
     expected = 0
     assert result == expected
@@ -184,13 +184,13 @@ def test_find_localized_empirical_covariance_np():
     np.testing.assert_allclose(np.diag(cov), np.diag(loc_cov))
 
     result, __, __ = _find_localized_empirical_covariance_np(
-        data, weights, localizer, k_folds=3
+        data, weights, localizer, k_folds=3, allow_singluar=False
     )
     expected = 1
     assert result == expected
 
     result, __, __ = _find_localized_empirical_covariance_np(
-        data, weights, localizer, k_folds=8
+        data, weights, localizer, k_folds=8, allow_singluar=False
     )
     expected = 6
     assert result == expected
@@ -216,7 +216,7 @@ def test_find_localized_empirical_covariance_method(random_data_5x3):
     localizer = {1: np.ones((50, 50)), 2: np.eye(50), 3: np.eye(50) * 0.5}
     with pytest.warns(LinAlgWarning, match="Singular matrix"):
         result, cov, lcov = _find_localized_empirical_covariance_np(
-            data, weights, localizer, 5
+            data, weights, localizer, 5, allow_singluar=True
         )
     assert result == 2
 
@@ -234,6 +234,7 @@ def test_ecov_crossvalidation_k_folds(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=2,
+        allow_singluar=False,
     )
     expected = 204.5516663440938
     np.testing.assert_allclose(result, expected)
@@ -244,6 +245,7 @@ def test_ecov_crossvalidation_k_folds(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=3,
+        allow_singluar=False,
     )
     expected = 183.32294464558134
     np.testing.assert_allclose(result, expected)
@@ -255,6 +257,7 @@ def test_ecov_crossvalidation_k_folds(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=5,
+        allow_singluar=False,
     )
     result6 = _EcovCrossvalidation().crossvalidate(
         250,
@@ -262,6 +265,7 @@ def test_ecov_crossvalidation_k_folds(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=6,
+        allow_singluar=False,
     )
 
     np.testing.assert_allclose(result5, result6)
@@ -280,6 +284,7 @@ def test_ecov_crossvalidation_localizer(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=5,
+        allow_singluar=False,
     )
     expected = 133.975629
     np.testing.assert_allclose(result, expected)
@@ -293,6 +298,7 @@ def test_ecov_crossvalidation_localizer(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=5,
+        allow_singluar=False,
     )
     expected = 985.073313
     np.testing.assert_allclose(result, expected)
@@ -310,6 +316,7 @@ def test_ecov_crossvalidation_localizer(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=5,
+        allow_singluar=False,
     )
     expected = 181.360159
     np.testing.assert_allclose(result, expected)
@@ -327,6 +334,7 @@ def test_ecov_crossvalidation_weights(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=2,
+        allow_singluar=False,
     )
     expected = 204.5516663440938
     np.testing.assert_allclose(result, expected)
@@ -338,6 +346,7 @@ def test_ecov_crossvalidation_weights(random_data_5x3):
         weights=weights,
         localizer=localizer,
         k_folds=2,
+        allow_singluar=False,
     )
     expected = 187.682058
     np.testing.assert_allclose(result, expected)
@@ -359,11 +368,24 @@ def test_ecov_crossvalidation_singular(random_data_5x3):
             weights=weights,
             localizer=localizer,
             k_folds=2,
+            allow_singluar=True,
         )
 
     expected = float("inf")
     np.testing.assert_allclose(result, expected)
     assert nll.method == "eigh"
+
+    nll = _EcovCrossvalidation(method="cholesky")
+
+    with pytest.raises(np.linalg.LinAlgError):
+        nll.crossvalidate(
+            250,
+            data=random_data_5x3,
+            weights=weights,
+            localizer=localizer,
+            k_folds=2,
+            allow_singluar=False,
+        )
 
 
 def test_get_neg_loglikelihood(random_data_5x3):
