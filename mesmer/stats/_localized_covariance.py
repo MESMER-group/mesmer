@@ -104,6 +104,9 @@ def find_localized_empirical_covariance(
     equal_dim_suffixes : tuple of str, default: ("_i", "_j")
         Suffixes to add to the the name of ``dim`` for the covariance array
         (xr.DataArray cannot have two dimensions with the same name).
+    allow_singluar : bool, default: False
+        If True, allow singular matrices to be used in the cross validation. In this case,
+        the method of decomposition is switched from cholesky to eigh and a warning is emitted.
 
     Returns
     -------
@@ -186,6 +189,9 @@ def find_localized_empirical_covariance_monthly(
     equal_dim_suffixes : tuple of str, default: ("_i", "_j")
         Suffixes to add to the the name of ``dim`` for the covariance array
         (xr.DataArray cannot have two dimensions with the same name).
+    allow_singluar : bool, default: False
+        If True, allow singular matrices to be used in the cross validation. In this case,
+        the method of decomposition is switched from cholesky to eigh and a warning is emitted.
 
     Returns
     -------
@@ -240,6 +246,9 @@ def _find_localized_empirical_covariance_np(
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
     k_folds : int
         Number of folds to use for cross validation.
+    allow_singluar : bool
+        If True, allow singular matrices to be used in the cross validation. In this case,
+        the method of decomposition is switched from cholesky to eigh and a warning is emitted.
 
     Returns
     -------
