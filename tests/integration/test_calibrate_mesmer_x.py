@@ -12,7 +12,13 @@ import mesmer.mesmer_x
     ("expr", "option_2ndfit", "outname", "update_expected_files"),
     [
         pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", False, "exp1", False),
-        # pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", True, "exp1_2ndfit", True),
+        pytest.param(
+            "norm(loc=c1 + c2 * __tas__, scale=c3)",
+            True,
+            "exp1_2ndfit",
+            False,
+            marks=pytest.mark.slow,
+        ),
     ],
 )
 def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files):
