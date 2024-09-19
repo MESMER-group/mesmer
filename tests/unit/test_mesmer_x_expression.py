@@ -40,8 +40,6 @@ def test_expression_wrong_math_function():
         Expression("norm(scale=5, loc=math.wrong())", expr_name="name")
 
 
-
-
 def test_expression_genextreme():
 
     expression_str = (
