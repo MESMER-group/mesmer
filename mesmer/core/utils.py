@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import xarray as xr
+from datatree import DataTree
 from packaging.version import Version
 
 
@@ -150,7 +151,7 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: str | set[str] = set(),
+    required_vars: str | set[str] | None = set(),
     optional_vars: str | set[str] = set(),
     requires_other_vars: bool = False,
 ):
@@ -240,3 +241,45 @@ def _check_dataarray_form(
 
     if shape is not None and obj.shape != shape:
         raise ValueError(f"{name} has wrong shape - expected {shape}, got {obj.shape}")
+
+
+def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
+    """
+    Take a ``DataTree`` and collapse it into a single ``xr.Dataset`` along dim.
+    All datasets in the ``DataTree`` must have the same dimensions and each dimension must have a coordinate.
+
+    Parameters
+    ----------
+    dt : DataTree
+        The DataTree to collapse.
+    dim : str
+        The dimension to concatenate the datasets along.
+
+    Returns
+    -------
+    xr.Dataset
+        The collapsed dataset.
+
+    Raises
+    ------
+    ValueError
+        If all datasets do not have the same dimensions.
+        If any dimension does not have a coordinate.
+
+    """
+
+    # check if all datasets have the same dimensions
+    ds_dims = [set(ds.dims) for ds in dt.leaves]
+    if not all(ds_dim == ds_dims[0] for ds_dim in ds_dims):
+        raise ValueError("All datasets must have the same dimensions")
+
+    # check that all dims have coords
+    for ds in dt.leaves:
+        for ds_dim in ds.dims:
+            if ds_dim not in ds.coords:
+                raise ValueError(f"Dimension {ds_dim} must have a coordinate")
+
+    ds = xr.concat([leaf.ds for leaf in dt.leaves], dim=dim)
+    ds = ds.assign_coords({dim: [leaf.name for leaf in dt.leaves]})
+
+    return ds

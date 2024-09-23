@@ -2,12 +2,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from datatree import DataTree
 from packaging.version import Version
 
 import mesmer.core.utils
 
 
-def make_dummy_yearly_data(freq, calendar="standard"):
+def make_dummy_yearly_data(freq: str, calendar: str = "standard"):
     if freq == "YM":
         freq = "AS-JUL" if Version(pd.__version__) < Version("2.2") else "YS-JUL"
         time = xr.date_range(
@@ -17,7 +18,7 @@ def make_dummy_yearly_data(freq, calendar="standard"):
         time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
     data = xr.DataArray([1.0, 2.0, 3.0, 4.0, 5.0], dims=("time"), coords={"time": time})
-    return data
+    return data.rename("tas")
 
 
 def make_dummy_monthly_data(freq, calendar="standard"):
@@ -31,7 +32,7 @@ def make_dummy_monthly_data(freq, calendar="standard"):
         )
 
     data = xr.DataArray(np.ones(5 * 12), dims=("time"), coords={"time": time})
-    return data
+    return data.rename("tas")
 
 
 @pytest.mark.parametrize("freq_y", ["YM", "YS", "YE", "YS-JUL", "YS-NOV"])
@@ -335,3 +336,105 @@ def test_assert_annual_data_unkown_freq():
 
     with pytest.raises(ValueError, match="Annual data is required but data of unknown"):
         mesmer.core.utils._assert_annual_data(time)
+
+
+def test_collapse_datatree_into_dataset():
+    da1 = make_dummy_yearly_data(freq="YS")
+    da2 = make_dummy_yearly_data(freq="YS")
+    da3 = make_dummy_yearly_data(freq="YS")
+
+    leaf1 = xr.concat([da1, da2, da3], dim="member").assign_coords(
+        {"member": np.arange(3)}
+    )
+    leaf2 = xr.concat([da1, da2], dim="member").assign_coords({"member": np.arange(2)})
+
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+
+    collapse_dim = "scenario"
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+
+    assert isinstance(res, xr.Dataset)
+    assert collapse_dim in res.dims
+    assert (res[collapse_dim] == ["scen1", "scen2"]).all()
+    assert len(res.dims) == 3
+    assert np.isnan(res.sel(scenario="scen2", member=2)).all()
+
+    # error if data set has no coords along dim (bc then it is not concatenable if lengths differ)
+    leaf_missing_coords = leaf1.drop_vars("member")
+    dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
+    with pytest.raises(ValueError, match="Dimension member must have a coordinate"):
+        res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+
+    # Dimension along which to concatenate already exists
+    leaf1_scen = leaf1.assign_coords({"scenario": "scen1"}).expand_dims(collapse_dim)
+    leaf2_scen = leaf2.assign_coords({"scenario": "scen2"}).expand_dims(collapse_dim)
+    dt = DataTree.from_dict({"scen1": leaf1_scen, "scen2": leaf2_scen})
+
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+    assert isinstance(res, xr.Dataset)
+
+    scen1 = res.sel(scenario="scen1").tas
+    xr.testing.assert_equal(scen1.drop_vars("scenario"), leaf1)
+
+    # only one leaf works
+    dt = DataTree.from_dict({"scen1": leaf1})
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+
+    assert isinstance(res, xr.Dataset)
+    assert collapse_dim in res.dims
+    assert (res[collapse_dim] == ["scen1"]).all()
+    assert len(res.dims) == 3
+
+    xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
+
+    # nested DataTree works
+    dt = DataTree()
+    dt["scen1/sub_scen1"] = DataTree(leaf1)
+    dt["scen1/sub_scen2"] = DataTree(leaf2)
+    dt["scen2"] = DataTree(leaf2)
+
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+    assert isinstance(res, xr.Dataset)
+    assert collapse_dim in res.dims
+    assert len(res.dims) == 3
+    assert (res[collapse_dim] == ["sub_scen1", "sub_scen2", "scen2"]).all()
+
+    # more than one datavariable - works and fills with nans if necessary
+    ds = da3.rename("tas2")
+
+    leaf3 = xr.merge(
+        [da1.assign_coords({"member": 1}), ds.assign_coords({"member": 1})]
+    ).expand_dims("member")
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
+
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+    assert isinstance(res, xr.Dataset)
+    assert collapse_dim in res.dims
+    assert len(res.dims) == 3
+    assert (res[collapse_dim] == ["scen1", "scen2", "scen3"]).all()
+    assert len(res.data_vars) == 2
+    assert np.isnan(res.sel(scenario="scen1").tas2).all()
+
+    # two time dimensions that have different length fills missing values with nans
+    da_with_different_time = make_dummy_yearly_data(freq="YE")
+
+    badleaf = da_with_different_time.assign_coords({"member": 0}).expand_dims("member")
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": badleaf})
+
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+
+    assert np.isnan(res.sel(scenario="scen2", time=leaf1.time)).all()
+
+    # missing dimension raises error
+    leaf_missing_dim = leaf1.sel(member=0).drop_vars("member") * 2
+
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf_missing_dim})
+    with pytest.raises(ValueError, match="All datasets must have the same dimensions"):
+        res = mesmer.utils.collapse_datatree_into_dataset(dt, dim="scenario")
+
+    # different dimensions raises error
+    leaf_diff_dim = leaf1.sel(member=0).rename({"member": "ens"}) * 2
+
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf_diff_dim})
+    with pytest.raises(ValueError, match="All datasets must have the same dimensions"):
+        res = mesmer.utils.collapse_datatree_into_dataset(dt, dim="scenario")
