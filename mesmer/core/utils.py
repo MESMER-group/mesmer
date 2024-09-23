@@ -200,7 +200,7 @@ def _check_dataarray_form(
     obj,
     name: str = "obj",
     *,
-    ndim: int = None,
+    ndim: int | None = None,
     required_dims: str | set[str] = set(),
     shape=None,
 ):
