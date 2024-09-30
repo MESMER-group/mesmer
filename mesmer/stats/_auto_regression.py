@@ -1,5 +1,5 @@
 import warnings
-from typing import Literal
+from typing import Literal, List
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_datas
 def _select_ar_order_scen_ens(
     dt: DataTree,
     dim: str,
-    ens_dim: str,
+    ens_dim: str | None,
     maxlag: int,
     ic: Literal["bic", "aic", "hqic"] = "bic",
 ) -> xr.DataArray:
@@ -30,7 +30,7 @@ def _select_ar_order_scen_ens(
     dim : str
         Dimension along which to determine the order.
     ens_dim : str
-        Dimension name of the ensemble members.
+        Dimension name of the ensemble members. Must be the same for all scenarios and have coordinates if not None.
     maxlag : int
         The maximum lag to consider.
     ic : {'aic', 'hqic', 'bic'}, default 'bic'
@@ -52,13 +52,19 @@ def _select_ar_order_scen_ens(
 
     ar_order_scen = _select_ar_order_dt(dt, dim=dim, maxlag=maxlag, ic=ic)
 
-    ar_odrer_scen_median = ar_order_scen.quantile(dim=ens_dim, q=0.5, method="nearest")
+    def ens_quantile(ds, ens_dim):
+        if ens_dim in ds.dims:
+            return ds.quantile(dim=ens_dim, q=0.5, method="nearest")
+        return ds
+    
+    ens_quantile_dt = map_over_subtree(ens_quantile)
+    ar_odrer_ens_median = ens_quantile_dt(ar_order_scen, ens_dim)
 
-    ar_odrer_scen_median_ds = collapse_datatree_into_dataset(
-        ar_odrer_scen_median, dim="scen"
+    ar_odrer_ens_median_ds = collapse_datatree_into_dataset(
+        ar_odrer_ens_median, dim="scen"
     )
 
-    ar_order = ar_odrer_scen_median_ds.quantile(
+    ar_order = ar_odrer_ens_median_ds.quantile(
         dim="scen", q=0.5, method="nearest"
     ).selected_order
 
@@ -99,7 +105,7 @@ def _fit_auto_regression_scen_ens(dt: DataTree,
     dim : str
         Dimension along which to fit the auto regression (often time).
     ens_dim : str
-        Dimension name of the ensemble members, None if no ensemble is provided.
+        Dimension name of the ensemble members, None if no ensemble is provided.  Must be the same for all scenarios and have coordinates if not None.
     lags : int
         The number of lags to include in the model.
 
@@ -134,6 +140,7 @@ def _fit_auto_regression_scen_ens(dt: DataTree,
     ar_params = ar_params_scen.mean("scen")
 
     return ar_params
+
 
 
 def _fit_auto_regression_ds(
@@ -564,7 +571,7 @@ def _draw_innovations_correlated_np(
 
 def fit_auto_regression(data: xr.DataArray, 
                         dim: str, 
-                        lags: int) -> xr.Dataset:
+                        lags: int | List[int]) -> xr.Dataset:
     """fit an auto regression
 
     Parameters
@@ -573,8 +580,9 @@ def fit_auto_regression(data: xr.DataArray,
         A ``xr.DataArray`` to estimate the auto regression over.
     dim : str
         Dimension along which to fit the auto regression.
-    lags : int
-        The number of lags to include in the model.
+    lags : int | list
+        The number of lags or list of lags to include in the model.
+        If int, then all lags up to ``lags`` will be included.
 
     Returns
     -------
@@ -598,7 +606,7 @@ def fit_auto_regression(data: xr.DataArray,
     )
 
     if np.ndim(lags) == 0:
-        lags = int(np.arange(lags) + 1)
+        lags = np.arange(lags) + 1
 
     # return intercept, coeffs, variance, lags, nobs
     data_vars = {

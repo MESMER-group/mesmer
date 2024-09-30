@@ -530,7 +530,7 @@ def test_fit_auto_regression_xr_1D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "variance"],
+        required_vars={"intercept", "coeffs", "variance"},
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=0, shape=())
@@ -555,7 +555,7 @@ def test_fit_auto_regression_xr_2D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "variance"],
+        required_vars={"intercept", "coeffs", "variance"},
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=1, shape=(n_cells,))
