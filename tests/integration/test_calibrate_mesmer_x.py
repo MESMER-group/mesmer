@@ -11,7 +11,13 @@ import mesmer.mesmer_x
 @pytest.mark.parametrize(
     ("expr", "option_2ndfit", "outname", "update_expected_files"),
     [
-        pytest.param("norm(loc=c1 + c2 * __tas__, scale=c3)", False, "exp1", False),
+        pytest.param(
+            "norm(loc=c1 + c2 * __tas__, scale=c3)",
+            False,
+            "exp1",
+            False,
+            marks=pytest.mark.slow,
+        ),
         pytest.param(
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             True,
