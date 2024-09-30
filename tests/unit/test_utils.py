@@ -438,3 +438,12 @@ def test_collapse_datatree_into_dataset():
     dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf_diff_dim})
     with pytest.raises(ValueError, match="All datasets must have the same dimensions"):
         res = mesmer.utils.collapse_datatree_into_dataset(dt, dim="scenario")
+
+    # make sure it also works with stacked dimension
+    # NOTE: only works if the stacked dimension has the same size on all datasets
+    n_lat, n_lon = 2, 3
+    da1 = mesmer.testing.trend_data_2D(n_timesteps=30, n_lat=n_lat, n_lon=n_lon)
+    da2 = mesmer.testing.trend_data_2D(n_timesteps=30, n_lat=n_lat, n_lon=n_lon)
+
+    dt = DataTree.from_dict({"mem1": da1, "mem2": da2})
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim="members")

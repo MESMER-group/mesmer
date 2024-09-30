@@ -276,8 +276,8 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
     # check that all dims have coords
     for ds in dt.leaves:
         for ds_dim in ds.dims:
-            if ds_dim not in ds.coords:
-                raise ValueError(f"Dimension {ds_dim} must have a coordinate")
+            if len(ds.ds[ds_dim].coords) == 0:
+                raise ValueError(f"Dimension {ds_dim} must have a coordinate/coordinates.")
 
     ds = xr.concat([leaf.ds for leaf in dt.leaves], dim=dim)
     ds = ds.assign_coords({dim: [leaf.name for leaf in dt.leaves]})
