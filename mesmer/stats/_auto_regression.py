@@ -1,5 +1,5 @@
 import warnings
-from typing import Literal, List
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -7,7 +7,12 @@ import scipy
 import xarray as xr
 from datatree import DataTree, map_over_subtree
 
-from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form, collapse_datatree_into_dataset
+from mesmer.core.utils import (
+    LinAlgWarning,
+    _check_dataarray_form,
+    _check_dataset_form,
+    collapse_datatree_into_dataset,
+)
 
 
 def _select_ar_order_scen_ens(
@@ -56,7 +61,7 @@ def _select_ar_order_scen_ens(
         if ens_dim in ds.dims:
             return ds.quantile(dim=ens_dim, q=0.5, method="nearest")
         return ds
-    
+
     ens_quantile_dt = map_over_subtree(ens_quantile)
     ar_odrer_ens_median = ens_quantile_dt(ar_order_scen, ens_dim)
 
@@ -77,7 +82,7 @@ def _select_ar_order_scen_ens(
 def _select_ar_order_ds(
     ds: xr.Dataset, dim: str, maxlag: int, ic: Literal["aic", "bic", "hqic"] = "bic"
 ) -> xr.DataArray:
-    
+
     data_vars = list(ds.keys())
     if len(data_vars) > 1:
         raise ValueError("Dataset must have only one data variable.")
@@ -88,10 +93,9 @@ def _select_ar_order_ds(
     return res.selected_order
 
 
-def _fit_auto_regression_scen_ens(dt: DataTree, 
-                                  dim: str, 
-                                  ens_dim: str | None, 
-                                  lags: int | xr.DataArray) -> xr.Dataset:
+def _fit_auto_regression_scen_ens(
+    dt: DataTree, dim: str, ens_dim: str | None, lags: int | xr.DataArray
+) -> xr.Dataset:
     """
     fit an auto regression and potentially calculate the mean over ensemble members
     and scenarios
@@ -100,7 +104,7 @@ def _fit_auto_regression_scen_ens(dt: DataTree,
     ----------
     dt : a DataTree
         A DataTree holding one or several ``xr.Dataset`` to estimate the auto regression order over,
-        each representing one scenario, potentially with several ensemble members along `ens_dim`. 
+        each representing one scenario, potentially with several ensemble members along `ens_dim`.
         Each ``xr.DataSet`` should only hold one variable, the one for which to estimate the autoregression.
     dim : str
         Dimension along which to fit the auto regression (often time).
@@ -130,7 +134,7 @@ def _fit_auto_regression_scen_ens(dt: DataTree,
         if ens_dim in ds.dims:
             return ds.mean(ens_dim)
         return ds
-    
+
     ens_mean_dt = map_over_subtree(ens_mean)
     ar_params_scen = ens_mean_dt(ar_params_scen, ens_dim)
 
@@ -142,11 +146,12 @@ def _fit_auto_regression_scen_ens(dt: DataTree,
     return ar_params
 
 
-
 def _fit_auto_regression_ds(
-    ds: xr.Dataset, dim: str, lags: int,
+    ds: xr.Dataset,
+    dim: str,
+    lags: int,
 ) -> xr.Dataset:
-    
+
     data_vars = list(ds.keys())
     if len(data_vars) > 1:
         raise ValueError("Dataset must have only one data variable.")
@@ -154,6 +159,7 @@ def _fit_auto_regression_ds(
     res = fit_auto_regression(ds[data_vars[0]], dim, lags)
 
     return res
+
 
 # ======================================================================================
 
@@ -569,9 +575,9 @@ def _draw_innovations_correlated_np(
     return innovations
 
 
-def fit_auto_regression(data: xr.DataArray, 
-                        dim: str, 
-                        lags: int | List[int]) -> xr.Dataset:
+def fit_auto_regression(
+    data: xr.DataArray, dim: str, lags: int | list[int]
+) -> xr.Dataset:
     """fit an auto regression
 
     Parameters

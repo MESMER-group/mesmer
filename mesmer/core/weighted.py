@@ -1,8 +1,8 @@
 import warnings
 
-from datatree import DataTree, map_over_subtree
 import numpy as np
 import xarray as xr
+from datatree import DataTree, map_over_subtree
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -109,9 +109,11 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     return weighted_mean(data, weights, [x_dim, y_dim])
 
 
-def create_equal_scenario_weights_from_datatree(dt: DataTree, ens_dim: str = "member") -> DataTree:
+def create_equal_scenario_weights_from_datatree(
+    dt: DataTree, ens_dim: str = "member"
+) -> DataTree:
     """
-    Create a DataTre isomorphic to ``dt`, holding the weights for each sceanrio to weight the ensemble members of each 
+    Create a DataTre isomorphic to ``dt`, holding the weights for each sceanrio to weight the ensemble members of each
     scenario such that each scenario contributes equally to some fitting procedure.
     The weight of each member = 1 / number of members in the scenario.
 
@@ -141,16 +143,16 @@ def create_equal_scenario_weights_from_datatree(dt: DataTree, ens_dim: str = "me
     #     "ssp119": DataTree({"weights": xr.DataArray([0.333333, 0.333333, 0.333333], dims="member")}),
     #     "ssp585": DataTree({"weights": xr.DataArray([0.5, 0.5], dims="member")})
     # })
-    
+
     """
     if dt.depth > 1:
         raise ValueError(f"DataTree must have a depth of 1, not {dt.depth}.")
-    
+
     def _create_weights(ds):
-        
+
         if ens_dim not in ds.dims:
             raise ValueError(f"Member dimension '{ens_dim}' not found in dataset.")
-        
+
         data_vars = list(ds.keys())
         if len(data_vars) > 1:
             raise ValueError("Dataset must have only one data variable.")
@@ -160,6 +162,5 @@ def create_equal_scenario_weights_from_datatree(dt: DataTree, ens_dim: str = "me
         return weights / ds[ens_dim].size
 
     weights = map_over_subtree(_create_weights)(dt)
-    
 
     return weights

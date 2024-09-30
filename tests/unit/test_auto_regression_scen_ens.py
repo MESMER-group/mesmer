@@ -1,7 +1,7 @@
-from datatree import DataTree
 import numpy as np
 import pytest
 import xarray as xr
+from datatree import DataTree
 from statsmodels.tsa.arima_process import ArmaProcess
 
 import mesmer
@@ -87,7 +87,7 @@ def test_fit_auto_regression_scen_ens_multi_scen():
     da2 = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=5)
 
     dt = DataTree.from_dict({"scen1": da1, "scen2": da2})
-    
+
     result = mesmer.stats._fit_auto_regression_scen_ens(
         dt, dim="time", ens_dim="ens", lags=3
     )
@@ -114,14 +114,17 @@ def test_fit_auto_regression_scen_ens_no_ens_dim():
 
     xr.testing.assert_allclose(result, expected)
 
+
 def test_fit_auto_regression_scen_ens_no_ens_dim_multi_scen():
 
-    da1 = generate_ar_samples([1, 0.5, 0.3], n_timesteps=100, n_ens=1).sel(ens=0).drop_vars("ens")
+    da1 = (
+        generate_ar_samples([1, 0.5, 0.3], n_timesteps=100, n_ens=1)
+        .sel(ens=0)
+        .drop_vars("ens")
+    )
     da2 = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=5)
 
     dt = DataTree.from_dict({"scen1": da1, "scen2": da2})
 
     with pytest.raises(ValueError, match="All datasets must have the same dimensions"):
-        mesmer.stats._fit_auto_regression_scen_ens(
-            dt, dim="time", ens_dim=None, lags=3
-        )
+        mesmer.stats._fit_auto_regression_scen_ens(dt, dim="time", ens_dim=None, lags=3)
