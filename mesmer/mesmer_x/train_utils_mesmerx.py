@@ -247,7 +247,7 @@ class Expression:
                 expr = expr.replace(x, "")
 
             # reading this condensed expression to find terms to replace
-            dico_replace, t = {}, ""  # initialization
+            t = ""  # initialization
 
             # adding one space at the end to treat the last term
             for ex in expr + " ":
@@ -260,7 +260,7 @@ class Expression:
                         if t.startswith("np."):
                             if t[len("np.") :] not in vars(np):
                                 raise ValueError(
-                                    f"Proposed a numpy function that does not exist: {t}"
+                                    f"Proposed a numpy function that does not exist: '{t}'"
                                 )
                             else:
                                 # nothing to replace, can go with that
@@ -268,21 +268,17 @@ class Expression:
                         elif t.startswith("math."):
                             if t[len("math.") :] not in vars(math):
                                 raise ValueError(
-                                    f"Proposed a math function that does not exist: {t}"
+                                    f"Proposed a math function that does not exist: '{t}'"
                                 )
                             else:
                                 # nothing to replace, can go with that
                                 pass
-                        elif t in vars(np):
-                            dico_replace[t] = "np." + t
-                        elif t in vars(math):
-                            dico_replace[t] = "math." + t
                         else:
                             raise ValueError(
-                                f"The term '{t}' appears in the expression"
-                                f" '{self.parameters_expressions[param]}' for"
-                                f" '{param}', but couldn't find an equivalent in numpy"
-                                " or math."
+                                f"Unknown function '{t}' in expression"
+                                f" '{self.parameters_expressions[param]}' for '{param}'."
+                                "Do you need to prepend it with 'np.' (or 'math.')?"
+                                " Currently only numpy and math functions are supported."
                             )
                     else:
                         # was a readable character, is still a readable character,
@@ -294,17 +290,7 @@ class Expression:
                 # TODO: would make sense to invert the logic here - move building 't'
                 # above the validity check
 
-            # list of replacements in correct order
-            tmp = list(dico_replace.keys())
-            tmp.sort(key=len, reverse=True)
-
-            # replacing
-            for t in tmp:
-                self.parameters_expressions[param] = self.parameters_expressions[
-                    param
-                ].replace(t, dico_replace[t])
-
-            # 2. replacing names of inputs in expressions
+            # replacing names of inputs in expressions
             for i in self.inputs_list:
                 self.parameters_expressions[param] = self.parameters_expressions[
                     param
