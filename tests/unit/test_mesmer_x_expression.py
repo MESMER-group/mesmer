@@ -162,3 +162,54 @@ def test_expression_exponpow():
 
     coeffs_per_param = {"loc": ["c1"], "scale": ["c2"], "b": ["c3"]}
     assert expr.coefficients_dict == coeffs_per_param
+
+
+@pytest.mark.xfail(
+    reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2385065252"
+)
+def test_expression_coefficients_two_digits():
+
+    expr = Expression("norm(loc=c1, scale=c2 + c10 * __T__)", "name")
+    assert expr.coefficients_list == ["c1", "c2", "c10"]
+
+
+@pytest.mark.xfail(
+    reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2385065252"
+)
+def test_expression_covariate_c_digit():
+
+    expr = Expression("norm(loc=c1, scale=c2 * __Tc3__)", "name")
+    expr.coefficients_list == ["c1", "c2"]
+
+
+@pytest.mark.xfail(
+    reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2385065252"
+)
+def test_expression_covariate_wrong_underscores():
+
+    # not sure wath the correct behavior should be
+    # - raise?
+    # - get "T__C" as covariate?
+
+    with pytest.raises(ValueError, match=""):
+        Expression("norm(loc=c1, scale=c2 * __T__C__)", "name")
+
+
+def test_expression_covariate_substring():
+
+    # test that GMT and GMT1 (which contains the substring GMT) is correctly parsed
+
+    expression_str = "norm(loc=c1 + c2 * __GMT__ + c3 * __GMT1__, scale=c4)"
+
+    expr = Expression(expression_str, expr_name="name")
+
+    assert expr.expression == expression_str
+
+    param_expr = {"loc": "c1+c2*GMT+c3*GMT1", "scale": "c4"}
+    assert expr.parameters_expressions == param_expr
+
+    coeffs = ["c1", "c2", "c3", "c4"]
+    assert expr.coefficients_list == coeffs
+
+    coeffs_per_param = {"loc": ["c1", "c2", "c3"], "scale": ["c4"]}
+    assert expr.coefficients_dict == coeffs_per_param
