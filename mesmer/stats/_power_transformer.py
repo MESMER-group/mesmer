@@ -55,8 +55,6 @@ def _yeo_johnson_transform_np(data, lambdas):
     Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_
     """
 
-    lambdas = lambdas.copy()
-
     return _yeo_johnson_transform_optimized(data)(lambdas)
 
 
@@ -71,51 +69,24 @@ def _yeo_johnson_transform_optimized(data):
 
     data_log1p = np.log1p(np.abs(data))
 
-    # pos = data >= 0
-    # neg = ~pos
-
-    neg = data < 0
+    pos = data >= 0
 
     def _inner(lambdas):
 
-        # NOTE: this code is copied from sklearn's PowerTransformer, see
+        # NOTE: this code is adapted from sklearn's PowerTransformer, see
         # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
-        # we acknowledge there is an inconsistency in the comparison of lambdas
 
-        # nonlocal transf
+        # align lambdas for pos and neg data - so we only have two cases
+        lambdas = np.where(pos, lambdas, 2. - lambdas)
 
-        # lambdas = lambdas.copy()
-        # l = lambdas[neg]
-        lambdas[neg] = 2 - lambdas[neg]
+        # NOTE: abs(2 - a) == abs(a - 2)
+        lambda_eq_0_2 = np.abs(lambdas) <= eps
+        lambda_ne_0_2 = ~lambda_eq_0_2
 
-        lambda_eq_0 = np.abs(lambdas) <= eps
-        lambda_ne_0 = ~lambda_eq_0
-        # lambda_eq_2 = np.abs(lambdas - 2) <= eps
+        transf[lambda_eq_0_2] = data_log1p[lambda_eq_0_2]
 
-        # sel_a = pos & lambda_eq_0
-        # sel_b = pos & ~lambda_eq_0
-        # sel_c = neg & ~lambda_eq_2
-        # sel_d = neg & lambda_eq_2
-
-        transf[lambda_eq_0] = data_log1p[lambda_eq_0]
-
-        lmbds = lambdas[lambda_ne_0]
-        transf[lambda_ne_0] = np.expm1(data_log1p[lambda_ne_0] * lmbds) / lmbds
-
-        lambdas[neg] = 2 - lambdas[neg]
-        # lambdas[neg] = l
-
-        # transf[sel_a] = data_log1p[sel_a]
-
-        # transf[sel_a] = data_log1p[sel_a]
-
-        # lmbds = lambdas[sel_b]
-        # transf[sel_b] = np.expm1(data_log1p[sel_b] * lmbds) / lmbds
-
-        # lmbds = 2 - lambdas[sel_c]
-        # transf[sel_c] = -np.expm1(data_log1p[sel_c] * lmbds) / lmbds
-
-        # transf[sel_d] = -data_log1p[sel_d]
+        lmbds = lambdas[lambda_ne_0_2]
+        transf[lambda_ne_0_2] = np.expm1(data_log1p[lambda_ne_0_2] * lmbds) / lmbds
 
         np.copysign(transf, data, out=transf)
 
@@ -176,26 +147,10 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     monthly_residuals = monthly_residuals[~isnan]
     yearly_pred = yearly_pred[~isnan]
 
-    # pos = monthly_residuals >= 0
-    # neg = ~pos
-    # n_pos = pos.sum()
-
-    # def _sort_by_sign(data):
-    #     out = np.empty_like(data)
-    #     out[:n_pos] = data[pos]
-    #     out[n_pos:] = data[neg]
-    #     return out
-
-    # resid_ordered = _sort_by_sign(monthly_residuals)
-    # pred_ordered = _sort_by_sign(yearly_pred)
-
     # initialize constant arrays
-    # _yeo_johnson_transform = _yeo_johnson_transform_optimized(resid_ordered)
     _yeo_johnson_transform = _yeo_johnson_transform_optimized(monthly_residuals)
 
     data_log1p = np.sign(monthly_residuals) * np.log1p(np.abs(monthly_residuals))
-    # data_log1p = np.sign(resid_ordered) * np.log1p(np.abs(resid_ordered))
-
     data_log1p_sum = data_log1p.sum()
 
     def _neg_log_likelihood(coeffs):
@@ -203,38 +158,25 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         as a function of lambda.
         """
         lambdas = lambda_function(coeffs, yearly_pred)
-        # lambdas = lambda_function(coeffs, pred_ordered)
 
-        # version with own power transform
         transformed_resids = _yeo_johnson_transform(lambdas)
 
         n_samples = monthly_residuals.shape[0]
         loglikelihood = -n_samples / 2 * np.log(transformed_resids.var())
-        # equal ((lambdas - 1) * data_log1p).sum()
-        # loglikelihood += ((lambdas - 1) * data_log1p).sum()
 
-        # loglikelihood += (lambdas * data_log1p).sum() - data_log1p_sum
-
-        # l = lambdas @ data_log1p - data_log1p_sum
-        # print(l.shape)
-
-        loglikelihood += lambdas @ data_log1p - data_log1p_sum
+        loglikelihood += (lambdas * data_log1p).sum() - data_log1p_sum
 
         return -loglikelihood
 
     bounds = np.array([[0, np.inf], [-0.1, 0.1]])
-    first_guess = np.array([1, 0])
+    first_guess = np.array([1., 0.])
 
     res = minimize(
         _neg_log_likelihood,
         x0=first_guess,
         bounds=bounds,
-        # args=(data_log1p, data_log1p_sum),
         method="Nelder-Mead",
     )
-
-    # print()
-    # print(res)
 
     return res.x
 
