@@ -325,7 +325,8 @@ class Expression:
         # - use broadcasting
         # - can we avoid using exec & eval?
         # - only parse the values once? (to avoid doing it repeatedly)
-        # - don't allow list of coefficients_values
+        # - require list of coefficients_values (similar to minimize)?
+        # - convert dataset to numpy arrays?
 
         # Check 1: are all the coefficients provided?
         if isinstance(coefficients_values, dict | xr.Dataset):
@@ -351,7 +352,7 @@ class Expression:
         # Check 3: do the inputs have the same shape
         shapes = {inputs_values[i].shape for i in self.inputs_list}
         if len(shapes) > 1:
-            raise ValueError("Different shapes of inputs detected.")
+            raise ValueError("shapes of inputs must be equal")
 
         # Evaluation 1: coefficients
         for c in coefficients_values:
