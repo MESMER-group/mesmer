@@ -27,7 +27,7 @@ def test_expression_missing_param():
 def test_expression_wrong_np_function():
 
     with pytest.raises(
-        ValueError, match="Proposed a numpy function that does not exist: np.wrong"
+        ValueError, match="Proposed a numpy function that does not exist: 'np.wrong'"
     ):
         Expression("norm(scale=5, loc=np.wrong())", expr_name="name")
 
@@ -35,9 +35,17 @@ def test_expression_wrong_np_function():
 def test_expression_wrong_math_function():
 
     with pytest.raises(
-        ValueError, match="Proposed a math function that does not exist: math.wrong"
+        ValueError, match="Proposed a math function that does not exist: 'math.wrong'"
     ):
         Expression("norm(scale=5, loc=math.wrong())", expr_name="name")
+
+
+def test_expression_wrong_function():
+
+    with pytest.raises(
+        ValueError, match=r"Unknown function 'mean' in expression 'mean\(\)' for 'loc'"
+    ):
+        Expression("norm(scale=5, loc=mean())", expr_name="name")
 
 
 def test_expression_genextreme():
