@@ -87,22 +87,22 @@ class Expression:
         self.expression_name = expr_name
 
         # identify distribution
-        self.interpret_distrib()
+        self._interpret_distrib()
 
         # identify parameters
-        self.find_parameters_list()
-        self.find_expr_parameters()
+        self._find_parameters_list()
+        self._find_expr_parameters()
 
         # identify coefficients
-        self.find_coefficients()
+        self._find_coefficients()
 
         # identify inputs
-        self.find_inputs()
+        self._find_inputs()
 
         # correct expressions of parameters
-        self.correct_expr_parameters()
+        self._correct_expr_parameters()
 
-    def interpret_distrib(self):
+    def _interpret_distrib(self):
         """interpreting the expression"""
 
         dist = str.split(self.expression, "(")[0]
@@ -115,9 +115,9 @@ class Expression:
             )
 
         self.distrib = getattr(sp.stats, dist)
-        self.is_distrib_discrete = self.distrib in _DISCRETE_DISTRIBUTIONS
+        self.is_distrib_discrete = dist in _DISCRETE_DISTRIBUTIONS
 
-    def find_expr_parameters(self):
+    def _find_expr_parameters(self):
 
         # removing spaces that would hinder the identification
         tmp_expression = self.expression.replace(" ", "")
@@ -136,7 +136,7 @@ class Expression:
                 self.parameters_expressions[param] = sub
             else:
                 raise ValueError(
-                    f"The parameter {param} is not part of prepared expression in scipy.stats:"
+                    f"The parameter '{param}' is not part of prepared expression in scipy.stats:"
                     " https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
                     f" of the distribution '{self.distrib.name}'"
                 )
@@ -147,7 +147,7 @@ class Expression:
             if pot_param not in self.parameters_expressions.keys():
                 raise ValueError(f"No information provided for `{pot_param}`")
 
-    def find_parameters_list(self):
+    def _find_parameters_list(self):
         """
         List parameters for scipy.stats.distribution.
             distribution: a string or scipy.stats distribution object.
@@ -157,25 +157,18 @@ class Expression:
 
         Based on the code available at: https://github.com/scipy/scipy/issues/9575
         """
-        # identifies parameters of the distribution
-        if isinstance(self.distrib, str):
-            self.distrib = getattr(sp.stats, self.distrib)
+
+        self.parameters_list = []
 
         if self.distrib.shapes:
-            self.parameters_list = [
+            self.parameters_list += [
                 name.strip() for name in self.distrib.shapes.split(",")
             ]
-        else:
-            self.parameters_list = []
 
         if self.distrib.name in _DISCRETE_DISTRIBUTIONS:
             self.parameters_list += ["loc"]
         elif self.distrib.name in _CONTINUOUS_DISTRIBUTIONS:
             self.parameters_list += ["loc", "scale"]
-        else:
-            raise AttributeError(
-                "Distribution name not found in discrete or continuous lists."
-            )
 
         # prepary basic boundaries on parameters: incomplete, did not find a way to
         # evaluate automatically the limits on shape parameters
@@ -188,7 +181,7 @@ class Expression:
         if "scale" in self.boundaries_parameters:
             self.boundaries_parameters["scale"][0] = 0
 
-    def find_coefficients(self):
+    def _find_coefficients(self):
         """
         coefficients are supposed to be written as "c#", with "#" being a number.
         """
@@ -222,7 +215,7 @@ class Expression:
                         # not a coefficient, move to the next
                         pass
 
-    def find_inputs(self):
+    def _find_inputs(self):
 
         self.inputs_list = []
 
@@ -235,7 +228,7 @@ class Expression:
         # require a specific order for use in correct_expr_parameters
         self.inputs_list.sort(key=len, reverse=True)
 
-    def correct_expr_parameters(self):
+    def _correct_expr_parameters(self):
         # list of inputs and coefficients, sorted by descending length, to be sure that
         # when removing them, will remove the good ones and not those with their short
         # name contained in the long name of another
@@ -254,7 +247,7 @@ class Expression:
                 expr = expr.replace(x, "")
 
             # reading this condensed expression to find terms to replace
-            dico_replace, t = {}, ""  # initialization
+            t = ""  # initialization
 
             # adding one space at the end to treat the last term
             for ex in expr + " ":
@@ -267,7 +260,7 @@ class Expression:
                         if t.startswith("np."):
                             if t[len("np.") :] not in vars(np):
                                 raise ValueError(
-                                    f"Proposed a numpy function that does not exist: {t}"
+                                    f"Proposed a numpy function that does not exist: '{t}'"
                                 )
                             else:
                                 # nothing to replace, can go with that
@@ -275,19 +268,17 @@ class Expression:
                         elif t.startswith("math."):
                             if t[len("math.") :] not in vars(math):
                                 raise ValueError(
-                                    f"Proposed a math function that does not exist: {t}"
+                                    f"Proposed a math function that does not exist: '{t}'"
                                 )
                             else:
                                 # nothing to replace, can go with that
                                 pass
-                        elif t in vars(np):
-                            dico_replace[t] = "np." + t
-                        elif t in vars(math):
-                            dico_replace[t] = "math." + t
                         else:
                             raise ValueError(
-                                f"The term {t} appears in {self.parameters_expressions[param]},"
-                                " but couldn't find an equivalent in numpy or math."
+                                f"Unknown function '{t}' in expression"
+                                f" '{self.parameters_expressions[param]}' for '{param}'."
+                                "Do you need to prepend it with 'np.' (or 'math.')?"
+                                " Currently only numpy and math functions are supported."
                             )
                     else:
                         # was a readable character, is still a readable character,
@@ -299,21 +290,11 @@ class Expression:
                 # TODO: would make sense to invert the logic here - move building 't'
                 # above the validity check
 
-            # list of replacements in correct order
-            tmp = list(dico_replace.keys())
-            tmp.sort(key=len, reverse=True)
-
-            # replacing
-            for t in tmp:
-                self.parameters_expressions[param] = self.parameters_expressions[
-                    param
-                ].replace(t, dico_replace[t])
-
-            # 2. replacing names of inputs in expressions
+            # replacing names of inputs in expressions
             for i in self.inputs_list:
                 self.parameters_expressions[param] = self.parameters_expressions[
                     param
-                ].replace("__" + i + "__", i)
+                ].replace(f"__{i}__", i)
 
     def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
         """
@@ -344,7 +325,8 @@ class Expression:
         # - use broadcasting
         # - can we avoid using exec & eval?
         # - only parse the values once? (to avoid doing it repeatedly)
-        # - don't allow list of coefficients_values
+        # - require list of coefficients_values (similar to minimize)?
+        # - convert dataset to numpy arrays?
 
         # Check 1: are all the coefficients provided?
         if isinstance(coefficients_values, dict | xr.Dataset):
@@ -370,7 +352,7 @@ class Expression:
         # Check 3: do the inputs have the same shape
         shapes = {inputs_values[i].shape for i in self.inputs_list}
         if len(shapes) > 1:
-            raise ValueError("Different shapes of inputs detected.")
+            raise ValueError("shapes of inputs must be equal")
 
         # Evaluation 1: coefficients
         for c in coefficients_values:
