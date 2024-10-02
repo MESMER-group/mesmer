@@ -8,7 +8,6 @@ dependencies:
  - python=3.10
  - cartopy=0.22
  - dask=2023.8
- - filefinder=0.3
  - joblib=1.3
  - netcdf4=1.6
  - numpy=1.24
@@ -27,3 +26,5 @@ dependencies:
 # for testing
  - pytest
  - pytest-cov
+ - pip:
+    - https://github.com/mathause/filefinder/archive/refs/tags/v0.3.0.zip

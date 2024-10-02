@@ -7,7 +7,6 @@ channels:
 dependencies:
  - cartopy
  - dask
- - filefinder
  - joblib
  - matplotlib-base
  - nc-time-axis
@@ -29,3 +28,5 @@ dependencies:
  - pytest
  - pytest-cov
  - ruff
+ - pip:
+    - https://github.com/mathause/filefinder/archive/refs/tags/v0.3.0.zip
