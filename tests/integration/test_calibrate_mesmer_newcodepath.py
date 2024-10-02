@@ -195,7 +195,7 @@ def test_calibrate_mesmer(
     ar_order = mesmer.stats.select_ar_order_scen_ens(
         tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"
     )
-    global_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+    global_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
 
@@ -275,7 +275,7 @@ def test_calibrate_mesmer(
         )
     dt_resids = DataTree.from_dict(dt_resids)
 
-    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+    local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         dt_resids,
         ens_dim="member",
         dim="time",
