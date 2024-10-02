@@ -7,8 +7,8 @@ Functions to train local variability module of MESMER.
 """
 
 import xarray as xr
-
 from datatree import DataTree
+
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import (
     _fit_auto_regression_scen_ens,
@@ -236,7 +236,9 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         data = {}
         for key, dat in targ.items():
             cell_coords = xr.DataArray(range(targ[key].shape[-1]), dims="cell")
-            data[key] = xr.DataArray(dat, dims=dims, coords={"cell": cell_coords}).rename("targ")
+            data[key] = xr.DataArray(
+                dat, dims=dims, coords={"cell": cell_coords}
+            ).rename("targ")
         data = DataTree.from_dict(data)
 
         params = _fit_auto_regression_scen_ens(data, dim="time", ens_dim="run", lags=1)

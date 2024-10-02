@@ -6,9 +6,9 @@
 Functions to train global variability module of MESMER.
 """
 
-from datatree import DataTree
 import numpy as np
 import xarray as xr
+from datatree import DataTree
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import _fit_auto_regression_scen_ens, _select_ar_order_scen_ens
