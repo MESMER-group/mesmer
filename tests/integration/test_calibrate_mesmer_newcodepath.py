@@ -1,12 +1,12 @@
 import pathlib
 
-import filefinder
 import joblib
 import numpy as np
 import pandas
 import pytest
 import xarray as xr
 from datatree import DataTree, map_over_subtree
+from filefinder import FileContainer, FileFinder
 
 import mesmer
 
@@ -103,7 +103,7 @@ def test_calibrate_mesmer(
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
     )
 
-    CMIP_FILEFINDER = filefinder.FileFinder(
+    CMIP_FILEFINDER = FileFinder(
         path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
@@ -124,7 +124,7 @@ def test_calibrate_mesmer(
         member=unique_scen_members,
     )
 
-    fc_all = filefinder.FileContainer(pandas.concat([fc_hist.df, fc_scens.df]))
+    fc_all = FileContainer(pandas.concat([fc_hist.df, fc_scens.df]))
 
     scenarios_whist = scenarios.copy()
     scenarios_whist.append("historical")
@@ -192,7 +192,7 @@ def test_calibrate_mesmer(
     # train global variability module
     tas_resid_novolc = tas_globmean - tas_globmean_smoothed
 
-    ar_order = mesmer.stats._select_ar_order_scen_ens(
+    ar_order = mesmer.stats.select_ar_order_scen_ens(
         tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"
     )
     global_ar_params = mesmer.stats._fit_auto_regression_scen_ens(

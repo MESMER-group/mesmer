@@ -15,7 +15,107 @@ from mesmer.core.utils import (
 )
 
 
-def _select_ar_order_scen_ens(
+def select_ar_order_scen_ens(
+    obs: list[xr.DataArray] | DataTree,
+    dim: str,
+    ens_dim: str | None,
+    maxlag: int,
+    ic: Literal["bic", "aic", "hqic"] = "bic",
+) -> xr.DataArray:
+    """
+    Select the order of an autoregressive process and potentially calculate the median
+    over ensemble members and scenarios
+
+    Parameters
+    ----------
+    objs : DataTree or iterable of DataArray
+        A list of ``xr.DataArray`` to estimate the auto regression order over.
+    dim : str
+        Dimension along which to determine the order.
+    ens_dim : str
+        Dimension name of the ensemble members.
+    maxlag : int
+        The maximum lag to consider.
+    ic : {'aic', 'hqic', 'bic'}, default 'bic'
+        The information criterion to use in the selection.
+
+    Returns
+    -------
+    selected_ar_order : DataArray
+        Array indicating the selected order with the same size as the input but ``dim``
+        removed.
+
+    Notes
+    -----
+    Calculates the median auto regression order, first over the ensemble members,
+    then over all scenarios.
+    """
+
+    if isinstance(obs, list):
+        warnings.warn(
+            "Passing a list of DataArrays will be deprecated in the future. Please use a DataTree instead.",
+            DeprecationWarning,
+        )
+        return _select_ar_order_scen_ens_list(obs, dim, ens_dim, maxlag, ic)
+    elif isinstance(obs, DataTree):
+        return _select_ar_order_scen_ens_dt(obs, dim, ens_dim, maxlag, ic)
+
+
+def _select_ar_order_scen_ens_list(
+    objs: list[xr.DataArray],
+    dim: str,
+    ens_dim: str | None,
+    maxlag: int,
+    ic: Literal["bic", "aic", "hqic"] = "bic",
+) -> xr.DataArray:
+    """
+    Select the order of an autoregressive process and potentially calculate the median
+    over ensemble members and scenarios
+
+    Parameters
+    ----------
+    objs : iterable of DataArray
+        A list of ``xr.DataArray`` to estimate the auto regression order over.
+    dim : str
+        Dimension along which to determine the order.
+    ens_dim : str
+        Dimension name of the ensemble members.
+    maxlag : int
+        The maximum lag to consider.
+    ic : {'aic', 'hqic', 'bic'}, default 'bic'
+        The information criterion to use in the selection.
+
+    Returns
+    -------
+    selected_ar_order : DataArray
+        Array indicating the selected order with the same size as the input but ``dim``
+        removed.
+
+    Notes
+    -----
+    Calculates the median auto regression order, first over the ensemble members,
+    then over all scenarios.
+    """
+
+    ar_order_scen = list()
+    for obj in objs:
+        res = select_ar_order(obj, dim=dim, maxlag=maxlag, ic=ic)
+        if ens_dim in res.dims:
+            res = res.quantile(dim=ens_dim, q=0.5, method="nearest")
+
+        ar_order_scen.append(res)
+
+    ar_order_scen = xr.concat(ar_order_scen, dim="scen")
+
+    ar_order = ar_order_scen.quantile(0.5, dim="scen", method="nearest")
+
+    if not np.isnan(ar_order).any():
+        ar_order = ar_order.astype(int)
+
+    return ar_order
+
+
+def _select_ar_order_scen_ens_dt(
     dt: DataTree,
     dim: str,
     ens_dim: str | None,
@@ -93,7 +193,105 @@ def _select_ar_order_ds(
     return res.selected_order
 
 
-def _fit_auto_regression_scen_ens(
+def fit_auto_regression_scen_ens(
+    obj: DataTree | list[xr.DataArray],
+    dim: str,
+    ens_dim: str | None,
+    lags: int | xr.DataArray,
+) -> xr.Dataset:
+    """
+    fit an auto regression and potentially calculate the mean over ensemble members
+    and scenarios
+
+    Parameters
+    ----------
+    obj : a DataTree or list of ``xr.DataArray``s
+        A ``DataTree`` holding one or several ``xr.Dataset`` or a list of ``xr.DataArray``s to estimate the auto regression order over,
+        each representing one scenario, potentially with several ensemble members along `ens_dim`.
+        If a ``DataTree``, each ``xr.DataSet`` should only hold one variable, the one for which to estimate the autoregression.
+    dim : str
+        Dimension along which to fit the auto regression (often time).
+    ens_dim : str
+        Dimension name of the ensemble members, None if no ensemble is provided.  Must be the same for all scenarios and have coordinates if not None.
+    lags : int
+        The number of lags to include in the model.
+
+    Returns
+    -------
+    :obj:`xr.Dataset`
+        Dataset containing the estimated parameters of the ``intercept``, the AR
+        ``coeffs`` and the ``variance`` of the residuals.
+
+    Notes
+    -----
+    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
+    members and then over scenarios. This is done to weight scenarios equally, consequently
+    ensemble members are not weighted equally, if the number of members differs between scenarios.
+    If no ensemble members are provided, the mean is calculated over scenarios only.
+    """
+    if isinstance(obj, list):
+        warnings.warn(
+            "Passing a list of DataArrays will be deprecated in the future. Please use a DataTree instead.",
+            DeprecationWarning,
+        )
+        return _fit_auto_regression_scen_ens_list(obj, dim, ens_dim, lags)
+    elif isinstance(obj, DataTree):
+        return _fit_auto_regression_scen_ens_dt(obj, dim, ens_dim, lags)
+
+
+def _fit_auto_regression_scen_ens_list(
+    objs: list[xr.DataArray], dim: str, ens_dim: str | None, lags: int | xr.DataArray
+) -> xr.Dataset:
+    """
+    fit an auto regression and potentially calculate the mean over ensemble members
+    and scenarios
+
+    Parameters
+    ----------
+    objs : iterable of DataArray
+        A list of ``xr.DataArray`` to estimate the auto regression over, each
+        representing one scenario, potentially with several ensemble members
+        along `ens_dim`.
+    dim : str
+        Dimension along which to fit the auto regression.
+    ens_dim : str
+        Dimension name of the ensemble members, None if no ensemble is provided.
+    lags : int
+        The number of lags to include in the model.
+
+    Returns
+    -------
+    :obj:`xr.Dataset`
+        Dataset containing the estimated parameters of the ``intercept``, the AR
+        ``coeffs`` and the ``variance`` of the residuals.
+
+    Notes
+    -----
+    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
+    members and then over scenarios. This is done to weight scenarios equally, consequently
+    ensemble members are not weighted equally, if the number of members differs between scenarios.
+    If no ensemble members are provided, the mean is calculated over scenarios only.
+    """
+
+    ar_params_scen = list()
+    for obj in objs:
+        ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
+
+        # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
+        if ens_dim in ar_params.dims:
+            ar_params = ar_params.mean(ens_dim)
+
+        ar_params_scen.append(ar_params)
+
+    ar_params_scen = xr.concat(ar_params_scen, dim="scen")
+
+    # return the mean over all scenarios
+    ar_params = ar_params_scen.mean("scen")
+
+    return ar_params
+
+
+def _fit_auto_regression_scen_ens_dt(
     dt: DataTree, dim: str, ens_dim: str | None, lags: int | xr.DataArray
 ) -> xr.Dataset:
     """
@@ -103,7 +301,7 @@ def _fit_auto_regression_scen_ens(
     Parameters
     ----------
     dt : a DataTree
-        A DataTree holding one or several ``xr.Dataset`` to estimate the auto regression order over,
+        A ``DataTree`` holding one or several ``xr.Dataset`` to estimate the auto regression order over,
         each representing one scenario, potentially with several ensemble members along `ens_dim`.
         Each ``xr.DataSet`` should only hold one variable, the one for which to estimate the autoregression.
     dim : str
