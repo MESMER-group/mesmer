@@ -296,7 +296,8 @@ class Expression:
                     param
                 ].replace(f"__{i}__", i)
 
-    def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
+
+    def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
         """
         Evaluates the distribution with the provided inputs and coefficients
 
@@ -358,10 +359,10 @@ class Expression:
         locals = {**coefficients_values, **inputs_values}
 
         # Evaluation 3: parameters
-        self.parameters_values = {}
+        parameters_values = {}
         for param, expr in self.parameters_expressions.items():
             # may need to silence warnings here, to avoid spamming
-            self.parameters_values[param] = eval(expr, None, locals)
+            parameters_values[param] = eval(expr, None, locals)
 
         # Correcting shapes 1: scalar parameters must have the shape of the inputs
         if len(self.inputs_list) > 0:
@@ -382,21 +383,26 @@ class Expression:
                             inputs_values[self.inputs_list[0]].shape
                         )
 
-                self.parameters_values[param] = param_value
+                parameters_values[param] = param_value
 
         # Correcting shapes 2: possibly forcing shape
         if len(self.inputs_list) > 0 and forced_shape is not None:
 
             for param in self.parameters_list:
                 dims_param = [
-                    d for d in forced_shape if d in self.parameters_values[param].dims
+                    d for d in forced_shape if d in parameters_values[param].dims
                 ]
-                self.parameters_values[param] = self.parameters_values[param].transpose(
+                parameters_values[param] = parameters_values[param].transpose(
                     *dims_param
                 )
 
-        # evaluation of the distribution
-        return self.distrib(**self.parameters_values)
+        return parameters_values
+
+    def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
+
+        params = self.evaluate_params(coefficients_values, inputs_values, forced_shape)
+        return self.distrib(**params)
+
 
 
 def probability_integral_transform(

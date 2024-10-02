@@ -684,10 +684,11 @@ class distrib_cov:
         for param in self.boundaries_params:
             bottom, top = self.boundaries_params[param]
 
+            # TODO: avoid using implementation detail of frozen distr of sp.stats
+            param_values = distrib.kwds[param]
+
             # out of boundaries
-            if np.any(self.expr_fit.parameters_values[param] < bottom) or np.any(
-                top < self.expr_fit.parameters_values[param]
-            ):
+            if np.any(param_values < bottom) or np.any(param_values >= top):
                 test = False
 
         # test of the support of the distribution: is there any data out of the
@@ -1064,10 +1065,10 @@ class distrib_cov:
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
     def fg_fun_deriv01(self, x):
-        self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_low"])
-        loc_low = self.expr_fit.parameters_values["loc"]
-        self.expr_fit.evaluate(x, self.fg_info_derivatives["pred_high"])
-        loc_high = self.expr_fit.parameters_values["loc"]
+        params = self.expr_fit.evaluate_params(x, self.fg_info_derivatives["pred_low"])
+        loc_low = params["loc"]
+        params = self.expr_fit.evaluate_params(x, self.fg_info_derivatives["pred_high"])
+        loc_high = params["loc"]
 
         deriv = {
             p: (loc_high - loc_low)
@@ -1091,16 +1092,16 @@ class distrib_cov:
     def fg_fun_loc(self, x_loc):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
-        self.expr_fit.evaluate(x, self.data_pred)
-        loc = self.expr_fit.parameters_values["loc"]
+        params = self.expr_fit.evaluate_params(x, self.data_pred)
+        loc = params["loc"]
         return np.sum((loc - self.smooth_data_targ) ** 2)
 
     def fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
-        self.expr_fit.evaluate(x, self.data_pred)
-        loc = self.expr_fit.parameters_values["loc"]
-        sca = self.expr_fit.parameters_values["scale"]
+        params = self.expr_fit.evaluate_params(x, self.data_pred)
+        loc = params["loc"]
+        sca = params["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
         dev = np.abs(self.data_targ - loc)
         return np.sum((dev - sca) ** 2)

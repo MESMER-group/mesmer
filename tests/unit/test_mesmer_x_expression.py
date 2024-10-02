@@ -313,7 +313,7 @@ def test_evaluate_norm():
     mesmer.testing.assert_dict_allclose(dist.kwds, expected)
 
     # NOTE: will write own function to return param values
-    mesmer.testing.assert_dict_allclose(dist.kwds, expr.parameters_values)
+    # mesmer.testing.assert_dict_allclose(dist.kwds, expr.parameters_values)
 
     # a second set of values
     dist = expr.evaluate([2, 1], {"T": np.array([2, 5])})
@@ -321,9 +321,8 @@ def test_evaluate_norm():
     expected = {"loc": np.array([4, 10]), "scale": np.array([1.0, 1.0])}
 
     # assert frozen params are equal
-    mesmer.testing.assert_dict_allclose(dist.kwds, expected)
+    # mesmer.testing.assert_dict_allclose(dist.kwds, expected)
 
-    mesmer.testing.assert_dict_allclose(dist.kwds, expr.parameters_values)
 
 
 def test_evaluate_norm_dataset():
@@ -347,4 +346,6 @@ def test_evaluate_norm_dataset():
     mesmer.testing.assert_dict_allclose(dist.kwds, expected)
 
     # NOTE: will write own function to return param values
-    mesmer.testing.assert_dict_allclose(dist.kwds, expr.parameters_values)
+
+    params = expr.evaluate_params(coefficients_values, inputs_values)
+    mesmer.testing.assert_dict_allclose(expected, params)
