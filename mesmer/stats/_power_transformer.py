@@ -77,16 +77,17 @@ def _yeo_johnson_transform_optimized(data):
         # https://github.com/scikit-learn/scikit-learn/blob/8721245511de2f225ff5f9aa5f5fadce663cd4a3/sklearn/preprocessing/_data.py#L3396
 
         # align lambdas for pos and neg data - so we only have two cases
+        # NOTE: cannot do this inplace; `where` is faster than copying & subsetting
         lambdas = np.where(pos, lambdas, 2. - lambdas)
 
         # NOTE: abs(2 - a) == abs(a - 2)
-        lambda_eq_0_2 = np.abs(lambdas) <= eps
-        lambda_ne_0_2 = ~lambda_eq_0_2
+        lmbds_eq_0_or_2 = np.abs(lambdas) <= eps
+        lmbds_ne_0_or_2 = ~lmbds_eq_0_or_2
 
-        transf[lambda_eq_0_2] = data_log1p[lambda_eq_0_2]
+        transf[lmbds_eq_0_or_2] = data_log1p[lmbds_eq_0_or_2]
 
-        lmbds = lambdas[lambda_ne_0_2]
-        transf[lambda_ne_0_2] = np.expm1(data_log1p[lambda_ne_0_2] * lmbds) / lmbds
+        lmbds = lambdas[lmbds_ne_0_or_2]
+        transf[lmbds_ne_0_or_2] = np.expm1(data_log1p[lmbds_ne_0_or_2] * lmbds) / lmbds
 
         np.copysign(transf, data, out=transf)
 
