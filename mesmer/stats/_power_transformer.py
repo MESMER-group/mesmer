@@ -78,7 +78,7 @@ def _yeo_johnson_transform_optimized(data):
 
         # align lambdas for pos and neg data - so we only have two cases
         # NOTE: cannot do this inplace; `where` is faster than copying & subsetting
-        lambdas = np.where(pos, lambdas, 2. - lambdas)
+        lambdas = np.where(pos, lambdas, 2.0 - lambdas)
 
         # NOTE: abs(2 - a) == abs(a - 2)
         lmbds_eq_0_or_2 = np.abs(lambdas) <= eps
@@ -170,7 +170,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
         return -loglikelihood
 
     bounds = np.array([[0, np.inf], [-0.1, 0.1]])
-    first_guess = np.array([1., 0.])
+    first_guess = np.array([1.0, 0.0])
 
     res = minimize(
         _neg_log_likelihood,
