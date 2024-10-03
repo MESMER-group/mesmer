@@ -324,7 +324,6 @@ def test_evaluate_norm():
     # mesmer.testing.assert_dict_allclose(dist.kwds, expected)
 
 
-
 def test_evaluate_norm_dataset():
     # NOTE: not sure if passing DataArray to scipy distribution is a good idea
 

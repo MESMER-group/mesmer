@@ -296,7 +296,6 @@ class Expression:
                     param
                 ].replace(f"__{i}__", i)
 
-
     def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
         """
         Evaluates the distribution with the provided inputs and coefficients
@@ -402,7 +401,6 @@ class Expression:
 
         params = self.evaluate_params(coefficients_values, inputs_values, forced_shape)
         return self.distrib(**params)
-
 
 
 def probability_integral_transform(
