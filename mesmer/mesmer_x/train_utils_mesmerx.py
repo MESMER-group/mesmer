@@ -368,7 +368,7 @@ class Expression:
         if len(self.inputs_list) > 0:
 
             for param in self.parameters_list:
-                param_value = self.parameters_values[param]
+                param_value = parameters_values[param]
 
                 # TODO: use np.ndim(param_value) ==  0? (i.e. isscalar)
                 if isinstance(param_value, int | float) or param_value.ndim == 0:
