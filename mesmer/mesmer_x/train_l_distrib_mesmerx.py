@@ -544,21 +544,19 @@ class distrib_cov:
         elif isinstance(options_solver, dict):
             default_options_solver.update(options_solver)
         else:
-            raise ValueError("options_solver must be a dictionary")
+            raise ValueError("`options_solver` must be a dictionary")
         self.xtol_req = default_options_solver["xtol_req"]
         self.ftol_req = default_options_solver["ftol_req"]
         self.maxiter = default_options_solver["maxiter"]
         self.maxfev = default_options_solver["maxfev"]
         self.method_fit = default_options_solver["method_fit"]
-        if self.method_fit in [
-            "dogleg",
-            "trust-ncg",
-            "trust-krylov",
-            "trust-exact",
-            "COBYLA",
-            "SLSQP",
-            "CG",
-            "Newton-CG",
+        if self.method_fit not in [
+            "BFGS",
+            "L-BFGS-B",
+            "Nelder-Mead",
+            "Powell",
+            "TNC",
+            "trust-constr",
         ]:
             raise ValueError("method for this fit not prepared, to avoid")
         else:

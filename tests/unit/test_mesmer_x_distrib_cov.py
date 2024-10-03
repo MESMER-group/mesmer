@@ -147,3 +147,88 @@ def test_distrib_cov_init_errors():
             {"tas": np.array([1, 2, np.inf]), "tas2": np.array([1, 2, np.nan])},
             expression,
         )
+
+    with pytest.raises(ValueError, match="Only one of "):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            data_targ_addtest=np.array([1, 2, 3]),
+        )
+
+    with pytest.raises(ValueError, match="Only one of "):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            data_preds_addtest={"tas": np.array([1, 2, 3])},
+        )
+
+    with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            threshold_min_proba=-1,
+        )
+    with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            threshold_min_proba=2,
+        )
+
+    with pytest.raises(
+        ValueError, match="The provided first guess does not have the correct shape:"
+    ):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            first_guess=np.array([1, 2, 3]),
+        )
+
+    with pytest.raises(ValueError, match="`options_solver` must be a dictionary"):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            options_solver="this is not a dictionary",
+        )
+
+    with pytest.raises(ValueError, match="`options_optim` must be a dictionary"):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            options_optim="this is not a dictionary",
+        )
+
+    with pytest.raises(ValueError, match="method for this fit not prepared, to avoid"):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            options_solver={"method_fit": "this is not a method"},
+        )
+
+    with pytest.raises(
+        ValueError, match="Lack of consistency on the options 'type_fun_optim'"
+    ):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            options_optim={"type_fun_optim": "NLL", "threshold_stopping_rule": 0.1},
+        )
+
+    with pytest.raises(
+        ValueError, match="Lack of consistency on the options 'type_fun_optim'"
+    ):
+        distrib_cov(
+            np.array([1, 2, 3]),
+            {"tas": np.array([1, 2, 3])},
+            expression,
+            options_optim={"type_fun_optim": "fcNLL", "threshold_stopping_rule": None},
+        )
