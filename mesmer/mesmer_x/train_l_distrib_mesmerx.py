@@ -471,6 +471,7 @@ class distrib_cov:
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise ValueError("NaN or infinite values in target of fit")
         self.data_pred = data_pred
+        # TODO: check if data_pred is actually a  dict, otherwise we run into problems later, currently this is a problem
 
         if np.any(
             [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
@@ -633,13 +634,15 @@ class distrib_cov:
 
         # if no predictors, straightforward
         if len(self.data_pred) == 0:
-            # TODO: isn't data_pred a dict and does therefore not have a shape?
-            return np.ones(self.data_pred.shape)
+            # TODO: isn't data_pred a dict and does therefore not have a shape? Yes. Also it is empty.
+            # TODO: Do we want to allow no predictor?
+            return np.ones(self.data_targ.shape)
 
         # explode data_pred dictionary into a single array for all predictors
         tmp = np.array(list(self.data_pred.values())).T
 
         # assessing limits on each axis
+        # TODO *nan*min/max should not be necessary bc we already checked for nan values in the data?
         mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
 
         bins = np.linspace(

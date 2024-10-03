@@ -16,7 +16,7 @@ def test_distrib_cov_init_all_default():
 
     np.testing.assert_equal(dist.data_targ, targ)
     np.testing.assert_equal(dist.data_pred, {"tas": pred})
-    np.testing.assert_equal(dist.weights_driver, np.ones(n) / n)
+    np.testing.assert_equal(dist.weights_driver, np.ones(n) / np.sum(np.ones(n)))
     assert dist.n_sample == n
     assert dist.expr_fit is expression
     assert not dist.add_test
@@ -97,7 +97,7 @@ def test_distrib_cov_init():
     np.testing.assert_equal(dist.data_targ, targ)
     np.testing.assert_equal(dist.data_pred, {"tas": pred})
     np.testing.assert_equal(dist.weights_driver, dist.get_weights())
-    # np.testing.assert_equal(dist.weights_driver, dist._get_weights_nll()) # WHY NOT???
+    np.testing.assert_equal(dist.weights_driver, dist._get_weights_nll()/np.sum(dist._get_weights_nll()))
     np.testing.assert_equal(dist.first_guess, first_guess)
     np.testing.assert_equal(dist.data_targ_addtest, data_targ_addtest)
     np.testing.assert_equal(dist.data_preds_addtest, data_preds_addtest)
@@ -232,3 +232,16 @@ def test_distrib_cov_init_errors():
             expression,
             options_optim={"type_fun_optim": "fcNLL", "threshold_stopping_rule": None},
         )
+
+def test_distrib_cov_get_weights():
+    expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+    n = 3
+
+    dist = distrib_cov(np.arange(n), {}, expression, options_optim={"weighted_NLL":True})
+    np.testing.assert_equal(dist.weights_driver, np.ones(n)/np.sum(np.ones(n)))
+
+    dist = distrib_cov(np.arange(n), {"tas": np.arange(n)}, expression, options_optim={"weighted_NLL":True})
+    np.testing.assert_equal(dist.weights_driver, dist._get_weights_nll()/np.sum(dist._get_weights_nll()))
+
+    dist = distrib_cov(np.arange(n), {"tas": np.arange(n)}, expression, options_optim={"weighted_NLL":False})
+    np.testing.assert_equal(dist.weights_driver, np.ones(n)/np.sum(np.ones(n)))
