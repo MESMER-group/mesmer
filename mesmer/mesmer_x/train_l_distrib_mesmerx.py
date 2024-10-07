@@ -649,7 +649,7 @@ class distrib_cov:
         ----------
         n_bins_density : int, default: 40
             Number of bins used to calculate the density of the predictors.
-        
+
         Returns
         -------
         weights_driver : numpy array 1D
@@ -658,8 +658,8 @@ class distrib_cov:
 
         Example
         -------
-        TODO     
-        
+        TODO
+
         """
 
         # if no predictors, straightforward
@@ -675,8 +675,8 @@ class distrib_cov:
         # TODO *nan*min/max should not be necessary bc we already checked for nan values in the data?
         mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
 
-        # TODO: at the moment bins == edges, either change bins to edges and do n_bins_density + 1 
-        # or change bins = n_bins_density in histogramdd 
+        # TODO: at the moment bins == edges, either change bins to edges and do n_bins_density + 1
+        # or change bins = n_bins_density in histogramdd
         bins = np.linspace(
             (mn - 0.05 * (mx - mn)),
             (mx + 0.05 * (mx - mn)),
@@ -689,11 +689,17 @@ class distrib_cov:
         gmt_bins_center = [0.5 * (edge[1:] + edge[:-1]) for edge in edges]
 
         # TODO: add bounds_error=False, fill_value=None (extrapolates the values outside the grid)
-        interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist, method="linear", bounds_error=False, fill_value=None)
+        interp = RegularGridInterpolator(
+            points=gmt_bins_center,
+            values=gmt_hist,
+            method="linear",
+            bounds_error=False,
+            fill_value=None,
+        )
         # evaluate interpolated density at datapoints
         density = interp(tmp)
 
-        return 1 / density # inverse of density
+        return 1 / density  # inverse of density
 
     def _test_coeffs_in_bounds(self, values_coeffs):
 
@@ -1286,6 +1292,7 @@ class distrib_cov:
         return self.n_coeffs * np.log(self.n_sample) / self.n_sample - 2 * self.loglike(
             distrib
         )
+
     # TODO: remove /self.n_sample? bc weights are already normalized
 
     def crps(self, coeffs):
