@@ -471,7 +471,8 @@ class distrib_cov:
         if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
             raise ValueError("NaN or infinite values in target of fit")
         self.data_pred = data_pred
-        # TODO: check if data_pred is actually a  dict, otherwise we run into problems later, currently this is a problem
+
+        # TODO: raise error if data_pred is not a dict
 
         if np.any(
             [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
@@ -596,6 +597,7 @@ class distrib_cov:
             raise ValueError("`options_optim` must be a dictionary")
 
         # preparing weights
+        # TODO: move this out of init or think of more flexible bins
         self.weighted_NLL = default_options_optim["weighted_NLL"]
         self.weights_driver = self.get_weights()
 
@@ -621,16 +623,44 @@ class distrib_cov:
                 " and 'ind_year_thres' must be used together, and only for 'fcNLL'",
             )
 
+    # TODO: don't do this in init. Give the user the option to either use this function or give their own weigths
+    # as soon as we switch the xarray wrapper into here and the user actually initialized this class themselves
     def get_weights(self, n_bins_density=40):
 
         if self.weighted_NLL:
             weights_driver = self._get_weights_nll(n_bins_density=n_bins_density)
         else:
             weights_driver = np.ones(self.data_targ.shape)
-
+        # TODO: move the normalization into the function
         return weights_driver / np.sum(weights_driver)
 
     def _get_weights_nll(self, n_bins_density=40):
+        """
+        Generate weights for the sample, based on the inverse of the density of the
+        predictors. More precisely, the density of the predictors is measured by a
+        multidimensional histogram where each dimension is one of the predictors. The
+        histogram is then smoothed by a regular grid interpolator to give the density
+        of the predictors in this "predictor space". Subsequently, the weights are
+        the inverse of this density of the predictors. Consequently, Samples in regions
+        of this space with low densitiy will have higher weights, this is, "unusual" samples
+        will have more weight.
+
+        Parameters
+        ----------
+        n_bins_density : int, default: 40
+            Number of bins used to calculate the density of the predictors.
+        
+        Returns
+        -------
+        weights_driver : numpy array 1D
+            Weights for the sample, based on the inverse of the density of the
+            predictors.
+
+        Example
+        -------
+        TODO     
+        
+        """
 
         # if no predictors, straightforward
         if len(self.data_pred) == 0:
@@ -645,6 +675,8 @@ class distrib_cov:
         # TODO *nan*min/max should not be necessary bc we already checked for nan values in the data?
         mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
 
+        # TODO: at the moment bins == edges, either change bins to edges and do n_bins_density + 1 
+        # or change bins = n_bins_density in histogramdd 
         bins = np.linspace(
             (mn - 0.05 * (mx - mn)),
             (mx + 0.05 * (mx - mn)),
@@ -655,10 +687,13 @@ class distrib_cov:
         gmt_hist, edges = np.histogramdd(sample=tmp, bins=bins.T)
 
         gmt_bins_center = [0.5 * (edge[1:] + edge[:-1]) for edge in edges]
-        interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist)
-        weights_driver = 1 / interp(tmp)  # inverse of density
 
-        return weights_driver
+        # TODO: add bounds_error=False, fill_value=None (extrapolates the values outside the grid)
+        interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist, method="linear", bounds_error=False, fill_value=None)
+        # evaluate interpolated density at datapoints
+        density = interp(tmp)
+
+        return 1 / density # inverse of density
 
     def _test_coeffs_in_bounds(self, values_coeffs):
 
@@ -1251,6 +1286,7 @@ class distrib_cov:
         return self.n_coeffs * np.log(self.n_sample) / self.n_sample - 2 * self.loglike(
             distrib
         )
+    # TODO: remove /self.n_sample? bc weights are already normalized
 
     def crps(self, coeffs):
         # ps.crps_quadrature cannot be applied on conditional distributions, thu

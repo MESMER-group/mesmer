@@ -1,3 +1,4 @@
+from tkinter import N
 import numpy as np
 import pytest
 
@@ -245,3 +246,18 @@ def test_distrib_cov_get_weights():
 
     dist = distrib_cov(np.arange(n), {"tas": np.arange(n)}, expression, options_optim={"weighted_NLL":False})
     np.testing.assert_equal(dist.weights_driver, np.ones(n)/np.sum(np.ones(n)))
+
+
+def test_distrib_cov_get_weights_nll():
+    # NOTE: case for no predictor already covered in test_distrib_cov_get_weights
+    
+    # constant density = constant weights, with each weight = 1/n_samples
+    expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+    n_samples = 10
+    n_bins_density = 5 + 1 # currently need to give bins + 1 to get n_bins correct
+
+    pred = np.array([0,0,1,1,2,2,3,3,4,4])
+    dist = distrib_cov(np.arange(n_samples), {"pred1": pred}, expression) # can currently not provide n_bins
+    weights = dist._get_weights_nll(n_bins_density=n_bins_density) 
+
+    np.testing.assert_equal(weights/weights.sum(), np.repeat(1/n_samples, n_samples))
