@@ -52,7 +52,7 @@ jobs:
         fi
 
     - name: Create conda environment
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-name: mesmer-tests
         cache-downloads: true
@@ -101,7 +101,7 @@ jobs:
           fetch-depth: 0 # Fetch all history for all branches and tags.
 
       - name: Create conda environment
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: min-version-policy
           micromamba-version: 'latest'
