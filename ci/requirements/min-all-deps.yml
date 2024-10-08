@@ -28,4 +28,4 @@ dependencies:
  - pytest-cov
  - pip
  - pip:
-    - https://github.com/mathause/filefinder/archive/refs/tags/v0.3.0.zip
+      - https://github.com/mathause/filefinder/archive/refs/tags/v0.3.0.zip
