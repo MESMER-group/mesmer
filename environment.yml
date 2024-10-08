@@ -28,5 +28,6 @@ dependencies:
  - pytest
  - pytest-cov
  - ruff
+ - pip
  - pip:
     - https://github.com/mathause/filefinder/archive/refs/tags/v0.3.0.zip
