@@ -182,7 +182,7 @@ def test_expression_coefficients_two_digits():
 def test_expression_covariate_c_digit():
 
     expr = Expression("norm(loc=c1, scale=c2 * __Tc3__)", "name")
-    expr.coefficients_list == ["c1", "c2"]
+    assert expr.coefficients_list == ["c1", "c2"]
 
 
 @pytest.mark.xfail(
@@ -300,6 +300,46 @@ def test_evaluate_covariates_wrong_shape():
         expr.evaluate([1, 1], xr.Dataset(data_vars=data_vars))
 
 
+def test_evaluate_params_norm():
+
+    expr = Expression("norm(loc=c1 * __T__, scale=c2)", expr_name="name")
+    params = expr.evaluate_params([1, 2], {"T": np.array([1, 2])})
+
+    assert isinstance(params, dict)
+
+    expected = {"loc": np.array([1, 2]), "scale": np.array([2.0, 2.0])}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+    # a second set of values
+    params = expr.evaluate_params([2, 1], {"T": np.array([2, 5])})
+
+    expected = {"loc": np.array([4, 10]), "scale": np.array([1.0, 1.0])}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+
+def test_evaluate_params_norm_dataset():
+    # NOTE: not sure if passing DataArray to scipy distribution is a good idea
+
+    expr = Expression("norm(loc=c1 * __T__, scale=c2)", expr_name="name")
+
+    coefficients_values = xr.Dataset(data_vars={"c1": 1, "c2": 2})
+    inputs_values = xr.Dataset(data_vars={"T": ("x", np.array([1, 2]))})
+
+    params = expr.evaluate_params(coefficients_values, inputs_values)
+
+    loc = xr.DataArray([1, 2], dims="x")
+    scale = xr.DataArray([2, 2], dims="x")
+
+    expected = {"loc": loc, "scale": scale}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+
 def test_evaluate_norm():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2)", expr_name="name")
@@ -312,16 +352,11 @@ def test_evaluate_norm():
     # assert frozen params are equal
     mesmer.testing.assert_dict_allclose(dist.kwds, expected)
 
-    # NOTE: will write own function to return param values
-    # mesmer.testing.assert_dict_allclose(dist.kwds, expr.parameters_values)
-
     # a second set of values
     dist = expr.evaluate([2, 1], {"T": np.array([2, 5])})
 
     expected = {"loc": np.array([4, 10]), "scale": np.array([1.0, 1.0])}
-
-    # assert frozen params are equal
-    # mesmer.testing.assert_dict_allclose(dist.kwds, expected)
+    mesmer.testing.assert_dict_allclose(dist.kwds, expected)
 
 
 def test_evaluate_norm_dataset():
@@ -343,8 +378,3 @@ def test_evaluate_norm_dataset():
 
     # assert frozen params are equal
     mesmer.testing.assert_dict_allclose(dist.kwds, expected)
-
-    # NOTE: will write own function to return param values
-
-    params = expr.evaluate_params(coefficients_values, inputs_values)
-    mesmer.testing.assert_dict_allclose(expected, params)
