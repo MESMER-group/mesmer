@@ -64,7 +64,6 @@ jobs:
 
     - name: Install mesmer
       run: |
-        micromamba activate mesmer-tests
         python -m pip install --no-deps -e .
 
     - name: Test installation
