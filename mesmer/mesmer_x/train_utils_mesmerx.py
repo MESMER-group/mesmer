@@ -354,19 +354,14 @@ class Expression:
         if len(shapes) > 1:
             raise ValueError("shapes of inputs must be equal")
 
-        # Evaluation 1: coefficients
-        for c in coefficients_values:
-            exec(c + " = coefficients_values[c]")
-
-        # Evaluation 2: inputs
-        for i in inputs_values:
-            exec(i + " = inputs_values[i]")
+        # gather coefficients and covariates (can't use d1 | d2, does not work for dataset)
+        locals = {**coefficients_values, **inputs_values}
 
         # Evaluation 3: parameters
         self.parameters_values = {}
-        for param in self.parameters_list:
+        for param, expr in self.parameters_expressions.items():
             # may need to silence warnings here, to avoid spamming
-            self.parameters_values[param] = eval(self.parameters_expressions[param])
+            self.parameters_values[param] = eval(expr, None, locals)
 
         # Correcting shapes 1: scalar parameters must have the shape of the inputs
         if len(self.inputs_list) > 0:
