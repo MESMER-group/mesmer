@@ -298,7 +298,7 @@ class Expression:
 
     def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
         """
-        Evaluates the distribution with the provided inputs and coefficients
+        Evaluates the parameters for the provided inputs and coefficients
 
         Parameters
         ----------
@@ -313,6 +313,12 @@ class Expression:
             - xr.Dataset(inp_i)
         forced_shape : None | tuple or list of dimensions
             coefficients_values and inputs_values for transposition of the shape
+
+        Returns
+        -------
+        params: dict
+            Realized parameters for the given expression, coefficients and covariates;
+            to pass ``self.distrib(**params)`` or it's methods.
 
         Warnings
         --------
@@ -398,6 +404,34 @@ class Expression:
         return parameters_values
 
     def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
+        """
+        Evaluates the distribution with the provided inputs and coefficients
+
+        Parameters
+        ----------
+        coefficients_values : dict | xr.Dataset(c_i) | list of values
+            Coefficient arrays or scalars. Can have the following form
+            - dict(c_i = values or np.array())
+            - xr.Dataset(c_i)
+            - list of values
+        inputs_values : dict | xr.Dataset
+            Input arrays or scalars. Can be passed as
+            - dict(inp_i = values or np.array())
+            - xr.Dataset(inp_i)
+        forced_shape : None | tuple or list of dimensions
+            coefficients_values and inputs_values for transposition of the shape
+
+        Returns
+        -------
+        distr: scipy stats frozen distribution
+            Frozen distribution with the realized parameters applied to.
+
+        Warnings
+        --------
+        with xarrays for coefficients_values and inputs_values, the outputs with have
+        for shape first the one of the coefficient, then the one of the inputs
+        --> trying to avoid this issue with 'forced_shape'
+        """
 
         params = self.evaluate_params(coefficients_values, inputs_values, forced_shape)
         return self.distrib(**params)
