@@ -62,11 +62,6 @@ jobs:
         create-args: >-
           python=${{ matrix.python-version }}
 
-    - name: Verify micromamba path
-      run: |
-        echo "Micromamba path: $(which micromamba)"
-        micromamba --version
-
     - name: Install mesmer
       run: |
         python -m pip install --no-deps -e .
