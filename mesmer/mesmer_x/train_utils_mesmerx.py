@@ -296,9 +296,9 @@ class Expression:
                     param
                 ].replace(f"__{i}__", i)
 
-    def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
+    def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
         """
-        Evaluates the distribution with the provided inputs and coefficients
+        Evaluates the parameters for the provided inputs and coefficients
 
         Parameters
         ----------
@@ -313,6 +313,12 @@ class Expression:
             - xr.Dataset(inp_i)
         forced_shape : None | tuple or list of dimensions
             coefficients_values and inputs_values for transposition of the shape
+
+        Returns
+        -------
+        params: dict
+            Realized parameters for the given expression, coefficients and covariates;
+            to pass ``self.distrib(**params)`` or it's methods.
 
         Warnings
         --------
@@ -357,17 +363,17 @@ class Expression:
         # gather coefficients and covariates (can't use d1 | d2, does not work for dataset)
         locals = {**coefficients_values, **inputs_values}
 
-        # Evaluation 3: parameters
-        self.parameters_values = {}
+        # evaluate parameters
+        parameters_values = {}
         for param, expr in self.parameters_expressions.items():
             # may need to silence warnings here, to avoid spamming
-            self.parameters_values[param] = eval(expr, None, locals)
+            parameters_values[param] = eval(expr, None, locals)
 
         # Correcting shapes 1: scalar parameters must have the shape of the inputs
         if len(self.inputs_list) > 0:
 
             for param in self.parameters_list:
-                param_value = self.parameters_values[param]
+                param_value = parameters_values[param]
 
                 # TODO: use np.ndim(param_value) ==  0? (i.e. isscalar)
                 if isinstance(param_value, int | float) or param_value.ndim == 0:
@@ -382,21 +388,53 @@ class Expression:
                             inputs_values[self.inputs_list[0]].shape
                         )
 
-                self.parameters_values[param] = param_value
+                parameters_values[param] = param_value
 
         # Correcting shapes 2: possibly forcing shape
         if len(self.inputs_list) > 0 and forced_shape is not None:
 
             for param in self.parameters_list:
                 dims_param = [
-                    d for d in forced_shape if d in self.parameters_values[param].dims
+                    d for d in forced_shape if d in parameters_values[param].dims
                 ]
-                self.parameters_values[param] = self.parameters_values[param].transpose(
+                parameters_values[param] = parameters_values[param].transpose(
                     *dims_param
                 )
 
-        # evaluation of the distribution
-        return self.distrib(**self.parameters_values)
+        return parameters_values
+
+    def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
+        """
+        Evaluates the distribution with the provided inputs and coefficients
+
+        Parameters
+        ----------
+        coefficients_values : dict | xr.Dataset(c_i) | list of values
+            Coefficient arrays or scalars. Can have the following form
+            - dict(c_i = values or np.array())
+            - xr.Dataset(c_i)
+            - list of values
+        inputs_values : dict | xr.Dataset
+            Input arrays or scalars. Can be passed as
+            - dict(inp_i = values or np.array())
+            - xr.Dataset(inp_i)
+        forced_shape : None | tuple or list of dimensions
+            coefficients_values and inputs_values for transposition of the shape
+
+        Returns
+        -------
+        distr: scipy stats frozen distribution
+            Frozen distribution with the realized parameters applied to.
+
+        Warnings
+        --------
+        with xarrays for coefficients_values and inputs_values, the outputs with have
+        for shape first the one of the coefficient, then the one of the inputs
+        --> trying to avoid this issue with 'forced_shape'
+        """
+
+        params = self.evaluate_params(coefficients_values, inputs_values, forced_shape)
+        return self.distrib(**params)
 
 
 def probability_integral_transform(
