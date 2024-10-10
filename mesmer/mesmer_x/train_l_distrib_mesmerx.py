@@ -38,6 +38,7 @@ def ignore_warnings(func):
     return wrapper
 
 
+# TODO: would want to switch this, have a distrib class that takes xarrays and have a training func that potentially works on xarrays
 def xr_train_distrib(
     predictors,
     target,
@@ -293,11 +294,13 @@ class distrib_cov:
         ----------
         data_targ : numpy array 1D
             Sample of the target for fit of a conditional distribution
+            Normally the timeseries of the target at one gridpoint.
 
         data_pred : dict of 1D vectors
             Covariates for the conditional distribution. Each key must be the exact name
             of the inputs used in 'expr_fit', and the values must be aligned with the
             values in 'data_targ'.
+            Normally the timeseries of the global mean predictor.
 
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
@@ -353,7 +356,8 @@ class distrib_cov:
             * type_fun_optim: string, default: "NLL"
                 If 'NLL', will optimize using the negative log likelihood. If 'fcNLL',
                 will use the full conditional negative log likelihood based on the
-                stopping rule.
+                stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
+                and `exclude_trigger` only apply to 'fcNLL'.
 
             * weighted_NLL: boolean, default: False
                 If True, the optimization function will based on the weighted sum of the
@@ -540,21 +544,19 @@ class distrib_cov:
         elif isinstance(options_solver, dict):
             default_options_solver.update(options_solver)
         else:
-            raise ValueError("options_solver must be a dictionary")
+            raise ValueError("`options_solver` must be a dictionary")
         self.xtol_req = default_options_solver["xtol_req"]
         self.ftol_req = default_options_solver["ftol_req"]
         self.maxiter = default_options_solver["maxiter"]
         self.maxfev = default_options_solver["maxfev"]
         self.method_fit = default_options_solver["method_fit"]
-        if self.method_fit in [
-            "dogleg",
-            "trust-ncg",
-            "trust-krylov",
-            "trust-exact",
-            "COBYLA",
-            "SLSQP",
-            "CG",
-            "Newton-CG",
+        if self.method_fit not in [
+            "BFGS",
+            "L-BFGS-B",
+            "Nelder-Mead",
+            "Powell",
+            "TNC",
+            "trust-constr",
         ]:
             raise ValueError("method for this fit not prepared, to avoid")
         else:
@@ -614,8 +616,8 @@ class distrib_cov:
         ):
             raise ValueError(
                 "Lack of consistency on the options 'type_fun_optim',"
-                " 'threshold_stopping_rule' and 'ind_year_thres', not sure if the"
-                " stopping rule will be employed"
+                " 'threshold_stopping_rule' and 'ind_year_thres', threshold_stopping_rule",
+                "and 'ind_year_thres' must be used together, and only for 'fcNLL'",
             )
 
     def get_weights(self, n_bins_density=40):
@@ -649,7 +651,7 @@ class distrib_cov:
         # interpolating over whole region
         gmt_hist, edges = np.histogramdd(sample=tmp, bins=bins.T)
 
-        gmt_bins_center = [0.5 * (edge[1:] + edges[:-1]) for edge in edges]
+        gmt_bins_center = [0.5 * (edge[1:] + edge[:-1]) for edge in edges]
         interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist)
         weights_driver = 1 / interp(tmp)  # inverse of density
 
