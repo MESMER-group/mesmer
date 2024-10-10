@@ -9,6 +9,7 @@ from mesmer.testing import assert_dict_allclose
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
+@pytest.mark.filterwarnings("ignore:Passing a list of DataArrays will be deprecated")
 @pytest.mark.parametrize(
     "scenarios, use_tas2, use_hfds, outname",
     (

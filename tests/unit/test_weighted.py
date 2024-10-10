@@ -1,6 +1,8 @@
+import datatree.testing
 import numpy as np
 import pytest
 import xarray as xr
+from datatree import DataTree
 
 import mesmer
 
@@ -170,3 +172,60 @@ def test_global_mean_weights_passed(as_dataset):
     expected = data.mean(("lat", "lon"))
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_create_equal_sceanrio_weights_from_datatree():
+    dt = DataTree()
+    dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray([1, 2, 3], dims="member")}))
+    dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")}))
+    result = mesmer.weighted.create_equal_scenario_weights_from_datatree(dt)
+    expected = DataTree.from_dict(
+        {
+            "ssp119": DataTree(
+                xr.DataArray([1 / 3, 1 / 3, 1 / 3], dims="member").rename("weights")
+            ),
+            "ssp585": DataTree(
+                xr.DataArray([0.5, 0.5], dims="member").rename("weights")
+            ),
+        }
+    )
+
+    result.isomorphic(dt)
+
+    datatree.testing.assert_equal(result, expected)
+
+
+def test_create_equal_sceanrio_weights_from_datatree_checks():
+
+    dt = DataTree()
+    dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray([1, 2, 3], dims="member")}))
+    dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")}))
+
+    # too deep
+    dt_too_deep = dt.copy()
+    dt_too_deep["ssp585/1"] = DataTree(
+        xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")})
+    )
+    with pytest.raises(ValueError, match="DataTree must have a depth of 1, not 2."):
+        mesmer.weighted.create_equal_scenario_weights_from_datatree(dt_too_deep)
+
+    # missing member dimension
+    dt_no_member = dt.copy()
+    dt_no_member["ssp119"] = DataTree(dt_no_member.ssp119.ds.sel(member=1))
+    with pytest.raises(
+        ValueError, match="Member dimension 'member' not found in dataset."
+    ):
+        mesmer.weighted.create_equal_scenario_weights_from_datatree(dt_no_member)
+
+    # multiple data variables
+    dt_multiple_vars = dt.copy()
+    dt_multiple_vars["ssp119"] = DataTree(
+        xr.Dataset(
+            {
+                "tas": xr.DataArray([4, 5], dims="member"),
+                "tas2": xr.DataArray([4, 5], dims="member"),
+            }
+        )
+    )
+    with pytest.raises(ValueError, match="Dataset must have only one data variable."):
+        mesmer.weighted.create_equal_scenario_weights_from_datatree(dt_multiple_vars)
