@@ -267,6 +267,7 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
         If any dimension does not have a coordinate.
 
     """
+    # TODO: could potentially be replaced by DataTree.merge_child_nodes in the future?
 
     # check if all datasets have the same dimensions
     ds_dims = [set(ds.dims) for ds in dt.leaves]
