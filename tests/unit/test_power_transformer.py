@@ -234,10 +234,10 @@ def test_power_transformer_xr():
         monthly_residuals, yearly_T
     )
     transformed = mesmer.stats.yeo_johnson_transform(
-        monthly_residuals, pt_coefficients, yearly_T
+        monthly_residuals, pt_coefficients.lambda_coeffs, yearly_T
     )
     inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
-        transformed.transformed, pt_coefficients, yearly_T
+        transformed.transformed, pt_coefficients.lambda_coeffs, yearly_T
     )
     xr.testing.assert_allclose(
         inverse_transformed.inverted, monthly_residuals, atol=1e-5
