@@ -1100,8 +1100,7 @@ class distrib_cov:
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
         params = self.expr_fit.evaluate_params(x, self.data_pred)
-        loc = params["loc"]
-        sca = params["scale"]
+        loc, sca = params["loc"], params["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
         dev = np.abs(self.data_targ - loc)
         return np.sum((dev - sca) ** 2)

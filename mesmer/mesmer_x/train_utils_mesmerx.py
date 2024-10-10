@@ -363,7 +363,7 @@ class Expression:
         # gather coefficients and covariates (can't use d1 | d2, does not work for dataset)
         locals = {**coefficients_values, **inputs_values}
 
-        # Evaluation 3: parameters
+        # evaluate parameters
         parameters_values = {}
         for param, expr in self.parameters_expressions.items():
             # may need to silence warnings here, to avoid spamming
