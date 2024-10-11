@@ -416,7 +416,8 @@ def test_collapse_datatree_into_dataset():
     assert np.isnan(res.sel(scenario="scen1").tas2).all()
 
     # two time dimensions that have different length fills missing values with nans
-    da_with_different_time = make_dummy_yearly_data(freq="YE")
+    freq = "A" if Version(pd.__version__) < Version("2.2") else "YE"
+    da_with_different_time = make_dummy_yearly_data(freq=freq)
 
     badleaf = da_with_different_time.assign_coords({"member": 0}).expand_dims("member")
     dt = DataTree.from_dict({"scen1": leaf1, "scen2": badleaf})
@@ -447,3 +448,14 @@ def test_collapse_datatree_into_dataset():
 
     dt = DataTree.from_dict({"mem1": da1, "mem2": da2})
     res = mesmer.utils.collapse_datatree_into_dataset(dt, dim="members")
+
+    # only one leaf also works
+    da = make_dummy_yearly_data(freq="YS")
+    ds = xr.Dataset({"tas": da})
+    dt = DataTree.from_dict({"ds": ds})
+
+    collapse_dim = "scenario"
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+
+    expected = ds.expand_dims(collapse_dim).assign_coords({collapse_dim: np.array(["ds"])})
+    xr.testing.assert_equal(res, expected)
