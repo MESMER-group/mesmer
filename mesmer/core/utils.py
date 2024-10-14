@@ -265,24 +265,27 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
     ValueError
         If all datasets do not have the same dimensions.
         If any dimension does not have a coordinate.
-
     """
     # TODO: could potentially be replaced by DataTree.merge_child_nodes in the future?
+    datasets = [subtree.to_dataset() for subtree in dt.subtree if not subtree.is_empty]
 
-    # check if all datasets have the same dimensions
-    ds_dims = [set(ds.dims) for ds in dt.leaves]
-    if not all(ds_dim == ds_dims[0] for ds_dim in ds_dims):
+    # Check if all datasets have the same dimensions
+    first_dims = set(datasets[0].dims)
+    if not all(set(ds.dims) == first_dims for ds in datasets):
         raise ValueError("All datasets must have the same dimensions")
 
-    # check that all dims have coords
-    for ds in dt.leaves:
+    # Check that all dimensions have coordinates
+    for ds in datasets:
         for ds_dim in ds.dims:
-            if len(ds.ds[ds_dim].coords) == 0:
+            if ds[ds_dim].coords == {}:
                 raise ValueError(
-                    f"Dimension {ds_dim} must have a coordinate/coordinates."
+                    f"Dimension '{ds_dim}' must have a coordinate/coordinates."
                 )
 
-    ds = xr.concat([leaf.ds for leaf in dt.leaves], dim=dim)
-    ds = ds.assign_coords({dim: [leaf.name for leaf in dt.leaves]})
+    # Concatenate datasets along the specified dimension
+    ds = xr.concat(datasets, dim=dim)
+    ds = ds.assign_coords(
+        {dim: [subtree.name for subtree in dt.subtree if not subtree.is_empty]}
+    )
 
     return ds

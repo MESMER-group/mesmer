@@ -362,7 +362,7 @@ def test_collapse_datatree_into_dataset():
     # error if data set has no coords along dim (bc then it is not concatenable if lengths differ)
     leaf_missing_coords = leaf1.drop_vars("member")
     dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
-    with pytest.raises(ValueError, match="Dimension member must have a coordinate"):
+    with pytest.raises(ValueError, match="Dimension 'member' must have a coordinate"):
         res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     # Dimension along which to concatenate already exists
@@ -457,5 +457,19 @@ def test_collapse_datatree_into_dataset():
     collapse_dim = "scenario"
     res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
-    expected = ds.expand_dims(collapse_dim).assign_coords({collapse_dim: np.array(["ds"])})
+    expected = ds.expand_dims(collapse_dim).assign_coords(
+        {collapse_dim: np.array(["ds"])}
+    )
+    xr.testing.assert_equal(res, expected)
+
+    # empty nodes are removed before concatenating
+    # NOTE: implicitly this is already there in the other tests, since the root node is always empty
+    # but it is nice to have it explicitly too
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": DataTree()})
+    res = mesmer.utils.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+    expected = (
+        xr.Dataset({"tas": leaf1})
+        .expand_dims(collapse_dim)
+        .assign_coords({collapse_dim: np.array(["scen1"])})
+    )
     xr.testing.assert_equal(res, expected)
