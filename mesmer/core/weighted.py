@@ -1,9 +1,9 @@
 import warnings
+from collections.abc import Hashable, Iterable
 
 import numpy as np
 import xarray as xr
 from datatree import DataTree, map_over_subtree
-from typing import Hashable, Iterable
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -130,7 +130,7 @@ def create_equal_scenario_weights_from_datatree(
         Name of the dimension along which the weights should be created. Default is "member".
     exclude : Iterable[Hashable] | None
         Name of one or several dimensions to exclude from the dataset before calculating the weights. Default is None.
-        Internally, these dimensions are dropped before calculating the weights. If None, the returned ``DataTree`` is 
+        Internally, these dimensions are dropped before calculating the weights. If None, the returned ``DataTree`` is
         isomorphic to ``dt``.
 
     Returns:
@@ -155,16 +155,20 @@ def create_equal_scenario_weights_from_datatree(
         raise ValueError(f"DataTree must have a depth of 1, not {dt.depth}.")
 
     def _create_weights(ds: xr.Dataset) -> xr.DataArray:
-        
+
         if ens_dim not in ds.dims:
             raise ValueError(f"Member dimension '{ens_dim}' not found in dataset.")
 
         data_vars = list(ds.keys())
         if len(data_vars) > 1:
             raise ValueError("Dataset must have only one data variable.")
-        
+
         # Get the dimensions to calculate the weights for and make sure they are in the right order
-        dims = [dim for dim in ds[data_vars[0]].dims if exclude is None or dim not in exclude]
+        dims = [
+            dim
+            for dim in ds[data_vars[0]].dims
+            if exclude is None or dim not in exclude
+        ]
 
         # Create a DataArray of ones with the remaining dimensions
         shape = [ds.sizes[dim] for dim in dims]
@@ -172,7 +176,7 @@ def create_equal_scenario_weights_from_datatree(
         ones = xr.DataArray(np.ones(shape), coords=coords, dims=list(dims))
 
         weights = ones.rename("weights")
-        
+
         return weights / ds[ens_dim].size
 
     weights = map_over_subtree(_create_weights)(dt)

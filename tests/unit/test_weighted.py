@@ -2,7 +2,7 @@ import datatree.testing
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
+from datatree import DataTree
 
 import mesmer
 
@@ -182,16 +182,28 @@ def test_create_equal_sceanrio_weights_from_datatree():
     n_gridcells = 3
     n_ts = 30
 
-    dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.arange(n_members_ssp119), dims="member")}))
-    dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.arange(n_members_ssp585), dims="member")}))
+    dt["ssp119"] = DataTree(
+        xr.Dataset({"tas": xr.DataArray(np.arange(n_members_ssp119), dims="member")})
+    )
+    dt["ssp585"] = DataTree(
+        xr.Dataset({"tas": xr.DataArray(np.arange(n_members_ssp585), dims="member")})
+    )
     result1 = mesmer.weighted.create_equal_scenario_weights_from_datatree(dt)
     expected = DataTree.from_dict(
         {
             "ssp119": DataTree(
-                xr.DataArray(np.ones(n_members_ssp119)/n_members_ssp119, dims="member", coords={"member": np.arange(n_members_ssp119)}).rename("weights")
+                xr.DataArray(
+                    np.ones(n_members_ssp119) / n_members_ssp119,
+                    dims="member",
+                    coords={"member": np.arange(n_members_ssp119)},
+                ).rename("weights")
             ),
             "ssp585": DataTree(
-                xr.DataArray(np.ones(n_members_ssp585)/n_members_ssp585, dims="member", coords={"member": np.arange(n_members_ssp585)}).rename("weights")
+                xr.DataArray(
+                    np.ones(n_members_ssp585) / n_members_ssp585,
+                    dims="member",
+                    coords={"member": np.arange(n_members_ssp585)},
+                ).rename("weights")
             ),
         }
     )
@@ -199,33 +211,56 @@ def test_create_equal_sceanrio_weights_from_datatree():
     datatree.testing.assert_isomorphic(result1, expected)
     datatree.testing.assert_equal(result1, expected)
 
+    dt["ssp119"] = DataTree(
+        dt.ssp119.ds.expand_dims(gridcell=np.arange(n_gridcells), axis=1)
+    )
+    dt["ssp585"] = DataTree(
+        dt.ssp585.ds.expand_dims(gridcell=np.arange(n_gridcells), axis=1)
+    )
 
-    dt["ssp119"] = DataTree(dt.ssp119.ds.expand_dims(gridcell = np.arange(n_gridcells), axis = 1))
-    dt["ssp585"] = DataTree(dt.ssp585.ds.expand_dims(gridcell = np.arange(n_gridcells), axis = 1))
-
-    result2 = mesmer.weighted.create_equal_scenario_weights_from_datatree(dt, ens_dim="member", exclude={"gridcell"})
+    result2 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        dt, ens_dim="member", exclude={"gridcell"}
+    )
     datatree.testing.assert_equal(result2, expected)
 
-    dt["ssp119"] = DataTree(dt.ssp119.ds.expand_dims(time = np.arange(n_ts), axis = 1))
-    dt["ssp585"] = DataTree(dt.ssp585.ds.expand_dims(time = np.arange(n_ts), axis = 1))
+    dt["ssp119"] = DataTree(dt.ssp119.ds.expand_dims(time=np.arange(n_ts), axis=1))
+    dt["ssp585"] = DataTree(dt.ssp585.ds.expand_dims(time=np.arange(n_ts), axis=1))
 
-    result3 = mesmer.weighted.create_equal_scenario_weights_from_datatree(dt, exclude={"gridcell"})
+    result3 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        dt, exclude={"gridcell"}
+    )
     expected = DataTree.from_dict(
         {
             "ssp119": DataTree(
-                xr.DataArray(np.ones((n_members_ssp119, n_ts))/n_members_ssp119, dims=["member", "time"], coords={"member": np.arange(n_members_ssp119), "time": np.arange(n_ts)}).rename("weights")
+                xr.DataArray(
+                    np.ones((n_members_ssp119, n_ts)) / n_members_ssp119,
+                    dims=["member", "time"],
+                    coords={
+                        "member": np.arange(n_members_ssp119),
+                        "time": np.arange(n_ts),
+                    },
+                ).rename("weights")
             ),
             "ssp585": DataTree(
-                xr.DataArray(np.ones((n_members_ssp585, n_ts))/n_members_ssp585, dims=["member", "time"], coords={"member": np.arange(n_members_ssp585), "time": np.arange(n_ts)}).rename("weights")
+                xr.DataArray(
+                    np.ones((n_members_ssp585, n_ts)) / n_members_ssp585,
+                    dims=["member", "time"],
+                    coords={
+                        "member": np.arange(n_members_ssp585),
+                        "time": np.arange(n_ts),
+                    },
+                ).rename("weights")
             ),
         }
     )
 
-    #datatree.testing.assert_equal(result3, expected)
+    # datatree.testing.assert_equal(result3, expected)
     xr.testing.assert_equal(result3.ssp119.weights, expected.ssp119.weights)
     xr.testing.assert_equal(result3.ssp585.weights, expected.ssp585.weights)
 
-    result4 = mesmer.weighted.create_equal_scenario_weights_from_datatree(dt, exclude={"time", "gridcell"})
+    result4 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        dt, exclude={"time", "gridcell"}
+    )
     datatree.testing.assert_equal(result4, result1)
 
 
