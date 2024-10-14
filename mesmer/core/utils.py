@@ -1,4 +1,5 @@
 import warnings
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,7 @@ def create_equal_dim_names(dim, suffixes):
     return tuple(f"{dim}{suffix}" for suffix in suffixes)
 
 
-def _minimize_local_discrete(func, sequence, **kwargs):
+def _minimize_local_discrete(func, sequence: Iterable, **kwargs):
     """find the local minimum for a function that consumes discrete input
 
     Parameters
@@ -200,9 +201,9 @@ def _check_dataarray_form(
     obj,
     name: str = "obj",
     *,
-    ndim: int | None = None,
+    ndim: int | tuple[int, ...] | None = None,
     required_dims: str | set[str] = set(),
-    shape=None,
+    shape: tuple[int] | None = None,
 ):
     """check if a dataset conforms to some conditions
 
@@ -210,7 +211,7 @@ def _check_dataarray_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    ndim, int, optional
+    ndim : int | tuple of ints optional
         Number of required dimensions, can be a tuple of int if several are possible.
     required_dims: str, set of str, optional
         Names of dims that are required for obj
@@ -289,3 +290,40 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
     )
 
     return ds
+
+
+def _datatree_to_arraydict(dt: DataTree) -> dict[str, xr.DataArray]:
+    """
+    Convert a DataTree to a dict of xr.DataArrays
+
+    Parameters
+    ----------
+    dt : DataTree
+        DataTree to convert. Note that each subtree should have a dataset with only one data variable.
+        And every node needs to have a name
+
+    Returns
+    -------
+    dict of xr.DataArray
+        Dictionary of xr.DataArrays
+
+    Raises
+    ------
+    ValueError
+        If the dataset in a subtree has more than one data variable
+    """
+    # TODO: temporary, should not be necessary in the future when DataTree can hold DataArrays
+    predictors_dict = {}
+    for subtree in dt.subtree:
+        if not subtree.is_empty:
+            ds = subtree.to_dataset()
+            data_vars = list(ds.keys())
+
+            if len(data_vars) > 1:
+                raise ValueError(
+                    f"Dataset in node '{subtree.name}' must have only one data variable."
+                )
+
+            predictors_dict[subtree.name] = ds[data_vars[0]]
+
+    return predictors_dict

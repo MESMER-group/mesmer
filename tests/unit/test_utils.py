@@ -473,3 +473,54 @@ def test_collapse_datatree_into_dataset():
         .assign_coords({collapse_dim: np.array(["scen1"])})
     )
     xr.testing.assert_equal(res, expected)
+
+
+def test_datatree_to_arraydict():
+    da1 = make_dummy_yearly_data(freq="YS")
+    da2 = make_dummy_yearly_data(freq="YS")
+    da3 = make_dummy_yearly_data(freq="YS")
+
+    leaf1 = xr.concat([da1, da2, da3], dim="member").assign_coords(
+        {"member": np.arange(3)}
+    )
+    leaf2 = xr.concat([da1, da2], dim="member").assign_coords({"member": np.arange(2)})
+
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+
+    arraydict = mesmer.core.utils._datatree_to_arraydict(dt)
+
+    assert isinstance(arraydict, dict)
+    assert len(arraydict) == 2
+    assert "scen1" in arraydict
+    assert "scen2" in arraydict
+    assert isinstance(arraydict["scen1"], xr.DataArray)
+    assert isinstance(arraydict["scen2"], xr.DataArray)
+
+    xr.testing.assert_equal(arraydict["scen1"], leaf1)
+    xr.testing.assert_equal(arraydict["scen2"], leaf2)
+
+    # nested DataTree works
+    dt = DataTree()
+    dt["scen1/sub_scen1"] = DataTree(leaf1)
+    dt["scen1/sub_scen2"] = DataTree(leaf2)
+    dt["scen2"] = DataTree(leaf2)
+
+    arraydict = mesmer.core.utils._datatree_to_arraydict(dt)
+    assert isinstance(arraydict, dict)
+    assert len(arraydict) == 3
+    assert "sub_scen1" in arraydict
+    assert "sub_scen2" in arraydict
+    assert "scen2" in arraydict
+
+    xr.testing.assert_equal(arraydict["sub_scen1"], leaf1)
+    xr.testing.assert_equal(arraydict["sub_scen2"], leaf2)
+    xr.testing.assert_equal(arraydict["scen2"], leaf2)
+
+    # more than one datavariable
+    leaf3 = xr.Dataset({"tas": da1, "tas2": da2})
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
+
+    with pytest.raises(
+        ValueError, match="Dataset in node 'scen3' must have only one data variable"
+    ):
+        mesmer.core.utils._datatree_to_arraydict(dt)
