@@ -530,6 +530,9 @@ def draw_auto_regression_uncorrelated(
     # _draw_ar_corr_xr_internal expects 2D arrays
     ar_params = ar_params.expand_dims("__gridpoint__")
 
+    if isinstance(seed, xr.Dataset):
+        seed = int(seed.seed.values)
+
     result = _draw_ar_corr_xr_internal(
         intercept=ar_params.intercept,
         coeffs=ar_params.coeffs,
@@ -545,7 +548,7 @@ def draw_auto_regression_uncorrelated(
     # remove the "__gridpoint__" dim again
     result = result.squeeze(dim="__gridpoint__", drop=True)
 
-    return result
+    return result.rename("samples")
 
 
 def draw_auto_regression_correlated(
@@ -616,6 +619,9 @@ def draw_auto_regression_correlated(
     )
     _check_dataarray_form(covariance, "covariance", ndim=2, shape=(size, size))
 
+    if isinstance(seed, xr.Dataset):
+        seed = int(seed.seed.values)
+
     result = _draw_ar_corr_xr_internal(
         intercept=ar_params.intercept,
         coeffs=ar_params.coeffs,
@@ -628,7 +634,7 @@ def draw_auto_regression_correlated(
         realisation_dim=realisation_dim,
     )
 
-    return result
+    return result.rename("samples")
 
 
 def _draw_ar_corr_xr_internal(
