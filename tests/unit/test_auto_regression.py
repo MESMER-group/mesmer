@@ -1,10 +1,10 @@
 from unittest import mock
 
-from datatree import DataTree, map_over_subtree
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from datatree import DataTree, map_over_subtree
 from packaging.version import Version
 
 import mesmer
@@ -172,9 +172,14 @@ def test_draw_auto_regression_uncorrelated(
         shape=(time, realization),
     )
 
+
 def test_draw_auto_regression_uncorrelated_dt(ar_params_1D):
-    seeds = DataTree.from_dict({"scen1": xr.DataArray(np.array([25])).rename("seed"), 
-                            "scen2": xr.DataArray(np.array([42])).rename("seed")})
+    seeds = DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25])).rename("seed"),
+            "scen2": xr.DataArray(np.array([42])).rename("seed"),
+        }
+    )
     n_realization = 10
     n_ts = 20
 
@@ -189,10 +194,27 @@ def test_draw_auto_regression_uncorrelated_dt(ar_params_1D):
     )
 
     assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
-    _check_dataset_form(result["scen1"].to_dataset(), "result", required_vars={"samples"})
-    _check_dataset_form(result["scen2"].to_dataset(), "result", required_vars={"samples"})
-    _check_dataarray_form(result["scen1"].samples, "samples", ndim=2, required_dims={"time", "realisation"}, shape=(n_ts, n_realization))
-    _check_dataarray_form(result["scen2"].samples, "samples", ndim=2, required_dims={"time", "realisation"}, shape=(n_ts, n_realization))
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=2,
+        required_dims={"time", "realisation"},
+        shape=(n_ts, n_realization),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=2,
+        required_dims={"time", "realisation"},
+        shape=(n_ts, n_realization),
+    )
+
 
 @pytest.mark.parametrize("dim", ("time", "realisation"))
 @pytest.mark.parametrize("wrong_coords", (None, 2.0, np.array([1, 2]), xr.Dataset()))
@@ -299,9 +321,14 @@ def test_draw_auto_regression_correlated(
         shape=(time, n_gridcells, realization),
     )
 
+
 def test_draw_auto_regression_correlated_dt(ar_params_2D, covariance):
-    seeds = DataTree.from_dict({"scen1": xr.DataArray(np.array([25])).rename("seed"), 
-                                "scen2": xr.DataArray(np.array([42])).rename("seed")})
+    seeds = DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25])).rename("seed"),
+            "scen2": xr.DataArray(np.array([42])).rename("seed"),
+        }
+    )
     n_realization = 10
     n_ts = 20
 
@@ -317,10 +344,26 @@ def test_draw_auto_regression_correlated_dt(ar_params_2D, covariance):
     )
 
     assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
-    _check_dataset_form(result["scen1"].to_dataset(), "result", required_vars={"samples"})
-    _check_dataset_form(result["scen2"].to_dataset(), "result", required_vars={"samples"})
-    _check_dataarray_form(result["scen1"].samples, "samples", ndim=3, required_dims={"time", "realisation", "gridcell"}, shape=(n_ts, 2, n_realization))
-    _check_dataarray_form(result["scen2"].samples, "samples", ndim=3, required_dims={"time", "realisation", "gridcell"}, shape=(n_ts, 2, n_realization))
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "realisation", "gridcell"},
+        shape=(n_ts, 2, n_realization),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "realisation", "gridcell"},
+        shape=(n_ts, 2, n_realization),
+    )
 
 
 @pytest.mark.parametrize("dim", ("time", "realisation"))
