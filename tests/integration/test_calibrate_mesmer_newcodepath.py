@@ -27,7 +27,7 @@ import mesmer
             False,
             False,
             "tas/one_scen_multi_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             ["ssp126", "ssp585"],
@@ -41,37 +41,37 @@ import mesmer
             True,
             False,
             "tas_tas2/one_scen_one_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
-        # # tas and hfds
-        # pytest.param(
-        #     ["ssp126"],
-        #     False,
-        #     True,
-        #     "tas_hfds/one_scen_one_ens",
-        #     marks=pytest.mark.slow,
-        # ),
-        # # tas, tas**2, and hfds
-        # pytest.param(
-        #     ["ssp126"],
-        #     True,
-        #     True,
-        #     "tas_tas2_hfds/one_scen_one_ens",
-        # ),
-        # pytest.param(
-        #     ["ssp585"],
-        #     True,
-        #     True,
-        #     "tas_tas2_hfds/one_scen_multi_ens",
-        #     marks=pytest.mark.slow,
-        # ),
-        # pytest.param(
-        #     ["ssp126", "ssp585"],
-        #     True,
-        #     True,
-        #     "tas_tas2_hfds/multi_scen_multi_ens",
-        #     marks=pytest.mark.slow,
-        # ),
+        # tas and hfds
+        pytest.param(
+            ["ssp126"],
+            False,
+            True,
+            "tas_hfds/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+        # tas, tas**2, and hfds
+        pytest.param(
+            ["ssp126"],
+            True,
+            True,
+            "tas_tas2_hfds/one_scen_one_ens",
+        ),
+        pytest.param(
+            ["ssp585"],
+            True,
+            True,
+            "tas_tas2_hfds/one_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            True,
+            True,
+            "tas_tas2_hfds/multi_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
     ),
 )
 def test_calibrate_mesmer(
@@ -148,6 +148,33 @@ def test_calibrate_mesmer(
         # put the scenario dataset into the DataTree
         dt[f"{scen}"] = DataTree(scen_data)
 
+    # load additional data
+    if use_hfds:
+        fc_hfds = CMIP_FILEFINDER.find_files(
+            variable="hfds",
+            scenario=scenarios_whist,
+            model=esm,
+            resolution="g025",
+            time_res="ann",
+            member=unique_scen_members,
+        )
+
+        dt_hfds = DataTree()
+        for scen in scenarios_whist:
+            files = fc_hfds.search(scenario=scen)
+
+            members = []
+            for fN, meta in files:
+                ds = xr.open_dataset(fN, use_cftime=True)
+                ds = ds.drop_vars(
+                    ["height", "time_bnds", "file_qf", "area"], errors="ignore"
+                )
+                ds = ds.assign_coords({"member": meta["member"]})
+                members.append(ds)
+
+            scen_data = xr.concat(members, dim="member")
+            dt_hfds[f"{scen}"] = DataTree(scen_data)
+
     # data preprocessing
     # create global mean tas anomlies timeseries
     dt = map_over_subtree(mesmer.grid.wrap_to_180)(dt)
@@ -198,20 +225,35 @@ def test_calibrate_mesmer(
         tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
 
+    if use_hfds:
+        hfds_ref = dt_hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
+        hfds_anoms = dt_hfds - hfds_ref.ds
+        hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
+        hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
+            hfds_globmean.mean(dim="member"), "time", n_steps=50, use_coords=False
+        )
+
     # train local forced response module
     # broadcast so all datasets have all the dimensions
     # gridcell can be excluded because it will be mapped in the Linear Regression
     target = tas_stacked
-    predictors = DataTree.from_dict({"tas": tas_globmean_smoothed,
-                                     "tas_resids": tas_resid_novolc})
+    predictors = DataTree.from_dict(
+        {"tas": tas_globmean_smoothed, "tas_resids": tas_resid_novolc}
+    )
     if use_tas2:
-        predictors["tas2"] = tas_globmean_smoothed ** 2 
+        predictors["tas2"] = tas_globmean_smoothed**2
+    if use_hfds:
+        predictors["hfds"] = hfds_globmean_smoothed
 
     weights = mesmer.weighted.create_equal_scenario_weights_from_datatree(
         target, ens_dim="member", exclude="gridcell"
     )
 
-    predictors_stacked, target_stacked, weights_stacked = mesmer.stats.prep_linear_regression_data(predictors, target, ["member", "time"], weights)
+    predictors_stacked, target_stacked, weights_stacked = (
+        mesmer.stats.prep_linear_regression_data(
+            predictors, target, ["member", "time"], weights
+        )
+    )
 
     local_forced_response_lr = mesmer.stats.LinearRegression()
 

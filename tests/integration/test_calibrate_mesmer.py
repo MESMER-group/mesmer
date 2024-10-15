@@ -47,7 +47,7 @@ from mesmer.testing import assert_dict_allclose
             False,
             True,
             "tas_hfds/one_scen_one_ens",
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
         # tas, tas**2, and hfds
         pytest.param(
