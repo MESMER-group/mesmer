@@ -35,15 +35,14 @@ import mesmer
             False,
             "tas/multi_scen_multi_ens",
         ),
-        # TODO: Add the other test cases too
-        # # tas and tas**2
-        # pytest.param(
-        #     ["ssp126"],
-        #     True,
-        #     False,
-        #     "tas_tas2/one_scen_one_ens",
-        #     marks=pytest.mark.slow,
-        # ),
+        # tas and tas**2
+        pytest.param(
+            ["ssp126"],
+            True,
+            False,
+            "tas_tas2/one_scen_one_ens",
+            # marks=pytest.mark.slow,
+        ),
         # # tas and hfds
         # pytest.param(
         #     ["ssp126"],
@@ -202,78 +201,46 @@ def test_calibrate_mesmer(
     # train local forced response module
     # broadcast so all datasets have all the dimensions
     # gridcell can be excluded because it will be mapped in the Linear Regression
-    tas_globmean_smoothed_bc = tas_globmean_smoothed.broadcast_like(
-        tas_stacked, exclude={"gridcell"}
-    )
-    tas_globmean_resids_bc = tas_resid_novolc.broadcast_like(
-        tas_stacked, exclude={"gridcell"}
-    )
+    target = tas_stacked
+    predictors = DataTree.from_dict({"tas": tas_globmean_smoothed,
+                                     "tas_resids": tas_resid_novolc})
+    if use_tas2:
+        predictors["tas2"] = tas_globmean_smoothed ** 2 
 
     weights = mesmer.weighted.create_equal_scenario_weights_from_datatree(
-        tas_globmean_smoothed_bc
+        target, ens_dim="member", exclude="gridcell"
     )
 
-    tas_local_ds = mesmer.utils.collapse_datatree_into_dataset(
-        tas_stacked, dim="scenario"
-    )
-    tas_glob_smoothed_ds = mesmer.utils.collapse_datatree_into_dataset(
-        tas_globmean_smoothed_bc, dim="scenario"
-    )
-    tas_glob_resid_ds = mesmer.utils.collapse_datatree_into_dataset(
-        tas_globmean_resids_bc, dim="scenario"
-    )
-    weights_ds = mesmer.utils.collapse_datatree_into_dataset(weights, dim="scenario")
-
-    # stack the dimensions and drop nans
-    tas_local_ds = tas_local_ds.stack(
-        sample=("time", "member", "scenario"), create_index=False
-    )
-    tas_local_ds = tas_local_ds.dropna("sample")
-
-    predictors = {
-        "tas_globmean": tas_glob_smoothed_ds,
-        "tas_globmean_resid": tas_glob_resid_ds,
-    }
-    for key, data in predictors.items():
-        predictors[key] = data.stack(
-            sample=("time", "member", "scenario"), create_index=False
-        ).tas
-        predictors[key] = predictors[key].dropna("sample")
-
-    weights_stacked = weights_ds.stack(
-        sample=("time", "member", "scenario"), create_index=False
-    ).weights
-    weights_stacked = weights_stacked.dropna("sample")
+    predictors_stacked, target_stacked, weights_stacked = mesmer.stats.prep_linear_regression_data(predictors, target, ["member", "time"], weights)
 
     local_forced_response_lr = mesmer.stats.LinearRegression()
 
     local_forced_response_lr.fit(
-        predictors=predictors,
-        target=tas_local_ds.tas,
+        predictors=predictors_stacked,
+        target=target_stacked.tas,
         dim="sample",
-        weights=weights_stacked,
+        weights=weights_stacked.weights,
     )
 
     # train local variability module
     # train local AR process
     tas_stacked_residuals = local_forced_response_lr.residuals(
-        predictors=predictors, target=tas_local_ds.tas
+        predictors=predictors, target=target_stacked.tas
     ).T
 
     tas_un_stacked_residuals = tas_stacked_residuals.set_index(
         sample=("time", "member", "scenario")
     ).unstack("sample")
 
-    dt_resids = {}
+    dt_resids = DataTree()
     for scenario in tas_un_stacked_residuals.scenario.values:
-        dt_resids[scenario] = (
+        dt_resids[scenario] = DataTree(
             tas_un_stacked_residuals.sel(scenario=scenario)
             .dropna("member", how="all")
             .dropna("time")
             .drop_vars("scenario")
             .rename("residuals")
         )
-    dt_resids = DataTree.from_dict(dt_resids)
 
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         dt_resids,
@@ -294,7 +261,7 @@ def test_calibrate_mesmer(
     k_folds = 30
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        tas_stacked_residuals, weights_stacked, phi_gc_localizer, dim, k_folds
+        tas_stacked_residuals, weights_stacked.weights, phi_gc_localizer, dim, k_folds
     )
 
     localized_ecov["localized_covariance_adjusted"] = (
