@@ -1,9 +1,18 @@
-from collections.abc import Mapping
+import warnings
 
 import numpy as np
 import xarray as xr
+from datatree import DataTree
 
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form, _to_set
+from mesmer.core.utils import (
+    _check_dataarray_form,
+    _check_dataset_form,
+    _datatree_to_arraydict,
+    _to_set,
+    collapse_datatree_into_dataset,
+)
+
+# TODO: deprecate predictor dicts?
 
 
 class LinearRegression:
@@ -14,7 +23,7 @@ class LinearRegression:
 
     def fit(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree,
         target: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
@@ -25,9 +34,9 @@ class LinearRegression:
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain
-            `dim`.
+        predictors : dict of xr.DataArray | DataTree
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`.
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
         dim : str
@@ -52,16 +61,17 @@ class LinearRegression:
 
     def predict(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree,
         exclude=None,
-    ):
+    ) -> xr.DataArray:
         """
         Predict using the linear model.
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+        predictors : dict of xr.DataArray | DataTree
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`.
         exclude : str or set of str, default: None
             Set of variables to exclude in the prediction. May include ``"intercept"``
             to initialize the prediction with 0.
@@ -71,6 +81,11 @@ class LinearRegression:
         prediction : xr.DataArray
             Returns predicted values.
         """
+
+        if not isinstance(predictors, dict | DataTree):
+            raise TypeError(
+                f"predictors should be a dict or DataTree, got {type(predictors)}."
+            )
 
         params = self.params
 
@@ -85,10 +100,11 @@ class LinearRegression:
             missing = "', '".join(missing)
             raise ValueError(f"Missing predictors: '{missing}'")
 
+        # TODO: should we even warn?
         if available_predictors - required_predictors:
             superfluous = sorted(available_predictors - required_predictors)
             superfluous = "', '".join(superfluous)
-            raise ValueError(f"Superfluous predictors: '{superfluous}'")
+            warnings.warn(f"Superfluous predictors: '{superfluous}', will be ignored.")
 
         if "intercept" in exclude:
             prediction = xr.zeros_like(params.intercept)
@@ -96,22 +112,29 @@ class LinearRegression:
             prediction = params.intercept
 
         for key in required_predictors:
-            prediction = prediction + predictors[key] * params[key]
+            predictor = (
+                predictors[key]
+                if isinstance(predictors, dict)
+                # NOTE: once we can store DataArrays in DataTrees this should not be necessary
+                else _datatree_to_arraydict(predictors)[key]
+            )
+            prediction = prediction + predictor * params[key]
 
         return prediction
 
     def residuals(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree,
         target: xr.DataArray,
-    ):
+    ) -> xr.DataArray:
         """
         Calculate the residuals of the fitted linear model
 
         Parameters
         ----------
         predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`.
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
 
@@ -182,12 +205,12 @@ class LinearRegression:
             Additional keyword arguments passed to ``xr.Dataset.to_netcf``
         """
 
-        params = self.params()
+        params = self.params
         params.to_netcdf(filename, **kwargs)
 
 
 def _fit_linear_regression_xr(
-    predictors: Mapping[str, xr.DataArray],
+    predictors: dict[str, xr.DataArray] | DataTree,
     target: xr.DataArray,
     dim: str,
     weights: xr.DataArray | None = None,
@@ -198,8 +221,9 @@ def _fit_linear_regression_xr(
 
     Parameters
     ----------
-    predictors : dict of xr.DataArray
-        A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+    predictors : dict of xr.DataArray | DataTree
+        A dict of DataArray objects used as predictors or a DataTree, holding each
+        predictor in a leaf. Each predictor must be 1D and contain `dim`.
     target : xr.DataArray
         Target DataArray. Must be 2D and contain `dim`.
     dim : str
@@ -217,8 +241,21 @@ def _fit_linear_regression_xr(
         individual DataArray.
     """
 
-    if not isinstance(predictors, Mapping):
-        raise TypeError(f"predictors should be a dict, got {type(predictors)}.")
+    if not isinstance(predictors, dict | DataTree):
+        raise TypeError(
+            f"predictors should be a dict or DataTree, got {type(predictors)}."
+        )
+
+    if isinstance(predictors, DataTree):
+        if predictors.depth > 1:
+            raise ValueError(
+                f"Predictors' DataTree must have a depth of 1, not {predictors.depth}."
+            )
+            # TODO maybe add something about stacking the data?
+
+        # extract dataarrays from the DataTree
+        # NOTE: once we can store DataArrays in DataTrees this should not be necessary
+        predictors = _datatree_to_arraydict(predictors)
 
     if ("weights" in predictors) or ("intercept" in predictors):
         raise ValueError(
@@ -319,3 +356,92 @@ def _fit_linear_regression_np(predictors, target, weights=None, fit_intercept=Tr
         intercepts = np.zeros_like(coefficients[:, :1])
 
     return np.hstack([intercepts, coefficients])
+
+
+def prep_linear_regression_data(
+    predictors: DataTree,
+    target: DataTree,
+    stacking_dims: list[str],
+    weights: DataTree | None = None,
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[DataTree, xr.Dataset, xr.Dataset] | tuple[DataTree, xr.Dataset]:
+    """
+    prepares data for Linear Regression:
+    1. Broadcasts predictors to target
+    2. Collapses DataTrees into DataSets
+    3. Stacks the DataSets along the stacking dimensions
+
+    Parameters
+    ----------
+    predictors : DataTree
+        A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
+        must have subtrees for each predictor each of which has to have at least one
+        leaf, holding a ``xr.Dataset`` representing a scenario. The subtrees of
+        different predictors must be isomorphic (i.e. have the save scenarios). The ``xr.Dataset``
+        must at least contain `dim` and each ``xr.Dataset`` must only hold one data variable.
+    target : DataTree
+        A ``DataTree``holding the targets. Must be isomorphic to the predictor subtrees, i.e.
+        have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must be at least 2D
+        and contain `dim`, but may also contain a dimension for ensemble members.
+    stacking_dims : list[str]
+        Dimension(s) to stack.
+    weights : DataTree, default: None.
+        Individual weights for each sample, must be isomorphic to target. Must at least contain
+        `dim`, and must have the ensemble member dimesnion if target has it.
+    collapse_dim : str, default: "scenario"
+        Dimension along which to collapse the DataTrees, will automatically be added to the
+        stacking dims.
+    stacked_dim : str, default: "sample"
+        Name of the stacked dimension.
+
+    Returns
+    -------
+    tuple
+        Tuple of the prepared predictors, target and weights, where the predictors and target are
+        stacked along the stacking dimensions and the weights are stacked along the stacking dimensions
+        and the ensemble member dimension.
+
+    Notes
+    -----
+    Dimensions which exist along the target but are not in the stacking_dims will be excluded from the
+    broadcasting of the predictors.
+    """
+
+    stacking_dims.append(collapse_dim)
+
+    # exclude target dimensions from broadcasting which are not in the stacking_dims
+    exclude_dim = set(target.leaves[0].ds.dims) - set(stacking_dims)
+
+    # predictors need to be
+    for key, subtree in predictors.items():
+        # 1) broadcast to target
+        broadcasted = subtree.broadcast_like(target, exclude=exclude_dim)
+        # 2) collapsed into DataSets
+        ds = collapse_datatree_into_dataset(broadcasted, dim=collapse_dim)
+        # 3) stacked
+        predictors[key] = DataTree(
+            ds.stack({stacked_dim: stacking_dims}, create_index=False).dropna(
+                dim=stacked_dim
+            )
+        )
+
+    # target needs to be
+    # 1) collapsed into DataSet
+    target_ds = collapse_datatree_into_dataset(target, dim=collapse_dim)
+    # 2) stacked
+    target_stacked = target_ds.stack(
+        {stacked_dim: stacking_dims}, create_index=False
+    ).dropna(dim=stacked_dim)
+
+    # weights need to be
+    if weights is not None:
+        # 1) collapsed into DataSet
+        weights_ds = collapse_datatree_into_dataset(weights, dim=collapse_dim)
+        # 2) stacked
+        weights_stacked = weights_ds.stack(
+            {stacked_dim: stacking_dims}, create_index=False
+        ).dropna(dim=stacked_dim)
+        return predictors, target_stacked, weights_stacked
+
+    return predictors, target_stacked
