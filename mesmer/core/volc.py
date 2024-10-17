@@ -99,7 +99,7 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
     # TODO: name of 'aod'
     lr.fit(
-        predictors=DataTree.from_dict({"aod": aod}),
+        predictors=DataTree(aod, name="aod"),
         target=tas_residuals,
         dim=dim,
         fit_intercept=False,
