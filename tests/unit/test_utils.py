@@ -6,6 +6,7 @@ from datatree import DataTree
 from packaging.version import Version
 
 import mesmer.core.utils
+from mesmer.testing import trend_data_1D, trend_data_2D
 
 
 def make_dummy_yearly_data(freq: str, calendar: str = "standard"):
@@ -524,3 +525,95 @@ def test_datatree_to_arraydict():
         ValueError, match="Dataset in node 'scen3' must have only one data variable"
     ):
         mesmer.core.utils._datatree_to_arraydict(dt)
+
+
+def test_stack_linear_regression_data():
+    n_ts, n_lat, n_lon = 30, 2, 3
+    member_dim = "member"
+    time_dim = "time"
+    stacking_dims = [time_dim, member_dim]
+    collapse_dim = "scenario"
+    stacked_dim = "sample"
+
+    d2D_1 = trend_data_2D(n_timesteps=n_ts, n_lat=n_lat, n_lon=n_lon)
+    d2D_2 = d2D_1 * 2
+    d2D_3 = d2D_1 * 3
+    d2D_4 = d2D_1 * 4
+    d2D_5 = d2D_1 * 5
+
+    leaf1 = xr.concat([d2D_1, d2D_2, d2D_3], dim=member_dim).assign_coords(
+        {member_dim: np.arange(3)}
+    )
+    leaf2 = xr.concat([d2D_4, d2D_5], dim=member_dim).assign_coords(
+        {member_dim: np.arange(2)}
+    )
+
+    target = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+
+    d1D_1 = trend_data_1D(n_timesteps=n_ts)
+    d1D_2 = d1D_1 * 2
+    d1D_3 = d1D_1 * 3
+    d1D_4 = d1D_1 * 4
+    predictors = DataTree.from_dict(
+        {
+            "pred1": DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2}),
+            "pred2": DataTree.from_dict({"scen1": d1D_3, "scen2": d1D_4}),
+        }
+    )
+
+    weights = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        target, exclude="cells"
+    )
+
+    predictors_stacked, target_stacked, weights_stacked = (
+        mesmer.core.utils.stack_linear_regression_data(
+            predictors,
+            target,
+            weights,
+            stacking_dims=stacking_dims,
+            collapse_dim=collapse_dim,
+            stacked_dim=stacked_dim,
+        )
+    )
+
+    n_samples = n_ts * (2 + 3)  # 2 members for scen1, 3 members for scen2
+
+    for pred in predictors_stacked.children:
+        da = predictors_stacked[pred].to_dataset().data
+        mesmer.core.utils._check_dataarray_form(
+            da, name="pred1", ndim=1, required_dims={"sample"}, shape=(n_samples,)
+        )
+
+    mesmer.core.utils._check_dataarray_form(
+        target_stacked.data,
+        ndim=2,
+        required_dims={"cells", "sample"},
+        shape=(n_lat * n_lon, n_samples),
+    )
+    mesmer.core.utils._check_dataarray_form(
+        weights_stacked.weights, ndim=1, required_dims={"sample"}, shape=(n_samples,)
+    )
+
+    # check if datasets align
+    assert xr.align(
+        target_stacked, predictors_stacked["pred1"].to_dataset(), join="exact"
+    ) == (target_stacked, predictors_stacked["pred1"].to_dataset())
+    assert xr.align(
+        target_stacked, predictors_stacked["pred2"].to_dataset(), join="exact"
+    ) == (target_stacked, predictors_stacked["pred2"].to_dataset())
+    assert xr.align(target_stacked, weights_stacked, join="exact") == (
+        target_stacked,
+        weights_stacked,
+    )
+
+    predictors_stacked, target_stacked, weights_stacked = (
+        mesmer.core.utils.stack_linear_regression_data(
+            predictors,
+            target,
+            None,
+            stacking_dims=stacking_dims,
+            collapse_dim=collapse_dim,
+            stacked_dim=stacked_dim,
+        )
+    )
+    assert weights_stacked is None, "Weights should be None if not provided"
