@@ -312,7 +312,7 @@ def _datatree_to_arraydict(dt: DataTree) -> dict[str, xr.DataArray]:
     ValueError
         If the dataset in a subtree has more than one data variable
     """
-    # TODO: temporary, should not be necessary in the future when DataTree can hold DataArrays
+    # TODO: temporary, should not be necessary once DataTree can hold DataArrays
     predictors_dict = {}
     for subtree in dt.subtree:
         if not subtree.is_empty:
