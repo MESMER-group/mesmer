@@ -114,7 +114,7 @@ def create_equal_scenario_weights_from_datatree(
     dt: DataTree, ens_dim: str = "member", exclude: Iterable[Hashable] | None = None
 ) -> DataTree:
     """
-    Create a DataTre isomorphic to ``dt`, holding the weights for each sceanrio to weight the ensemble members of each
+    Create a DataTree isomorphic to ``dt`, holding the weights for each scenario to weight the ensemble members of each
     scenario such that each scenario contributes equally to some fitting procedure.
     The weight of each member = 1 / number of members in the scenario, so weights = 1 / ds[ens_dim].size.
 
