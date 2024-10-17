@@ -1,9 +1,17 @@
-from collections.abc import Mapping
+import warnings
 
 import numpy as np
 import xarray as xr
+from datatree import DataTree
 
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form, _to_set
+from mesmer.core.utils import (
+    _check_dataarray_form,
+    _check_dataset_form,
+    _datatree_to_arraydict,
+    _to_set,
+)
+
+# TODO: deprecate predictor dicts?
 
 
 class LinearRegression:
@@ -14,7 +22,7 @@ class LinearRegression:
 
     def fit(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree,
         target: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
@@ -25,9 +33,9 @@ class LinearRegression:
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain
-            `dim`.
+        predictors : dict of xr.DataArray | DataTree
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`.
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
         dim : str
@@ -52,16 +60,17 @@ class LinearRegression:
 
     def predict(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree,
         exclude=None,
-    ):
+    ) -> xr.DataArray:
         """
         Predict using the linear model.
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+        predictors : dict of xr.DataArray | DataTree
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`.
         exclude : str or set of str, default: None
             Set of variables to exclude in the prediction. May include ``"intercept"``
             to initialize the prediction with 0.
@@ -71,6 +80,11 @@ class LinearRegression:
         prediction : xr.DataArray
             Returns predicted values.
         """
+
+        if not isinstance(predictors, dict | DataTree):
+            raise TypeError(
+                f"predictors should be a dict or DataTree, got {type(predictors)}."
+            )
 
         params = self.params
 
@@ -85,10 +99,11 @@ class LinearRegression:
             missing = "', '".join(missing)
             raise ValueError(f"Missing predictors: '{missing}'")
 
+        # TODO: should we even warn?
         if available_predictors - required_predictors:
             superfluous = sorted(available_predictors - required_predictors)
             superfluous = "', '".join(superfluous)
-            raise ValueError(f"Superfluous predictors: '{superfluous}'")
+            warnings.warn(f"Superfluous predictors: '{superfluous}', will be ignored.")
 
         if "intercept" in exclude:
             prediction = xr.zeros_like(params.intercept)
@@ -96,22 +111,29 @@ class LinearRegression:
             prediction = params.intercept
 
         for key in required_predictors:
-            prediction = prediction + predictors[key] * params[key]
+            predictor = (
+                predictors[key]
+                if isinstance(predictors, dict)
+                # NOTE: once we can store DataArrays in DataTrees this should not be necessary
+                else _datatree_to_arraydict(predictors)[key]
+            )
+            prediction = prediction + predictor * params[key]
 
         return prediction
 
     def residuals(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree,
         target: xr.DataArray,
-    ):
+    ) -> xr.DataArray:
         """
         Calculate the residuals of the fitted linear model
 
         Parameters
         ----------
         predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`.
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
 
@@ -182,12 +204,12 @@ class LinearRegression:
             Additional keyword arguments passed to ``xr.Dataset.to_netcf``
         """
 
-        params = self.params()
+        params = self.params
         params.to_netcdf(filename, **kwargs)
 
 
 def _fit_linear_regression_xr(
-    predictors: Mapping[str, xr.DataArray],
+    predictors: dict[str, xr.DataArray] | DataTree,
     target: xr.DataArray,
     dim: str,
     weights: xr.DataArray | None = None,
@@ -198,8 +220,9 @@ def _fit_linear_regression_xr(
 
     Parameters
     ----------
-    predictors : dict of xr.DataArray
-        A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+    predictors : dict of xr.DataArray | DataTree
+        A dict of DataArray objects used as predictors or a DataTree, holding each
+        predictor in a leaf. Each predictor must be 1D and contain `dim`.
     target : xr.DataArray
         Target DataArray. Must be 2D and contain `dim`.
     dim : str
@@ -217,8 +240,21 @@ def _fit_linear_regression_xr(
         individual DataArray.
     """
 
-    if not isinstance(predictors, Mapping):
-        raise TypeError(f"predictors should be a dict, got {type(predictors)}.")
+    if not isinstance(predictors, dict | DataTree):
+        raise TypeError(
+            f"predictors should be a dict or DataTree, got {type(predictors)}."
+        )
+
+    if isinstance(predictors, DataTree):
+        if predictors.depth > 1:
+            raise ValueError(
+                f"Predictors' DataTree must have a depth of 1, not {predictors.depth}."
+            )
+            # TODO maybe add something about stacking the data?
+
+        # extract dataarrays from the DataTree
+        # NOTE: once we can store DataArrays in DataTrees this should not be necessary
+        predictors = _datatree_to_arraydict(predictors)
 
     if ("weights" in predictors) or ("intercept" in predictors):
         raise ValueError(

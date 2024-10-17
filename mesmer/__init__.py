@@ -9,16 +9,17 @@ analyze the results.
 
 from importlib.metadata import version as _get_version
 
-from . import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
+from . import calibrate_mesmer, core, create_emulations, io, stats, testing
+from . import utils as old_utils
 from .core import _data as data
-from .core import geospatial, grid, mask, volc, weighted
+from .core import geospatial, grid, mask, utils, volc, weighted
 
 # "legacy" modules
 __all__ = [
     "calibrate_mesmer",
     "create_emulations",
     "io",
-    "utils",
+    "old_utils",
 ]
 
 # "new" "modules"
@@ -32,6 +33,7 @@ __all__ += [
     "testing",
     "volc",
     "weighted",
+    "utils",
 ]
 
 

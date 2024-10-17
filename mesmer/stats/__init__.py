@@ -1,12 +1,12 @@
 from mesmer.stats._auto_regression import (
-    _fit_auto_regression_scen_ens,
-    _select_ar_order_scen_ens,
     draw_auto_regression_correlated,
     draw_auto_regression_monthly,
     draw_auto_regression_uncorrelated,
     fit_auto_regression,
     fit_auto_regression_monthly,
+    fit_auto_regression_scen_ens,
     select_ar_order,
+    select_ar_order_scen_ens,
 )
 from mesmer.stats._gaspari_cohn import gaspari_cohn, gaspari_cohn_correlation_matrices
 from mesmer.stats._harmonic_model import fit_harmonic_model, predict_harmonic_model
@@ -27,8 +27,8 @@ from mesmer.stats._smoothing import lowess
 
 __all__ = [
     # auto regression
-    "_fit_auto_regression_scen_ens",
-    "_select_ar_order_scen_ens",
+    "fit_auto_regression_scen_ens",
+    "select_ar_order_scen_ens",
     "draw_auto_regression_correlated",
     "draw_auto_regression_uncorrelated",
     "fit_auto_regression",
@@ -40,6 +40,7 @@ __all__ = [
     "gaspari_cohn",
     # linear regression
     "LinearRegression",
+    "prep_linear_regression_data",
     # localized covariance
     "adjust_covariance_ar1",
     "find_localized_empirical_covariance",

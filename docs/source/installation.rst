@@ -5,6 +5,7 @@ Required dependencies
 ---------------------
 
 - Python (3.10 or later)
+- `filefinder <https://github.com/mathause/filefinder>`__
 - `dask <https://dask.org/>`__
 - `joblib <https://joblib.readthedocs.io/en/latest/>`__
 - `netcdf4 <https://unidata.github.io/netcdf4-python/>`__
@@ -18,6 +19,7 @@ Required dependencies
 - `scipy <https://scipy.org/>`__
 - `statsmodels <https://www.statsmodels.org/stable/index.html>`__
 - `xarray <http://xarray.pydata.org/>`__
+- `xarray-datatree <https://xarray-datatree.readthedocs.io/en/latest/index.html>`__
 
 Optional dependencies
 ---------------------
