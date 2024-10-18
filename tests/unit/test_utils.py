@@ -7,7 +7,7 @@ from packaging.version import Version
 import mesmer.core.utils
 
 
-def make_dummy_yearly_data(freq, calendar="standard"):
+def make_dummy_yearly_data(freq: str, calendar: str = "standard"):
     if freq == "YM":
         freq = "AS-JUL" if Version(pd.__version__) < Version("2.2") else "YS-JUL"
         time = xr.date_range(
@@ -17,7 +17,7 @@ def make_dummy_yearly_data(freq, calendar="standard"):
         time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
     data = xr.DataArray([1.0, 2.0, 3.0, 4.0, 5.0], dims=("time"), coords={"time": time})
-    return data
+    return data.rename("tas")
 
 
 def make_dummy_monthly_data(freq, calendar="standard"):
@@ -31,7 +31,7 @@ def make_dummy_monthly_data(freq, calendar="standard"):
         )
 
     data = xr.DataArray(np.ones(5 * 12), dims=("time"), coords={"time": time})
-    return data
+    return data.rename("tas")
 
 
 @pytest.mark.parametrize("freq_y", ["YM", "YS", "YE", "YS-JUL", "YS-NOV"])

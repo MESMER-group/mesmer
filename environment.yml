@@ -22,8 +22,12 @@ dependencies:
  - scipy
  - statsmodels>=0.13
  - xarray>=2023.04 # because pandas 2 is required
+ - xarray-datatree
 # for testing
  - black!=23
  - pytest
  - pytest-cov
  - ruff
+ - pip
+ - pip:
+      - https://github.com/mathause/filefinder/archive/refs/tags/v0.3.0.zip
