@@ -143,7 +143,7 @@ def test_collapse_datatree_into_dataset():
         .assign_coords({collapse_dim: np.array(["scen1"])})
     )
     xr.testing.assert_equal(res, expected)
-    
+
 
 def test_extract_single_dataarray_from_dt():
     da = trend_data_1D(n_timesteps=30).rename("tas")

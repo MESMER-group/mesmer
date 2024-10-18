@@ -1,6 +1,5 @@
 import warnings
 
-from distributed import variable
 import numpy as np
 import xarray as xr
 from datatree import DataTree
@@ -268,7 +267,9 @@ def _fit_linear_regression_xr(
         )
     else:
         predictors_concat = collapse_datatree_into_dataset(predictors, dim="predictor")
-        predictors_concat = predictors_concat.to_array().isel(variable=0).drop_vars("variable")
+        predictors_concat = (
+            predictors_concat.to_array().isel(variable=0).drop_vars("variable")
+        )
 
     _check_dataarray_form(target, required_dims=dim, name="target")
 

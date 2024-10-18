@@ -1,6 +1,7 @@
 import xarray as xr
 from datatree import DataTree
 
+
 def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
     """
     Extract a single DataArray from a DataTree node, holding one ``Dataset`` with one ``DataArray``.
