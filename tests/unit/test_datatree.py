@@ -145,55 +145,38 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(res, expected)
 
 
-def test_datatree_to_arraydict():
-    da1 = trend_data_1D(n_timesteps=30)
-    da2 = da1 * 2
-    da3 = da1 * 3
-
-    leaf1 = xr.concat([da1, da2, da3], dim="member").assign_coords(
-        {"member": np.arange(3)}
-    )
-    leaf2 = xr.concat([da1, da2], dim="member").assign_coords({"member": np.arange(2)})
-
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
-
-    arraydict = mesmer.datatree._datatree_to_arraydict(dt)
-
-    assert isinstance(arraydict, dict)
-    assert len(arraydict) == 2
-    assert "scen1" in arraydict
-    assert "scen2" in arraydict
-    assert isinstance(arraydict["scen1"], xr.DataArray)
-    assert isinstance(arraydict["scen2"], xr.DataArray)
-
-    xr.testing.assert_equal(arraydict["scen1"], leaf1)
-    xr.testing.assert_equal(arraydict["scen2"], leaf2)
-
-    # nested DataTree works
-    dt = DataTree()
-    dt["scen1/sub_scen1"] = DataTree(leaf1)
-    dt["scen1/sub_scen2"] = DataTree(leaf2)
-    dt["scen2"] = DataTree(leaf2)
-
-    arraydict = mesmer.datatree._datatree_to_arraydict(dt)
-    assert isinstance(arraydict, dict)
-    assert len(arraydict) == 3
-    assert "sub_scen1" in arraydict
-    assert "sub_scen2" in arraydict
-    assert "scen2" in arraydict
-
-    xr.testing.assert_equal(arraydict["sub_scen1"], leaf1)
-    xr.testing.assert_equal(arraydict["sub_scen2"], leaf2)
-    xr.testing.assert_equal(arraydict["scen2"], leaf2)
-
-    # more than one datavariable
-    leaf3 = xr.Dataset({"tas": da1, "tas2": da2})
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
-
+def test_assert_dt_depth():
     with pytest.raises(
-        ValueError, match="Dataset in node 'scen3' must have only one data variable"
+        ValueError, match="DataTree 'DataTree' must have a depth of 1, not 0."
     ):
-        mesmer.datatree._datatree_to_arraydict(dt)
+        mesmer.datatree._assert_dt_depth(DataTree(), 1)
+
+    # passes
+    mesmer.datatree._assert_dt_depth(DataTree(), 0)
+
+
+def test_extract_single_dataarray_from_dt():
+    da = trend_data_1D(n_timesteps=30).rename("tas")
+    dt = DataTree.from_dict({"/": xr.Dataset({"tas": da})})
+
+    res = mesmer.datatree._extract_single_dataarray_from_dt(dt)
+    xr.testing.assert_equal(res, da)
+
+    dt = DataTree.from_dict({"/": xr.Dataset({"tas": da, "tas2": da})})
+    with pytest.raises(
+        ValueError, match="DataTree must have exactly one data variable."
+    ):
+        res = mesmer.datatree._extract_single_dataarray_from_dt(dt)
+
+    dt = DataTree.from_dict(
+        {"scen1": xr.Dataset({"tas": da, "tas2": da}), "scen2": xr.Dataset({"tas": da})}
+    )
+
+    with pytest.raises(ValueError, match="DataTree must only contain one node."):
+        mesmer.datatree._extract_single_dataarray_from_dt(dt)
+
+    with pytest.raises(ValueError, match="DataTree must contain data."):
+        mesmer.datatree._extract_single_dataarray_from_dt(DataTree())
 
 
 def test_stack_linear_regression_datatrees():

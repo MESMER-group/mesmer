@@ -4,7 +4,11 @@ import numpy as np
 import xarray as xr
 from datatree import DataTree
 
-from mesmer.core.datatree import _datatree_to_arraydict
+from mesmer.core.datatree import (
+    _assert_dt_depth,
+    _extract_single_dataarray_from_dt,
+    collapse_datatree_into_dataset,
+)
 from mesmer.core.utils import (
     _check_dataarray_form,
     _check_dataset_form,
@@ -110,15 +114,15 @@ class LinearRegression:
             prediction = params.intercept
 
         for key in required_predictors:
-            predictor = (
-                predictors[key]
-                if isinstance(predictors, dict)
-                # NOTE: once we can store DataArrays in DataTrees this should not be necessary
-                else _datatree_to_arraydict(predictors)[key]
-            )
-            prediction = prediction + predictor * params[key]
+            prediction = predictors[key] * params[key] + prediction
 
-        return prediction
+        prediction = (
+            _extract_single_dataarray_from_dt(prediction)
+            if isinstance(prediction, DataTree)
+            else prediction
+        )
+
+        return prediction.T.rename("prediction")
 
     def residuals(
         self,
@@ -147,7 +151,7 @@ class LinearRegression:
 
         residuals = target - prediction
 
-        return residuals
+        return residuals.rename("residuals")
 
     @property
     def params(self):
@@ -245,15 +249,7 @@ def _fit_linear_regression_xr(
         )
 
     if isinstance(predictors, DataTree):
-        if predictors.depth > 1:
-            raise ValueError(
-                f"Predictors' DataTree must have a depth of 1, not {predictors.depth}."
-            )
-            # TODO maybe add something about stacking the data?
-
-        # extract dataarrays from the DataTree
-        # NOTE: once we can store DataArrays in DataTrees this should not be necessary
-        predictors = _datatree_to_arraydict(predictors)
+        _assert_dt_depth(predictors, 1, "predictors")
 
     if ("weights" in predictors) or ("intercept" in predictors):
         raise ValueError(
@@ -264,14 +260,22 @@ def _fit_linear_regression_xr(
         raise ValueError("dim cannot currently be 'predictor'.")
 
     for key, pred in predictors.items():
+        pred = (
+            _extract_single_dataarray_from_dt(pred)
+            if isinstance(pred, DataTree)
+            else pred
+        )
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
 
-    predictors_concat = xr.concat(
-        tuple(predictors.values()),
-        dim="predictor",
-        join="exact",
-        coords="minimal",
-    )
+    if isinstance(predictors, dict):
+        predictors_concat = xr.concat(
+            tuple(predictors.values()),
+            dim="predictor",
+            join="exact",
+            coords="minimal",
+        )
+    else:
+        predictors_concat = collapse_datatree_into_dataset(predictors, dim="predictor")
 
     _check_dataarray_form(target, required_dims=dim, name="target")
 

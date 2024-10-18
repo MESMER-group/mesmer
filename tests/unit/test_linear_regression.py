@@ -370,7 +370,7 @@ def test_linear_regression_errors(lr_method_or_function):
 
     # test DataTree depth
     with pytest.raises(
-        ValueError, match="Predictors' DataTree must have a depth of 1, not 2."
+        ValueError, match="DataTree 'predictors' must have a depth of 1, not 2."
     ):
         lr_method_or_function(
             DataTree.from_dict({"scen0": DataTree.from_dict({"pred1": pred1})}),

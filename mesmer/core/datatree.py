@@ -2,9 +2,38 @@ import xarray as xr
 from datatree import DataTree
 
 
+def _assert_dt_depth(dt: DataTree, depth: int, name: str = "DataTree") -> None:
+    """
+    Assert that a DataTree has a certain depth.
+    """
+    if not dt.depth == depth:
+        raise ValueError(
+            f"DataTree '{name}' must have a depth of {depth}, not {dt.depth}."
+        )
+
+
+def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
+    """
+    Extract a single DataArray from a DataTree node, holding one ``Dataset`` with one ``DataArray``.
+    """
+    # assert only one node in dt
+    if not len(list(dt.subtree)) == 1:
+        raise ValueError("DataTree must only contain one node.")
+    if not dt.has_data:
+        raise ValueError("DataTree must contain data.")
+
+    ds = dt.to_dataset()
+    if len(ds.data_vars) != 1:
+        raise ValueError("DataTree must have exactly one data variable.")
+
+    varname = list(ds.data_vars)[0]
+    da = ds.to_array().isel(variable=0).drop_vars("variable")
+    return da.rename(varname)
+
+
 def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
     """
-    Take a ``DataTree`` and collapse it into a single ``xr.Dataset`` along dim.
+    Take a ``DataTree`` and collapse **all subtrees** in it into a single ``xr.Dataset`` along dim.
     All datasets in the ``DataTree`` must have the same dimensions and each dimension must have a coordinate.
 
     Parameters
@@ -48,43 +77,6 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
     )
 
     return ds
-
-
-def _datatree_to_arraydict(dt: DataTree) -> dict[str, xr.DataArray]:
-    """
-    Convert a DataTree to a dict of xr.DataArrays
-
-    Parameters
-    ----------
-    dt : DataTree
-        DataTree to convert. Note that each subtree should have a dataset with only one data variable.
-        And every node needs to have a name
-
-    Returns
-    -------
-    dict of xr.DataArray
-        Dictionary of xr.DataArrays
-
-    Raises
-    ------
-    ValueError
-        If the dataset in a subtree has more than one data variable
-    """
-    # TODO: temporary, should not be necessary once DataTree can hold DataArrays
-    predictors_dict = {}
-    for subtree in dt.subtree:
-        if not subtree.is_empty:
-            ds = subtree.to_dataset()
-            data_vars = list(ds.keys())
-
-            if len(data_vars) > 1:
-                raise ValueError(
-                    f"Dataset in node '{subtree.name}' must have only one data variable."
-                )
-
-            predictors_dict[subtree.name] = ds[data_vars[0]]
-
-    return predictors_dict
 
 
 def stack_linear_regression_datatrees(
