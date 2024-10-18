@@ -7,9 +7,9 @@ from datatree import DataTree
 from mesmer.core.utils import (
     _check_dataarray_form,
     _check_dataset_form,
-    _datatree_to_arraydict,
     _to_set,
 )
+from mesmer.core.datatree import _datatree_to_arraydict
 
 # TODO: deprecate predictor dicts?
 
@@ -99,7 +99,6 @@ class LinearRegression:
             missing = "', '".join(missing)
             raise ValueError(f"Missing predictors: '{missing}'")
 
-        # TODO: should we even warn?
         if available_predictors - required_predictors:
             superfluous = sorted(available_predictors - required_predictors)
             superfluous = "', '".join(superfluous)

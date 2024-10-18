@@ -250,8 +250,8 @@ def test_calibrate_mesmer(
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.stats.prep_linear_regression_data(
-            predictors, target, ["member", "time"], weights
+        mesmer.core.datatree.test_stack_linear_regression_datatrees(
+            predictors, target, weights, stacking_dims=["member", "time"]
         )
     )
 
@@ -267,7 +267,7 @@ def test_calibrate_mesmer(
     # train local variability module
     # train local AR process
     tas_stacked_residuals = local_forced_response_lr.residuals(
-        predictors=predictors, target=target_stacked.tas
+        predictors=predictors_stacked, target=target_stacked.tas
     ).T
 
     tas_un_stacked_residuals = tas_stacked_residuals.set_index(
