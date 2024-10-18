@@ -203,7 +203,7 @@ def _check_dataarray_form(
     *,
     ndim: int | tuple[int, ...] | None = None,
     required_dims: str | set[str] = set(),
-    shape: tuple[int] | None = None,
+    shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
 
