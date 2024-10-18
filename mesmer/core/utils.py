@@ -211,7 +211,7 @@ def _check_dataarray_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    ndim : int | tuple of ints optional
+    ndim : int | tuple of int, optional
         Number of required dimensions, can be a tuple of int if several are possible.
     required_dims: str, set of str, optional
         Names of dims that are required for obj
