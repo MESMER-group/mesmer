@@ -250,7 +250,7 @@ def test_calibrate_mesmer(
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.core.datatree.test_stack_linear_regression_datatrees(
+        mesmer.core.datatree.stack_linear_regression_datatrees(
             predictors, target, weights, stacking_dims=["member", "time"]
         )
     )

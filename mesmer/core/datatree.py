@@ -1,6 +1,7 @@
 import xarray as xr
 from datatree import DataTree
 
+
 def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
     """
     Take a ``DataTree`` and collapse it into a single ``xr.Dataset`` along dim.
@@ -86,7 +87,7 @@ def _datatree_to_arraydict(dt: DataTree) -> dict[str, xr.DataArray]:
     return predictors_dict
 
 
-def test_stack_linear_regression_datatrees(
+def stack_linear_regression_datatrees(
     predictors: DataTree,
     target: DataTree,
     weights: DataTree | None,
@@ -148,9 +149,7 @@ def test_stack_linear_regression_datatrees(
         # 1) broadcast to target
         pred_broadcast = subtree.broadcast_like(target, exclude=exclude_dim)
         # 2) collapsed into DataSets
-        predictor_ds = collapse_datatree_into_dataset(
-            pred_broadcast, dim=collapse_dim
-        )
+        predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
         # 3) stacked
         predictors_stacked[key] = DataTree(
             predictor_ds.stack(

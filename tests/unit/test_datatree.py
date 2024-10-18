@@ -7,11 +7,12 @@ import mesmer
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
+
 def test_collapse_datatree_into_dataset():
     n_ts = 30
     da1 = trend_data_1D(n_timesteps=n_ts).rename("tas")
-    da2 = da1*2
-    da3 = da1*3
+    da2 = da1 * 2
+    da3 = da1 * 3
 
     leaf1 = xr.concat([da1, da2, da3], dim="member").assign_coords(
         {"member": np.arange(3)}
@@ -234,7 +235,7 @@ def test_stack_linear_regression_datatrees():
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_linear_regression_data(
+        mesmer.datatree.stack_linear_regression_datatrees(
             predictors,
             target,
             weights,
@@ -275,7 +276,7 @@ def test_stack_linear_regression_datatrees():
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_linear_regression_data(
+        mesmer.datatree.stack_linear_regression_datatrees(
             predictors,
             target,
             None,

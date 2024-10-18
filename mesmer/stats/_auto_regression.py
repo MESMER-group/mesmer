@@ -7,12 +7,13 @@ import scipy
 import xarray as xr
 from datatree import DataTree, map_over_subtree
 
+from mesmer.core.datatree import collapse_datatree_into_dataset
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
 )
-from mesmer.core.datatree import collapse_datatree_into_dataset
+
 
 def select_ar_order_scen_ens(
     obs: list[xr.DataArray] | DataTree,
