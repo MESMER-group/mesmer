@@ -1,11 +1,11 @@
 import warnings
 
+from distributed import variable
 import numpy as np
 import xarray as xr
 from datatree import DataTree
 
 from mesmer.core.datatree import (
-    _assert_dt_depth,
     _extract_single_dataarray_from_dt,
     collapse_datatree_into_dataset,
 )
@@ -84,11 +84,6 @@ class LinearRegression:
         prediction : xr.DataArray
             Returns predicted values.
         """
-
-        if not isinstance(predictors, dict | DataTree):
-            raise TypeError(
-                f"predictors should be a dict or DataTree, got {type(predictors)}."
-            )
 
         params = self.params
 
@@ -248,9 +243,6 @@ def _fit_linear_regression_xr(
             f"predictors should be a dict or DataTree, got {type(predictors)}."
         )
 
-    if isinstance(predictors, DataTree):
-        _assert_dt_depth(predictors, 1, "predictors")
-
     if ("weights" in predictors) or ("intercept" in predictors):
         raise ValueError(
             "A predictor with the name 'weights' or 'intercept' is not allowed"
@@ -276,6 +268,7 @@ def _fit_linear_regression_xr(
         )
     else:
         predictors_concat = collapse_datatree_into_dataset(predictors, dim="predictor")
+        predictors_concat = predictors_concat.to_array().isel(variable=0).drop_vars("variable")
 
     _check_dataarray_form(target, required_dims=dim, name="target")
 

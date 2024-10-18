@@ -143,17 +143,7 @@ def test_collapse_datatree_into_dataset():
         .assign_coords({collapse_dim: np.array(["scen1"])})
     )
     xr.testing.assert_equal(res, expected)
-
-
-def test_assert_dt_depth():
-    with pytest.raises(
-        ValueError, match="DataTree 'DataTree' must have a depth of 1, not 0."
-    ):
-        mesmer.datatree._assert_dt_depth(DataTree(), 1)
-
-    # passes
-    mesmer.datatree._assert_dt_depth(DataTree(), 0)
-
+    
 
 def test_extract_single_dataarray_from_dt():
     da = trend_data_1D(n_timesteps=30).rename("tas")

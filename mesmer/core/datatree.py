@@ -1,17 +1,6 @@
 import xarray as xr
 from datatree import DataTree
 
-
-def _assert_dt_depth(dt: DataTree, depth: int, name: str = "DataTree") -> None:
-    """
-    Assert that a DataTree has a certain depth.
-    """
-    if not dt.depth == depth:
-        raise ValueError(
-            f"DataTree '{name}' must have a depth of {depth}, not {dt.depth}."
-        )
-
-
 def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
     """
     Extract a single DataArray from a DataTree node, holding one ``Dataset`` with one ``DataArray``.
