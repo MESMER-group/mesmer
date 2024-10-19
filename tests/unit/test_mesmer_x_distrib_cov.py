@@ -102,7 +102,7 @@ def test_distrib_cov_init():
     np.testing.assert_equal(dist.data_targ_addtest, data_targ_addtest)
     np.testing.assert_equal(dist.data_preds_addtest, data_preds_addtest)
     assert dist.n_sample == n
-    assert dist.expr_fit == expression
+    assert dist.expr_fit is expression
     assert dist.add_test  # is True
     assert dist.threshold_min_proba == threshold_min_proba
     assert dist.boundaries_params == boundaries_params
