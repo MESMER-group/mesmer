@@ -38,7 +38,7 @@ def ignore_warnings(func):
     return wrapper
 
 
-# TODO: would want to switch this, have a distrib class that takes xarrays and have a training func that potentially works on xarrays
+# TODO: enable distrib class and training func for xarray objs
 def xr_train_distrib(
     predictors,
     target,
