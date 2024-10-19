@@ -38,6 +38,7 @@ def ignore_warnings(func):
     return wrapper
 
 
+# TODO: enable distrib class and training func for xarray objs
 def xr_train_distrib(
     predictors,
     target,
@@ -293,11 +294,13 @@ class distrib_cov:
         ----------
         data_targ : numpy array 1D
             Sample of the target for fit of a conditional distribution
+            Normally the timeseries of the target at one gridpoint.
 
         data_pred : dict of 1D vectors
             Covariates for the conditional distribution. Each key must be the exact name
             of the inputs used in 'expr_fit', and the values must be aligned with the
             values in 'data_targ'.
+            Normally the timeseries of the global mean predictor.
 
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
@@ -353,7 +356,8 @@ class distrib_cov:
             * type_fun_optim: string, default: "NLL"
                 If 'NLL', will optimize using the negative log likelihood. If 'fcNLL',
                 will use the full conditional negative log likelihood based on the
-                stopping rule.
+                stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
+                and `exclude_trigger` only apply to 'fcNLL'.
 
             * weighted_NLL: boolean, default: False
                 If True, the optimization function will based on the weighted sum of the
@@ -468,6 +472,8 @@ class distrib_cov:
             raise ValueError("NaN or infinite values in target of fit")
         self.data_pred = data_pred
 
+        # TODO: raise error if data_pred is not a dict
+
         if np.any(
             [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
         ) or np.any(
@@ -540,21 +546,19 @@ class distrib_cov:
         elif isinstance(options_solver, dict):
             default_options_solver.update(options_solver)
         else:
-            raise ValueError("options_solver must be a dictionary")
+            raise ValueError("`options_solver` must be a dictionary")
         self.xtol_req = default_options_solver["xtol_req"]
         self.ftol_req = default_options_solver["ftol_req"]
         self.maxiter = default_options_solver["maxiter"]
         self.maxfev = default_options_solver["maxfev"]
         self.method_fit = default_options_solver["method_fit"]
-        if self.method_fit in [
-            "dogleg",
-            "trust-ncg",
-            "trust-krylov",
-            "trust-exact",
-            "COBYLA",
-            "SLSQP",
-            "CG",
-            "Newton-CG",
+        if self.method_fit not in [
+            "BFGS",
+            "L-BFGS-B",
+            "Nelder-Mead",
+            "Powell",
+            "TNC",
+            "trust-constr",
         ]:
             raise ValueError("method for this fit not prepared, to avoid")
         else:
@@ -593,6 +597,7 @@ class distrib_cov:
             raise ValueError("`options_optim` must be a dictionary")
 
         # preparing weights
+        # TODO: move this out of init or think of more flexible bins
         self.weighted_NLL = default_options_optim["weighted_NLL"]
         self.weights_driver = self.get_weights()
 
@@ -614,32 +619,64 @@ class distrib_cov:
         ):
             raise ValueError(
                 "Lack of consistency on the options 'type_fun_optim',"
-                " 'threshold_stopping_rule' and 'ind_year_thres', not sure if the"
-                " stopping rule will be employed"
+                " 'threshold_stopping_rule' and 'ind_year_thres', threshold_stopping_rule,"
+                " and 'ind_year_thres' must be used together, and only for 'fcNLL'",
             )
 
+    # TODO: don't do this in init. Give the user the option to either use this function or give their own weigths
+    # as soon as we switch the xarray wrapper into here and the user actually initialized this class themselves
     def get_weights(self, n_bins_density=40):
 
         if self.weighted_NLL:
             weights_driver = self._get_weights_nll(n_bins_density=n_bins_density)
         else:
             weights_driver = np.ones(self.data_targ.shape)
-
+        # TODO: move the normalization into the function
         return weights_driver / np.sum(weights_driver)
 
     def _get_weights_nll(self, n_bins_density=40):
+        """
+        Generate weights for the sample, based on the inverse of the density of the
+        predictors. More precisely, the density of the predictors is measured by a
+        multidimensional histogram where each dimension is one of the predictors. The
+        histogram is then smoothed by a regular grid interpolator to give the density
+        of the predictors in this "predictor space". Subsequently, the weights are
+        the inverse of this density of the predictors. Consequently, Samples in regions
+        of this space with low densitiy will have higher weights, this is, "unusual" samples
+        will have more weight.
+
+        Parameters
+        ----------
+        n_bins_density : int, default: 40
+            Number of bins used to calculate the density of the predictors.
+
+        Returns
+        -------
+        weights_driver : numpy array 1D
+            Weights for the sample, based on the inverse of the density of the
+            predictors.
+
+        Example
+        -------
+        TODO
+
+        """
 
         # if no predictors, straightforward
         if len(self.data_pred) == 0:
-            # TODO: isn't data_pred a dict and does therefore not have a shape?
-            return np.ones(self.data_pred.shape)
+            # TODO: isn't data_pred a dict and does therefore not have a shape? Yes. Also it is empty.
+            # TODO: Do we want to allow no predictor?
+            return np.ones(self.data_targ.shape)
 
         # explode data_pred dictionary into a single array for all predictors
         tmp = np.array(list(self.data_pred.values())).T
 
         # assessing limits on each axis
+        # TODO *nan*min/max should not be necessary bc we already checked for nan values in the data?
         mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
 
+        # TODO: at the moment bins == edges, either change bins to edges and do n_bins_density + 1
+        # or change bins = n_bins_density in histogramdd
         bins = np.linspace(
             (mn - 0.05 * (mx - mn)),
             (mx + 0.05 * (mx - mn)),
@@ -649,11 +686,20 @@ class distrib_cov:
         # interpolating over whole region
         gmt_hist, edges = np.histogramdd(sample=tmp, bins=bins.T)
 
-        gmt_bins_center = [0.5 * (edge[1:] + edges[:-1]) for edge in edges]
-        interp = RegularGridInterpolator(points=gmt_bins_center, values=gmt_hist)
-        weights_driver = 1 / interp(tmp)  # inverse of density
+        gmt_bins_center = [0.5 * (edge[1:] + edge[:-1]) for edge in edges]
 
-        return weights_driver
+        # TODO: add bounds_error=False, fill_value=None (extrapolates the values outside the grid)
+        interp = RegularGridInterpolator(
+            points=gmt_bins_center,
+            values=gmt_hist,
+            method="linear",
+            bounds_error=False,
+            fill_value=None,
+        )
+        # evaluate interpolated density at datapoints
+        density = interp(tmp)
+
+        return 1 / density  # inverse of density
 
     def _test_coeffs_in_bounds(self, values_coeffs):
 
@@ -1246,6 +1292,8 @@ class distrib_cov:
         return self.n_coeffs * np.log(self.n_sample) / self.n_sample - 2 * self.loglike(
             distrib
         )
+
+    # TODO: remove /self.n_sample? bc weights are already normalized
 
     def crps(self, coeffs):
         # ps.crps_quadrature cannot be applied on conditional distributions, thu
