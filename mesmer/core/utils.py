@@ -1,4 +1,5 @@
 import warnings
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
@@ -22,7 +23,7 @@ def create_equal_dim_names(dim, suffixes):
     return tuple(f"{dim}{suffix}" for suffix in suffixes)
 
 
-def _minimize_local_discrete(func, sequence, **kwargs):
+def _minimize_local_discrete(func, sequence: Iterable, **kwargs):
     """find the local minimum for a function that consumes discrete input
 
     Parameters
@@ -150,7 +151,7 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: str | set[str] = set(),
+    required_vars: str | set[str] | None = set(),
     optional_vars: str | set[str] = set(),
     requires_other_vars: bool = False,
 ):
@@ -199,9 +200,9 @@ def _check_dataarray_form(
     obj,
     name: str = "obj",
     *,
-    ndim: int = None,
+    ndim: int | tuple[int, ...] | None = None,
     required_dims: str | set[str] = set(),
-    shape=None,
+    shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
 
@@ -209,7 +210,7 @@ def _check_dataarray_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    ndim, int, optional
+    ndim : int | tuple of int, optional
         Number of required dimensions, can be a tuple of int if several are possible.
     required_dims: str, set of str, optional
         Names of dims that are required for obj

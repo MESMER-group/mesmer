@@ -4,6 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
+from datatree import DataTree
 
 import mesmer
 from mesmer.testing import trend_data_1D, trend_data_2D
@@ -87,10 +88,16 @@ def test_lr_predict(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time")
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
 
     result = lr.predict({"tas": tas})
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time")).rename("tas")
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict(DataTree.from_dict({"tas": tas}))
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time")).rename("tas")
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
@@ -115,11 +122,22 @@ def test_lr_predict_missing_superfluous():
     with pytest.raises(ValueError, match="Missing predictors: 'tas'"):
         lr.predict({"tas2": None})
 
-    with pytest.raises(ValueError, match="Superfluous predictors: 'something else'"):
-        lr.predict({"tas": None, "tas2": None, "something else": None})
+    with pytest.warns(match="Superfluous predictors: 'something else'"):
+        lr.predict({"tas": 1, "tas2": 2, "something else": None})
 
-    with pytest.raises(ValueError, match="Superfluous predictors: 'bar', 'foo'"):
-        lr.predict({"tas": None, "tas2": None, "foo": None, "bar": None})
+    with pytest.warns(match="Superfluous predictors: 'bar', 'foo'"):
+        lr.predict({"tas": 1, "tas2": 2, "foo": None, "bar": None})
+
+    with pytest.warns(match="Superfluous predictors: 'tas2'"):
+        lr.predict({"tas": 1, "tas2": 2}, exclude="tas2")
+
+    with pytest.warns(match="Superfluous predictors: 'tas2'"):
+        lr.predict(
+            DataTree.from_dict(
+                {"tas": xr.Dataset({"tas": 1}), "tas2": xr.Dataset({"tas2": 2})}
+            ),
+            exclude="tas2",
+        )
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
@@ -151,6 +169,41 @@ def test_lr_predict_exclude(as_2D):
     xr.testing.assert_equal(result, expected)
 
     result = lr.predict({}, exclude={"tas", "tas2"})
+    expected = xr.DataArray([5], dims="x")
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_lr_predict_exclude_dt(as_2D):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+
+    result = lr.predict(DataTree.from_dict({"tas": tas}), exclude="tas2")
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict(DataTree.from_dict({"tas": tas}), exclude={"tas2"})
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict(DataTree.from_dict({}), exclude={"tas", "tas2"})
     expected = xr.DataArray([5], dims="x")
     expected = expected if as_2D else expected.squeeze()
 
@@ -200,6 +253,27 @@ def test_LR_residuals(as_2D):
     target = target if as_2D else target.squeeze()
 
     result = lr.residuals({"tas": tas}, target)
+    expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"))
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(expected, result)
+
+
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_LR_residuals_dt(as_2D):
+
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [0])}
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    target = xr.DataArray([[5, 8, 0]], dims=("x", "time"))
+    target = target if as_2D else target.squeeze()
+
+    result = lr.residuals(DataTree.from_dict({"tas": tas}), target)
     expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"))
     expected = expected if as_2D else expected.squeeze()
 
@@ -287,6 +361,20 @@ def test_linear_regression_errors(lr_method_or_function):
 
     with pytest.raises(ValueError, match="dim cannot currently be 'predictor'."):
         lr_method_or_function({"pred0": pred0}, tgt, dim="predictor")
+
+    # test predictors have to be dict or DataTree
+    with pytest.raises(
+        TypeError, match="predictors should be a dict or DataTree, got <class 'list'>."
+    ):
+        lr_method_or_function([pred0, pred1], tgt, dim="time")
+
+    # test DataTree depth
+    with pytest.raises(ValueError, match="DataTree must only contain one node."):
+        lr_method_or_function(
+            DataTree.from_dict({"scen0": DataTree.from_dict({"pred1": pred1})}),
+            tgt,
+            dim="time",
+        )
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)

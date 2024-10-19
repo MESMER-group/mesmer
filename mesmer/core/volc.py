@@ -1,6 +1,7 @@
 import warnings
 
 import xarray as xr
+from datatree import DataTree
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 from mesmer.core.utils import _check_dataarray_form
@@ -98,7 +99,7 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
     # TODO: name of 'aod'
     lr.fit(
-        predictors={"aod": aod},
+        predictors=DataTree(aod, name="aod"),
         target=tas_residuals,
         dim=dim,
         fit_intercept=False,
