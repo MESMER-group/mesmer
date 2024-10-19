@@ -107,7 +107,7 @@ def test_distrib_cov_init():
     assert dist.expr_fit is expression
     assert dist.add_test  # is True
     assert dist.threshold_min_proba == threshold_min_proba
-    assert dist.boundaries_params == boundaries_params
+    assert dist.boundaries_params == {'loc': [-10, 10],'scale': [0, 1.0]} # -1 -> 0 scince no negative values allowed
     assert dist.boundaries_coeffs == boundaries_coeffs
     assert dist.func_first_guess is None
     assert dist.n_coeffs == 2
