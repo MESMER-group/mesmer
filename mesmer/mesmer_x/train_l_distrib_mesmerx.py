@@ -616,8 +616,8 @@ class distrib_cov:
         ):
             raise ValueError(
                 "Lack of consistency on the options 'type_fun_optim',"
-                " 'threshold_stopping_rule' and 'ind_year_thres', threshold_stopping_rule",
-                "and 'ind_year_thres' must be used together, and only for 'fcNLL'",
+                " 'threshold_stopping_rule' and 'ind_year_thres', threshold_stopping_rule,"
+                " and 'ind_year_thres' must be used together, and only for 'fcNLL'",
             )
 
     def get_weights(self, n_bins_density=40):
