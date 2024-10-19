@@ -18,7 +18,7 @@ def test_distrib_cov_init_all_default():
     np.testing.assert_equal(dist.data_pred, {"tas": pred})
     np.testing.assert_equal(dist.weights_driver, np.ones(n) / n)
     assert dist.n_sample == n
-    assert dist.expr_fit == expression
+    assert dist.expr_fit is expression
     assert not dist.add_test
     assert dist.data_targ_addtest is None
     assert dist.data_preds_addtest is None
