@@ -56,7 +56,7 @@ def test_distrib_cov_init():
     data_targ_addtest = rng.normal(loc=2 * pred, scale=0.1, size=n)
     data_preds_addtest = {"tas": np.linspace(0, 0.9, n)}
     threshold_min_proba = 0.1
-    boundaries_params = {"loc": [-10, 10], "scale": [0, 1]}
+    boundaries_params = {"loc": [-10, 10], "scale": [-1, 1]}
     boundaries_coeffs = {"c1": [0, 5], "c2": [0, 1]}
     first_guess = np.array([1, 0.1])
     func_first_guess = None
