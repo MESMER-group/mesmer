@@ -77,7 +77,13 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
 
 
 def find_localized_empirical_covariance(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
+    data,
+    weights,
+    localizer,
+    dim,
+    k_folds,
+    equal_dim_suffixes=("_i", "_j"),
+    allow_singluar=False,
 ):
     """determine localized empirical covariance by cross validation
 
@@ -98,6 +104,9 @@ def find_localized_empirical_covariance(
     equal_dim_suffixes : tuple of str, default: ("_i", "_j")
         Suffixes to add to the the name of ``dim`` for the covariance array
         (xr.DataArray cannot have two dimensions with the same name).
+    allow_singluar : bool, default: False
+        If True, allow singular matrices to be used in the cross validation. In this case,
+        the method of decomposition is switched from cholesky to eigh and a warning is emitted.
 
     Returns
     -------
@@ -129,7 +138,11 @@ def find_localized_empirical_covariance(
         _find_localized_empirical_covariance_np,
         data,
         weights,
-        kwargs={"localizer": localizer, "k_folds": k_folds},
+        kwargs={
+            "localizer": localizer,
+            "k_folds": k_folds,
+            "allow_singluar": allow_singluar,
+        },
         input_core_dims=[all_dims, [dim]],
         output_core_dims=([], out_dims, out_dims),
     )
@@ -145,7 +158,13 @@ def find_localized_empirical_covariance(
 
 
 def find_localized_empirical_covariance_monthly(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
+    data,
+    weights,
+    localizer,
+    dim,
+    k_folds,
+    equal_dim_suffixes=("_i", "_j"),
+    allow_singluar=False,
 ):
     """determine localized empirical covariance by cross validation for each month. `data`
     should be the residuals of the cyclo-stationary AR(1) process, see
@@ -170,6 +189,9 @@ def find_localized_empirical_covariance_monthly(
     equal_dim_suffixes : tuple of str, default: ("_i", "_j")
         Suffixes to add to the the name of ``dim`` for the covariance array
         (xr.DataArray cannot have two dimensions with the same name).
+    allow_singluar : bool, default: False
+        If True, allow singular matrices to be used in the cross validation. In this case,
+        the method of decomposition is switched from cholesky to eigh and a warning is emitted.
 
     Returns
     -------
@@ -199,6 +221,7 @@ def find_localized_empirical_covariance_monthly(
             dim=dim,
             k_folds=k_folds,
             equal_dim_suffixes=equal_dim_suffixes,
+            allow_singluar=allow_singluar,
         )
         localized_ecov.append(res)
 
@@ -206,7 +229,9 @@ def find_localized_empirical_covariance_monthly(
     return xr.concat(localized_ecov, dim=month)
 
 
-def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
+def _find_localized_empirical_covariance_np(
+    data, weights, localizer, k_folds, allow_singluar
+):
     """determine localized empirical covariance by cross validation
 
     Parameters
@@ -221,6 +246,9 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
     k_folds : int
         Number of folds to use for cross validation.
+    allow_singluar : bool
+        If True, allow singular matrices to be used in the cross validation. In this case,
+        the method of decomposition is switched from cholesky to eigh and a warning is emitted.
 
     Returns
     -------
@@ -250,13 +278,16 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     # start again. Better to stop once min is reached (to limit computational effort
     # and singular matrices).
 
+    # start with cholesky decomposition
+    # function returns method and can switch to eigh() if cov is singular
     localization_radius = _minimize_local_discrete(
-        _ecov_crossvalidation,
+        _EcovCrossvalidation(method="cholesky").crossvalidate,
         localization_radii,
         data=data,
         weights=weights,
         localizer=localizer,
         k_folds=k_folds,
+        allow_singluar=allow_singluar,
     )
 
     covariance = np.cov(data, rowvar=False, aweights=weights)
@@ -265,45 +296,71 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
-def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
-    """k-fold crossvalidation for a single localization radius"""
+class _EcovCrossvalidation:
+    # we organize this as a class so we can store `method` as state
+    # ensures we use `eigh` after `cholesky` fails for one localization
+    # radius
+    def __init__(self, method=None):
 
-    n_samples, __ = data.shape
-    n_iterations = min(n_samples, k_folds)
+        self.method = method or "cholesky"
 
-    nll = 0  # negative log likelihood
+    def crossvalidate(
+        self, localization_radius, *, data, weights, localizer, k_folds, allow_singluar
+    ):
+        """k-fold crossvalidation for a single localization radius"""
 
-    for it in range(n_iterations):
+        n_samples, __ = data.shape
+        n_iterations = min(n_samples, k_folds)
 
-        # every `k_folds` element for validation such that each is used exactly once
-        sel = np.ones(n_samples, dtype=bool)
-        sel[it::k_folds] = False
+        nll = 0  # negative log likelihood
 
-        # extract training set
-        data_train, weights_train = data[sel, :], weights[sel]
+        for it in range(n_iterations):
 
-        # extract validation set
-        data_cv, weights_cv = data[~sel, :], weights[~sel]
+            # every `k_folds` element for validation such that each is used exactly once
+            sel = np.ones(n_samples, dtype=bool)
+            sel[it::k_folds] = False
 
-        # compute (localized) empirical covariance
-        cov = np.cov(data_train, rowvar=False, aweights=weights_train)
-        localized_cov = localizer[localization_radius] * cov
+            # extract training set
+            data_train, weights_train = data[sel, :], weights[sel]
 
-        try:
-            # sum log likelihood of all crossvalidation folds
-            nll += _get_neg_loglikelihood(data_cv, localized_cov, weights_cv)
-        except np.linalg.LinAlgError:
-            warnings.warn(
-                f"Singular matrix for localization_radius of {localization_radius}."
-                " Skipping this radius.",
-                LinAlgWarning,
-            )
-            return float("inf")
+            # extract validation set
+            data_cv, weights_cv = data[~sel, :], weights[~sel]
 
-    return nll
+            # compute (localized) empirical covariance
+            cov = np.cov(data_train, rowvar=False, aweights=weights_train)
+            localized_cov = localizer[localization_radius] * cov
+
+            try:
+                # sum log likelihood of all crossvalidation folds
+                nll += _get_neg_loglikelihood(
+                    data_cv, localized_cov, weights_cv, self.method
+                )
+
+            except np.linalg.LinAlgError as e:
+                if not allow_singluar:
+                    raise np.linalg.LinAlgError(
+                        f"Singular matrix for localization_radius of {localization_radius}."
+                    )
+
+                if self.method == "eigh":
+                    raise e
+
+                # switch to eigh from now on
+                self.method = "eigh"
+                warnings.warn(
+                    f"Singular matrix for localization_radius of {localization_radius}."
+                    "\n Switching to eigh().",
+                    LinAlgWarning,
+                )
+
+                nll += _get_neg_loglikelihood(
+                    data_cv, localized_cov, weights_cv, self.method
+                )
+
+        return nll
 
 
-def _get_neg_loglikelihood(data, covariance, weights):
+def _get_neg_loglikelihood(data, covariance, weights, method):
     """calculate weighted log likelihood for multivariate normal distribution
 
     Parameters
@@ -330,11 +387,16 @@ def _get_neg_loglikelihood(data, covariance, weights):
     The mean is assumed to be zero for all points.
     """
 
-    # NOTE: 90 % of time is spent in multivariate_normal.logpdf - not much point
-    # optimizing the rest
+    if method == "cholesky":
+        L = np.linalg.cholesky(covariance)
+        cov = scipy.stats.Covariance.from_cholesky(L)
+    else:
+        w, v = np.linalg.eigh(covariance)
+        cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
 
-    cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
-    log_likelihood = scipy.stats.multivariate_normal.logpdf(data, cov=cov)
+    log_likelihood = scipy.stats.multivariate_normal.logpdf(
+        data, cov=cov, allow_singular=True
+    )
 
     # logpdf can return a scalar, which np.average does not like
     log_likelihood = np.atleast_1d(log_likelihood)
