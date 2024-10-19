@@ -24,10 +24,10 @@ def test_distrib_cov_init_all_default():
     assert dist.data_preds_addtest is None
     assert dist.threshold_min_proba == 1e-09
     assert dist.boundaries_params == expression.boundaries_parameters
-    assert dist.boundaries_coeffs == {} # TODO: make this a property of expr_fit
-    assert dist.first_guess is None # TODO: make this a property of expr_fit
-    assert dist.func_first_guess is None # TODO: make this a property of expr_fit
-    assert dist.n_coeffs == 2 # TODO: make this a property of expr_fit
+    assert dist.boundaries_coeffs == {}  # TODO: make this a property of expr_fit
+    assert dist.first_guess is None  # TODO: make this a property of expr_fit
+    assert dist.func_first_guess is None  # TODO: make this a property of expr_fit
+    assert dist.n_coeffs == 2  # TODO: make this a property of expr_fit
     assert dist.scores_fit == ["func_optim", "NLL", "BIC"]
     assert dist.xtol_req == 1e-06
     assert dist.ftol_req == 1e-06
