@@ -39,6 +39,7 @@ python -m pip install \
     git+https://github.com/dask/dask \
     git+https://github.com/fatiando/pooch \
     git+https://github.com/geopandas/geopandas \
+    git+https://github.com/properscoring/properscoring \
     git+https://github.com/pydata/xarray \
     git+https://github.com/pypa/packaging \
     git+https://github.com/pyproj4/pyproj \
