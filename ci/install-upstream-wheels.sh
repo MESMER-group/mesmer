@@ -9,7 +9,6 @@ conda uninstall -y --force \
   pandas \
   pooch \
   properscoring \
-  pyogrio \
   regionmask \
   scikit-learn \
   scipy \
