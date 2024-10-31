@@ -9,6 +9,8 @@ New Features
 - Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
+- Add python 3.13 to list of supported versions (`#547 <https://github.com/MESMER-group/mesmer/pull/547>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
