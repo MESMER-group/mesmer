@@ -16,10 +16,8 @@ conda uninstall -y --force \
   statsmodels \
   xarray
 
-# keep cartopy & matplotlib as we don't have tests that use them
-#   cartopy \
-#   matplotlib-base \
-# keep joblib as we want to move away from pickle files
+# keep cartopy & matplotlib: we don't have tests that use them
+# keep joblib: we want to move away from pickle files
 # keep netcdf4: difficult to build
 
 # to limit the runtime of Upstream CI
