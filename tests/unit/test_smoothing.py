@@ -74,7 +74,8 @@ def test_lowess_n_steps(n_steps):
 def test_lowess_use_coords():
 
     data = trend_data_1D()
-    time = data.time.values
+    # make copy as it's read only
+    time = np.array(data.time.values)
     time[-1] = time[-1] + 10
     data = data.assign_coords(time=time)
 
