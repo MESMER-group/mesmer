@@ -433,7 +433,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
         np.testing.assert_allclose(result, expected[:, i : i + 4])
 
 
-def test_draw_auto_regression_random():
+def test_draw_auto_regression_numeric():
 
     result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
@@ -674,6 +674,7 @@ def test_fit_auto_regression_monthly():
         mesmer.stats.fit_auto_regression_monthly(data.values)
 
 
+@pytest.mark.filterwarnings("ignore:Covariance matrix is not positive definite")
 @pytest.mark.parametrize("buffer", [1, 10, 20])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
