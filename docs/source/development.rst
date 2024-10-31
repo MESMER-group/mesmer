@@ -61,14 +61,19 @@ Follow the steps below (if any of these tools are unfamiliar, please see the res
 
    b. Create a conda environment to use with MESMER and install all the dependencies: ``conda env create -n mesmer_dev -f environment.yml``.
 
-   c. Activate your conda environment: ``conda activate mesmer``. This is important for the next step, otherwise the packages will be installed in your base environment. Make sure the command line now says: ``(mesmer_dev) username@host:~/mesmer>``.
+   c. Activate your conda environment: ``conda activate mesmer_dev``. This is important for the next step, otherwise the packages will be installed in your base environment. Make sure the command line now says: ``(mesmer_dev) username@host:~/mesmer>``.
+
+   d. (optional) Install additional dependencies which are not strictly necessary but useful for MESMER:
+
+      .. code-block:: shell
+
+         conda install ipykernel matplotlib
+         python -m pip install git+https://github.com/mathause/filefinder/
 
    d. Install mesmer itself and packages needed for development (pytest, sphinx, etc.) ``python -m pip install -e .``.
       The flag ``-e`` installs MESMER in development (**e**\ ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
 
 3. Make sure that MESMER was correctly installed by running the test suite ``pytest . --all`` in the mesmer folder.
-
-(Optional) Other packages that are not necessary but useful for MESMER development: ``conda install ipykernel matplotlib`` and ``python -m pip install git+https://github.com/mathause/filefinder/``.
 
 Pull Request Process
 ~~~~~~~~~~~~~~~~~~~~
