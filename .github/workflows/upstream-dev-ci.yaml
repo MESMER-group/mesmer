@@ -59,9 +59,10 @@ jobs:
       - name: Run Tests
         if: success()
         id: status
-        run: |
-          python -m pytest -rf \
-            --report-log output-${{ matrix.python-version }}-log.jsonl
+        run: python -m pytest
+          -rf
+          --all
+          --report-log output-${{ matrix.python-version }}-log.jsonl
       - name: Generate and publish the report
         if: |
           failure()
