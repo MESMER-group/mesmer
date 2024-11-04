@@ -454,7 +454,7 @@ def probability_integral_transform(
     Parameters
     ----------
     data : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
+        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint', and one
         2D variable with both coordinates
     target_name : str
         name of the variable to train
