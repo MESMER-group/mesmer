@@ -190,7 +190,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         xr.testing.assert_allclose(
             local_ar_params["intercept"],
             expected_local_ar_params["intercept"],
-            atol=1e-6,
+            atol=1e-7,
         )
         xr.testing.assert_allclose(
             local_ar_params["coeffs"], expected_local_ar_params["coeffs"]
