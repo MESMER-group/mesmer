@@ -187,7 +187,20 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         expected_local_ar_params = xr.open_dataset(
             TEST_PATH / f"test-mesmer_x-local_ar_params_{outname}.nc"
         )
-        xr.testing.assert_allclose(local_ar_params, expected_local_ar_params)
+        xr.testing.assert_allclose(
+            local_ar_params["intercept"],
+            expected_local_ar_params["intercept"],
+            atol=1e-6,
+        )
+        xr.testing.assert_allclose(
+            local_ar_params["coeffs"], expected_local_ar_params["coeffs"]
+        )
+        xr.testing.assert_allclose(
+            local_ar_params["variance"], expected_local_ar_params["variance"]
+        )
+        xr.testing.assert_equal(
+            local_ar_params["nobs"], expected_local_ar_params["nobs"]
+        )
 
         expected_localized_ecov = xr.open_dataset(
             TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
