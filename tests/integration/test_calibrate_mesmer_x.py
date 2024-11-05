@@ -110,12 +110,12 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         transf_target[0][0],
         dims=["time", "gridpoint"],
         coords={"time": txx_stacked_hist.time},
-    )
+    ).assign_coords(txx_stacked_hist.gridpoint.coords)
     transf_target_xr_ssp585 = xr.DataArray(
         transf_target[1][0],
         dims=["time", "gridpoint"],
         coords={"time": txx_stacked_ssp585.time},
-    )
+    ).assign_coords(txx_stacked_hist.gridpoint.coords)
 
     # training of auto-regression with spatially correlated innovations
     local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
@@ -176,6 +176,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         localized_ecov.to_netcdf(
             TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
         )
+        pytest.skip(f"Updated {outname}")
 
     else:
         # load the parameters

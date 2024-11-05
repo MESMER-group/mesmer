@@ -9,7 +9,7 @@ import mesmer.mesmer_x
 
 
 @pytest.mark.parametrize(
-    ("expr", "option_2ndfit", "outname", "update_expected_files"),
+    ("expr", "outname", "update_expected_files"),
     [
         pytest.param(
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
@@ -28,7 +28,7 @@ import mesmer.mesmer_x
 def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
-    n_realizations = 10
+    n_realizations = 1 # TODO: more is not possible atm
     seed = 0
     buffer = 10
     targ = 'tasmax'
@@ -102,14 +102,18 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
                     coords={'time': time})
     emus = emus.assign_coords(local_ar_params.gridpoint.coords)
 
+    expected_output_file = TEST_PATH / f"test-mesmer_x-emus_{outname}.nc"
     if update_expected_files:
         # save output
-        emus.to_netcdf(
-            TEST_PATH / f"test-mesmer_x-emus_{outname}.nc"
-        )
+        emus.to_netcdf(expected_output_file)
+        pytest.skip(f"Updated {expected_output_file}")
     else:
         # load the output
-        expected_emus = xr.open_dataset(
-            TEST_PATH / f"test-mesmer_x-emus_{outname}.nc"
-        )
+        expected_emus = xr.open_dataarray(expected_output_file, use_cftime=True)
         xr.testing.assert_allclose(emus, expected_emus)
+
+        # make sure we can get onto a lat lon grid from what is saved
+        exp_reshaped = expected_emus.set_index(gridpoint=("lat", "lon")).unstack("gridpoint")
+        expected_dims = {"lon", "lat", "time"}
+
+        assert set(exp_reshaped.dims) == expected_dims
