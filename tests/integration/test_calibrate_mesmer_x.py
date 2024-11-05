@@ -16,14 +16,14 @@ import mesmer.mesmer_x
             False,
             "exp1",
             False,
-            #marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
         pytest.param(
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             True,
             "exp1_2ndfit",
             False,
-            #marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
     ],
 )
