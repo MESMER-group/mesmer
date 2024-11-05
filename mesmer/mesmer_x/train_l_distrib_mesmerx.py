@@ -146,7 +146,7 @@ def xr_train_distrib(
     print(f"Fitting the variable {target_name} with the expression {expr}:")
 
     # looping over grid points
-    # TODO: use applyufunc for this 
+    # TODO: use applyufunc for this
     # NOTE: important to preserve stacked gridpoint coords
     for igp, gp in enumerate(gridpoints):
         fraction = (igp + 1) / gridpoints.size

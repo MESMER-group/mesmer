@@ -28,10 +28,10 @@ import mesmer.mesmer_x
 def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
-    n_realizations = 1 # TODO: more is not possible atm
+    n_realizations = 1  # TODO: more is not possible atm
     seed = 0
     buffer = 10
-    targ = 'tasmax'
+    targ = "tasmax"
 
     # load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
@@ -57,9 +57,9 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
     tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
 
-    # concat 
-    predictor = xr.concat([tas_glob_mean_hist, tas_glob_mean_ssp585], dim = 'time')
-    time  = predictor.time
+    # concat
+    predictor = xr.concat([tas_glob_mean_hist, tas_glob_mean_ssp585], dim="time")
+    time = predictor.time
 
     # load the parameters
     transform_params = xr.open_dataset(
@@ -76,7 +76,6 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
 
     # txx = DataTree({"hist": txx_hist, "ssp585": txx_ssp585})
 
-
     # generate realizations based on the auto-regression with spatially correlated innovations
     transf_emus = mesmer.stats.draw_auto_regression_correlated(
         local_ar_params,
@@ -84,22 +83,21 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
         time=time,
         realisation=n_realizations,
         seed=seed,
-        buffer=buffer
+        buffer=buffer,
     )
-    transf_emus = xr.Dataset({'tasmax': transf_emus})
+    transf_emus = xr.Dataset({"tasmax": transf_emus})
 
     # back-transform the realizations
     emus = mesmer.mesmer_x.probability_integral_transform(
-            target_name=targ,
-            data=[(transf_emus.sel(realisation=0), 'ssp585')],
-            expr_start="norm(loc=0, scale=1)",
-            expr_end=expr,
-            coeffs_end=transform_params,
-            preds_end=[(predictor, 'ssp585')],
-        )
-    
-    emus = xr.DataArray(emus[0][0], dims=['time', 'gridpoint'], 
-                    coords={'time': time})
+        target_name=targ,
+        data=[(transf_emus.sel(realisation=0), "ssp585")],
+        expr_start="norm(loc=0, scale=1)",
+        expr_end=expr,
+        coeffs_end=transform_params,
+        preds_end=[(predictor, "ssp585")],
+    )
+
+    emus = xr.DataArray(emus[0][0], dims=["time", "gridpoint"], coords={"time": time})
     emus = emus.assign_coords(local_ar_params.gridpoint.coords)
 
     expected_output_file = TEST_PATH / f"test-mesmer_x-emus_{outname}.nc"
@@ -113,7 +111,9 @@ def test_calibrate_mesmer_x(expr, outname, update_expected_files):
         xr.testing.assert_allclose(emus, expected_emus)
 
         # make sure we can get onto a lat lon grid from what is saved
-        exp_reshaped = expected_emus.set_index(gridpoint=("lat", "lon")).unstack("gridpoint")
+        exp_reshaped = expected_emus.set_index(gridpoint=("lat", "lon")).unstack(
+            "gridpoint"
+        )
         expected_dims = {"lon", "lat", "time"}
 
         assert set(exp_reshaped.dims) == expected_dims
