@@ -27,7 +27,6 @@ import mesmer.mesmer_x
 )
 def test_calibrate_mesmer_x(expr, outname, update_expected_files):
     # set some configuration parameters
-    THRESHOLD_LAND = 1 / 3
     n_realizations = 1  # TODO: more is not possible atm
     seed = 0
     buffer = 10
