@@ -16,14 +16,14 @@ import mesmer.mesmer_x
             False,
             "exp1",
             False,
-            marks=pytest.mark.slow,
+            #marks=pytest.mark.slow,
         ),
         pytest.param(
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             True,
             "exp1_2ndfit",
             False,
-            marks=pytest.mark.slow,
+            #marks=pytest.mark.slow,
         ),
     ],
 )
@@ -105,17 +105,17 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         expr_end="norm(loc=0, scale=1)",
     )
 
-    # transformed target into DataArrays
+    # make transformed target into DataArrays
     transf_target_xr_hist = xr.DataArray(
         transf_target[0][0],
         dims=["time", "gridpoint"],
         coords={"time": txx_stacked_hist.time},
-    )
+    ).assign_coords(txx_stacked_hist.gridpoint.coords)
     transf_target_xr_ssp585 = xr.DataArray(
         transf_target[1][0],
         dims=["time", "gridpoint"],
         coords={"time": txx_stacked_ssp585.time},
-    )
+    ).assign_coords(txx_stacked_hist.gridpoint.coords)
 
     # training of auto-regression with spatially correlated innovations
     local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
