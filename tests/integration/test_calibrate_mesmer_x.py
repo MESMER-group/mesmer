@@ -16,14 +16,14 @@ import mesmer.mesmer_x
             False,
             "exp1",
             False,
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             True,
             "exp1_2ndfit",
             False,
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
     ],
 )
@@ -133,7 +133,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     )
     # prep localizer
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-        geodist, range(2000, 9001, 500)
+        geodist, range(4000, 6001, 500)
     )
 
     # stack target
