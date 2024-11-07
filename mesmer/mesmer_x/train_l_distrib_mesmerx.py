@@ -264,7 +264,7 @@ class distrib_cov:
         self,
         data_targ,
         data_pred,
-        expr_fit,
+        expr_fit: Expression,
         data_targ_addtest=None,  # TODO: rename to data_targ_verification?
         data_preds_addtest=None,  # TODO: rename to data_preds_verification?
         threshold_min_proba=1.0e-9,
@@ -364,7 +364,7 @@ class distrib_cov:
                 NLL, instead of the sum of the NLL. The weights are calculated as the
                 inverse density in the predictors.
 
-            * threshold_stopping_rule: float > 0, default: None
+            * threshold_stopping_rule: float > 1, default: None
                 Maximum return period, used to define the threshold of the stopping
                 rule.
                 threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
@@ -468,32 +468,37 @@ class distrib_cov:
         # can be different from length of predictors IF no predictors.
         self.n_sample = len(self.data_targ)
 
-        if np.any(np.isnan(self.data_targ)) or np.any(np.isinf(self.data_targ)):
-            raise ValueError("NaN or infinite values in target of fit")
+        if np.isnan(self.data_targ).any():
+            raise ValueError("nan values in target")
+
+        if np.isinf(self.data_targ).any():
+            raise ValueError("infinite values in target")
+
         self.data_pred = data_pred
 
         # TODO: raise error if data_pred is not a dict
 
-        if np.any(
-            [np.any(np.isnan(self.data_pred[pred])) for pred in self.data_pred]
-        ) or np.any(
-            [np.any(np.isinf(self.data_pred[pred])) for pred in self.data_pred]
-        ):
-            raise ValueError("NaN or infinite values in predictors of fit")
+        if any(np.isnan(self.data_pred[pred]).any() for pred in self.data_pred):
+            raise ValueError("nan values in predictors")
+
+        if any(np.isinf(self.data_pred[pred]).any() for pred in self.data_pred):
+            raise ValueError("infinite values in predictors")
 
         self.expr_fit = expr_fit
 
         # preparing additional data
-        self.add_test = (data_targ_addtest is not None) and (
-            data_preds_addtest is not None
-        )
+        add_test = (data_targ_addtest is not None) and (data_preds_addtest is not None)
+        self.add_test = add_test
+
+        # TODO: this case can not happen - can it?
         if (self.add_test is False) and (
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
             raise ValueError(
-                "Only one of `data_targ_addtest` & `data_preds_addtest` have been provided,"
-                " not both of them."
+                "Only one of `data_targ_addtest` & `data_preds_addtest` have been"
+                " provided, not both of them."
             )
+
         self.data_targ_addtest = data_targ_addtest
         self.data_preds_addtest = data_preds_addtest
 
@@ -516,19 +521,18 @@ class distrib_cov:
 
                 self.boundaries_params[param] = [lower_bound, upper_bound]
 
-        if boundaries_coeffs is not None:
-            self.boundaries_coeffs = boundaries_coeffs
-        else:
-            self.boundaries_coeffs = {}
+        self.boundaries_coeffs = {} if boundaries_coeffs is None else boundaries_coeffs
 
         # preparing additional information
         self.first_guess = first_guess
         self.func_first_guess = func_first_guess
         self.n_coeffs = len(self.expr_fit.coefficients_list)
+
         if (self.first_guess is not None) and (len(self.first_guess) != self.n_coeffs):
             raise ValueError(
                 f"The provided first guess does not have the correct shape: {self.n_coeffs}"
             )
+
         self.scores_fit = scores_fit
 
         # preparing information on solver
@@ -541,45 +545,51 @@ class distrib_cov:
             "error_failedfit": False,
             "fg_with_global_opti": False,
         }
-        if options_solver is None:
-            pass
-        elif isinstance(options_solver, dict):
-            default_options_solver.update(options_solver)
-        else:
+
+        options_solver = options_solver or {}
+        if not isinstance(options_solver, dict):
             raise ValueError("`options_solver` must be a dictionary")
-        self.xtol_req = default_options_solver["xtol_req"]
-        self.ftol_req = default_options_solver["ftol_req"]
-        self.maxiter = default_options_solver["maxiter"]
-        self.maxfev = default_options_solver["maxfev"]
-        self.method_fit = default_options_solver["method_fit"]
-        if self.method_fit not in [
+
+        # TODO: use get? (e.g. self.method_fit = options_solver.get("method_fit", "Powell")
+        options_solver = default_options_solver | options_solver
+
+        self.xtol_req = options_solver["xtol_req"]
+        self.ftol_req = options_solver["ftol_req"]
+        self.maxiter = options_solver["maxiter"]
+        self.maxfev = options_solver["maxfev"]
+        self.method_fit = options_solver["method_fit"]
+
+        if self.method_fit not in (
             "BFGS",
             "L-BFGS-B",
             "Nelder-Mead",
             "Powell",
             "TNC",
             "trust-constr",
-        ]:
+        ):
             raise ValueError("method for this fit not prepared, to avoid")
-        else:
-            self.name_xtol = {
-                "BFGS": "xrtol",
-                "L-BFGS-B": "gtol",
-                "Nelder-Mead": "xatol",
-                "Powell": "xtol",
-                "TNC": "xtol",
-                "trust-constr": "xtol",
-            }[self.method_fit]
-            self.name_ftol = {
-                "BFGS": "gtol",
-                "L-BFGS-B": "ftol",
-                "Nelder-Mead": "fatol",
-                "Powell": "ftol",
-                "TNC": "ftol",
-                "trust-constr": "gtol",
-            }[self.method_fit]
-        self.error_failedfit = default_options_solver["error_failedfit"]
-        self.fg_with_global_opti = default_options_solver["fg_with_global_opti"]
+
+        xtol = {
+            "BFGS": "xrtol",
+            "L-BFGS-B": "gtol",
+            "Nelder-Mead": "xatol",
+            "Powell": "xtol",
+            "TNC": "xtol",
+            "trust-constr": "xtol",
+        }
+        ftol = {
+            "BFGS": "gtol",
+            "L-BFGS-B": "ftol",
+            "Nelder-Mead": "fatol",
+            "Powell": "ftol",
+            "TNC": "ftol",
+            "trust-constr": "gtol",
+        }
+
+        self.name_xtol = xtol[self.method_fit]
+        self.name_ftol = ftol[self.method_fit]
+        self.error_failedfit = options_solver["error_failedfit"]
+        self.fg_with_global_opti = options_solver["fg_with_global_opti"]
 
         # preparing information on functions to optimize
         default_options_optim = dict(
@@ -589,33 +599,34 @@ class distrib_cov:
             exclude_trigger=None,
             ind_year_thres=None,
         )
-        if options_optim is None:
-            pass
-        elif isinstance(options_optim, dict):
-            default_options_optim.update(options_optim)
-        else:
+
+        options_optim = options_optim or {}
+
+        if not isinstance(options_optim, dict):
             raise ValueError("`options_optim` must be a dictionary")
+
+        options_optim = default_options_optim | options_optim
 
         # preparing weights
         # TODO: move this out of init or think of more flexible bins
-        self.weighted_NLL = default_options_optim["weighted_NLL"]
+        self.weighted_NLL = options_optim["weighted_NLL"]
         self.weights_driver = self.get_weights()
 
         # preparing information for the stopping rule
-        self.type_fun_optim = default_options_optim["type_fun_optim"]
-        self.threshold_stopping_rule = default_options_optim["threshold_stopping_rule"]
-        self.ind_year_thres = default_options_optim["ind_year_thres"]
-        self.exclude_trigger = default_options_optim["exclude_trigger"]
+        self.type_fun_optim = options_optim["type_fun_optim"]
+        self.threshold_stopping_rule = options_optim["threshold_stopping_rule"]
+        self.ind_year_thres = options_optim["ind_year_thres"]
+        self.exclude_trigger = options_optim["exclude_trigger"]
+
         if (
-            (self.type_fun_optim == "NLL")
+            self.type_fun_optim == "NLL"
             and (
-                (self.threshold_stopping_rule is not None)
-                or (self.ind_year_thres is not None)
+                self.threshold_stopping_rule is not None
+                or self.ind_year_thres is not None
             )
-            or (self.type_fun_optim == "fcNLL")
-            and (
-                (self.threshold_stopping_rule is None) or (self.ind_year_thres is None)
-            )
+        ) or (
+            self.type_fun_optim == "fcNLL"
+            and (self.threshold_stopping_rule is None or self.ind_year_thres is None)
         ):
             raise ValueError(
                 "Lack of consistency on the options 'type_fun_optim',"
@@ -723,8 +734,6 @@ class distrib_cov:
         return True
 
     def _test_evol_params(self, distrib, data):
-        # initialize test
-        test = True
 
         # checking set boundaries on parameters
         for param in self.boundaries_params:
@@ -734,24 +743,25 @@ class distrib_cov:
             param_values = distrib.kwds[param]
 
             # out of boundaries
+            # TODO: why >= (and not >) or < (and not <=)?
             if np.any(param_values < bottom) or np.any(param_values >= top):
-                test = False
+                return False
 
         # test of the support of the distribution: is there any data out of the
         # corresponding support? dont try testing if there are issues on the parameters
-        if test:
-            bottom, top = distrib.support()
 
-            # out of support
-            if (
-                np.any(np.isnan(bottom))
-                or np.any(np.isnan(top))
-                or np.any(data < bottom)
-                or np.any(top < data)
-            ):
-                test = False
+        bottom, top = distrib.support()
 
-        return test
+        # out of support
+        if (
+            np.any(np.isnan(bottom))
+            or np.any(np.isnan(top))
+            or np.any(data < bottom)
+            or np.any(data > top)
+        ):
+            return False
+
+        return True
 
     def _test_proba_value(self, distrib, data):
         # tested values must have a minimum probability of occurring, i.e. be in a
@@ -760,9 +770,9 @@ class distrib_cov:
         # distribution (eg 'k' for poisson).
 
         cdf = distrib.cdf(data)
-        return np.all(1 - cdf >= self.threshold_min_proba) * np.all(
-            cdf >= self.threshold_min_proba
-        )
+        thres = self.threshold_min_proba
+        # TODO (mathause): why does this use cdf and not pdf?
+        return np.all(1 - cdf >= thres) and np.all(cdf >= thres)
 
     def validate_coefficients(self, coefficients):
         """validate coefficients
@@ -774,22 +784,21 @@ class distrib_cov:
 
         test_coeff = self._test_coeffs_in_bounds(coefficients)
 
-        # tests on coeffs show already that it wont work: fill in the rest with Fals
+        # tests on coeffs show already that it wont work: fill in the rest with False
         if not test_coeff:
             return test_coeff, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
+
         if self.add_test:
             distrib_add = self.expr_fit.evaluate(coefficients, self.data_preds_addtest)
 
         # test for the validity of the parameters
+        test_param = self._test_evol_params(distrib, self.data_targ)
+
         if self.add_test:
-            test_param = self._test_evol_params(
-                distrib, self.data_targ
-            ) * self._test_evol_params(distrib_add, self.data_targ_addtest)
-        else:
-            test_param = self._test_evol_params(distrib, self.data_targ)
+            test_param &= self._test_evol_params(distrib_add, self.data_targ_addtest)
 
         # tests on params show already that it wont work: fill in the rest with False
         if not test_param:
@@ -797,14 +806,12 @@ class distrib_cov:
 
         # test for the probability of the values
         if self.threshold_min_proba is None:
-            test_proba = True
-        else:
-            if self.add_test:
-                test_proba = self._test_proba_value(
-                    distrib, self.data_targ
-                ) * self._test_proba_value(distrib_add, self.data_targ_addtest)
-            else:
-                test_proba = self._test_proba_value(distrib, self.data_targ)
+            return test_coeff, test_param, True, distrib
+
+        test_proba = self._test_proba_value(distrib, self.data_targ)
+
+        if self.add_test:
+            test_proba &= self._test_proba_value(distrib_add, self.data_targ_addtest)
 
         # return values for each test and the distribution that has already been
         # evaluated
@@ -911,12 +918,15 @@ class distrib_cov:
         self.smooth_data_targ = self.smooth_data(self.data_targ)
 
         m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
+
         ind_targ_low = np.where(self.smooth_data_targ < m - s)[0]
         ind_targ_high = np.where(self.smooth_data_targ > m + s)[0]
+
         pred_low = {p: np.mean(self.data_pred[p][ind_targ_low]) for p in self.data_pred}
         pred_high = {
             p: np.mean(self.data_pred[p][ind_targ_high]) for p in self.data_pred
         }
+
         deriv_targ = {
             p: (
                 np.mean(self.smooth_data_targ[ind_targ_high])
@@ -925,6 +935,7 @@ class distrib_cov:
             / (pred_high[p] - pred_low[p])
             for p in self.data_pred
         }
+
         self.fg_info_derivatives = {
             "pred_low": pred_low,
             "pred_high": pred_high,
@@ -950,6 +961,7 @@ class distrib_cov:
         else:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
+
         self.mem = np.copy(self.fg_coeffs)
 
         # Step 2: fit coefficients of location (objective: improving the subset of
@@ -970,20 +982,17 @@ class distrib_cov:
 
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
+        scale = self.expr_fit.coefficients_dict["scale"]
         self.fg_ind_sca = np.array(
-            [
-                self.expr_fit.coefficients_list.index(c)
-                for c in self.expr_fit.coefficients_dict["scale"]
-            ]
+            [self.expr_fit.coefficients_list.index(c) for c in scale]
         )
         if self.first_guess is None:
             # compared to all 0, better for ref level but worse for trend
-            x0 = np.std(self.data_targ) * np.ones(
-                len(self.expr_fit.coefficients_dict["scale"])
-            )
+            x0 = np.full(len(scale), fill_value=np.std(self.data_targ))
 
         else:
             x0 = self.fg_coeffs[self.fg_ind_sca]
+
         localfit_sca = self.minimize(
             func=self.fg_fun_sca,
             x0=x0,
@@ -1002,7 +1011,9 @@ class distrib_cov:
             for param in other_params:
                 for c in self.expr_fit.coefficients_dict[param]:
                     self.fg_ind_others.append(self.expr_fit.coefficients_list.index(c))
+
             self.fg_ind_others = np.array(self.fg_ind_others)
+
             localfit_others = self.minimize(
                 func=self.fg_fun_others,
                 x0=self.fg_coeffs[self.fg_ind_others],
@@ -1025,11 +1036,12 @@ class distrib_cov:
             self.fg_coeffs
         )
 
-        if ~(test_coeff and test_param and test_proba):
+        if not (test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL doesnt behave well enough here)
             # two potential functions:
             if False:
+                # TODO: unreachable?
                 # fit coefficients on CDFs
                 fun_opti_prob = self.fg_fun_cdfs
             else:
@@ -1047,12 +1059,16 @@ class distrib_cov:
 
         # Step 7: if required, global fit within boundaries
         if self.fg_with_global_opti:
+
             # find boundaries on each coefficient
             bounds = []
+
+            # TODO: does this assume the coeffs are ordered?
             for i_c in np.arange(self.n_coeffs):
-                vals_bounds = self.find_bound(
-                    i_c=i_c, x0=self.fg_coeffs, fact_coeff=-0.05
-                ), self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=0.05)
+                a = self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=-0.05)
+                b = self.find_bound(i_c=i_c, x0=self.fg_coeffs, fact_coeff=0.05)
+                vals_bounds = (a, b)
+
                 bounds.append([np.min(vals_bounds), np.max(vals_bounds)])
 
             # global minimization, using the one with the best performances in this
@@ -1155,44 +1171,45 @@ class distrib_cov:
         # preparing support
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_others] = x_others
+
         distrib = self.expr_fit.evaluate(x, self.data_pred)
-        bottom, top = distrib.support()
-        val_bottom = np.min(self.data_targ - bottom)
+        bot, top = distrib.support()
+        val_bot = np.min(self.data_targ - bot)
         val_top = np.min(top - self.data_targ)
         # preparing margin on support
         m = np.mean(self.data_targ)
         s = np.std(self.data_targ - m)
         # optimization
-        if val_bottom < 0:
-            return (
-                np.exp(-val_bottom) * 1 / (margin0 * s)
-            )  # limit of val_bottom --> 0- = 1/margin0*s
+        if val_bot < 0:
+            # limit of val_bottom --> 0- = 1/margin0*s
+            return np.exp(-val_bot) * 1 / (margin0 * s)
         elif val_top < 0:
-            return (
-                np.exp(-val_top) * 1 / (margin0 * s)
-            )  # limit of val_top --> 0+ = 1/margin0*s
+            # limit of val_top --> 0+ = 1/margin0*s
+            return np.exp(-val_top) * 1 / (margin0 * s)
         else:
-            return 1 / (val_bottom + margin0 * s) + 1 / (val_top + margin0 * s)
+            return 1 / (val_bot + margin0 * s) + 1 / (val_top + margin0 * s)
 
     def fg_fun_NLL_notests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
-        self.ind_ok_data = np.arange(self.data_targ.size)
+        self.ind_data_ok = np.arange(self.data_targ.size)
         return self.neg_loglike(distrib)
 
     def fg_fun_cdfs(self, x):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         cdf = distrib.cdf(self.data_targ)
+
         if self.threshold_min_proba is None:
             thres = 10 * 1.0e-9
         else:
             thres = np.min([0.1, 10 * self.threshold_min_proba])
+
         if np.any(np.isnan(cdf)):
             return np.inf
-        else:
-            # DO NOT CHANGE THESE EXPRESSIONS!!
-            term_low = (thres - np.min(cdf)) ** 2 / np.min(cdf) ** 2
-            term_high = (thres - np.min(1 - cdf)) ** 2 / np.min(1 - cdf) ** 2
-            return np.max([term_low, term_high])
+
+        # DO NOT CHANGE THESE EXPRESSIONS!!
+        term_low = (thres - np.min(cdf)) ** 2 / np.min(cdf) ** 2
+        term_high = (thres - np.min(1 - cdf)) ** 2 / np.min(1 - cdf) ** 2
+        return np.max([term_low, term_high])
 
     def fg_fun_LL_n(self, x, n=4):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
@@ -1205,7 +1222,7 @@ class distrib_cov:
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
             test_c, test_p, test_v, _ = self.validate_coefficients(x)
-            test = test_c * test_p * test_v
+            test = test_c and test_p and test_v
             x[i_c] += fact_coeff * x[i_c]
             iter += 1
         return x[i_c]
@@ -1217,6 +1234,7 @@ class distrib_cov:
         test_coeff, test_param, test_proba, distrib = self.validate_coefficients(
             coefficients
         )
+
         if test_coeff and test_param and test_proba:
 
             # check for the stopping rule
@@ -1225,7 +1243,7 @@ class distrib_cov:
                 # using the given threshold
                 self.ind_data_ok, self.ind_data_stopped = self.stopping_rule(distrib)
             else:
-                self.ind_ok_data = np.arange(self.data_targ.size)
+                self.ind_data_ok = slice(None)
 
             # compute negative loglikelihood
             NLL = self.neg_loglike(distrib)
@@ -1255,7 +1273,8 @@ class distrib_cov:
             LL = distrib.logpdf(self.data_targ)
 
         # weighted sum of the loglikelihood
-        value = np.sum((self.weights_driver * LL)[self.ind_ok_data])
+        value = np.sum((self.weights_driver * LL)[self.ind_data_ok])
+
         if np.isnan(value):
             return -np.inf
         else:
@@ -1270,12 +1289,12 @@ class distrib_cov:
 
         # identifying where exceedances occur
         if self.exclude_trigger:
-            ind_data_stopped = np.where(self.data_targ > thres)[0]
+            ind_data_stopped = self.data_targ > thres
         else:
-            ind_data_stopped = np.where(self.data_targ >= thres)[0]
+            ind_data_stopped = self.data_targ >= thres
 
         # identifying remaining positions
-        ind_data_ok = [i for i in np.arange(self.n_sample) if i not in ind_data_stopped]
+        ind_data_ok = ~ind_data_stopped
         return ind_data_ok, ind_data_stopped
 
     def fullcond_thres(self, distrib):
@@ -1320,6 +1339,7 @@ class distrib_cov:
 
     @ignore_warnings  # suppress nan & inf warnings
     def fit(self):
+
         # Before fitting, need a good first guess, using 'find_fg'.
         if self.func_first_guess is not None:
             self.func_first_guess()
