@@ -84,7 +84,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     target = ((txx_stacked_hist, "hist"), (txx_stacked_ssp585, "ssp585"))
 
     # do the training
-    result, _ = mesmer.mesmer_x.xr_train_distrib(
+    transform_params, _ = mesmer.mesmer_x.xr_train_distrib(
         predictors=predictor,
         target=target,
         target_name="tasmax",
@@ -96,20 +96,113 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     )
 
     # probability integral transform: projection of the data on a standard normal distribution
-    # transf_target = mesmer.mesmer_x.probability_integral_transform(  # noqa: F841
-    #     data=target,
-    #     expr_start=expr,
-    #     coeffs_start=result,
-    #     preds_start=predictor,
-    #     expr_end="norm(loc=0, scale=1)",
-    #     target_name="tasmax",
-    # )
+    transf_target = mesmer.mesmer_x.probability_integral_transform(  # noqa: F841
+        data=target,
+        target_name="tasmax",
+        expr_start=expr,
+        coeffs_start=transform_params,
+        preds_start=predictor,
+        expr_end="norm(loc=0, scale=1)",
+    )
+
+    # make transformed target into DataArrays
+    transf_target_xr_hist = xr.DataArray(
+        transf_target[0][0],
+        dims=["time", "gridpoint"],
+        coords={"time": txx_stacked_hist.time},
+    ).assign_coords(txx_stacked_hist.gridpoint.coords)
+    transf_target_xr_ssp585 = xr.DataArray(
+        transf_target[1][0],
+        dims=["time", "gridpoint"],
+        coords={"time": txx_stacked_ssp585.time},
+    ).assign_coords(txx_stacked_hist.gridpoint.coords)
+
+    # training of auto-regression with spatially correlated innovations
+    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+        transf_target_xr_hist,
+        transf_target_xr_ssp585,
+        ens_dim=None,
+        dim="time",
+        lags=1,
+    )
+
+    # estimate covariance matrix
+    # prep distance matrix
+    geodist = mesmer.geospatial.geodist_exact(
+        txx_stacked_hist.lon, txx_stacked_hist.lat
+    )
+    # prep localizer
+    phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
+        geodist, range(4000, 6001, 500)
+    )
+
+    # stack target
+    transf_target_stacked = xr.concat(
+        [transf_target_xr_hist, transf_target_xr_ssp585], dim="scenario"
+    )
+    transf_target_stacked = transf_target_stacked.assign_coords(
+        scenario=["hist", "ssp585"]
+    )
+    transf_target_stacked = transf_target_stacked.stack(
+        {"sample": ["time", "scenario"]}, create_index=False
+    ).dropna("sample")
+
+    # make weights
+    weights = xr.ones_like(transf_target_stacked.isel(gridpoint=0))
+
+    # find covariance
+    dim = "sample"
+    k_folds = 15
+
+    localized_ecov = mesmer.stats.find_localized_empirical_covariance(
+        transf_target_stacked, weights, phi_gc_localizer, dim, k_folds
+    )
+
+    # Adjust regularized covariance matrix # TODO: verify if this is actually done in MESMER-X
+    localized_ecov["localized_covariance_adjusted"] = (
+        mesmer.stats.adjust_covariance_ar1(
+            localized_ecov.localized_covariance, local_ar_params.coeffs
+        )
+    )
 
     if update_expected_files:
         # save the parameters
-        result.to_netcdf(TEST_PATH / f"test-mesmer_x-params_{outname}.nc")
+        transform_params.to_netcdf(
+            TEST_PATH / f"test-mesmer_x-transf_params_{outname}.nc"
+        )
+        local_ar_params.to_netcdf(
+            TEST_PATH / f"test-mesmer_x-local_ar_params_{outname}.nc"
+        )
+        localized_ecov.to_netcdf(
+            TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
+        )
 
     else:
         # load the parameters
-        expected = xr.open_dataset(TEST_PATH / f"test-mesmer_x-params_{outname}.nc")
-        xr.testing.assert_allclose(result, expected)
+        expected_transform_params = xr.open_dataset(
+            TEST_PATH / f"test-mesmer_x-transf_params_{outname}.nc"
+        )
+        xr.testing.assert_allclose(transform_params, expected_transform_params)
+
+        expected_local_ar_params = xr.open_dataset(
+            TEST_PATH / f"test-mesmer_x-local_ar_params_{outname}.nc"
+        )
+        xr.testing.assert_allclose(
+            local_ar_params["intercept"],
+            expected_local_ar_params["intercept"],
+            atol=1e-7,
+        )
+        xr.testing.assert_allclose(
+            local_ar_params["coeffs"], expected_local_ar_params["coeffs"]
+        )
+        xr.testing.assert_allclose(
+            local_ar_params["variance"], expected_local_ar_params["variance"]
+        )
+        xr.testing.assert_equal(
+            local_ar_params["nobs"], expected_local_ar_params["nobs"]
+        )
+
+        expected_localized_ecov = xr.open_dataset(
+            TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
+        )
+        xr.testing.assert_allclose(localized_ecov, expected_localized_ecov)

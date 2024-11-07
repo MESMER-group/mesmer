@@ -90,7 +90,8 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   `#470 <https://github.com/MESMER-group/mesmer/pull/470>`_,
   `#502 <https://github.com/MESMER-group/mesmer/pull/502>`_)
 - Add tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
-             `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_)
+             `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_,
+             `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_)
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
