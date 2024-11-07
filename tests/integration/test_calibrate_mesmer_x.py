@@ -158,7 +158,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         transf_target_stacked, weights, phi_gc_localizer, dim, k_folds
     )
 
-    # Adjust regularized covariance matrix # TODO: varify if this is actually done in MESMER-X
+    # Adjust regularized covariance matrix # TODO: verify if this is actually done in MESMER-X
     localized_ecov["localized_covariance_adjusted"] = (
         mesmer.stats.adjust_covariance_ar1(
             localized_ecov.localized_covariance, local_ar_params.coeffs
