@@ -25,7 +25,7 @@ import mesmer.mesmer_x
         ),
     ],
 )
-def test_calibrate_mesmer_x(expr, outname, update_expected_files):
+def test_emulations_mesmer_x(expr, outname, update_expected_files):
     # set some configuration parameters
     n_realizations = 1  # TODO: more is not possible atm
     seed = 0
