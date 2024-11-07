@@ -105,7 +105,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         expr_end="norm(loc=0, scale=1)",
     )
 
-    # transformed target into DataArrays
+    # make transformed target into DataArrays
     transf_target_xr_hist = xr.DataArray(
         transf_target[0][0],
         dims=["time", "gridpoint"],
@@ -133,7 +133,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     )
     # prep localizer
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-        geodist, range(2000, 9001, 500)
+        geodist, range(4000, 6001, 500)
     )
 
     # stack target
@@ -158,7 +158,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         transf_target_stacked, weights, phi_gc_localizer, dim, k_folds
     )
 
-    # Adjust regularized covariance matrix # TODO: varify if this is actually done in MESMER-X
+    # Adjust regularized covariance matrix # TODO: verify if this is actually done in MESMER-X
     localized_ecov["localized_covariance_adjusted"] = (
         mesmer.stats.adjust_covariance_ar1(
             localized_ecov.localized_covariance, local_ar_params.coeffs
@@ -176,7 +176,6 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         localized_ecov.to_netcdf(
             TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
         )
-        pytest.skip(f"Updated {outname}")
 
     else:
         # load the parameters
