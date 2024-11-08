@@ -77,7 +77,10 @@ def test_make_realisations_mesmer_x(
     )
 
     localized_ecov = xr.open_dataset(
-        TEST_PATH / "params" / "local_variability" / f"params_localized_ecov_{file_end}.nc"
+        TEST_PATH
+        / "params"
+        / "local_variability"
+        / f"params_localized_ecov_{file_end}.nc"
     )
 
     # generate realizations based on the auto-regression with spatially correlated innovations
