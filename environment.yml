@@ -22,6 +22,7 @@ dependencies:
  - scipy
  - statsmodels>=0.13
  - xarray>=2023.04 # because pandas 2 is required
+ - xarray-datatree
 # for testing
  - black!=23
  - pytest

@@ -18,6 +18,7 @@ Required dependencies
 - `scipy <https://scipy.org/>`__
 - `statsmodels <https://www.statsmodels.org/stable/index.html>`__
 - `xarray <http://xarray.pydata.org/>`__
+- `xarray-datatree <https://xarray-datatree.readthedocs.io/en/latest/index.html>`__
 
 Optional dependencies
 ---------------------
