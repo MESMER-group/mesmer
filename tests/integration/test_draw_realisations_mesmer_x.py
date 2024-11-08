@@ -69,16 +69,16 @@ def test_make_realisations_mesmer_x(
     # load the parameters
     file_end = f"{target_name}_{expr_name}_{esm}_{scenario}"
     transform_params = xr.open_dataset(
-        TEST_PATH / "params" / "distrib" / f"params_transform_distrib_{file_end}.nc"
+        TEST_PATH / "test-params" / "distrib" / f"params_transform_distrib_{file_end}.nc"
     )
 
     local_ar_params = xr.open_dataset(
-        TEST_PATH / "params" / "local_variability" / f"params_local_AR_{file_end}.nc"
+        TEST_PATH / "test-params" / "local_variability" / f"params_local_AR_{file_end}.nc"
     )
 
     localized_ecov = xr.open_dataset(
         TEST_PATH
-        / "params"
+        / "test-params"
         / "local_variability"
         / f"params_localized_ecov_{file_end}.nc"
     )

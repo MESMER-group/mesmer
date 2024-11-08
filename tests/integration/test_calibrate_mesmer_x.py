@@ -51,7 +51,7 @@ def test_calibrate_mesmer_x(
     # TODO: replace with filefinder later
     # load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
-    TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens" / "params"
+    TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens" / "test-params"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
     # load predictor data
