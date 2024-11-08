@@ -87,6 +87,7 @@ def test_emulations_mesmer_x(expr, outname, update_expected_files):
     transf_emus = xr.Dataset({"tasmax": transf_emus})
 
     # back-transform the realizations
+    # can only take 2D input aka only one realisation atm
     emus = mesmer.mesmer_x.probability_integral_transform(
         target_name=targ,
         data=[(transf_emus.sel(realisation=0), "ssp585")],

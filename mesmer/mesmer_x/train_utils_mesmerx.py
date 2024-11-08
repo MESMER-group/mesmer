@@ -492,6 +492,7 @@ def probability_integral_transform(
       forced to 1.e-9. Unless someone has a better idea! :D
     Disclaimer:
     - TODO
+    can only take 2D input aka only one realisation for the back-transformation
 
     """
     # preparation of distributions
