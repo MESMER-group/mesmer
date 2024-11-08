@@ -196,7 +196,7 @@ def test_calibrate_mesmer_x(
         transform_params.to_netcdf(distrib_file)
         local_ar_params.to_netcdf(local_ar_file)
         localized_ecov.to_netcdf(localized_ecov_file)
-        pytest.skip(f"Updated param files.")
+        pytest.skip("Updated param files.")
 
     else:
         # load the parameters
