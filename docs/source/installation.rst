@@ -20,6 +20,8 @@ Required dependencies
 - `xarray <http://xarray.pydata.org/>`__
 - `xarray-datatree <https://xarray-datatree.readthedocs.io/en/latest/index.html>`__
 
+Please note that we only support datatree version 0.0.13 and will switch to the xarray internal datatree module in the future.
+
 Optional dependencies
 ---------------------
 
