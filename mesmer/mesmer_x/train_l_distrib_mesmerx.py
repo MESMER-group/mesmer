@@ -239,6 +239,7 @@ def xr_train_distrib(
             for score in scores_fit:
                 quality_xr2[score].loc[{"gridpoint": gp}] = quality_np[score]
 
+    # TODO: add expr as variable to coefficients_xr?
     return coefficients_xr, quality_xr
 
 

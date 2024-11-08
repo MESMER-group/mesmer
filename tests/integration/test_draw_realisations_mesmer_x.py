@@ -9,39 +9,45 @@ import mesmer.mesmer_x
 
 
 @pytest.mark.parametrize(
-    ("expr", "outname", "update_expected_files"),
+    ("scenario", "target_name", "expr", "expr_name", "update_expected_files"),
     [
         pytest.param(
+            "ssp585",
+            "tasmax",
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
-            "exp1",
+            "expr1",
             False,
             marks=pytest.mark.slow,
         ),
         pytest.param(
+            "ssp585",
+            "tasmax",
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
-            "exp1_2ndfit",
+            "expr1_2ndfit",
             False,
             marks=pytest.mark.slow,
         ),
     ],
 )
-def test_emulations_mesmer_x(expr, outname, update_expected_files):
+def test_make_realisations_mesmer_x(
+    scenario, target_name, expr, expr_name, update_expected_files
+):
     # set some configuration parameters
     n_realizations = 1  # TODO: more is not possible atm
     seed = 0
     buffer = 10
-    targ = "tasmax"
+    esm = "IPSL-CM6A-LR"
 
     # load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
-    TEST_PATH = TEST_DATA_PATH / "output" / "txx"
+    TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
     # load predictor data
     path_tas = cmip6_data_path / "tas" / "ann" / "g025"
 
-    fN_hist = path_tas / "tas_ann_IPSL-CM6A-LR_historical_r1i1p1f1_g025.nc"
-    fN_ssp585 = path_tas / "tas_ann_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc"
+    fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
+    fN_ssp585 = path_tas / f"tas_ann_{esm}_ssp585_r1i1p1f1_g025.nc"
 
     tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(
         ["height", "file_qf", "time_bnds"]
@@ -61,19 +67,18 @@ def test_emulations_mesmer_x(expr, outname, update_expected_files):
     time = predictor.time
 
     # load the parameters
+    file_end = f"{target_name}_{expr_name}_{esm}_{scenario}"
     transform_params = xr.open_dataset(
-        TEST_PATH / f"test-mesmer_x-transf_params_{outname}.nc"
+        TEST_PATH / "params" / "distrib" / f"params_transform_distrib_{file_end}.nc"
     )
 
     local_ar_params = xr.open_dataset(
-        TEST_PATH / f"test-mesmer_x-local_ar_params_{outname}.nc"
+        TEST_PATH / "params" / "local_variability" / f"params_local_AR_{file_end}.nc"
     )
 
     localized_ecov = xr.open_dataset(
-        TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
+        TEST_PATH / "params" / "local_variability" / f"params_localized_ecov_{file_end}.nc"
     )
-
-    # txx = DataTree({"hist": txx_hist, "ssp585": txx_ssp585})
 
     # generate realizations based on the auto-regression with spatially correlated innovations
     transf_emus = mesmer.stats.draw_auto_regression_correlated(
@@ -84,23 +89,25 @@ def test_emulations_mesmer_x(expr, outname, update_expected_files):
         seed=seed,
         buffer=buffer,
     )
-    transf_emus = xr.Dataset({"tasmax": transf_emus})
+    transf_emus = xr.Dataset({target_name: transf_emus})
 
     # back-transform the realizations
     # can only take 2D input aka only one realisation atm
     emus = mesmer.mesmer_x.probability_integral_transform(
-        target_name=targ,
-        data=[(transf_emus.sel(realisation=0), "ssp585")],
+        target_name=target_name,
+        data=[(transf_emus.sel(realisation=0), scenario)],
         expr_start="norm(loc=0, scale=1)",
         expr_end=expr,
         coeffs_end=transform_params,
-        preds_end=[(predictor, "ssp585")],
+        preds_end=[(predictor, scenario)],
     )
 
     emus = xr.DataArray(emus[0][0], dims=["time", "gridpoint"], coords={"time": time})
     emus = emus.assign_coords(local_ar_params.gridpoint.coords)
 
-    expected_output_file = TEST_PATH / f"test-mesmer_x-emus_{outname}.nc"
+    expected_output_file = (
+        TEST_PATH / f"test_make_realisations_expected_output_{expr_name}.nc"
+    )
     if update_expected_files:
         # save output
         emus.to_netcdf(expected_output_file)

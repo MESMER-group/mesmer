@@ -7,40 +7,58 @@ import xarray as xr
 import mesmer
 import mesmer.mesmer_x
 
+# TODO: extend to more scenarios and members
+# TODO: extend predictors
+
 
 @pytest.mark.parametrize(
-    ("expr", "option_2ndfit", "outname", "update_expected_files"),
+    (
+        "scenario",
+        "target_name",
+        "expr",
+        "expr_name",
+        "option_2ndfit",
+        "update_expected_files",
+    ),
     [
         pytest.param(
+            "ssp585",
+            "tasmax",
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
+            "expr1",
             False,
-            "exp1",
             False,
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
         pytest.param(
+            "ssp585",
+            "tasmax",
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
+            "expr1_2ndfit",
             True,
-            "exp1_2ndfit",
             False,
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
     ],
 )
-def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files):
+def test_calibrate_mesmer_x(
+    scenario, target_name, expr, expr_name, option_2ndfit, update_expected_files
+):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
+    esm = "IPSL-CM6A-LR"
 
+    # TODO: replace with filefinder later
     # load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
-    TEST_PATH = TEST_DATA_PATH / "output" / "txx"
+    TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens" / "params"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
     # load predictor data
     path_tas = cmip6_data_path / "tas" / "ann" / "g025"
 
-    fN_hist = path_tas / "tas_ann_IPSL-CM6A-LR_historical_r1i1p1f1_g025.nc"
-    fN_ssp585 = path_tas / "tas_ann_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc"
+    fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
+    fN_ssp585 = path_tas / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
 
     tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(
         ["height", "file_qf", "time_bnds"]
@@ -57,15 +75,15 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
 
     # load target data
-    path_txx = cmip6_data_path / "txx" / "ann" / "g025"
+    path_target = cmip6_data_path / target_name / "ann" / "g025"
 
-    fN_hist = path_txx / "txx_ann_IPSL-CM6A-LR_historical_r1i1p1f1_g025.nc"
-    fN_ssp585 = path_txx / "txx_ann_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc"
+    fN_hist = path_target / f"{target_name}_ann_{esm}_historical_r1i1p1f1_g025.nc"
+    fN_ssp585 = path_target / f"{target_name}_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
 
-    txx_hist = xr.open_dataset(fN_hist, use_cftime=True)
-    txx_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True)
+    targ_hist = xr.open_dataset(fN_hist, use_cftime=True)
+    targ_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True)
 
-    # txx = DataTree({"hist": txx_hist, "ssp585": txx_ssp585})
+    # target = DataTree({"hist": targ_hist, "ssp585": targ_ssp585})
 
     # stack target data
     def mask_and_stack(ds, threshold_land):
@@ -75,21 +93,21 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         return ds
 
     # mask_and_stack_dt = map_over_subtree(mask_and_stack)
-    txx_stacked_hist = mask_and_stack(txx_hist, threshold_land=THRESHOLD_LAND)
-    txx_stacked_ssp585 = mask_and_stack(txx_ssp585, threshold_land=THRESHOLD_LAND)
+    targ_stacked_hist = mask_and_stack(targ_hist, threshold_land=THRESHOLD_LAND)
+    targ_stacked_ssp585 = mask_and_stack(targ_ssp585, threshold_land=THRESHOLD_LAND)
 
     # collect scenarios in a tuple
     # NOTE: each of the datasets below could have a dimension along member
     predictor = ((tas_glob_mean_hist, "hist"), (tas_glob_mean_ssp585, "ssp585"))
-    target = ((txx_stacked_hist, "hist"), (txx_stacked_ssp585, "ssp585"))
+    target = ((targ_stacked_hist, "hist"), (targ_stacked_ssp585, "ssp585"))
 
     # do the training
     transform_params, _ = mesmer.mesmer_x.xr_train_distrib(
         predictors=predictor,
         target=target,
-        target_name="tasmax",
+        target_name=target_name,
         expr=expr,
-        expr_name=outname,
+        expr_name=expr_name,
         option_2ndfit=option_2ndfit,
         r_gasparicohn_2ndfit=500,
         scores_fit=["func_optim", "NLL", "BIC"],
@@ -98,24 +116,25 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     # probability integral transform: projection of the data on a standard normal distribution
     transf_target = mesmer.mesmer_x.probability_integral_transform(  # noqa: F841
         data=target,
-        target_name="tasmax",
+        target_name=target_name,
         expr_start=expr,
         coeffs_start=transform_params,
         preds_start=predictor,
         expr_end="norm(loc=0, scale=1)",
     )
+    # TODO: add expression as varibale here or in function or before saving?
 
     # make transformed target into DataArrays
     transf_target_xr_hist = xr.DataArray(
         transf_target[0][0],
         dims=["time", "gridpoint"],
-        coords={"time": txx_stacked_hist.time},
-    ).assign_coords(txx_stacked_hist.gridpoint.coords)
+        coords={"time": targ_stacked_hist.time},
+    ).assign_coords(targ_stacked_hist.gridpoint.coords)
     transf_target_xr_ssp585 = xr.DataArray(
         transf_target[1][0],
         dims=["time", "gridpoint"],
-        coords={"time": txx_stacked_ssp585.time},
-    ).assign_coords(txx_stacked_hist.gridpoint.coords)
+        coords={"time": targ_stacked_ssp585.time},
+    ).assign_coords(targ_stacked_hist.gridpoint.coords)
 
     # training of auto-regression with spatially correlated innovations
     local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
@@ -129,7 +148,7 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
     # estimate covariance matrix
     # prep distance matrix
     geodist = mesmer.geospatial.geodist_exact(
-        txx_stacked_hist.lon, txx_stacked_hist.lat
+        targ_stacked_hist.lon, targ_stacked_hist.lat
     )
     # prep localizer
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
@@ -158,35 +177,32 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
         transf_target_stacked, weights, phi_gc_localizer, dim, k_folds
     )
 
-    # Adjust regularized covariance matrix # TODO: verify if this is actually done in MESMER-X
+    # Adjust regularized covariance matrix
     localized_ecov["localized_covariance_adjusted"] = (
         mesmer.stats.adjust_covariance_ar1(
             localized_ecov.localized_covariance, local_ar_params.coeffs
         )
     )
 
+    file_end = f"{target_name}_{expr_name}_{esm}_{scenario}"
+    distrib_file = TEST_PATH / "distrib" / f"params_transform_distrib_{file_end}.nc"
+    local_ar_file = TEST_PATH / "local_variability" / f"params_local_AR_{file_end}.nc"
+    localized_ecov_file = (
+        TEST_PATH / "local_variability" / f"params_localized_ecov_{file_end}.nc"
+    )
+
     if update_expected_files:
         # save the parameters
-        transform_params.to_netcdf(
-            TEST_PATH / f"test-mesmer_x-transf_params_{outname}.nc"
-        )
-        local_ar_params.to_netcdf(
-            TEST_PATH / f"test-mesmer_x-local_ar_params_{outname}.nc"
-        )
-        localized_ecov.to_netcdf(
-            TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
-        )
+        transform_params.to_netcdf(distrib_file)
+        local_ar_params.to_netcdf(local_ar_file)
+        localized_ecov.to_netcdf(localized_ecov_file)
 
     else:
         # load the parameters
-        expected_transform_params = xr.open_dataset(
-            TEST_PATH / f"test-mesmer_x-transf_params_{outname}.nc"
-        )
+        expected_transform_params = xr.open_dataset(distrib_file)
         xr.testing.assert_allclose(transform_params, expected_transform_params)
 
-        expected_local_ar_params = xr.open_dataset(
-            TEST_PATH / f"test-mesmer_x-local_ar_params_{outname}.nc"
-        )
+        expected_local_ar_params = xr.open_dataset(local_ar_file)
         xr.testing.assert_allclose(
             local_ar_params["intercept"],
             expected_local_ar_params["intercept"],
@@ -202,7 +218,5 @@ def test_calibrate_mesmer_x(expr, option_2ndfit, outname, update_expected_files)
             local_ar_params["nobs"], expected_local_ar_params["nobs"]
         )
 
-        expected_localized_ecov = xr.open_dataset(
-            TEST_PATH / f"test-mesmer_x-localized_ecov_{outname}.nc"
-        )
+        expected_localized_ecov = xr.open_dataset(localized_ecov_file)
         xr.testing.assert_allclose(localized_ecov, expected_localized_ecov)
