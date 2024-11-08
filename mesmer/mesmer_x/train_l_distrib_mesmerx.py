@@ -618,24 +618,25 @@ class distrib_cov:
         self.ind_year_thres = options_optim["ind_year_thres"]
         self.exclude_trigger = options_optim["exclude_trigger"]
 
-        if (
-            self.type_fun_optim == "NLL"
-            and (
-                self.threshold_stopping_rule is not None
-                or self.ind_year_thres is not None
-            )
-        ) or (
-            self.type_fun_optim == "fcNLL"
-            and (self.threshold_stopping_rule is None or self.ind_year_thres is None)
+        if self.type_fun_optim == "NLL" and (
+            self.threshold_stopping_rule is not None or self.ind_year_thres is not None
         ):
             raise ValueError(
-                "Lack of consistency on the options 'type_fun_optim',"
-                " 'threshold_stopping_rule' and 'ind_year_thres', threshold_stopping_rule,"
-                " and 'ind_year_thres' must be used together, and only for 'fcNLL'",
+                "`threshold_stopping_rule` and `ind_year_thres` not used for"
+                " `type_fun_optim='NLL'`"
             )
 
-    # TODO: don't do this in init. Give the user the option to either use this function or give their own weigths
-    # as soon as we switch the xarray wrapper into here and the user actually initialized this class themselves
+        if self.type_fun_optim == "fcNLL" and (
+            self.threshold_stopping_rule is None or self.ind_year_thres is None
+        ):
+            raise ValueError(
+                "`type_fun_optim='fcNLL'` needs both, `threshold_stopping_rule`"
+                "  and `ind_year_thres`."
+            )
+
+    # TODO: don't do this in init. Give the user the option to either use this function
+    # or give their own weigths as soon as we switch the xarray wrapper into here and
+    # the user actually initialized this class themselves
     def get_weights(self, n_bins_density=40):
 
         if self.weighted_NLL:
