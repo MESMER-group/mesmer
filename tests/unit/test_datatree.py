@@ -203,7 +203,9 @@ def test_stack_linear_regression_datatrees():
         }
     )
 
-    weights = map_over_subtree(xr.ones_like)(target.sel(cells=0)).rename({"tas": "weights"})
+    weights = map_over_subtree(xr.ones_like)(target.sel(cells=0)).rename(
+        {"tas": "weights"}
+    )
 
     predictors_stacked, target_stacked, weights_stacked = (
         mesmer.datatree.stack_linear_regression_datatrees(
