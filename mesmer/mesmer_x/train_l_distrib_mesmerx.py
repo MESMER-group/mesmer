@@ -145,7 +145,9 @@ def xr_train_distrib(
 
     print(f"Fitting the variable {target_name} with the expression {expr}:")
 
-    # looping over grid points (to replace with a map function)
+    # looping over grid points
+    # TODO: use applyufunc for this
+    # NOTE: important to preserve stacked gridpoint coords
     for igp, gp in enumerate(gridpoints):
         fraction = (igp + 1) / gridpoints.size
         print(f"{fraction:0.1%}", end="\r")
@@ -237,6 +239,7 @@ def xr_train_distrib(
             for score in scores_fit:
                 quality_xr2[score].loc[{"gridpoint": gp}] = quality_np[score]
 
+    # TODO: add expr as variable to coefficients_xr?
     return coefficients_xr, quality_xr
 
 
