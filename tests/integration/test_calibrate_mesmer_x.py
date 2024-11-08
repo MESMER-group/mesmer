@@ -28,7 +28,7 @@ import mesmer.mesmer_x
             "expr1",
             False,
             False,
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
@@ -37,7 +37,7 @@ import mesmer.mesmer_x
             "expr1_2ndfit",
             True,
             False,
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
     ],
 )
@@ -196,6 +196,7 @@ def test_calibrate_mesmer_x(
         transform_params.to_netcdf(distrib_file)
         local_ar_params.to_netcdf(local_ar_file)
         localized_ecov.to_netcdf(localized_ecov_file)
+        pytest.skip(f"Updated param files.")
 
     else:
         # load the parameters
