@@ -490,8 +490,7 @@ class distrib_cov:
         add_test = (data_targ_addtest is not None) and (data_preds_addtest is not None)
         self.add_test = add_test
 
-        # TODO: this case can not happen - can it?
-        if (self.add_test is False) and (
+        if not self.add_test and (
             (data_targ_addtest is not None) or (data_preds_addtest is not None)
         ):
             raise ValueError(
@@ -1103,7 +1102,7 @@ class distrib_cov:
         # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
         # critical steps or when Powell fails.
 
-        if (option_NelderMead == "fail_run" and fit.success is False) or (
+        if (option_NelderMead == "fail_run" and not fit.success) or (
             option_NelderMead == "best_run"
         ):
             fit_NM = minimize(
@@ -1355,7 +1354,7 @@ class distrib_cov:
         )
 
         # checking if the fit has failed
-        if self.error_failedfit and (m.success is False):
+        if self.error_failedfit and not m.success:
             raise ValueError("Failed fit.")
         else:
             self.coefficients_fit = m.x
