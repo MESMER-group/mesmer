@@ -1041,7 +1041,7 @@ class distrib_cov:
             # to have all points within support. NB: NLL doesnt behave well enough here)
             # two potential functions:
             if False:
-                # TODO: unreachable?
+                # TODO: unreachable - add option or remove?
                 # fit coefficients on CDFs
                 fun_opti_prob = self.fg_fun_cdfs
             else:
