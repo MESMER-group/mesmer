@@ -23,13 +23,21 @@ ignore = [
   "E501",
   "E731",
 ]
-select = [
-  "F", # Pyflakes
+extend-select = [
   "E", # pycodestyle - Errors
-  "W", # pycodestyle - Warnings
+  "F", # Pyflakes
   "I", # isort
+  "TID",  # flake8-tidy-imports (absolute imports)
   "UP", # Pyupgrade
+  "W", # pycodestyle - Warnings
 ]
+extend-safe-fixes = [
+  "TID252",  # absolute imports
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
 
 [tool.ruff.lint.isort]
 known-first-party = ["mesmer"]
