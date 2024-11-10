@@ -23,7 +23,7 @@ ignore = [
   "E501",
   "E731",
 ]
-extend-select = [
+select = [
   "E", # pycodestyle - Errors
   "F", # Pyflakes
   "I", # isort
