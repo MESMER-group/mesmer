@@ -14,9 +14,8 @@ import numpy as np
 import xarray as xr
 
 import mesmer
-
-from ..io.load_constant_files import load_regs_ls_wgt_lon_lat
-from ..utils import convert_dict_to_arr, extract_land
+from mesmer.io.load_constant_files import load_regs_ls_wgt_lon_lat
+from mesmer.utils import convert_dict_to_arr, extract_land
 
 
 def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
