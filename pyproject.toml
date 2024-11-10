@@ -24,12 +24,12 @@ ignore = [
   "E731",
 ]
 select = [
-  "E", # pycodestyle - Errors
-  "F", # Pyflakes
+  "F", # pyflakes
+  "E", # pycodestyle - errors
+  "W", # pycodestyle - warnings
   "I", # isort
-  "TID",  # flake8-tidy-imports (absolute imports)
-  "UP", # Pyupgrade
-  "W", # pycodestyle - Warnings
+  "TID", # flake8-tidy-imports (absolute imports)
+  "UP", # pyupgrade
 ]
 extend-safe-fixes = [
   "TID252",  # absolute imports
