@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import xarray as xr
-from xarray import DataTree, map_over_datasets
+from datatree import DataTree, map_over_subtree
 
 import mesmer
 from mesmer.core.utils import _check_dataarray_form
@@ -200,8 +200,8 @@ def test_stack_linear_regression_datatrees():
         }
     )
 
-    weights = map_over_datasets(xr.ones_like, target.sel(cells=0))
-    weights = map_over_datasets(lambda ds: ds.rename({var: "weights" for var in ds.data_vars}), weights)
+    weights = map_over_subtree(xr.ones_like)(target.sel(cells=0))
+    weights = map_over_subtree(lambda ds: ds.rename({var: "weights" for var in ds.data_vars}))(weights)
 
     predictors_stacked, target_stacked, weights_stacked = (
         mesmer.datatree.stack_linear_regression_datatrees(

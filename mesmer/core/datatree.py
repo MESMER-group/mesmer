@@ -1,5 +1,5 @@
 import xarray as xr
-from xarray import DataTree, map_over_datasets
+from datatree import DataTree
 
 
 def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
