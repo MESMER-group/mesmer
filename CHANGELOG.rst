@@ -89,9 +89,13 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   `#469 <https://github.com/MESMER-group/mesmer/pull/469>`_,
   `#470 <https://github.com/MESMER-group/mesmer/pull/470>`_,
   `#502 <https://github.com/MESMER-group/mesmer/pull/502>`_)
-- Add tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
-             `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_,
-             `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_)
+- Add unit tests (`#526 <https://github.com/MESMER-group/mesmer/pull/526>`_,
+                  `#533 <https://github.com/MESMER-group/mesmer/pull/533>`_,
+                  `#534 <https://github.com/MESMER-group/mesmer/pull/534>`_,
+                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_)
+- Add integration tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
+                         `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
+                         `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^

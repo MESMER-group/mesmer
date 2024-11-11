@@ -134,26 +134,28 @@ def test_distrib_cov_init():
 def test_distrib_cov_init_errors():
     expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
 
-    with pytest.raises(ValueError, match="NaN or infinite values in target of fit"):
+    with pytest.raises(ValueError, match="nan values in target"):
         distrib_cov(np.array([1, 2, np.nan]), {"tas": np.array([1, 2, 3])}, expression)
 
-    with pytest.raises(ValueError, match="NaN or infinite values in target of fit"):
+    with pytest.raises(ValueError, match="infinite values in target"):
         distrib_cov(np.array([1, 2, np.inf]), {"tas": np.array([1, 2, 3])}, expression)
 
-    with pytest.raises(ValueError, match="NaN or infinite values in predictors of fit"):
+    with pytest.raises(ValueError, match="nan values in predictors"):
         distrib_cov(np.array([1, 2, 3]), {"tas": np.array([1, 2, np.nan])}, expression)
 
-    with pytest.raises(ValueError, match="NaN or infinite values in predictors of fit"):
+    with pytest.raises(ValueError, match="infinite values in predictors"):
         distrib_cov(np.array([1, 2, 3]), {"tas": np.array([1, 2, np.inf])}, expression)
 
-    with pytest.raises(ValueError, match="NaN or infinite values in predictors of fit"):
+    with pytest.raises(ValueError, match="nan values in predictors"):
         distrib_cov(
             np.array([1, 2, 3]),
             {"tas": np.array([1, 2, np.inf]), "tas2": np.array([1, 2, np.nan])},
             expression,
         )
 
-    with pytest.raises(ValueError, match="Only one of "):
+    with pytest.raises(
+        ValueError, match="Only one of `data_targ_addtest` & `data_preds_addtest`"
+    ):
         distrib_cov(
             np.array([1, 2, 3]),
             {"tas": np.array([1, 2, 3])},
@@ -161,7 +163,9 @@ def test_distrib_cov_init_errors():
             data_targ_addtest=np.array([1, 2, 3]),
         )
 
-    with pytest.raises(ValueError, match="Only one of "):
+    with pytest.raises(
+        ValueError, match="Only one of `data_targ_addtest` & `data_preds_addtest`"
+    ):
         distrib_cov(
             np.array([1, 2, 3]),
             {"tas": np.array([1, 2, 3])},
@@ -219,7 +223,7 @@ def test_distrib_cov_init_errors():
         )
 
     with pytest.raises(
-        ValueError, match="Lack of consistency on the options 'type_fun_optim'"
+        ValueError, match="`threshold_stopping_rule` and `ind_year_thres` not used"
     ):
         distrib_cov(
             np.array([1, 2, 3]),
@@ -228,9 +232,7 @@ def test_distrib_cov_init_errors():
             options_optim={"type_fun_optim": "NLL", "threshold_stopping_rule": 0.1},
         )
 
-    with pytest.raises(
-        ValueError, match="Lack of consistency on the options 'type_fun_optim'"
-    ):
+    with pytest.raises(ValueError, match="`type_fun_optim='fcNLL'` needs both, .*"):
         distrib_cov(
             np.array([1, 2, 3]),
             {"tas": np.array([1, 2, 3])},

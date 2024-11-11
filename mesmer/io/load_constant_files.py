@@ -15,9 +15,8 @@ import joblib
 import numpy as np
 import regionmask
 
+from mesmer.core.regionmaskcompat import _mask_3D_frac_approx
 from mesmer.stats import gaspari_cohn
-
-from ..core.regionmaskcompat import _mask_3D_frac_approx
 
 
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):

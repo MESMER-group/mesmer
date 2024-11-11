@@ -21,7 +21,7 @@ dependencies:
  - scikit-learn
  - scipy
  - statsmodels>=0.13
- - xarray>=2023.04 # because pandas 2 is required
+ - xarray>=2023.04, <2024.10 # upper pin for xarray-datatree
  - xarray-datatree==0.0.13
 # for testing
  - black!=23
