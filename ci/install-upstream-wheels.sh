@@ -30,8 +30,8 @@ python -m pip install \
     pandas \
     scikit-learn \
     scipy \
-    statsmodels \
-    xarray
+    statsmodels
+
 python -m pip install \
     --no-deps \
     --upgrade \
