@@ -19,7 +19,7 @@ def test_collapse_datatree_into_dataset():
     )
     leaf2 = xr.concat([ds1, ds2], dim="member").assign_coords({"member": np.arange(2)})
 
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2":leaf2})
+    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
     collapse_dim = "scenario"
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
@@ -138,7 +138,9 @@ def test_collapse_datatree_into_dataset():
     # but it is nice to have it explicitly too
     dt = DataTree.from_dict({"scen1": leaf1, "scen2": DataTree()})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
-    expected = leaf1.expand_dims(collapse_dim).assign_coords({collapse_dim: np.array(["scen1"])})
+    expected = leaf1.expand_dims(collapse_dim).assign_coords(
+        {collapse_dim: np.array(["scen1"])}
+    )
     xr.testing.assert_equal(res, expected)
 
 
@@ -174,7 +176,9 @@ def test_stack_linear_regression_datatrees():
     collapse_dim = "scenario"
     stacked_dim = "sample"
 
-    d2D_1 = xr.Dataset({"tas": trend_data_2D(n_timesteps=n_ts, n_lat=n_lat, n_lon=n_lon)})
+    d2D_1 = xr.Dataset(
+        {"tas": trend_data_2D(n_timesteps=n_ts, n_lat=n_lat, n_lon=n_lon)}
+    )
     d2D_2 = d2D_1 * 2
     d2D_3 = d2D_1 * 3
     d2D_4 = d2D_1 * 4
@@ -201,7 +205,9 @@ def test_stack_linear_regression_datatrees():
     )
 
     weights = map_over_subtree(xr.ones_like)(target.sel(cells=0))
-    weights = map_over_subtree(lambda ds: ds.rename({var: "weights" for var in ds.data_vars}))(weights)
+    weights = map_over_subtree(
+        lambda ds: ds.rename({var: "weights" for var in ds.data_vars})
+    )(weights)
 
     predictors_stacked, target_stacked, weights_stacked = (
         mesmer.datatree.stack_linear_regression_datatrees(
