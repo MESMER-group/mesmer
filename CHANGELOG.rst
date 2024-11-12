@@ -9,6 +9,8 @@ New Features
 - Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
+- Add python 3.13 to list of supported versions (`#547 <https://github.com/MESMER-group/mesmer/pull/547>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -58,6 +60,7 @@ Bug fixes
 
 Documentation
 ^^^^^^^^^^^^^
+- Updated and extended the development Guide (`#511 <https://github.com/MESMER-group/mesmer/pull/511>`_, `#523 <https://github.com/MESMER-group/mesmer/pull/523>`_)
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
@@ -71,6 +74,28 @@ Internal Changes
   By `Victoria Bauer`_.
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
+
+Integration of MESMER-X
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In the release the MESMER-X functionality is integrated into the MESMER Codebase.
+
+- Add MESMER-X functionality to the code base (`#432 <https://github.com/MESMER-group/mesmer/pull/432>`_)
+- Some general refactoring and clean-up (`#437 <https://github.com/MESMER-group/mesmer/pull/437>`_,
+  `#465 <https://github.com/MESMER-group/mesmer/pull/465>`_,
+  `#466 <https://github.com/MESMER-group/mesmer/pull/466>`_,
+  `#467 <https://github.com/MESMER-group/mesmer/pull/467>`_,
+  `#468 <https://github.com/MESMER-group/mesmer/pull/468>`_,
+  `#469 <https://github.com/MESMER-group/mesmer/pull/469>`_,
+  `#470 <https://github.com/MESMER-group/mesmer/pull/470>`_,
+  `#502 <https://github.com/MESMER-group/mesmer/pull/502>`_)
+- Add unit tests (`#526 <https://github.com/MESMER-group/mesmer/pull/526>`_,
+                  `#533 <https://github.com/MESMER-group/mesmer/pull/533>`_,
+                  `#534 <https://github.com/MESMER-group/mesmer/pull/534>`_,
+                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_)
+- Add integration tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
+                         `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
+                         `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
