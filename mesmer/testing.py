@@ -2,6 +2,45 @@ import numpy as np
 import xarray as xr
 
 
+def assert_allclose_allowed_failures(
+    actual, desired, *, rtol=1e-07, atol=0, allowed_failures=0
+):
+    """check arrays are close but allow a number of failures
+
+        Parameters
+        ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional
+        Relative tolerance.
+    atol : float, optional
+        Absolute tolerance.
+    allowed_failures : int, default: 0
+        Number of points that may violate the tolerance criteria
+
+    Notes
+    -----
+    Only for numpy arrays at the moment.
+
+    """
+
+    __tracebackhide__ = True
+
+    def comparison(actual, desired):
+
+        __tracebackhide__ = True
+
+        isclose = np.isclose(actual, desired, rtol=rtol, atol=atol)
+        n_not_isclose = (~isclose).sum()
+        if n_not_isclose > allowed_failures:
+            return isclose
+        return True
+
+    np.testing.assert_array_compare(comparison, actual, desired)
+
+
 def assert_dict_allclose(first, second, first_name="left", second_name="right"):
 
     if not isinstance(first, dict) or not isinstance(second, dict):

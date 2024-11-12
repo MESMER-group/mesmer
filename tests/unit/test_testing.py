@@ -4,11 +4,64 @@ import xarray as xr
 
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import (
+    assert_allclose_allowed_failures,
     assert_dict_allclose,
     trend_data_1D,
     trend_data_2D,
     trend_data_3D,
 )
+
+
+def test_assert_allclose_allowed_failures():
+
+    # test non-failure cases
+    arr1 = np.array([1, 2, 3])
+
+    arr2 = np.array([1, 2, 3])
+    assert_allclose_allowed_failures(arr1, arr2)
+
+    arr2 = np.array([1, 2, 4])
+    assert_allclose_allowed_failures(arr1, arr2, atol=1)
+
+    arr2 = np.array([1, 3, 3])
+    assert_allclose_allowed_failures(arr1, arr2, rtol=0.5)
+
+    arr2 = np.array([1, 2, 4])
+    assert_allclose_allowed_failures(arr1, arr2, allowed_failures=1)
+
+    arr1_nan = np.array([1, np.nan, 3])
+    arr2_nan = np.array([1, np.nan, 4])
+    assert_allclose_allowed_failures(arr1_nan, arr2_nan, allowed_failures=1)
+
+    arr2 = np.array([1, 2, 4])
+    with pytest.raises(AssertionError):
+        assert_allclose_allowed_failures(arr1, arr2)
+
+    arr2 = np.array([1, 2, np.inf])
+    with pytest.raises(AssertionError):
+        assert_allclose_allowed_failures(arr1, arr2)
+
+    arr2 = np.array([1, 2, np.nan])
+    with pytest.raises(AssertionError):
+        assert_allclose_allowed_failures(arr1, arr2)
+
+    arr2 = np.array([1, 3, 4])
+    with pytest.raises(AssertionError):
+        assert_allclose_allowed_failures(arr1, arr2, allowed_failures=1)
+
+    arr1_2d = np.random.uniform(0, 1, size=(5, 3))
+
+    arr2_2d = arr1_2d.copy()
+    assert_allclose_allowed_failures(arr1_2d, arr2_2d)
+
+    arr2_2d = arr1_2d.copy()
+    arr2_2d[0, 0] = -1
+    assert_allclose_allowed_failures(arr1_2d, arr2_2d, allowed_failures=1)
+
+    arr2_2d = arr1_2d.copy()
+    arr2_2d[:] = -1
+    with pytest.raises(AssertionError):
+        assert_allclose_allowed_failures(arr1_2d, arr2_2d, allowed_failures=1)
 
 
 def test_assert_dict_allclose_type_key_errors():
