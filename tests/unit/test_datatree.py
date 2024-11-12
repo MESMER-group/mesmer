@@ -15,11 +15,11 @@ def test_collapse_datatree_into_dataset():
     ds1 = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts)})
     ds2 = ds1 * 2
     ds3 = ds1 * 3
-
-    leaf1 = xr.concat([ds1, ds2, ds3], dim="member").assign_coords(
-        {"member": np.arange(3)}
-    )
-    leaf2 = xr.concat([ds1, ds2], dim="member").assign_coords({"member": np.arange(2)})
+    
+    dim = xr.Variable("member", np.arange(3))
+    leaf1 = xr.concat([ds1, ds2, ds3], dim=dim)
+    dim = xr.Variable("member", np.arange(2))
+    leaf2 = xr.concat([ds1, ds2], dim=dim)
 
     dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
