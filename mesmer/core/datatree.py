@@ -18,10 +18,14 @@ def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
     return da
 
 
-def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
+def collapse_datatree_into_dataset(dt: DataTree, dim: str, **concat_kwargs) -> xr.Dataset:
     """
     Take a ``DataTree`` and collapse **all subtrees** in it into a single ``xr.Dataset`` along dim.
-    All datasets in the ``DataTree`` must have the same dimensions and each dimension must have a coordinate.
+    All subtrees are converted to ``xr.Dataset`` objects and concatenated along the
+    specified dimension. The dimension along which the datasets are concatenated will be added as a
+    coordinate to the resulting dataset and name of each subtree will be used as the coordinate
+    values for this new dimension. Internally, xr.concat is used to concatenate the datasets, so
+    all keyword arguments that can be passed to xr.concat can be passed to this function as well.
 
     Parameters
     ----------
@@ -29,41 +33,34 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
         The DataTree to collapse.
     dim : str
         The dimension to concatenate the datasets along.
+    **concat_kwargs : dict
+        Additional keyword arguments to pass to ``xr.concat``.
 
     Returns
     -------
     xr.Dataset
         The collapsed dataset.
-
-    Raises
-    ------
-    ValueError
-        If all datasets do not have the same dimensions.
-        If any dimension does not have a coordinate.
     """
-    # TODO: implement and test options for join and coords
     # TODO: could potentially be replaced by DataTree.merge_child_nodes in the future?
     datasets = [subtree.to_dataset() for subtree in dt.subtree if not subtree.is_empty]
 
     # Check if all datasets have the same dimensions
-    first_dims = set(datasets[0].dims)
-    if not all(set(ds.dims) == first_dims for ds in datasets):
-        raise ValueError("All datasets must have the same dimensions")
+    # first_dims = set(datasets[0].dims)
+    # if not all(set(ds.dims) == first_dims for ds in datasets):
+    #     raise ValueError("All datasets must have the same dimensions")
 
-    # Check that all dimensions have coordinates
-    for ds in datasets:
-        missing_coords = set(ds.dims) - set(ds.coords)
-        if missing_coords:
-            missing_coords = "', '".join(sorted(missing_coords))
-            raise ValueError(
-                f"Dimension(s) '{missing_coords}' must have a coordinate/coordinates."
-            )
+    # # Check that all dimensions have coordinates
+    # for ds in datasets:
+    #     for ds_dim in ds.dims:
+    #         if ds[ds_dim].coords == {}:
+    #             raise ValueError(
+    #                 f"Dimension '{ds_dim}' must have a coordinate/coordinates."
+    #             )
 
     # Concatenate datasets along the specified dimension
-    ds = xr.concat(datasets, dim=dim)
-    ds = ds.assign_coords(
-        {dim: [subtree.name for subtree in dt.subtree if not subtree.is_empty]}
-    )
+    ds = xr.concat(datasets, dim=dim, **concat_kwargs)
+    dims = [subtree.name for subtree in dt.subtree if not subtree.is_empty]
+    ds = ds.assign_coords({dim: dims})
 
     return ds
 

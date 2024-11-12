@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import xarray as xr
+import re
 from datatree import DataTree, map_over_subtree
 
 import mesmer
@@ -33,7 +34,7 @@ def test_collapse_datatree_into_dataset():
     # error if data set has no coords along dim (bc then it is not concatenable if lengths differ)
     leaf_missing_coords = leaf1.drop_vars("member")
     dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
-    with pytest.raises(ValueError, match="Dimension 'member' must have a coordinate"):
+    with pytest.raises(ValueError, match=("cannot reindex or align along dimension 'member'")):
         res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     # Dimension along which to concatenate already exists
@@ -95,20 +96,6 @@ def test_collapse_datatree_into_dataset():
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     assert np.isnan(res.sel(scenario="scen2", time=leaf1.time)).all()
-
-    # missing dimension raises error
-    leaf_missing_dim = leaf1.sel(member=0).drop_vars("member") * 2
-
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf_missing_dim})
-    with pytest.raises(ValueError, match="All datasets must have the same dimensions"):
-        res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim="scenario")
-
-    # different dimensions raises error
-    leaf_diff_dim = leaf1.sel(member=0).rename({"member": "ens"}) * 2
-
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf_diff_dim})
-    with pytest.raises(ValueError, match="All datasets must have the same dimensions"):
-        res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim="scenario")
 
     # make sure it also works with stacked dimension
     # NOTE: only works if the stacked dimension has the same size on all datasets
