@@ -7,18 +7,30 @@ import mesmer
 
 
 def _load_data(*filenames):
-    # TODO: extract to a helper function
+    # TODO: extract to a 'official' helper function
 
-    ds = xr.open_mfdataset(
-        filenames,
-        combine="by_coords",
-        use_cftime=True,
+    # NOTE: open_mfdataset is considerably slower...
+    # ds = xr.open_mfdataset(
+    #     filenames,
+    #     combine="by_coords",
+    #     use_cftime=True,
+    #     combine_attrs="override",
+    #     data_vars="minimal",
+    #     compat="override",
+    #     coords="minimal",
+    #     drop_variables=["height", "file_qf"],
+    # ).load()
+
+    load_opt = {"drop_variables": ["height", "file_qf"], "use_cftime": True}
+    datasets = [xr.open_dataset(fN, **load_opt) for fN in filenames]
+
+    ds = xr.combine_by_coords(
+        datasets,
         combine_attrs="override",
         data_vars="minimal",
         compat="override",
         coords="minimal",
-        drop_variables=["height", "file_qf"],
-    ).load()
+    )
 
     return ds
 
