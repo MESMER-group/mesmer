@@ -55,11 +55,12 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
 
     # Check that all dimensions have coordinates
     for ds in datasets:
-        for ds_dim in ds.dims:
-            if ds[ds_dim].coords == {}:
-                raise ValueError(
-                    f"Dimension '{ds_dim}' must have a coordinate/coordinates."
-                )
+        missing_coords = set(ds.dims) - set(ds.coords)
+        if missing_coords:
+            missing_coords = "', '".join(sorted(missing_coords))
+            raise ValueError(
+                f"Dimension(s) '{missing_coords}' must have a coordinate/coordinates."
+            )
 
     # Concatenate datasets along the specified dimension
     ds = xr.concat(datasets, dim=dim)
