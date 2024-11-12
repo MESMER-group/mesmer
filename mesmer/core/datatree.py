@@ -14,8 +14,8 @@ def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
     if others:
         raise ValueError("DataTree must only contain one data variable.")
 
-    da = ds.to_array().isel(variable=0).drop_vars("variable")
-    return da.rename(name)
+    da = ds[name]
+    return da
 
 
 def collapse_datatree_into_dataset(dt: DataTree, dim: str) -> xr.Dataset:
