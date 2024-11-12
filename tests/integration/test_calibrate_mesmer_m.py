@@ -13,7 +13,9 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     REFERENCE_PERIOD = slice("1850", "1900")
 
-    LOCALISATION_RADII = list(range(1250, 6251, 250)) + list(range(6500, 8501, 500))
+    # LOCALISATION_RADII = list(range(1250, 6251, 250)) + list(range(6500, 8501, 500))
+    # restrict radii for faster tests
+    LOCALISATION_RADII = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
 
     esm = "IPSL-CM6A-LR"
 
