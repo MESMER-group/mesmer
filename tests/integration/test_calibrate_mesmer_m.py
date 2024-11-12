@@ -6,6 +6,23 @@ import xarray as xr
 import mesmer
 
 
+def _load_data(*filenames):
+    # TODO: extract to a helper function
+
+    ds = xr.open_mfdataset(
+        filenames,
+        combine="by_coords",
+        use_cftime=True,
+        combine_attrs="override",
+        data_vars="minimal",
+        compat="override",
+        coords="minimal",
+        drop_variables=["height", "file_qf"],
+    ).load()
+
+    return ds
+
+
 @pytest.mark.slow
 def test_calibrate_mesmer_m(update_expected_files=False):
     # define config values
@@ -24,34 +41,17 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
+    # load annual data
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
     fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_ssp585_r1i1p1f1_g025.nc"
+    tas_y = _load_data(fN_hist_ann, fN_proj_ann)
 
-    tas_y = xr.open_mfdataset(
-        [fN_hist_ann, fN_proj_ann],
-        combine="by_coords",
-        use_cftime=True,
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
-        drop_variables=["height", "file_qf"],
-    ).load()
-
+    # load monthly data
     path_tas_mon = cmip6_data_path / "tas" / "mon" / "g025"
     fN_hist_mon = path_tas_mon / f"tas_mon_{esm}_historical_r1i1p1f1_g025.nc"
     fN_proj_mon = path_tas_mon / f"tas_mon_{esm}_ssp585_r1i1p1f1_g025.nc"
-    tas_m = xr.open_mfdataset(
-        [fN_hist_mon, fN_proj_mon],
-        combine="by_coords",
-        use_cftime=True,
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
-        drop_variables=["height", "file_qf"],
-    ).load()
+    tas_m = _load_data(fN_hist_mon, fN_proj_mon)
 
     # data preprocessing
     ref_y = tas_y.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
