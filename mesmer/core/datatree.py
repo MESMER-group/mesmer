@@ -44,19 +44,6 @@ def collapse_datatree_into_dataset(dt: DataTree, dim: str, **concat_kwargs) -> x
     # TODO: could potentially be replaced by DataTree.merge_child_nodes in the future?
     datasets = [subtree.to_dataset() for subtree in dt.subtree if not subtree.is_empty]
 
-    # Check if all datasets have the same dimensions
-    # first_dims = set(datasets[0].dims)
-    # if not all(set(ds.dims) == first_dims for ds in datasets):
-    #     raise ValueError("All datasets must have the same dimensions")
-
-    # # Check that all dimensions have coordinates
-    # for ds in datasets:
-    #     for ds_dim in ds.dims:
-    #         if ds[ds_dim].coords == {}:
-    #             raise ValueError(
-    #                 f"Dimension '{ds_dim}' must have a coordinate/coordinates."
-    #             )
-
     # Concatenate datasets along the specified dimension
     ds = xr.concat(datasets, dim=dim, **concat_kwargs)
     dims = [subtree.name for subtree in dt.subtree if not subtree.is_empty]
