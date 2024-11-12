@@ -4,11 +4,8 @@ from datatree import DataTree
 
 def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
     """
-    Extract a single DataArray from a DataTree node, holding one ``Dataset`` with one ``DataArray``.
+    Extract a single DataArray from a DataTree node, holding a ``Dataset`` with one ``DataArray``.
     """
-    # assert only one node in dt
-    if not len(list(dt.subtree)) == 1:
-        raise ValueError("DataTree must only contain one node.")
     if not dt.has_data:
         raise ValueError("DataTree must contain data.")
 
