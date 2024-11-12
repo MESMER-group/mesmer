@@ -1,8 +1,6 @@
-from calendar import c
 import numpy as np
 import pytest
 import xarray as xr
-import re
 from datatree import DataTree, map_over_subtree
 
 import mesmer
@@ -15,7 +13,7 @@ def test_collapse_datatree_into_dataset():
     ds1 = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts)})
     ds2 = ds1 * 2
     ds3 = ds1 * 3
-    
+
     dim = xr.Variable("member", np.arange(3))
     leaf1 = xr.concat([ds1, ds2, ds3], dim=dim)
     dim = xr.Variable("member", np.arange(2))
@@ -35,7 +33,9 @@ def test_collapse_datatree_into_dataset():
     # error if data set has no coords along dim (bc then it is not concatenable if lengths differ)
     leaf_missing_coords = leaf1.drop_vars("member")
     dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
-    with pytest.raises(ValueError, match=("cannot reindex or align along dimension 'member'")):
+    with pytest.raises(
+        ValueError, match=("cannot reindex or align along dimension 'member'")
+    ):
         res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     # Dimension along which to concatenate already exists
@@ -153,7 +153,7 @@ def test_extract_single_dataarray_from_dt():
     with pytest.raises(ValueError, match="DataTree must contain data."):
         mesmer.datatree._extract_single_dataarray_from_dt(dt)
 
-    res = mesmer.datatree._extract_single_dataarray_from_dt(dt['scen2'])
+    res = mesmer.datatree._extract_single_dataarray_from_dt(dt["scen2"])
     xr.testing.assert_equal(res, da)
 
     # passing empty Dataree
