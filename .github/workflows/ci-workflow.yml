@@ -71,6 +71,7 @@ jobs:
 
     - name: Run tests
       run: python -u -m pytest
+       -n 4
        -r a -v
        --all
        --cov=mesmer
