@@ -71,8 +71,8 @@ def stack_linear_regression_datatrees(
     ----------
     predictors : DataTree
         A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
-        must have subtrees for each predictor each of which has to have at least one
-        leaf, holding a ``xr.Dataset`` representing a scenario. The subtrees of
+        must have subtrees for each predictor, each of which has to have at least one
+        non-empty leaf, holding a ``xr.Dataset`` representing a scenario. The subtrees of
         different predictors must be isomorphic (i.e. have the save scenarios). The ``xr.Dataset``
         must at least contain `dim` and each ``xr.Dataset`` must only hold one data variable.
     target : DataTree
@@ -81,7 +81,7 @@ def stack_linear_regression_datatrees(
         and contain `dim`, but may also contain a dimension for ensemble members.
     weights : DataTree, default: None.
         Individual weights for each sample, must be isomorphic to target. Must at least contain
-        `dim`, and must have the ensemble member dimesnion if target has it.
+        `dim`, and must have the ensemble member dimension if target has it.
     stacking_dims : list[str]
         Dimension(s) to stack.
     collapse_dim : str, default: "scenario"
@@ -101,6 +101,18 @@ def stack_linear_regression_datatrees(
     -----
     Dimensions which exist along the target but are not in the stacking_dims will be excluded from the
     broadcasting of the predictors.
+
+    Example for how the predictor ``DataTree`` should look like:
+    ├─ tas
+    │  ├─ hist
+    │  ├─ scen1
+    │  └─ ...
+    ├─ hfds
+    │  ├─ hist
+    │  ├─ scen1
+    │  └─ ...
+    └─ ...
+    with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
     """
 
     stacking_dims_all = stacking_dims + [collapse_dim]
@@ -109,31 +121,31 @@ def stack_linear_regression_datatrees(
     # exclude target dimensions from broadcasting which are not in the stacking_dims
     exclude_dim = set(target.leaves[0].ds.dims) - set(stacking_dims)
 
-    # predictors need to be
+    # prepare predictors
     predictors_stacked = DataTree()
     for key, subtree in predictors.items():
         # 1) broadcast to target
         pred_broadcast = subtree.broadcast_like(target, exclude=exclude_dim)
-        # 2) collapsed into DataSets
+        # 2) collapse into DataSets
         predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
-        # 3) stacked
+        # 3) stack
         predictors_stacked[key] = DataTree(
             predictor_ds.stack(stack_dim, create_index=False)
         )
     predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
 
-    # target needs to be
-    # 1) collapsed into DataSet
+    # prepare target
+    # 1) collapse into DataSet
     target_ds = collapse_datatree_into_dataset(target, dim=collapse_dim)
-    # 2) stacked
+    # 2) stack
     target_stacked = target_ds.stack(stack_dim, create_index=False)
     target_stacked = target_stacked.dropna(dim=stacked_dim)
 
-    # weights need to be
+    # prepare weights
     if weights is not None:
-        # 1) collapsed into DataSet
+        # 1) collapse into DataSet
         weights_ds = collapse_datatree_into_dataset(weights, dim=collapse_dim)
-        # 2) stacked
+        # 2) stack
         weights_stacked = weights_ds.stack(stack_dim, create_index=False)
         weights_stacked = weights_stacked.dropna(dim=stacked_dim)
     else:

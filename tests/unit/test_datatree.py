@@ -1,3 +1,4 @@
+from calendar import c
 import numpy as np
 import pytest
 import xarray as xr
@@ -253,3 +254,19 @@ def test_stack_linear_regression_datatrees():
         )
     )
     assert weights_stacked is None, "Weights should be None if not provided"
+
+    # check if exclude_dim can be empty
+    predictors_stacked, target_stacked, weights_stacked = (
+        mesmer.datatree.stack_linear_regression_datatrees(
+            predictors,
+            target.sel(cells=0),
+            weights,
+            stacking_dims=stacking_dims,
+            collapse_dim=collapse_dim,
+            stacked_dim=stacked_dim,
+        )
+    )
+
+    assert xr.align(
+        target_stacked, predictors_stacked["pred1"].to_dataset(), join="exact"
+    ) == (target_stacked, predictors_stacked["pred1"].to_dataset())
