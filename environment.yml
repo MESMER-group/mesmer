@@ -27,4 +27,5 @@ dependencies:
  - black!=23
  - pytest
  - pytest-cov
+ - pytest-xdist
  - ruff
