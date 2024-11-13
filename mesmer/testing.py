@@ -7,8 +7,8 @@ def assert_allclose_allowed_failures(
 ):
     """check arrays are close but allow a number of failures
 
-        Parameters
-        ----------
+    Parameters
+    ----------
     actual : array_like
         Array obtained.
     desired : array_like
