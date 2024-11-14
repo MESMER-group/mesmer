@@ -34,7 +34,7 @@ def test_collapse_datatree_into_dataset():
     leaf_missing_coords = leaf1.drop_vars("member")
     dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
     with pytest.raises(
-        ValueError, match=("cannot reindex or align along dimension 'member'")
+        ValueError, match="cannot reindex or align along dimension 'member'"
     ):
         res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
@@ -203,7 +203,7 @@ def test_stack_linear_regression_datatrees():
     )(weights)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_linear_regression_datatrees(
+        mesmer.datatree.stack_datatrees_for_linear_regression(
             predictors,
             target,
             weights,
@@ -232,19 +232,28 @@ def test_stack_linear_regression_datatrees():
     )
 
     # check if datasets align
-    assert xr.align(
-        target_stacked, predictors_stacked["pred1"].to_dataset(), join="exact"
-    ) == (target_stacked, predictors_stacked["pred1"].to_dataset())
-    assert xr.align(
-        target_stacked, predictors_stacked["pred2"].to_dataset(), join="exact"
-    ) == (target_stacked, predictors_stacked["pred2"].to_dataset())
-    assert xr.align(target_stacked, weights_stacked, join="exact") == (
-        target_stacked,
-        weights_stacked,
+    pred1_stacked = predictors_stacked["pred1"].to_dataset()
+    target_aligned, pred1_aligned = xr.align(
+        target_stacked, pred1_stacked, join="exact"
     )
+    xr.testing.assert_equal(target_stacked, target_aligned)
+    xr.testing.assert_equal(pred1_stacked, pred1_aligned)
+
+    pred2_stacked = predictors_stacked["pred2"].to_dataset()
+    target_aligned, pred2_aligned = xr.align(
+        target_stacked, pred2_stacked, join="exact"
+    )
+    xr.testing.assert_equal(target_stacked, target_aligned)
+    xr.testing.assert_equal(pred2_stacked, pred2_aligned)
+
+    target_aligned, weights_aligned = xr.align(
+        target_stacked, weights_stacked, join="exact"
+    )
+    xr.testing.assert_equal(target_stacked, target_aligned)
+    xr.testing.assert_equal(weights_stacked, weights_aligned)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_linear_regression_datatrees(
+        mesmer.datatree.stack_datatrees_for_linear_regression(
             predictors,
             target,
             None,
@@ -257,7 +266,7 @@ def test_stack_linear_regression_datatrees():
 
     # check if exclude_dim can be empty
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_linear_regression_datatrees(
+        mesmer.datatree.stack_datatrees_for_linear_regression(
             predictors,
             target.sel(cells=0),
             weights,
@@ -267,6 +276,7 @@ def test_stack_linear_regression_datatrees():
         )
     )
 
-    assert xr.align(
-        target_stacked, predictors_stacked["pred1"].to_dataset(), join="exact"
-    ) == (target_stacked, predictors_stacked["pred1"].to_dataset())
+    pred1 = predictors_stacked["pred1"].to_dataset()
+    target_aligned, pred1_aligned = xr.align(target_stacked, pred1, join="exact")
+    xr.testing.assert_equal(target_stacked, target_aligned)
+    xr.testing.assert_equal(pred1, pred1_aligned)

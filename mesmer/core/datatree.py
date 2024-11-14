@@ -22,11 +22,13 @@ def collapse_datatree_into_dataset(
     dt: DataTree, dim: str, **concat_kwargs
 ) -> xr.Dataset:
     """
-    Take a ``DataTree`` and collapse **all subtrees** in it into a single ``xr.Dataset`` along dim.
+    Take a ``DataTree`` and collapse **all its subtrees** into a single ``xr.Dataset`` along dim.
+    Shallow wrapper around ``xr.concat``.
+
     All subtrees are converted to ``xr.Dataset`` objects and concatenated along the
     specified dimension. The dimension along which the datasets are concatenated will be added as a
-    coordinate to the resulting dataset and name of each subtree will be used as the coordinate
-    values for this new dimension. Internally, xr.concat is used to concatenate the datasets, so
+    coordinate to the resulting dataset and the name of each subtree will be used as the coordinate
+    value for this new dimension. Internally, xr.concat is used to concatenate the datasets, so
     all keyword arguments that can be passed to xr.concat can be passed to this function as well.
 
     Parameters
@@ -54,7 +56,7 @@ def collapse_datatree_into_dataset(
     return ds
 
 
-def stack_linear_regression_datatrees(
+def stack_datatrees_for_linear_regression(
     predictors: DataTree,
     target: DataTree,
     weights: DataTree | None,
