@@ -229,16 +229,22 @@ def test_power_transformer_xr():
     )
     yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
 
-    # new method
+    month = np.arange(1, 13)
+    expected_month = xr.DataArray(month, coords={"month": month}, name="month")
+
+    # 1 - fitting
     pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
         monthly_residuals, yearly_T
     )
+    # 2 - transformation
     transformed = mesmer.stats.yeo_johnson_transform(
         monthly_residuals, pt_coefficients, yearly_T
     )
+    # 3 - back-transformation
     inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
         transformed.transformed, pt_coefficients, yearly_T
     )
+
     xr.testing.assert_allclose(
         inverse_transformed.inverted, monthly_residuals, atol=1e-5
     )
@@ -250,6 +256,17 @@ def test_power_transformer_xr():
         required_dims=("cells", "time"),
         shape=(n_gridcells, n_years * 12),
     )
+
+    _check_dataarray_form(
+        transformed.lambdas,
+        name="lambdas",
+        ndim=3,
+        required_dims=("month", "cells", "year"),
+        shape=(12, n_gridcells, n_years),
+    )
+    assert "month" in transformed.lambdas.coords
+    xr.testing.assert_equal(expected_month, transformed.month)
+
     _check_dataarray_form(
         inverse_transformed.inverted,
         name="inverted",
@@ -267,3 +284,5 @@ def test_power_transformer_xr():
         required_dims=("cells", "coeff", "month"),
         shape=(12, n_gridcells, 2),
     )
+    assert "month" in pt_coefficients.lambda_coeffs.coords
+    xr.testing.assert_equal(expected_month, pt_coefficients.month)
