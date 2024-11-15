@@ -274,7 +274,8 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
         res = res.assign_coords({"coeff": np.arange(len(res.coeff))})
         coeffs.append(xr.Dataset({"lambda_coeffs": res}))
 
-    return xr.concat(coeffs, dim="month")
+    month = xr.Variable("month", np.arange(1, 13))
+    return xr.concat(coeffs, dim=month)
 
 
 def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
