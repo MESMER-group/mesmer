@@ -4,9 +4,22 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
+from datatree import DataTree
 
 import mesmer
 from mesmer.testing import trend_data_1D, trend_data_2D
+
+
+def to_dict(data_dict):
+    return data_dict
+
+
+def to_datatree(data_dict):
+    return DataTree.from_dict(data_dict)
+
+
+def to_xr_dataset(data_dict):
+    return xr.Dataset(data_dict)
 
 
 def trend_data_1D_or_2D(as_2D, slope, scale, intercept):
@@ -79,7 +92,8 @@ def test_lr_params():
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_lr_predict(as_2D):
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_lr_predict(as_2D, data_structure):
     lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
@@ -87,16 +101,65 @@ def test_lr_predict(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time")
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    pred = data_structure({"tas": tas})
 
-    result = lr.predict({"tas": tas})
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    result = lr.predict(pred)
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time")).rename("tas")
     expected = expected if as_2D else expected.squeeze()
-
     xr.testing.assert_equal(result, expected)
 
 
-def test_lr_predict_missing_superfluous():
+@pytest.mark.parametrize("as_2D", [True, False])
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_lr_predict_two_predictors(as_2D, data_structure):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    pred = data_structure({"tas": tas, "tas2": tas.rename("tas2")})
+
+    result = lr.predict(pred)
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time")).rename("tas")
+    expected = expected if as_2D else expected.squeeze()
+    xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("as_2D", [True, False])
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_lr_predict_two_predictors_diffnames(as_2D, data_structure):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    pred = data_structure({"tas": tas, "tas2": tas})
+
+    result = lr.predict(pred)
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time")).rename("tas")
+    expected = expected if as_2D else expected.squeeze()
+    xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_lr_predict_missing_superfluous(data_structure):
     lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
@@ -108,22 +171,30 @@ def test_lr_predict_missing_superfluous():
         }
     )
     lr.params = params
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
 
     with pytest.raises(ValueError, match="Missing predictors: 'tas', 'tas2'"):
-        lr.predict({})
+        lr.predict(data_structure({}))
 
     with pytest.raises(ValueError, match="Missing predictors: 'tas'"):
-        lr.predict({"tas2": None})
+        lr.predict(data_structure({"tas2": None}))
 
     with pytest.raises(ValueError, match="Superfluous predictors: 'something else'"):
-        lr.predict({"tas": None, "tas2": None, "something else": None})
+        lr.predict(data_structure({"tas": tas, "tas2": tas, "something else": None}))
+
+    with pytest.raises(ValueError, match="Superfluous predictors: 'something else'"):
+        lr.predict(
+            data_structure({"tas": tas, "tas2": tas, "something else": None}),
+            exclude="tas2",
+        )
 
     with pytest.raises(ValueError, match="Superfluous predictors: 'bar', 'foo'"):
-        lr.predict({"tas": None, "tas2": None, "foo": None, "bar": None})
+        lr.predict(data_structure({"tas": tas, "tas2": tas, "foo": None, "bar": None}))
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_lr_predict_exclude(as_2D):
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_lr_predict_exclude(as_2D, data_structure):
     lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
@@ -136,21 +207,21 @@ def test_lr_predict_exclude(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time")
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
 
-    result = lr.predict({"tas": tas}, exclude="tas2")
+    result = lr.predict(data_structure({"tas": tas}), exclude="tas2")
     expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
-    result = lr.predict({"tas": tas}, exclude={"tas2"})
+    result = lr.predict(data_structure({"tas": tas}), exclude={"tas2"})
     expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
-    result = lr.predict({}, exclude={"tas", "tas2"})
+    result = lr.predict(data_structure({}), exclude={"tas", "tas2"})
     expected = xr.DataArray([5], dims="x")
     expected = expected if as_2D else expected.squeeze()
 
@@ -158,7 +229,8 @@ def test_lr_predict_exclude(as_2D):
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_lr_predict_exclude_intercept(as_2D):
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_lr_predict_exclude_intercept(as_2D, data_structure):
     lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
@@ -170,15 +242,15 @@ def test_lr_predict_exclude_intercept(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time")
+    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
 
-    result = lr.predict({"tas": tas}, exclude="intercept")
+    result = lr.predict(data_structure({"tas": tas}), exclude="intercept")
     expected = xr.DataArray([[0, 3, 6]], dims=("x", "time"))
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
-    result = lr.predict({}, exclude={"tas", "intercept"})
+    result = lr.predict(data_structure({}), exclude={"tas", "intercept"})
     expected = xr.DataArray([0], dims="x")
     expected = expected if as_2D else expected.squeeze()
 
@@ -288,20 +360,36 @@ def test_linear_regression_errors(lr_method_or_function):
     with pytest.raises(ValueError, match="dim cannot currently be 'predictor'."):
         lr_method_or_function({"pred0": pred0}, tgt, dim="predictor")
 
+    # test predictors have to be dict or DataTree
+    with pytest.raises(
+        TypeError,
+        match="predictors should be a dict, DataTree or xr.Dataset, got <class 'list'>.",
+    ):
+        lr_method_or_function([pred0, pred1], tgt, dim="time")
+
+    # test DataTree depth
+    with pytest.raises(ValueError, match="DataTree must only contain one node."):
+        lr_method_or_function(
+            DataTree.from_dict({"scen0": DataTree.from_dict({"pred1": pred1})}),
+            tgt,
+            dim="time",
+        )
+
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
 @pytest.mark.parametrize("as_2D", [True, False])
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
 def test_linear_regression_one_predictor(
-    lr_method_or_function, intercept, slope, as_2D
+    lr_method_or_function, intercept, slope, as_2D, data_structure
 ):
 
     pred0 = trend_data_1D(slope=1, scale=0)
 
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
 
-    result = lr_method_or_function({"pred0": pred0}, tgt, "time")
+    result = lr_method_or_function(data_structure({"pred0": pred0}), tgt, "time")
 
     template = tgt.isel(time=0, drop=True)
 
@@ -320,12 +408,16 @@ def test_linear_regression_one_predictor(
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_linear_regression_predictor_named_like_dim(lr_method_or_function, as_2D):
-
+@pytest.mark.parametrize("data_structure", [to_dict])
+def test_linear_regression_predictor_named_like_dim(
+    lr_method_or_function, as_2D, data_structure
+):
+    # cannot be DataTree, becaue data_var cannot have the same name as coord
+    # cannot be Dataset because we need pred as a data_variable not coord
     slope, intercept = 0.3, 0.2
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
 
-    result = lr_method_or_function({"time": tgt.time}, tgt, "time")
+    result = lr_method_or_function(data_structure({"time": tgt.time}), tgt, "time")
     template = tgt.isel(time=0, drop=True)
 
     expected_intercept = xr.full_like(template, intercept)
@@ -343,13 +435,17 @@ def test_linear_regression_predictor_named_like_dim(lr_method_or_function, as_2D
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_linear_regression_predictor_has_non_dim_coors(lr_method_or_function, as_2D):
-
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_linear_regression_predictor_has_non_dim_coors(
+    lr_method_or_function, as_2D, data_structure
+):
     slope, intercept = 0.3, 0.2
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
     tgt = tgt.assign_coords(year=("time", tgt.time.values + 1850))
 
-    result = lr_method_or_function({"pred0": tgt.time}, tgt, "time")
+    result = lr_method_or_function(
+        data_structure({"pred0": tgt.time.rename("pred0")}), tgt, "time"
+    )
     template = tgt.isel(time=0, drop=True)
 
     expected_intercept = xr.full_like(template, intercept)
@@ -367,12 +463,15 @@ def test_linear_regression_predictor_has_non_dim_coors(lr_method_or_function, as
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_linear_regression_fit_intercept(lr_method_or_function, as_2D):
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_linear_regression_fit_intercept(lr_method_or_function, as_2D, data_structure):
 
     pred0 = trend_data_1D(slope=1, scale=0)
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=1, scale=0, intercept=1)
 
-    result = lr_method_or_function({"pred0": pred0}, tgt, "time", fit_intercept=False)
+    result = lr_method_or_function(
+        data_structure({"pred0": pred0}), tgt, "time", fit_intercept=False
+    )
 
     template = tgt.isel(time=0, drop=True)
 
@@ -391,7 +490,9 @@ def test_linear_regression_fit_intercept(lr_method_or_function, as_2D):
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_linear_regression_no_coords(lr_method_or_function, as_2D):
+@pytest.mark.parametrize("data_structure", [to_dict, to_xr_dataset])
+def test_linear_regression_no_coords(lr_method_or_function, as_2D, data_structure):
+    # does not work with DataTree due to missing coords in collapse_datatree_into_dataset
 
     slope, intercept = 3.14, 3.14
 
@@ -402,7 +503,7 @@ def test_linear_regression_no_coords(lr_method_or_function, as_2D):
     pred0 = pred0.drop_vars(pred0.coords.keys())
     tgt = tgt.drop_vars(tgt.coords.keys())
 
-    result = lr_method_or_function({"pred0": pred0}, tgt, "time")
+    result = lr_method_or_function(data_structure({"pred0": pred0}), tgt, "time")
 
     template = tgt.isel(time=0, drop=True)
 
@@ -423,15 +524,18 @@ def test_linear_regression_no_coords(lr_method_or_function, as_2D):
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
 @pytest.mark.parametrize("as_2D", [True, False])
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
 def test_linear_regression_two_predictors(
-    lr_method_or_function, intercept, slope, as_2D
+    lr_method_or_function, intercept, slope, as_2D, data_structure
 ):
 
     pred0 = trend_data_1D(slope=1, scale=0)
     pred1 = trend_data_1D(slope=1, scale=0)
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
 
-    result = lr_method_or_function({"pred0": pred0, "pred1": pred1}, tgt, "time")
+    result = lr_method_or_function(
+        data_structure({"pred0": pred0, "pred1": pred1}), tgt, "time"
+    )
 
     template = tgt.isel(time=0, drop=True)
 
@@ -452,7 +556,46 @@ def test_linear_regression_two_predictors(
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
-def test_linear_regression_two_predictors_extra_dim(lr_method_or_function):
+@pytest.mark.parametrize("intercept", (0, 3.14))
+@pytest.mark.parametrize("slope", (0, 3.14))
+@pytest.mark.parametrize("as_2D", [True, False])
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_linear_regression_two_predictors_diffnames(
+    lr_method_or_function, intercept, slope, as_2D, data_structure
+):
+
+    pred0 = trend_data_1D(slope=1, scale=0).rename("bar")
+    pred1 = trend_data_1D(slope=1, scale=0).rename("foo")
+    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
+
+    result = lr_method_or_function(
+        data_structure({"pred0": pred0, "pred1": pred1}), tgt, "time"
+    )
+
+    template = tgt.isel(time=0, drop=True)
+
+    expected_intercept = xr.full_like(template, intercept)
+    expected_pred0 = xr.full_like(template, slope / 2)
+    expected_pred1 = xr.full_like(template, slope / 2)
+
+    expected = xr.Dataset(
+        {
+            "intercept": expected_intercept,
+            "pred0": expected_pred0,
+            "pred1": expected_pred1,
+            "fit_intercept": True,
+        }
+    )
+
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+@pytest.mark.parametrize("data_structure", [to_dict, to_xr_dataset])
+def test_linear_regression_two_predictors_extra_dim(
+    lr_method_or_function, data_structure
+):
+    # does not work with datatree because we have not implemented minimal coords
     # add a 0D dimension/ coordinate and ensure it still works
     # NOTE: requires 3 predictors to trigger the error (might be an xarray issue)
 
@@ -467,7 +610,7 @@ def test_linear_regression_two_predictors_extra_dim(lr_method_or_function):
     tgt = trend_data_2D(slope=slope, scale=0, intercept=intercept)
 
     result = lr_method_or_function(
-        {"pred0": pred0, "pred1": pred1, "pred2": pred0}, tgt, "time"
+        data_structure({"pred0": pred0, "pred1": pred1, "pred2": pred0}), tgt, "time"
     )
 
     template = tgt.isel(time=0, drop=True)
@@ -492,7 +635,8 @@ def test_linear_regression_two_predictors_extra_dim(lr_method_or_function):
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
-def test_linear_regression_weights(lr_method_or_function, intercept):
+@pytest.mark.parametrize("data_structure", [to_dict, to_datatree, to_xr_dataset])
+def test_linear_regression_weights(lr_method_or_function, intercept, data_structure):
 
     pred0 = trend_data_1D(slope=1, scale=0)
     tgt = trend_data_2D(slope=1, scale=0, intercept=intercept)
@@ -500,7 +644,9 @@ def test_linear_regression_weights(lr_method_or_function, intercept):
     weights = trend_data_1D(intercept=0, slope=0, scale=0)
     weights[0] = 1
 
-    result = lr_method_or_function({"pred0": pred0}, tgt, "time", weights=weights)
+    result = lr_method_or_function(
+        data_structure({"pred0": pred0}), tgt, "time", weights=weights
+    )
 
     template = tgt.isel(time=0, drop=True)
 
