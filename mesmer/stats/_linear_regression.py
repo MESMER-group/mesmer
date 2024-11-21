@@ -278,7 +278,7 @@ def _fit_linear_regression_xr(
             {"predictor": list(predictors.keys())}
         )
     elif isinstance(predictors, DataTree):
-        # rename all data variables to "data" to avoid conflicts when concatenating
+        # rename all data variables to "pred" to avoid conflicts when concatenating
         predictors = map_over_subtree(
             lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
         )(predictors)
