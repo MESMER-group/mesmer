@@ -7,6 +7,7 @@ import xarray as xr
 from datatree import DataTree
 
 import mesmer
+import mesmer.stats._linear_regression
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 

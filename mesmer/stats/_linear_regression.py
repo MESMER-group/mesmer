@@ -12,8 +12,6 @@ from mesmer.core.utils import (
     _to_set,
 )
 
-# TODO: deprecate predictor dicts?
-
 
 class LinearRegression:
     """Ordinary least squares Linear Regression for xr.DataArray objects."""
