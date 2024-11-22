@@ -71,7 +71,7 @@ class LinearRegression:
         predictors : dict of xr.DataArray | DataTree | xr.Dataset
             A dict of ``DataArray`` objects used as predictors or a ``DataTree``, holding each
             predictor in a leaf. Each predictor must be 1D and contain ``dim``. If predictors
-            is a ``xr.Dataset``, it must have each predictor as a ``DataArray``.
+            is a ``xr.Dataset``, it must have each predictor as a single ``DataArray``.
         exclude : str or set of str, default: None
             Set of variables to exclude in the prediction. May include ``"intercept"``
             to initialize the prediction with 0.
