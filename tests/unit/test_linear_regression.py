@@ -101,11 +101,11 @@ def test_lr_predict(as_2D, data_type):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    tas = xr.DataArray([0, 1, 2], dims="time", name = "tas")
     pred = convert_to({"tas": tas}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time")).rename("tas")
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name = "tas")
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
@@ -125,11 +125,11 @@ def test_lr_predict_two_predictors(as_2D, data_type):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    tas = xr.DataArray([0, 1, 2], dims="time", name = "tas")
     pred = convert_to({"tas": tas, "tas2": tas.rename("tas2")}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time")).rename("tas")
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name = "tas")
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
@@ -149,11 +149,11 @@ def test_lr_predict_two_predictors_diffnames(as_2D, data_type):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    tas = xr.DataArray([0, 1, 2], dims="time", name = "tas")
     pred = convert_to({"tas": tas, "tas2": tas}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time")).rename("tas")
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name = "tas")
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
@@ -171,7 +171,7 @@ def test_lr_predict_missing_superfluous(data_type):
         }
     )
     lr.params = params
-    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    tas = xr.DataArray([0, 1, 2], dims="time", name = "tas")
 
     with pytest.raises(ValueError, match="Missing predictors: 'tas', 'tas2'"):
         lr.predict(convert_to({}, data_type))
@@ -207,7 +207,7 @@ def test_lr_predict_exclude(as_2D, data_type):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    tas = xr.DataArray([0, 1, 2], dims="time", name = "tas")
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude="tas2")
     expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
@@ -242,7 +242,7 @@ def test_lr_predict_exclude_intercept(as_2D, data_type):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time").rename("tas")
+    tas = xr.DataArray([0, 1, 2], dims="time", name = "tas")
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude="intercept")
     expected = xr.DataArray([[0, 3, 6]], dims=("x", "time"))
