@@ -326,7 +326,7 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
         errortype = TypeError
 
         # errors sooner for datatree predictors
-        if preds_wrong == True:
+        if preds_wrong:
             if data_type == "DataTree":
                 msg = f"{name} has no data."
                 errortype = ValueError
