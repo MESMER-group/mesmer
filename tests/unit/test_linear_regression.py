@@ -627,6 +627,27 @@ def test_linear_regression_two_predictors_diffnames(
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
+@pytest.mark.parametrize("intercept", (0, 3.14))
+@pytest.mark.parametrize("slope", (0, 3.14))
+@pytest.mark.parametrize("as_2D", [True, False])
+def test_linear_regression_datatree_data_in_root(
+    lr_method_or_function, intercept, slope, as_2D
+):
+
+    pred0 = trend_data_1D(slope=1, scale=0).rename("bar")
+    pred1 = trend_data_1D(slope=1, scale=0).rename("foo")
+    ds = xr.Dataset({"pred0": pred0, "pred1": pred1})
+    dt = DataTree(ds, name="root")
+    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
+
+    result = lr_method_or_function(dt, tgt, "time")
+
+    expected = lr_method_or_function(ds, tgt, "time")
+
+    xr.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
 def test_linear_regression_two_predictors_extra_dim(lr_method_or_function, data_type):
     # add a 0D dimension/ coordinate and ensure it still works
