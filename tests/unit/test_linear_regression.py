@@ -262,7 +262,8 @@ def test_lr_predict_exclude_intercept(as_2D, data_type):
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-def test_LR_residuals(as_2D):
+@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+def test_LR_residuals(as_2D, data_type):
 
     lr = mesmer.stats.LinearRegression()
 
@@ -271,11 +272,11 @@ def test_LR_residuals(as_2D):
     )
     lr.params = params if as_2D else params.squeeze()
 
-    tas = xr.DataArray([0, 1, 2], dims="time")
+    tas = xr.DataArray([0, 1, 2], dims="time", name="tas")
     target = xr.DataArray([[5, 8, 0]], dims=("x", "time"))
     target = target if as_2D else target.squeeze()
 
-    result = lr.residuals({"tas": tas}, target)
+    result = lr.residuals(convert_to({"tas": tas}, data_type), target)
     expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"))
     expected = expected if as_2D else expected.squeeze()
 
@@ -284,7 +285,8 @@ def test_LR_residuals(as_2D):
 
 # TEST XARRAY WRAPPER & LinearRegression().fit
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
-def test_linear_regression_errors(lr_method_or_function):
+@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+def test_linear_regression_errors(lr_method_or_function, data_type):
 
     pred0 = trend_data_1D()
     pred1 = trend_data_1D()
@@ -295,36 +297,54 @@ def test_linear_regression_errors(lr_method_or_function):
 
     weights = trend_data_1D(intercept=1, slope=0, scale=0)
 
-    with pytest.raises(TypeError, match="predictors should be a dict"):
-        lr_method_or_function(pred0, tgt, dim="time")
+    # test predictors have to be dict, dataset or DataTree
+    with pytest.raises(
+        TypeError,
+        match="predictors should be a dict, DataTree or xr.Dataset, got <class 'list'>.",
+    ):
+        lr_method_or_function([pred0, pred1], tgt, dim="time")
 
     def test_unequal_coords(pred0, pred1, tgt, weights):
-
         with pytest.raises(ValueError, match="cannot align objects"):
             lr_method_or_function(
-                {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
             )
 
-    test_unequal_coords(pred0.isel(time=slice(0, 5)), pred1, tgt, weights)
-    test_unequal_coords(pred0, pred1.isel(time=slice(0, 5)), tgt, weights)
+    if not data_type == "xr_dataset":
+        # for xr_dataset, this leads to nans in the predictors -> user responsibility
+        test_unequal_coords(pred0.isel(time=slice(0, 5)), pred1, tgt, weights)
+        test_unequal_coords(pred0, pred1.isel(time=slice(0, 5)), tgt, weights)
     test_unequal_coords(pred0, pred1, tgt.isel(time=slice(0, 5)), weights)
     test_unequal_coords(pred0, pred1, tgt, weights.isel(time=slice(0, 5)))
 
-    def test_wrong_type(pred0, pred1, tgt, weights, name):
-        with pytest.raises(TypeError, match=f"Expected {name} to be an xr.DataArray"):
+    def test_wrong_type(pred0, pred1, tgt, weights, name, preds_wrong = False):
+        
+        msg = f"Expected {name} to be an xr.DataArray"
+        errortype = TypeError
+
+        # errors sooner for datatree predictors
+        if preds_wrong == True:
+            if data_type == "DataTree":
+                msg = f"{name} has no data."
+                errortype = ValueError
+            elif data_type == "xr_dataset":
+                msg = f"{name} should be 1D, but is 0D"
+                errortype = ValueError
+
+        with pytest.raises(errortype, match=msg):
             lr_method_or_function(
-                {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
             )
 
-    test_wrong_type(None, pred1, tgt, weights, name="predictor: pred0")
-    test_wrong_type(pred0, None, tgt, weights, name="predictor: pred1")
+    test_wrong_type(None, pred1, tgt, weights, name="predictor: pred0", preds_wrong = True)
+    test_wrong_type(pred0, None, tgt, weights, name="predictor: pred1", preds_wrong = True)
     test_wrong_type(pred0, pred1, None, weights, name="target")
     test_wrong_type(pred0, pred1, tgt, xr.Dataset(), name="weights")
 
     def test_wrong_shape(pred0, pred1, tgt, weights, name, ndim):
         with pytest.raises(ValueError, match=f"{name} should be {ndim}D"):
             lr_method_or_function(
-                {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
             )
 
     test_wrong_shape(
@@ -340,7 +360,7 @@ def test_linear_regression_errors(lr_method_or_function):
     # target ndim test has a different error message
     with pytest.raises(ValueError, match="target should be 1D or 2D"):
         lr_method_or_function(
-            {"pred0": pred0, "pred1": pred1},
+            convert_to({"pred0": pred0, "pred1": pred1}, data_type),
             tgt.expand_dims("new"),
             dim="time",
             weights=weights,
@@ -349,7 +369,7 @@ def test_linear_regression_errors(lr_method_or_function):
     def test_missing_dim(pred0, pred1, tgt, weights, name):
         with pytest.raises(ValueError, match=f"{name} is missing the required dims"):
             lr_method_or_function(
-                {"pred0": pred0, "pred1": pred1}, tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
             )
 
     test_missing_dim(
@@ -361,23 +381,14 @@ def test_linear_regression_errors(lr_method_or_function):
     test_missing_dim(pred0, pred1, tgt.rename(time="t"), weights, name="target")
     test_missing_dim(pred0, pred1, tgt, weights.rename(time="t"), name="weights")
 
-    with pytest.raises(ValueError, match="dim cannot currently be 'predictor'."):
-        lr_method_or_function({"pred0": pred0}, tgt, dim="predictor")
-
-    # test predictors have to be dict or DataTree
-    with pytest.raises(
-        TypeError,
-        match="predictors should be a dict, DataTree or xr.Dataset, got <class 'list'>.",
-    ):
-        lr_method_or_function([pred0, pred1], tgt, dim="time")
-
-    # test DataTree depth
-    with pytest.raises(ValueError, match="DataTree must contain data."):
+    with pytest.raises(ValueError, match="A predictor with the name 'weights' or 'intercept' is not allowed"):
         lr_method_or_function(
-            DataTree.from_dict({"scen0": DataTree.from_dict({"pred1": pred1})}),
+            convert_to({"weights": pred0, "intercept": pred1}, data_type),
             tgt,
             dim="time",
         )
+    with pytest.raises(ValueError, match="dim cannot currently be 'predictor'."):
+        lr_method_or_function(convert_to({"pred0": pred0}, data_type), tgt, dim="predictor")
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
@@ -416,7 +427,7 @@ def test_linear_regression_one_predictor(
 def test_linear_regression_predictor_named_like_dim(
     lr_method_or_function, as_2D, data_type
 ):
-    # cannot be DataTree, becaue data_var cannot have the same name as coord
+    # cannot be DataTree, because data_var cannot have the same name as coord
     # cannot be Dataset because we need pred as a data_variable not coord
     slope, intercept = 0.3, 0.2
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
@@ -496,10 +507,8 @@ def test_linear_regression_fit_intercept(lr_method_or_function, as_2D, data_type
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
 def test_linear_regression_no_coords(lr_method_or_function, as_2D, data_type):
-    # does not work with DataTree due to missing coords in collapse_datatree_into_dataset
-
     slope, intercept = 3.14, 3.14
 
     pred0 = trend_data_1D(slope=1, scale=0)
@@ -597,9 +606,8 @@ def test_linear_regression_two_predictors_diffnames(
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
-@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
 def test_linear_regression_two_predictors_extra_dim(lr_method_or_function, data_type):
-    # does not work with datatree because we have not implemented minimal coords
     # add a 0D dimension/ coordinate and ensure it still works
     # NOTE: requires 3 predictors to trigger the error (might be an xarray issue)
 

@@ -109,7 +109,8 @@ class LinearRegression:
             prediction = params.intercept
 
         # if predictors is a DataTree, rename all data variables to "pred" to avoid conflicts
-        if isinstance(predictors, DataTree) and not predictors.equals(DataTree()):
+        # not necessaey if predictors is empty DataTree or only data is in root, i.e. depth == 0
+        if isinstance(predictors, DataTree) and not predictors.depth == 0:
             predictors = map_over_subtree(
                 lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
             )(predictors)
@@ -242,6 +243,9 @@ def _fit_linear_regression_xr(
         Dataset of intercepts and coefficients. The intercepts and each predictor is an
         individual DataArray.
     """
+    # if DataTree only has data in root, extract Dataset
+    if isinstance(predictors, DataTree) and predictors.depth == 0:
+        predictors = predictors.to_dataset()
 
     if not isinstance(predictors, dict | DataTree | xr.Dataset):
         raise TypeError(
@@ -258,7 +262,7 @@ def _fit_linear_regression_xr(
 
     for key, pred in predictors.items():
         if isinstance(pred, DataTree):
-            pred = _extract_single_dataarray_from_dt(pred)
+            pred = _extract_single_dataarray_from_dt(pred, name=f"predictor: {key}")
 
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
 
@@ -277,7 +281,7 @@ def _fit_linear_regression_xr(
         predictors = map_over_subtree(
             lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
         )(predictors)
-        predictors_concat = collapse_datatree_into_dataset(predictors, dim="predictor")
+        predictors_concat = collapse_datatree_into_dataset(predictors, dim="predictor", join="exact", coords="minimal")
         predictors_concat = (
             predictors_concat.to_array().isel(variable=0).drop_vars("variable")
         )
