@@ -2,19 +2,21 @@ import xarray as xr
 from datatree import DataTree
 
 
-def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
+def _extract_single_dataarray_from_dt(dt: DataTree, name: str = "node") -> xr.DataArray:
     """
     Extract a single DataArray from a DataTree node, holding a ``Dataset`` with one ``DataArray``.
     """
+
     if not dt.has_data:
-        raise ValueError("DataTree must contain data.")
+        raise ValueError(f"{name} has no data.")
 
     ds = dt.to_dataset()
-    name, *others = ds.keys()
+    var_name, *others = ds.keys()
     if others:
-        raise ValueError("DataTree must only contain one data variable.")
+        others = ", ".join(map(str, others))
+        raise ValueError(f"Node must only contain one data variable, {name} has {others} and {var_name}.")
 
-    da = ds[name]
+    da = ds[var_name]
     return da
 
 
