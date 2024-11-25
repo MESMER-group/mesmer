@@ -127,9 +127,9 @@ def stack_datatrees_for_linear_regression(
 
     # prepare predictors
     predictors_stacked = DataTree()
-    for key, subtree in predictors.items():
+    for key, pred in predictors.items():
         # 1) broadcast to target
-        pred_broadcast = subtree.broadcast_like(target, exclude=exclude_dim)
+        pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
         # 2) collapse into DataSets
         predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
         # 3) stack
