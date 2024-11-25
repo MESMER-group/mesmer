@@ -281,7 +281,9 @@ def _fit_linear_regression_xr(
         predictors = map_over_subtree(
             lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
         )(predictors)
-        predictors_concat = collapse_datatree_into_dataset(predictors, dim="predictor", join="exact", coords="minimal")
+        predictors_concat = collapse_datatree_into_dataset(
+            predictors, dim="predictor", join="exact", coords="minimal"
+        )
         predictors_concat = (
             predictors_concat.to_array().isel(variable=0).drop_vars("variable")
         )

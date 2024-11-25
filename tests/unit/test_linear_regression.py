@@ -307,7 +307,10 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
     def test_unequal_coords(pred0, pred1, tgt, weights):
         with pytest.raises(ValueError, match="cannot align objects"):
             lr_method_or_function(
-                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type),
+                tgt,
+                dim="time",
+                weights=weights,
             )
 
     if not data_type == "xr_dataset":
@@ -317,8 +320,8 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
     test_unequal_coords(pred0, pred1, tgt.isel(time=slice(0, 5)), weights)
     test_unequal_coords(pred0, pred1, tgt, weights.isel(time=slice(0, 5)))
 
-    def test_wrong_type(pred0, pred1, tgt, weights, name, preds_wrong = False):
-        
+    def test_wrong_type(pred0, pred1, tgt, weights, name, preds_wrong=False):
+
         msg = f"Expected {name} to be an xr.DataArray"
         errortype = TypeError
 
@@ -333,18 +336,28 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
 
         with pytest.raises(errortype, match=msg):
             lr_method_or_function(
-                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type),
+                tgt,
+                dim="time",
+                weights=weights,
             )
 
-    test_wrong_type(None, pred1, tgt, weights, name="predictor: pred0", preds_wrong = True)
-    test_wrong_type(pred0, None, tgt, weights, name="predictor: pred1", preds_wrong = True)
+    test_wrong_type(
+        None, pred1, tgt, weights, name="predictor: pred0", preds_wrong=True
+    )
+    test_wrong_type(
+        pred0, None, tgt, weights, name="predictor: pred1", preds_wrong=True
+    )
     test_wrong_type(pred0, pred1, None, weights, name="target")
     test_wrong_type(pred0, pred1, tgt, xr.Dataset(), name="weights")
 
     def test_wrong_shape(pred0, pred1, tgt, weights, name, ndim):
         with pytest.raises(ValueError, match=f"{name} should be {ndim}D"):
             lr_method_or_function(
-                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type),
+                tgt,
+                dim="time",
+                weights=weights,
             )
 
     test_wrong_shape(
@@ -369,7 +382,10 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
     def test_missing_dim(pred0, pred1, tgt, weights, name):
         with pytest.raises(ValueError, match=f"{name} is missing the required dims"):
             lr_method_or_function(
-                convert_to({"pred0": pred0, "pred1": pred1}, data_type), tgt, dim="time", weights=weights
+                convert_to({"pred0": pred0, "pred1": pred1}, data_type),
+                tgt,
+                dim="time",
+                weights=weights,
             )
 
     test_missing_dim(
@@ -381,14 +397,19 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
     test_missing_dim(pred0, pred1, tgt.rename(time="t"), weights, name="target")
     test_missing_dim(pred0, pred1, tgt, weights.rename(time="t"), name="weights")
 
-    with pytest.raises(ValueError, match="A predictor with the name 'weights' or 'intercept' is not allowed"):
+    with pytest.raises(
+        ValueError,
+        match="A predictor with the name 'weights' or 'intercept' is not allowed",
+    ):
         lr_method_or_function(
             convert_to({"weights": pred0, "intercept": pred1}, data_type),
             tgt,
             dim="time",
         )
     with pytest.raises(ValueError, match="dim cannot currently be 'predictor'."):
-        lr_method_or_function(convert_to({"pred0": pred0}, data_type), tgt, dim="predictor")
+        lr_method_or_function(
+            convert_to({"pred0": pred0}, data_type), tgt, dim="predictor"
+        )
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)

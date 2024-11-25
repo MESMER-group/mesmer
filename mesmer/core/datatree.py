@@ -14,7 +14,9 @@ def _extract_single_dataarray_from_dt(dt: DataTree, name: str = "node") -> xr.Da
     var_name, *others = ds.keys()
     if others:
         others = ", ".join(map(str, others))
-        raise ValueError(f"Node must only contain one data variable, {name} has {others} and {var_name}.")
+        raise ValueError(
+            f"Node must only contain one data variable, {name} has {others} and {var_name}."
+        )
 
     da = ds[var_name]
     return da

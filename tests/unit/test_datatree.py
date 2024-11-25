@@ -141,7 +141,8 @@ def test_extract_single_dataarray_from_dt():
 
     dt = DataTree(data=xr.Dataset({"tas": da, "tas2": da}))
     with pytest.raises(
-        ValueError, match="Node must only contain one data variable, node has tas2 and tas."
+        ValueError,
+        match="Node must only contain one data variable, node has tas2 and tas.",
     ):
         mesmer.datatree._extract_single_dataarray_from_dt(dt)
 
@@ -154,8 +155,11 @@ def test_extract_single_dataarray_from_dt():
         mesmer.datatree._extract_single_dataarray_from_dt(dt)
 
     # check name
-    with pytest.raises(ValueError, match="Node must only contain one data variable, scen1 has tas2 and tas."):
-        mesmer.datatree._extract_single_dataarray_from_dt(dt['scen1'], name="scen1")
+    with pytest.raises(
+        ValueError,
+        match="Node must only contain one data variable, scen1 has tas2 and tas.",
+    ):
+        mesmer.datatree._extract_single_dataarray_from_dt(dt["scen1"], name="scen1")
 
     res = mesmer.datatree._extract_single_dataarray_from_dt(dt["scen2"])
     xr.testing.assert_equal(res, da)
