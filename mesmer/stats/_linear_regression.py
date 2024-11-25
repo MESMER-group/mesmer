@@ -117,11 +117,8 @@ class LinearRegression:
         for key in required_predictors:
             prediction = (predictors[key] * params[key]).transpose() + prediction
 
-        prediction = (
-            _extract_single_dataarray_from_dt(prediction)
-            if isinstance(prediction, DataTree)
-            else prediction
-        )
+        if isinstance(prediction, DataTree):
+            prediction = _extract_single_dataarray_from_dt(prediction)
 
         return prediction.rename("prediction")
 
@@ -260,11 +257,9 @@ def _fit_linear_regression_xr(
         raise ValueError("dim cannot currently be 'predictor'.")
 
     for key, pred in predictors.items():
-        pred = (
-            _extract_single_dataarray_from_dt(pred)
-            if isinstance(pred, DataTree)
-            else pred
-        )
+        if isinstance(pred, DataTree):
+            pred = _extract_single_dataarray_from_dt(pred)
+
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
 
     if isinstance(predictors, dict | xr.Dataset):
