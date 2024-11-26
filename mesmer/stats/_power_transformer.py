@@ -169,7 +169,7 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
         return -loglikelihood
 
-    bounds = np.array([[0, np.inf], [-0.1, 0.1]])
+    bounds = np.array([[0, 1e10], [-0.1, 0.1]])
     first_guess = np.array([1.0, 0.0])
 
     res = minimize(
