@@ -2,19 +2,23 @@ import xarray as xr
 from datatree import DataTree
 
 
-def _extract_single_dataarray_from_dt(dt: DataTree) -> xr.DataArray:
+def _extract_single_dataarray_from_dt(dt: DataTree, name: str = "node") -> xr.DataArray:
     """
     Extract a single DataArray from a DataTree node, holding a ``Dataset`` with one ``DataArray``.
     """
+
     if not dt.has_data:
-        raise ValueError("DataTree must contain data.")
+        raise ValueError(f"{name} has no data.")
 
     ds = dt.to_dataset()
-    name, *others = ds.keys()
+    var_name, *others = ds.keys()
     if others:
-        raise ValueError("DataTree must only contain one data variable.")
+        others = ", ".join(map(str, others))
+        raise ValueError(
+            f"Node must only contain one data variable, {name} has {others} and {var_name}."
+        )
 
-    da = ds[name]
+    da = ds[var_name]
     return da
 
 
@@ -127,9 +131,9 @@ def stack_datatrees_for_linear_regression(
 
     # prepare predictors
     predictors_stacked = DataTree()
-    for key, subtree in predictors.items():
+    for key, pred in predictors.items():
         # 1) broadcast to target
-        pred_broadcast = subtree.broadcast_like(target, exclude=exclude_dim)
+        pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
         # 2) collapse into DataSets
         predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
         # 3) stack

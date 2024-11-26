@@ -60,6 +60,17 @@ def test_collapse_datatree_into_dataset():
 
     xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
 
+    # test data in root works
+    dt = DataTree(leaf1, name="scen1")
+    res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
+
+    assert isinstance(res, xr.Dataset)
+    assert collapse_dim in res.dims
+    assert (res[collapse_dim] == ["scen1"]).all()
+    assert len(res.dims) == 3
+
+    xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
+
     # nested DataTree works
     dt = DataTree()
     dt["scen1/sub_scen1"] = DataTree(leaf1)
@@ -109,18 +120,6 @@ def test_collapse_datatree_into_dataset():
     dt = DataTree.from_dict({"mem1": ds1, "mem2": ds2})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim="members")
 
-    # only one leaf also works
-    ds = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts)})
-    dt = DataTree.from_dict({"ds": ds})
-
-    collapse_dim = "scenario"
-    res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
-
-    expected = ds.expand_dims(collapse_dim).assign_coords(
-        {collapse_dim: np.array(["ds"])}
-    )
-    xr.testing.assert_equal(res, expected)
-
     # empty nodes are removed before concatenating
     # NOTE: implicitly this is already there in the other tests, since the root node is always empty
     # but it is nice to have it explicitly too
@@ -141,23 +140,31 @@ def test_extract_single_dataarray_from_dt():
 
     dt = DataTree(data=xr.Dataset({"tas": da, "tas2": da}))
     with pytest.raises(
-        ValueError, match="DataTree must only contain one data variable."
+        ValueError,
+        match="Node must only contain one data variable, node has tas2 and tas.",
     ):
-        res = mesmer.datatree._extract_single_dataarray_from_dt(dt)
+        mesmer.datatree._extract_single_dataarray_from_dt(dt)
 
     dt = DataTree.from_dict(
         {"scen1": xr.Dataset({"tas": da, "tas2": da}), "scen2": xr.Dataset({"tas": da})}
     )
 
     # passing empty root
-    with pytest.raises(ValueError, match="DataTree must contain data."):
+    with pytest.raises(ValueError, match="node has no data."):
         mesmer.datatree._extract_single_dataarray_from_dt(dt)
+
+    # check name
+    with pytest.raises(
+        ValueError,
+        match="Node must only contain one data variable, scen1 has tas2 and tas.",
+    ):
+        mesmer.datatree._extract_single_dataarray_from_dt(dt["scen1"], name="scen1")
 
     res = mesmer.datatree._extract_single_dataarray_from_dt(dt["scen2"])
     xr.testing.assert_equal(res, da)
 
     # passing empty Dataree
-    with pytest.raises(ValueError, match="DataTree must contain data."):
+    with pytest.raises(ValueError, match="node has no data."):
         mesmer.datatree._extract_single_dataarray_from_dt(DataTree())
 
 
