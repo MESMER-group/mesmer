@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import xarray as xr
+from datatree import DataTree, map_over_subtree
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -106,3 +107,75 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
         weights = lat_weights(data[y_dim])
 
     return weighted_mean(data, weights, [x_dim, y_dim])
+
+
+def create_equal_scenario_weights_from_datatree(
+    dt: DataTree, ens_dim: str = "member", exclude: set[str] | None = None
+) -> DataTree:
+    """
+    Create a DataTree isomorphic to ``dt`, holding the weights for each scenario to weight the ensemble members of each
+    scenario such that each scenario contributes equally to some fitting procedure.
+    The weight of each member = 1 / number of members in the scenario, so weights = 1 / ds[ens_dim].size.
+
+    Thus, if all scenarios have equal amounts of members, all weights will be equal.
+    If one scenario has more members than the others, the weights will be smaller for each member of this scenario.
+
+    Parameters:
+    -----------
+    dt : DataTree
+        DataTree holding the ``xr.Datasets`` for which the weights should be created. Each dataset must have at least
+        ens_dim as a dimension, but can have more dimensions.
+    ens_dim : str
+        Name of the dimension along which the weights should be created. Default is "member".
+    exclude : set[str] | None
+        Name of one or several dimensions to exclude from the dataset before calculating the weights. Default is None.
+        Internally, these dimensions are dropped before calculating the weights. If None, the returned ``DataTree`` is
+        isomorphic to ``dt``.
+
+    Returns:
+    --------
+    DataTree
+        DataTree holding the weights for each scenario.
+
+    Example:
+    --------
+    dt = DataTree()
+    dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray([1, 2, 3], dims="member")}))
+    dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")}))
+    create_equal_scenario_weights_from_datatree(dt)
+    # Output:
+    # DataTree({
+    #     "ssp119": DataTree({"weights": xr.DataArray([0.333333, 0.333333, 0.333333], dims="member")}),
+    #     "ssp585": DataTree({"weights": xr.DataArray([0.5, 0.5], dims="member")})
+    # })
+
+    """
+    if dt.depth > 1:
+        raise ValueError(f"DataTree must have a depth of 1, not {dt.depth}.")
+
+    if exclude is None:
+        exclude = set()
+
+    def _create_weights(ds: xr.Dataset) -> xr.DataArray:
+        if ens_dim not in ds.dims:
+            raise ValueError(f"Member dimension '{ens_dim}' not found in dataset.")
+
+        name, *others = ds.keys()
+        if others:
+            raise ValueError("Dataset must only contain one data variable.")
+
+        # Get the dimensions to calculate the weights for and make sure they are in the right order
+        dims = [dim for dim in ds[name].dims if dim not in exclude]
+
+        # Create a DataArray of ones with the remaining dimensions
+        shape = [ds.sizes[dim] for dim in dims]
+        coords = {dim: ds.coords[dim] for dim in dims}
+
+        data = np.full(shape, fill_value=1 / ds[ens_dim].size)
+        weights = xr.DataArray(data, coords=coords, dims=dims, name="weights")
+
+        return weights
+
+    weights = map_over_subtree(_create_weights)(dt)
+
+    return weights
