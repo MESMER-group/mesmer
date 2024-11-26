@@ -278,15 +278,15 @@ def _fit_linear_regression_xr(
         )
     elif isinstance(predictors, DataTree):
         # rename all data variables to "pred" to avoid conflicts when concatenating
-        predictors = map_over_subtree(
-            lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
-        )(predictors)
+        def _rename_vars(ds) -> DataTree:
+            (var,) = ds.data_vars
+            return ds.rename({var: "pred"})
+        
+        predictors = map_over_subtree(_rename_vars)(predictors)
         predictors_concat = collapse_datatree_into_dataset(
             predictors, dim="predictor", join="exact", coords="minimal"
         )
-        predictors_concat = (
-            predictors_concat.to_array().isel(variable=0).drop_vars("variable")
-        )
+        predictors_concat = predictors_concat['pred']
 
     _check_dataarray_form(target, required_dims=dim, name="target")
 
