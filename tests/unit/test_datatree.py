@@ -60,7 +60,7 @@ def test_collapse_datatree_into_dataset():
 
     xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
 
-    # data in root works
+    # test data in root works
     dt = DataTree(leaf1, name="scen1")
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
