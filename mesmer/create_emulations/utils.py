@@ -114,7 +114,7 @@ def _gather_lr_params(params_dict, targ, dims):
         intercept = xr.DataArray(params_dict["intercept"][targ], dims=dims)
         fit_intercept = True
     else:
-        intercept = 0 # xr.zeros_like(params[pred])
+        intercept = 0  # xr.zeros_like(params[pred])
         fit_intercept = False
 
     params["intercept"] = intercept
