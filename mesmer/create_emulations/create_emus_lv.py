@@ -271,6 +271,6 @@ def create_emus_lv_OLS(params_lv, preds_lv):
             lr.params = params
             prediction = lr.predict(predictors=preds)
 
-            emus_lv[scen][targ] = prediction.values
+            emus_lv[scen][targ] = prediction.values.transpose()
 
     return emus_lv

@@ -1,9 +1,16 @@
-from collections.abc import Mapping
-
 import numpy as np
 import xarray as xr
+from datatree import DataTree, map_over_subtree
 
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form, _to_set
+from mesmer.core.datatree import (
+    _extract_single_dataarray_from_dt,
+    collapse_datatree_into_dataset,
+)
+from mesmer.core.utils import (
+    _check_dataarray_form,
+    _check_dataset_form,
+    _to_set,
+)
 
 
 class LinearRegression:
@@ -14,7 +21,7 @@ class LinearRegression:
 
     def fit(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
         target: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
@@ -25,9 +32,10 @@ class LinearRegression:
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain
-            `dim`.
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
         dim : str
@@ -52,16 +60,18 @@ class LinearRegression:
 
     def predict(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
         exclude=None,
-    ):
+    ) -> xr.DataArray:
         """
         Predict using the linear model.
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of ``DataArray`` objects used as predictors or a ``DataTree``, holding each
+            predictor in a leaf. Each predictor must be 1D and contain ``dim``. If predictors
+            is a ``xr.Dataset``, it must have each predictor as a single ``DataArray``.
         exclude : str or set of str, default: None
             Set of variables to exclude in the prediction. May include ``"intercept"``
             to initialize the prediction with 0.
@@ -78,7 +88,7 @@ class LinearRegression:
 
         non_predictor_vars = {"intercept", "weights", "fit_intercept"}
         required_predictors = set(params.data_vars) - non_predictor_vars - exclude
-        available_predictors = set(predictors.keys())
+        available_predictors = set(predictors.keys()) - exclude
 
         if required_predictors - available_predictors:
             missing = sorted(required_predictors - available_predictors)
@@ -88,30 +98,45 @@ class LinearRegression:
         if available_predictors - required_predictors:
             superfluous = sorted(available_predictors - required_predictors)
             superfluous = "', '".join(superfluous)
-            raise ValueError(f"Superfluous predictors: '{superfluous}'")
+            raise ValueError(
+                f"Superfluous predictors: '{superfluous}', either params",
+                "for this predictor are missing or you forgot to add it to 'exclude'.",
+            )
 
         if "intercept" in exclude:
             prediction = xr.zeros_like(params.intercept)
         else:
             prediction = params.intercept
 
-        for key in required_predictors:
-            prediction = prediction + predictors[key] * params[key]
+        # if predictors is a DataTree, rename all data variables to "pred" to avoid conflicts
+        # not necessaey if predictors is empty DataTree or only data is in root, i.e. depth == 0
+        if isinstance(predictors, DataTree) and not predictors.depth == 0:
+            predictors = map_over_subtree(
+                lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
+            )(predictors)
 
-        return prediction
+        for key in required_predictors:
+            prediction = (predictors[key] * params[key]).transpose() + prediction
+
+        if isinstance(prediction, DataTree):
+            prediction = _extract_single_dataarray_from_dt(prediction)
+
+        return prediction.rename("prediction")
 
     def residuals(
         self,
-        predictors: Mapping[str, xr.DataArray],
+        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
         target: xr.DataArray,
-    ):
+    ) -> xr.DataArray:
         """
         Calculate the residuals of the fitted linear model
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray
-            A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
         target : xr.DataArray
             Target DataArray. Must be 2D and contain `dim`.
 
@@ -126,7 +151,7 @@ class LinearRegression:
 
         residuals = target - prediction
 
-        return residuals
+        return residuals.rename("residuals")
 
     @property
     def params(self):
@@ -182,12 +207,12 @@ class LinearRegression:
             Additional keyword arguments passed to ``xr.Dataset.to_netcf``
         """
 
-        params = self.params()
+        params = self.params
         params.to_netcdf(filename, **kwargs)
 
 
 def _fit_linear_regression_xr(
-    predictors: Mapping[str, xr.DataArray],
+    predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
     target: xr.DataArray,
     dim: str,
     weights: xr.DataArray | None = None,
@@ -198,8 +223,10 @@ def _fit_linear_regression_xr(
 
     Parameters
     ----------
-    predictors : dict of xr.DataArray
-        A dict of DataArray objects used as predictors. Must be 1D and contain `dim`.
+    predictors : dict of xr.DataArray | DataTree | xr.Dataset
+        A dict of DataArray objects used as predictors or a DataTree, holding each
+        predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+        is a xr.Dataset, it must have each predictor as a DataArray.
     target : xr.DataArray
         Target DataArray. Must be 2D and contain `dim`.
     dim : str
@@ -216,9 +243,14 @@ def _fit_linear_regression_xr(
         Dataset of intercepts and coefficients. The intercepts and each predictor is an
         individual DataArray.
     """
+    # if DataTree only has data in root, extract Dataset
+    if isinstance(predictors, DataTree) and predictors.depth == 0:
+        predictors = predictors.to_dataset()
 
-    if not isinstance(predictors, Mapping):
-        raise TypeError(f"predictors should be a dict, got {type(predictors)}.")
+    if not isinstance(predictors, dict | DataTree | xr.Dataset):
+        raise TypeError(
+            f"predictors should be a dict, DataTree or xr.Dataset, got {type(predictors)}."
+        )
 
     if ("weights" in predictors) or ("intercept" in predictors):
         raise ValueError(
@@ -229,14 +261,32 @@ def _fit_linear_regression_xr(
         raise ValueError("dim cannot currently be 'predictor'.")
 
     for key, pred in predictors.items():
+        if isinstance(pred, DataTree):
+            pred = _extract_single_dataarray_from_dt(pred, name=f"predictor: {key}")
+
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
 
-    predictors_concat = xr.concat(
-        tuple(predictors.values()),
-        dim="predictor",
-        join="exact",
-        coords="minimal",
-    )
+    if isinstance(predictors, dict | xr.Dataset):
+        predictors_concat = xr.concat(
+            tuple(predictors.values()),
+            dim="predictor",
+            join="exact",
+            coords="minimal",
+        )
+        predictors_concat = predictors_concat.assign_coords(
+            {"predictor": list(predictors.keys())}
+        )
+    elif isinstance(predictors, DataTree):
+        # rename all data variables to "pred" to avoid conflicts when concatenating
+        def _rename_vars(ds) -> DataTree:
+            (var,) = ds.data_vars
+            return ds.rename({var: "pred"})
+
+        predictors = map_over_subtree(_rename_vars)(predictors)
+        predictors_concat = collapse_datatree_into_dataset(
+            predictors, dim="predictor", join="exact", coords="minimal"
+        )
+        predictors_concat = predictors_concat["pred"]
 
     _check_dataarray_form(target, required_dims=dim, name="target")
 
@@ -267,7 +317,7 @@ def _fit_linear_regression_xr(
     target = target.drop_vars(target[dim].coords)
 
     # split `out` into individual DataArrays
-    keys = ["intercept"] + list(predictors)
+    keys = ["intercept"] + list(predictors_concat.coords["predictor"].values)
     data_vars = {key: (target_dim, out[:, i]) for i, key in enumerate(keys)}
     out = xr.Dataset(data_vars, coords=target.coords)
 
