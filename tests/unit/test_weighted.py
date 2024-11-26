@@ -1,6 +1,8 @@
+import datatree.testing
 import numpy as np
 import pytest
 import xarray as xr
+from datatree import DataTree
 
 import mesmer
 
@@ -170,3 +172,131 @@ def test_global_mean_weights_passed(as_dataset):
     expected = data.mean(("lat", "lon"))
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_create_equal_sceanrio_weights_from_datatree():
+    dt = DataTree()
+
+    n_members_ssp119 = 3
+    n_members_ssp585 = 2
+    n_gridcells = 3
+    n_ts = 30
+
+    dt["ssp119"] = DataTree(
+        xr.Dataset({"tas": xr.DataArray(np.arange(n_members_ssp119), dims="member")})
+    )
+    dt["ssp585"] = DataTree(
+        xr.Dataset({"tas": xr.DataArray(np.arange(n_members_ssp585), dims="member")})
+    )
+    result1 = mesmer.weighted.create_equal_scenario_weights_from_datatree(dt)
+    expected = DataTree.from_dict(
+        {
+            "ssp119": DataTree(
+                xr.DataArray(
+                    np.ones(n_members_ssp119) / n_members_ssp119,
+                    dims="member",
+                    coords={"member": np.arange(n_members_ssp119)},
+                ).rename("weights")
+            ),
+            "ssp585": DataTree(
+                xr.DataArray(
+                    np.ones(n_members_ssp585) / n_members_ssp585,
+                    dims="member",
+                    coords={"member": np.arange(n_members_ssp585)},
+                ).rename("weights")
+            ),
+        }
+    )
+
+    datatree.testing.assert_isomorphic(result1, expected)
+    datatree.testing.assert_equal(result1, expected)
+
+    dt["ssp119"] = DataTree(
+        dt.ssp119.ds.expand_dims(gridcell=np.arange(n_gridcells), axis=1)
+    )
+    dt["ssp585"] = DataTree(
+        dt.ssp585.ds.expand_dims(gridcell=np.arange(n_gridcells), axis=1)
+    )
+
+    result2 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        dt, ens_dim="member", exclude={"gridcell"}
+    )
+    datatree.testing.assert_equal(result2, expected)
+
+    dt["ssp119"] = DataTree(dt.ssp119.ds.expand_dims(time=np.arange(n_ts), axis=1))
+    dt["ssp585"] = DataTree(dt.ssp585.ds.expand_dims(time=np.arange(n_ts), axis=1))
+
+    result3 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        dt, exclude={"gridcell"}
+    )
+    expected = DataTree.from_dict(
+        {
+            "ssp119": DataTree(
+                xr.DataArray(
+                    np.ones((n_members_ssp119, n_ts)) / n_members_ssp119,
+                    dims=["member", "time"],
+                    coords={
+                        "member": np.arange(n_members_ssp119),
+                        "time": np.arange(n_ts),
+                    },
+                ).rename("weights")
+            ),
+            "ssp585": DataTree(
+                xr.DataArray(
+                    np.ones((n_members_ssp585, n_ts)) / n_members_ssp585,
+                    dims=["member", "time"],
+                    coords={
+                        "member": np.arange(n_members_ssp585),
+                        "time": np.arange(n_ts),
+                    },
+                ).rename("weights")
+            ),
+        }
+    )
+
+    # datatree.testing.assert_equal(result3, expected)
+    xr.testing.assert_equal(result3.ssp119.weights, expected.ssp119.weights)
+    xr.testing.assert_equal(result3.ssp585.weights, expected.ssp585.weights)
+
+    result4 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
+        dt, exclude={"time", "gridcell"}
+    )
+    datatree.testing.assert_equal(result4, result1)
+
+
+def test_create_equal_sceanrio_weights_from_datatree_checks():
+
+    dt = DataTree()
+    dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray([1, 2, 3], dims="member")}))
+    dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")}))
+
+    # too deep
+    dt_too_deep = dt.copy()
+    dt_too_deep["ssp585/1"] = DataTree(
+        xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")})
+    )
+    with pytest.raises(ValueError, match="DataTree must have a depth of 1, not 2."):
+        mesmer.weighted.create_equal_scenario_weights_from_datatree(dt_too_deep)
+
+    # missing member dimension
+    dt_no_member = dt.copy()
+    dt_no_member["ssp119"] = DataTree(dt_no_member.ssp119.ds.sel(member=1))
+    with pytest.raises(
+        ValueError, match="Member dimension 'member' not found in dataset."
+    ):
+        mesmer.weighted.create_equal_scenario_weights_from_datatree(dt_no_member)
+
+    # multiple data variables
+    dt_multiple_vars = dt.copy()
+    dt_multiple_vars["ssp119"] = DataTree(
+        xr.Dataset(
+            {
+                "tas": xr.DataArray([4, 5], dims="member"),
+                "tas2": xr.DataArray([4, 5], dims="member"),
+            }
+        )
+    )
+    with pytest.raises(
+        ValueError, match="Dataset must only contain one data variable."
+    ):
+        mesmer.weighted.create_equal_scenario_weights_from_datatree(dt_multiple_vars)
