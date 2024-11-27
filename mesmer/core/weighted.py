@@ -159,7 +159,7 @@ def create_equal_scenario_weights_from_datatree(
         if ens_dim not in ds.dims:
             raise ValueError(f"Member dimension '{ens_dim}' not found in dataset.")
 
-        name, *others = ds.keys()
+        name, *others = ds.data_vars
         if others:
             raise ValueError("Dataset must only contain one data variable.")
 
