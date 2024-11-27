@@ -166,8 +166,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         np.testing.assert_allclose(
             expected_params.hm_coeffs,
             calibrated_params.hm_coeffs,
-            atol=1e-5,
-            rtol=1 / 3,
+            atol=2e-5,
         )
         # NOTE: would have to be atol is 1e12 here - not doing that
         np.testing.assert_allclose(
