@@ -1,6 +1,6 @@
 from mesmer.stats._auto_regression import (
-    _fit_auto_regression_scen_ens,
-    _select_ar_order_scen_ens,
+    fit_auto_regression_scen_ens,
+    select_ar_order_scen_ens,
     draw_auto_regression_correlated,
     draw_auto_regression_monthly,
     draw_auto_regression_uncorrelated,
@@ -27,8 +27,8 @@ from mesmer.stats._smoothing import lowess
 
 __all__ = [
     # auto regression
-    "_fit_auto_regression_scen_ens",
-    "_select_ar_order_scen_ens",
+    "fit_auto_regression_scen_ens",
+    "select_ar_order_scen_ens",
     "draw_auto_regression_correlated",
     "draw_auto_regression_uncorrelated",
     "fit_auto_regression",
