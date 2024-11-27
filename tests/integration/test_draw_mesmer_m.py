@@ -43,15 +43,31 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     # load parameters
     PARAMS_PATH = TEST_PATH / "test-params"
     hm_params = xr.open_dataset(
-        PARAMS_PATH / "harmonic_model" / f"params_harmonic_model_tas_{esm}_{scenario}.nc", use_cftime=True
+        PARAMS_PATH
+        / "harmonic_model"
+        / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
+        use_cftime=True,
     )
     pt_params = xr.open_dataset(
-        PARAMS_PATH / "power_transformer" / f"params_power_transformer_tas_{esm}_{scenario}.nc", use_cftime=True
-        )
-    AR1_params = xr.open_dataset(PARAMS_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc", use_cftime=True)
-    localized_ecov = xr.open_dataset(PARAMS_PATH / "local_variability" / f"params_localized_ecov_tas_{esm}_{scenario}.nc", use_cftime=True)
-    m_time = xr.open_dataset(PARAMS_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc", use_cftime=True)
-
+        PARAMS_PATH
+        / "power_transformer"
+        / f"params_power_transformer_tas_{esm}_{scenario}.nc",
+        use_cftime=True,
+    )
+    AR1_params = xr.open_dataset(
+        PARAMS_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
+        use_cftime=True,
+    )
+    localized_ecov = xr.open_dataset(
+        PARAMS_PATH
+        / "local_variability"
+        / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
+        use_cftime=True,
+    )
+    m_time = xr.open_dataset(
+        PARAMS_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
+        use_cftime=True,
+    )
 
     # preprocess yearly data
     def mask_and_stack(ds, threshold_land):

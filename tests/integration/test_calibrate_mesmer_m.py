@@ -114,33 +114,65 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
         AR1_fit.residuals, weights, phi_gc_localizer, "time", 30
-    ) 
+    )
 
     # we need to get the original time coordinate to be able to validate our results
     m_time = tas_stacked_m.time.rename("monthly_time")
 
     # save params
     if update_expected_files:
-        harmonic_model_fit.to_netcdf(TEST_PATH / "harmonic_model" / f"params_harmonic_model_tas_{esm}_{scenario}.nc")
-        pt_coefficients.to_netcdf(TEST_PATH / "power_transformer" / f"params_power_transformer_tas_{esm}_{scenario}.nc")
-        AR1_fit.to_netcdf(TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc")
-        localized_ecov.to_netcdf(TEST_PATH / "local_variability" / f"params_localized_ecov_tas_{esm}_{scenario}.nc")
-        m_time.to_netcdf(TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc")
+        harmonic_model_fit.to_netcdf(
+            TEST_PATH
+            / "harmonic_model"
+            / f"params_harmonic_model_tas_{esm}_{scenario}.nc"
+        )
+        pt_coefficients.to_netcdf(
+            TEST_PATH
+            / "power_transformer"
+            / f"params_power_transformer_tas_{esm}_{scenario}.nc"
+        )
+        AR1_fit.to_netcdf(
+            TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc"
+        )
+        localized_ecov.to_netcdf(
+            TEST_PATH
+            / "local_variability"
+            / f"params_localized_ecov_tas_{esm}_{scenario}.nc"
+        )
+        m_time.to_netcdf(
+            TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc"
+        )
         pytest.skip("Updated param files.")
 
     # testing
     else:
         # load expected values
         expected_hm_params = xr.open_dataset(
-            TEST_PATH / "harmonic_model" / f"params_harmonic_model_tas_{esm}_{scenario}.nc", use_cftime=True
+            TEST_PATH
+            / "harmonic_model"
+            / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
+            use_cftime=True,
         )
         expected_pt_params = xr.open_dataset(
-            TEST_PATH / "power_transformer" / f"params_power_transformer_tas_{esm}_{scenario}.nc", use_cftime=True
-            )
-        expected_AR1_params = xr.open_dataset(TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc", use_cftime=True)
-        expected_localized_ecov = xr.open_dataset(TEST_PATH / "local_variability" / f"params_localized_ecov_tas_{esm}_{scenario}.nc", use_cftime=True)
-        expected_m_time = xr.open_dataset(TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc", use_cftime=True)
-
+            TEST_PATH
+            / "power_transformer"
+            / f"params_power_transformer_tas_{esm}_{scenario}.nc",
+            use_cftime=True,
+        )
+        expected_AR1_params = xr.open_dataset(
+            TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
+            use_cftime=True,
+        )
+        expected_localized_ecov = xr.open_dataset(
+            TEST_PATH
+            / "local_variability"
+            / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
+            use_cftime=True,
+        )
+        expected_m_time = xr.open_dataset(
+            TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
+            use_cftime=True,
+        )
 
         # the following parameters should be exactly the same
         exact_exp_params = xr.merge(
