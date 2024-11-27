@@ -47,22 +47,23 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     LOCALISATION_RADII = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
 
     esm = "IPSL-CM6A-LR"
+    scenario = "ssp585"
 
     # define paths and load data
     TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
-    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
+    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon" / "test-params"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
     # load annual data
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
     fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_ssp585_r1i1p1f1_g025.nc"
+    fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
     tas_y = _load_data(fN_hist_ann, fN_proj_ann)
 
     # load monthly data
     path_tas_mon = cmip6_data_path / "tas" / "mon" / "g025"
     fN_hist_mon = path_tas_mon / f"tas_mon_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj_mon = path_tas_mon / f"tas_mon_{esm}_ssp585_r1i1p1f1_g025.nc"
+    fN_proj_mon = path_tas_mon / f"tas_mon_{esm}_{scenario}_r1i1p1f1_g025.nc"
     tas_m = _load_data(fN_hist_mon, fN_proj_mon)
 
     # data preprocessing
@@ -82,21 +83,18 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
     tas_stacked_m = mask_and_stack(tas_m, threshold_land=THRESHOLD_LAND)
 
-    # we need to get the original time coordinate to be able to validate our results
-    m_time = tas_stacked_m.time
-
     # fit harmonic model
     harmonic_model_fit = mesmer.stats.fit_harmonic_model(
         tas_stacked_y.tas, tas_stacked_m.tas
     )
 
     # train power transformer
-    resids_after_hm = tas_stacked_m - harmonic_model_fit.hm_predictions
+    resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
     pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
         resids_after_hm.tas, tas_stacked_y.tas
     )
     transformed_hm_resids = mesmer.stats.yeo_johnson_transform(
-        resids_after_hm.tas, pt_coefficients.lambda_coeffs, tas_stacked_y.tas
+        resids_after_hm.tas, pt_coefficients.coeffs, tas_stacked_y.tas
     )
 
     # fit cyclo-stationary AR(1) process
@@ -116,42 +114,47 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
         AR1_fit.residuals, weights, phi_gc_localizer, "time", 30
-    )
+    ) 
 
-    # merge into one dataset
-    harmonic_model_fit = harmonic_model_fit.drop_vars("hm_predictions")
-    AR1_fit = AR1_fit.drop_vars("residuals")
-    localized_ecov = localized_ecov.drop_vars("covariance")
-    m_time = m_time.rename("monthly_time")
-    calibrated_params = xr.merge(
-        [harmonic_model_fit, pt_coefficients, AR1_fit, localized_ecov, m_time]
-    )
+    # we need to get the original time coordinate to be able to validate our results
+    m_time = tas_stacked_m.time.rename("monthly_time")
 
     # save params
     if update_expected_files:
-        calibrated_params.to_netcdf(TEST_PATH / "test-mesmer_m-params.nc")
-        pytest.skip("Updated test-mesmer_m-params.nc")
+        harmonic_model_fit.to_netcdf(TEST_PATH / "harmonic_model" / f"params_harmonic_model_tas_{esm}_{scenario}.nc")
+        pt_coefficients.to_netcdf(TEST_PATH / "power_transformer" / f"params_power_transformer_tas_{esm}_{scenario}.nc")
+        AR1_fit.to_netcdf(TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc")
+        localized_ecov.to_netcdf(TEST_PATH / "local_variability" / f"params_localized_ecov_tas_{esm}_{scenario}.nc")
+        m_time.to_netcdf(TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc")
+        pytest.skip("Updated param files.")
 
     # testing
     else:
         # load expected values
-        expected_params = xr.open_dataset(
-            TEST_PATH / "test-mesmer_m-params.nc", use_cftime=True
+        expected_hm_params = xr.open_dataset(
+            TEST_PATH / "harmonic_model" / f"params_harmonic_model_tas_{esm}_{scenario}.nc", use_cftime=True
         )
+        expected_pt_params = xr.open_dataset(
+            TEST_PATH / "power_transformer" / f"params_power_transformer_tas_{esm}_{scenario}.nc", use_cftime=True
+            )
+        expected_AR1_params = xr.open_dataset(TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc", use_cftime=True)
+        expected_localized_ecov = xr.open_dataset(TEST_PATH / "local_variability" / f"params_localized_ecov_tas_{esm}_{scenario}.nc", use_cftime=True)
+        expected_m_time = xr.open_dataset(TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc", use_cftime=True)
+
 
         # the following parameters should be exactly the same
         exact_exp_params = xr.merge(
             [
-                expected_params.hm_selected_order,
-                expected_params.localization_radius,
-                expected_params.monthly_time,
+                expected_hm_params.selected_order,
+                expected_localized_ecov.localization_radius,
+                expected_m_time.monthly_time,
             ]
         )
         exact_cal_params = xr.merge(
             [
-                calibrated_params.hm_selected_order,
-                calibrated_params.localization_radius,
-                calibrated_params.monthly_time,
+                harmonic_model_fit.selected_order,
+                localized_ecov.localization_radius,
+                m_time,
             ]
         )
 
@@ -164,26 +167,26 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         # the tols are set to the best we can do
         # NOTE: it is always rather few values that are off
         np.testing.assert_allclose(
-            expected_params.hm_coeffs,
-            calibrated_params.hm_coeffs,
+            expected_hm_params.coeffs,
+            harmonic_model_fit.coeffs,
             atol=2e-5,
         )
         # NOTE: would have to be atol is 1e12 here - not doing that
         np.testing.assert_allclose(
-            expected_params.lambda_coeffs, calibrated_params.lambda_coeffs, rtol=0.6
+            expected_pt_params.coeffs, pt_coefficients.coeffs, rtol=0.6
         )
         np.testing.assert_allclose(
-            expected_params.ar1_slope, calibrated_params.ar1_slope, atol=1e-5, rtol=1e-4
+            expected_AR1_params.slope, AR1_fit.slope, atol=1e-5, rtol=1e-4
         )
         np.testing.assert_allclose(
-            expected_params.ar1_intercept,
-            calibrated_params.ar1_intercept,
+            expected_AR1_params.intercept,
+            AR1_fit.intercept,
             atol=1e-4,
             rtol=1e-2 / 3,
         )
         np.testing.assert_allclose(
-            expected_params.localized_covariance,
-            calibrated_params.localized_covariance,
+            localized_ecov.localized_covariance,
+            localized_ecov.localized_covariance,
             atol=1e-4,
             rtol=1e-2,
         )

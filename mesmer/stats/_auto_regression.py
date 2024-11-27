@@ -675,7 +675,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
             vectorize=True,
         )
 
-        ar_params.append(xr.Dataset({"ar1_slope": slope, "ar1_intercept": intercept}))
+        ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
         residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
     month = xr.Variable("month", np.arange(1, 13))
@@ -775,18 +775,18 @@ def draw_auto_regression_monthly(
     """
     # check input
     _check_dataset_form(
-        ar_params, "ar_params", required_vars=("ar1_intercept", "ar1_slope")
+        ar_params, "ar_params", required_vars=("intercept", "slope")
     )
-    month_dim, gridcell_dim = ar_params.ar1_intercept.dims
-    n_months, size = ar_params.ar1_intercept.shape
+    month_dim, gridcell_dim = ar_params.intercept.dims
+    n_months, size = ar_params.intercept.shape
     _check_dataarray_form(
-        ar_params.ar1_intercept,
+        ar_params.intercept,
         "intercept",
         ndim=2,
         required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
-        ar_params.ar1_slope,
+        ar_params.slope,
         "ar1_slope",
         ndim=2,
         required_dims=(month_dim, gridcell_dim),
@@ -796,8 +796,8 @@ def draw_auto_regression_monthly(
     )
 
     result = _draw_ar_corr_monthly_xr_internal(
-        intercept=ar_params.ar1_intercept,
-        slope=ar_params.ar1_slope,
+        intercept=ar_params.intercept,
+        slope=ar_params.slope,
         covariance=covariance,
         time=time,
         realisation=n_realisations,

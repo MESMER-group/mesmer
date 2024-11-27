@@ -157,8 +157,8 @@ def test_fit_harmonic_model():
 
     # test if the model can recover the monthly target from perfect fourier series
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
-    np.testing.assert_equal(result.hm_selected_order.values, orders)
-    xr.testing.assert_allclose(result["hm_predictions"], monthly_target)
+    np.testing.assert_equal(result.selected_order.values, orders)
+    xr.testing.assert_allclose(result["predictions"], monthly_target)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
     rng = np.random.default_rng(0)
@@ -167,7 +167,7 @@ def test_fit_harmonic_model():
     )
 
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
-    xr.testing.assert_allclose(result["hm_predictions"], monthly_target, atol=0.1)
+    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
 
     # compare numerically one cell of one year
     expected = np.array(
@@ -187,15 +187,15 @@ def test_fit_harmonic_model():
         ]
     )
 
-    result_comp = result.hm_predictions.isel(cells=0, time=slice(0, 12)).values
+    result_comp = result.predictions.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(result_comp, expected, atol=1e-6)
 
     # ensure coeffs and predictions are consistent
     expected = mesmer.stats.predict_harmonic_model(
-        yearly_predictor, result.hm_coeffs, result.time
+        yearly_predictor, result.coeffs, result.time
     )
 
-    xr.testing.assert_equal(expected, result.hm_predictions)
+    xr.testing.assert_equal(expected, result.predictions)
 
 
 def test_fit_harmonic_model_checks():

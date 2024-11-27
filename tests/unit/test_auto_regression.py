@@ -654,17 +654,17 @@ def test_fit_auto_regression_monthly():
 
     result = mesmer.stats.fit_auto_regression_monthly(data)
 
-    _check_dataset_form(result, "result", required_vars={"ar1_slope", "ar1_intercept"})
+    _check_dataset_form(result, "result", required_vars={"slope", "intercept"})
     _check_dataarray_form(
-        result.ar1_slope,
-        "ar1_slope",
+        result.slope,
+        "slope",
         ndim=2,
         required_dims={"month", "gridcell"},
         shape=(12, n_gridcells),
     )
     _check_dataarray_form(
-        result.ar1_intercept,
-        "ar1_intercept",
+        result.intercept,
+        "intercept",
         ndim=2,
         required_dims={"month", "gridcell"},
         shape=(12, n_gridcells),
@@ -751,7 +751,7 @@ def test_draw_auto_regression_monthly():
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
-    ar_params = xr.Dataset({"ar1_intercept": intercepts, "ar1_slope": slopes})
+    ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
 
     covariance = xr.DataArray(
         np.tile(np.eye(n_gridcells), [12, 1, 1]),
