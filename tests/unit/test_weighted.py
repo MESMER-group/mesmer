@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
+from datatree import DataTree
 
 import mesmer
 
@@ -208,7 +208,7 @@ def test_create_equal_sceanrio_weights_from_datatree():
     )
 
     # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
-    assert result1.equals(expected) 
+    assert result1.equals(expected)
 
     dt["ssp119"] = DataTree(
         dt.ssp119.ds.expand_dims(gridcell=np.arange(n_gridcells), axis=1)
@@ -221,7 +221,7 @@ def test_create_equal_sceanrio_weights_from_datatree():
         dt, ens_dim="member", exclude={"gridcell"}
     )
     # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
-    assert result2.equals(expected) 
+    assert result2.equals(expected)
 
     dt["ssp119"] = DataTree(dt.ssp119.ds.expand_dims(time=np.arange(n_ts), axis=1))
     dt["ssp585"] = DataTree(dt.ssp585.ds.expand_dims(time=np.arange(n_ts), axis=1))
@@ -261,7 +261,7 @@ def test_create_equal_sceanrio_weights_from_datatree():
         dt, exclude={"time", "gridcell"}
     )
     # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
-    assert result4.equals(expected.isel(time=0).drop_vars("time")) 
+    assert result4.equals(expected.isel(time=0).drop_vars("time"))
 
 
 def test_create_equal_sceanrio_weights_from_datatree_checks():
