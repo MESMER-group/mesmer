@@ -14,7 +14,7 @@ from mesmer.calibrate_mesmer.train_utils import (
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import (
-    _fit_auto_regression_scen_ens,
+    fit_auto_regression_scen_ens,
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
 )
@@ -235,7 +235,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         dims = ("run", "time", "cell")
         data = [xr.DataArray(data, dims=dims) for data in targ.values()]
 
-        params = _fit_auto_regression_scen_ens(*data, dim="time", ens_dim="run", lags=1)
+        params = fit_auto_regression_scen_ens(data, dim="time", ens_dim="run", lags=1)
 
         params_lv["AR1_int"][targ_name] = params.intercept.values
         params_lv["AR1_coef"][targ_name] = params.coeffs.values.squeeze()
