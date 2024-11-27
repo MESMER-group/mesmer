@@ -1,8 +1,7 @@
-import datatree.testing
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree
+from datatree import DataTree, map_over_subtree
 
 import mesmer
 
@@ -208,8 +207,8 @@ def test_create_equal_sceanrio_weights_from_datatree():
         }
     )
 
-    datatree.testing.assert_isomorphic(result1, expected)
-    datatree.testing.assert_equal(result1, expected)
+    # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
+    assert result1.equals(expected) 
 
     dt["ssp119"] = DataTree(
         dt.ssp119.ds.expand_dims(gridcell=np.arange(n_gridcells), axis=1)
@@ -221,7 +220,8 @@ def test_create_equal_sceanrio_weights_from_datatree():
     result2 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
         dt, ens_dim="member", exclude={"gridcell"}
     )
-    datatree.testing.assert_equal(result2, expected)
+    # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
+    assert result2.equals(expected) 
 
     dt["ssp119"] = DataTree(dt.ssp119.ds.expand_dims(time=np.arange(n_ts), axis=1))
     dt["ssp585"] = DataTree(dt.ssp585.ds.expand_dims(time=np.arange(n_ts), axis=1))
@@ -254,14 +254,14 @@ def test_create_equal_sceanrio_weights_from_datatree():
         }
     )
 
-    # datatree.testing.assert_equal(result3, expected)
-    xr.testing.assert_equal(result3.ssp119.weights, expected.ssp119.weights)
-    xr.testing.assert_equal(result3.ssp585.weights, expected.ssp585.weights)
+    # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
+    assert result3.equals(expected)
 
     result4 = mesmer.weighted.create_equal_scenario_weights_from_datatree(
         dt, exclude={"time", "gridcell"}
     )
-    datatree.testing.assert_equal(result4, result1)
+    # TODO: replace with datatree testing funcs when switching to xarray internal DataTree
+    assert result4.equals(expected.isel(time=0).drop_vars("time")) 
 
 
 def test_create_equal_sceanrio_weights_from_datatree_checks():

@@ -129,13 +129,12 @@ def create_equal_scenario_weights_from_datatree(
         Name of the dimension along which the weights should be created. Default is "member".
     exclude : set[str] | None
         Name of one or several dimensions to exclude from the dataset before calculating the weights. Default is None.
-        Internally, these dimensions are dropped before calculating the weights. If None, the returned ``DataTree`` is
-        isomorphic to ``dt``.
+        Internally, these dimensions are dropped before calculating the weights.
 
     Returns:
     --------
     DataTree
-        DataTree holding the weights for each scenario.
+        DataTree holding the weights for each scenario isomorphic to dt.
 
     Example:
     --------
