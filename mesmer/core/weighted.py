@@ -149,7 +149,7 @@ def create_equal_scenario_weights_from_datatree(
     # })
 
     """
-    if dt.depth > 1:
+    if not dt.depth is 1:
         raise ValueError(f"DataTree must have a depth of 1, not {dt.depth}.")
 
     if exclude is None:
