@@ -169,6 +169,10 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
         return -loglikelihood
 
+    # upper bound on coeffs[0] as larger values become indistinguishable because
+    # lambda ~ 1 / coeff[0]. For details see discussion in
+    # https://github.com/MESMER-group/mesmer/pull/501#issuecomment-2500750245
+
     bounds = np.array([[0, 1e10], [-0.1, 0.1]])
     first_guess = np.array([1.0, 0.0])
 
