@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from rasterio import fill
 import xarray as xr
 from datatree import DataTree
 
@@ -182,22 +181,38 @@ def test_equal_sceanrio_weights_from_datatree():
     n_gridcells = 3
     n_ts = 30
 
-    ssp119 = xr.Dataset({"tas": xr.DataArray(np.ones((n_ts, n_members_ssp119)), dims=("time", "member"))})
+    ssp119 = xr.Dataset(
+        {
+            "tas": xr.DataArray(
+                np.ones((n_ts, n_members_ssp119)), dims=("time", "member")
+            )
+        }
+    )
     ssp119 = ssp119.assign_coords(time=np.arange(n_ts))
-    ssp585 = xr.Dataset({"tas": xr.DataArray(np.ones((n_ts, n_members_ssp585)), dims=("time", "member"))})
+    ssp585 = xr.Dataset(
+        {
+            "tas": xr.DataArray(
+                np.ones((n_ts, n_members_ssp585)), dims=("time", "member")
+            )
+        }
+    )
     ssp585 = ssp585.assign_coords(member=np.arange(n_members_ssp585))
     dt = DataTree()
     dt["ssp119"] = DataTree(ssp119)
     dt["ssp585"] = DataTree(ssp585)
-    
+
     result1 = mesmer.weighted.equal_scenario_weights_from_datatree(dt)
     expected = DataTree.from_dict(
         {
             "ssp119": DataTree(
-                xr.full_like(ssp119, fill_value = 1/n_members_ssp119).rename({"tas": "weights"})
+                xr.full_like(ssp119, fill_value=1 / n_members_ssp119).rename(
+                    {"tas": "weights"}
+                )
             ),
             "ssp585": DataTree(
-                xr.full_like(ssp585, fill_value = 1/n_members_ssp585).rename({"tas": "weights"})
+                xr.full_like(ssp585, fill_value=1 / n_members_ssp585).rename(
+                    {"tas": "weights"}
+                )
             ),
         }
     )
@@ -222,8 +237,12 @@ def test_equal_sceanrio_weights_from_datatree():
 def test_create_equal_sceanrio_weights_from_datatree_checks():
 
     dt = DataTree()
-    ssp119 = xr.Dataset({"tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member"))})
-    ssp585 = xr.Dataset({"tas": xr.DataArray(np.ones((20, 3)), dims=("time", "member"))})
+    ssp119 = xr.Dataset(
+        {"tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member"))}
+    )
+    ssp585 = xr.Dataset(
+        {"tas": xr.DataArray(np.ones((20, 3)), dims=("time", "member"))}
+    )
     dt = DataTree()
     dt["ssp119"] = DataTree(ssp119)
     dt["ssp585"] = DataTree(ssp585)
@@ -247,9 +266,7 @@ def test_create_equal_sceanrio_weights_from_datatree_checks():
     # missing time dimension
     dt_no_time = dt.copy()
     dt_no_time["ssp119"] = DataTree(dt_no_time.ssp119.ds.sel(time=1))
-    with pytest.raises(
-        ValueError, match="Time dimension 'time' not found in dataset."
-    ):
+    with pytest.raises(ValueError, match="Time dimension 'time' not found in dataset."):
         mesmer.weighted.equal_scenario_weights_from_datatree(dt_no_time)
 
     # multiple data variables
@@ -257,8 +274,8 @@ def test_create_equal_sceanrio_weights_from_datatree_checks():
     dt_multiple_vars["ssp119"] = DataTree(
         xr.Dataset(
             {
-                'tas': xr.DataArray(np.ones((20, 2)), dims=("time", "member")),
-                'tas2': xr.DataArray(np.ones((20, 2)), dims=("time", "member")),
+                "tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member")),
+                "tas2": xr.DataArray(np.ones((20, 2)), dims=("time", "member")),
             }
         )
     )

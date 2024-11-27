@@ -128,7 +128,7 @@ def equal_scenario_weights_from_datatree(
         ens_dim as a dimension, but can have more dimensions.
     ens_dim : str
         Name of the dimension along which the weights should be created. Default is "member".
-    time_dim : str 
+    time_dim : str
         Name of the time dimension, will be filled with equal values for each ensemble member. Default is "time".
 
     Returns:
@@ -161,14 +161,14 @@ def equal_scenario_weights_from_datatree(
     #                weights  (time, member) float64 0.5 0.5 0.5 0.5 0.5 ... 0.5 0.5 0.5 0.5 0.5
 
     """
-    if not dt.depth is 1:
+    if dt.depth != 1:
         raise ValueError(f"DataTree must have a depth of 1, not {dt.depth}.")
 
     def _create_weights(ds: xr.Dataset) -> xr.Dataset:
         dims = set(ds.dims)
         if ens_dim not in dims:
             raise ValueError(f"Member dimension '{ens_dim}' not found in dataset.")
-        if time_dim not in dims: 
+        if time_dim not in dims:
             raise ValueError(f"Time dimension '{time_dim}' not found in dataset.")
 
         name, *others = ds.data_vars
