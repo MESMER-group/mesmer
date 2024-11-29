@@ -784,7 +784,7 @@ def draw_auto_regression_monthly(
         required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
-        ar_params.slope, "ar1_slope", ndim=2, required_dims=(month_dim, gridcell_dim)
+        ar_params.slope, "slope", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
     _check_dataarray_form(
         covariance, "covariance", ndim=3, shape=(n_months, size, size)
