@@ -203,22 +203,20 @@ def test_calibrate_mesmer_m(update_expected_files=False):
             harmonic_model_fit.coeffs,
             atol=2e-5,
         )
-        # NOTE: would have to be atol is 1e12 here - not doing that
         np.testing.assert_allclose(
-            expected_pt_params.coeffs, pt_coefficients.coeffs, rtol=0.6
+            expected_pt_params.coeffs, pt_coefficients.coeffs, atol=1e-4
         )
         np.testing.assert_allclose(
-            expected_AR1_params.slope, AR1_fit.slope, atol=1e-5, rtol=1e-4
+            expected_AR1_params.slope,
+            AR1_fit.slope,
+            atol=1e-5,
         )
         np.testing.assert_allclose(
             expected_AR1_params.intercept,
             AR1_fit.intercept,
-            atol=1e-4,
-            rtol=1e-2 / 3,
+            atol=2e-4,
         )
         np.testing.assert_allclose(
             localized_ecov.localized_covariance,
             localized_ecov.localized_covariance,
-            atol=1e-4,
-            rtol=1e-2,
         )
