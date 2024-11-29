@@ -742,8 +742,8 @@ def draw_auto_regression_monthly(
         Dataset containing the estimated parameters of the AR1 process. Must contain the
         following DataArray objects:
 
-        - ar1_intercept
-        - ar1_slope
+        - intercept
+        - slope
 
         both of shape (12, n_gridpoints).
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
@@ -784,10 +784,7 @@ def draw_auto_regression_monthly(
         required_dims=(month_dim, gridcell_dim),
     )
     _check_dataarray_form(
-        ar_params.slope,
-        "ar1_slope",
-        ndim=2,
-        required_dims=(month_dim, gridcell_dim),
+        ar_params.slope, "ar1_slope", ndim=2, required_dims=(month_dim, gridcell_dim)
     )
     _check_dataarray_form(
         covariance, "covariance", ndim=3, shape=(n_months, size, size)
