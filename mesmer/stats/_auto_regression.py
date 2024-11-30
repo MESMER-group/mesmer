@@ -366,15 +366,15 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
 
 
 def draw_auto_regression_uncorrelated(
-    ar_params,
+    ar_params: xr.Dataset,
     *,
-    time,
-    realisation,
-    seed,
-    buffer,
-    time_dim="time",
-    realisation_dim="realisation",
-):
+    time: int | xr.DataArray | pd.Index,
+    realisation: int | xr.DataArray,
+    seed: int | xr.Dataset,
+    buffer: int,
+    time_dim: str ="time",
+    realisation_dim: str ="realisation",
+) -> xr.DataArray:
     """draw time series of an auto regression process
 
     Parameters
@@ -398,8 +398,10 @@ def draw_auto_regression_uncorrelated(
         Defines the number of uncorrelated samples to draw and possibly its coordinates.
         See ``time`` for details.
 
-    seed : int
-        Seed used to initialize the pseudo-random number generator.
+    seed : int| xr.Dataset
+        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
+        contains a single variable "seed" with the seed value, used if this function is mapped over
+        a DataTree to draw samples for multiple scenarios.
 
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
@@ -453,16 +455,16 @@ def draw_auto_regression_uncorrelated(
 
 
 def draw_auto_regression_correlated(
-    ar_params,
-    covariance,
+    ar_params: xr.Dataset,
+    covariance: xr.DataArray,
     *,
-    time,
-    realisation,
-    seed,
-    buffer,
-    time_dim="time",
-    realisation_dim="realisation",
-):
+    time: int | xr.DataArray | pd.Index,
+    realisation: int | xr.DataArray,
+    seed: int | xr.Dataset,
+    buffer: int,
+    time_dim: str ="time",
+    realisation_dim: str ="realisation",
+) -> xr.DataArray:
     """
     draw time series of an auto regression process with spatially-correlated innovations
 
@@ -489,8 +491,10 @@ def draw_auto_regression_correlated(
         Defines the number of uncorrelated samples to draw and possibly its coordinates.
         See ``time`` for details.
 
-    seed : int
-        Seed used to initialize the pseudo-random number generator.
+    seed : int | xr.Dataset
+        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
+        contains a single variable "seed" with the seed value, used if this function is mapped over
+        a DataTree to draw samples for multiple scenarios.
 
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
