@@ -199,9 +199,7 @@ def test_fit_auto_regression_scen_ens_errors():
     dt = DataTree.from_dict(data)
 
     with pytest.raises(ValueError, match="Dataset must have only one data variable."):
-        mesmer.stats.fit_auto_regression_scen_ens(
-            dt, dim="time", ens_dim="ens", lags=3
-        )
+        mesmer.stats.fit_auto_regression_scen_ens(dt, dim="time", ens_dim="ens", lags=3)
 
     # dict
     data = {"scen1": da, "scen2": da}
