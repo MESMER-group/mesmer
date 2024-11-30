@@ -1,6 +1,6 @@
 import warnings
-from collections.abc import Sequence
-from typing import Callable, Literal
+from collections.abc import Callable, Sequence
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,9 @@ import scipy
 import xarray as xr
 from datatree import DataTree, map_over_subtree
 
-from mesmer.core.datatree import collapse_datatree_into_dataset, _extract_single_dataarray_from_dt
+from mesmer.core.datatree import (
+    collapse_datatree_into_dataset,
+)
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
@@ -55,12 +57,11 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
 
 def _extract_and_apply_to_da(func: Callable, ds: xr.Dataset, **kwargs) -> xr.Dataset:
 
-        name, *others = ds.data_vars
-        if others:
-            raise ValueError("Dataset must have only one data variable.")
+    name, *others = ds.data_vars
+    if others:
+        raise ValueError("Dataset must have only one data variable.")
 
-        return func(ds[name], **kwargs)
-
+    return func(ds[name], **kwargs)
 
 
 def select_ar_order_scen_ens(
@@ -372,8 +373,8 @@ def draw_auto_regression_uncorrelated(
     realisation: int | xr.DataArray,
     seed: int | xr.Dataset,
     buffer: int,
-    time_dim: str ="time",
-    realisation_dim: str ="realisation",
+    time_dim: str = "time",
+    realisation_dim: str = "realisation",
 ) -> xr.DataArray:
     """draw time series of an auto regression process
 
@@ -462,8 +463,8 @@ def draw_auto_regression_correlated(
     realisation: int | xr.DataArray,
     seed: int | xr.Dataset,
     buffer: int,
-    time_dim: str ="time",
-    realisation_dim: str ="realisation",
+    time_dim: str = "time",
+    realisation_dim: str = "realisation",
 ) -> xr.DataArray:
     """
     draw time series of an auto regression process with spatially-correlated innovations
