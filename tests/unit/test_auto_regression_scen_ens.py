@@ -1,12 +1,13 @@
-from typing import Callable
-from coverage import data
+from collections.abc import Callable
+
 import numpy as np
 import pytest
 import xarray as xr
-from statsmodels.tsa.arima_process import ArmaProcess
 from datatree import DataTree
+from statsmodels.tsa.arima_process import ArmaProcess
 
 import mesmer
+import mesmer.stats._auto_regression
 
 
 def generate_ar_samples(ar, std=1, n_timesteps=100, n_ens=4):
@@ -31,7 +32,9 @@ def _prepare_data(*dataarrays, data_format):
         return {f"scen{i+1}": da for i, da in enumerate(dataarrays)}
     elif data_format == "datatree":
         # Use provided data arrays to create a DataTree
-        data = {f"scen{i+1}": xr.Dataset({"tas": da}) for i, da in enumerate(dataarrays)}
+        data = {
+            f"scen{i+1}": xr.Dataset({"tas": da}) for i, da in enumerate(dataarrays)
+        }
         return DataTree.from_dict(data)
     else:
         raise ValueError(f"Unknown format_type: {data_format}")
@@ -50,8 +53,14 @@ def test_select_ar_order_scen_ens_one_scen(data_format):
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
     data = _prepare_data(da, data_format=data_format)
 
-    result = _format_wrapper(mesmer.stats.select_ar_order_scen_ens, 
-                     data_format, data, dim="time", ens_dim="ens", maxlag=5)
+    result = _format_wrapper(
+        mesmer.stats.select_ar_order_scen_ens,
+        data_format,
+        data,
+        dim="time",
+        ens_dim="ens",
+        maxlag=5,
+    )
 
     expected = xr.DataArray(3, coords={"quantile": 0.5})
 
@@ -66,8 +75,14 @@ def test_select_ar_order_scen_ens_multi_scen_tuple(data_format):
 
     data = _prepare_data(da1, da2, data_format=data_format)
 
-    result = _format_wrapper(mesmer.stats.select_ar_order_scen_ens, data_format,
-                             data, dim="time", ens_dim="ens", maxlag=5)
+    result = _format_wrapper(
+        mesmer.stats.select_ar_order_scen_ens,
+        data_format,
+        data,
+        dim="time",
+        ens_dim="ens",
+        maxlag=5,
+    )
 
     expected = xr.DataArray(2, coords={"quantile": 0.5})
 
@@ -80,8 +95,14 @@ def test_select_ar_order_scen_ens_no_ens_dim(data_format):
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
     data = _prepare_data(da, data_format=data_format)
 
-    result = _format_wrapper(mesmer.stats.select_ar_order_scen_ens, data_format,
-                                data, dim="time", ens_dim=None, maxlag=5)
+    result = _format_wrapper(
+        mesmer.stats.select_ar_order_scen_ens,
+        data_format,
+        data,
+        dim="time",
+        ens_dim=None,
+        maxlag=5,
+    )
 
     ens = [0, 1, 2, 3]
     expected = xr.DataArray(
@@ -99,8 +120,14 @@ def test_fit_auto_regression_scen_ens_one_scen(data_format, std):
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], std, n_timesteps=n_timesteps, n_ens=4)
     data = _prepare_data(da, data_format=data_format)
 
-    result = _format_wrapper(mesmer.stats.fit_auto_regression_scen_ens, data_format,
-                                data, dim="time", ens_dim="ens", lags=3)
+    result = _format_wrapper(
+        mesmer.stats.fit_auto_regression_scen_ens,
+        data_format,
+        data,
+        dim="time",
+        ens_dim="ens",
+        lags=3,
+    )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
     expected = expected.mean("ens")
@@ -116,8 +143,14 @@ def test_fit_auto_regression_scen_ens_multi_scen(data_format):
 
     data = _prepare_data(da1, da2, data_format=data_format)
 
-    result = _format_wrapper(mesmer.stats.fit_auto_regression_scen_ens, data_format,
-                                data, dim="time", ens_dim="ens", lags=3)
+    result = _format_wrapper(
+        mesmer.stats.fit_auto_regression_scen_ens,
+        data_format,
+        data,
+        dim="time",
+        ens_dim="ens",
+        lags=3,
+    )
 
     da = xr.concat([da1, da2], dim="scen")
     da = da.stack(scen_ens=("scen", "ens")).dropna("scen_ens")
@@ -135,9 +168,43 @@ def test_fit_auto_regression_scen_ens_no_ens_dim(data_format):
     data = _prepare_data(da, data_format=data_format)
 
     # simply fits each ens individually, no averaging
-    result = _format_wrapper(mesmer.stats.fit_auto_regression_scen_ens, data_format,
-                                data, dim="time", ens_dim=None, lags=3)
+    result = _format_wrapper(
+        mesmer.stats.fit_auto_regression_scen_ens,
+        data_format,
+        data,
+        dim="time",
+        ens_dim=None,
+        lags=3,
+    )
 
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_fit_auto_regression_scen_ens_errors():
+    da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
+
+    # data tree
+    data = {"scen1": xr.Dataset({"tas": da})}
+    dt1 = DataTree.from_dict(data)
+    dt2 = dt1.copy()
+
+    with pytest.raises(ValueError, match="Only one DataTree can be passed."):
+        mesmer.stats.fit_auto_regression_scen_ens(
+            dt1, dt2, dim="time", ens_dim="ens", lags=3
+        )
+
+    # dict
+    data = {"scen1": da, "scen2": da}
+    with pytest.raises(ValueError, match="Only one dictionary can be passed."):
+        mesmer.stats.fit_auto_regression_scen_ens(
+            data, data, dim="time", ens_dim="ens", lags=3
+        )
+
+    # wrong datatype
+    data = xr.Dataset({"tas": da})
+    with pytest.raises(ValueError, match="Expected either"):
+        mesmer.stats.fit_auto_regression_scen_ens(
+            data, dim="time", ens_dim="ens", lags=3
+        )

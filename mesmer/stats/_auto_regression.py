@@ -16,6 +16,43 @@ from mesmer.core.utils import (
 )
 
 
+def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
+    """Helper function to convert a sequence of objects to a DataTree"""
+
+    if isinstance(objs[0], DataTree):
+        if len(objs) != 1:
+            raise ValueError("Only one DataTree can be passed.")
+        dt = objs[0]
+
+    elif isinstance(objs[0], xr.DataArray):
+        # TODO: in the future might be able to use DataTree.from_array_dict
+        # see https://github.com/pydata/xarray/issues/9486
+        # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
+        ds_dict = {
+            f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)
+        }
+        dt = DataTree.from_dict(ds_dict)
+
+    elif isinstance(objs[0], dict):
+        if len(objs) != 1:
+            raise ValueError("Only one dictionary can be passed.")
+        da_dict = objs[0]
+        # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
+        # see https://github.com/pydata/xarray/issues/9486
+        ds_dict = {
+            f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()
+        }
+        dt = DataTree.from_dict(ds_dict)
+
+    else:
+        raise ValueError(
+            "Expected either a DataTree, a dictionary of xr.DataArrays",
+            f"or several DataArrays as objs, got {type(objs[0])}.",
+        )
+
+    return dt
+
+
 def select_ar_order_scen_ens(
     *objs: xr.DataArray | dict[str, xr.DataArray] | DataTree,
     dim: str,
@@ -51,37 +88,7 @@ def select_ar_order_scen_ens(
     Calculates the median auto regression order, first over the ensemble members,
     then over all scenarios.
     """
-    if isinstance(objs[0], DataTree):
-        if len(objs) != 1:
-            raise ValueError("Only one DataTree can be passed.")
-        dt = objs[0]
-
-    elif isinstance(objs[0], xr.DataArray):
-        # TODO: in the future might be able to use DataTree.from_array_dict
-        # see https://github.com/pydata/xarray/issues/9486
-        # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
-        ds_dict = {
-            f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)
-        }
-        dt = DataTree.from_dict(ds_dict)
-
-    elif isinstance(objs[0], dict):
-        if len(objs) != 1:
-            raise ValueError("Only one dict can be passed.")
-        da_dict = objs[0]
-        # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
-        # see https://github.com/pydata/xarray/issues/9486
-        ds_dict = {
-            f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()
-        }
-        dt = DataTree.from_dict(ds_dict)
-
-    else:
-        raise ValueError(
-            "Expected an either a DataTree, a dictionary of xr.DataArrays",
-            f"or several DataArrays as objs, got {type(objs[0])}.",
-        )
-
+    dt = _scen_ens_inputs_to_dt(objs)
     return _select_ar_order_scen_ens_dt(dt, dim, ens_dim, maxlag, ic)
 
 
@@ -196,37 +203,7 @@ def fit_auto_regression_scen_ens(
     ensemble members are not weighted equally, if the number of members differs between scenarios.
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
-    if isinstance(objs[0], DataTree):
-        if len(objs) != 1:
-            raise ValueError("Only one DataTree can be passed.")
-        dt = objs[0]
-
-    elif isinstance(objs[0], xr.DataArray):
-        # TODO: in the future might be able to use DataTree.from_array_dict
-        # see https://github.com/pydata/xarray/issues/9486
-        # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
-        ds_dict = {
-            f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)
-        }
-        dt = DataTree.from_dict(ds_dict)
-
-    elif isinstance(objs[0], dict):
-        if len(objs) != 1:
-            raise ValueError("Only one dict can be passed.")
-        da_dict = objs[0]
-        # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
-        # see https://github.com/pydata/xarray/issues/9486
-        ds_dict = {
-            f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()
-        }
-        dt = DataTree.from_dict(ds_dict)
-
-    else:
-        raise ValueError(
-            "Expected an either a DataTree, a dictionary of xr.DataArrays",
-            f"or several DataArrays as objs, got {type(objs[0])}.",
-        )
-
+    dt = _scen_ens_inputs_to_dt(objs)
     return _fit_auto_regression_scen_ens_dt(dt, dim, ens_dim, lags)
 
 
