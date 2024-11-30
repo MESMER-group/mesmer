@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Sequence
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import scipy
 import xarray as xr
 from datatree import DataTree, map_over_subtree
 
-from mesmer.core.datatree import collapse_datatree_into_dataset
+from mesmer.core.datatree import collapse_datatree_into_dataset, _extract_single_dataarray_from_dt
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
@@ -51,6 +51,16 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
         )
 
     return dt
+
+
+def _extract_and_apply_to_da(func: Callable, ds: xr.Dataset, **kwargs) -> xr.Dataset:
+
+        name, *others = ds.data_vars
+        if others:
+            raise ValueError("Dataset must have only one data variable.")
+
+        return func(ds[name], **kwargs)
+
 
 
 def select_ar_order_scen_ens(
@@ -130,19 +140,8 @@ def _select_ar_order_scen_ens_dt(
     then over all scenarios.
     """
 
-    def _select_ar_order_ds(
-        ds: xr.Dataset, dim: str, maxlag: int, ic: Literal["aic", "bic", "hqic"] = "bic"
-    ) -> xr.DataArray:
-
-        name, *others = ds.data_vars
-        if others:
-            raise ValueError("Dataset must have only one data variable.")
-        res = select_ar_order(ds[name], dim, maxlag, ic)
-
-        return res.rename("selected_order")
-
-    ar_order_scen = map_over_subtree(_select_ar_order_ds)(
-        dt, dim=dim, maxlag=maxlag, ic=ic
+    ar_order_scen = map_over_subtree(_extract_and_apply_to_da)(
+        select_ar_order, dt, dim=dim, maxlag=maxlag, ic=ic
     )
 
     # TODO: think about weighting?
@@ -159,7 +158,7 @@ def _select_ar_order_scen_ens_dt(
 
     ar_order = ar_odrer_ens_median_ds.quantile(
         dim="scen", q=0.5, method="nearest"
-    ).selected_order
+    ).selected_ar_order
 
     if not np.isnan(ar_order).any():
         ar_order = ar_order.astype(int)
@@ -241,16 +240,8 @@ def _fit_auto_regression_scen_ens_dt(
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
 
-    def _fit_auto_regression_ds(ds, dim, lags) -> xr.Dataset:
-
-        name, *others = ds.data_vars
-        if others:
-            raise ValueError("Dataset must have only one data variable.")
-
-        return fit_auto_regression(ds[name], dim, lags)
-
-    ar_params_scen = map_over_subtree(_fit_auto_regression_ds)(
-        dt, dim=dim, lags=int(lags)
+    ar_params_scen = map_over_subtree(_extract_and_apply_to_da)(
+        fit_auto_regression, dt, dim=dim, lags=int(lags)
     )
 
     # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307

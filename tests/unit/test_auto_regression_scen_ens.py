@@ -195,6 +195,14 @@ def test_fit_auto_regression_scen_ens_errors():
             dt1, dt2, dim="time", ens_dim="ens", lags=3
         )
 
+    data = {"scen1": xr.Dataset({"tas": da, "tas2": da})}
+    dt1 = DataTree.from_dict(data)
+
+    with pytest.raises(ValueError, match="Only one DataTree can be passed."):
+        mesmer.stats.fit_auto_regression_scen_ens(
+            dt1, dt2, dim="time", ens_dim="ens", lags=3
+        )
+
     # dict
     data = {"scen1": da, "scen2": da}
     with pytest.raises(ValueError, match="Only one dictionary can be passed."):
