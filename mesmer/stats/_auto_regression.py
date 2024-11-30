@@ -55,28 +55,33 @@ def select_ar_order_scen_ens(
         if len(objs) != 1:
             raise ValueError("Only one DataTree can be passed.")
         dt = objs[0]
-        
+
     elif isinstance(objs[0], xr.DataArray):
         # TODO: in the future might be able to use DataTree.from_array_dict
         # see https://github.com/pydata/xarray/issues/9486
         # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
-        ds_dict = {f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)}
+        ds_dict = {
+            f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)
+        }
         dt = DataTree.from_dict(ds_dict)
-        
-    
+
     elif isinstance(objs[0], dict):
         if len(objs) != 1:
             raise ValueError("Only one dict can be passed.")
         da_dict = objs[0]
         # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
         # see https://github.com/pydata/xarray/issues/9486
-        ds_dict = {f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()}
+        ds_dict = {
+            f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()
+        }
         dt = DataTree.from_dict(ds_dict)
-    
+
     else:
-        raise ValueError("Expected an either a DataTree, a dictionary of xr.DataArrays",
-                         f"or several DataArrays as objs, got {type(objs[0])}.")
-    
+        raise ValueError(
+            "Expected an either a DataTree, a dictionary of xr.DataArrays",
+            f"or several DataArrays as objs, got {type(objs[0])}.",
+        )
+
     return _select_ar_order_scen_ens_dt(dt, dim, ens_dim, maxlag, ic)
 
 
@@ -129,7 +134,9 @@ def _select_ar_order_scen_ens_dt(
 
         return res.rename("selected_order")
 
-    ar_order_scen = map_over_subtree(_select_ar_order_ds)(dt, dim=dim, maxlag=maxlag, ic=ic)
+    ar_order_scen = map_over_subtree(_select_ar_order_ds)(
+        dt, dim=dim, maxlag=maxlag, ic=ic
+    )
 
     # TODO: think about weighting?
     def _ens_quantile(ds, ens_dim):
@@ -151,7 +158,6 @@ def _select_ar_order_scen_ens_dt(
         ar_order = ar_order.astype(int)
 
     return ar_order
-
 
 
 def fit_auto_regression_scen_ens(
@@ -194,28 +200,33 @@ def fit_auto_regression_scen_ens(
         if len(objs) != 1:
             raise ValueError("Only one DataTree can be passed.")
         dt = objs[0]
-        
+
     elif isinstance(objs[0], xr.DataArray):
         # TODO: in the future might be able to use DataTree.from_array_dict
         # see https://github.com/pydata/xarray/issues/9486
         # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
-        ds_dict = {f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)}
+        ds_dict = {
+            f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)
+        }
         dt = DataTree.from_dict(ds_dict)
-        
-    
+
     elif isinstance(objs[0], dict):
         if len(objs) != 1:
             raise ValueError("Only one dict can be passed.")
         da_dict = objs[0]
         # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
         # see https://github.com/pydata/xarray/issues/9486
-        ds_dict = {f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()}
+        ds_dict = {
+            f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()
+        }
         dt = DataTree.from_dict(ds_dict)
-    
+
     else:
-        raise ValueError("Expected an either a DataTree, a dictionary of xr.DataArrays",
-                         f"or several DataArrays as objs, got {type(objs[0])}.")
-    
+        raise ValueError(
+            "Expected an either a DataTree, a dictionary of xr.DataArrays",
+            f"or several DataArrays as objs, got {type(objs[0])}.",
+        )
+
     return _fit_auto_regression_scen_ens_dt(dt, dim, ens_dim, lags)
 
 
@@ -252,6 +263,7 @@ def _fit_auto_regression_scen_ens_dt(
     ensemble members are not weighted equally, if the number of members differs between scenarios.
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
+
     def _fit_auto_regression_ds(ds, dim, lags) -> xr.Dataset:
 
         name, *others = ds.data_vars
@@ -278,6 +290,7 @@ def _fit_auto_regression_scen_ens_dt(
     ar_params = ar_params_scen.mean("scen")
 
     return ar_params
+
 
 # ======================================================================================
 

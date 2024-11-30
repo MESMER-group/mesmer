@@ -14,9 +14,9 @@ from mesmer.calibrate_mesmer.train_utils import (
 )
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import (
-    fit_auto_regression_scen_ens,
     adjust_covariance_ar1,
     find_localized_empirical_covariance,
+    fit_auto_regression_scen_ens,
 )
 
 
