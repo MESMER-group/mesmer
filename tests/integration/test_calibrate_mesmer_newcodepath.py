@@ -166,10 +166,10 @@ def test_calibrate_mesmer(
 
     data = (tas_hist_resid_novolc.tas, tas_proj_resid.tas)
 
-    ar_order = mesmer.stats._select_ar_order_scen_ens(
+    ar_order = mesmer.stats.select_ar_order_scen_ens(
         *data, dim="time", ens_dim="ens", maxlag=12, ic="bic"
     )
-    global_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+    global_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         *data, dim="time", ens_dim="ens", lags=ar_order
     )
 
@@ -202,7 +202,7 @@ def test_calibrate_mesmer(
     )
 
     data = (tas_stacked_residuals_hist, tas_stacked_residuals_proj)
-    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+    local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         *data,
         ens_dim="none",
         dim="time",

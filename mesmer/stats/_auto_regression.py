@@ -17,7 +17,7 @@ from mesmer.core.utils import (
 
 
 def select_ar_order_scen_ens(
-    obs: list[xr.DataArray] | DataTree,
+    *objs: xr.DataArray | dict[str, xr.DataArray] | DataTree,
     dim: str,
     ens_dim: str | None,
     maxlag: int,
@@ -29,8 +29,8 @@ def select_ar_order_scen_ens(
 
     Parameters
     ----------
-    objs : DataTree or iterable of DataArray
-        A list of ``xr.DataArray`` to estimate the auto regression order over.
+    objs : DataTree, xr.DataArrays or dict of DataArrays
+        A DataTree, ``xr.DataArray``s or dict of ``xr.DataArray`` to estimate the auto regression order over.
     dim : str
         Dimension along which to determine the order.
     ens_dim : str
@@ -51,69 +51,33 @@ def select_ar_order_scen_ens(
     Calculates the median auto regression order, first over the ensemble members,
     then over all scenarios.
     """
-
-    if isinstance(obs, list):
-        warnings.warn(
-            "Passing a list of DataArrays will be deprecated in the future. Please use a DataTree instead.",
-            DeprecationWarning,
-        )
-        return _select_ar_order_scen_ens_list(obs, dim, ens_dim, maxlag, ic)
-    elif isinstance(obs, DataTree):
-        return _select_ar_order_scen_ens_dt(obs, dim, ens_dim, maxlag, ic)
-
-
-def _select_ar_order_scen_ens_list(
-    objs: list[xr.DataArray],
-    dim: str,
-    ens_dim: str | None,
-    maxlag: int,
-    ic: Literal["bic", "aic", "hqic"] = "bic",
-) -> xr.DataArray:
-    """
-    Select the order of an autoregressive process and potentially calculate the median
-    over ensemble members and scenarios
-
-    Parameters
-    ----------
-    objs : iterable of DataArray
-        A list of ``xr.DataArray`` to estimate the auto regression order over.
-    dim : str
-        Dimension along which to determine the order.
-    ens_dim : str
-        Dimension name of the ensemble members.
-    maxlag : int
-        The maximum lag to consider.
-    ic : {'aic', 'hqic', 'bic'}, default 'bic'
-        The information criterion to use in the selection.
-
-    Returns
-    -------
-    selected_ar_order : DataArray
-        Array indicating the selected order with the same size as the input but ``dim``
-        removed.
-
-    Notes
-    -----
-    Calculates the median auto regression order, first over the ensemble members,
-    then over all scenarios.
-    """
-
-    ar_order_scen = list()
-    for obj in objs:
-        res = select_ar_order(obj, dim=dim, maxlag=maxlag, ic=ic)
-        if ens_dim in res.dims:
-            res = res.quantile(dim=ens_dim, q=0.5, method="nearest")
-
-        ar_order_scen.append(res)
-
-    ar_order_scen = xr.concat(ar_order_scen, dim="scen")
-
-    ar_order = ar_order_scen.quantile(0.5, dim="scen", method="nearest")
-
-    if not np.isnan(ar_order).any():
-        ar_order = ar_order.astype(int)
-
-    return ar_order
+    if isinstance(objs[0], DataTree):
+        if len(objs) != 1:
+            raise ValueError("Only one DataTree can be passed.")
+        dt = objs[0]
+        
+    elif isinstance(objs[0], xr.DataArray):
+        # TODO: in the future might be able to use DataTree.from_array_dict
+        # see https://github.com/pydata/xarray/issues/9486
+        # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
+        ds_dict = {f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)}
+        dt = DataTree.from_dict(ds_dict)
+        
+    
+    elif isinstance(objs[0], dict):
+        if len(objs) != 1:
+            raise ValueError("Only one dict can be passed.")
+        da_dict = objs[0]
+        # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
+        # see https://github.com/pydata/xarray/issues/9486
+        ds_dict = {f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()}
+        dt = DataTree.from_dict(ds_dict)
+    
+    else:
+        raise ValueError("Expected an either a DataTree, a dictionary of xr.DataArrays",
+                         f"or several DataArrays as objs, got {type(objs[0])}.")
+    
+    return _select_ar_order_scen_ens_dt(dt, dim, ens_dim, maxlag, ic)
 
 
 def _select_ar_order_scen_ens_dt(
@@ -154,17 +118,26 @@ def _select_ar_order_scen_ens_dt(
     then over all scenarios.
     """
 
-    _select_ar_order_dt = map_over_subtree(_select_ar_order_ds)
+    def _select_ar_order_ds(
+        ds: xr.Dataset, dim: str, maxlag: int, ic: Literal["aic", "bic", "hqic"] = "bic"
+    ) -> xr.DataArray:
 
-    ar_order_scen = _select_ar_order_dt(dt, dim=dim, maxlag=maxlag, ic=ic)
+        name, *others = ds.data_vars
+        if others:
+            raise ValueError("Dataset must have only one data variable.")
+        res = select_ar_order(ds[name], dim, maxlag, ic)
 
-    def ens_quantile(ds, ens_dim):
+        return res.rename("selected_order")
+
+    ar_order_scen = map_over_subtree(_select_ar_order_ds)(dt, dim=dim, maxlag=maxlag, ic=ic)
+
+    # TODO: think about weighting?
+    def _ens_quantile(ds, ens_dim):
         if ens_dim in ds.dims:
             return ds.quantile(dim=ens_dim, q=0.5, method="nearest")
         return ds
 
-    ens_quantile_dt = map_over_subtree(ens_quantile)
-    ar_odrer_ens_median = ens_quantile_dt(ar_order_scen, ens_dim)
+    ar_odrer_ens_median = map_over_subtree(_ens_quantile)(ar_order_scen, ens_dim)
 
     ar_odrer_ens_median_ds = collapse_datatree_into_dataset(
         ar_odrer_ens_median, dim="scen"
@@ -180,22 +153,9 @@ def _select_ar_order_scen_ens_dt(
     return ar_order
 
 
-def _select_ar_order_ds(
-    ds: xr.Dataset, dim: str, maxlag: int, ic: Literal["aic", "bic", "hqic"] = "bic"
-) -> xr.DataArray:
-
-    data_vars = list(ds.keys())
-    if len(data_vars) > 1:
-        raise ValueError("Dataset must have only one data variable.")
-
-    res = ds.map(select_ar_order, args=(dim, maxlag, ic))
-    res = res.rename({data_vars[0]: "selected_order"})
-
-    return res.selected_order
-
 
 def fit_auto_regression_scen_ens(
-    obj: DataTree | list[xr.DataArray],
+    *objs: xr.DataArray | dict[str, xr.DataArray] | DataTree,
     dim: str,
     ens_dim: str | None,
     lags: int | xr.DataArray,
@@ -206,10 +166,10 @@ def fit_auto_regression_scen_ens(
 
     Parameters
     ----------
-    obj : a DataTree or list of ``xr.DataArray``s
-        A ``DataTree`` holding one or several ``xr.Dataset`` or a list of ``xr.DataArray``s to estimate the auto regression order over,
+    obj : DataTree, xr.DataArrays or dict of DataArrays
+        A ``DataTree`` holding one or several ``xr.Dataset``, ``xr.DataArray``s, or dict of ``xr.DataArray``s to estimate the auto regression order over,
         each representing one scenario, potentially with several ensemble members along `ens_dim`.
-        If a ``DataTree``, each ``xr.DataSet`` should only hold one variable, the one for which to estimate the autoregression.
+        If a ``DataTree``, each ``xr.Dataset`` should only hold one variable, the one for which to estimate the autoregression.
     dim : str
         Dimension along which to fit the auto regression (often time).
     ens_dim : str
@@ -230,66 +190,33 @@ def fit_auto_regression_scen_ens(
     ensemble members are not weighted equally, if the number of members differs between scenarios.
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
-    if isinstance(obj, list):
-        warnings.warn(
-            "Passing a list of DataArrays will be deprecated in the future. Please use a DataTree instead.",
-            DeprecationWarning,
-        )
-        return _fit_auto_regression_scen_ens_list(obj, dim, ens_dim, lags)
-    elif isinstance(obj, DataTree):
-        return _fit_auto_regression_scen_ens_dt(obj, dim, ens_dim, lags)
-
-
-def _fit_auto_regression_scen_ens_list(
-    objs: list[xr.DataArray], dim: str, ens_dim: str | None, lags: int | xr.DataArray
-) -> xr.Dataset:
-    """
-    fit an auto regression and potentially calculate the mean over ensemble members
-    and scenarios
-
-    Parameters
-    ----------
-    objs : iterable of DataArray
-        A list of ``xr.DataArray`` to estimate the auto regression over, each
-        representing one scenario, potentially with several ensemble members
-        along `ens_dim`.
-    dim : str
-        Dimension along which to fit the auto regression.
-    ens_dim : str
-        Dimension name of the ensemble members, None if no ensemble is provided.
-    lags : int
-        The number of lags to include in the model.
-
-    Returns
-    -------
-    :obj:`xr.Dataset`
-        Dataset containing the estimated parameters of the ``intercept``, the AR
-        ``coeffs`` and the ``variance`` of the residuals.
-
-    Notes
-    -----
-    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
-    members and then over scenarios. This is done to weight scenarios equally, consequently
-    ensemble members are not weighted equally, if the number of members differs between scenarios.
-    If no ensemble members are provided, the mean is calculated over scenarios only.
-    """
-
-    ar_params_scen = list()
-    for obj in objs:
-        ar_params = fit_auto_regression(obj, dim=dim, lags=int(lags))
-
-        # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
-        if ens_dim in ar_params.dims:
-            ar_params = ar_params.mean(ens_dim)
-
-        ar_params_scen.append(ar_params)
-
-    ar_params_scen = xr.concat(ar_params_scen, dim="scen")
-
-    # return the mean over all scenarios
-    ar_params = ar_params_scen.mean("scen")
-
-    return ar_params
+    if isinstance(objs[0], DataTree):
+        if len(objs) != 1:
+            raise ValueError("Only one DataTree can be passed.")
+        dt = objs[0]
+        
+    elif isinstance(objs[0], xr.DataArray):
+        # TODO: in the future might be able to use DataTree.from_array_dict
+        # see https://github.com/pydata/xarray/issues/9486
+        # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
+        ds_dict = {f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)}
+        dt = DataTree.from_dict(ds_dict)
+        
+    
+    elif isinstance(objs[0], dict):
+        if len(objs) != 1:
+            raise ValueError("Only one dict can be passed.")
+        da_dict = objs[0]
+        # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
+        # see https://github.com/pydata/xarray/issues/9486
+        ds_dict = {f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()}
+        dt = DataTree.from_dict(ds_dict)
+    
+    else:
+        raise ValueError("Expected an either a DataTree, a dictionary of xr.DataArrays",
+                         f"or several DataArrays as objs, got {type(objs[0])}.")
+    
+    return _fit_auto_regression_scen_ens_dt(dt, dim, ens_dim, lags)
 
 
 def _fit_auto_regression_scen_ens_dt(
@@ -325,29 +252,25 @@ def _fit_auto_regression_scen_ens_dt(
     ensemble members are not weighted equally, if the number of members differs between scenarios.
     If no ensemble members are provided, the mean is calculated over scenarios only.
     """
-    # check if all scenarios have the same dimensions
-    ds_dims = [set(ds.dims) for ds in dt.subtree if not ds.is_empty]
-    if not all(ds_dims[0] == ds_dim for ds_dim in ds_dims):
-        raise ValueError("Dimensions differ between scenarios but all scenarios/subtrees must have the same dimensions.")
-    
-    # check if dimensions have coordinates
-    # def _check_coords(ds):
-    #     for dim in ds.dims:
-    #         if not ds[dim].coords:
-    #             raise ValueError(f"Dimension '{dim}' must have coordinates.")
-    # map_over_subtree(_check_coords)(dt)
+    def _fit_auto_regression_ds(ds, dim, lags) -> xr.Dataset:
+
+        name, *others = ds.data_vars
+        if others:
+            raise ValueError("Dataset must have only one data variable.")
+
+        return fit_auto_regression(ds[name], dim, lags)
 
     ar_params_scen = map_over_subtree(_fit_auto_regression_ds)(
         dt, dim=dim, lags=int(lags)
     )
 
     # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
-    def ens_mean(ds, ens_dim):
+    def _ens_mean(ds, ens_dim):
         if ens_dim in ds.dims:
             return ds.mean(ens_dim)
         return ds
 
-    ar_params_scen = map_over_subtree(ens_mean)(ar_params_scen, ens_dim)
+    ar_params_scen = map_over_subtree(_ens_mean)(ar_params_scen, ens_dim)
 
     ar_params_scen = collapse_datatree_into_dataset(ar_params_scen, dim="scen")
 
@@ -356,26 +279,10 @@ def _fit_auto_regression_scen_ens_dt(
 
     return ar_params
 
-
-def _fit_auto_regression_ds(
-    ds: xr.Dataset,
-    dim: str,
-    lags: int,
-) -> xr.Dataset:
-
-    data_vars = list(ds.keys())
-    if len(data_vars) > 1:
-        raise ValueError("Dataset must have only one data variable.")
-
-    res = fit_auto_regression(ds[data_vars[0]], dim, lags)
-
-    return res
-
-
 # ======================================================================================
 
 
-def select_ar_order(data, dim, maxlag, ic="bic"):
+def select_ar_order(data, dim, maxlag, ic="bic") -> xr.DataArray:
     """Select the order of an autoregressive process
 
     Parameters

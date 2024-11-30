@@ -235,7 +235,7 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
         dims = ("run", "time", "cell")
         data = [xr.DataArray(data, dims=dims) for data in targ.values()]
 
-        params = fit_auto_regression_scen_ens(data, dim="time", ens_dim="run", lags=1)
+        params = fit_auto_regression_scen_ens(*data, dim="time", ens_dim="run", lags=1)
 
         params_lv["AR1_int"][targ_name] = params.intercept.values
         params_lv["AR1_coef"][targ_name] = params.coeffs.values.squeeze()
