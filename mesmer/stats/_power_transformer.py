@@ -328,7 +328,7 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
     if not isinstance(coeffs, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(coeffs)}")
 
     lambdas = get_lambdas_from_covariates(coeffs, yearly_pred).rename({"time": "year"})
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
@@ -388,7 +388,7 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
     if not isinstance(coeffs, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(coeffs)}")
 
     lambdas = get_lambdas_from_covariates(coeffs, yearly_pred).rename({"time": "year"})
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
