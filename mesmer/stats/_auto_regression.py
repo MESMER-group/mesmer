@@ -399,7 +399,7 @@ def draw_auto_regression_uncorrelated(
         Defines the number of uncorrelated samples to draw and possibly its coordinates.
         See ``time`` for details.
 
-    seed : int| xr.Dataset
+    seed : int | xr.Dataset
         Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
         contains a single variable "seed" with the seed value, used if this function is mapped over
         a DataTree to draw samples for multiple scenarios.
