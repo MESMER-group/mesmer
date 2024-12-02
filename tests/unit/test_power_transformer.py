@@ -5,7 +5,7 @@ import xarray as xr
 from sklearn.preprocessing import PowerTransformer
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.core.utils import _check_dataarray_form
 from mesmer.stats._power_transformer import (
     _yeo_johnson_inverse_transform_np,
     _yeo_johnson_optimize_lambda_np,

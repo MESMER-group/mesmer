@@ -17,7 +17,7 @@ def lambda_function(coeffs: np.ndarray, local_yearly_T: np.ndarray) -> np.ndarra
     Parameters
     ----------
     coeffs : ndarray of shape (2,)
-        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept, 
+        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept,
         the second coefficient (:math:`\xi_1`) controls the slope.
     local_yearly_T : ndarray of shape (n_years,)
         Yearly values of one gridcell and month used as predictor
@@ -226,7 +226,9 @@ def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
     return lambdas.rename("lambdas")
 
 
-def fit_yeo_johnson_transform(monthly_residuals: xr.DataArray, yearly_pred: xr.DataArray, time_dim: str ="time") -> xr.DataArray:
+def fit_yeo_johnson_transform(
+    monthly_residuals: xr.DataArray, yearly_pred: xr.DataArray, time_dim: str = "time"
+) -> xr.DataArray:
     """
     estimate the optimal coefficients for the parameters :math:`\\lambda` for each gridcell,
     to normalize monthly residuals conditional on yearly predictor. Here, :math:`\\lambda`
@@ -329,7 +331,9 @@ def yeo_johnson_transform(monthly_residuals, lambda_coeffs, yearly_pred):
     if not isinstance(lambda_coeffs, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
 
-    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
+        {"time": "year"}
+    )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     transformed_resids = xr.apply_ufunc(
@@ -389,7 +393,9 @@ def inverse_yeo_johnson_transform(monthly_residuals, lambda_coeffs, yearly_pred)
     if not isinstance(lambda_coeffs, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
 
-    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
+        {"time": "year"}
+    )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     inverted_resids = xr.apply_ufunc(
