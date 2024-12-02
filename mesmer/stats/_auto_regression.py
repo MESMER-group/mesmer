@@ -151,7 +151,7 @@ def _select_ar_order_scen_ens_dt(
             return ds.quantile(dim=ens_dim, q=0.5, method="nearest")
         return ds
 
-    ar_odrer_ens_median = map_over_subtree(_ens_quantile)(ar_order_scen, ens_dim)
+    ar_order_ens_median = map_over_subtree(_ens_quantile)(ar_order_scen, ens_dim)
 
     ar_odrer_ens_median_ds = collapse_datatree_into_dataset(
         ar_odrer_ens_median, dim="scen"
