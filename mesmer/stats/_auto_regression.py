@@ -460,7 +460,7 @@ def draw_auto_regression_correlated(
     covariance: xr.DataArray,
     *,
     time: int | xr.DataArray | pd.Index,
-    realisation: int | xr.DataArray,
+    realisation: int | xr.DataArray | pd.Index,
     seed: int | xr.Dataset,
     buffer: int,
     time_dim: str = "time",
