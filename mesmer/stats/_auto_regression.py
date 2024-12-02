@@ -31,7 +31,7 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
         # see https://github.com/pydata/xarray/issues/9486
         # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
         ds_dict = {
-            f"scen_{i}": xr.Dataset({"variable": da}) for i, da in enumerate(objs)
+            f"scen_{i}": da._to_temp_dataset() for i, da in enumerate(objs)
         }
         dt = DataTree.from_dict(ds_dict)
 
@@ -42,7 +42,7 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
         # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
         # see https://github.com/pydata/xarray/issues/9486
         ds_dict = {
-            f"{key}": xr.Dataset({"variable": da}) for key, da in da_dict.items()
+            f"{key}": da._to_temp_dataset() for key, da in da_dict.items()
         }
         dt = DataTree.from_dict(ds_dict)
 
