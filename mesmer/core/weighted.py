@@ -138,27 +138,26 @@ def equal_scenario_weights_from_datatree(
 
     Example:
     --------
-    dt = DataTree()
-    dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.ones((20, 3)), dims=("time", "member"))}))
-    dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member"))}))
-    weights = equal_scenario_weights_from_datatree(dt)
-    weights
-    # Output:
-    # DataTree('None', parent=None)
-    #    ├── DataTree('ssp119')
-    #    │       Dimensions:  (time: 20, member: 3)
-    #    │       Coordinates:
-    #    │         * time     (time) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
-    #    │         * member   (member) int64 0 1 2
-    #    │       Data variables:
-    #    │           weights  (time, member) float64 0.3333 0.3333 0.3333 ... 0.3333 0.3333
-    #    └── DataTree('ssp585')
-    #            Dimensions:  (time: 20, member: 2)
-    #            Coordinates:
-    #            * time     (time) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
-    #            * member   (member) int64 0 1
-    #            Data variables:
-    #                weights  (time, member) float64 0.5 0.5 0.5 0.5 0.5 ... 0.5 0.5 0.5 0.5 0.5
+    >>> dt = DataTree()
+    >>> dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.ones((20, 3)), dims=("time", "member"))}))
+    >>> dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member"))}))
+    >>> weights = equal_scenario_weights_from_datatree(dt)
+    >>> weights
+    DataTree('None', parent=None)
+       ├── DataTree('ssp119')
+       │       Dimensions:  (time: 20, member: 3)
+       │       Coordinates:
+       │         * time     (time) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+       │         * member   (member) int64 0 1 2
+       │       Data variables:
+       │           weights  (time, member) float64 0.3333 0.3333 0.3333 ... 0.3333 0.3333
+       └── DataTree('ssp585')
+               Dimensions:  (time: 20, member: 2)
+               Coordinates:
+               * time     (time) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+               * member   (member) int64 0 1
+               Data variables:
+                   weights  (time, member) float64 0.5 0.5 0.5 0.5 0.5 ... 0.5 0.5 0.5 0.5 0.5
 
     """
     if dt.depth != 1:
