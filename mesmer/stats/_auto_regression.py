@@ -370,7 +370,7 @@ def draw_auto_regression_uncorrelated(
     ar_params: xr.Dataset,
     *,
     time: int | xr.DataArray | pd.Index,
-    realisation: int | xr.DataArray,
+    realisation: int | xr.DataArray | pd.Index,
     seed: int | xr.Dataset,
     buffer: int,
     time_dim: str = "time",
