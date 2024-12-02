@@ -119,7 +119,7 @@ def equal_scenario_weights_from_datatree(
 
     Thus, if all scenarios have the same number of members, all weights will be equal.
     If one scenario has more members than the others, its weights will be smaller.
-    Weights are always of dims (time_dim, ens_dim), if there are more dimensions in a dataset, they will be dropped.
+    Weights are always along the time and ens dim, if there are more dimensions in a dataset, they will be dropped.
 
     Parameters:
     -----------
