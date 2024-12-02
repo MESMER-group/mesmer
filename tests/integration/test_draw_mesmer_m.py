@@ -98,7 +98,7 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     # invert the power transformation
     local_variability_inverted = mesmer.stats.inverse_yeo_johnson_transform(
         local_variability_transformed,
-        pt_params.coeffs,
+        pt_params.lambda_coeffs,
         tas_stacked_y.tas,
     )
 

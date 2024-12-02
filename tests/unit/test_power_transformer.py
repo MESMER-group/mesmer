@@ -238,11 +238,11 @@ def test_power_transformer_xr():
     )
     # 2 - transformation
     transformed = mesmer.stats.yeo_johnson_transform(
-        monthly_residuals, pt_coefficients.coeffs, yearly_T
+        monthly_residuals, pt_coefficients, yearly_T
     )
     # 3 - back-transformation
     inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
-        transformed.transformed, pt_coefficients.coeffs, yearly_T
+        transformed.transformed, pt_coefficients, yearly_T
     )
 
     xr.testing.assert_allclose(
@@ -274,15 +274,12 @@ def test_power_transformer_xr():
         required_dims=("cells", "time"),
         shape=(n_gridcells, n_years * 12),
     )
-    _check_dataset_form(
-        pt_coefficients, name="pt_coefficients", required_vars=("coeffs")
-    )
     _check_dataarray_form(
-        pt_coefficients.coeffs,
+        pt_coefficients,
         name="coeffs",
         ndim=3,
         required_dims=("cells", "coeff", "month"),
         shape=(12, n_gridcells, 2),
     )
-    assert "month" in pt_coefficients.coeffs.coords
+    assert "month" in pt_coefficients.coords
     xr.testing.assert_equal(expected_month, pt_coefficients.month)

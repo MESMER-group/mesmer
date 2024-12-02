@@ -35,7 +35,7 @@ def _load_data(*filenames):
     return ds
 
 
-@pytest.mark.slow
+#@pytest.mark.slow
 def test_calibrate_mesmer_m(update_expected_files=False):
     # define config values
     THRESHOLD_LAND = 1 / 3
@@ -94,7 +94,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
         resids_after_hm.tas, tas_stacked_y.tas
     )
     transformed_hm_resids = mesmer.stats.yeo_johnson_transform(
-        resids_after_hm.tas, pt_coefficients.coeffs, tas_stacked_y.tas
+        resids_after_hm.tas, pt_coefficients, tas_stacked_y.tas
     )
 
     # fit cyclo-stationary AR(1) process
@@ -204,7 +204,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
             atol=2e-5,
         )
         np.testing.assert_allclose(
-            expected_pt_params.coeffs, pt_coefficients.coeffs, atol=1.0e-4, rtol=1.5e-4
+            expected_pt_params.lambda_coeffs, pt_coefficients, atol=1.0e-4, rtol=1.5e-4
         )
         np.testing.assert_allclose(
             expected_AR1_params.slope,
