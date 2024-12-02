@@ -117,7 +117,7 @@ def equal_scenario_weights_from_datatree(
     scenario such that each scenario contributes equally to some fitting procedure.
     The weight of each member = 1 / number of members in the scenario, so weights = 1 / ds[ens_dim].size.
 
-    Thus, if all scenarios the same number of members, all weights will be equal.
+    Thus, if all scenarios have the same number of members, all weights will be equal.
     If one scenario has more members than the others, its weights will be smaller.
     Weights are always of dims (time_dim, ens_dim), if there are more dimensions in a dataset, they will be dropped.
 
