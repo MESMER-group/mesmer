@@ -125,7 +125,7 @@ def equal_scenario_weights_from_datatree(
     -----------
     dt : DataTree
         DataTree holding the ``xr.Datasets`` for which the weights should be created. Each dataset must have at least
-        ens_dim as a dimension, but can have more dimensions.
+        ens_dim and time_dim as dimensions, but can have more dimensions.
     ens_dim : str
         Name of the dimension along which the weights should be created. Default is "member".
     time_dim : str
