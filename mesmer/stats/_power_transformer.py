@@ -17,11 +17,11 @@ def lambda_function(coeffs: np.ndarray, local_yearly_T: np.ndarray) -> np.ndarra
     Parameters
     ----------
     coeffs : ndarray of shape (2,)
-        Coefficients for the logistic function. The virst coefficient (math: \xi_0) controlls the intercept, 
-        the second coefficient (math: \xi_1) controls the slope.
+        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept, 
+        the second coefficient (:math:`\xi_1`) controls the slope.
     local_yearly_T : ndarray of shape (n_years,)
-            yearly values of one gridcell and month used as predictor
-            for lambda.
+        Yearly values of one gridcell and month used as predictor
+        for lambda.
 
     Returns
     -------
