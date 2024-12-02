@@ -204,7 +204,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
             atol=2e-5,
         )
         np.testing.assert_allclose(
-            expected_pt_params.coeffs, pt_coefficients.coeffs, atol=1.5e-4
+            expected_pt_params.coeffs, pt_coefficients.coeffs, atol=1.e-4, rtol=1.5e-4
         )
         np.testing.assert_allclose(
             expected_AR1_params.slope,
