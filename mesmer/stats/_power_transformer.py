@@ -227,7 +227,7 @@ def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
 
 
 def fit_yeo_johnson_transform(
-    yearly_pred: xr.DataArray, monthly_residuals: xr.DataArray,  time_dim: str = "time"
+    yearly_pred: xr.DataArray, monthly_residuals: xr.DataArray, time_dim: str = "time"
 ) -> xr.DataArray:
     """
     estimate the optimal coefficients for the parameters :math:`\\lambda` for each gridcell,
