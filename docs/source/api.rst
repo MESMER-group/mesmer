@@ -122,6 +122,7 @@ Weighted operations: calculate global mean
    ~core.weighted.global_mean
    ~core.weighted.lat_weights
    ~core.weighted.weighted_mean
+   ~core.weighted.equal_scenario_weights_from_datatree
 
 Geospatial
 ----------
