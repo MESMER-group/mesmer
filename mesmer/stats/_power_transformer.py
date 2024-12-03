@@ -3,7 +3,7 @@ import xarray as xr
 from scipy.optimize import minimize
 
 
-def lambda_function(coeffs, local_yearly_T):
+def lambda_function(coeffs: np.ndarray, local_yearly_T: np.ndarray) -> np.ndarray:
     r"""Use logistic function to calculate lambda depending on the local yearly
     values. The function is defined as
 
@@ -16,13 +16,12 @@ def lambda_function(coeffs, local_yearly_T):
 
     Parameters
     ----------
-    xi_0 : float
-        First coefficient of the logistic function (controlling the intercept).
-    xi_1 : float
-        Second coefficient of the logistic function (controlling the slope).
+    coeffs : ndarray of shape (2,)
+        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept,
+        the second coefficient (:math:`\xi_1`) controls the slope.
     local_yearly_T : ndarray of shape (n_years,)
-            yearly values of one gridcell and month used as predictor
-            for lambda.
+        Yearly values of one gridcell and month used as predictor
+        for lambda.
 
     Returns
     -------
@@ -169,7 +168,11 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
         return -loglikelihood
 
-    bounds = np.array([[0, np.inf], [-0.1, 0.1]])
+    # upper bound on coeffs[0] as larger values become indistinguishable because
+    # lambda ~ 1 / coeff[0]. For details see discussion in
+    # https://github.com/MESMER-group/mesmer/pull/501#issuecomment-2500750245
+
+    bounds = np.array([[0, 1e10], [-0.1, 0.1]])
     first_guess = np.array([1.0, 0.0])
 
     res = minimize(
@@ -182,16 +185,16 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     return res.x
 
 
-def get_lambdas_from_covariates(coeffs, yearly_pred):
+def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
     """function that relates fitted coefficients and the yearly predictor
     to the lambdas. We usee a logistic function between 0 and 2 to estimate
     the lambdas, see :func:`lambda_function <mesmer.stats.lambda_function>`.
 
     Parameters
     ----------
-    lambda_coeffs : ``xr.Dataset``
+    lambda_coeffs : ``xr.DataArray``
         The parameters of the power transformation for each gridcell and month,
-        containing ``lambda_coeffs`` with dims (months, n_gridcells, coeff) calculated
+        with dims (months, coeff, n_gridcells) calculated
         using ``fit_yeo_johnson_transform``.
     yearly_pred : ``xr.DataArray``
         yearly values used as predictors for the lambdas. Must have shape shape
@@ -203,15 +206,15 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
         The parameters of the power transformation for each gridcell month and year
 
     """
-    if not isinstance(coeffs, xr.Dataset):
-        raise TypeError(f"Expected a `xr.Dataset`, got {type(coeffs)}")
+    if not isinstance(lambda_coeffs, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
 
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
     lambdas = xr.apply_ufunc(
         lambda_function,
-        coeffs.lambda_coeffs,
+        lambda_coeffs,
         yearly_pred,
         input_core_dims=[("coeff",), []],
         output_core_dims=[[]],
@@ -223,7 +226,9 @@ def get_lambdas_from_covariates(coeffs, yearly_pred):
     return lambdas.rename("lambdas")
 
 
-def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
+def fit_yeo_johnson_transform(
+    yearly_pred: xr.DataArray, monthly_residuals: xr.DataArray, time_dim: str = "time"
+) -> xr.DataArray:
     """
     estimate the optimal coefficients for the parameters :math:`\\lambda` for each gridcell,
     to normalize monthly residuals conditional on yearly predictor. Here, :math:`\\lambda`
@@ -233,21 +238,20 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
 
     Parameters
     ----------
+    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
+        yearly values used as predictors for the lambdas.
     monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the optimal
         transformation parameters (lambdas).
-    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly values used as predictors for the lambdas.
     time_dim : str, optional
         Name of the time dimension in the input data used to align monthly residuals and
         yearly predictor data (needs to be the same in both).
 
     Returns
     -------
-    :obj:`xr.Dataset`
-        Dataset containing the estimated coefficients xi_0 and xi_1 needed to estimate
-        lambda with dimensions (months, n_gridcells) and the lambdas themselves with
-        dimensions (months, n_gridcells, n_years).
+    lambda_coeffs: `xr.DataArray`
+        DataArray containing the estimated coefficients needed to estimate
+        lambda with dimensions (months, coeff, n_gridcells).
 
     """
     # TODO allow passing func instead of our fixed lambda_function?
@@ -257,7 +261,7 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    coeffs = []
+    lambda_coeffs = []
     for month in range(12):
 
         monthly_data = monthly_residuals.isel({time_dim: slice(month, None, 12)})
@@ -272,29 +276,29 @@ def fit_yeo_johnson_transform(monthly_residuals, yearly_pred, time_dim="time"):
             output_dtypes=[float],
             vectorize=True,
         )
+        res = res.assign_coords({"coeff": np.arange(len(res.coeff))})
+        lambda_coeffs.append(res.rename("lambda_coeffs"))
 
-        coeffs.append(xr.Dataset({"lambda_coeffs": res}))
-
-    month = xr.Variable("month", np.arange(1, 13))
-    return xr.concat(coeffs, dim=month)
+    month = xr.DataArray(np.arange(1, 13), dims="month")
+    return xr.concat(lambda_coeffs, dim=month)
 
 
-def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
+def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
     """
     transform `monthly_residuals` following Yeo-Johnson transformer
     with parameters :math:`\\lambda`, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.
 
     Parameters
     ----------
+    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
+        yearly values used as predictors for the lambdas.
     monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
         Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
-    coeffs : ``xr.Dataset``
-        The parameters of the power transformation containing ``lambda_coeffs`` of shape
-        (months, n_gridcells, coeff) for each gridcell, calculated using
+    lambda_coeffs : ``xr.DataArray``
+        The parameters of the power transformation of shape
+        (months, coeff, n_gridcells) for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
-    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly values used as predictors for the lambdas.
 
     Returns
     -------
@@ -324,10 +328,12 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    if not isinstance(coeffs, xr.Dataset):
-        raise TypeError(f"Expected a `xr.Dataset`, got {type(monthly_residuals)}")
+    if not isinstance(lambda_coeffs, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
 
-    lambdas = get_lambdas_from_covariates(coeffs, yearly_pred).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
+        {"time": "year"}
+    )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     transformed_resids = xr.apply_ufunc(
@@ -343,19 +349,19 @@ def yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     return xr.merge([transformed_resids, lambdas])
 
 
-def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
+def inverse_yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
     """apply the inverse power transformation using the fitted lambdas.
 
     Parameters
     ----------
-    monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        The data to be transformed back to the original scale.
-    coeffs : ``xr.Dataset``
-        The parameters of the power transformation containing ``lambda_coeffs`` of shape
-        (months, n_gridcells, coeff) for each gridcell, calculated using
-        :func:`lambda_function <mesmer.stats.lambda_function>`.
     yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
         yearly values used as predictors for the lambdas.
+    monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
+        The data to be transformed back to the original scale.
+    lambda_coeffs : ``xr.DataArray``
+        The parameters of the power transformation of shape
+        (months, coeff, n_gridcells) for each gridcell, calculated using
+        :func:`lambda_function <mesmer.stats.lambda_function>`.
 
     Returns
     -------
@@ -384,10 +390,12 @@ def inverse_yeo_johnson_transform(monthly_residuals, coeffs, yearly_pred):
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    if not isinstance(coeffs, xr.Dataset):
-        raise TypeError(f"Expected a `xr.Dataset`, got {type(monthly_residuals)}")
+    if not isinstance(lambda_coeffs, xr.DataArray):
+        raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
 
-    lambdas = get_lambdas_from_covariates(coeffs, yearly_pred).rename({"time": "year"})
+    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
+        {"time": "year"}
+    )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     inverted_resids = xr.apply_ufunc(

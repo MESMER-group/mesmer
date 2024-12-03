@@ -674,6 +674,9 @@ def test_fit_auto_regression_monthly():
         mesmer.stats.fit_auto_regression_monthly(data.values)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Covariance matrix is not positive definite, using eigh instead of cholesky."
+)
 @pytest.mark.parametrize("buffer", [1, 10, 20])
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1

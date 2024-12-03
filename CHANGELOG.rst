@@ -111,6 +111,7 @@ that this led to some numerical changes compared to the MESMER-M publication
 - move the harmonic model and power transformer functionalities to the stats module (
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
 - add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
+- add integration tests for MESMER-M (`#501 <https://github.com/MESMER-group/mesmer/pull/501>`_)
 
 Auto-Regression
 ~~~~~~~~~~~~~~~
@@ -134,8 +135,8 @@ Yeo-Johnson power transformer
    `#440 <https://github.com/MESMER-group/mesmer/issues/440>`_):
 
    -  expand the upper bound of the first coefficient from :math:`1` to :math:`\infty`,
-      i.e. to all positive numbers  (
-      `#446 <https://github.com/MESMER-group/mesmer/pull/446>`_)
+      i.e. to 1e10  (
+      `#446 <https://github.com/MESMER-group/mesmer/pull/446>`_, `#501 <https://github.com/MESMER-group/mesmer/pull/501>`_)
    -  remove jacobian ``rosen_der`` from fit (
       `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_)
    -  change optimization method from *SLSQP* to *Nelder-Mead* (

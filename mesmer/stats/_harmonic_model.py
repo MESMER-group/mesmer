@@ -147,14 +147,16 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     """
 
-    def func(coeffs, yearly_predictor, mon_target):
+    def residuals_from_fourier_series(coeffs, yearly_predictor, mon_target):
         return _generate_fourier_series_np(yearly_predictor, coeffs) - mon_target
 
+    # use least_squares to optimize the coefficients
     minimize_result = sp.optimize.least_squares(
-        func,
+        residuals_from_fourier_series,
         first_guess,
         args=(yearly_predictor, monthly_target),
         loss="linear",
+        method="lm",
     )
 
     coeffs = minimize_result.x
@@ -295,6 +297,8 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
         output_dtypes=[int, float, float],
         kwargs={"max_order": max_order},
     )
+
+    coeffs = coeffs.assign_coords({"coeff": np.arange(coeffs.sizes["coeff"])})
 
     preds = yearly_predictor + preds
 
