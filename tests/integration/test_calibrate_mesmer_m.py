@@ -35,7 +35,7 @@ def _load_data(*filenames):
     return ds
 
 
-# @pytest.mark.slow
+@pytest.mark.slow
 def test_calibrate_mesmer_m(update_expected_files=False):
     # define config values
     THRESHOLD_LAND = 1 / 3
@@ -91,10 +91,10 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     # train power transformer
     resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
     pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
-        resids_after_hm.tas, tas_stacked_y.tas
+        tas_stacked_y.tas, resids_after_hm.tas,
     )
     transformed_hm_resids = mesmer.stats.yeo_johnson_transform(
-        resids_after_hm.tas, pt_coefficients, tas_stacked_y.tas
+        tas_stacked_y.tas, resids_after_hm.tas, pt_coefficients
     )
 
     # fit cyclo-stationary AR(1) process
