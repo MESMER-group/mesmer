@@ -276,7 +276,7 @@ def test_power_transformer_xr():
     )
     _check_dataarray_form(
         pt_coefficients,
-        name="coeffs",
+        name="lambda_coeffs",
         ndim=3,
         required_dims=("cells", "coeff", "month"),
         shape=(12, n_gridcells, 2),
