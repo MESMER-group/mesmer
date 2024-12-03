@@ -249,7 +249,7 @@ def fit_yeo_johnson_transform(
 
     Returns
     -------
-    :obj:`xr.DataArray`
+    lambda_coeffs: `xr.DataArray`
         DataArray containing the estimated coefficients needed to estimate
         lambda with dimensions (months, coeff, n_gridcells).
 
@@ -261,7 +261,7 @@ def fit_yeo_johnson_transform(
     if not isinstance(yearly_pred, xr.DataArray):
         raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
 
-    coeffs = []
+    lambda_coeffs = []
     for month in range(12):
 
         monthly_data = monthly_residuals.isel({time_dim: slice(month, None, 12)})
@@ -277,10 +277,10 @@ def fit_yeo_johnson_transform(
             vectorize=True,
         )
         res = res.assign_coords({"coeff": np.arange(len(res.coeff))})
-        coeffs.append(res.rename("lambda_coeffs"))
+        lambda_coeffs.append(res.rename("lambda_coeffs"))
 
-    month = xr.Variable("month", np.arange(1, 13))
-    return xr.concat(coeffs, dim=month)
+    month = xr.DataArray(np.arange(1, 13), dims="month")
+    return xr.concat(lambda_coeffs, dim=month)
 
 
 def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
@@ -296,7 +296,7 @@ def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
         Monthly residuals after removing harmonic model fits, used to fit for the
         optimal transformation parameters (lambdas).
     lambda_coeffs : ``xr.DataArray``
-        The parameters of the power transformation containing ``lambda_coeffs`` of shape
+        The parameters of the power transformation of shape
         (months, coeff, n_gridcells) for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
 
@@ -359,7 +359,7 @@ def inverse_yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs)
     monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
         The data to be transformed back to the original scale.
     lambda_coeffs : ``xr.DataArray``
-        The parameters of the power transformation containing ``lambda_coeffs`` of shape
+        The parameters of the power transformation of shape
         (months, coeff, n_gridcells) for each gridcell, calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
 
