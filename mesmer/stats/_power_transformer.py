@@ -194,7 +194,7 @@ def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
     ----------
     lambda_coeffs : ``xr.DataArray``
         The parameters of the power transformation for each gridcell and month,
-        containing ``lambda_coeffs`` with dims (months, coeff, n_gridcells) calculated
+        with dims (months, coeff, n_gridcells) calculated
         using ``fit_yeo_johnson_transform``.
     yearly_pred : ``xr.DataArray``
         yearly values used as predictors for the lambdas. Must have shape shape
