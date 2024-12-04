@@ -2,6 +2,8 @@ import numpy as np
 import xarray as xr
 from scipy.optimize import minimize
 
+from mesmer.core.utils import _check_dataarray_form
+
 
 def lambda_function(coeffs: np.ndarray, local_yearly_T: np.ndarray) -> np.ndarray:
     r"""Use logistic function to calculate lambda depending on the local yearly
@@ -185,7 +187,9 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     return res.x
 
 
-def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
+def get_lambdas_from_covariates(
+    lambda_coeffs: xr.DataArray, yearly_pred: xr.DataArray
+) -> xr.DataArray:
     """function that relates fitted coefficients and the yearly predictor
     to the lambdas. We usee a logistic function between 0 and 2 to estimate
     the lambdas, see :func:`lambda_function <mesmer.stats.lambda_function>`.
@@ -193,24 +197,24 @@ def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
     Parameters
     ----------
     lambda_coeffs : ``xr.DataArray``
-        The parameters of the power transformation for each gridcell and month,
-        with dims (months, coeff, n_gridcells) calculated
-        using ``fit_yeo_johnson_transform``.
+        The parameters of the power transformation for each month along "month",
+        with coefficients along "coeff" calculated using ``fit_yeo_johnson_transform``.
+        Can have additional dimensions, like for example a gridcell or member dimension.
     yearly_pred : ``xr.DataArray``
-        yearly values used as predictors for the lambdas. Must have shape shape
-        (n_years, n_gridcells).
+        yearly values used as predictors for the lambdas, contains dims for time
+        and possibly additional dims as for lambda_coeffs.
 
     Returns
     -------
-    lambdas : ``xr.DataArray`` of shape (months, n_gridcells, n_years)
-        The parameters of the power transformation for each gridcell month and year
+    lambdas : ``xr.DataArray``
+        The parameters of the power transformation for each month, and year, and
+        possibly additional dims.
 
     """
-    if not isinstance(lambda_coeffs, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
-
-    if not isinstance(yearly_pred, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
+    lc_dims = {"month", "coeff"}
+    _check_dataarray_form(lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"})
+    yp_dims = {str(dim) for dim in lambda_coeffs.dims} -  lc_dims
+    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=yp_dims)
 
     lambdas = xr.apply_ufunc(
         lambda_function,
@@ -238,12 +242,14 @@ def fit_yeo_johnson_transform(
 
     Parameters
     ----------
-    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly values used as predictors for the lambdas.
-    monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
+    yearly_pred : ``xr.DataArray``
+        yearly values used as predictors for the lambdas, must contain time_dim but can have
+        additional dimensions for example gridcells or members.
+    monthly_residuals : ``xr.DataArray``
         Monthly residuals after removing harmonic model fits, used to fit for the optimal
-        transformation parameters (lambdas).
-    time_dim : str, optional
+        transformation parameters (lambdas). Has time_dim which is of length len(yearly_pred[time_dim]) * 12
+        and can also contain the same additional dimensions as yearly_pred.
+    time_dim : str, default: "time"
         Name of the time dimension in the input data used to align monthly residuals and
         yearly predictor data (needs to be the same in both).
 
@@ -251,15 +257,16 @@ def fit_yeo_johnson_transform(
     -------
     lambda_coeffs: `xr.DataArray`
         DataArray containing the estimated coefficients needed to estimate
-        lambda with dimensions (months, coeff, n_gridcells).
+        lambda with dimensions "month", "coeff" and additional dims on inputs.
 
     """
     # TODO allow passing func instead of our fixed lambda_function?
-    if not isinstance(monthly_residuals, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
 
-    if not isinstance(yearly_pred, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
+    _check_dataarray_form(
+        monthly_residuals, name="monthly_residuals", required_dims=(time_dim)
+    )
+    monthly_dims = {str(dim) for dim in monthly_residuals.dims}
+    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=monthly_dims)
 
     lambda_coeffs = []
     for month in range(12):
@@ -283,22 +290,32 @@ def fit_yeo_johnson_transform(
     return xr.concat(lambda_coeffs, dim=month)
 
 
-def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
+def yeo_johnson_transform(
+    yearly_pred: xr.DataArray,
+    monthly_residuals: xr.DataArray,
+    lambda_coeffs: xr.DataArray,
+    time_dim: str = "time",
+) -> xr.Dataset:
     """
     transform `monthly_residuals` following Yeo-Johnson transformer
     with parameters :math:`\\lambda`, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.
 
     Parameters
     ----------
-    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly values used as predictors for the lambdas.
-    monthly_residuals : ``xr.DataArray`` of shape (n_years*12, n_gridcells)
+    yearly_pred : ``xr.DataArray``
+        yearly values used as predictors for the lambdas, must contain time_dim but can have
+        additional dimensions for example gridcells or members.
+    monthly_residuals : ``xr.DataArray``
         Monthly residuals after removing harmonic model fits, used to fit for the
-        optimal transformation parameters (lambdas).
+        optimal transformation parameters (lambdas). Has time_dim which is of length len(yearly_pred[time_dim]) * 12
+        and can also contain the same additional dimensions as yearly_pred.
     lambda_coeffs : ``xr.DataArray``
-        The parameters of the power transformation of shape
-        (months, coeff, n_gridcells) for each gridcell, calculated using
+        DataArray containing the estimated coefficients needed to estimate
+        lambda with dimensions "month", "coeff" and additional dims on inputs. Calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
+    time_dim : str, default: "time"
+        Name of the time dimension in the input data used to align monthly residuals and
+        yearly predictor data (needs to be the same in both).
 
     Returns
     -------
@@ -322,17 +339,17 @@ def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
     Note that :math:`X` and :math:`X_{trans}` have the same sign.
     Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_.
     """
-    if not isinstance(monthly_residuals, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
-
-    if not isinstance(yearly_pred, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
-
-    if not isinstance(lambda_coeffs, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
+    _check_dataarray_form(
+        monthly_residuals, name="monthly_residuals", required_dims=(time_dim)
+    )
+    monthly_dims = {str(dim) for dim in monthly_residuals.dims}
+    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=monthly_dims)
+    _check_dataarray_form(
+        lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
+    )
 
     lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
-        {"time": "year"}
+        {time_dim: "year"}
     )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
@@ -340,8 +357,8 @@ def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
         _yeo_johnson_transform_np,
         monthly_residuals,
         lambdas_stacked,
-        input_core_dims=[["time"], ["stack"]],
-        output_core_dims=[["time"]],
+        input_core_dims=[[time_dim], ["stack"]],
+        output_core_dims=[[time_dim]],
         output_dtypes=[float],
         vectorize=True,
     ).rename("transformed")
@@ -349,19 +366,29 @@ def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
     return xr.merge([transformed_resids, lambdas])
 
 
-def inverse_yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
+def inverse_yeo_johnson_transform(
+    yearly_pred: xr.DataArray,
+    monthly_residuals: xr.DataArray,
+    lambda_coeffs: xr.DataArray,
+    time_dim: str = "time",
+) -> xr.Dataset:
     """apply the inverse power transformation using the fitted lambdas.
 
     Parameters
     ----------
-    yearly_pred : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        yearly values used as predictors for the lambdas.
-    monthly_residuals : ``xr.DataArray`` of shape (n_years, n_gridcells)
-        The data to be transformed back to the original scale.
+    yearly_pred : ``xr.DataArray``
+        yearly values used as predictors for the lambdas, must contain time_dim but can have
+        additional dimensions for example gridcells or members.
+    monthly_residuals : ``xr.DataArray``
+        The data to be transformed back to the original scale. Has time_dim which is of length len(yearly_pred[time_dim]) * 12
+        and can also contain the same additional dimensions as yearly_pred.
     lambda_coeffs : ``xr.DataArray``
-        The parameters of the power transformation of shape
-        (months, coeff, n_gridcells) for each gridcell, calculated using
+        DataArray containing the estimated coefficients needed to estimate
+        lambda with dimensions "month", "coeff" and additional dims on inputs. Calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
+    time_dim : str, default: "time"
+        Name of the time dimension in the input data used to align monthly residuals and
+        yearly predictor data (needs to be the same in both).
 
     Returns
     -------
@@ -384,17 +411,16 @@ def inverse_yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs)
 
     Note that :math:`X_{inv}` and :math:`X_{trans}` have the same sign.
     """
-    if not isinstance(monthly_residuals, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_residuals)}")
-
-    if not isinstance(yearly_pred, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_pred)}")
-
-    if not isinstance(lambda_coeffs, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(lambda_coeffs)}")
+    _check_dataarray_form(
+        monthly_residuals, name="monthly_residuals", required_dims=(time_dim)
+    )
+    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=(time_dim))
+    _check_dataarray_form(
+        lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
+    )
 
     lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
-        {"time": "year"}
+        {time_dim: "year"}
     )
     lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
@@ -402,8 +428,8 @@ def inverse_yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs)
         _yeo_johnson_inverse_transform_np,
         monthly_residuals,
         lambdas_stacked,
-        input_core_dims=[["time"], ["stack"]],
-        output_core_dims=[["time"]],
+        input_core_dims=[[time_dim], ["stack"]],
+        output_core_dims=[[time_dim]],
         output_dtypes=[float],
         vectorize=True,
     ).rename("inverted")
