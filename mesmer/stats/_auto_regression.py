@@ -635,8 +635,9 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
     Parameters
     ----------
-    monthly_data : ``xr.DataArray`` of shape (n_timesteps, n_gridpoints)
-        A ``xr.DataArray`` to estimate the auto regression over. Each month has a value.
+    monthly_data : ``xr.DataArray``
+        A ``xr.DataArray`` to estimate the auto regression over, must contain time_dim and can have more dims,
+        for example a gridcell and/or a member dim. Each month has a value.
     time_dim : str
         Name of the time dimension (dimension along which to fit the auto regression).
 
@@ -647,7 +648,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned. These
         are needed for the estimation of the covariance matrix.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
+    _check_dataarray_form(monthly_data, "monthly_data", required_dims=time_dim)
     monthly_data = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
     residuals = []
@@ -678,7 +679,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
         residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
-    month = xr.Variable("month", np.arange(1, 13))
+    month = xr.DataArray(np.arange(1, 13), dims="month", name="month")
     ar_params = xr.concat(ar_params, dim=month)
     residuals = xr.concat(residuals, dim=time_dim).rename("residuals")
 
