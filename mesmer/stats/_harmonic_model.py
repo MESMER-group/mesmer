@@ -300,7 +300,7 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
 
     coeffs = coeffs.assign_coords({"coeff": np.arange(coeffs.sizes["coeff"])})
 
-    resids =  monthly_target - (yearly_predictor + preds)
+    resids = monthly_target - (yearly_predictor + preds)
 
     data_vars = {
         "selected_order": selected_order,
