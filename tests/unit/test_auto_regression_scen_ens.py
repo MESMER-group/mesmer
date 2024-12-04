@@ -29,7 +29,7 @@ def _prepare_data(*dataarrays, data_format):
         return dataarrays
     elif data_format == "dict":
         # Use provided data arrays to create a dictionary
-        return {f"scen{i+1}": da for i, da in enumerate(dataarrays)}
+        return {f"scen{i}": da for i, da in enumerate(dataarrays, 1)}
     elif data_format == "datatree":
         # Use provided data arrays to create a DataTree
         data = {
