@@ -212,8 +212,10 @@ def get_lambdas_from_covariates(
 
     """
     lc_dims = {"month", "coeff"}
-    _check_dataarray_form(lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"})
-    yp_dims = {str(dim) for dim in lambda_coeffs.dims} -  lc_dims
+    _check_dataarray_form(
+        lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
+    )
+    yp_dims = {str(dim) for dim in lambda_coeffs.dims} - lc_dims
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=yp_dims)
 
     lambdas = xr.apply_ufunc(
