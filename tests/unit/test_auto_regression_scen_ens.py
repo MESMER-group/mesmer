@@ -33,7 +33,7 @@ def _prepare_data(*dataarrays, data_format):
     elif data_format == "datatree":
         # Use provided data arrays to create a DataTree
         data = {
-            f"scen{i+1}": xr.Dataset({"tas": da}) for i, da in enumerate(dataarrays)
+            f"scen{i}": xr.Dataset({"tas": da}) for i, da in enumerate(dataarrays, 1)
         }
         return DataTree.from_dict(data)
     else:
