@@ -89,13 +89,12 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     )
 
     # train power transformer
-    resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
     pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
         tas_stacked_y.tas,
-        resids_after_hm.tas,
+        harmonic_model_fit.residuals,
     )
     transformed_hm_resids = mesmer.stats.yeo_johnson_transform(
-        tas_stacked_y.tas, resids_after_hm.tas, pt_coefficients
+        tas_stacked_y.tas, harmonic_model_fit.residuals, pt_coefficients
     )
 
     # fit cyclo-stationary AR(1) process

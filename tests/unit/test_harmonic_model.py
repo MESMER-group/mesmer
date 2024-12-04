@@ -1,6 +1,8 @@
+from calendar import month
 import numpy as np
 import pandas as pd
 import pytest
+from scipy.constants import year
 import xarray as xr
 from packaging.version import Version
 
@@ -158,7 +160,7 @@ def test_fit_harmonic_model():
     # test if the model can recover the monthly target from perfect fourier series
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
     np.testing.assert_equal(result.selected_order.values, orders)
-    xr.testing.assert_allclose(result["predictions"], monthly_target)
+    xr.testing.assert_allclose(result.residuals, xr.zeros_like(monthly_target), atol=1e-6)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
     rng = np.random.default_rng(0)
@@ -167,35 +169,24 @@ def test_fit_harmonic_model():
     )
 
     result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
-    xr.testing.assert_allclose(result["predictions"], monthly_target, atol=0.1)
+    predictions = mesmer.stats.predict_harmonic_model(yearly_predictor, result.coeffs, time = monthly_time)
+    xr.testing.assert_allclose(predictions, monthly_target, atol=0.1)
 
     # compare numerically one cell of one year
     expected = np.array(
         [
-            7.324277,
-            9.966644,
-            9.972146,
-            7.33931,
-            2.7736,
-            -2.501604,
-            -7.072816,
-            -9.715184,
-            -9.720686,
-            -7.087849,
-            -2.52214,
-            2.753065,
+            0.014026,  0.131156, -0.232648,  0.040157,  0.088749, -0.102724,
+            -0.066836,  0.133832,  0.180308, -0.12783 , -0.042045,  0.160109
         ]
     )
 
-    result_comp = result.predictions.isel(cells=0, time=slice(0, 12)).values
+    result_comp = result.residuals.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(result_comp, expected, atol=1e-6)
 
-    # ensure coeffs and predictions are consistent
-    expected = mesmer.stats.predict_harmonic_model(
-        yearly_predictor, result.coeffs, result.time
-    )
+    # ensure predictons and residuals are consistent
+    expected = noisy_monthly_target - predictions
 
-    xr.testing.assert_equal(expected, result.predictions)
+    xr.testing.assert_equal(expected, result.residuals)
 
 
 def test_fit_harmonic_model_checks():
