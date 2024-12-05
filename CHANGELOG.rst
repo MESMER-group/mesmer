@@ -177,8 +177,9 @@ Harmonic model
    (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
    `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
    `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_,
    `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_, and
-   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_).
+   `#574 <https://github.com/MESMER-group/mesmer/pull/574>`_).
 - add tests (
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
