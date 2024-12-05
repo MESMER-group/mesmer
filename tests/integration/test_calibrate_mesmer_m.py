@@ -121,6 +121,11 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     # save params
     if update_expected_files:
+        # drop unnecessary variables
+        harmonic_model_fit = harmonic_model_fit.drop_vars(["residuals", "time"])
+        AR1_fit = AR1_fit.drop_vars(["residuals", "time"])
+
+        # save
         harmonic_model_fit.to_netcdf(
             TEST_PATH
             / "harmonic_model"
