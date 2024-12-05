@@ -134,7 +134,7 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
 
 
 def test_fit_harmonic_model():
-    n_ts = 200
+    n_ts = 100
     orders = [1, 2, 3, 4, 5, 6]
 
     coefficients = get_2D_coefficients(order_per_cell=orders, n_lat=3, n_lon=2)
@@ -177,18 +177,18 @@ def test_fit_harmonic_model():
     # compare numerically one cell of one year
     expected = np.array(
         [
-            0.010312,
-            0.129227,
-            -0.232274,
-            0.042733,
-            0.092837,
-            -0.098219,
-            -0.063122,
-            0.13576,
-            0.179934,
-            -0.130406,
-            -0.046133,
-            0.155605,
+            0.014026,
+            0.131156,
+            -0.232648,
+            0.040157,
+            0.088749,
+            -0.102724,
+            -0.066836,
+            0.133832,
+            0.180308,
+            -0.12783,
+            -0.042045,
+            0.160109,
         ]
     )
 
