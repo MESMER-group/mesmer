@@ -20,7 +20,7 @@ jobs:
 
   upstream-dev:
     name: upstream-dev
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: |
         always()
         && (
@@ -56,6 +56,9 @@ jobs:
         run: |
           micromamba info
           micromamba list
+          echo ""
+          echo "numpy.show_config()"
+          echo ""
           python -c "import numpy; numpy.show_config()"
       - name: Import mesmer
         run: |
