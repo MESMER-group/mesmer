@@ -56,6 +56,7 @@ jobs:
         run: |
           micromamba info
           micromamba list
+          python -c "import numpy; numpy.show_config()"
       - name: Import mesmer
         run: |
           python -c 'import mesmer'
