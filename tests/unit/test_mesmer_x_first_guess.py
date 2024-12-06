@@ -4,6 +4,7 @@ from scipy.stats import genextreme
 
 from mesmer.mesmer_x import Expression, distrib_cov
 
+
 def test_first_guess_provided():
     rng = np.random.default_rng(0)
     n = 251
@@ -20,6 +21,7 @@ def test_first_guess_provided():
     expected = np.array([-0.005093821547802998, 1.0152673111973072])
 
     np.testing.assert_equal(result, expected)
+
 
 def test_first_guess_standard_normal_():
     rng = np.random.default_rng(0)
@@ -56,13 +58,15 @@ def test_first_guess_dist_more_params():
     expected = [loc, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, atol = 0.2, rtol=0.2)
+    np.testing.assert_allclose(result, expected, atol=0.2, rtol=0.2)
 
     # any difference if we provide a first guess?
-    dist2 = distrib_cov(targ, {"tas": pred}, expression, first_guess=[loc, scale, shape])
+    dist2 = distrib_cov(
+        targ, {"tas": pred}, expression, first_guess=[loc, scale, shape]
+    )
     dist2.find_fg()
     result2 = dist.fg_coeffs
-    np.testing.assert_equal(result2, result) # No
+    np.testing.assert_equal(result2, result)  # No
 
 
 def test_first_guess_with_bounds():
@@ -79,8 +83,10 @@ def test_first_guess_with_bounds():
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
 
-    boundaries_coeffs={'c1': loc_bounds, 'c2': scale_bounds}
-    dist = distrib_cov(targ, {"tas": pred}, expression, boundaries_coeffs=boundaries_coeffs)
+    boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds}
+    dist = distrib_cov(
+        targ, {"tas": pred}, expression, boundaries_coeffs=boundaries_coeffs
+    )
 
     dist.find_fg()
     result = dist.fg_coeffs
@@ -93,8 +99,10 @@ def test_first_guess_with_bounds():
 
     # test with wrong bounds
     scale_bounds_wrong = (0.5, 0.8)
-    boundaries_coeffs={'c1': loc_bounds, 'c2': scale_bounds_wrong}
-    dist = distrib_cov(targ, {"tas": pred}, expression, boundaries_coeffs=boundaries_coeffs)
+    boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds_wrong}
+    dist = distrib_cov(
+        targ, {"tas": pred}, expression, boundaries_coeffs=boundaries_coeffs
+    )
 
     dist.find_fg()
     result = dist.fg_coeffs
@@ -105,17 +113,29 @@ def test_first_guess_with_bounds():
     np.testing.assert_allclose(result, expected)
 
     # fails if we enforce the bounds
-    options_solver = {'fg_with_global_opti': True}
-    dist = distrib_cov(targ, {"tas": pred}, expression, boundaries_coeffs=boundaries_coeffs, options_solver=options_solver)
+    options_solver = {"fg_with_global_opti": True}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        boundaries_coeffs=boundaries_coeffs,
+        options_solver=options_solver,
+    )
 
     with pytest.raises(ValueError, match="Global optimization for first guess failed,"):
         dist.find_fg()
 
     # when does step 7 actually succeed?
     # when we do enforce a global optimum but the bounds are good
-    boundaries_coeffs={'c1': loc_bounds, 'c2': scale_bounds}
+    boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds}
 
-    dist = distrib_cov(targ, {"tas": pred}, expression, boundaries_coeffs=boundaries_coeffs, options_solver=options_solver)
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        boundaries_coeffs=boundaries_coeffs,
+        options_solver=options_solver,
+    )
     dist.find_fg()
     result = dist.fg_coeffs
     expected = np.array([-0.005093817314214182, 1.0152672979527537])
