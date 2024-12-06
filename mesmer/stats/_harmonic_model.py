@@ -265,9 +265,9 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     Returns
     -------
     data_vars : `xr.Dataset`
-        Dataset containing the selected order of Fourier Series (selected_order),
-        the estimated coefficients of the Fourier Series (coeffs) and the resulting
-        residuals of th model (residuals).
+        Dataset containing the selected order of Fourier Series (`selected_order`),
+        the estimated coefficients of the Fourier Series (`coeffs`) and the resulting
+        residuals of the model (`residuals`).
 
     """
 
