@@ -52,7 +52,14 @@ jobs:
       - name: Install mesmer
         run: |
           python -m pip install --no-deps -e .
-
+      - name: Environment info
+        run: |
+          micromamba info
+          micromamba list
+          echo ""
+          echo "numpy.show_config()"
+          echo ""
+          python -c "import numpy; numpy.show_config()"
       - name: Import mesmer
         run: |
           python -c 'import mesmer'
