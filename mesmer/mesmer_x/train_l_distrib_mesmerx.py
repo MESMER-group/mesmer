@@ -728,7 +728,7 @@ class distrib_cov:
                     " does not exist in expr_fit"
                 )
 
-            values = values_coeffs[self.expr_fit.list_coefficients.index(coeff)]
+            values = values_coeffs[self.expr_fit.coefficients_list.index(coeff)]
 
             if np.any(values < bottom) or np.any(top < values):
                 # out of boundaries
@@ -965,6 +965,7 @@ class distrib_cov:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
 
+        # TODO: this is used nowhere?
         self.mem = np.copy(self.fg_coeffs)
 
         # Step 2: fit coefficients of location (objective: improving the subset of
@@ -1039,6 +1040,7 @@ class distrib_cov:
             self.fg_coeffs
         )
 
+        # if validate_coefficients all False (e.g. any of the coefficients are out of bounds)
         if not (test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL doesnt behave well enough here)
@@ -1078,6 +1080,11 @@ class distrib_cov:
             # situation. sobol or halton, observed lower performances with
             # implicial. n=1000, options={'maxiter':10000, 'maxev':10000})
             globalfit_all = shgo(self.func_optim, bounds, sampling_method="sobol")
+            if not globalfit_all.success:
+                raise ValueError(
+                    "Global optimization for first guess failed, please check boundaries_coeff or ",
+                    "disable fg_with_global_opti in options_solver.",
+                )
             self.fg_coeffs = globalfit_all.x
 
     def minimize(self, func, x0, fact_maxfev_iter=1, option_NelderMead="dont_run"):
