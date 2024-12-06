@@ -4,6 +4,21 @@ from scipy.stats import genextreme
 
 from mesmer.mesmer_x import Expression, distrib_cov
 
+def test_first_guess_standard_normal():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+    targ = rng.normal(loc=0, scale=1, size=n)
+
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
+
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+
+    dist.find_fg()
+    result = dist.fg_coeffs
+
+    np.testing.assert_allclose(result, [0.0, 1.0], atol=0.02)
+
 
 def test_first_guess_provided():
     rng = np.random.default_rng(0)
@@ -21,22 +36,6 @@ def test_first_guess_provided():
     expected = np.array([-0.005093821547802998, 1.0152673111973072])
 
     np.testing.assert_equal(result, expected)
-
-
-def test_first_guess_standard_normal_():
-    rng = np.random.default_rng(0)
-    n = 251
-    pred = np.ones(n)
-    targ = rng.normal(loc=0, scale=1, size=n)
-
-    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-
-    dist = distrib_cov(targ, {"tas": pred}, expression)
-
-    dist.find_fg()
-    result = dist.fg_coeffs
-
-    np.testing.assert_allclose(result, [0.0, 1.0], atol=0.02)
 
 
 def test_first_guess_dist_more_params():
@@ -108,7 +107,7 @@ def test_first_guess_with_bounds():
     result = dist.fg_coeffs
     # still finds a fg because we do not enforce the bounds on the fg
     # however the fg is significantly worse on the param with the wrong bounds
-    # in contrast to the above this also runs step 6: fit on CDF or LL^n -> impications?
+    # in contrast to the above this also runs step 6: fit on CDF or LL^n -> implications?
     expected = np.array([-0.016552527864083358, 1.520612113729222])
     np.testing.assert_allclose(result, expected)
 
