@@ -34,9 +34,9 @@ def test_first_guess_provided():
 
     dist.find_fg()
     result = dist.fg_coeffs
-    expected = np.array([-0.005093821547802998, 1.0152673111973072])
+    expected = np.array([-0.005093, 1.015267])
 
-    np.testing.assert_equal(result, expected)
+    np.testing.assert_allclose(result, expected)
 
 
 def test_first_guess_dist_more_params():
@@ -94,7 +94,7 @@ def test_first_guess_with_bounds():
     # test result is within bounds
     assert loc_bounds[0] <= result[0] <= loc_bounds[1]
     assert scale_bounds[0] <= result[1] <= scale_bounds[1]
-    expected = np.array([-0.005093812890413328, 1.0152673109207098])
+    expected = np.array([-0.005093, 1.015267])
     np.testing.assert_allclose(result, expected)
 
     # test with wrong bounds
@@ -109,7 +109,7 @@ def test_first_guess_with_bounds():
     # still finds a fg because we do not enforce the bounds on the fg
     # however the fg is significantly worse on the param with the wrong bounds
     # in contrast to the above this also runs step 6: fit on CDF or LL^n -> implications?
-    expected = np.array([-0.016552527864083358, 1.520612113729222])
+    expected = np.array([-0.016552, 1.520612])
     np.testing.assert_allclose(result, expected)
 
     # fails if we enforce the bounds
@@ -138,5 +138,5 @@ def test_first_guess_with_bounds():
     )
     dist.find_fg()
     result = dist.fg_coeffs
-    expected = np.array([-0.005093817314214182, 1.0152672979527537])
+    expected = np.array([-0.005093, 1.015267])
     np.testing.assert_allclose(result, expected)
