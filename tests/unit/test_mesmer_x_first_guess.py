@@ -4,6 +4,7 @@ from scipy.stats import genextreme
 
 from mesmer.mesmer_x import Expression, distrib_cov
 
+
 def test_first_guess_standard_normal():
     rng = np.random.default_rng(0)
     n = 251
