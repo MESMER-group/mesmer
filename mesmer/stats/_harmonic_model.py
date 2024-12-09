@@ -19,6 +19,7 @@ from mesmer.core.utils import _check_dataarray_form
 
 @lru_cache
 def _get_cos_sin(order):
+    # cos_sin is constant with order, cache it for a considerable speed gain
 
     # create 2D array of angles with shape (months, order)
     # as 2 * np.pi * k * np.arange(12).reshape(-1, 1) / 12 but faster
@@ -66,7 +67,6 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
 
 def _generate_fourier_series_order_np(yearly_predictor, coeffs, order):
 
-    # cos_sin is constant with order, cache it for a considerable speed gain
     cos_sin = _get_cos_sin(order)
 
     # sum coefficients - equivalent to np.sum(cos_sin * coeffs[0::2], axis=1)
