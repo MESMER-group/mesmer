@@ -265,9 +265,9 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     Returns
     -------
     data_vars : `xr.Dataset`
-        Dataset containing the selected order of Fourier Series (selected_order),
-        the estimated coefficients of the Fourier Series (coeffs) and the resulting
-        predictions for monthly values (predictions).
+        Dataset containing the selected order of Fourier Series (`selected_order`),
+        the estimated coefficients of the Fourier Series (`coeffs`) and the resulting
+        residuals of the model (`residuals`).
 
     """
 
@@ -300,12 +300,12 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
 
     coeffs = coeffs.assign_coords({"coeff": np.arange(coeffs.sizes["coeff"])})
 
-    preds = yearly_predictor + preds
+    resids = monthly_target - (yearly_predictor + preds)
 
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
-        "predictions": preds.transpose(time_dim, ...),
+        "residuals": resids.transpose(time_dim, ...),
     }
 
     return xr.Dataset(data_vars)
