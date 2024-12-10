@@ -195,9 +195,6 @@ def xr_train_distrib(
             f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
         )
 
-        print(
-            f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
-        )
 
         for igp, gp in enumerate(gridpoints):
             fraction = (igp + 1) / gridpoints.size
@@ -793,14 +790,11 @@ class distrib_cov:
 
         # evaluate the distribution for the predictors and this iteration of coeffs
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
-
-        if self.add_test:
-            distrib_add = self.expr_fit.evaluate(coefficients, self.data_preds_addtest)
-
         # test for the validity of the parameters
         test_param = self._test_evol_params(distrib, self.data_targ)
 
         if self.add_test:
+            distrib_add = self.expr_fit.evaluate(coefficients, self.data_preds_addtest)
             test_param &= self._test_evol_params(distrib_add, self.data_targ_addtest)
 
         # tests on params show already that it wont work: fill in the rest with False
@@ -979,7 +973,7 @@ class distrib_cov:
         localfit_loc = self.minimize(
             func=self.fg_fun_loc,
             x0=self.fg_coeffs[self.fg_ind_loc],
-            fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
+            fact_maxfev_iter=len(self.fg_ind_loc) // self.n_coeffs,
             option_NelderMead="best_run",
         )
         self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
@@ -1000,7 +994,7 @@ class distrib_cov:
         localfit_sca = self.minimize(
             func=self.fg_fun_sca,
             x0=x0,
-            fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
+            fact_maxfev_iter=len(self.fg_ind_sca) // self.n_coeffs,
             option_NelderMead="best_run",
         )
         self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
@@ -1021,7 +1015,7 @@ class distrib_cov:
             localfit_others = self.minimize(
                 func=self.fg_fun_others,
                 x0=self.fg_coeffs[self.fg_ind_others],
-                fact_maxfev_iter=len(self.fg_ind_others) / self.n_coeffs,
+                fact_maxfev_iter=len(self.fg_ind_others) // self.n_coeffs,
                 option_NelderMead="best_run",
             )
             self.fg_coeffs[self.fg_ind_others] = localfit_others.x
@@ -1265,8 +1259,7 @@ class distrib_cov:
             else:
                 optim = NLL
 
-        # returns value for optimization
-        if test_coeff and test_param and test_proba:
+            # returns value for optimization
             return optim
         else:
             # something wrong: returns a blocking value
