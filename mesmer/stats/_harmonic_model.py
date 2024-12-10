@@ -7,12 +7,33 @@
 Functions to train monthly trend module of MESMER-M
 """
 
+from functools import lru_cache
+
 import numpy as np
 import scipy as sp
 import xarray as xr
 
 import mesmer
 from mesmer.core.utils import _check_dataarray_form
+
+
+@lru_cache
+def _get_cos_sin(order):
+    # cos_sin is constant with order, cache it for a considerable speed gain
+
+    # create 2D array of angles with shape (months, order)
+    # as 2 * np.pi * k * np.arange(12).reshape(-1, 1) / 12 but faster
+
+    factor = 2 * np.pi / 12
+    k = np.arange(1.0, order + 1)
+    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
+
+    # combine cosine and sine into one array
+    cos_sin = np.empty((12, order * 2))
+    cos_sin[:, :order] = np.cos(alpha)
+    cos_sin[:, order:] = np.sin(alpha)
+
+    return cos_sin
 
 
 def _generate_fourier_series_np(yearly_predictor, coeffs):
@@ -41,17 +62,12 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     coeffs = coeffs[~np.isnan(coeffs)]
     order = coeffs.size // 4
 
-    # create 2D array of angles with shape (months, order)
-    # as 2 * np.pi * k * np.arange(12).reshape(-1, 1) / 12 but faster
+    return _generate_fourier_series_order_np(yearly_predictor, coeffs, order)
 
-    factor = 2 * np.pi / 12
-    k = np.arange(1.0, order + 1)
-    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
 
-    # combine cosine and sine into one array
-    cos_sin = np.empty((12, order * 2))
-    cos_sin[:, :order] = np.cos(alpha)
-    cos_sin[:, order:] = np.sin(alpha)
+def _generate_fourier_series_order_np(yearly_predictor, coeffs, order):
+
+    cos_sin = _get_cos_sin(order)
 
     # sum coefficients - equivalent to np.sum(cos_sin * coeffs[0::2], axis=1)
     coeff_a = cos_sin @ coeffs[0::2]
@@ -61,7 +77,7 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
     yearly_predictor = yearly_predictor.reshape(-1, 12)
     seasonal_cycle = coeff_a * yearly_predictor + coeff_b
 
-    return seasonal_cycle.flatten()
+    return seasonal_cycle.ravel()
 
 
 def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
@@ -147,14 +163,19 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     """
 
-    def residuals_from_fourier_series(coeffs, yearly_predictor, mon_target):
-        return _generate_fourier_series_np(yearly_predictor, coeffs) - mon_target
+    def residuals_from_fourier_series(coeffs, yearly_predictor, mon_target, order):
+        return (
+            _generate_fourier_series_order_np(yearly_predictor, coeffs, order)
+            - mon_target
+        )
+
+    order = first_guess.size // 4
 
     # use least_squares to optimize the coefficients
     minimize_result = sp.optimize.least_squares(
         residuals_from_fourier_series,
         first_guess,
-        args=(yearly_predictor, monthly_target),
+        args=(yearly_predictor, monthly_target, order),
         loss="linear",
         method="lm",
     )
