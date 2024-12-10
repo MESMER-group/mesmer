@@ -206,8 +206,9 @@ def _calculate_bic(n_samples, order, mse):
 
     n_params = order * 4
 
-    # assume mse smaller eps is 'perfect' - only relevant for noiseless test data
-    mse = mse if mse > np.finfo(float).eps else 0.0
+    # assume mse smaller 10 eps is 'perfect' - only relevant for noiseless test data
+    if mse < np.finfo(float).eps * 10:
+        return -np.inf
 
     return n_samples * np.log(mse) + n_params * np.log(n_samples)
 
