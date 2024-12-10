@@ -973,7 +973,7 @@ class distrib_cov:
         localfit_loc = self.minimize(
             func=self.fg_fun_loc,
             x0=self.fg_coeffs[self.fg_ind_loc],
-            fact_maxfev_iter=len(self.fg_ind_loc) // self.n_coeffs,
+            fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
             option_NelderMead="best_run",
         )
         self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
@@ -994,7 +994,7 @@ class distrib_cov:
         localfit_sca = self.minimize(
             func=self.fg_fun_sca,
             x0=x0,
-            fact_maxfev_iter=len(self.fg_ind_sca) // self.n_coeffs,
+            fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
             option_NelderMead="best_run",
         )
         self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
@@ -1015,7 +1015,7 @@ class distrib_cov:
             localfit_others = self.minimize(
                 func=self.fg_fun_others,
                 x0=self.fg_coeffs[self.fg_ind_others],
-                fact_maxfev_iter=len(self.fg_ind_others) // self.n_coeffs,
+                fact_maxfev_iter=len(self.fg_ind_others) / self.n_coeffs,
                 option_NelderMead="best_run",
             )
             self.fg_coeffs[self.fg_ind_others] = localfit_others.x
@@ -1081,7 +1081,7 @@ class distrib_cov:
                 )
             self.fg_coeffs = globalfit_all.x
 
-    def minimize(self, func, x0, fact_maxfev_iter=1, option_NelderMead="dont_run"):
+    def minimize(self, func, x0, fact_maxfev_iter=1., option_NelderMead="dont_run"):
         """
         options_NelderMead: str
             * dont_run: would minimize only the chosen solver in method_fit
