@@ -1149,8 +1149,7 @@ class distrib_cov:
     @staticmethod
     def _smooth_data(data, nn=10):
         """Moving average of data"""
-        # TODO: could replace by scipy.ndimage.uniform_filter1d, much faster, but different results around the edges
-        # return scipy.ndimage.uniform_filter1d(data, nn)
+        # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
     def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
