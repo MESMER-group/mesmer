@@ -1229,7 +1229,7 @@ class distrib_cov:
         x[self.fg_ind_loc] = x_loc
         params = self.expr_fit.evaluate_params(x, self.data_pred)
         loc = params["loc"]
-        return np.sum((loc - smooth_target) ** 2)
+        return np.mean((loc - smooth_target) ** 2)
 
     def _fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
@@ -1238,7 +1238,7 @@ class distrib_cov:
         loc, sca = params["loc"], params["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
         dev = np.abs(self.data_targ - loc)
-        return np.sum((dev - sca) ** 2)
+        return np.mean((dev - sca) ** 2)
 
     def _fg_fun_others(self, x_others, margin0=0.05):
         # preparing support
