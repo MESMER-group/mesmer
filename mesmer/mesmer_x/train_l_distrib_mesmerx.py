@@ -1159,7 +1159,7 @@ class distrib_cov:
         2) get a location close to the mean of the target samples.
 
         The loss is computed as follows:
-        
+
         .. math::
 
         \sum^{p}{(\frac{\Delta loc(x)}{\Delta pred} - \frac{\Delta targ}{\Delta pred}^2)} + (mean_{loc} - mean_{targ})^2
@@ -1211,7 +1211,7 @@ class distrib_cov:
 
         .. math::
 
-        \sum^n{(loc(x\_loc) - smooth\_target_{n})^2}
+        mean((loc(x\_loc) - smooth\_target_{n})^2)
 
         Parameters
         ----------
@@ -1223,7 +1223,7 @@ class distrib_cov:
         Returns
         -------
         float
-            Loss value        
+            Loss value
         """
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
@@ -1247,14 +1247,13 @@ class distrib_cov:
         ----------
         x_sca : numpy array
             Coefficients for the scale
-        
+
         Returns
         -------
         float
             Loss value
 
         """
-
 
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
