@@ -1153,6 +1153,35 @@ class distrib_cov:
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
     def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
+        r"""
+        Loss function for very fist guess of the location coefficients. The objective is
+        to 1) get a location with a similar change with the predictor as the target, and
+        2) get a location close to the mean of the target samples.
+
+        The loss is computed as follows:
+        
+        .. math::
+
+        \sum^{p}{(\frac{\Delta loc(x)}{\Delta pred} - \frac{\Delta targ}{\Delta pred}^2)} + (mean_{loc} - mean_{targ})^2
+
+        Parameters
+        ----------
+        x : numpy array
+            Coefficients for the location
+        pred_high : dict[str, numpy array]
+            Predictors for the high samples of the targets
+        pred_low : dict[str, numpy array]
+            Predictors for the low samples of the targets
+        deriv_targ : dict
+            Derivatives of the target samples for every predictor
+        mean_targ : float
+            Mean of the (smoothed) target samples
+
+        Returns
+        -------
+        float
+            Loss value
+        """
         params = self.expr_fit.evaluate_params(x, pred_low)
         loc_low = params["loc"]
         params = self.expr_fit.evaluate_params(x, pred_high)
