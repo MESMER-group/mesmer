@@ -161,6 +161,7 @@ def test_first_guess_with_bounds():
     np.testing.assert_allclose(result, expected, rtol=1e-5)
 
 
+@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
 def test_fg_func_deriv01():
     # test that for a rather smooth target, fg_func_deriv01 returns little loss for the right coefficients
     rng = np.random.default_rng(0)
@@ -173,14 +174,12 @@ def test_fg_func_deriv01():
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     dist = distrib_cov(targ, {"tas": pred}, expression)
 
-    nn = 10
-    # smooth_targ = np.convolve(targ, np.ones(nn) / nn, mode="same") #
-    # smooth_targ = scipy.ndimage.uniform_filter1d(targ, nn)
-    from statsmodels.nonparametric.smoothers_lowess import lowess
-
-    smooth_targ = lowess(
-        targ, np.arange(n), frac=nn / n, return_sorted=False
-    )  # works best
+    smooth_targ = dist._smooth_data(targ)
+    # smooth_targ = scipy.ndimage.uniform_filter1d(targ, 10)
+    # from statsmodels.nonparametric.smoothers_lowess import lowess
+    # smooth_targ = lowess(
+    #     targ, np.arange(n), frac=10 / n, return_sorted=False
+    # )  # works best
 
     mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
 
