@@ -1202,6 +1202,29 @@ class distrib_cov:
         )
 
     def _fg_fun_loc(self, x_loc, smooth_target):
+        r"""
+        Loss function for the location coefficients. The objective is to get a location
+        such that the center of the distribution is close to the location, thus we fit a mean
+        squared error between the location and the smoothed target samples.
+
+        The loss is computed as follows:
+
+        .. math::
+
+        \sum^n{(loc(x\_loc) - smooth\_target_{n})^2}
+
+        Parameters
+        ----------
+        x_loc : numpy array
+            Coefficients for the location
+        smooth_target : numpy array
+            Smoothed target samples
+
+        Returns
+        -------
+        float
+            Loss value        
+        """
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
         params = self.expr_fit.evaluate_params(x, self.data_pred)
