@@ -20,21 +20,14 @@ conda uninstall -y --force \
 # keep netcdf4: difficult to build
 
 # to limit the runtime of Upstream CI
-python -m pip install \
-    -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
-    --no-deps \
-    --pre \
-    --upgrade \
-    matplotlib \
+python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple --no-deps --pre --upgrade \
     numpy \
     pandas \
     scikit-learn \
     scipy \
     statsmodels
 
-python -m pip install \
-    --no-deps \
-    --upgrade \
+python -m pip install --no-deps --upgrade \
     git+https://github.com/dask/dask \
     git+https://github.com/fatiando/pooch \
     git+https://github.com/geopandas/geopandas \
