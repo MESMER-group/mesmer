@@ -11,7 +11,7 @@ def test_first_guess_standard_normal():
     pred = np.ones(n)
     targ = rng.normal(loc=0, scale=1, size=n)
 
-    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
+    expression = Expression("norm(loc=c1, scale=c3)", expr_name="exp1")
 
     dist = distrib_cov(targ, {"tas": pred}, expression)
 
@@ -19,6 +19,25 @@ def test_first_guess_standard_normal():
     result = dist.fg_coeffs
 
     np.testing.assert_allclose(result, [0.0, 1.0], atol=0.02)
+
+
+def test_first_guess_standard_normal_including_pred():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 5.0
+    c3 = 1.0
+    targ = rng.normal(loc=c1 * pred + c2, scale=c3, size=n)
+
+    expression = Expression("norm(loc=c1*__tas__+c2, scale=c3)", expr_name="exp1")
+
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+
+    dist.find_fg()
+    result = dist.fg_coeffs
+
+    np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.1)
 
 
 def test_first_guess_provided():
@@ -140,3 +159,54 @@ def test_first_guess_with_bounds():
     result = dist.fg_coeffs
     expected = np.array([-0.005093817, 1.015267298])
     np.testing.assert_allclose(result, expected, rtol=1e-5)
+
+
+def test_fg_func_deriv01():
+    # test that for a rather smooth target, fg_func_deriv01 returns little loss for the right coefficients
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(0, n - 1, n)
+    c1 = 2.0
+    c2 = 0.1
+    targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+
+    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+
+    nn = 10
+    # smooth_targ = np.convolve(targ, np.ones(nn) / nn, mode="same") #
+    # smooth_targ = scipy.ndimage.uniform_filter1d(targ, nn)
+    from statsmodels.nonparametric.smoothers_lowess import lowess
+
+    smooth_targ = lowess(
+        targ, np.arange(n), frac=nn / n, return_sorted=False
+    )  # works best
+
+    mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
+
+    mean_minus_one_std = mean_smooth_targ - std_smooth_targ
+    mean_plus_one_std = mean_smooth_targ + std_smooth_targ
+
+    ind_targ_low = np.where(smooth_targ < mean_minus_one_std)[0]
+    ind_targ_high = np.where(smooth_targ > mean_plus_one_std)[0]
+
+    mean_low_preds = {
+        p: np.mean(dist.data_pred[p][ind_targ_low]) for p in dist.data_pred
+    }
+    mean_high_preds = {
+        p: np.mean(dist.data_pred[p][ind_targ_high]) for p in dist.data_pred
+    }
+
+    mean_low_targs = np.mean(smooth_targ[ind_targ_low])
+    mean_high_targs = np.mean(smooth_targ[ind_targ_high])
+
+    deriv_targ = {
+        p: (mean_high_targs - mean_low_targs) / (mean_high_preds[p] - mean_low_preds[p])
+        for p in dist.data_pred
+    }
+
+    result = dist._fg_fun_deriv01(
+        [c1, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
+    )
+
+    np.testing.assert_allclose(result, 0, atol=1e-5)
