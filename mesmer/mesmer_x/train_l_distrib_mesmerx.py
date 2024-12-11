@@ -832,8 +832,14 @@ class distrib_cov:
             FLEXIBLE (any sample, any distribution & any expression).
 
         Method:
-            1. Global fit of the coefficients of the location using derivatives, to
-               improve the very first guess for the location
+            1. Improve very first guess for the location by finding a global fit of the 
+               coefficients for the location by fitting for coefficients that give location that
+               is a) close to the mean of the target samples and b) has a similar change with the
+               predictor as the target, i.e. approximation of the first derivative of the location 
+               as function of the predictors is close to the one of the target samples. The first
+               derivative is approximated by computing the quotient of the differences in the mean
+               of high (outside +1 std) samples and low (outside -1 std) samples and their 
+                corresponding predictor values.
             2. Fit of the coefficients of the location, assuming that the center of the
                distribution should be close from its location.
             3. Fit of the coefficients of the scale, assuming that the deviation of the
@@ -912,7 +918,7 @@ class distrib_cov:
         # preparing derivatives to estimate derivatives of data along predictors,
         # and infer a very first guess for the coefficients facilitates the
         # representation of the trends
-        self.smooth_data_targ = self.smooth_data(self.data_targ)
+        self.smooth_data_targ = self._smooth_data(self.data_targ)
 
         m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
 
@@ -948,7 +954,7 @@ class distrib_cov:
             # first guess for the coefficients of location. proven to be necessary
             # in many situations, & accelerate step 2)
             globalfit_d01 = basinhopping(
-                func=self.fg_fun_deriv01, x0=self.fg_coeffs, niter=10
+                func=self._fg_fun_deriv01, x0=self.fg_coeffs, niter=10
             )
             # warning, basinhopping tends to introduce non-reproductibility in fits,
             # reduced when using 2nd round of fits
@@ -970,8 +976,8 @@ class distrib_cov:
                 for c in self.expr_fit.coefficients_dict["loc"]
             ]
         )
-        localfit_loc = self.minimize(
-            func=self.fg_fun_loc,
+        localfit_loc = self._minimize(
+            func=self._fg_fun_loc,
             x0=self.fg_coeffs[self.fg_ind_loc],
             fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
             option_NelderMead="best_run",
@@ -991,8 +997,8 @@ class distrib_cov:
         else:
             x0 = self.fg_coeffs[self.fg_ind_sca]
 
-        localfit_sca = self.minimize(
-            func=self.fg_fun_sca,
+        localfit_sca = self._minimize(
+            func=self._fg_fun_sca,
             x0=x0,
             fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
             option_NelderMead="best_run",
@@ -1012,8 +1018,8 @@ class distrib_cov:
 
             self.fg_ind_others = np.array(self.fg_ind_others)
 
-            localfit_others = self.minimize(
-                func=self.fg_fun_others,
+            localfit_others = self._minimize(
+                func=self._fg_fun_others,
                 x0=self.fg_coeffs[self.fg_ind_others],
                 fact_maxfev_iter=len(self.fg_ind_others) / self.n_coeffs,
                 option_NelderMead="best_run",
@@ -1022,8 +1028,8 @@ class distrib_cov:
 
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
-        localfit_nll = self.minimize(
-            func=self.fg_fun_NLL_notests,
+        localfit_nll = self._minimize(
+            func=self._fg_fun_NLL_notests,
             x0=self.fg_coeffs,
             fact_maxfev_iter=1,
             option_NelderMead="best_run",
@@ -1042,12 +1048,12 @@ class distrib_cov:
             if False:
                 # TODO: unreachable - add option or remove?
                 # fit coefficients on CDFs
-                fun_opti_prob = self.fg_fun_cdfs
+                fun_opti_prob = self._fg_fun_cdfs
             else:
                 # fit coefficients on log-likelihood to the power n
-                fun_opti_prob = self.fg_fun_LL_n
+                fun_opti_prob = self._fg_fun_LL_n
 
-            localfit_opti = self.minimize(
+            localfit_opti = self._minimize(
                 func=fun_opti_prob,
                 x0=self.fg_coeffs,
                 fact_maxfev_iter=1,
@@ -1081,7 +1087,7 @@ class distrib_cov:
                 )
             self.fg_coeffs = globalfit_all.x
 
-    def minimize(self, func, x0, fact_maxfev_iter=1., option_NelderMead="dont_run"):
+    def _minimize(self, func, x0, fact_maxfev_iter=1., option_NelderMead="dont_run"):
         """
         options_NelderMead: str
             * dont_run: would minimize only the chosen solver in method_fit
@@ -1127,10 +1133,12 @@ class distrib_cov:
         return fit
 
     @staticmethod
-    def smooth_data(data, nn=10):
+    def _smooth_data(data, nn=10):
+        """Moving average of data"""
+        # TODO: could replace by scipy.ndimage.uniform_filter1d, much faster, but different results around the edges
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
-    def fg_fun_deriv01(self, x):
+    def _fg_fun_deriv01(self, x):
         params = self.expr_fit.evaluate_params(x, self.fg_info_derivatives["pred_low"])
         loc_low = params["loc"]
         params = self.expr_fit.evaluate_params(x, self.fg_info_derivatives["pred_high"])
@@ -1151,18 +1159,20 @@ class distrib_cov:
                     (deriv[p] - self.fg_info_derivatives["deriv_targ"][p]) ** 2
                     for p in self.data_pred
                 ]
+                # ^ change of the location with the predictor should be similar to the change of the target with the predictor
             )
             + (0.5 * (loc_low + loc_high) - self.fg_info_derivatives["m"]) ** 2
+            # ^ location should not be too far from the mean
         )
 
-    def fg_fun_loc(self, x_loc):
+    def _fg_fun_loc(self, x_loc):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
         params = self.expr_fit.evaluate_params(x, self.data_pred)
         loc = params["loc"]
         return np.sum((loc - self.smooth_data_targ) ** 2)
 
-    def fg_fun_sca(self, x_sca):
+    def _fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
         params = self.expr_fit.evaluate_params(x, self.data_pred)
@@ -1171,7 +1181,7 @@ class distrib_cov:
         dev = np.abs(self.data_targ - loc)
         return np.sum((dev - sca) ** 2)
 
-    def fg_fun_others(self, x_others, margin0=0.05):
+    def _fg_fun_others(self, x_others, margin0=0.05):
         # preparing support
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_others] = x_others
@@ -1193,12 +1203,12 @@ class distrib_cov:
         else:
             return 1 / (val_bot + margin0 * s) + 1 / (val_top + margin0 * s)
 
-    def fg_fun_NLL_notests(self, coefficients):
+    def _fg_fun_NLL_notests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
         self.ind_data_ok = np.arange(self.data_targ.size)
         return self.neg_loglike(distrib)
 
-    def fg_fun_cdfs(self, x):
+    def _fg_fun_cdfs(self, x):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         cdf = distrib.cdf(self.data_targ)
 
@@ -1215,7 +1225,7 @@ class distrib_cov:
         term_high = (thres - np.min(1 - cdf)) ** 2 / np.min(1 - cdf) ** 2
         return np.max([term_low, term_high])
 
-    def fg_fun_LL_n(self, x, n=4):
+    def _fg_fun_LL_n(self, x, n=4):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         LL = np.sum(distrib.logpdf(self.data_targ) ** n)
         return LL
@@ -1349,7 +1359,7 @@ class distrib_cov:
         else:
             self.find_fg()
 
-        m = self.minimize(
+        m = self._minimize(
             func=self.func_optim,
             x0=self.fg_coeffs,
             fact_maxfev_iter=1,
