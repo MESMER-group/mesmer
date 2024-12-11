@@ -209,3 +209,21 @@ def test_fg_func_deriv01():
     )
 
     np.testing.assert_allclose(result, 0, atol=1e-5)
+
+
+def test_fg_fun_loc():
+    # test for noiseless data, loss = 0
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(0, n - 1, n)
+    c1 = 2
+    c2 = 0
+    targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+
+    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+    dist.fg_coeffs = [0, 0]
+    dist.fg_ind_loc = np.array([0])
+
+    result = dist._fg_fun_loc(c1, targ)
+    np.testing.assert_equal(result, 0)
