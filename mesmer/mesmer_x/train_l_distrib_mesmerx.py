@@ -195,7 +195,6 @@ def xr_train_distrib(
             f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
         )
 
-
         for igp, gp in enumerate(gridpoints):
             fraction = (igp + 1) / gridpoints.size
             print(f"{fraction:0.1%}", end="\r")
@@ -256,6 +255,10 @@ def np_train_distrib(
     )
     dfit.fit()
     return dfit.coefficients_fit, dfit.quality_fit
+
+
+def _difference_quotient(f_high, f_low, x_high, x_low):
+    return (f_high - f_low) / (x_high - x_low)
 
 
 class distrib_cov:
@@ -814,6 +817,7 @@ class distrib_cov:
         # evaluated
         return test_coeff, test_param, test_proba, distrib
 
+    # TODO: factor out into own module?
     # suppress nan & inf warnings
     @ignore_warnings
     def find_fg(self):
@@ -832,13 +836,13 @@ class distrib_cov:
             FLEXIBLE (any sample, any distribution & any expression).
 
         Method:
-            1. Improve very first guess for the location by finding a global fit of the 
+            1. Improve very first guess for the location by finding a global fit of the
                coefficients for the location by fitting for coefficients that give location that
                is a) close to the mean of the target samples and b) has a similar change with the
-               predictor as the target, i.e. approximation of the first derivative of the location 
+               predictor as the target, i.e. approximation of the first derivative of the location
                as function of the predictors is close to the one of the target samples. The first
                derivative is approximated by computing the quotient of the differences in the mean
-               of high (outside +1 std) samples and low (outside -1 std) samples and their 
+               of high (outside +1 std) samples and low (outside -1 std) samples and their
                 corresponding predictor values.
             2. Fit of the coefficients of the location, assuming that the center of the
                distribution should be close from its location.
@@ -918,32 +922,31 @@ class distrib_cov:
         # preparing derivatives to estimate derivatives of data along predictors,
         # and infer a very first guess for the coefficients facilitates the
         # representation of the trends
-        self.smooth_data_targ = self._smooth_data(self.data_targ)
+        smooth_targ = self._smooth_data(self.data_targ)
 
-        m, s = np.mean(self.smooth_data_targ), np.std(self.smooth_data_targ)
+        mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
 
-        ind_targ_low = np.where(self.smooth_data_targ < m - s)[0]
-        ind_targ_high = np.where(self.smooth_data_targ > m + s)[0]
+        mean_minus_one_std = mean_smooth_targ - std_smooth_targ
+        mean_plus_one_std = mean_smooth_targ + std_smooth_targ
 
-        pred_low = {p: np.mean(self.data_pred[p][ind_targ_low]) for p in self.data_pred}
-        pred_high = {
+        ind_targ_low = np.where(smooth_targ < mean_minus_one_std)[0]
+        ind_targ_high = np.where(smooth_targ > mean_plus_one_std)[0]
+
+        mean_low_preds = {
+            p: np.mean(self.data_pred[p][ind_targ_low]) for p in self.data_pred
+        }
+        mean_high_preds = {
             p: np.mean(self.data_pred[p][ind_targ_high]) for p in self.data_pred
         }
 
-        deriv_targ = {
-            p: (
-                np.mean(self.smooth_data_targ[ind_targ_high])
-                - np.mean(self.smooth_data_targ[ind_targ_low])
-            )
-            / (pred_high[p] - pred_low[p])
-            for p in self.data_pred
-        }
+        mean_low_targs = np.mean(smooth_targ[ind_targ_low])
+        mean_high_targs = np.mean(smooth_targ[ind_targ_high])
 
-        self.fg_info_derivatives = {
-            "pred_low": pred_low,
-            "pred_high": pred_high,
-            "deriv_targ": deriv_targ,
-            "m": m,
+        deriv_targ = {
+            p: _difference_quotient(
+                mean_high_targs, mean_low_targs, mean_high_preds[p], mean_low_preds[p]
+            )
+            for p in self.data_pred
         }
 
         # Initialize first guess
@@ -953,8 +956,14 @@ class distrib_cov:
             # Step 1: fit coefficients of location (objective: generate an adequate
             # first guess for the coefficients of location. proven to be necessary
             # in many situations, & accelerate step 2)
+            minimizer_kwargs = {
+                "args": (mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ)
+            }
             globalfit_d01 = basinhopping(
-                func=self._fg_fun_deriv01, x0=self.fg_coeffs, niter=10
+                func=self._fg_fun_deriv01,
+                x0=self.fg_coeffs,
+                niter=10,
+                minimizer_kwargs=minimizer_kwargs,
             )
             # warning, basinhopping tends to introduce non-reproductibility in fits,
             # reduced when using 2nd round of fits
@@ -979,6 +988,7 @@ class distrib_cov:
         localfit_loc = self._minimize(
             func=self._fg_fun_loc,
             x0=self.fg_coeffs[self.fg_ind_loc],
+            args=(smooth_targ),
             fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
             option_NelderMead="best_run",
         )
@@ -1087,7 +1097,9 @@ class distrib_cov:
                 )
             self.fg_coeffs = globalfit_all.x
 
-    def _minimize(self, func, x0, fact_maxfev_iter=1., option_NelderMead="dont_run"):
+    def _minimize(
+        self, func, x0, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run"
+    ):
         """
         options_NelderMead: str
             * dont_run: would minimize only the chosen solver in method_fit
@@ -1099,6 +1111,7 @@ class distrib_cov:
         fit = minimize(
             func,
             x0=x0,
+            args=args,
             method=self.method_fit,
             options={
                 "maxfev": self.maxfev * fact_maxfev_iter,
@@ -1118,6 +1131,7 @@ class distrib_cov:
             fit_NM = minimize(
                 func,
                 x0=x0,
+                args=args,
                 method="Nelder-Mead",
                 options={
                     "maxfev": self.maxfev * fact_maxfev_iter,
@@ -1136,41 +1150,35 @@ class distrib_cov:
     def _smooth_data(data, nn=10):
         """Moving average of data"""
         # TODO: could replace by scipy.ndimage.uniform_filter1d, much faster, but different results around the edges
+        # return scipy.ndimage.uniform_filter1d(data, nn)
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
-    def _fg_fun_deriv01(self, x):
-        params = self.expr_fit.evaluate_params(x, self.fg_info_derivatives["pred_low"])
+    def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
+        params = self.expr_fit.evaluate_params(x, pred_low)
         loc_low = params["loc"]
-        params = self.expr_fit.evaluate_params(x, self.fg_info_derivatives["pred_high"])
+        params = self.expr_fit.evaluate_params(x, pred_high)
         loc_high = params["loc"]
 
-        deriv = {
-            p: (loc_high - loc_low)
-            / (
-                self.fg_info_derivatives["pred_high"][p]
-                - self.fg_info_derivatives["pred_low"][p]
-            )
+        deriv_loc = {
+            p: _difference_quotient(loc_high, loc_low, pred_high[p], pred_low[p])
             for p in self.data_pred
         }
 
         return (
             np.sum(
-                [
-                    (deriv[p] - self.fg_info_derivatives["deriv_targ"][p]) ** 2
-                    for p in self.data_pred
-                ]
+                [(deriv_loc[p] - deriv_targ[p]) ** 2 for p in self.data_pred]
                 # ^ change of the location with the predictor should be similar to the change of the target with the predictor
             )
-            + (0.5 * (loc_low + loc_high) - self.fg_info_derivatives["m"]) ** 2
-            # ^ location should not be too far from the mean
+            + (0.5 * (loc_low + loc_high) - mean_targ) ** 2
+            # ^ location should not be too far from the mean of the samples
         )
 
-    def _fg_fun_loc(self, x_loc):
+    def _fg_fun_loc(self, x_loc, smooth_target):
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
         params = self.expr_fit.evaluate_params(x, self.data_pred)
         loc = params["loc"]
-        return np.sum((loc - self.smooth_data_targ) ** 2)
+        return np.sum((loc - smooth_target) ** 2)
 
     def _fg_fun_sca(self, x_sca):
         x = np.copy(self.fg_coeffs)
