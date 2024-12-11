@@ -1232,6 +1232,30 @@ class distrib_cov:
         return np.mean((loc - smooth_target) ** 2)
 
     def _fg_fun_sca(self, x_sca):
+        r"""
+        Loss function for the scale coefficients. The objective is to get a scale such that
+        the deviation of the distribution is close to the scale, thus we fit a mean squared
+        error between the deviation of the (not smoothed) target samples from the location and the scale.
+
+        The loss is computed as follows:
+
+        .. math::
+
+        mean(deviation_{n} - scale(x\_sca))^2)
+
+        Parameters
+        ----------
+        x_sca : numpy array
+            Coefficients for the scale
+        
+        Returns
+        -------
+        float
+            Loss value
+
+        """
+
+
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
         params = self.expr_fit.evaluate_params(x, self.data_pred)
