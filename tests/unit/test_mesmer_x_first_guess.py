@@ -163,7 +163,7 @@ def test_first_guess_with_bounds():
 
 @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
 def test_fg_func_deriv01():
-    # test that for a rather smooth target, fg_func_deriv01 returns little loss for the right coefficients
+    # test that for a rather smooth target, fg_func_deriv01 returns small loss for the right coefficients
     rng = np.random.default_rng(0)
     n = 251
     pred = np.linspace(0, n - 1, n)
@@ -227,3 +227,21 @@ def test_fg_fun_loc():
 
     result = dist._fg_fun_loc(c1, targ)
     np.testing.assert_equal(result, 0)
+
+
+def test_fg_fun_sca():
+    # test for noiseless data, loss = 0
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(0, n - 1, n)
+    c1 = 2
+    c2 = 1
+    targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+
+    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+    dist.fg_coeffs = [2, 0]
+    dist.fg_ind_sca = np.array([1])
+
+    result = dist._fg_fun_sca(c2)
+    np.testing.assert_allclose(result, 0, atol=0.4)
