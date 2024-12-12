@@ -648,6 +648,7 @@ class distrib_cov:
         # TODO: move the normalization into the function
         return weights_driver / np.sum(weights_driver)
 
+
     def _get_weights_nll(self, n_bins_density=40):
         """
         Generate weights for the sample, based on the inverse of the density of the
@@ -715,6 +716,7 @@ class distrib_cov:
 
         return 1 / density  # inverse of density
 
+
     def _test_coeffs_in_bounds(self, values_coeffs):
 
         # checking set boundaries on coefficients
@@ -735,6 +737,7 @@ class distrib_cov:
                 return False
 
         return True
+
 
     def _test_evol_params(self, distrib, data):
 
@@ -766,6 +769,7 @@ class distrib_cov:
 
         return True
 
+
     def _test_proba_value(self, distrib, data):
         # tested values must have a minimum probability of occurring, i.e. be in a
         # confidence interval
@@ -776,6 +780,7 @@ class distrib_cov:
         thres = self.threshold_min_proba
         # TODO (mathause): why does this use cdf and not pdf?
         return np.all(1 - cdf >= thres) and np.all(cdf >= thres)
+
 
     def validate_coefficients(self, coefficients):
         """validate coefficients
@@ -816,6 +821,7 @@ class distrib_cov:
         # return values for each test and the distribution that has already been
         # evaluated
         return test_coeff, test_param, test_proba, distrib
+
 
     # TODO: factor out into own module?
     # suppress nan & inf warnings
@@ -1097,6 +1103,7 @@ class distrib_cov:
                 )
             self.fg_coeffs = globalfit_all.x
 
+
     def _minimize(
         self, func, x0, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run"
     ):
@@ -1146,11 +1153,13 @@ class distrib_cov:
                 fit = fit_NM
         return fit
 
+
     @staticmethod
     def _smooth_data(data, nn=10):
         """Moving average of data"""
         # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
         return np.convolve(data, np.ones(nn) / nn, mode="same")
+
 
     def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
         r"""
@@ -1201,6 +1210,7 @@ class distrib_cov:
             # ^ location should not be too far from the mean of the samples
         )
 
+
     def _fg_fun_loc(self, x_loc, smooth_target):
         r"""
         Loss function for the location coefficients. The objective is to get a location
@@ -1231,6 +1241,7 @@ class distrib_cov:
         loc = params["loc"]
         return np.mean((loc - smooth_target) ** 2)
 
+
     def _fg_fun_sca(self, x_sca):
         r"""
         Loss function for the scale coefficients. The objective is to get a scale such that
@@ -1254,7 +1265,6 @@ class distrib_cov:
             Loss value
 
         """
-
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
         params = self.expr_fit.evaluate_params(x, self.data_pred)
@@ -1263,27 +1273,29 @@ class distrib_cov:
         dev = np.abs(self.data_targ - loc)
         return np.mean((dev - sca) ** 2)
 
+
     def _fg_fun_others(self, x_others, margin0=0.05):
+        
         # preparing support
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_others] = x_others
 
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         bot, top = distrib.support()
-        val_bot = np.min(self.data_targ - bot)
-        val_top = np.min(top - self.data_targ)
+        val_bot = np.min(self.data_targ) - bot
+        val_top = top - np.max(self.data_targ)
         # preparing margin on support
-        m = np.mean(self.data_targ)
-        s = np.std(self.data_targ - m)
+        s = np.std(self.data_targ)
+        margin = margin0 * s
         # optimization
         if val_bot < 0:
-            # limit of val_bottom --> 0- = 1/margin0*s
-            return np.exp(-val_bot) * 1 / (margin0 * s)
+            # limit of val_bottom --> 0- = 1/margin
+            return np.exp(-val_bot) / margin
         elif val_top < 0:
-            # limit of val_top --> 0+ = 1/margin0*s
-            return np.exp(-val_top) * 1 / (margin0 * s)
+            # limit of val_top --> 0+ = 1/margin
+            return np.exp(-val_top) / margin
         else:
-            return 1 / (val_bot + margin0 * s) + 1 / (val_top + margin0 * s)
+            return 1 / (val_bot + margin) + 1 / (val_top + margin)
 
     def _fg_fun_NLL_notests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
