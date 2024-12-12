@@ -58,7 +58,7 @@ def test_first_guess_provided():
     np.testing.assert_allclose(result, expected, rtol=1e-5)
 
 
-def test_first_guess_dist_more_params():
+def test_first_guess_GEV():
     rng = np.random.default_rng(0)
     n = 251
     pred = np.ones(n)
@@ -77,7 +77,7 @@ def test_first_guess_dist_more_params():
     expected = [loc, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, atol=0.2, rtol=0.2)
+    np.testing.assert_allclose(result, expected, atol=0.2)
 
     # any difference if we provide a first guess?
     dist2 = distrib_cov(
@@ -86,6 +86,28 @@ def test_first_guess_dist_more_params():
     dist2.find_fg()
     result2 = dist.fg_coeffs
     np.testing.assert_equal(result2, result)  # No
+
+
+def test_first_guess_GEV_including_pred():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.arange(n)
+
+    c1 = 2
+    scale = 1
+    shape = 0.5
+    # distribution with loc, scale, and shape parameters
+    targ = genextreme.rvs(c=shape, loc=pred**c1, scale=scale, size=n, random_state=rng)
+
+    expression = Expression("genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1")
+
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+    dist.find_fg()
+    result = dist.fg_coeffs
+    expected = [c1, scale, shape]
+
+    # test right order of magnitude
+    np.testing.assert_allclose(result, expected, atol=0.2)
 
 
 def test_first_guess_with_bounds():
@@ -166,7 +188,7 @@ def test_fg_func_deriv01():
     # test that for a rather smooth target, fg_func_deriv01 returns small loss for the right coefficients
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.linspace(0, n - 1, n)
+    pred = np.arange(n)
     c1 = 2.0
     c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
@@ -215,7 +237,7 @@ def test_fg_fun_loc():
     # test for noiseless data, loss = 0
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.linspace(0, n - 1, n)
+    pred = np.arange(n)
     c1 = 2
     c2 = 0
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
@@ -233,7 +255,7 @@ def test_fg_fun_sca():
     # test for noiseless data, loss = 0
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.linspace(0, n - 1, n)
+    pred = np.arange(n)
     c1 = 2
     c2 = 1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
