@@ -139,7 +139,7 @@ def test_calibrate_mesmer_x(
     ).assign_coords(targ_stacked_hist.gridpoint.coords)
 
     # training of auto-regression with spatially correlated innovations
-    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+    local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         transf_target_xr_hist,
         transf_target_xr_ssp585,
         ens_dim=None,

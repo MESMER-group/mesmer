@@ -149,15 +149,16 @@ def test_draw_auto_regression_uncorrelated_2D_errors(ar_params_2D):
 @pytest.mark.parametrize("realization", (2, 4))
 @pytest.mark.parametrize("time_dim", ("time", "ts"))
 @pytest.mark.parametrize("realization_dim", ("realization", "sample"))
+@pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_uncorrelated(
-    ar_params_1D, time, realization, time_dim, realization_dim
+    ar_params_1D, time, realization, time_dim, realization_dim, seed
 ):
 
     result = mesmer.stats.draw_auto_regression_uncorrelated(
         ar_params_1D,
         time=time,
         realisation=realization,
-        seed=0,
+        seed=seed,
         buffer=0,
         time_dim=time_dim,
         realisation_dim=realization_dim,
@@ -252,8 +253,9 @@ def test_draw_auto_regression_correlated_wrong_input(ar_params_2D, covariance, d
 @pytest.mark.parametrize("realization", (2, 4))
 @pytest.mark.parametrize("time_dim", ("time", "ts"))
 @pytest.mark.parametrize("realization_dim", ("realization", "sample"))
+@pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_correlated(
-    ar_params_2D, covariance, time, realization, time_dim, realization_dim
+    ar_params_2D, covariance, time, realization, time_dim, realization_dim, seed
 ):
 
     result = mesmer.stats.draw_auto_regression_correlated(
@@ -261,7 +263,7 @@ def test_draw_auto_regression_correlated(
         covariance,
         time=time,
         realisation=realization,
-        seed=0,
+        seed=seed,
         buffer=0,
         time_dim=time_dim,
         realisation_dim=realization_dim,
