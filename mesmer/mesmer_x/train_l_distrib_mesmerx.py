@@ -648,7 +648,6 @@ class distrib_cov:
         # TODO: move the normalization into the function
         return weights_driver / np.sum(weights_driver)
 
-
     def _get_weights_nll(self, n_bins_density=40):
         """
         Generate weights for the sample, based on the inverse of the density of the
@@ -716,14 +715,13 @@ class distrib_cov:
 
         return 1 / density  # inverse of density
 
-
     def _test_coeffs_in_bounds(self, values_coeffs):
 
         # checking set boundaries on coefficients
         for coeff in self.boundaries_coeffs:
             bottom, top = self.boundaries_coeffs[coeff]
 
-            # TODO: move this check to __init__
+            # TODO: move this check to __init__ NOTE: also used in fg
             if coeff not in self.expr_fit.coefficients_list:
                 raise ValueError(
                     f"Provided wrong boundaries on coefficient, {coeff}"
@@ -737,7 +735,6 @@ class distrib_cov:
                 return False
 
         return True
-
 
     def _test_evol_params(self, distrib, data):
 
@@ -769,7 +766,6 @@ class distrib_cov:
 
         return True
 
-
     def _test_proba_value(self, distrib, data):
         # tested values must have a minimum probability of occurring, i.e. be in a
         # confidence interval
@@ -780,7 +776,6 @@ class distrib_cov:
         thres = self.threshold_min_proba
         # TODO (mathause): why does this use cdf and not pdf?
         return np.all(1 - cdf >= thres) and np.all(cdf >= thres)
-
 
     def validate_coefficients(self, coefficients):
         """validate coefficients
@@ -846,7 +841,6 @@ class distrib_cov:
         # return values for each test and the distribution that has already been
         # evaluated
         return test_coeff, test_param, test_proba, distrib
-
 
     # TODO: factor out into own module?
     # suppress nan & inf warnings
@@ -1012,45 +1006,43 @@ class distrib_cov:
 
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
+        loc_coeffs = self.expr_fit.coefficients_dict["loc"]
         self.fg_ind_loc = np.array(
-            [
-                self.expr_fit.coefficients_list.index(c)
-                for c in self.expr_fit.coefficients_dict["loc"]
-            ]
+            [self.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
         )
         # location might not be used (beta distribution) or set in the expression
         if len(self.fg_ind_loc) > 0:
-        localfit_loc = self._minimize(
-            func=self._fg_fun_loc,
-            x0=self.fg_coeffs[self.fg_ind_loc],
-            args=(smooth_targ),
-            fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
+            localfit_loc = self._minimize(
+                func=self._fg_fun_loc,
+                x0=self.fg_coeffs[self.fg_ind_loc],
+                args=(smooth_targ),
+                fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
 
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
-        scale = self.expr_fit.coefficients_dict["scale"]
+        scale_coeffs = self.expr_fit.coefficients_dict["scale"]
         self.fg_ind_sca = np.array(
-            [self.expr_fit.coefficients_list.index(c) for c in scale]
+            [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
         )
         # scale might not be used (beta distribution) or set in the expression
         if len(self.fg_ind_sca) > 0:
-        if self.first_guess is None:
-            # compared to all 0, better for ref level but worse for trend
-            x0 = np.full(len(scale), fill_value=np.std(self.data_targ))
+            if self.first_guess is None:
+                # compared to all 0, better for ref level but worse for trend
+                x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
 
-        else:
-            x0 = self.fg_coeffs[self.fg_ind_sca]
+            else:
+                x0 = self.fg_coeffs[self.fg_ind_sca]
 
-        localfit_sca = self._minimize(
-            func=self._fg_fun_sca,
-            x0=x0,
-            fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
+            localfit_sca = self._minimize(
+                func=self._fg_fun_sca,
+                x0=x0,
+                fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
@@ -1134,7 +1126,6 @@ class distrib_cov:
                 )
             self.fg_coeffs = globalfit_all.x
 
-
     def _minimize(
         self, func, x0, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run"
     ):
@@ -1184,13 +1175,11 @@ class distrib_cov:
                 fit = fit_NM
         return fit
 
-
     @staticmethod
     def _smooth_data(data, nn=10):
         """Moving average of data"""
         # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
         return np.convolve(data, np.ones(nn) / nn, mode="same")
-
 
     def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
         r"""
@@ -1241,7 +1230,6 @@ class distrib_cov:
             # ^ location should not be too far from the mean of the samples
         )
 
-
     def _fg_fun_loc(self, x_loc, smooth_target):
         r"""
         Loss function for the location coefficients. The objective is to get a location
@@ -1272,7 +1260,6 @@ class distrib_cov:
         loc = params["loc"]
         return np.mean((loc - smooth_target) ** 2)
 
-
     def _fg_fun_sca(self, x_sca):
         r"""
         Loss function for the scale coefficients. The objective is to get a scale such that
@@ -1302,6 +1289,7 @@ class distrib_cov:
         loc, sca = params["loc"], params["scale"]
         # ^ better to use that one instead of deviation, which is affected by the scale
         dev = np.abs(self.data_targ - loc)
+        # dev = (self.data_targ - loc)**2 # Potential TODO
         return np.mean((dev - sca) ** 2)
 
     def _fg_fun_others(self, x_others, margin0=0.05):
@@ -1389,6 +1377,7 @@ class distrib_cov:
             test = test_c and test_p and test_v
             x[i_c] += fact_coeff * x[i_c]
             iter += 1
+        # TODO: returns value after test = False, but should it maybe be the last value before that?
         return x[i_c]
 
     # OPTIMIZATION FUNCTIONS & SCORES
