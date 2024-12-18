@@ -785,9 +785,34 @@ class distrib_cov:
     def validate_coefficients(self, coefficients):
         """validate coefficients
 
-        Validate estimated coefficients
-        1. using the target data and predictors and
-        2. potentially the cross-validaten data
+        Parameters
+        ----------
+        coefficients : numpy array 1D
+            Coefficients to validate.
+
+        Returns
+        -------
+        test_coeff : boolean
+            True if the coefficients are within self.boundaries_coeffs. If
+            False, all other tests will also be set to False and not tested.
+
+        test_param : boolean
+            True if parameters are within self.boundaries_params and within the support of the distribution.
+            False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
+
+            If self.add_test is True, will also test the additional sample.
+
+        test_proba : boolean
+            Only tested if self.threshold_min_proba is not None.
+            True if the probability of the target samples for the given coefficients
+            is above self.threshold_min_proba.
+            False if not or if test_coeff or test_param or test_coeff is False.
+
+            If self.add_test is True, will also test the additional sample.
+
+        distrib : distrib_cov
+            The distribution that has been evaluated for the given coefficients.
+
         """
 
         test_coeff = self._test_coeffs_in_bounds(coefficients)
