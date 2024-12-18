@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from scipy.stats import genextreme
+from scipy.stats import beta, genextreme, laplace, truncnorm
 
 from mesmer.mesmer_x import Expression, distrib_cov
 
@@ -93,13 +93,15 @@ def test_first_guess_GEV_including_pred():
     n = 251
     pred = np.arange(n)
 
-    c1 = 2
-    scale = 1
+    c1 = 2.0
+    scale = 1.0
     shape = 0.5
     # distribution with loc, scale, and shape parameters
     targ = genextreme.rvs(c=shape, loc=pred**c1, scale=scale, size=n, random_state=rng)
 
-    expression = Expression("genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1")
+    expression = Expression(
+        "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
+    )
 
     dist = distrib_cov(targ, {"tas": pred}, expression)
     dist.find_fg()
@@ -369,18 +371,32 @@ def test_fg_fun_loc():
 
 
 def test_fg_fun_sca():
-    # test for noiseless data, loss = 0
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.arange(n)
-    c1 = 2
-    c2 = 1
-    targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+    pred = np.ones(n)
+    loc = 0
+    scale = 1
 
-    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
+    # test normal
+    targ = rng.normal(loc=loc, scale=scale, size=n)
+
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
     dist = distrib_cov(targ, {"tas": pred}, expression)
-    dist.fg_coeffs = [2, 0]
+    dist.fg_coeffs = [loc, scale]
     dist.fg_ind_sca = np.array([1])
 
-    result = dist._fg_fun_sca(c2)
+    result = dist._fg_fun_sca(scale)
     np.testing.assert_allclose(result, 0, atol=0.4)
+
+    # test GEV
+    targ = genextreme.rvs(c=1, loc=loc, scale=scale, size=n, random_state=rng)
+
+    expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
+
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+    dist.fg_coeffs = [loc, scale, 1]
+    dist.fg_ind_sca = np.array([1])
+
+    result = dist._fg_fun_sca(scale)
+
+    np.testing.assert_allclose(result, 0, atol=0.6)
