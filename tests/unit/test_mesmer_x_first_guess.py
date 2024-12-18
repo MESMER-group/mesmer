@@ -40,22 +40,22 @@ def test_first_guess_standard_normal_including_pred():
     np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.1)
 
 
-def test_first_guess_provided():
+@pytest.mark.parametrize("first_guess", [[1.0, 1.0], [1.0, 2.0], [-1, 0.5], [10, 7]])
+def test_first_guess_provided(first_guess):
     rng = np.random.default_rng(0)
     n = 251
     pred = np.ones(n)
-    targ = rng.normal(loc=0, scale=1, size=n)
+    loc, scale = 1, 1
+    targ = rng.normal(loc=loc, scale=scale, size=n)
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-    first_guess = [0.0, 1.0]
 
     dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
 
     dist.find_fg()
     result = dist.fg_coeffs
-    expected = np.array([-0.005093822, 1.015267311])
 
-    np.testing.assert_allclose(result, expected, rtol=1e-5)
+    np.testing.assert_allclose(result, [loc, scale], rtol=0.02)
 
 
 def test_first_guess_GEV():
