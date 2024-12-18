@@ -304,7 +304,6 @@ def test_first_guess_with_bounds():
 
 @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
 def test_fg_func_deriv01():
-    # test that for a rather smooth target, fg_func_deriv01 returns small loss for the right coefficients
     rng = np.random.default_rng(0)
     n = 251
     pred = np.arange(n)
@@ -316,11 +315,6 @@ def test_fg_func_deriv01():
     dist = distrib_cov(targ, {"tas": pred}, expression)
 
     smooth_targ = dist._smooth_data(targ)
-    # smooth_targ = scipy.ndimage.uniform_filter1d(targ, 10)
-    # from statsmodels.nonparametric.smoothers_lowess import lowess
-    # smooth_targ = lowess(
-    #     targ, np.arange(n), frac=10 / n, return_sorted=False
-    # )  # works best
 
     mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
 
@@ -345,20 +339,28 @@ def test_fg_func_deriv01():
         for p in dist.data_pred
     }
 
-    result = dist._fg_fun_deriv01(
+    loss_at_toolow = dist._fg_fun_deriv01(
+        [c1 / 2, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
+    )
+    loss_at_truesolution = dist._fg_fun_deriv01(
         [c1, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
     )
+    loss_at_toohigh = dist._fg_fun_deriv01(
+        [c1 * 2, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
+    )
 
-    np.testing.assert_allclose(result, 0, atol=1e-5)
+    assert loss_at_toolow > loss_at_truesolution
+    assert loss_at_toohigh > loss_at_truesolution
+
+    np.testing.assert_allclose(loss_at_truesolution, 0, atol=1e-5)
 
 
 def test_fg_fun_loc():
-    # test for noiseless data, loss = 0
     rng = np.random.default_rng(0)
     n = 251
     pred = np.arange(n)
     c1 = 2
-    c2 = 0
+    c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
 
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
@@ -366,8 +368,13 @@ def test_fg_fun_loc():
     dist.fg_coeffs = [0, 0]
     dist.fg_ind_loc = np.array([0])
 
-    result = dist._fg_fun_loc(c1, targ)
-    np.testing.assert_equal(result, 0)
+    # test local minima at true coefficients
+    loss_at_toolow = dist._fg_fun_loc(c1 - 1, targ)
+    loss_at_truesolution = dist._fg_fun_loc(c1, targ)
+    loss_at_toohigh = dist._fg_fun_loc(c1 + 1, targ)
+
+    assert loss_at_toolow > loss_at_truesolution
+    assert loss_at_toohigh > loss_at_truesolution
 
 
 def test_fg_fun_sca():
@@ -397,6 +404,41 @@ def test_fg_fun_sca():
     dist.fg_coeffs = [loc, scale, 1]
     dist.fg_ind_sca = np.array([1])
 
-    result = dist._fg_fun_sca(scale)
+    # test local minimum at true value
+    loss_at_toolow = dist._fg_fun_sca(scale - 1)
+    loss_at_truesolution = dist._fg_fun_sca(scale)
+    loss_at_toohigh = dist._fg_fun_sca(scale + 1)
 
-    np.testing.assert_allclose(result, 0, atol=0.6)
+    assert loss_at_toolow > loss_at_truesolution
+    assert loss_at_toohigh > loss_at_truesolution
+
+
+@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/582")
+def test_fg_fun_others():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+    loc = 0
+    scale = 1
+    a = -1.2  # nr of stds from loc at which to truncate
+    b = 1.2
+    targ = truncnorm.rvs(loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng)
+    expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
+
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+    dist.fg_coeffs = [loc, scale, a, b]
+    dist.fg_ind_others = np.array([2, 3])
+
+    # test local minimum at true value
+    loss_at_toolow_a = dist._fg_fun_others([a - 1, b])
+    loss_at_toohigh_a = dist._fg_fun_others([a + 1, b])
+
+    loss_at_toolow_b = dist._fg_fun_others([a, b - 1])
+    loss_at_toohigh_b = dist._fg_fun_others([a, b + 1])
+
+    loss_at_truesolution = dist._fg_fun_others([a, b])
+
+    min_loss = np.min(
+        [loss_at_toolow_a, loss_at_toohigh_a, loss_at_toolow_b, loss_at_toohigh_b]
+    )
+    np.testing.assert_equal(loss_at_truesolution, min_loss)

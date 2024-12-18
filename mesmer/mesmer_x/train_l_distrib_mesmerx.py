@@ -1295,7 +1295,7 @@ class distrib_cov:
     def _fg_fun_others(self, x_others, margin0=0.05):
         """
         loss function for other coefficients than loc and scale. Objective is to tune parameters such
-        that target samples are within the support of the distribution, with some margin. If we 
+        that target samples are within the support of the distribution, with some margin. If we
         find samples outside of the distribution support we employ an exponential loss function to minimize
         the differences between the most extreme sample and the support bound. If all samples are within
         the support, we optimize for coefficients that expand the support of the distribution.
