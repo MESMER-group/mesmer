@@ -1300,29 +1300,54 @@ class distrib_cov:
         dev = np.abs(self.data_targ - loc)
         return np.mean((dev - sca) ** 2)
 
-
     def _fg_fun_others(self, x_others, margin0=0.05):
-        
+        """
+        loss function for other coefficients than loc and scale. Objective is to tune parameters such
+        that target samples are within the support of the distribution, with some margin. If we 
+        find samples outside of the distribution support we employ an exponential loss function to minimize
+        the differences between the most extreme sample and the support bound. If all samples are within
+        the support, we optimize for coefficients that expand the support of the distribution.
+        """
         # preparing support
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_others] = x_others
 
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         bot, top = distrib.support()
-        val_bot = np.min(self.data_targ) - bot
-        val_top = top - np.max(self.data_targ)
+
+        # distance between samples and bottom or top bound of support, negative if sample is out of support
+        diff_bot = self.data_targ - bot
+        diff_top = top - self.data_targ
+
+        # smallest difference -> if diff was negative, this gives the greatest distance to the support bound
+        # if diff was positive, this gives the diff that was closest to the support bound, i.e. in both cases
+        # the ~worst~ difference
+        worst_diff_bot = np.min(diff_bot)
+        worst_diff_top = np.min(diff_top)
+
         # preparing margin on support
         s = np.std(self.data_targ)
         margin = margin0 * s
+
         # optimization
-        if val_bot < 0:
-            # limit of val_bottom --> 0- = 1/margin
-            return np.exp(-val_bot) / margin
-        elif val_top < 0:
-            # limit of val_top --> 0+ = 1/margin
-            return np.exp(-val_top) / margin
-        else:
-            return 1 / (val_bot + margin) + 1 / (val_top + margin)
+        if worst_diff_bot < 0:  # sample out of bottom support
+            # penalize larger distances more than small ones -> exponential
+            # limit of worst_diff_bottom --> 0- = 1/margin
+            return 1 / margin * np.exp(-worst_diff_bot)
+        elif worst_diff_top < 0:  # sample out of top support
+            # penalize larger distances more than small ones -> exponential
+            # limit of worst_diff_top --> 0+ = 1/margin
+            return 1 / margin * np.exp(-worst_diff_top)
+        else:  # all samples within support
+            return 1 / (worst_diff_bot + margin) + 1 / (worst_diff_top + margin)
+
+        # TODO
+        # if bot == -np.inf:
+        #     return worst_diff_top**2
+        # elif top == np.inf:
+        #     return worst_diff_bot**2
+        # else:
+        #     return worst_diff_bot**2 + worst_diff_top**2 # + margin?
 
     def _fg_fun_NLL_notests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
