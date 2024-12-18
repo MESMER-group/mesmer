@@ -1004,6 +1004,8 @@ class distrib_cov:
         else:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
+            # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
+            self.fg_coeffs = self.fg_coeffs.astype(float)
 
         # TODO: this is used nowhere?
         self.mem = np.copy(self.fg_coeffs)
