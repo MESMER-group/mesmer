@@ -58,14 +58,14 @@ def test_first_guess_provided(first_guess):
     np.testing.assert_allclose(result, [loc, scale], rtol=0.02)
 
 
-def test_first_guess_GEV():
+@pytest.mark.parametrize("shape", [0.5, -0.5, 0.1])
+def test_first_guess_GEV(shape):
     rng = np.random.default_rng(0)
     n = 251
     pred = np.ones(n)
 
-    loc = 0
-    scale = 1
-    shape = 0.5
+    loc = 1.0
+    scale = 0.5
     # distribution with loc, scale, and shape parameters
     targ = genextreme.rvs(c=shape, loc=loc, scale=scale, size=n, random_state=rng)
 
@@ -77,7 +77,7 @@ def test_first_guess_GEV():
     expected = [loc, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, atol=0.2)
+    np.testing.assert_allclose(result, expected, rtol=0.5)
 
     # any difference if we provide a first guess?
     dist2 = distrib_cov(
