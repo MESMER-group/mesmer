@@ -110,6 +110,123 @@ def test_first_guess_GEV_including_pred():
     np.testing.assert_allclose(result, expected, atol=0.2)
 
 
+def test_first_guess_beta():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+
+    a = 2
+    b = 2
+    loc = 0
+    scale = 1
+    targ = beta.rvs(a, b, loc, scale, size=n, random_state=rng)
+
+    expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
+
+    # we need a first guess here because our default first guess is zeros, which leads
+    # to a degenerate distribution in the case of a beta distribution
+    first_guess = [1.0, 1.0]
+    options_solver = {"fg_with_global_opti": True}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        options_solver=options_solver,
+    )
+    dist.find_fg()
+
+    # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
+    # it is always (0,1), thus the optimization with _fg_fun_others does not do anything
+    # NOTE: Step 7 (fg_with_global_opti) leads to a impovement of the first guess at the 6th digit after the comma, i.e. very small
+    result = dist.fg_coeffs
+    expected = [a, b]
+
+    np.testing.assert_allclose(result, expected, rtol=0.5)
+
+
+def test_first_guess_gamma():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+
+    a = 2
+    b = 2
+    loc = 0
+    scale = 1
+    targ = beta.rvs(a, b, loc, scale, size=n, random_state=rng)
+
+    expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
+
+    # we need a first guess here because our default first guess is zeros, which leads
+    # to a degenerate distribution in the case of a beta distribution
+    first_guess = [1.0, 1.0]
+    options_solver = {"fg_with_global_opti": True}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        options_solver=options_solver,
+    )
+    dist.find_fg()
+
+    # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
+    # it is always (0,1), thus the optimization with _fg_fun_others does not do anything
+    # NOTE: Step 7 (fg_with_global_opti) leads to a impovement of the first guess at the 6th digit after the comma, i.e. very small
+    result = dist.fg_coeffs
+    expected = [a, b]
+
+    np.testing.assert_allclose(result, expected, rtol=0.5)
+
+
+def test_first_guess_truncnorm():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+
+    loc = 1.0
+    scale = 0.1
+    a = -1.2  # nr of stds from loc at which to truncate
+    b = 1.2
+    targ = truncnorm.rvs(loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng)
+    expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
+
+    # NOTE: this is an interesting case to test because the fact that the distribution is truncated
+    # makes the optimization for the scale biased in step 3: here we fit the scale to be close to the
+    # deviations from the location, which is smaller for the truncated normal than for the not truncated normal
+    # thus the first fit for the scale is too small, then the fit for the bounds is too large, but step 5
+    # does a good job in fixing this.
+
+    # needs first guess different from 0, 0 for a and b, degenerate otherwise, also degenerate if a == b
+    first_guess = [0.0, 1.0, -1, 2.0]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+
+    result = dist.fg_coeffs
+    expected = [loc, scale, a, b]
+
+    np.testing.assert_allclose(result, expected, rtol=0.5)
+
+
+def test_fg_fun_scale_laplace():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+    loc = 2
+    scale = 1
+    targ = laplace.rvs(loc=loc, scale=scale, size=n, random_state=rng)
+
+    expression = Expression("laplace(loc=c1, scale=c2)", expr_name="exp1")
+    dist = distrib_cov(targ, {"tas": pred}, expression)
+    dist.find_fg()
+
+    result = dist.fg_coeffs
+    expected = [loc, scale]
+
+    np.testing.assert_allclose(result, expected, rtol=0.1)
+
+
 def test_first_guess_with_bounds():
     rng = np.random.default_rng(0)
     n = 251
