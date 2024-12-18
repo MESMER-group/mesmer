@@ -864,26 +864,29 @@ class distrib_cov:
             1. Improve very first guess for the location by finding a global fit of the
                coefficients for the location by fitting for coefficients that give location that
                is a) close to the mean of the target samples and b) has a similar change with the
-               predictor as the target, i.e. approximation of the first derivative of the location
+               predictor as the target, i.e. the approximation of the first derivative of the location
                as function of the predictors is close to the one of the target samples. The first
                derivative is approximated by computing the quotient of the differences in the mean
                of high (outside +1 std) samples and low (outside -1 std) samples and their
-                corresponding predictor values.
+               corresponding predictor values.
             2. Fit of the coefficients of the location, assuming that the center of the
-               distribution should be close from its location.
+               distribution should be close to its location by minimizing mean squared error
+               between location and target samples.
             3. Fit of the coefficients of the scale, assuming that the deviation of the
-               distribution should be close from its scale.
+               distribution should be close from its scale, by minimizoing mean squared error between
+               the scale and the absolute deviations of the target samples from the location.          
             4. Fit of remaining coefficients, assuming that the sample must be within
-               the support of the distribution, with some margin.
+               the support of the distribution, with some margin. Optimizing for coefficients
+               that yield a support such that all samples are within this support.
             5. Improvement of all coefficients: better coefficients on location & scale,
-               and especially estimating those on shape. Based on the Negative Log
+               and especially estimating those on shape. Optimized using the Negative Log
                Likelihoog, albeit without the validity of the coefficients.
-            6. Improvement of coefficients: ensuring that all points are within a likely
-               support of the distribution. Two possibilities tried:
-               (For 4, tried 2 approaches: based on CDF or based on NLL^n. The idea is
+            6. If step 5 yields invalid coefficients, fit coefficients on log-likelihood to the power n 
+                to ensurine that all points are within a likely
+               support of the distribution. Two possibilities tried: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
                extremely unlikely values, that lead to division by 0 with CDF)
-               (step 5 still not always working, trying without?)
+            7. If required (self.fg_with_global_opti), global fit within boundaries
 
         Risks for the method:
             The only risk that I identify is if the user sets boundaries on coefficients
