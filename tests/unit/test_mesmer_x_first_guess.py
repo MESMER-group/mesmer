@@ -266,11 +266,11 @@ def test_first_guess_with_bounds():
 
     dist.find_fg()
     result = dist.fg_coeffs
-    # still finds a fg because we do not enforce the bounds on the fg
-    # however the fg is significantly worse on the param with the wrong bounds
-    # in contrast to the above this also runs step 6: fit on CDF or LL^n -> implications?
     expected = np.array([-0.016552528, 1.520612114])
     np.testing.assert_allclose(result, expected, rtol=1e-5)
+    # ^ still finds a fg because we do not enforce the bounds on the fg
+    # however the fg is significantly worse on the param with the wrong bounds
+    # in contrast to the above the test below also runs step 6: fit on CDF or LL^n -> implications?
 
     # fails if we enforce the bounds
     options_solver = {"fg_with_global_opti": True}

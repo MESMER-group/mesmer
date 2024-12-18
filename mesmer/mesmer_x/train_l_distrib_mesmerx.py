@@ -874,14 +874,14 @@ class distrib_cov:
                between location and target samples.
             3. Fit of the coefficients of the scale, assuming that the deviation of the
                distribution should be close from its scale, by minimizoing mean squared error between
-               the scale and the absolute deviations of the target samples from the location.          
+               the scale and the absolute deviations of the target samples from the location.
             4. Fit of remaining coefficients, assuming that the sample must be within
                the support of the distribution, with some margin. Optimizing for coefficients
                that yield a support such that all samples are within this support.
             5. Improvement of all coefficients: better coefficients on location & scale,
                and especially estimating those on shape. Optimized using the Negative Log
                Likelihoog, albeit without the validity of the coefficients.
-            6. If step 5 yields invalid coefficients, fit coefficients on log-likelihood to the power n 
+            6. If step 5 yields invalid coefficients, fit coefficients on log-likelihood to the power n
                 to ensurine that all points are within a likely
                support of the distribution. Two possibilities tried: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
@@ -1071,7 +1071,7 @@ class distrib_cov:
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
         localfit_nll = self._minimize(
-            func=self._fg_fun_NLL_notests,
+            func=self._fg_fun_NLL_no_tests,
             x0=self.fg_coeffs,
             fact_maxfev_iter=1,
             option_NelderMead="best_run",
@@ -1344,7 +1344,7 @@ class distrib_cov:
         # else:
         #     return worst_diff_bot**2 + worst_diff_top**2 # + margin?
 
-    def _fg_fun_NLL_notests(self, coefficients):
+    def _fg_fun_NLL_no_tests(self, coefficients):
         distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
         self.ind_data_ok = np.arange(self.data_targ.size)
         return self.neg_loglike(distrib)
@@ -1372,6 +1372,10 @@ class distrib_cov:
         return LL
 
     def find_bound(self, i_c, x0, fact_coeff):
+        """
+        expand bound until coefficients are valid: starts  with x0
+        and multiplies with fact_coeff until self.validate_coefficients returns all True.
+        """
         # could be accelerated using dichotomy, but 100 iterations max are fast enough
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
@@ -1432,8 +1436,8 @@ class distrib_cov:
 
         if np.isnan(value):
             return -np.inf
-        else:
-            return value
+
+        return value
 
     def stopping_rule(self, distrib):
         # evaluating threshold over time
