@@ -1018,6 +1018,8 @@ class distrib_cov:
                 for c in self.expr_fit.coefficients_dict["loc"]
             ]
         )
+        # location might not be used (beta distribution) or set in the expression
+        if len(self.fg_ind_loc) > 0:
         localfit_loc = self._minimize(
             func=self._fg_fun_loc,
             x0=self.fg_coeffs[self.fg_ind_loc],
@@ -1033,6 +1035,8 @@ class distrib_cov:
         self.fg_ind_sca = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in scale]
         )
+        # scale might not be used (beta distribution) or set in the expression
+        if len(self.fg_ind_sca) > 0:
         if self.first_guess is None:
             # compared to all 0, better for ref level but worse for trend
             x0 = np.full(len(scale), fill_value=np.std(self.data_targ))
