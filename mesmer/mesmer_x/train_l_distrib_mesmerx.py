@@ -257,10 +257,6 @@ def np_train_distrib(
     return dfit.coefficients_fit, dfit.quality_fit
 
 
-def _difference_quotient(f_high, f_low, x_high, x_low):
-    return (f_high - f_low) / (x_high - x_low)
-
-
 class distrib_cov:
 
     def __init__(
@@ -971,7 +967,7 @@ class distrib_cov:
         mean_high_targs = np.mean(smooth_targ[ind_targ_high])
 
         deriv_targ = {
-            p: _difference_quotient(
+            p: self._difference_quotient(
                 mean_high_targs, mean_low_targs, mean_high_preds[p], mean_low_preds[p]
             )
             for p in self.data_pred
@@ -1184,6 +1180,10 @@ class distrib_cov:
         # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
         return np.convolve(data, np.ones(nn) / nn, mode="same")
 
+    @staticmethod
+    def _difference_quotient(f_high, f_low, x_high, x_low):
+        return (f_high - f_low) / (x_high - x_low)
+
     def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
         r"""
         Loss function for very fist guess of the location coefficients. The objective is
@@ -1220,7 +1220,7 @@ class distrib_cov:
         loc_high = params["loc"]
 
         deriv_loc = {
-            p: _difference_quotient(loc_high, loc_low, pred_high[p], pred_low[p])
+            p: self._difference_quotient(loc_high, loc_low, pred_high[p], pred_low[p])
             for p in self.data_pred
         }
 
