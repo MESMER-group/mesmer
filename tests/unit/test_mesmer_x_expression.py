@@ -347,7 +347,9 @@ def test_evaluate_params_norm():
     mesmer.testing.assert_dict_allclose(params, expected)
 
 
-@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2557261793")
+@pytest.mark.xfail(
+    reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2557261793"
+)
 def test_evaluate_params_norm_set_params_with_float():
 
     expr = Expression("norm(loc= c1 * __T__, scale=0.1)", expr_name="name")
@@ -367,7 +369,6 @@ def test_evaluate_params_norm_set_params_with_float():
 
     # assert frozen params are equal
     mesmer.testing.assert_dict_allclose(params, expected)
-
 
 
 def test_evaluate_params_norm_dataset():

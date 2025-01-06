@@ -257,6 +257,16 @@ def np_train_distrib(
     return dfit.coefficients_fit, dfit.quality_fit
 
 
+def _smooth_data(data, nn=10):
+    """Moving average of data"""
+    # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
+    return np.convolve(data, np.ones(nn) / nn, mode="same")
+
+
+def _finite_difference(f_high, f_low, x_high, x_low):
+    return (f_high - f_low) / (x_high - x_low)
+
+
 class distrib_cov:
 
     def __init__(
@@ -869,7 +879,7 @@ class distrib_cov:
                distribution should be close to its location by minimizing mean squared error
                between location and target samples.
             3. Fit of the coefficients of the scale, assuming that the deviation of the
-               distribution should be close from its scale, by minimizoing mean squared error between
+               distribution should be close from its scale, by minimizing mean squared error between
                the scale and the absolute deviations of the target samples from the location.
             4. Fit of remaining coefficients, assuming that the sample must be within
                the support of the distribution, with some margin. Optimizing for coefficients
@@ -878,7 +888,7 @@ class distrib_cov:
                and especially estimating those on shape. Optimized using the Negative Log
                Likelihoog, albeit without the validity of the coefficients.
             6. If step 5 yields invalid coefficients, fit coefficients on log-likelihood to the power n
-                to ensurine that all points are within a likely
+                to ensure that all points are within a likely
                support of the distribution. Two possibilities tried: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
                extremely unlikely values, that lead to division by 0 with CDF)
@@ -946,15 +956,15 @@ class distrib_cov:
         # preparing derivatives to estimate derivatives of data along predictors,
         # and infer a very first guess for the coefficients facilitates the
         # representation of the trends
-        smooth_targ = self._smooth_data(self.data_targ)
+        smooth_targ = _smooth_data(self.data_targ)
 
         mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
 
-        mean_minus_one_std = mean_smooth_targ - std_smooth_targ
-        mean_plus_one_std = mean_smooth_targ + std_smooth_targ
+        mean_m_one_std = mean_smooth_targ - std_smooth_targ
+        mean_p_one_std = mean_smooth_targ + std_smooth_targ
 
-        ind_targ_low = np.where(smooth_targ < mean_minus_one_std)[0]
-        ind_targ_high = np.where(smooth_targ > mean_plus_one_std)[0]
+        ind_targ_low = np.where(smooth_targ < mean_m_one_std)[0]
+        ind_targ_high = np.where(smooth_targ > mean_p_one_std)[0]
 
         mean_low_preds = {
             p: np.mean(self.data_pred[p][ind_targ_low]) for p in self.data_pred
@@ -966,8 +976,8 @@ class distrib_cov:
         mean_low_targs = np.mean(smooth_targ[ind_targ_low])
         mean_high_targs = np.mean(smooth_targ[ind_targ_high])
 
-        deriv_targ = {
-            p: self._difference_quotient(
+        derivative_targ = {
+            p: _finite_difference(
                 mean_high_targs, mean_low_targs, mean_high_preds[p], mean_low_preds[p]
             )
             for p in self.data_pred
@@ -981,7 +991,12 @@ class distrib_cov:
             # first guess for the coefficients of location. proven to be necessary
             # in many situations, & accelerate step 2)
             minimizer_kwargs = {
-                "args": (mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ)
+                "args": (
+                    mean_high_preds,
+                    mean_low_preds,
+                    derivative_targ,
+                    mean_smooth_targ,
+                )
             }
             globalfit_d01 = basinhopping(
                 func=self._fg_fun_deriv01,
@@ -1014,7 +1029,7 @@ class distrib_cov:
             localfit_loc = self._minimize(
                 func=self._fg_fun_loc,
                 x0=self.fg_coeffs[self.fg_ind_loc],
-                args=(smooth_targ),
+                args=(smooth_targ,),
                 fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
                 option_NelderMead="best_run",
             )
@@ -1174,17 +1189,7 @@ class distrib_cov:
                 fit = fit_NM
         return fit
 
-    @staticmethod
-    def _smooth_data(data, nn=10):
-        """Moving average of data"""
-        # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
-        return np.convolve(data, np.ones(nn) / nn, mode="same")
-
-    @staticmethod
-    def _difference_quotient(f_high, f_low, x_high, x_low):
-        return (f_high - f_low) / (x_high - x_low)
-
-    def _fg_fun_deriv01(self, x, pred_high, pred_low, deriv_targ, mean_targ):
+    def _fg_fun_deriv01(self, x, pred_high, pred_low, derivative_targ, mean_targ):
         r"""
         Loss function for very fist guess of the location coefficients. The objective is
         to 1) get a location with a similar change with the predictor as the target, and
@@ -1204,7 +1209,7 @@ class distrib_cov:
             Predictors for the high samples of the targets
         pred_low : dict[str, numpy array]
             Predictors for the low samples of the targets
-        deriv_targ : dict
+        derivative_targ : dict
             Derivatives of the target samples for every predictor
         mean_targ : float
             Mean of the (smoothed) target samples
@@ -1219,14 +1224,14 @@ class distrib_cov:
         params = self.expr_fit.evaluate_params(x, pred_high)
         loc_high = params["loc"]
 
-        deriv_loc = {
-            p: self._difference_quotient(loc_high, loc_low, pred_high[p], pred_low[p])
+        derivative_loc = {
+            p: _finite_difference(loc_high, loc_low, pred_high[p], pred_low[p])
             for p in self.data_pred
         }
 
         return (
             np.sum(
-                [(deriv_loc[p] - deriv_targ[p]) ** 2 for p in self.data_pred]
+                [(derivative_loc[p] - derivative_targ[p]) ** 2 for p in self.data_pred]
                 # ^ change of the location with the predictor should be similar to the change of the target with the predictor
             )
             + (0.5 * (loc_low + loc_high) - mean_targ) ** 2
@@ -1321,8 +1326,8 @@ class distrib_cov:
         worst_diff_top = np.min(diff_top)
 
         # preparing margin on support
-        s = np.std(self.data_targ)
-        margin = margin0 * s
+        std = np.std(self.data_targ)
+        margin = margin0 * std
 
         # optimization
         if worst_diff_bot < 0:  # sample out of bottom support
