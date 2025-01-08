@@ -6,6 +6,7 @@ Required dependencies
 
 - Python (3.10 or later)
 - `dask <https://dask.org/>`__
+- `filefisher <https://filefisher.readthedocs.io/en/latest/>`__
 - `joblib <https://joblib.readthedocs.io/en/latest/>`__
 - `netcdf4 <https://unidata.github.io/netcdf4-python/>`__
 - `numpy <http://www.numpy.org/>`__
