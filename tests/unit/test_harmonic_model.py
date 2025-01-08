@@ -60,7 +60,7 @@ def test_predict_harmonic_model():
         result,
         "result",
         ndim=2,
-        required_dims=["time", "cells"],
+        required_dims={"time", "cells"},
         shape=(n_years * 12, n_gridcells),
     )
 

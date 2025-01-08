@@ -660,6 +660,7 @@ def _draw_innovations_correlated_np(
 ):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
+    cov = None
     try:
         cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
     except np.linalg.LinAlgError as e:
@@ -717,8 +718,8 @@ def fit_auto_regression(
         kwargs={"lags": lags},
     )
 
-    if np.ndim(lags) == 0:
-        lags = np.arange(lags) + 1
+    if isinstance(lags, int):
+        lags = list(np.arange(lags) + 1)
 
     # return intercept, coeffs, variance, lags, nobs
     data_vars = {

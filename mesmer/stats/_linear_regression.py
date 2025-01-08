@@ -96,7 +96,8 @@ class LinearRegression:
             raise ValueError(f"Missing predictors: '{missing}'")
 
         if available_predictors - required_predictors:
-            superfluous = sorted(available_predictors - required_predictors)
+            superfluous = map(str, available_predictors - required_predictors)
+            superfluous = sorted(superfluous)
             superfluous = "', '".join(superfluous)
             raise ValueError(
                 f"Superfluous predictors: '{superfluous}', either params",

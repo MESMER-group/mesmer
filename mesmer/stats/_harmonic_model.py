@@ -26,7 +26,7 @@ def _get_cos_sin(order):
 
     factor = 2 * np.pi / 12
     k = np.arange(1.0, order + 1)
-    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
+    alpha = np.arange(0, 12 * factor, step=factor).reshape(-1, 1) * k
 
     # combine cosine and sine into one array
     cos_sin = np.empty((12, order * 2))

@@ -139,7 +139,7 @@ def test_lowess_2D():
     result = mesmer.stats.lowess(data, "time", frac=0.3)
 
     _check_dataarray_form(
-        result, "result", ndim=2, required_dims=("time", "cells"), shape=data.shape
+        result, "result", ndim=2, required_dims={"time", "cells"}, shape=data.shape
     )
 
 
