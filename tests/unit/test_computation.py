@@ -12,7 +12,7 @@ def test_gaspari_cohn_error():
     ds = xr.Dataset()
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        gaspari_cohn(ds)
+        gaspari_cohn(ds) # type: ignore
 
 
 def test_gaspari_cohn():
@@ -61,13 +61,13 @@ def test_calc_geodist_dataset_error():
     da = xr.DataArray()
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        geodist_exact(ds, ds)
+        geodist_exact(ds, ds) # type: ignore
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        geodist_exact(ds, da)
+        geodist_exact(ds, da) # type: ignore
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        geodist_exact(da, ds)
+        geodist_exact(da, ds) # type: ignore
 
 
 def test_calc_geodist_dataarray_equal_dims_required():
@@ -82,7 +82,7 @@ def test_calc_geodist_dataarray_equal_dims_required():
 @pytest.mark.parametrize("as_dataarray", [True, False])
 def test_calc_geodist_not_same_shape_error(as_dataarray):
 
-    lon, lat = [0, 0], [0]
+    lon, lat = np.array([0, 0]), np.array([0])
 
     if as_dataarray:
         lon, lat = xr.DataArray(lon), xr.DataArray(lat)
@@ -94,7 +94,7 @@ def test_calc_geodist_not_same_shape_error(as_dataarray):
 @pytest.mark.parametrize("as_dataarray", [True, False])
 def test_calc_geodist_not_1D_error(as_dataarray):
 
-    lon = lat = [[0, 0]]
+    lon = lat = np.array([[0, 0]])
 
     if as_dataarray:
         lon, lat = xr.DataArray(lon), xr.DataArray(lat)
@@ -110,7 +110,7 @@ def test_geodist_exact_equal(lon, as_dataarray):
 
     expected = np.array([[0, 0], [0, 0]])
 
-    lat = [0, 0]
+    lat = np.array([0, 0])
 
     if as_dataarray:
         lon = xr.DataArray(lon)
@@ -125,8 +125,8 @@ def test_geodist_exact_equal(lon, as_dataarray):
 def test_geodist_exact(as_dataarray):
     """test some random points"""
 
-    lon = [-180, 0, 3]
-    lat = [0, 0, 5]
+    lon = np.array([-180, 0, 3])
+    lat = np.array([0, 0, 5])
 
     if as_dataarray:
         lon = xr.DataArray(lon, dims="gp", coords={"lon": ("gp", lon)})

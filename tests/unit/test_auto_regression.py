@@ -682,7 +682,7 @@ def test_fit_auto_regression_monthly():
     )
 
     with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
-        mesmer.stats.fit_auto_regression_monthly(data.values)
+        mesmer.stats.fit_auto_regression_monthly(data.values)  # type: ignore
 
 
 @pytest.mark.filterwarnings(

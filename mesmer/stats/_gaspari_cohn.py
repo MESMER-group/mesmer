@@ -3,11 +3,16 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
+from collections.abc import Iterable
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 
 
-def gaspari_cohn_correlation_matrices(geodist, localisation_radii):
+def gaspari_cohn_correlation_matrices(
+    geodist: xr.DataArray | np.ndarray, localisation_radii: Iterable[float]
+) -> dict[float, xr.DataArray | np.ndarray]:
     """Gaspari-Cohn correlation matrices for a range of localisation radii
 
     Parameters
@@ -38,18 +43,18 @@ def gaspari_cohn_correlation_matrices(geodist, localisation_radii):
     return out
 
 
-def gaspari_cohn(r):
+def gaspari_cohn(r: xr.DataArray | np.ndarray | int | float) -> xr.DataArray | np.ndarray:
     """smooth, exponentially decaying Gaspari-Cohn correlation function
 
     Parameters
     ----------
-    r : xr.DataArray, np.ndarray
+    r : xr.DataArray, np.ndarray, int or float
         Values for which to calculate the value of the Gaspari-Cohn correlation function
         (e.g. normalised geographical distances)
 
     Returns
     -------
-    out : xr.DataArray, , np.ndarray
+    out : xr.DataArray, np.ndarray
         Gaspari-Cohn correlation function
 
     Notes
