@@ -23,6 +23,7 @@ from mesmer.stats._power_transformer import (
     lambda_function,
     yeo_johnson_transform,
 )
+from mesmer.stats._principal_component_decomposition import fit_principal_components, transform_principal_components, inverse_transform_principal_components
 from mesmer.stats._smoothing import lowess
 
 __all__ = [
