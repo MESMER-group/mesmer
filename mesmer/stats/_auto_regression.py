@@ -720,8 +720,8 @@ def fit_auto_regression(
         kwargs={"lags": lags},
     )
 
-    if isinstance(lags, int):
-        lags = list(np.arange(lags) + 1)
+    if np.ndim(lags) == 0:
+        lags = np.arange(lags) + 1
 
     # return intercept, coeffs, variance, lags, nobs
     data_vars = {
