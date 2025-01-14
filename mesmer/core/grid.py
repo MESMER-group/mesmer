@@ -24,7 +24,9 @@ def _lon_to_360(lon):
     return lon
 
 
-def wrap_to_180(obj: xr.Dataset | xr.DataArray, lon_name: str ="lon") -> xr.Dataset | xr.DataArray:
+def wrap_to_180(
+    obj: xr.Dataset | xr.DataArray, lon_name: str = "lon"
+) -> xr.Dataset | xr.DataArray:
     """
     wrap array with longitude to [-180..180)
 
@@ -49,7 +51,9 @@ def wrap_to_180(obj: xr.Dataset | xr.DataArray, lon_name: str ="lon") -> xr.Data
     return obj
 
 
-def wrap_to_360(obj: xr.Dataset | xr.DataArray, lon_name: str ="lon") -> xr.Dataset | xr.DataArray:
+def wrap_to_360(
+    obj: xr.Dataset | xr.DataArray, lon_name: str = "lon"
+) -> xr.Dataset | xr.DataArray:
     """
     wrap array with longitude to [0..360)
 

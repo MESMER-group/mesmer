@@ -12,7 +12,7 @@ def test_gaspari_cohn_error():
     ds = xr.Dataset()
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        gaspari_cohn(ds) # type: ignore
+        gaspari_cohn(ds)  # type: ignore
 
 
 def test_gaspari_cohn():
@@ -61,13 +61,13 @@ def test_calc_geodist_dataset_error():
     da = xr.DataArray()
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        geodist_exact(ds, ds) # type: ignore
+        geodist_exact(ds, ds)  # type: ignore
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        geodist_exact(ds, da) # type: ignore
+        geodist_exact(ds, da)  # type: ignore
 
     with pytest.raises(TypeError, match="Dataset is not supported"):
-        geodist_exact(da, ds) # type: ignore
+        geodist_exact(da, ds)  # type: ignore
 
 
 def test_calc_geodist_dataarray_equal_dims_required():

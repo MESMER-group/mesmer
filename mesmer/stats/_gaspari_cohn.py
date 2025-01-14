@@ -4,7 +4,6 @@
 # https://www.gnu.org/licenses/
 
 from collections.abc import Iterable
-from typing import Literal
 
 import numpy as np
 import xarray as xr
@@ -43,7 +42,9 @@ def gaspari_cohn_correlation_matrices(
     return out
 
 
-def gaspari_cohn(r: xr.DataArray | np.ndarray | int | float) -> xr.DataArray | np.ndarray:
+def gaspari_cohn(
+    r: xr.DataArray | np.ndarray | int | float,
+) -> xr.DataArray | np.ndarray:
     """smooth, exponentially decaying Gaspari-Cohn correlation function
 
     Parameters
