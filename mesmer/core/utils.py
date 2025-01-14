@@ -157,8 +157,8 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: str | Iterable | None = set(),
-    optional_vars: str | Iterable | None = set(),
+    required_vars: str | Iterable[str] | None = set(),
+    optional_vars: str | Iterable[str] | None = set(),
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
@@ -207,7 +207,7 @@ def _check_dataarray_form(
     name: str = "obj",
     *,
     ndim: tuple[int, ...] | int | None = None,
-    required_dims: str | Iterable | None = set(),
+    required_dims: str | Iterable[str] | None = set(),
     shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
