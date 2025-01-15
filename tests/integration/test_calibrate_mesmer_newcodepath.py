@@ -104,7 +104,7 @@ def test_calibrate_mesmer(
     )
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",
+        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}", # type: ignore
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
@@ -136,7 +136,7 @@ def test_calibrate_mesmer(
 
         # load all members for a scenario
         members = []
-        for fN, meta in files:
+        for fN, meta in files.items():
             ds = xr.open_dataset(fN, use_cftime=True)
             # drop unnecessary variables
             ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
@@ -165,7 +165,7 @@ def test_calibrate_mesmer(
             files = fc_hfds.search(scenario=scen)
 
             members = []
-            for fN, meta in files:
+            for fN, meta in files.items():
                 ds = xr.open_dataset(fN, use_cftime=True)
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
