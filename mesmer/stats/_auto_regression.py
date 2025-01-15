@@ -919,8 +919,10 @@ def draw_auto_regression_monthly(
         that will be the assigned time dimension of the predictions.
     n_realisations : int
         The number of realisations to draw.
-    seed : int
-        Seed used to initialize the pseudo-random number generator.
+    seed : int | xr.Dataset
+        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
+        contains a single variable "seed" with the seed value, used if this function is mapped over
+        a DataTree to draw samples for multiple scenarios.
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
@@ -953,6 +955,9 @@ def draw_auto_regression_monthly(
         covariance, "covariance", ndim=3, shape=(n_months, size, size)
     )
 
+    if isinstance(seed, xr.Dataset):
+        seed = int(seed.seed.values)
+
     result = _draw_ar_corr_monthly_xr_internal(
         intercept=ar_params.intercept,
         slope=ar_params.slope,
@@ -965,7 +970,7 @@ def draw_auto_regression_monthly(
         realisation_dim=realisation_dim,
     )
 
-    return result
+    return result.rename("samples")
 
 
 def _draw_ar_corr_monthly_xr_internal(
