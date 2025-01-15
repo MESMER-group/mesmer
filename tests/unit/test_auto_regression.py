@@ -823,13 +823,13 @@ def test_draw_autoregression_monthly_np_rng():
     assert np.not_equal(jan, feb).any()
 
 
-def test_draw_auto_regression_monthly():
+@pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
+def test_draw_auto_regression_monthly(seed):
     freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
 
     n_gridcells = 10
     n_realisations = 5
     n_years = 10
-    seed = 0
     buffer = 10
     rng = np.random.default_rng(seed=0)
 
