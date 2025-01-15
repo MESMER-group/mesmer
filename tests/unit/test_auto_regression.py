@@ -877,14 +877,14 @@ def test_draw_auto_regression_monthly(seed):
 
 
 def test_draw_auto_regression_monthly_dt():
-    
+
     seeds = DataTree.from_dict(
         {
             "scen1": xr.DataArray(np.array([25])).rename("seed"),
             "scen2": xr.DataArray(np.array([42])).rename("seed"),
         }
     )
-    
+
     freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
 
     n_gridcells = 10
@@ -893,7 +893,7 @@ def test_draw_auto_regression_monthly_dt():
     buffer = 10
 
     rng = np.random.default_rng(seed=0)
-    
+
     slopes = xr.DataArray(
         rng.normal(-0.99, 0.99, size=(12, n_gridcells)),
         dims=("month", "gridcell"),
@@ -940,12 +940,12 @@ def test_draw_auto_regression_monthly_dt():
         "samples",
         ndim=3,
         required_dims={"time", "gridcell", "realisation"},
-        shape=(n_years*12, n_gridcells, n_realisation),
+        shape=(n_years * 12, n_gridcells, n_realisation),
     )
     _check_dataarray_form(
         result["scen2"].samples,
         "samples",
         ndim=3,
         required_dims={"time", "gridcell", "realisation"},
-        shape=(n_years*12, n_gridcells, n_realisation),
+        shape=(n_years * 12, n_gridcells, n_realisation),
     )
