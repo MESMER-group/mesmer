@@ -772,7 +772,8 @@ def test_fit_auto_regression_monthly():
 def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
     n_gridcells = 10
-    rng = np.random.default_rng(seed=0)
+    seed = 0
+    rng = np.random.default_rng(seed=seed)
     slope = rng.uniform(-1, 1, size=(12, n_gridcells))
     intercept = np.ones((12, n_gridcells))
     covariance = np.zeros((12, n_gridcells, n_gridcells))
