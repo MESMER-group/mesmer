@@ -31,4 +31,4 @@ dependencies:
  - ruff
  - pip
  - pip:
-    - filefisher
+    - filefisher>=1.0.1
