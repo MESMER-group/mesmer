@@ -124,7 +124,7 @@ def test_calibrate_mesmer(
         member=unique_scen_members,
     )
 
-    fc_all = FileContainer(pandas.concat([fc_hist.df, fc_scens.df]))
+    fc_all = fc_hist.concat(fc_scens)
 
     scenarios_whist = scenarios.copy()
     scenarios_whist.append("historical")
