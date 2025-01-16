@@ -228,7 +228,7 @@ def test_calibrate_mesmer(
         tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
 
-    if not dt_hfds is None:
+    if dt_hfds is not None:
         hfds_ref = dt_hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
         hfds_anoms = dt_hfds - hfds_ref.ds
         hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
@@ -248,7 +248,7 @@ def test_calibrate_mesmer(
     )
     if use_tas2:
         predictors["tas2"] = tas_globmean_smoothed**2
-    if not hfds_globmean_smoothed is None:
+    if hfds_globmean_smoothed is not None:
         predictors["hfds"] = hfds_globmean_smoothed
 
     weights = mesmer.weighted.equal_scenario_weights_from_datatree(
