@@ -2,11 +2,10 @@ import pathlib
 
 import joblib
 import numpy as np
-import pandas
 import pytest
 import xarray as xr
 from datatree import DataTree, map_over_subtree
-from filefisher import FileContainer, FileFinder
+from filefisher import FileFinder
 
 import mesmer
 import mesmer.core.datatree
@@ -105,7 +104,7 @@ def test_calibrate_mesmer(
 
     CMIP_FILEFINDER = FileFinder(
         path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
-        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{variant}_{resolution}.nc",
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
@@ -113,7 +112,7 @@ def test_calibrate_mesmer(
     )
 
     # only get the historical members that are also in the future scenarios, but only once
-    unique_scen_members = fc_scens.df.member.unique()
+    unique_scen_members = fc_scens.df.variant.unique()
 
     fc_hist = CMIP_FILEFINDER.find_files(
         variable="tas",
@@ -121,17 +120,17 @@ def test_calibrate_mesmer(
         model=esm,
         resolution="g025",
         time_res="ann",
-        member=unique_scen_members,
+        variant=unique_scen_members,
     )
 
     fc_all = fc_hist.concat(fc_scens)
 
-    scenarios_whist = scenarios.copy()
-    scenarios_whist.append("historical")
+    scenarios_incl_hist = scenarios.copy()
+    scenarios_incl_hist.append("historical")
 
     # load data for each scenario
     dt = DataTree()
-    for scen in scenarios_whist:
+    for scen in scenarios_incl_hist:
         files = fc_all.search(scenario=scen)
 
         # load all members for a scenario
@@ -141,27 +140,27 @@ def test_calibrate_mesmer(
             # drop unnecessary variables
             ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
             # assign member-ID as coordinate
-            ds = ds.assign_coords({"member": meta["member"]})
+            ds = ds.assign_coords({"member": meta["variant"]})
             members.append(ds)
 
         # create a Dataset that holds each member along the member dimension
         scen_data = xr.concat(members, dim="member")
         # put the scenario dataset into the DataTree
-        dt[f"{scen}"] = DataTree(scen_data)
+        dt[scen] = DataTree(scen_data)
 
     # load additional data
     if use_hfds:
         fc_hfds = CMIP_FILEFINDER.find_files(
             variable="hfds",
-            scenario=scenarios_whist,
+            scenario=scenarios_incl_hist,
             model=esm,
             resolution="g025",
             time_res="ann",
-            member=unique_scen_members,
+            variant=unique_scen_members,
         )
 
         dt_hfds = DataTree()
-        for scen in scenarios_whist:
+        for scen in scenarios_incl_hist:
             files = fc_hfds.search(scenario=scen)
 
             members = []
@@ -170,11 +169,11 @@ def test_calibrate_mesmer(
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
                 )
-                ds = ds.assign_coords({"member": meta["member"]})
+                ds = ds.assign_coords({"member": meta["variant"]})
                 members.append(ds)
 
             scen_data = xr.concat(members, dim="member")
-            dt_hfds[f"{scen}"] = DataTree(scen_data)
+            dt_hfds[scen] = DataTree(scen_data)
     else:
         dt_hfds = None
 
@@ -200,8 +199,9 @@ def test_calibrate_mesmer(
     )
 
     # train global trend module
+    tas_globmean_ensmean = tas_globmean.mean(dim="member")
     tas_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-        tas_globmean.mean(dim="member"), "time", n_steps=50, use_coords=False
+        tas_globmean_ensmean, "time", n_steps=50, use_coords=False
     )
     hist_lowess_residuals = (
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
@@ -232,8 +232,9 @@ def test_calibrate_mesmer(
         hfds_ref = dt_hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
         hfds_anoms = dt_hfds - hfds_ref.ds
         hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
+        hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
         hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-            hfds_globmean.mean(dim="member"), "time", n_steps=50, use_coords=False
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
 
     # train local forced response module
@@ -271,7 +272,7 @@ def test_calibrate_mesmer(
     # train local AR process
     tas_stacked_residuals = local_forced_response_lr.residuals(
         predictors=predictors_stacked, target=target_stacked.tas
-    ).T
+    )
 
     tas_un_stacked_residuals = tas_stacked_residuals.set_index(
         sample=("time", "member", "scenario")
