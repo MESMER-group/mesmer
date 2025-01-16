@@ -99,13 +99,13 @@ def test_calibrate_mesmer(
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / outname
 
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
-    )
-
     PARAM_FILEFINDER = FileFinder(
         path_pattern = TEST_PATH / "params/{scope}/{param_type}",
         file_pattern = "params_{short_type}_{method}_tas_{esm}_{scen}_new.nc"
+    )
+    
+    cmip_data_path = (
+        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
     )
 
     CMIP_FILEFINDER = FileFinder(
