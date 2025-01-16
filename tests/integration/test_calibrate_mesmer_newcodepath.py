@@ -80,6 +80,7 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
+    update_expected_files = False,
 ):
 
     # define config values
@@ -100,6 +101,11 @@ def test_calibrate_mesmer(
 
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
+    )
+
+    PARAM_FILEFINDER = FileFinder(
+        path_pattern = TEST_PATH / "params/{scope}/{param_type}",
+        file_pattern = "params_{short_type}_{method}_tas_{esm}_{scen}_new.nc"
     )
 
     CMIP_FILEFINDER = FileFinder(
@@ -318,14 +324,43 @@ def test_calibrate_mesmer(
         )
     )
 
-    # testing
-    assert_params_allclose(
-        TEST_PATH,
-        global_ar_params,
-        local_forced_response_lr,
-        local_ar_params,
-        localized_ecov,
-    )
+    # parameter paths
+    scen_str = "-".join(scenarios)
+
+    volcanic_file = PARAM_FILEFINDER.create_full_name(scope="global", param_type="global_trend",
+                                                      short_type="gt", method="LOWESS_OLSVOLC_saod",
+                                                      esm=esm, scen=scen_str)
+    global_ar_file = PARAM_FILEFINDER.create_full_name(scope="global", param_type="global_variability",
+                                                      short_type="gv", method="AR_tas",
+                                                      esm=esm, scen=scen_str)
+    local_forced_file = PARAM_FILEFINDER.create_full_name(scope="local", param_type="local_trends",
+                                                      short_type="lt", method="OLS_gttas",
+                                                      esm=esm, scen=scen_str)
+    local_ar_file = PARAM_FILEFINDER.create_full_name(scope="local", param_type="local_variability",
+                                                      short_type="lv", method="OLS_AR1_sci_gvtas",
+                                                      esm=esm, scen=scen_str)
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(scope="local", param_type="local_variability",
+                                                            short_type="lv", method="localized_ecov",
+                                                            esm=esm, scen=scen_str)
+    
+    if update_expected_files:
+        # save the parameters
+        volcanic_params.to_netcdf(volcanic_file)
+        global_ar_params.to_netcdf(global_ar_file)
+        local_forced_response_lr.to_netcdf(local_forced_file)
+        local_ar_params.to_netcdf(local_ar_file)
+        localized_ecov.to_netcdf(localized_ecov_file)
+        pytest.skip("Updated param files.")
+
+    else:
+        # testing
+        assert_params_allclose(
+            TEST_PATH,
+            global_ar_params,
+            local_forced_response_lr,
+            local_ar_params,
+            localized_ecov,
+        )
 
 
 def assert_params_allclose(
