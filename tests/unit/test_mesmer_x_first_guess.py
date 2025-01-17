@@ -258,7 +258,7 @@ def test_first_guess_with_bounds():
     expected = np.array([-0.005093813, 1.015267311])
     np.testing.assert_allclose(result, expected, rtol=1e-5)
 
-    # test with wrong bounds
+    # test with bounds outside true value
     scale_bounds_wrong = (0.5, 0.8)
     boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds_wrong}
     dist = distrib_cov(
