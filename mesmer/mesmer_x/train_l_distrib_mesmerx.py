@@ -1040,17 +1040,15 @@ class distrib_cov:
         self.fg_ind_loc = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
         )
-        # location might not be used (beta distribution) or set in the expression
-        if len(self.fg_ind_loc) > 0:
-            
-            localfit_loc = self._minimize(
-                func=self._fg_fun_loc,
-                x0=self.fg_coeffs[self.fg_ind_loc],
-                args=(smooth_targ,),
-                fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
-                option_NelderMead="best_run",
-            )
-            self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
+
+        localfit_loc = self._minimize(
+            func=self._fg_fun_loc,
+            x0=self.fg_coeffs[self.fg_ind_loc],
+            args=(smooth_targ,),
+            fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
+            option_NelderMead="best_run",
+        )
+        self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
 
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
@@ -1058,22 +1056,21 @@ class distrib_cov:
         self.fg_ind_sca = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
         )
-        # scale might not be used (beta distribution) or set in the expression
-        if len(self.fg_ind_sca) > 0:
-            if self.first_guess is None:
-                # compared to all 0, better for ref level but worse for trend
-                x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
 
-            else:
-                x0 = self.fg_coeffs[self.fg_ind_sca]
+        if self.first_guess is None:
+            # compared to all 0, better for ref level but worse for trend
+            x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
 
-            localfit_sca = self._minimize(
-                func=self._fg_fun_sca,
-                x0=x0,
-                fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
-                option_NelderMead="best_run",
-            )
-            self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
+        else:
+            x0 = self.fg_coeffs[self.fg_ind_sca]
+
+        localfit_sca = self._minimize(
+            func=self._fg_fun_sca,
+            x0=x0,
+            fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
+            option_NelderMead="best_run",
+        )
+        self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
