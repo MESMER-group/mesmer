@@ -85,6 +85,7 @@ def test_first_guess_GEV(shape):
     )
     dist2.find_fg()
     result2 = dist.fg_coeffs
+    # NOTE: leads to the same result as without first guess
     np.testing.assert_equal(result2, result)  # No
 
 
