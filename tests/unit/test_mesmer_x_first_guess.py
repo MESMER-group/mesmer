@@ -3,6 +3,7 @@ import pytest
 from scipy.stats import beta, genextreme, laplace, truncnorm
 
 from mesmer.mesmer_x import Expression, distrib_cov
+from mesmer.mesmer_x.train_l_distrib_mesmerx import _smooth_data
 
 
 def test_first_guess_standard_normal():
@@ -11,7 +12,7 @@ def test_first_guess_standard_normal():
     pred = np.ones(n)
     targ = rng.normal(loc=0, scale=1, size=n)
 
-    expression = Expression("norm(loc=c1, scale=c3)", expr_name="exp1")
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
 
     dist = distrib_cov(targ, {"tas": pred}, expression)
 
@@ -315,7 +316,7 @@ def test_fg_func_deriv01():
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     dist = distrib_cov(targ, {"tas": pred}, expression)
 
-    smooth_targ = dist._smooth_data(targ)
+    smooth_targ = _smooth_data(targ)
 
     mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
 

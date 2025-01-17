@@ -257,10 +257,26 @@ def np_train_distrib(
     return dfit.coefficients_fit, dfit.quality_fit
 
 
-def _smooth_data(data, nn=10):
-    """Moving average of data"""
+def _smooth_data(data, length=10):
+    """
+    Moving average of 1D data: Applies a convolution to the data where the kernel is a
+    window of length `length` with values 1/`length`.
+
+    Parameters
+    ----------
+    data : numpy array 1D
+        Data to smooth
+    length: int, default: 10
+        Length of the window for the moving average
+
+    Returns
+    -------
+    obj: numpy array 1D
+        Smoothed data
+
+    """
     # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
-    return np.convolve(data, np.ones(nn) / nn, mode="same")
+    return np.convolve(data, np.ones(length) / length, mode="same")
 
 
 def _finite_difference(f_high, f_low, x_high, x_low):
@@ -1026,6 +1042,7 @@ class distrib_cov:
         )
         # location might not be used (beta distribution) or set in the expression
         if len(self.fg_ind_loc) > 0:
+            
             localfit_loc = self._minimize(
                 func=self._fg_fun_loc,
                 x0=self.fg_coeffs[self.fg_ind_loc],
