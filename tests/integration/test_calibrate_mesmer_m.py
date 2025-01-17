@@ -89,13 +89,12 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     )
 
     # train power transformer
-    resids_after_hm = tas_stacked_m - harmonic_model_fit.predictions
     pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
         tas_stacked_y.tas,
-        resids_after_hm.tas,
+        harmonic_model_fit.residuals,
     )
     transformed_hm_resids = mesmer.stats.yeo_johnson_transform(
-        tas_stacked_y.tas, resids_after_hm.tas, pt_coefficients
+        tas_stacked_y.tas, harmonic_model_fit.residuals, pt_coefficients
     )
 
     # fit cyclo-stationary AR(1) process
@@ -122,6 +121,11 @@ def test_calibrate_mesmer_m(update_expected_files=False):
 
     # save params
     if update_expected_files:
+        # drop unnecessary variables
+        harmonic_model_fit = harmonic_model_fit.drop_vars(["residuals", "time"])
+        AR1_fit = AR1_fit.drop_vars(["residuals", "time"])
+
+        # save
         harmonic_model_fit.to_netcdf(
             TEST_PATH
             / "harmonic_model"

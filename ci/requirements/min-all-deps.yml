@@ -23,6 +23,9 @@ dependencies:
  - statsmodels=0.14
  - xarray=2023.7
  - xarray-datatree=0.0.13
+ - pip=23.1
+ - pip:
+    - filefisher==1.0.1
 # for testing
  - pytest
  - pytest-cov

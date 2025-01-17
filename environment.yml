@@ -29,3 +29,6 @@ dependencies:
  - pytest-cov
  - pytest-xdist
  - ruff
+ - pip
+ - pip:
+    - filefisher>=1.0.1
