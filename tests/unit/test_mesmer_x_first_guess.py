@@ -315,8 +315,8 @@ def test_fg_fun_sca():
     rng = np.random.default_rng(0)
     n = 251
     pred = np.ones(n)
-    loc = 0
-    scale = 1
+    loc = 0.0
+    scale = 1.0
 
     # test normal
     targ = rng.normal(loc=loc, scale=scale, size=n)
@@ -335,13 +335,14 @@ def test_fg_fun_sca():
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
 
     dist = distrib_cov(targ, {"tas": pred}, expression)
-    dist.fg_coeffs = [loc, scale, 1]
+    dist.fg_coeffs = [loc, scale, 1.0]
     dist.fg_ind_sca = np.array([1])
 
     # test local minimum at true value
-    loss_at_toolow = dist._fg_fun_sca(scale - 1)
+    delta = 1.0 # don't get closer than this since for a GEV the variance is not necessarily close to the scale
+    loss_at_toolow = dist._fg_fun_sca(scale - delta)
     loss_at_truesolution = dist._fg_fun_sca(scale)
-    loss_at_toohigh = dist._fg_fun_sca(scale + 1)
+    loss_at_toohigh = dist._fg_fun_sca(scale + delta)
 
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution
@@ -364,11 +365,12 @@ def test_fg_fun_others():
     dist.fg_ind_others = np.array([2, 3])
 
     # test local minimum at true value
-    loss_at_toolow_a = dist._fg_fun_others([a - 1, b])
-    loss_at_toohigh_a = dist._fg_fun_others([a + 1, b])
+    delta = 1
+    loss_at_toolow_a = dist._fg_fun_others([a - delta, b])
+    loss_at_toohigh_a = dist._fg_fun_others([a + delta, b])
 
-    loss_at_toolow_b = dist._fg_fun_others([a, b - 1])
-    loss_at_toohigh_b = dist._fg_fun_others([a, b + 1])
+    loss_at_toolow_b = dist._fg_fun_others([a, b - delta])
+    loss_at_toohigh_b = dist._fg_fun_others([a, b + delta])
 
     loss_at_truesolution = dist._fg_fun_others([a, b])
 
