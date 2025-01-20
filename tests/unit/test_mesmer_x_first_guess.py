@@ -298,11 +298,11 @@ def test_fg_fun_loc():
 
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     dist = distrib_cov(targ, {"tas": pred}, expression)
-    dist.fg_coeffs = [0., 0.]
+    dist.fg_coeffs = [0.0, 0.0]
     dist.fg_ind_loc = np.array([0])
 
     # test local minima at true coefficients
-    delta = 1.e-4
+    delta = 1.0e-4
     loss_at_toolow = dist._fg_fun_loc(c1 - delta, targ)
     loss_at_truesolution = dist._fg_fun_loc(c1, targ)
     loss_at_toohigh = dist._fg_fun_loc(c1 + delta, targ)
@@ -339,7 +339,7 @@ def test_fg_fun_sca():
     dist.fg_ind_sca = np.array([1])
 
     # test local minimum at true value
-    delta = 1.0 # don't get closer than this since for a GEV the variance is not necessarily close to the scale
+    delta = 1.0  # don't get closer than this since for a GEV the variance is not necessarily close to the scale
     loss_at_toolow = dist._fg_fun_sca(scale - delta)
     loss_at_truesolution = dist._fg_fun_sca(scale)
     loss_at_toohigh = dist._fg_fun_sca(scale + delta)
