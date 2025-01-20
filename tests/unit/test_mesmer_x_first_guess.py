@@ -291,20 +291,21 @@ def test_fg_func_deriv01():
 def test_fg_fun_loc():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.arange(n)
-    c1 = 2
+    pred = np.arange(np.float64(n))
+    c1 = 2.0
     c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
 
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     dist = distrib_cov(targ, {"tas": pred}, expression)
-    dist.fg_coeffs = [0, 0]
+    dist.fg_coeffs = [0., 0.]
     dist.fg_ind_loc = np.array([0])
 
     # test local minima at true coefficients
-    loss_at_toolow = dist._fg_fun_loc(c1 - 1, targ)
+    delta = 1.e-4
+    loss_at_toolow = dist._fg_fun_loc(c1 - delta, targ)
     loss_at_truesolution = dist._fg_fun_loc(c1, targ)
-    loss_at_toohigh = dist._fg_fun_loc(c1 + 1, targ)
+    loss_at_toohigh = dist._fg_fun_loc(c1 + delta, targ)
 
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution
