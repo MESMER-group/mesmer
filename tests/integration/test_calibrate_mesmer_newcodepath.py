@@ -1,7 +1,5 @@
 import pathlib
 
-import joblib
-import numpy as np
 import pytest
 import xarray as xr
 from datatree import DataTree, map_over_subtree
@@ -80,7 +78,7 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
-    update_expected_files = False,
+    update_expected_files=False,
 ):
 
     # define config values
@@ -100,10 +98,10 @@ def test_calibrate_mesmer(
     TEST_PATH = TEST_DATA_PATH / "output" / outname
 
     PARAM_FILEFINDER = FileFinder(
-        path_pattern = TEST_PATH / "params/{scope}/{param_type}",
-        file_pattern = "params_{short_type}_{method}_tas_{esm}_{scen}_new.nc"
+        path_pattern=TEST_PATH / "test-params/{scope}/{param_type}",
+        file_pattern="params_{short_type}_{method}_{esm}_{scen}.nc",
     )
-    
+
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
     )
@@ -327,22 +325,47 @@ def test_calibrate_mesmer(
     # parameter paths
     scen_str = "-".join(scenarios)
 
-    volcanic_file = PARAM_FILEFINDER.create_full_name(scope="global", param_type="global_trend",
-                                                      short_type="gt", method="LOWESS_OLSVOLC_saod",
-                                                      esm=esm, scen=scen_str)
-    global_ar_file = PARAM_FILEFINDER.create_full_name(scope="global", param_type="global_variability",
-                                                      short_type="gv", method="AR_tas",
-                                                      esm=esm, scen=scen_str)
-    local_forced_file = PARAM_FILEFINDER.create_full_name(scope="local", param_type="local_trends",
-                                                      short_type="lt", method="OLS_gttas",
-                                                      esm=esm, scen=scen_str)
-    local_ar_file = PARAM_FILEFINDER.create_full_name(scope="local", param_type="local_variability",
-                                                      short_type="lv", method="OLS_AR1_sci_gvtas",
-                                                      esm=esm, scen=scen_str)
-    localized_ecov_file = PARAM_FILEFINDER.create_full_name(scope="local", param_type="local_variability",
-                                                            short_type="lv", method="localized_ecov",
-                                                            esm=esm, scen=scen_str)
-    
+    volcanic_file = PARAM_FILEFINDER.create_full_name(
+        scope="global",
+        param_type="global_trend",
+        short_type="gt",
+        method="LOWESS_OLSVOLC_saod",
+        esm=esm,
+        scen=scen_str,
+    )
+    global_ar_file = PARAM_FILEFINDER.create_full_name(
+        scope="global",
+        param_type="global_variability",
+        short_type="gv",
+        method="AR_tas",
+        esm=esm,
+        scen=scen_str,
+    )
+    local_forced_file = PARAM_FILEFINDER.create_full_name(
+        scope="local",
+        param_type="local_trends",
+        short_type="lt",
+        method="OLS_gttas",
+        esm=esm,
+        scen=scen_str,
+    )
+    local_ar_file = PARAM_FILEFINDER.create_full_name(
+        scope="local",
+        param_type="local_variability",
+        short_type="lv",
+        method="OLS_AR1_sci_gvtas",
+        esm=esm,
+        scen=scen_str,
+    )
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(
+        scope="local",
+        param_type="local_variability",
+        short_type="lv",
+        method="localized_ecov",
+        esm=esm,
+        scen=scen_str,
+    )
+
     if update_expected_files:
         # save the parameters
         volcanic_params.to_netcdf(volcanic_file)
@@ -355,76 +378,40 @@ def test_calibrate_mesmer(
     else:
         # testing
         assert_params_allclose(
-            TEST_PATH,
+            volcanic_params,
             global_ar_params,
-            local_forced_response_lr,
+            local_forced_response_lr.params,
             local_ar_params,
             localized_ecov,
+            volcanic_file,
+            global_ar_file,
+            local_forced_file,
+            local_ar_file,
+            localized_ecov_file,
         )
 
 
 def assert_params_allclose(
-    TEST_PATH,
+    volcanic_params,
     global_ar_params,
-    local_forced_response_lr,
+    local_forced_params,
     local_ar_params,
     localized_ecov,
+    volcanic_file,
+    global_ar_file,
+    local_forced_file,
+    local_ar_file,
+    localized_ecov_file,
 ):
-    fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
-    bundle = joblib.load(fN_bundle)
+    # test params
+    exp_volcanic_params = xr.open_dataset(volcanic_file, use_cftime=True)
+    exp_global_ar_params = xr.open_dataset(global_ar_file, use_cftime=True)
+    exp_local_forced_params = xr.open_dataset(local_forced_file, use_cftime=True)
+    exp_local_ar_params = xr.open_dataset(local_ar_file, use_cftime=True)
+    exp_localized_ecov = xr.open_dataset(localized_ecov_file, use_cftime=True)
 
-    # TODO: Test volcanic influence params too (not in bundle)
-
-    # global variability
-    np.testing.assert_allclose(
-        bundle["params_gv"]["AR_int"], global_ar_params.intercept
-    )
-    np.testing.assert_equal(
-        bundle["params_gv"]["AR_order_sel"], global_ar_params.lags.max().values
-    )
-    np.testing.assert_allclose(bundle["params_gv"]["AR_coefs"], global_ar_params.coeffs)
-    np.testing.assert_allclose(
-        bundle["params_gv"]["AR_var_innovs"], global_ar_params.variance
-    )
-
-    # local forced response
-    np.testing.assert_allclose(
-        bundle["params_lt"]["intercept"]["tas"],
-        local_forced_response_lr.params.intercept,
-    )
-
-    np.testing.assert_allclose(
-        bundle["params_lt"]["coef_gttas"]["tas"],
-        local_forced_response_lr.params.tas_globmean,
-    )
-
-    np.testing.assert_allclose(
-        bundle["params_lv"]["coef_gvtas"]["tas"],
-        local_forced_response_lr.params.tas_globmean_resid,
-    )
-
-    # local variability
-    # AR process
-    np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_coef"]["tas"], local_ar_params.coeffs.squeeze()
-    )
-    np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_int"]["tas"], local_ar_params.intercept.squeeze()
-    )
-    np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_var_innovs"]["tas"],
-        local_ar_params.variance.squeeze(),
-    )
-
-    # covariance
-    assert bundle["params_lv"]["L"]["tas"] == localized_ecov.localization_radius
-
-    np.testing.assert_allclose(
-        bundle["params_lv"]["ecov"]["tas"], localized_ecov.covariance
-    )
-
-    np.testing.assert_allclose(
-        bundle["params_lv"]["loc_ecov"]["tas"],
-        localized_ecov.localized_covariance,
-        atol=1e-7,
-    )
+    xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
+    xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
+    xr.testing.assert_allclose(local_forced_params, exp_local_forced_params)
+    xr.testing.assert_allclose(local_ar_params, exp_local_ar_params)
+    xr.testing.assert_allclose(localized_ecov, exp_localized_ecov)
