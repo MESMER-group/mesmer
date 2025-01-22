@@ -1038,6 +1038,7 @@ class distrib_cov:
         # location coefficients)
         loc_coeffs = self.expr_fit.coefficients_dict["loc"]
         self.fg_ind_loc = np.array(
+            # TODO: move to `Expression`
             [self.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
         )
 
