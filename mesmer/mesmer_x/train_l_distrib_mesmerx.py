@@ -795,7 +795,7 @@ class distrib_cov:
 
     def _test_proba_value(self, distrib, data):
         """
-        Test that all cdf(data) >= threshold_min_proba and 1-cdf(data) >= threshold_min_proba
+        Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
         Ensures that data lies within a confidence interval of threshold_min_proba for the tested
         distribution.
         """
