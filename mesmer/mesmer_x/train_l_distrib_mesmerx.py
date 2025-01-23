@@ -564,8 +564,8 @@ class distrib_cov:
             "method_fit": "Powell",
             "xtol_req": 1e-6,
             "ftol_req": 1.0e-6,
-            "maxiter": 1000 * self.n_coeffs * np.log(self.n_coeffs),
-            "maxfev": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "maxiter": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
+            "maxfev": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
             "error_failedfit": False,
             "fg_with_global_opti": False,
         }
@@ -1057,9 +1057,9 @@ class distrib_cov:
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
         # TODO: move to `Expression`
-        try: 
+        try:
             scale_coeffs = self.expr_fit.coefficients_dict["scale"]
-        except KeyError: 
+        except KeyError:
             scale_coeffs = []
         # scale might not be used or set in the expression
         if len(scale_coeffs) > 0:
