@@ -108,7 +108,7 @@ def test_calibrate_mesmer(
 
     CMIP_FILEFINDER = FileFinder(
         path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
-        file_pattern="{variable}_{time_res}_{model}_{scenario}_{variant}_{resolution}.nc",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
@@ -116,7 +116,7 @@ def test_calibrate_mesmer(
     )
 
     # only get the historical members that are also in the future scenarios, but only once
-    unique_scen_members = fc_scens.df.variant.unique()
+    unique_scen_members = fc_scens.df.member.unique()
 
     fc_hist = CMIP_FILEFINDER.find_files(
         variable="tas",
@@ -124,7 +124,7 @@ def test_calibrate_mesmer(
         model=esm,
         resolution="g025",
         time_res="ann",
-        variant=unique_scen_members,
+        member=unique_scen_members,
     )
 
     fc_all = fc_hist.concat(fc_scens)
@@ -144,7 +144,7 @@ def test_calibrate_mesmer(
             # drop unnecessary variables
             ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
             # assign member-ID as coordinate
-            ds = ds.assign_coords({"member": meta["variant"]})
+            ds = ds.assign_coords({"member": meta["member"]})
             members.append(ds)
 
         # create a Dataset that holds each member along the member dimension
@@ -160,7 +160,7 @@ def test_calibrate_mesmer(
             model=esm,
             resolution="g025",
             time_res="ann",
-            variant=unique_scen_members,
+            member=unique_scen_members,
         )
 
         dt_hfds = DataTree()
@@ -173,7 +173,7 @@ def test_calibrate_mesmer(
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
                 )
-                ds = ds.assign_coords({"member": meta["variant"]})
+                ds = ds.assign_coords({"member": meta["member"]})
                 members.append(ds)
 
             scen_data = xr.concat(members, dim="member")
