@@ -1036,7 +1036,7 @@ class distrib_cov:
 
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
-        loc_coeffs = self.expr_fit.coefficients_dict["loc"]
+        loc_coeffs = self.expr_fit.coefficients_dict.get("loc", [])
         # TODO: move to `Expression`
         self.fg_ind_loc = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
@@ -1057,10 +1057,7 @@ class distrib_cov:
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
         # TODO: move to `Expression`
-        try:
-            scale_coeffs = self.expr_fit.coefficients_dict["scale"]
-        except KeyError:
-            scale_coeffs = []
+        scale_coeffs = self.expr_fit.coefficients_dict.get("scale", [])
 
         self.fg_ind_sca = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
