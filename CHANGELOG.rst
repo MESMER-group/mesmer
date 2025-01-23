@@ -110,6 +110,7 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
 - Add integration tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
                          `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
                          `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
+- Enable `threshold_min_proba` to be `None` in `distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_)
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
