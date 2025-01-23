@@ -1061,9 +1061,10 @@ class distrib_cov:
             scale_coeffs = self.expr_fit.coefficients_dict["scale"]
         except KeyError:
             scale_coeffs = []
-            self.fg_ind_sca = np.array(
-                [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
-            )
+        
+        self.fg_ind_sca = np.array(
+            [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
+        )
         # scale might not be used or set in the expression
         if len(self.fg_ind_sca) > 0:
             if self.first_guess is None:
