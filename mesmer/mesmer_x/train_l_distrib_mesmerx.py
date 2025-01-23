@@ -1206,7 +1206,8 @@ class distrib_cov:
                 },
             )
             if (option_NelderMead == "fail_run") or (
-                option_NelderMead == "best_run" and (fit_NM.fun < fit.fun or not fit.success)
+                option_NelderMead == "best_run"
+                and (fit_NM.fun < fit.fun or not fit.success)
             ):
                 fit = fit_NM
         return fit
