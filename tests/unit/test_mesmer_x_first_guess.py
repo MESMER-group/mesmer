@@ -38,7 +38,7 @@ def test_first_guess_standard_normal_including_pred():
     dist.find_fg()
     result = dist.fg_coeffs
 
-    np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.1)
+    np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.03)
 
 
 @pytest.mark.parametrize("first_guess", [[1.0, 1.0], [1.0, 2.0], [-1, 0.5], [10, 7]])
@@ -79,7 +79,7 @@ def test_first_guess_GEV(shape):
     expected = [loc, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, rtol=0.5)
+    np.testing.assert_allclose(result, expected, rtol=0.4)
 
     # any difference if we provide a first guess?
     dist2 = distrib_cov(
@@ -112,7 +112,7 @@ def test_first_guess_GEV_including_pred():
     expected = [c1, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, atol=0.2)
+    np.testing.assert_allclose(result, expected, rtol=0.2)
 
 
 def test_first_guess_truncnorm():
@@ -211,7 +211,7 @@ def test_first_guess_gamma():
     result = dist.fg_coeffs
     expected = [a]
 
-    np.testing.assert_allclose(result, expected, atol=0.03)
+    np.testing.assert_allclose(result, expected, rtol=0.02)
 
 
 def test_fg_fun_scale_laplace():
@@ -229,7 +229,7 @@ def test_fg_fun_scale_laplace():
     result = dist.fg_coeffs
     expected = [loc, scale]
 
-    np.testing.assert_allclose(result, expected, rtol=0.52)
+    np.testing.assert_allclose(result, expected, rtol=0.1)
 
 
 def test_first_guess_with_bounds():
@@ -270,7 +270,7 @@ def test_first_guess_with_bounds():
     dist.find_fg()
     result = dist.fg_coeffs
     expected = np.array([-0.016552528, 1.520612114])
-    np.testing.assert_allclose(result, expected, rtol=1e-5)
+    np.testing.assert_allclose(result, expected, rtol=1e-6)
     # ^ still finds a fg because we do not enforce the bounds on the fg
     # however the fg is significantly worse on the param with the wrong bounds
     # in contrast to the above the test below also runs step 6: fit on CDF or LL^n -> implications?
@@ -302,7 +302,7 @@ def test_first_guess_with_bounds():
     dist.find_fg()
     result = dist.fg_coeffs
     expected = np.array([-0.005093817, 1.015267298])
-    np.testing.assert_allclose(result, expected, rtol=1e-5)
+    np.testing.assert_allclose(result, expected, rtol=1e-6)
 
 
 @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
