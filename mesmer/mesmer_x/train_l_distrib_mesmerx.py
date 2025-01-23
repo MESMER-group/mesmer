@@ -1388,7 +1388,11 @@ class distrib_cov:
 
     def _fg_fun_LL_n(self, x, n=4):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
-        LL = np.sum(distrib.logpdf(self.data_targ) ** n)
+
+        if self.expr_fit.is_distrib_discrete:
+            LL = np.sum(distrib.logpmf(self.data_targ) ** n)
+        else:
+            LL = np.sum(distrib.logpdf(self.data_targ) ** n)
         return LL
 
     def find_bound(self, i_c, x0, fact_coeff):
