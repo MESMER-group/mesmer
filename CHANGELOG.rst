@@ -82,7 +82,7 @@ This release implements using `DataTree` from `xarray-datatree` to handle multip
 - Add `filefisher` as dependency to handle file paths of several scenarios (`#586 <https://github.com/MESMER-group/mesmer/pull/586>`_ and `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_).
 - Enable passing a `DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
-- Add `DataTree` and `xr.Dataset` formats to the LinearRegression (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
+- Enable passing `DataTree` and `xr.Dataset` to `LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
 - Add upper pin to `xarray` version to support `xarray-datatree`(`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
 - Add utility functions for `DataTree`s (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
 - Add `xarray-datatree` to the dependencies (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
