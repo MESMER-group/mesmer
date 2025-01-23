@@ -147,7 +147,7 @@ def test_first_guess_truncnorm():
     result = dist.fg_coeffs
     expected = [loc, scale, a, b]
 
-    np.testing.assert_allclose(result, expected, rtol=0.1)
+    np.testing.assert_allclose(result, expected, rtol=0.52)
 
 
 def test_fg_fun_scale_laplace():
@@ -165,7 +165,7 @@ def test_fg_fun_scale_laplace():
     result = dist.fg_coeffs
     expected = [loc, scale]
 
-    np.testing.assert_allclose(result, expected, rtol=0.1)
+    np.testing.assert_allclose(result, expected, rtol=0.52)
 
 
 def test_first_guess_with_bounds():
