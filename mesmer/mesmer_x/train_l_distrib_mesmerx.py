@@ -347,6 +347,7 @@ class distrib_cov:
             i.e. each sample lies within some confidence interval of the distribution.
             Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
             ensure that all points are feasible with the fitted distribution.
+            If `None` this test is skipped.
 
         boundaries_params : dict, default: None
             Prescribed boundaries on the parameters of the expression. Some basic
