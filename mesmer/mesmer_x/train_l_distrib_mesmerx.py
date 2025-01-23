@@ -1080,6 +1080,7 @@ class distrib_cov:
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
+        # TODO: move to `Expression`
         other_params = [
             p for p in self.expr_fit.parameters_list if p not in ["loc", "scale"]
         ]
