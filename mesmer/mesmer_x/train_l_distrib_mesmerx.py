@@ -531,7 +531,7 @@ class distrib_cov:
         if threshold_min_proba is not None and (
             (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
         ):
-            raise ValueError("`threshold_min_proba` must be in (0,0.5)")
+            raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
 
         self.threshold_min_proba = threshold_min_proba
 
