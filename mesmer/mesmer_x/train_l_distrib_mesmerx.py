@@ -342,7 +342,7 @@ class distrib_cov:
             out of support of the distribution.
 
         threshold_min_proba : float or None, default: 1e-9
-            if not None imposes a check during the fitting that every sample fulfills
+            If numeric imposes a check during the fitting that every sample fulfills
             `cdf(sample) >= threshold_min_proba and 1-cdf(sample) >= threshold_min_proba`,
             i.e. each sample lies within some confidence interval of the distribution.
             Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
