@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from scipy.stats import genextreme, laplace, truncnorm
+from scipy.stats import binom, hypergeom, genextreme, laplace, truncnorm
 
 from mesmer.mesmer_x import Expression, distrib_cov
 from mesmer.mesmer_x.train_l_distrib_mesmerx import _smooth_data
@@ -142,6 +142,49 @@ def test_first_guess_truncnorm():
     expected = [loc, scale, a, b]
 
     np.testing.assert_allclose(result, expected, rtol=0.52)
+
+
+def test_fg_binom():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n) * 0.5
+
+    n_trials = 10
+    p = 0.5
+    targ = binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
+
+    expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
+
+    first_guess = [11, 0.4]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+    result = dist.fg_coeffs
+    expected = [n_trials, p]
+
+    np.testing.assert_allclose(result, expected, rtol=0.2)
+
+
+def test_fg_hypergeom():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n, dtype=int) * 2
+
+    M = 100
+    n_draws = 10
+    n_success = 2
+    targ = hypergeom.rvs(M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n)
+
+    expression = Expression(
+        "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)", expr_name="exp1"
+    )
+
+    first_guess = [99, 9, 1]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+    result = dist.fg_coeffs
+    expected = [M, n_draws, n_success]
+
+    np.testing.assert_allclose(result, expected, rtol=0.1)
 
 
 def test_fg_fun_scale_laplace():
