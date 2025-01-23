@@ -92,10 +92,12 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
 - Add unit tests (`#526 <https://github.com/MESMER-group/mesmer/pull/526>`_,
                   `#533 <https://github.com/MESMER-group/mesmer/pull/533>`_,
                   `#534 <https://github.com/MESMER-group/mesmer/pull/534>`_,
-                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_)
+                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_,
+                  `#577 <https://github.com/MESMER-group/mesmer/pull/577>`_)
 - Add integration tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
                          `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
                          `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
+- Enable to pass set values for loc and scale (only integers) and make scale parameter optional (`#597 <https://github.com/MESMER-group/mesmer/pull/597>`_)
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
