@@ -86,6 +86,7 @@ This release implements using `DataTree` from `xarray-datatree` to handle multip
 - Add upper pin to `xarray` version to support `xarray-datatree`(`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
 - Add utility functions for `DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
 - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
+- Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
