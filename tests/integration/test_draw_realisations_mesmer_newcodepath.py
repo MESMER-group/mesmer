@@ -30,7 +30,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
 
     CMIP_FILEFINDER = FileFinder(
         path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}", # type: ignore
-        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member_label}_{resolution}.nc",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
@@ -46,7 +46,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         model=esm,
         resolution="g025",
         time_res="ann",
-        member_label=unique_scen_members,
+        member=unique_scen_members,
     )
 
     # load data for each scenario
