@@ -80,7 +80,7 @@ Data structure using xarray-datatree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This release implements using `DataTree` from `xarray-datatree` to handle multiple scenarios and members.
 - Add `filefisher` as dependency to handle file paths of several scenarios (`#586 <https://github.com/MESMER-group/mesmer/pull/586>`_ and `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_).
-- Implement `DataTree` in auto_regression (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
+- Enable passing a `DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add `DataTree` and `xr.Dataset` formats to the LinearRegression (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
 - Add upper pin to `xarray` version to support `xarray-datatree`(`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
