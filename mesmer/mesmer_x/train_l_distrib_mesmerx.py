@@ -1114,7 +1114,7 @@ class distrib_cov:
             self.fg_coeffs
         )
 
-        # if validate_coefficients all False (e.g. any of the coefficients are out of bounds)
+        # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
         if not (test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL doesnt behave well enough here)
