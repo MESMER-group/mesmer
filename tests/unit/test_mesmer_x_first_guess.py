@@ -135,7 +135,13 @@ def test_first_guess_truncnorm():
 
     # needs first guess different from 0, 0 for a and b, degenerate otherwise, also degenerate if a == b
     first_guess = [0.0, 1.0, -1, 2.0]
-    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess, threshold_min_proba=None)
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        threshold_min_proba=None,
+    )
     dist.find_fg()
 
     result = dist.fg_coeffs
