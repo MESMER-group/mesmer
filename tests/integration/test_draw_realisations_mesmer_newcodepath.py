@@ -1,21 +1,17 @@
-import os.path
-
-import joblib
-import numpy as np
 import pathlib
-import pandas
+
+import datatree
 import pytest
 import xarray as xr
-import datatree
 from datatree import DataTree, map_over_subtree
-from filefisher import FileFinder, FileContainer
+from filefisher import FileFinder
 
-import mesmer.create_emulations
-# comment 
+import mesmer
+
+
+# comment
 def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     # define config values
-    THRESHOLD_LAND = 1 / 3
-
     REFERENCE_PERIOD = slice("1850", "1900")
 
     esm = "IPSL-CM6A-LR"
@@ -29,7 +25,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     )
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}", # type: ignore
+        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
@@ -75,8 +71,8 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             files = fc_scens.search(scenario=scen)
 
             members = []
-            
-            for fN, meta in fc_scens.items():
+
+            for fN, meta in files.items():
 
                 try:
                     hist = load_hist(meta, fc_hist)
@@ -93,7 +89,9 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
                     coords="minimal",
                 )
 
-                ds = ds.drop_vars(("height", "time_bnds", "file_qf"), errors="ignore")
+                ds = ds.drop_vars(
+                    ("height", "time_bnds", "file_qf", "area"), errors="ignore"
+                )
 
                 ds = mesmer.grid.wrap_to_180(ds)
 
@@ -101,7 +99,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
                 ds = ds.assign_coords({"member": meta["member"]})
 
                 members.append(ds)
-            
+
             # create a Dataset that holds each member along the member dimension
             scen_data = xr.concat(members, dim="member")
             # put the scenario dataset into the DataTree
@@ -112,9 +110,11 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time")
     tas_anoms = tas - ref
     tas_globmean = map_over_subtree(mesmer.weighted.global_mean)(tas_anoms)
-    
-    # TODO mask out ocean here??
-    tas_globmean_forcing = map_over_subtree(mesmer.stats.lowess)(tas_globmean.mean(dim="member"), dim="time", n_steps=30, use_coords=False)
+
+    tas_globmean_ensmean = tas_globmean.mean(dim="member")
+    tas_globmean_forcing = map_over_subtree(mesmer.stats.lowess)(
+        tas_globmean_ensmean, dim="time", n_steps=30, use_coords=False
+    )
 
     if use_hfds:
         fc_hfds = CMIP_FILEFINDER.find_files(
@@ -135,22 +135,23 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             member=unique_scen_members,
         )
 
+        hfds = load_hist_scen_continuous(fc_hfds_hist, fc_hfds)
 
-        hfds = load_hist_scen_continuous(fc_hfds, fc_hfds_hist)
-
-        hfds_ref = hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
-        hfds_anoms = hfds - hfds_ref.ds
+        hfds_ref = hfds.sel(time=REFERENCE_PERIOD).mean("time")
+        hfds_anoms = hfds - hfds_ref
         hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
+        hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
         hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-            hfds_globmean.mean(dim="member"), "time", n_steps=50, use_coords=False
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
 
     else:
         hfds_globmean_smoothed = None
-    
-    tas2 = tas_globmean**2 if use_tas2 else None
+
+    tas2 = tas_globmean_forcing**2 if use_tas2 else None
 
     return tas_globmean_forcing, hfds_globmean_smoothed, tas2
+
 
 @pytest.mark.parametrize(
     "scenarios, use_tas2, use_hfds, n_realisations, outname",
@@ -224,7 +225,7 @@ def test_make_realisations(
     n_realisations,
     outname,
     test_data_root_dir,
-    update_expected_files,
+    update_expected_files=False,
 ):
     esm = "IPSL-CM6A-LR"
 
@@ -257,18 +258,26 @@ def test_make_realisations(
 
     HIST_PERIOD = slice("1850", "2014")
 
-    seed_list = [981, 314, 272, 42] # we need a maximum of 4 seeds if there are max 2 scenarios
+    # we need a maximum of 4 seeds if there are max 2 scenarios (1 for global and 1 for local)
+    seed_list = [981, 314, 272, 42]  
 
     seed_global_variability = DataTree()
     seed_local_variability = DataTree()
 
     for scen in scenarios:
-        seed_global_variability[scen] = DataTree(xr.Dataset({"seed": xr.DataArray(seed_list.pop())}))
-        seed_local_variability[scen] = DataTree(xr.Dataset({"seed": xr.DataArray(seed_list.pop())}))
-    
-    tas_forcing, hfds, tas2 = create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2)
-    time = tas_forcing["ssp126"].time
-    
+        seed_global_variability[scen] = DataTree(
+            xr.Dataset({"seed": xr.DataArray(seed_list.pop())})
+        )
+        seed_local_variability[scen] = DataTree(
+            xr.Dataset({"seed": xr.DataArray(seed_list.pop())})
+        )
+
+    tas_forcing, hfds, tas2 = create_forcing_data(
+        test_data_root_dir, scenarios, use_hfds, use_tas2
+    )
+    scen0 = scenarios[0]
+    time = tas_forcing[scen0].time
+
     buffer_global_variability = 50
     buffer_local_variability = 20
 
@@ -279,22 +288,27 @@ def test_make_realisations(
 
     # 2.) compute the global variability
     global_ar_params = xr.open_dataset(global_ar_file)
-    global_variability = map_over_subtree(mesmer.stats.draw_auto_regression_uncorrelated)(
+    global_variability = map_over_subtree(
+        mesmer.stats.draw_auto_regression_uncorrelated
+    )(
         global_ar_params,
         realisation=n_realisations,
         time=time,
         seed=seed_global_variability,
         buffer=buffer_global_variability,
-    ).rename({"samples": "tas"})
+    ).rename(
+        {"samples": "tas"}
+    )
 
     # 3.) compute the local forced response
     lr = mesmer.stats.LinearRegression().from_netcdf(local_forced_file)
 
     predictors = DataTree()
     for scen in scenarios:
-        predictors[scen] = DataTree.from_dict({"tas": tas_forcing[scen],
-                                               "tas_resids": global_variability[scen]})
-        
+        predictors[scen] = DataTree.from_dict(
+            {"tas": tas_forcing[scen], "tas_resids": global_variability[scen]}
+        )
+
         if tas2 is not None:
             predictors[scen]["tas2"] = tas2[scen]
         if hfds is not None:
@@ -304,8 +318,10 @@ def test_make_realisations(
     local_forced_response = DataTree()
     local_variability_from_global_var = DataTree()
 
-    for key in predictors.children:
-        local_forced_response[key] = DataTree(lr.predict(predictors[key], exclude={"tas_resids"}).rename("tas"))
+    for scen in predictors.children:
+        local_forced_response[scen] = DataTree(
+            lr.predict(predictors[scen], exclude={"tas_resids"}).rename("tas")
+        )
 
         # 4.) compute the local variability part driven by global variabilty
         exclude = {"tas", "intercept"}
@@ -314,10 +330,9 @@ def test_make_realisations(
         if use_hfds:
             exclude.add("hfds")
 
-        local_variability_from_global_var[key] = DataTree(lr.predict(
-            predictors[key], 
-            exclude=exclude
-        ).rename("tas"))
+        local_variability_from_global_var[scen] = DataTree(
+            lr.predict(predictors[scen], exclude=exclude).rename("tas")
+        )
 
     # 5.) compute local variability
     local_ar = xr.open_dataset(local_ar_file)
@@ -349,8 +364,9 @@ def test_make_realisations(
             xr.testing.assert_allclose(res_scen, exp_scen)
 
             # make sure we can get onto a lat lon grid from what is saved
-            exp_reshaped = exp_scen.set_index(gridcell=("lat", "lon")).unstack("gridcell")
+            exp_reshaped = exp_scen.set_index(gridcell=("lat", "lon")).unstack(
+                "gridcell"
+            )
             expected_dims = {"realisation", "lon", "lat", "time"}
 
             assert set(exp_reshaped.dims) == expected_dims
-
