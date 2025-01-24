@@ -98,8 +98,8 @@ def test_calibrate_mesmer(
     TEST_PATH = TEST_DATA_PATH / "output" / outname
 
     PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{scope}/{param_type}",
-        file_pattern="params_{short_type}_{method}_{esm}_{scen}.nc",
+        path_pattern=TEST_PATH / "test-params/{module}/",
+        file_pattern="params_{module}_{esm}_{scen}.nc",
     )
 
     cmip_data_path = (
@@ -326,42 +326,27 @@ def test_calibrate_mesmer(
     scen_str = "-".join(scenarios)
 
     volcanic_file = PARAM_FILEFINDER.create_full_name(
-        scope="global",
-        param_type="global_trend",
-        short_type="gt",
-        method="LOWESS_OLSVOLC_saod",
+        module="volcanic",
         esm=esm,
         scen=scen_str,
     )
     global_ar_file = PARAM_FILEFINDER.create_full_name(
-        scope="global",
-        param_type="global_variability",
-        short_type="gv",
-        method="AR_tas",
+        module="global-variability",
         esm=esm,
         scen=scen_str,
     )
     local_forced_file = PARAM_FILEFINDER.create_full_name(
-        scope="local",
-        param_type="local_trends",
-        short_type="lt",
-        method="OLS_gttas",
+        module="local-trends",
         esm=esm,
         scen=scen_str,
     )
     local_ar_file = PARAM_FILEFINDER.create_full_name(
-        scope="local",
-        param_type="local_variability",
-        short_type="lv",
-        method="OLS_AR1_sci_gvtas",
+        module="local-variability",
         esm=esm,
         scen=scen_str,
     )
     localized_ecov_file = PARAM_FILEFINDER.create_full_name(
-        scope="local",
-        param_type="local_variability",
-        short_type="lv",
-        method="localized_ecov",
+        module="covariance",
         esm=esm,
         scen=scen_str,
     )
