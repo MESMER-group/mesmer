@@ -881,8 +881,8 @@ def test_draw_auto_regression_monthly_dt():
 
     seeds = DataTree.from_dict(
         {
-            "scen1": xr.DataArray(np.array([25])).rename("seed"),
-            "scen2": xr.DataArray(np.array([42])).rename("seed"),
+            "scen1": xr.DataArray(np.array([25]), name="seed"),
+            "scen2": xr.DataArray(np.array([42]), name="seed"),
         }
     )
 
