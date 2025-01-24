@@ -26,7 +26,7 @@ def _get_cos_sin(order):
 
     factor = 2 * np.pi / 12
     k = np.arange(1.0, order + 1)
-    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
+    alpha = np.arange(0, 12 * factor, step=factor).reshape(-1, 1) * k
 
     # combine cosine and sine into one array
     cos_sin = np.empty((12, order * 2))
@@ -80,7 +80,12 @@ def _generate_fourier_series_order_np(yearly_predictor, coeffs, order):
     return seasonal_cycle.ravel()
 
 
-def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
+def predict_harmonic_model(
+    yearly_predictor: xr.DataArray,
+    coeffs: xr.DataArray,
+    time: xr.DataArray,
+    time_dim: str = "time",
+) -> xr.DataArray:
     """construct a Fourier Series from yearly predictors with fitted coeffs.
 
     Parameters
@@ -269,7 +274,12 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
     return selected_order, coeffs, predictions
 
 
-def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="time"):
+def fit_harmonic_model(
+    yearly_predictor: xr.DataArray,
+    monthly_target: xr.DataArray,
+    max_order: int = 6,
+    time_dim: str = "time",
+) -> xr.Dataset:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
 

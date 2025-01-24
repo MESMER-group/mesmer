@@ -176,7 +176,7 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     # test if our fit is the same as sklearns
     np.random.seed(0)
     n_ts = 100
-    yearly_T_value = 2
+    yearly_T_value = np.array(2.0)
 
     yearly_T = np.ones(n_ts) * yearly_T_value
     local_monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
@@ -253,7 +253,7 @@ def test_power_transformer_xr():
         transformed.transformed,
         name="transformed",
         ndim=2,
-        required_dims=("cells", "time"),
+        required_dims={"cells", "time"},
         shape=(n_gridcells, n_years * 12),
     )
 
@@ -261,7 +261,7 @@ def test_power_transformer_xr():
         transformed.lambdas,
         name="lambdas",
         ndim=3,
-        required_dims=("month", "cells", "year"),
+        required_dims={"month", "cells", "year"},
         shape=(12, n_gridcells, n_years),
     )
     assert "month" in transformed.lambdas.coords
@@ -271,14 +271,14 @@ def test_power_transformer_xr():
         inverse_transformed.inverted,
         name="inverted",
         ndim=2,
-        required_dims=("cells", "time"),
+        required_dims={"cells", "time"},
         shape=(n_gridcells, n_years * 12),
     )
     _check_dataarray_form(
         pt_coefficients,
         name="lambda_coeffs",
         ndim=3,
-        required_dims=("cells", "coeff", "month"),
+        required_dims={"cells", "coeff", "month"},
         shape=(12, n_gridcells, 2),
     )
     assert "month" in pt_coefficients.coords

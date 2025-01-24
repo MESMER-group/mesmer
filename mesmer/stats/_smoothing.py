@@ -5,8 +5,15 @@ from mesmer.core.utils import _check_dataarray_form
 
 
 def lowess(
-    data, dim, *, combine_dim=None, n_steps=None, frac=None, use_coords=True, it=0
-):
+    data: xr.DataArray | xr.Dataset,
+    dim: str | tuple,
+    *,
+    combine_dim: str | None = None,
+    n_steps: int | None = None,
+    frac: float | None = None,
+    use_coords: bool = True,
+    it: int = 0,
+) -> xr.DataArray | xr.Dataset:
     """LOWESS (Locally Weighted Scatterplot Smoothing) for xarray objects
 
     Parameters
@@ -15,7 +22,7 @@ def lowess(
         Data to smooth (y-values).
     dim : str
         Dimension along which to smooth (x-dimension)
-    combine_dim : str, default: None
+    combine_dim : str | tuple, default: None
         Dimension along which to pool the data. This will stack the data and estimate
         the smoothing on the stacked data.
     n_steps : int
