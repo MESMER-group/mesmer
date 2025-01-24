@@ -237,26 +237,26 @@ def test_make_realisations(
     TEST_PATH = TEST_DATA_PATH / "output" / outname
 
     PARAM_FILEFINDER = FileFinder(
-        path_pattern = TEST_PATH / "params/{scope}/{param_type}",
-        file_pattern = "params_{short_type}_{method}_tas_{esm}_{scen}_new.nc"
+        path_pattern=TEST_PATH / "test-params/{module}/",
+        file_pattern="params_{module}_{esm}_{scen}.nc",
     )
     scen_str = "-".join(scenarios)
 
-    volcanic_file = PARAM_FILEFINDER.find_single_file(scope="global", param_type="global_trend",
-                                                      short_type="gt", method="LOWESS_OLSVOLC_saod",
-                                                      esm=esm, scen=scen_str).paths.pop()
-    global_ar_file = PARAM_FILEFINDER.find_single_file(scope="global", param_type="global_variability",
-                                                      short_type="gv", method="AR_tas",
-                                                      esm=esm, scen=scen_str).paths.pop()
-    local_forced_file = PARAM_FILEFINDER.find_single_file(scope="local", param_type="local_trends",
-                                                      short_type="lt", method="OLS_gttas",
-                                                      esm=esm, scen=scen_str).paths.pop()
-    local_ar_file = PARAM_FILEFINDER.find_single_file(scope="local", param_type="local_variability",
-                                                      short_type="lv", method="OLS_AR1_sci_gvtas",
-                                                      esm=esm, scen=scen_str).paths.pop()
-    localized_ecov_file = PARAM_FILEFINDER.find_single_file(scope="local", param_type="local_variability",
-                                                            short_type="lv", method="localized_ecov",
-                                                            esm=esm, scen=scen_str).paths.pop()
+    volcanic_file = PARAM_FILEFINDER.find_single_file(
+        module="volcanic", esm=esm, scen=scen_str
+    ).paths.pop()
+    global_ar_file = PARAM_FILEFINDER.find_single_file(
+        module="global-variability", esm=esm, scen=scen_str
+    ).paths.pop()
+    local_forced_file = PARAM_FILEFINDER.find_single_file(
+        module="local-trends", esm=esm, scen=scen_str
+    ).paths.pop()
+    local_ar_file = PARAM_FILEFINDER.find_single_file(
+        module="local-variability", esm=esm, scen=scen_str
+    ).paths.pop()
+    localized_ecov_file = PARAM_FILEFINDER.find_single_file(
+        module="covariance", esm=esm, scen=scen_str
+    ).paths.pop()
 
     expected_output_file = TEST_PATH / "test_make_realisations_expected_output.nc"
 
