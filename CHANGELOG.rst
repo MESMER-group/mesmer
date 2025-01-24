@@ -111,7 +111,7 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
                          `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
                          `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
 - Enable `threshold_min_proba` to be `None` in `distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_)
-- Also use Nelder-Mead fit in `distrib_cov._minimize` for `option_NelderMead == "best_run"` when Powell fit was not successful. (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_)
+- Also use Nelder-Mead fit in `distrib_cov._minimize` for `option_NelderMead == "best_run"` when Powell fit was not successful (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_).
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
