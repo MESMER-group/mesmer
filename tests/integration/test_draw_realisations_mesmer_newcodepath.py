@@ -259,7 +259,7 @@ def test_make_realisations(
     HIST_PERIOD = slice("1850", "2014")
 
     # we need a maximum of 4 seeds if there are max 2 scenarios (1 for global and 1 for local)
-    seed_list = [981, 314, 272, 42]  
+    seed_list = [981, 314, 272, 42]
 
     seed_global_variability = DataTree()
     seed_local_variability = DataTree()
