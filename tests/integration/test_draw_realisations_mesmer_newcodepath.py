@@ -169,7 +169,6 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             False,
             30,
             "tas/one_scen_multi_ens",
-            # marks=pytest.mark.slow,
         ),
         pytest.param(
             ["ssp126", "ssp585"],
@@ -185,7 +184,6 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             False,
             1,
             "tas_tas2/one_scen_one_ens",
-            # marks=pytest.mark.slow,
         ),
         # tas and hfds
         pytest.param(
@@ -194,7 +192,6 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             True,
             1,
             "tas_hfds/one_scen_one_ens",
-            # marks=pytest.mark.slow,
         ),
         # tas, tas**2, and hfds
         pytest.param(
@@ -210,7 +207,6 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             True,
             1,
             "tas_tas2_hfds/one_scen_multi_ens",
-            # marks=pytest.mark.slow,
         ),
         pytest.param(
             ["ssp126", "ssp585"],
@@ -218,7 +214,6 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             True,
             1,
             "tas_tas2_hfds/multi_scen_multi_ens",
-            # marks=pytest.mark.slow,
         ),
     ),
 )
