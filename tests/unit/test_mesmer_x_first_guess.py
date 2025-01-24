@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from scipy.stats import beta, gamma, genextreme, laplace, truncnorm
+from scipy.stats import beta, binom, gamma, genextreme, hypergeom, laplace, truncnorm
 
 from mesmer.mesmer_x import Expression, distrib_cov
 from mesmer.mesmer_x.train_l_distrib_mesmerx import _smooth_data
@@ -148,6 +148,68 @@ def test_first_guess_truncnorm():
     expected = [loc, scale, a, b]
 
     np.testing.assert_allclose(result, expected, rtol=0.52)
+
+
+def test_fg_binom():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n) * 0.5
+
+    n_trials = 10
+    p = 0.5
+    targ = binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
+
+    expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
+
+    first_guess = [11, 0.4]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+    result = dist.fg_coeffs
+    expected = [n_trials, p]
+
+    np.testing.assert_allclose(result, expected, rtol=0.2)
+
+
+def test_fg_hypergeom():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.full(n, fill_value=2, dtype=int)
+
+    M = 100
+    n_draws = 10
+    n_success = 2
+    targ = hypergeom.rvs(M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n)
+
+    expression = Expression(
+        "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)", expr_name="exp1"
+    )
+
+    first_guess = [99, 9, 1]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+    result = dist.fg_coeffs  # 99, 11, 2
+    expected = [M, n_draws, n_success]
+
+    np.testing.assert_allclose(result, expected, rtol=0.1)
+
+    # test with bounds
+    # NOTE: here we add a bound on c2 that is smaller than the negative loglikelihood fit (step 5)
+    # this leads to `test_coeff` being False and another fit with NLL*4 is being done (step 6)
+    # this leads to coverage of _fg_fun_LL_n() also for the discrete case
+    # NOTE: sadly this does not improve the fit
+
+    boundaries_coeffs = {"c1": (80, 110), "c2": (5, 10), "c3": (1, 3)}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        boundaries_coeffs=boundaries_coeffs,
+    )
+    dist.find_fg()
+    result_with_bounds = dist.fg_coeffs
+
+    np.testing.assert_equal(result, result_with_bounds)
 
 
 def test_first_guess_beta():
