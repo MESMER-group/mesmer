@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from scipy.stats import beta, binom, gamma, hypergeom, genextreme, laplace, truncnorm
+from scipy.stats import beta, binom, gamma, genextreme, hypergeom, laplace, truncnorm
 
 from mesmer.mesmer_x import Expression, distrib_cov
 from mesmer.mesmer_x.train_l_distrib_mesmerx import _smooth_data
