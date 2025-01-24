@@ -769,7 +769,7 @@ def _fit_auto_regression_np(data: np.ndarray, lags: int | Sequence[int]):
     return intercept, coeffs, variance, nobs
 
 
-def fit_auto_regression_monthly(monthly_data, time_dim="time"):
+def fit_auto_regression_monthly(monthly_data: xr.DataArray, time_dim: str = "time"):
     """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly
     data. The parameters are estimated for each month and gridpoint separately.
     This is based on the assumption that e.g. June depends on May differently
@@ -798,20 +798,24 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
 
     Parameters
     ----------
-    monthly_data : ``xr.DataArray`` of shape (n_timesteps, n_gridpoints)
-        A ``xr.DataArray`` to estimate the auto regression over. Each month has a value.
+    monthly_data : ``xr.DataArray``
+        A ``xr.DataArray`` to estimate the auto regression over, must contain `time_dim` and can have more dims,
+        for example a gridcell and/or a member dim. Each month has a value.
     time_dim : str
         Name of the time dimension (dimension along which to fit the auto regression).
 
     Returns
     -------
     obj : ``xr.Dataset``
-        Dataset containing the estimated parameters of the AR(1) process, the ``intercept`` and the
-        ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned. These
-        are needed for the estimation of the covariance matrix.
+        Dataset containing
+        - the ``intercept`` for each month of the AR(1) process,
+        - the ``slope`` for each month and
+        - the ``residuals`` (needed for the estimation of the covariance matrices).
+        `ìntercept``and ``slope`` have "month" and the additional dims of the input data as dimensions,
+        the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
-    monthly_data = monthly_data.groupby(f"{time_dim}.month")
+    _check_dataarray_form(monthly_data, "monthly_data", required_dims=time_dim)
+    grouped_monthly_data = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
     residuals = []
 
@@ -819,14 +823,14 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            n_ts = monthly_data[12].sizes[time_dim]
-            prev_month = monthly_data[12].isel({time_dim: slice(0, n_ts - 1)})
+            n_ts = grouped_monthly_data[12].sizes[time_dim]
+            prev_month = grouped_monthly_data[12].isel({time_dim: slice(0, n_ts - 1)})
 
-            n_ts = monthly_data[1].sizes[time_dim]
-            cur_month = monthly_data[1].isel({time_dim: slice(1, n_ts)})
+            n_ts = grouped_monthly_data[1].sizes[time_dim]
+            cur_month = grouped_monthly_data[1].isel({time_dim: slice(1, n_ts)})
         else:
-            prev_month = monthly_data[month - 1]
-            cur_month = monthly_data[month]
+            prev_month = grouped_monthly_data[month - 1]
+            cur_month = grouped_monthly_data[month]
 
         slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
@@ -841,7 +845,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
         residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
-    month = xr.Variable("month", np.arange(1, 13))
+    month = xr.DataArray(np.arange(1, 13), dims="month", name="month")
     ar_params = xr.concat(ar_params, dim=month)
     residuals = xr.concat(residuals, dim=time_dim).rename("residuals")
 
