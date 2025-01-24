@@ -187,10 +187,29 @@ def test_fg_hypergeom():
     first_guess = [99, 9, 1]
     dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
     dist.find_fg()
-    result = dist.fg_coeffs
+    result = dist.fg_coeffs  # 99, 11, 2
     expected = [M, n_draws, n_success]
 
     np.testing.assert_allclose(result, expected, rtol=0.1)
+
+    # test with bounds
+    # NOTE: here we add a bound on c2 that is smaller than the negative loglikelihood fit (step 5)
+    # this leads to `test_coeff` being False and another fit with NLL*4 is being done (step 6)
+    # this leads to coverage of _fg_fun_LL_n() also for the discrete case
+    # NOTE: sadly this does not improve the fit
+
+    boundaries_coeffs = {"c1": (80, 110), "c2": (5, 10), "c3": (1, 3)}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        boundaries_coeffs=boundaries_coeffs,
+    )
+    dist.find_fg()
+    result_with_bounds = dist.fg_coeffs
+
+    np.testing.assert_equal(result, result_with_bounds)
 
 
 def test_first_guess_beta():
