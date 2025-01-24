@@ -341,10 +341,13 @@ class distrib_cov:
             data, but will test that this data remains valid. Important to avoid points
             out of support of the distribution.
 
-        threshold_min_proba : float, default: 1e-9
-            Will test that each point of the sample and added sample have their
-            probability higher than this value. Important to ensure that all points are
-            feasible with the fitted distribution.
+        threshold_min_proba : float or None, default: 1e-9
+            If numeric imposes a check during the fitting that every sample fulfills
+            `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
+            i.e. each sample lies within some confidence interval of the distribution.
+            Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
+            ensure that all points are feasible with the fitted distribution.
+            If `None` this test is skipped.
 
         boundaries_params : dict, default: None
             Prescribed boundaries on the parameters of the expression. Some basic
@@ -526,8 +529,10 @@ class distrib_cov:
         self.data_targ_addtest = data_targ_addtest
         self.data_preds_addtest = data_preds_addtest
 
-        if (threshold_min_proba <= 0) or (1 < threshold_min_proba):
-            raise ValueError("`threshold_min_proba` must be in [0;1[")
+        if threshold_min_proba is not None and (
+            (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
+        ):
+            raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
 
         self.threshold_min_proba = threshold_min_proba
 
@@ -564,8 +569,8 @@ class distrib_cov:
             "method_fit": "Powell",
             "xtol_req": 1e-6,
             "ftol_req": 1.0e-6,
-            "maxiter": 1000 * self.n_coeffs * np.log(self.n_coeffs),
-            "maxfev": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "maxiter": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
+            "maxfev": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
             "error_failedfit": False,
             "fg_with_global_opti": False,
         }
@@ -789,15 +794,17 @@ class distrib_cov:
         return True
 
     def _test_proba_value(self, distrib, data):
-        # tested values must have a minimum probability of occurring, i.e. be in a
-        # confidence interval
+        """
+        Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
+        Ensures that data lies within a confidence interval of threshold_min_proba for the tested
+        distribution.
+        """
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
 
         cdf = distrib.cdf(data)
-        thres = self.threshold_min_proba
-        # TODO (mathause): why does this use cdf and not pdf?
-        return np.all(1 - cdf >= thres) and np.all(cdf >= thres)
+        thresh = self.threshold_min_proba
+        return np.all(1 - cdf >= thresh) and np.all(cdf >= thresh)
 
     def validate_coefficients(self, coefficients):
         """validate coefficients
@@ -1036,45 +1043,52 @@ class distrib_cov:
 
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
-        loc_coeffs = self.expr_fit.coefficients_dict["loc"]
+        loc_coeffs = self.expr_fit.coefficients_dict.get("loc", [])
+        # TODO: move to `Expression`
         self.fg_ind_loc = np.array(
-            # TODO: move to `Expression`
             [self.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
         )
 
-        localfit_loc = self._minimize(
-            func=self._fg_fun_loc,
-            x0=self.fg_coeffs[self.fg_ind_loc],
-            args=(smooth_targ,),
-            fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
+        # location might not be used (beta distribution) or set in the expression
+        if len(self.fg_ind_loc) > 0:
+
+            localfit_loc = self._minimize(
+                func=self._fg_fun_loc,
+                x0=self.fg_coeffs[self.fg_ind_loc],
+                args=(smooth_targ,),
+                fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
 
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
-        scale_coeffs = self.expr_fit.coefficients_dict["scale"]
+        # TODO: move to `Expression`
+        scale_coeffs = self.expr_fit.coefficients_dict.get("scale", [])
+
         self.fg_ind_sca = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
         )
+        # scale might not be used or set in the expression
+        if len(self.fg_ind_sca) > 0:
+            if self.first_guess is None:
+                # compared to all 0, better for ref level but worse for trend
+                x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
 
-        if self.first_guess is None:
-            # compared to all 0, better for ref level but worse for trend
-            x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
+            else:
+                x0 = self.fg_coeffs[self.fg_ind_sca]
 
-        else:
-            x0 = self.fg_coeffs[self.fg_ind_sca]
-
-        localfit_sca = self._minimize(
-            func=self._fg_fun_sca,
-            x0=x0,
-            fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
+            localfit_sca = self._minimize(
+                func=self._fg_fun_sca,
+                x0=x0,
+                fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
+        # TODO: move to `Expression`
         other_params = [
             p for p in self.expr_fit.parameters_list if p not in ["loc", "scale"]
         ]
@@ -1108,7 +1122,7 @@ class distrib_cov:
             self.fg_coeffs
         )
 
-        # if validate_coefficients all False (e.g. any of the coefficients are out of bounds)
+        # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
         if not (test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL doesnt behave well enough here)
@@ -1199,7 +1213,8 @@ class distrib_cov:
                 },
             )
             if (option_NelderMead == "fail_run") or (
-                option_NelderMead == "best_run" and fit_NM.fun < fit.fun
+                option_NelderMead == "best_run"
+                and (fit_NM.fun < fit.fun or not fit.success)
             ):
                 fit = fit_NM
         return fit
@@ -1369,6 +1384,7 @@ class distrib_cov:
         self.ind_data_ok = np.arange(self.data_targ.size)
         return self.neg_loglike(distrib)
 
+    # TODO: remove?
     def _fg_fun_cdfs(self, x):
         distrib = self.expr_fit.evaluate(x, self.data_pred)
         cdf = distrib.cdf(self.data_targ)

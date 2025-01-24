@@ -6,6 +6,7 @@ v0.11.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
+- Implemented new data structure using xarray-datatree, see `Data structure using xarray-datatree`_.
 - Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
@@ -75,6 +76,19 @@ Internal Changes
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
 
+Data structure using xarray-datatree
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This release implements using `DataTree` from `xarray-datatree` to handle multiple scenarios.
+- Add `filefisher` as dependency to handle file paths of several scenarios (`#586 <https://github.com/MESMER-group/mesmer/pull/586>`_ and `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_).
+- Enable passing a `DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
+- Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
+- Enable passing `DataTree` and `xr.Dataset` to `LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
+- Add upper pin to `xarray` version to support `xarray-datatree`(`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
+- Add utility functions for `DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
+- Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
+
+By `Victoria Bauer`_ and `Mathias Hauser`_.
+
 Integration of MESMER-X
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -92,10 +106,14 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
 - Add unit tests (`#526 <https://github.com/MESMER-group/mesmer/pull/526>`_,
                   `#533 <https://github.com/MESMER-group/mesmer/pull/533>`_,
                   `#534 <https://github.com/MESMER-group/mesmer/pull/534>`_,
-                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_)
+                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_,
+                  `#577 <https://github.com/MESMER-group/mesmer/pull/577>`_)
 - Add integration tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
                          `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
                          `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
+- Enable to pass set values for loc and scale (only integers) and make scale parameter optional (`#597 <https://github.com/MESMER-group/mesmer/pull/597>`_)
+- Enable `threshold_min_proba` to be `None` in `distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_)
+- Also use Nelder-Mead fit in `distrib_cov._minimize` for `option_NelderMead == "best_run"` when Powell fit was not successful (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_).
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
