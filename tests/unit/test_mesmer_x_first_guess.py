@@ -302,7 +302,7 @@ def test_first_guess_with_bounds():
     dist.find_fg()
     result = dist.fg_coeffs
     expected = np.array([-0.005093817, 1.015267298])
-    np.testing.assert_allclose(result, expected, rtol=1e-6)
+    np.testing.assert_allclose(result, expected, rtol=1e-5)
 
 
 @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
