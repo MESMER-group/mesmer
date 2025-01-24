@@ -569,8 +569,8 @@ class distrib_cov:
             "method_fit": "Powell",
             "xtol_req": 1e-6,
             "ftol_req": 1.0e-6,
-            "maxiter": 1000 * self.n_coeffs * np.log(self.n_coeffs),
-            "maxfev": 1000 * self.n_coeffs * np.log(self.n_coeffs),
+            "maxiter": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
+            "maxfev": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
             "error_failedfit": False,
             "fg_with_global_opti": False,
         }
@@ -1043,45 +1043,52 @@ class distrib_cov:
 
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
-        loc_coeffs = self.expr_fit.coefficients_dict["loc"]
+        loc_coeffs = self.expr_fit.coefficients_dict.get("loc", [])
+        # TODO: move to `Expression`
         self.fg_ind_loc = np.array(
-            # TODO: move to `Expression`
             [self.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
         )
 
-        localfit_loc = self._minimize(
-            func=self._fg_fun_loc,
-            x0=self.fg_coeffs[self.fg_ind_loc],
-            args=(smooth_targ,),
-            fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
+        # location might not be used (beta distribution) or set in the expression
+        if len(self.fg_ind_loc) > 0:
+
+            localfit_loc = self._minimize(
+                func=self._fg_fun_loc,
+                x0=self.fg_coeffs[self.fg_ind_loc],
+                args=(smooth_targ,),
+                fact_maxfev_iter=len(self.fg_ind_loc) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_loc] = localfit_loc.x
 
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
-        scale_coeffs = self.expr_fit.coefficients_dict["scale"]
+        # TODO: move to `Expression`
+        scale_coeffs = self.expr_fit.coefficients_dict.get("scale", [])
+
         self.fg_ind_sca = np.array(
             [self.expr_fit.coefficients_list.index(c) for c in scale_coeffs]
         )
+        # scale might not be used or set in the expression
+        if len(self.fg_ind_sca) > 0:
+            if self.first_guess is None:
+                # compared to all 0, better for ref level but worse for trend
+                x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
 
-        if self.first_guess is None:
-            # compared to all 0, better for ref level but worse for trend
-            x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
+            else:
+                x0 = self.fg_coeffs[self.fg_ind_sca]
 
-        else:
-            x0 = self.fg_coeffs[self.fg_ind_sca]
-
-        localfit_sca = self._minimize(
-            func=self._fg_fun_sca,
-            x0=x0,
-            fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
-            option_NelderMead="best_run",
-        )
-        self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
+            localfit_sca = self._minimize(
+                func=self._fg_fun_sca,
+                x0=x0,
+                fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
+                option_NelderMead="best_run",
+            )
+            self.fg_coeffs[self.fg_ind_sca] = localfit_sca.x
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
+        # TODO: move to `Expression`
         other_params = [
             p for p in self.expr_fit.parameters_list if p not in ["loc", "scale"]
         ]
