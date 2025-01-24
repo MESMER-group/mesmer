@@ -173,7 +173,7 @@ def test_fg_binom():
 def test_fg_hypergeom():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n, dtype=int) * 2
+    pred = np.full(n, fill_value=2, dtype=int)
 
     M = 100
     n_draws = 10
