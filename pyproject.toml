@@ -41,3 +41,32 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.isort]
 known-first-party = ["mesmer"]
+
+[tool.mypy]
+exclude = [
+  'build',
+  "ci",
+  "devel",
+  "dist",
+  "examples",
+]
+files = "mesmer"
+
+show_error_context = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [
+  "cftime.*",
+  "joblib.*",
+  "pooch.*",
+  "properscoring.*",
+  "scipy.*",
+  "setuptools.*",
+  "shapely.*",
+  "sklearn.*",
+  "statsmodels.*",
+]

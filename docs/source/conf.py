@@ -10,7 +10,7 @@ import datetime
 import os
 import subprocess
 import sys
-from importlib.metadata import version
+from importlib.metadata import version as _get_version
 
 import mesmer
 
@@ -47,7 +47,7 @@ authors = "Authors, see AUTHORS"
 author = authors
 
 # The full version, including alpha/beta/rc tags
-release = version("mesmer-emulator")
+release = _get_version("mesmer-emulator")
 # The short X.Y version
 version = ".".join(release.split(".")[:2])
 
@@ -85,7 +85,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 
 # -- Options for HTML output -------------------------------------------------
