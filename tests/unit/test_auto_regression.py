@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from datatree import DataTree, map_over_subtree
 from packaging.version import Version
 
 import mesmer
@@ -146,30 +147,73 @@ def test_draw_auto_regression_uncorrelated_2D_errors(ar_params_2D):
 
 
 @pytest.mark.parametrize("time", (3, 5))
-@pytest.mark.parametrize("realization", (2, 4))
+@pytest.mark.parametrize("realisation", (2, 4))
 @pytest.mark.parametrize("time_dim", ("time", "ts"))
-@pytest.mark.parametrize("realization_dim", ("realization", "sample"))
+@pytest.mark.parametrize("realisation_dim", ("realisation", "sample"))
 @pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_uncorrelated(
-    ar_params_1D, time, realization, time_dim, realization_dim, seed
+    ar_params_1D, time, realisation, time_dim, realisation_dim, seed
 ):
 
     result = mesmer.stats.draw_auto_regression_uncorrelated(
         ar_params_1D,
         time=time,
-        realisation=realization,
+        realisation=realisation,
         seed=seed,
         buffer=0,
         time_dim=time_dim,
-        realisation_dim=realization_dim,
+        realisation_dim=realisation_dim,
     )
 
     _check_dataarray_form(
         result,
         "result",
         ndim=2,
-        required_dims={time_dim, realization_dim},
-        shape=(time, realization),
+        required_dims={time_dim, realisation_dim},
+        shape=(time, realisation),
+    )
+
+
+def test_draw_auto_regression_uncorrelated_dt(ar_params_1D):
+    seeds = DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25]), name="seed"),
+            "scen2": xr.DataArray(np.array([42]), name="seed"),
+        }
+    )
+    n_realisation = 10
+    n_ts = 20
+
+    result = map_over_subtree(mesmer.stats.draw_auto_regression_uncorrelated)(
+        ar_params_1D,
+        time=n_ts,
+        realisation=n_realisation,
+        seed=seeds,
+        buffer=10,
+        time_dim="time",
+        realisation_dim="realisation",
+    )
+
+    assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=2,
+        required_dims={"time", "realisation"},
+        shape=(n_ts, n_realisation),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=2,
+        required_dims={"time", "realisation"},
+        shape=(n_ts, n_realisation),
     )
 
 
@@ -250,23 +294,23 @@ def test_draw_auto_regression_correlated_wrong_input(ar_params_2D, covariance, d
 
 
 @pytest.mark.parametrize("time", (3, 5))
-@pytest.mark.parametrize("realization", (2, 4))
+@pytest.mark.parametrize("realisation", (2, 4))
 @pytest.mark.parametrize("time_dim", ("time", "ts"))
-@pytest.mark.parametrize("realization_dim", ("realization", "sample"))
+@pytest.mark.parametrize("realisation_dim", ("realisation", "sample"))
 @pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_correlated(
-    ar_params_2D, covariance, time, realization, time_dim, realization_dim, seed
+    ar_params_2D, covariance, time, realisation, time_dim, realisation_dim, seed
 ):
 
     result = mesmer.stats.draw_auto_regression_correlated(
         ar_params_2D,
         covariance,
         time=time,
-        realisation=realization,
+        realisation=realisation,
         seed=seed,
         buffer=0,
         time_dim=time_dim,
-        realisation_dim=realization_dim,
+        realisation_dim=realisation_dim,
     )
 
     n_gridcells = ar_params_2D.intercept.size
@@ -275,8 +319,52 @@ def test_draw_auto_regression_correlated(
         result,
         "result",
         ndim=3,
-        required_dims={time_dim, "gridcell", realization_dim},
-        shape=(time, n_gridcells, realization),
+        required_dims={time_dim, "gridcell", realisation_dim},
+        shape=(time, n_gridcells, realisation),
+    )
+
+
+def test_draw_auto_regression_correlated_dt(ar_params_2D, covariance):
+    seeds = DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25]), name="seed"),
+            "scen2": xr.DataArray(np.array([42]), name="seed"),
+        }
+    )
+    n_realisation = 10
+    n_ts = 20
+
+    result = map_over_subtree(mesmer.stats.draw_auto_regression_correlated)(
+        ar_params_2D,
+        covariance,
+        time=n_ts,
+        realisation=n_realisation,
+        seed=seeds,
+        buffer=10,
+        time_dim="time",
+        realisation_dim="realisation",
+    )
+
+    assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_ts, 2, n_realisation),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_ts, 2, n_realisation),
     )
 
 
@@ -604,8 +692,8 @@ def test_fit_autoregression_monthly_np_no_noise(slope, intercept):
     # test if autoregrerssion can fit using previous month as independent variable
     # and current month as dependent variable
     n_ts = 100
-    np.random.seed(0)
-    prev_month = np.random.normal(size=n_ts)
+    rng = np.random.default_rng(seed=0)
+    prev_month = rng.normal(size=n_ts)
     cur_month = prev_month * slope + intercept
 
     result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
@@ -626,9 +714,9 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     # test if autoregrerssion can fit using previous month as independent variable
     # and current month as dependent variable
     n_ts = 5000
-    np.random.seed(0)
-    prev_month = np.random.normal(size=n_ts)
-    cur_month = prev_month * slope + intercept + np.random.normal(0, std, size=n_ts)
+    rng = np.random.default_rng(seed=0)
+    prev_month = rng.normal(size=n_ts)
+    cur_month = prev_month * slope + intercept + rng.normal(0, std, size=n_ts)
 
     result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
         cur_month, prev_month
@@ -644,9 +732,10 @@ def test_fit_auto_regression_monthly():
     freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
     n_years = 20
     n_gridcells = 10
-    np.random.seed(0)
+    rng = np.random.default_rng(seed=0)
+
     data = xr.DataArray(
-        np.random.normal(size=(n_years * 12, n_gridcells)),
+        rng.normal(size=(n_years * 12, n_gridcells)),
         dims=("time", "gridcell"),
         coords={
             "time": pd.date_range("2000-01-01", periods=n_years * 12, freq=freq),
@@ -684,7 +773,8 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
     n_gridcells = 10
     seed = 0
-    slope = np.random.uniform(-1, 1, size=(12, n_gridcells))
+    rng = np.random.default_rng(seed=seed)
+    slope = rng.uniform(-1, 1, size=(12, n_gridcells))
     intercept = np.ones((12, n_gridcells))
     covariance = np.zeros((12, n_gridcells, n_gridcells))
     n_ts = 120
@@ -734,22 +824,23 @@ def test_draw_autoregression_monthly_np_rng():
     assert np.not_equal(jan, feb).any()
 
 
-def test_draw_auto_regression_monthly():
+@pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
+def test_draw_auto_regression_monthly(seed):
     freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
 
     n_gridcells = 10
     n_realisations = 5
     n_years = 10
-    seed = 0
     buffer = 10
-    np.random.seed(0)
+    rng = np.random.default_rng(seed=0)
+
     slopes = xr.DataArray(
-        np.random.normal(-0.99, 0.99, size=(12, n_gridcells)),
+        rng.normal(-0.99, 0.99, size=(12, n_gridcells)),
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
     intercepts = xr.DataArray(
-        np.random.normal(-10, 10, size=(12, n_gridcells)),
+        rng.normal(-10, 10, size=(12, n_gridcells)),
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
@@ -783,4 +874,79 @@ def test_draw_auto_regression_monthly():
         ndim=3,
         required_dims={"time", "gridcell", "realisation"},
         shape=(len(time), n_gridcells, n_realisations),
+    )
+
+
+def test_draw_auto_regression_monthly_dt():
+
+    seeds = DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25]), name="seed"),
+            "scen2": xr.DataArray(np.array([42]), name="seed"),
+        }
+    )
+
+    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+
+    n_gridcells = 10
+    n_realisation = 5
+    n_years = 10
+    buffer = 10
+
+    rng = np.random.default_rng(seed=0)
+
+    slopes = xr.DataArray(
+        rng.normal(-0.99, 0.99, size=(12, n_gridcells)),
+        dims=("month", "gridcell"),
+        coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
+    )
+    intercepts = xr.DataArray(
+        rng.normal(-10, 10, size=(12, n_gridcells)),
+        dims=("month", "gridcell"),
+        coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
+    )
+    ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
+
+    covariance = xr.DataArray(
+        np.tile(np.eye(n_gridcells), [12, 1, 1]),
+        dims=("month", "gridcell_i", "gridcell_j"),
+        coords={
+            "month": np.arange(1, 13),
+            "gridcell_i": np.arange(n_gridcells),
+            "gridcell_j": np.arange(n_gridcells),
+        },
+    )
+
+    time = pd.date_range("2000-01-01", periods=n_years * 12, freq=freq)
+    time = xr.DataArray(time, dims="time", coords={"time": time})
+
+    result = map_over_subtree(mesmer.stats.draw_auto_regression_monthly)(
+        ar_params,
+        covariance,
+        time=time,
+        n_realisations=n_realisation,
+        seed=seeds,
+        buffer=buffer,
+    )
+
+    assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_years * 12, n_gridcells, n_realisation),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_years * 12, n_gridcells, n_realisation),
     )
