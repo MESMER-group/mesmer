@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from scipy.stats import genextreme, laplace, truncnorm
+from scipy.stats import beta, binom, gamma, genextreme, hypergeom, laplace, truncnorm
 
 from mesmer.mesmer_x import Expression, distrib_cov
 from mesmer.mesmer_x.train_l_distrib_mesmerx import _smooth_data
@@ -38,7 +38,7 @@ def test_first_guess_standard_normal_including_pred():
     dist.find_fg()
     result = dist.fg_coeffs
 
-    np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.1)
+    np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.03)
 
 
 @pytest.mark.parametrize("first_guess", [[1.0, 1.0], [1.0, 2.0], [-1, 0.5], [10, 7]])
@@ -79,7 +79,7 @@ def test_first_guess_GEV(shape):
     expected = [loc, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, rtol=0.5)
+    np.testing.assert_allclose(result, expected, rtol=0.4)
 
     # any difference if we provide a first guess?
     dist2 = distrib_cov(
@@ -112,7 +112,7 @@ def test_first_guess_GEV_including_pred():
     expected = [c1, scale, shape]
 
     # test right order of magnitude
-    np.testing.assert_allclose(result, expected, atol=0.2)
+    np.testing.assert_allclose(result, expected, rtol=0.2)
 
 
 def test_first_guess_truncnorm():
@@ -135,13 +135,145 @@ def test_first_guess_truncnorm():
 
     # needs first guess different from 0, 0 for a and b, degenerate otherwise, also degenerate if a == b
     first_guess = [0.0, 1.0, -1, 2.0]
-    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        threshold_min_proba=None,
+    )
     dist.find_fg()
 
     result = dist.fg_coeffs
     expected = [loc, scale, a, b]
 
     np.testing.assert_allclose(result, expected, rtol=0.52)
+
+
+def test_fg_binom():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n) * 0.5
+
+    n_trials = 10
+    p = 0.5
+    targ = binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
+
+    expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
+
+    first_guess = [11, 0.4]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+    result = dist.fg_coeffs
+    expected = [n_trials, p]
+
+    np.testing.assert_allclose(result, expected, rtol=0.2)
+
+
+def test_fg_hypergeom():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.full(n, fill_value=2, dtype=int)
+
+    M = 100
+    n_draws = 10
+    n_success = 2
+    targ = hypergeom.rvs(M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n)
+
+    expression = Expression(
+        "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)", expr_name="exp1"
+    )
+
+    first_guess = [99, 9, 1]
+    dist = distrib_cov(targ, {"tas": pred}, expression, first_guess=first_guess)
+    dist.find_fg()
+    result = dist.fg_coeffs  # 99, 11, 2
+    expected = [M, n_draws, n_success]
+
+    np.testing.assert_allclose(result, expected, rtol=0.1)
+
+    # test with bounds
+    # NOTE: here we add a bound on c2 that is smaller than the negative loglikelihood fit (step 5)
+    # this leads to `test_coeff` being False and another fit with NLL*4 is being done (step 6)
+    # this leads to coverage of _fg_fun_LL_n() also for the discrete case
+    # NOTE: sadly this does not improve the fit
+
+    boundaries_coeffs = {"c1": (80, 110), "c2": (5, 10), "c3": (1, 3)}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        boundaries_coeffs=boundaries_coeffs,
+    )
+    dist.find_fg()
+    result_with_bounds = dist.fg_coeffs
+
+    np.testing.assert_equal(result, result_with_bounds)
+
+
+def test_first_guess_beta():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+
+    a = 2
+    b = 2
+    loc = 0
+    scale = 1
+    targ = beta.rvs(a, b, loc, scale, size=n, random_state=rng)
+
+    expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
+
+    # we need a first guess here because our default first guess is zeros, which leads
+    # to a degenerate distribution in the case of a beta distribution
+    first_guess = [1.0, 1.0]
+    options_solver = {"fg_with_global_opti": True}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        options_solver=options_solver,
+    )
+    dist.find_fg()
+
+    # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
+    # it is always (0, 1), thus the optimization with _fg_fun_others does not do anything
+    # NOTE: Step 7 (fg_with_global_opti) leads to a impovement of the first guess at the 6th digit after the comma, i.e. very small
+    result = dist.fg_coeffs
+    expected = [a, b]
+
+    np.testing.assert_allclose(result, expected, rtol=0.5)
+
+
+def test_first_guess_gamma():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+
+    a = 2
+    loc = 0
+    scale = 1
+    targ = gamma.rvs(a, loc, scale, size=n, random_state=rng)
+
+    expression = Expression("gamma(loc=0, scale=1, a=c1)", expr_name="exp1")
+
+    # we need a first guess different from zero for gamma distribution
+    first_guess = [1.0]
+    options_solver = {"fg_with_global_opti": True}
+    dist = distrib_cov(
+        targ,
+        {"tas": pred},
+        expression,
+        first_guess=first_guess,
+        options_solver=options_solver,
+    )
+    dist.find_fg()
+    result = dist.fg_coeffs
+    expected = [a]
+
+    np.testing.assert_allclose(result, expected, rtol=0.02)
 
 
 def test_fg_fun_scale_laplace():
@@ -200,7 +332,7 @@ def test_first_guess_with_bounds():
     dist.find_fg()
     result = dist.fg_coeffs
     expected = np.array([-0.016552528, 1.520612114])
-    np.testing.assert_allclose(result, expected, rtol=1e-5)
+    np.testing.assert_allclose(result, expected, rtol=1e-6)
     # ^ still finds a fg because we do not enforce the bounds on the fg
     # however the fg is significantly worse on the param with the wrong bounds
     # in contrast to the above the test below also runs step 6: fit on CDF or LL^n -> implications?
