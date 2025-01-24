@@ -44,7 +44,7 @@ def test_make_realisations(
     ouput_dir = os.path.join(test_data_root_dir, "output", outname)
 
     expected_output_file = os.path.join(
-        ouput_dir, "test_make_realisations_expected_output.nc"
+        ouput_dir, "test_make_realisations_expected_output_legacy.nc"
     )
 
     tseeds = {"IPSL-CM6A-LR": {"all": {"gv": 0, "lv": 1_000_000}}}
