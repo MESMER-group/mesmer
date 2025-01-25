@@ -7,10 +7,10 @@ build:
       - git fetch --unshallow
     pre_install:
         # see https://github.com/readthedocs/readthedocs.org/issues/8201
-      - git update-index --assume-unchanged docs/source/conf.py
+      - git update-index --assume-unchanged docs/conf.py
       # editable install mesmer with docs extras
       - python -m pip install -e .[docs]
   tools:
     python: "3.12"
 sphinx:
-  configuration: docs/source/conf.py
+  configuration: docs/conf.py
