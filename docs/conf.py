@@ -62,6 +62,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
+    "nbsphinx",
 ]
 
 autosummary_generate = True
@@ -95,6 +96,10 @@ exclude_patterns: list[str] = []
 #
 
 html_theme = "sphinx_book_theme"
+
+html_theme_options = {
+  "show_toc_level": 5
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
