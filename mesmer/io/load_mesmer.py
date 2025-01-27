@@ -6,14 +6,18 @@
 Functions to load in mesmer output.
 """
 
-
 import glob
 import os.path
 import warnings
 
 import joblib
+from deprecated import deprecated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_mesmer_output(
     name,
     cfg,

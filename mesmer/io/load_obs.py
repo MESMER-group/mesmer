@@ -5,16 +5,20 @@
 """
 Functions to load in observations which are saved locally.
 """
-
 import os
 import warnings
 
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     """Load observations which you previously downloaded.
 
@@ -96,6 +100,10 @@ def load_obs(targ, prod, lon, lat, cfg, sel_ref="native", ignore_nans=True):
     return var_dict, GVAR_dict, time
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     """Load spatially infilled tblend observations. Currently available: best and cw.
 
@@ -165,6 +173,10 @@ def load_obs_tblend(prod, lon, lat, cfg, sel_ref):
     return tblend, time
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_strat_aod(time, dir_obs=None):
     """Load observed global stratospheric aerosol optical depth time series.
 
