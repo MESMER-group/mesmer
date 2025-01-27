@@ -14,13 +14,13 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     REFERENCE_PERIOD = slice("1850", "1900")
 
     esm = "IPSL-CM6A-LR"
-    test_cmip_generation = 6
+    cmip_generation = 6
 
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
 
     cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
+        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{cmip_generation}-ng"
     )
 
     CMIP_FILEFINDER = FileFinder(
@@ -45,7 +45,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     )
 
     # load data for each scenario
-    def _get_hist(meta, fc_hist):
+    def _get_hist_path(meta, fc_hist):
 
         meta_hist = meta | {"scenario": "historical"}
 
@@ -56,12 +56,10 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         if len(fc) != 1:
             raise ValueError("more than one hist file found")
 
-        fN, meta_hist = fc[0]
-
-        return fN, meta_hist
+        return fc.paths.pop()
 
     def load_hist(meta, fc_hist):
-        fN, __ = _get_hist(meta, fc_hist)
+        fN = _get_hist_path(meta, fc_hist)
         return xr.open_dataset(fN, use_cftime=True)
 
     def load_hist_scen_continuous(fc_hist, fc_scens):
@@ -115,7 +113,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         tas_globmean_ensmean, dim="time", n_steps=30, use_coords=False
     )
 
-    if use_hfds:
+    def _get_hfds():
         fc_hfds = CMIP_FILEFINDER.find_files(
             variable="hfds",
             scenario=scenarios,
@@ -135,7 +133,6 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         )
 
         hfds = load_hist_scen_continuous(fc_hfds_hist, fc_hfds)
-
         hfds_ref = hfds.sel(time=REFERENCE_PERIOD).mean("time")
         hfds_anoms = hfds - hfds_ref
         hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
@@ -143,7 +140,11 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
             hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
+        return hfds_globmean_smoothed
 
+    if use_hfds:
+        hfds_globmean_smoothed = _get_hfds()
+        
     else:
         hfds_globmean_smoothed = None
 
@@ -253,7 +254,7 @@ def test_make_realisations(
         module="covariance", esm=esm, scen=scen_str
     ).paths.pop()
 
-    expected_output_file = TEST_PATH / "test_make_realisations_expected_output.nc"
+    expected_output_file = TEST_PATH / f"test_realisations_expected_{scen_str}.nc"
 
     HIST_PERIOD = slice("1850", "2014")
 
@@ -280,6 +281,7 @@ def test_make_realisations(
     buffer_global_variability = 50
     buffer_local_variability = 20
 
+    # 1.) superimpose volcanic influence
     volcanic_params = xr.open_dataset(volcanic_file)
     tas_forcing = map_over_subtree(mesmer.volc.superimpose_volcanic_influence)(
         tas_forcing, volcanic_params, hist_period=HIST_PERIOD
