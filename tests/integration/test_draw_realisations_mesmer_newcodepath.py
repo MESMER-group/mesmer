@@ -144,7 +144,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
 
     if use_hfds:
         hfds_globmean_smoothed = _get_hfds()
-        
+
     else:
         hfds_globmean_smoothed = None
 
