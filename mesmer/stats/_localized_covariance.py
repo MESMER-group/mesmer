@@ -84,7 +84,7 @@ def find_localized_empirical_covariance(
     localizer: dict[float | int, xr.DataArray],
     dim: str,
     k_folds: int,
-    equal_dim_suffixes: tuple[str, ...] = ("_i", "_j"),
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
 ) -> xr.Dataset:
     """determine localized empirical covariance by cross validation
 
