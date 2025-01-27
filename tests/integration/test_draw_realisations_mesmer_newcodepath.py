@@ -9,7 +9,6 @@ from filefisher import FileFinder
 import mesmer
 
 
-# comment
 def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     # define config values
     REFERENCE_PERIOD = slice("1850", "1900")
