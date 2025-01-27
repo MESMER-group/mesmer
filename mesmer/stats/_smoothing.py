@@ -26,7 +26,7 @@ def lowess(
         Data to smooth (y-values).
     dim : str
         Dimension along which to smooth (x-dimension)
-    combine_dim : str | tuple, default: None
+    combine_dim : str | None, default: None
         Dimension along which to pool the data. This will stack the data and estimate
         the smoothing on the stacked data.
     n_steps : int
