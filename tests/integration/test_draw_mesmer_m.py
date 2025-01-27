@@ -1,12 +1,11 @@
-import importlib
-
+import pathlib
 import pytest
 import xarray as xr
 
 import mesmer
 
 
-def test_make_emulations_mesmer_m(update_expected_files=False):
+def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files=False):
 
     # define config values
     THRESHOLD_LAND = 1 / 3
@@ -21,7 +20,7 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     seed = 0
 
     # define paths and load data
-    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
+    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 

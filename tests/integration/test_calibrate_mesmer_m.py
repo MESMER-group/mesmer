@@ -1,5 +1,4 @@
-import importlib
-
+import pathlib
 import pytest
 import xarray as xr
 
@@ -36,7 +35,7 @@ def _load_data(*filenames):
 
 
 @pytest.mark.slow
-def test_calibrate_mesmer_m(update_expected_files=False):
+def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files=False):
     # define config values
     THRESHOLD_LAND = 1 / 3
 
@@ -50,7 +49,7 @@ def test_calibrate_mesmer_m(update_expected_files=False):
     scenario = "ssp585"
 
     # define paths and load data
-    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
+    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon" / "test-params"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
