@@ -81,7 +81,7 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
 def find_localized_empirical_covariance(
     data: xr.DataArray,
     weights: xr.DataArray,
-    localizer: dict[float | int, xr.DataArray],
+    localizer: dict[float | int, xr.DataArray | np.ndarray],
     dim: str,
     k_folds: int,
     equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
@@ -154,7 +154,7 @@ def find_localized_empirical_covariance(
 def find_localized_empirical_covariance_monthly(
     data: xr.DataArray,
     weights: xr.DataArray,
-    localizer: dict[float | int, xr.DataArray],
+    localizer: dict[float | int, xr.DataArray | np.ndarray],
     dim: str,
     k_folds: int,
     equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
