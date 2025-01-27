@@ -157,7 +157,7 @@ def find_localized_empirical_covariance_monthly(
     localizer: dict[float | int, xr.DataArray],
     dim: str,
     k_folds: int,
-    equal_dim_suffixes: tuple[str, ...] = ("_i", "_j"),
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
 ) -> xr.Dataset:
     """determine localized empirical covariance by cross validation for each month. `data`
     should be the residuals of the cyclo-stationary AR(1) process, see
