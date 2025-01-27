@@ -157,8 +157,8 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: str | Iterable[str] | None = set(),
-    optional_vars: str | Iterable[str] | None = set(),
+    required_vars: str | Iterable[str] | None = None,
+    optional_vars: str | Iterable[str] | None = None,
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
