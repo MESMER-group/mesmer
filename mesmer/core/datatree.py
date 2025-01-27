@@ -1,4 +1,5 @@
-from typing import overload, Optional, Union
+from typing import overload
+
 import xarray as xr
 from datatree import DataTree
 
@@ -60,26 +61,38 @@ def collapse_datatree_into_dataset(
 
     return ds
 
-@overload
-def stack_datatrees_for_linear_regression(predictors: DataTree, target: DataTree, weights: None = None, *,
-    stacking_dims: list[str],
-    collapse_dim: str = "scenario",
-    stacked_dim: str = "sample",) -> tuple[DataTree, xr.Dataset, None]: ...
-@overload
-def stack_datatrees_for_linear_regression(predictors: DataTree, target: DataTree, weights: DataTree, *,
-    stacking_dims: list[str],
-    collapse_dim: str = "scenario",
-    stacked_dim: str = "sample",) -> tuple[DataTree, xr.Dataset, xr.Dataset]: ...
 
+@overload
 def stack_datatrees_for_linear_regression(
     predictors: DataTree,
     target: DataTree,
-    weights: Optional[DataTree] = None,
+    weights: None = None,
     *,
     stacking_dims: list[str],
     collapse_dim: str = "scenario",
     stacked_dim: str = "sample",
-) -> tuple[DataTree, xr.Dataset, Optional[Union[xr.Dataset, None]]]:
+) -> tuple[DataTree, xr.Dataset, None]: ...
+@overload
+def stack_datatrees_for_linear_regression(
+    predictors: DataTree,
+    target: DataTree,
+    weights: DataTree,
+    *,
+    stacking_dims: list[str],
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[DataTree, xr.Dataset, xr.Dataset]: ...
+
+
+def stack_datatrees_for_linear_regression(
+    predictors: DataTree,
+    target: DataTree,
+    weights: DataTree | None = None,
+    *,
+    stacking_dims: list[str],
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[DataTree, xr.Dataset, xr.Dataset | None | None]:
     """
     prepares data for Linear Regression:
     1. Broadcasts predictors to target

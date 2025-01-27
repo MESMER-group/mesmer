@@ -45,7 +45,7 @@ def wrap_to_180(
 
     new_lon = _lon_to_180(obj[lon_name])
 
-    obj = obj.assign_coords(**{lon_name: new_lon})
+    obj = obj.assign_coords(**{lon_name: new_lon})  # type: ignore[arg-type] xarray doesn't type
     obj = obj.sortby(lon_name)
 
     return obj
@@ -72,7 +72,7 @@ def wrap_to_360(
 
     new_lon = _lon_to_360(obj[lon_name])
 
-    obj = obj.assign_coords(**{lon_name: new_lon})
+    obj = obj.assign_coords(**{lon_name: new_lon})  # type: ignore[arg-type]
     obj = obj.sortby(lon_name)
 
     return obj

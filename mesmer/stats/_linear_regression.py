@@ -285,7 +285,7 @@ def _fit_linear_regression_xr(
 
         predictors = map_over_subtree(_rename_vars)(predictors)
         predictors_concat = collapse_datatree_into_dataset(
-            predictors, dim="predictor", join="exact", coords="minimal" # type: ignore[arg-type]
+            predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
         )
         predictors_concat = predictors_concat["pred"]
 

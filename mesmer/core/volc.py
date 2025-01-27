@@ -45,7 +45,7 @@ def _load_and_align_strat_aod_obs(data, hist_period, dim="time", version="2022")
     aod = aod.assign_coords({dim: time_hist})
 
     # expand aod to the full time period
-    __, aod = xr.align(time, aod, fill_value=0.0, join="outer")
+    __, aod = xr.align(time, aod, fill_value=0.0, join="outer")  # type: ignore[assignment]
 
     return aod
 

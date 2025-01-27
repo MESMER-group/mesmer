@@ -7,6 +7,7 @@ from mesmer.core.utils import _check_dataarray_form
 
 T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")
 
+
 def lowess(
     data: T_Xarray,
     dim: str,

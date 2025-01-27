@@ -1,4 +1,5 @@
 import pathlib
+
 import pytest
 import xarray as xr
 
@@ -41,7 +42,13 @@ import mesmer.mesmer_x
     ],
 )
 def test_calibrate_mesmer_x(
-    scenario, target_name, expr, expr_name, option_2ndfit, test_data_root_dir, update_expected_files
+    scenario,
+    target_name,
+    expr,
+    expr_name,
+    option_2ndfit,
+    test_data_root_dir,
+    update_expected_files,
 ):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3

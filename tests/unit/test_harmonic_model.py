@@ -206,10 +206,10 @@ def test_fit_harmonic_model_checks():
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)  # type: ignore
+        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)  # type: ignore
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)  # type: ignore[arg-type]
 
     freq = "YE" if Version(pd.__version__) >= Version("2.2") else "Y"
     yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq=freq)

@@ -347,7 +347,7 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
         return size, coord_dict
 
     # TODO: use public xr.Index when the minimum xarray version is v2023.08.0
-    xr_Index = xr.core.indexes.Index
+    xr_Index = xr.core.indexes.Index  # type: ignore[attr-defined]
 
     if not isinstance(coords_or_size, xr.DataArray | xr_Index | pd.Index):
         raise TypeError(
