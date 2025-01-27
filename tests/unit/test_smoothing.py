@@ -13,7 +13,7 @@ def test_lowess_errors():
     data = trend_data_2D()
 
     with pytest.raises(ValueError, match="Can only pass a single dimension."):
-        mesmer.stats.lowess(data, ("lat", "lon"), frac=0.3)
+        mesmer.stats.lowess(data, ("lat", "lon"), frac=0.3) # type: ignore[arg-type]
 
     with pytest.raises(ValueError, match="data should be 1D"):
         mesmer.stats.lowess(data.to_dataset(), "data", frac=0.3)

@@ -1,19 +1,22 @@
+from typing import TypeVar
+
 import numpy as np
 import xarray as xr
 
 from mesmer.core.utils import _check_dataarray_form
 
+T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")
 
 def lowess(
-    data: xr.DataArray | xr.Dataset,
-    dim: str | tuple,
+    data: T_Xarray,
+    dim: str,
     *,
     combine_dim: str | None = None,
     n_steps: int | None = None,
     frac: float | None = None,
     use_coords: bool = True,
     it: int = 0,
-) -> xr.DataArray | xr.Dataset:
+) -> T_Xarray:
     """LOWESS (Locally Weighted Scatterplot Smoothing) for xarray objects
 
     Parameters
@@ -40,7 +43,7 @@ def lowess(
 
     Returns
     -------
-    out : xr.DataArray | xr.Dataset
+    out : xr.DataArray | xr.Dataset same as `data`
         LOWESS smoothed array
 
     See Also
