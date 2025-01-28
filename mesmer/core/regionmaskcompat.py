@@ -10,7 +10,9 @@ from packaging.version import Version
 
 if Version(regionmask.__version__) >= Version("0.12.0"):
 
-    from regionmask.core.mask import InvalidCoordsError # type: ignore[reportAssignmentType]
+    from regionmask.core.mask import (
+        InvalidCoordsError,  # type: ignore[reportAssignmentType]
+    )
 else:
 
     class InvalidCoordsError(ValueError):
@@ -74,7 +76,7 @@ def _mask_3D_frac_approx(regions, lon, lat, **kwargs):
 
 def _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs):
 
-    backend = regionmask.core.mask._determine_method(lon, lat) # type: ignore[attr-defined]
+    backend = regionmask.core.mask._determine_method(lon, lat)  # type: ignore[attr-defined]
     if "rasterize" not in backend:
         raise InvalidCoordsError("'lon' and 'lat' must be 1D and equally spaced.")
 
