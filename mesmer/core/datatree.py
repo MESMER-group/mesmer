@@ -1,3 +1,5 @@
+from typing import overload
+
 import xarray as xr
 from datatree import DataTree
 
@@ -60,10 +62,32 @@ def collapse_datatree_into_dataset(
     return ds
 
 
+@overload
 def stack_datatrees_for_linear_regression(
     predictors: DataTree,
     target: DataTree,
-    weights: DataTree | None,
+    weights: None = None,
+    *,
+    stacking_dims: list[str],
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[DataTree, xr.Dataset, None]: ...
+@overload
+def stack_datatrees_for_linear_regression(
+    predictors: DataTree,
+    target: DataTree,
+    weights: DataTree,
+    *,
+    stacking_dims: list[str],
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[DataTree, xr.Dataset, xr.Dataset]: ...
+
+
+def stack_datatrees_for_linear_regression(
+    predictors: DataTree,
+    target: DataTree,
+    weights: DataTree | None = None,
     *,
     stacking_dims: list[str],
     collapse_dim: str = "scenario",
@@ -73,7 +97,7 @@ def stack_datatrees_for_linear_regression(
     prepares data for Linear Regression:
     1. Broadcasts predictors to target
     2. Collapses DataTrees into DataSets
-    3. Stacks the DataSets along the stacking dimension(s)
+    3. Stacks the Datasets along the stacking dimension(s)
 
     Parameters
     ----------
@@ -87,7 +111,7 @@ def stack_datatrees_for_linear_regression(
         A ``DataTree``holding the targets. Must be isomorphic to the predictor subtrees, i.e.
         have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must be at least 2D
         and contain `dim`, but may also contain a dimension for ensemble members.
-    weights : DataTree, default: None.
+    weights : DataTree or None, default: None
         Individual weights for each sample, must be isomorphic to target. Must at least contain
         `dim`, and must have the ensemble member dimension if target has it.
     stacking_dims : list[str]
@@ -100,7 +124,7 @@ def stack_datatrees_for_linear_regression(
 
     Returns
     -------
-    tuple
+    tuple of stacked predictors, target and weights
         Tuple of the prepared predictors, target and weights, where the predictors and target are
         stacked along the stacking dimensions and the weights are stacked along the stacking dimensions
         and the ensemble member dimension.

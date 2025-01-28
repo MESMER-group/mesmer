@@ -10,7 +10,11 @@ import xarray as xr
 from mesmer.core.utils import create_equal_dim_names
 
 
-def geodist_exact(lon, lat, equal_dim_suffixes=("_i", "_j")):
+def geodist_exact(
+    lon: xr.DataArray | np.ndarray,
+    lat: xr.DataArray | np.ndarray,
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
+):
     """exact great circle distance based on WSG 84
 
     Parameters

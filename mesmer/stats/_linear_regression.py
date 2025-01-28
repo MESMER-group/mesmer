@@ -61,7 +61,7 @@ class LinearRegression:
     def predict(
         self,
         predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
-        exclude=None,
+        exclude: str | set[str] | None = None,
     ) -> xr.DataArray:
         """
         Predict using the linear model.
@@ -96,7 +96,8 @@ class LinearRegression:
             raise ValueError(f"Missing predictors: '{missing}'")
 
         if available_predictors - required_predictors:
-            superfluous = sorted(available_predictors - required_predictors)
+            superfluous = map(str, available_predictors - required_predictors)
+            superfluous = sorted(superfluous)
             superfluous = "', '".join(superfluous)
             raise ValueError(
                 f"Superfluous predictors: '{superfluous}', either params",
@@ -179,7 +180,7 @@ class LinearRegression:
         self._params = params
 
     @classmethod
-    def from_netcdf(cls, filename, **kwargs):
+    def from_netcdf(cls, filename: str, **kwargs):
         """read params from a netCDF file
 
         Parameters
@@ -196,7 +197,7 @@ class LinearRegression:
 
         return obj
 
-    def to_netcdf(self, filename, **kwargs):
+    def to_netcdf(self, filename: str, **kwargs):
         """save params to a netCDF file
 
         Parameters
@@ -284,7 +285,7 @@ def _fit_linear_regression_xr(
 
         predictors = map_over_subtree(_rename_vars)(predictors)
         predictors_concat = collapse_datatree_into_dataset(
-            predictors, dim="predictor", join="exact", coords="minimal"
+            predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
         )
         predictors_concat = predictors_concat["pred"]
 

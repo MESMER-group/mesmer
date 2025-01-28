@@ -260,7 +260,9 @@ def _fit_auto_regression_scen_ens_dt(
 # ======================================================================================
 
 
-def select_ar_order(data, dim, maxlag, ic="bic") -> xr.DataArray:
+def select_ar_order(
+    data: xr.DataArray, dim: str, maxlag: int, ic: Literal["bic", "aic", "hqic"] = "bic"
+) -> xr.DataArray:
     """Select the order of an autoregressive process
 
     Parameters
@@ -345,7 +347,7 @@ def _get_size_and_coord_dict(coords_or_size, dim, name):
         return size, coord_dict
 
     # TODO: use public xr.Index when the minimum xarray version is v2023.08.0
-    xr_Index = xr.core.indexes.Index
+    xr_Index = xr.core.indexes.Index  # type: ignore[attr-defined]
 
     if not isinstance(coords_or_size, xr.DataArray | xr_Index | pd.Index):
         raise TypeError(
@@ -660,6 +662,7 @@ def _draw_innovations_correlated_np(
 ):
     # NOTE: 'innovations' is the error or noise term.
     # innovations has shape (n_samples, n_ts + buffer, n_coeffs)
+    cov = None
     try:
         cov = scipy.stats.Covariance.from_cholesky(np.linalg.cholesky(covariance))
     except np.linalg.LinAlgError as e:
@@ -769,7 +772,9 @@ def _fit_auto_regression_np(data: np.ndarray, lags: int | Sequence[int]):
     return intercept, coeffs, variance, nobs
 
 
-def fit_auto_regression_monthly(monthly_data, time_dim="time"):
+def fit_auto_regression_monthly(
+    monthly_data: xr.DataArray, time_dim: str = "time"
+) -> xr.Dataset:
     """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly
     data. The parameters are estimated for each month and gridpoint separately.
     This is based on the assumption that e.g. June depends on May differently
@@ -811,7 +816,7 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         are needed for the estimation of the covariance matrix.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
-    monthly_data = monthly_data.groupby(f"{time_dim}.month")
+    monthly_groups = monthly_data.groupby(f"{time_dim}.month")
     ar_params = []
     residuals = []
 
@@ -819,14 +824,14 @@ def fit_auto_regression_monthly(monthly_data, time_dim="time"):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            n_ts = monthly_data[12].sizes[time_dim]
-            prev_month = monthly_data[12].isel({time_dim: slice(0, n_ts - 1)})
+            n_ts = monthly_groups[12].sizes[time_dim]
+            prev_month = monthly_groups[12].isel({time_dim: slice(0, n_ts - 1)})
 
-            n_ts = monthly_data[1].sizes[time_dim]
-            cur_month = monthly_data[1].isel({time_dim: slice(1, n_ts)})
+            n_ts = monthly_groups[1].sizes[time_dim]
+            cur_month = monthly_groups[1].isel({time_dim: slice(1, n_ts)})
         else:
-            prev_month = monthly_data[month - 1]
-            cur_month = monthly_data[month]
+            prev_month = monthly_groups[month - 1]
+            cur_month = monthly_groups[month]
 
         slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
@@ -884,16 +889,16 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
 
 
 def draw_auto_regression_monthly(
-    ar_params,
-    covariance,
+    ar_params: xr.Dataset,
+    covariance: xr.DataArray,
     *,
-    time,
-    n_realisations,
-    seed,
-    buffer,
-    time_dim="time",
-    realisation_dim="realisation",
-):
+    time: xr.DataArray | pd.Index,
+    n_realisations: int,
+    seed: int | xr.Dataset,
+    buffer: int,
+    time_dim: str = "time",
+    realisation_dim: str = "realisation",
+) -> xr.DataArray:
     """draw time series of a cyclo-stationary auto-regressive process of lag one (AR(1))
     using individual parameters for each month including spatially-correlated innovations.
     For more information on the cyclo-stationary AR(1) process please refer to
@@ -914,7 +919,7 @@ def draw_auto_regression_monthly(
         white noise process for each month. Must be symmetric and at least
         positive-semidefinite.
         Used to draw spatially-correlated innovations using a multivariate normal.
-    time : xr.DataArray
+    time : xr.DataArray | pd.Index
         The time coordinates that determines the length of the predicted timeseries and
         that will be the assigned time dimension of the predictions.
     n_realisations : int

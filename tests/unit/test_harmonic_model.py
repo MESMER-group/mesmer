@@ -60,7 +60,7 @@ def test_predict_harmonic_model():
         result,
         "result",
         ndim=2,
-        required_dims=["time", "cells"],
+        required_dims={"time", "cells"},
         shape=(n_years * 12, n_gridcells),
     )
 
@@ -95,7 +95,7 @@ def test_fit_fourier_order_np(coefficients):
     )
     estimated_coefficients = np.nan_to_num(
         estimated_coefficients,
-        0,
+        nan=0,
     )
 
     np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-7)
@@ -206,10 +206,10 @@ def test_fit_harmonic_model_checks():
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)
+        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)  # type: ignore[arg-type]
 
     freq = "YE" if Version(pd.__version__) >= Version("2.2") else "Y"
     yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq=freq)
