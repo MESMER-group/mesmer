@@ -124,7 +124,7 @@ def stack_datatrees_for_linear_regression(
 
     Returns
     -------
-    tuple od stacked predictors, target and weights
+    tuple of stacked predictors, target and weights
         Tuple of the prepared predictors, target and weights, where the predictors and target are
         stacked along the stacking dimensions and the weights are stacked along the stacking dimensions
         and the ensemble member dimension.
