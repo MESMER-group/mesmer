@@ -92,7 +92,7 @@ def stack_datatrees_for_linear_regression(
     stacking_dims: list[str],
     collapse_dim: str = "scenario",
     stacked_dim: str = "sample",
-) -> tuple[DataTree, xr.Dataset, xr.Dataset | None | None]:
+) -> tuple[DataTree, xr.Dataset, xr.Dataset | None]:
     """
     prepares data for Linear Regression:
     1. Broadcasts predictors to target
