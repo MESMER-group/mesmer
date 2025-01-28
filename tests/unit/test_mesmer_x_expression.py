@@ -51,6 +51,32 @@ def test_expression_wrong_function():
         Expression("norm(scale=5, loc=mean())", expr_name="name")
 
 
+def test_expression_set_params():
+
+    expression_str = "norm(loc=0, scale=c1)"
+    expr = Expression(expression_str, expr_name="name")
+
+    assert expr.expression == expression_str
+    assert expr.expression_name == "name"
+
+    assert expr.distrib == sp.stats.norm
+    assert not expr.is_distrib_discrete
+
+    assert expr.parameters_list == ["loc", "scale"]
+
+    bounds = {"loc": [-inf, inf], "scale": [0, inf]}
+    assert expr.boundaries_parameters == bounds
+
+    param_expr = {"loc": "0", "scale": "c1"}
+    assert expr.parameters_expressions == param_expr
+
+    coeffs = ["c1"]
+    assert expr.coefficients_list == coeffs
+
+    coeffs_per_param = {"loc": [], "scale": ["c1"]}
+    assert expr.coefficients_dict == coeffs_per_param
+
+
 def test_expression_genextreme():
 
     expression_str = (
@@ -316,6 +342,30 @@ def test_evaluate_params_norm():
     params = expr.evaluate_params([2, 1], {"T": np.array([2, 5])})
 
     expected = {"loc": np.array([4, 10]), "scale": np.array([1.0, 1.0])}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+
+@pytest.mark.xfail(
+    reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2557261793"
+)
+def test_evaluate_params_norm_set_params_with_float():
+
+    expr = Expression("norm(loc= c1 * __T__, scale=0.1)", expr_name="name")
+    params = expr.evaluate_params([1], {"T": np.array([1, 2])})
+
+    assert isinstance(params, dict)
+
+    expected = {"loc": np.array([1, 2]), "scale": np.array([0.1, 0.1])}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+    # a second set of values
+    params = expr.evaluate_params([2], {"T": np.array([2, 5])})
+
+    expected = {"loc": np.array([4, 10]), "scale": np.array([0.1, 0.1])}
 
     # assert frozen params are equal
     mesmer.testing.assert_dict_allclose(params, expected)
