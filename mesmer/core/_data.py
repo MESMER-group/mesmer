@@ -43,7 +43,7 @@ def _load_aod_obs(*, version, resample):
         dtype={"year": str, "month": str},
     )
 
-    time = pd.to_datetime(df.year + df.month, format="%Y%m")
+    time = pd.to_datetime(df.year + df.month, format="%Y%m").astype("datetime64[ns]")
 
     aod = xr.DataArray(df.aod.values, coords={"time": time}, name="aod")
 
