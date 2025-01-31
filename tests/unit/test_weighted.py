@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree
 
 import mesmer
+from mesmer.core._datatreecompat import DataTree
 
 
 def data_lon_lat(as_dataset, x_dim="lon", y_dim="lat"):
@@ -249,9 +249,7 @@ def test_create_equal_sceanrio_weights_from_datatree_checks():
 
     # too deep
     dt_too_deep = dt.copy()
-    dt_too_deep["ssp585/1"] = DataTree(
-        xr.Dataset({"tas": xr.DataArray([4, 5], dims="member")})
-    )
+    dt_too_deep["ssp585/1"] = DataTree(ssp585)
     with pytest.raises(ValueError, match="DataTree must have a depth of 1, not 2."):
         mesmer.weighted.equal_scenario_weights_from_datatree(dt_too_deep)
 

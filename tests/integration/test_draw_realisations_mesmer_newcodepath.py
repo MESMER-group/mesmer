@@ -1,12 +1,11 @@
 import pathlib
 
-import datatree
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 from filefisher import FileFinder
 
 import mesmer
+from mesmer.core._datatreecompat import DataTree, map_over_datasets, open_datatree
 
 
 def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
@@ -106,11 +105,15 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     tas = load_hist_scen_continuous(fc_hist, fc_scens)
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time")
     tas_anoms = tas - ref
-    tas_globmean = map_over_subtree(mesmer.weighted.global_mean)(tas_anoms)
+    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
 
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_forcing = map_over_subtree(mesmer.stats.lowess)(
-        tas_globmean_ensmean, dim="time", n_steps=30, use_coords=False
+    tas_globmean_forcing = map_over_datasets(
+        mesmer.stats.lowess,
+        tas_globmean_ensmean,
+        dim="time",
+        n_steps=30,
+        use_coords=False,
     )
 
     def _get_hfds():
@@ -135,10 +138,14 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         hfds = load_hist_scen_continuous(fc_hfds_hist, fc_hfds)
         hfds_ref = hfds.sel(time=REFERENCE_PERIOD).mean("time")
         hfds_anoms = hfds - hfds_ref
-        hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
+        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
         hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
+        hfds_globmean_smoothed = map_over_datasets(
+            mesmer.stats.lowess,
+            hfds_globmean_ensmean,
+            "time",
+            n_steps=50,
+            use_coords=False,
         )
         return hfds_globmean_smoothed
 
@@ -283,22 +290,25 @@ def test_make_realisations(
 
     # 1.) superimpose volcanic influence
     volcanic_params = xr.open_dataset(volcanic_file)
-    tas_forcing = map_over_subtree(mesmer.volc.superimpose_volcanic_influence)(
-        tas_forcing, volcanic_params, hist_period=HIST_PERIOD
+    tas_forcing = map_over_datasets(
+        mesmer.volc.superimpose_volcanic_influence,
+        tas_forcing,
+        volcanic_params,
+        hist_period=HIST_PERIOD,
     )
 
     # 2.) compute the global variability
     global_ar_params = xr.open_dataset(global_ar_file)
-    global_variability = map_over_subtree(
-        mesmer.stats.draw_auto_regression_uncorrelated
-    )(
+    global_variability = mesmer.stats.draw_auto_regression_uncorrelated(
         global_ar_params,
         realisation=n_realisations,
         time=time,
         seed=seed_global_variability,
         buffer=buffer_global_variability,
-    ).rename(
-        {"samples": "tas"}
+    )
+
+    global_variability = map_over_datasets(
+        xr.Dataset.rename, global_variability, samples="tas"
     )
 
     # 3.) compute the local forced response
@@ -321,7 +331,9 @@ def test_make_realisations(
 
     for scen in predictors.children:
         local_forced_response[scen] = DataTree(
-            lr.predict(predictors[scen], exclude={"tas_resids"}).rename("tas")
+            lr.predict(predictors[scen], exclude={"tas_resids"})
+            .rename("tas")
+            .to_dataset()
         )
 
         # 4.) compute the local variability part driven by global variabilty
@@ -332,7 +344,7 @@ def test_make_realisations(
             exclude.add("hfds")
 
         local_variability_from_global_var[scen] = DataTree(
-            lr.predict(predictors[scen], exclude=exclude).rename("tas")
+            lr.predict(predictors[scen], exclude=exclude).rename("tas").to_dataset()
         )
 
     # 5.) compute local variability
@@ -340,14 +352,18 @@ def test_make_realisations(
     localized_covariance = xr.open_dataset(localized_ecov_file)
     localized_covariance_adjusted = localized_covariance.localized_covariance_adjusted
 
-    local_variability = map_over_subtree(mesmer.stats.draw_auto_regression_correlated)(
+    local_variability = mesmer.stats.draw_auto_regression_correlated(
         local_ar,
         localized_covariance_adjusted,
         time=time,
         realisation=n_realisations,
         seed=seed_local_variability,
         buffer=buffer_local_variability,
-    ).rename({"samples": "tas"})
+    )
+
+    local_variability = map_over_datasets(
+        xr.Dataset.rename, local_variability, samples="tas"
+    )
 
     local_variability_total = local_variability_from_global_var + local_variability
 
@@ -358,7 +374,7 @@ def test_make_realisations(
         result.to_netcdf(expected_output_file)
         pytest.skip("Updated expected output file.")
     else:
-        expected = datatree.open_datatree(expected_output_file, use_cftime=True)
+        expected = open_datatree(expected_output_file, use_cftime=True)
         for scen in scenarios:
             exp_scen = expected[scen].to_dataset()
             res_scen = result[scen].to_dataset()

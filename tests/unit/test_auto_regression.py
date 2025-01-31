@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 from packaging.version import Version
 
 import mesmer
+from mesmer.core._datatreecompat import DataTree
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
 from mesmer.stats import _auto_regression
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
@@ -178,14 +178,14 @@ def test_draw_auto_regression_uncorrelated(
 def test_draw_auto_regression_uncorrelated_dt(ar_params_1D):
     seeds = DataTree.from_dict(
         {
-            "scen1": xr.DataArray(np.array([25]), name="seed"),
-            "scen2": xr.DataArray(np.array([42]), name="seed"),
+            "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
+            "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
         }
     )
     n_realisation = 10
     n_ts = 20
 
-    result = map_over_subtree(mesmer.stats.draw_auto_regression_uncorrelated)(
+    result = mesmer.stats.draw_auto_regression_uncorrelated(
         ar_params_1D,
         time=n_ts,
         realisation=n_realisation,
@@ -334,14 +334,14 @@ def test_draw_auto_regression_correlated(
 def test_draw_auto_regression_correlated_dt(ar_params_2D, covariance):
     seeds = DataTree.from_dict(
         {
-            "scen1": xr.DataArray(np.array([25]), name="seed"),
-            "scen2": xr.DataArray(np.array([42]), name="seed"),
+            "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
+            "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
         }
     )
     n_realisation = 10
     n_ts = 20
 
-    result = map_over_subtree(mesmer.stats.draw_auto_regression_correlated)(
+    result = mesmer.stats.draw_auto_regression_correlated(
         ar_params_2D,
         covariance,
         time=n_ts,
@@ -890,8 +890,8 @@ def test_draw_auto_regression_monthly_dt():
 
     seeds = DataTree.from_dict(
         {
-            "scen1": xr.DataArray(np.array([25]), name="seed"),
-            "scen2": xr.DataArray(np.array([42]), name="seed"),
+            "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
+            "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
         }
     )
 
@@ -929,7 +929,7 @@ def test_draw_auto_regression_monthly_dt():
     time = pd.date_range("2000-01-01", periods=n_years * 12, freq=freq)
     time = xr.DataArray(time, dims="time", coords={"time": time})
 
-    result = map_over_subtree(mesmer.stats.draw_auto_regression_monthly)(
+    result = mesmer.stats.draw_auto_regression_monthly(
         ar_params,
         covariance,
         time=time,
