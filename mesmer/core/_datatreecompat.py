@@ -18,7 +18,7 @@ else:
         @functools.wraps(func)
         def _func(ds, *args, **kwargs):
             # print(ds)
-            if not ds or not ds.data_vars:
+            if not ds:
                 return ds
             return func(ds, *args, **kwargs)
 
