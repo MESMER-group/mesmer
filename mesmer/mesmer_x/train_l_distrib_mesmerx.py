@@ -769,7 +769,6 @@ class distrib_cov:
         for param in self.boundaries_params:
             bottom, top = self.boundaries_params[param]
 
-            # TODO: avoid using implementation detail of frozen distr of sp.stats
             param_values = params[param]
 
             # out of boundaries
