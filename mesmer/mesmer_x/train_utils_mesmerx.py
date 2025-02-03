@@ -369,28 +369,7 @@ class Expression:
             # may need to silence warnings here, to avoid spamming
             parameters_values[param] = eval(expr, None, locals)
 
-        # Correcting shapes 1: scalar parameters must have the shape of the inputs
-        # if len(self.inputs_list) > 0:
-
-        #     for param in self.parameters_list:
-        #         param_value = parameters_values[param]
-
-        #         # TODO: use np.ndim(param_value) ==  0? (i.e. isscalar)
-        #         if isinstance(param_value, int | float) or param_value.ndim == 0:
-        #             if isinstance(coefficients_values, xr.Dataset) and (
-        #                 isinstance(inputs_values, xr.Dataset)
-        #             ):
-        #                 param_value = param_value * xr.ones_like(
-        #                     inputs_values[self.inputs_list[0]]
-        #                 )
-        #             else:
-        #                 param_value = param_value * np.ones(
-        #                     inputs_values[self.inputs_list[0]].shape
-        #                 )
-
-        #         parameters_values[param] = param_value
-
-        # Correcting shapes 2: possibly forcing shape
+        # possibly forcing shape
         if forced_shape is not None and len(self.inputs_list) > 0:
 
             for param in self.parameters_list:
