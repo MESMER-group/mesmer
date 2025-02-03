@@ -523,19 +523,19 @@ def probability_integral_transform(
         print(f"Transforming {target_name}: {scen}", end="\r")
 
         # calculation distributions for this scenario
-        distrib_start = expression_start.evaluate(
+        params_start = expression_start.evaluate_params(
             coeffs_start, preds_start_item, forced_shape=data_item[target_name].dims
         )
 
-        distrib_end = expression_end.evaluate(
+        params_end = expression_end.evaluate_params(
             coeffs_end, preds_end_item, forced_shape=data_item[target_name].dims
         )
 
         # probabilities of the sample on the starting distribution
-        cdf_item = distrib_start.cdf(data_item[target_name])
+        cdf_item = expression_start.distrib.cdf(data_item[target_name], **params_start)
 
         # corresponding values on the ending distribution
-        transf_item = distrib_end.ppf(cdf_item)
+        transf_item = expression_end.distrib.ppf(cdf_item, **params_end)
 
         # archiving
         out.append((transf_item, scen))
