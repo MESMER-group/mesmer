@@ -116,7 +116,9 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
 - Enable to pass set values for loc and scale (only integers) and make scale parameter optional (`#597 <https://github.com/MESMER-group/mesmer/pull/597>`_).
 - Enable `threshold_min_proba` to be `None` in `distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_).
 - Also use Nelder-Mead fit in `distrib_cov._minimize` for `option_NelderMead == "best_run"` when Powell fit was not successful (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_).
-- Return `logpmf` for discrete distributions in `distrib_cov._fg_fun_LL_n()` (`#602 <https://github.com/MESMER-group/mesmer/pull/602>`_)
+- Return `logpmf` for discrete distributions in `distrib_cov._fg_fun_LL_n()` (`#602 <https://github.com/MESMER-group/mesmer/pull/602>`_).
+- Speed-up MESMER-X by avoiding frozen distributions (`#532 <https://github.com/MESMER-group/mesmer/issues/532>`_).
+
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^
