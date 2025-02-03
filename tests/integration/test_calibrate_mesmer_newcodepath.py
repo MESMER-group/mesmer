@@ -255,7 +255,6 @@ def test_calibrate_mesmer(
             n_steps=50,
             use_coords=False,
         )
-        print(hfds_globmean_smoothed)
     else:
         hfds_globmean_smoothed = None
 
