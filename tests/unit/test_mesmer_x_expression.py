@@ -382,7 +382,7 @@ def test_evaluate_params_norm_dataset():
     params = expr.evaluate_params(coefficients_values, inputs_values)
 
     loc = xr.DataArray([1, 2], dims="x")
-    scale = xr.DataArray([2, 2], dims="x")
+    scale = xr.DataArray(2)
 
     expected = {"loc": loc, "scale": scale}
 
@@ -422,7 +422,7 @@ def test_evaluate_norm_dataset():
     assert isinstance(dist.dist, type(sp.stats.norm))
 
     loc = xr.DataArray([1, 2], dims="x")
-    scale = xr.DataArray([2, 2], dims="x")
+    scale = xr.DataArray(2)
 
     expected = {"loc": loc, "scale": scale}
 
