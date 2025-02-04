@@ -15,7 +15,7 @@ New Features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-- Switch random number generation for drawing emulations from np.random.seed() to np.random.default_rng()
+- Switch random number generation for drawing emulations from :py:func:`np.random.seed()` to :py:func:`np.random.default_rng()`
   (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
