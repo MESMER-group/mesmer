@@ -102,6 +102,9 @@ class Expression:
         # correct expressions of parameters
         self._correct_expr_parameters()
 
+        # compile expression for faster eval
+        self._compile_expression()
+
     def _interpret_distrib(self):
         """interpreting the expression"""
 
@@ -296,6 +299,14 @@ class Expression:
                     param
                 ].replace(f"__{i}__", i)
 
+    def _compile_expression(self):
+        """compile expression for faster eval"""
+
+        self._compiled_param_expr = {
+            param: compile(expr, param, "eval")
+            for param, expr in self.parameters_expressions.items()
+        }
+
     def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
         """
         Evaluates the parameters for the provided inputs and coefficients
@@ -365,8 +376,7 @@ class Expression:
 
         # evaluate parameters
         parameters_values = {}
-        for param, expr in self.parameters_expressions.items():
-            # may need to silence warnings here, to avoid spamming
+        for param, expr in self._compiled_param_expr.items():
             parameters_values[param] = eval(expr, None, locals)
 
         # possibly forcing shape
