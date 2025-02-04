@@ -78,13 +78,15 @@ Internal Changes
 
 Data structure using xarray-datatree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This release implements using `DataTree` from `xarray-datatree` to handle multiple scenarios.
+
+This release implements using :py:class:`DataTree` from `xarray-datatree` to handle multiple scenarios.
+
 - Add `filefisher` as dependency to handle file paths of several scenarios (`#586 <https://github.com/MESMER-group/mesmer/pull/586>`_ and `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_).
-- Enable passing a `DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
+- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
-- Enable passing `DataTree` and `xr.Dataset` to `LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
+- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
 - Add upper pin to `xarray` version to support `xarray-datatree`(`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
-- Add utility functions for `DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
+- Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
 - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
@@ -106,17 +108,17 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   `#470 <https://github.com/MESMER-group/mesmer/pull/470>`_,
   `#502 <https://github.com/MESMER-group/mesmer/pull/502>`_)
 - Add unit tests (`#526 <https://github.com/MESMER-group/mesmer/pull/526>`_,
-                  `#533 <https://github.com/MESMER-group/mesmer/pull/533>`_,
-                  `#534 <https://github.com/MESMER-group/mesmer/pull/534>`_,
-                  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_,
-                  `#577 <https://github.com/MESMER-group/mesmer/pull/577>`_)
+  `#533 <https://github.com/MESMER-group/mesmer/pull/533>`_,
+  `#534 <https://github.com/MESMER-group/mesmer/pull/534>`_,
+  `#540 <https://github.com/MESMER-group/mesmer/pull/540>`_,
+  `#577 <https://github.com/MESMER-group/mesmer/pull/577>`_)
 - Add integration tests (`#524 <https://github.com/MESMER-group/mesmer/pull/524>`_,
-                         `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_
-                         `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
+  `#550 <https://github.com/MESMER-group/mesmer/pull/550>`_,
+  `#553 <https://github.com/MESMER-group/mesmer/pull/553>`_)
 - Enable to pass set values for loc and scale (only integers) and make scale parameter optional (`#597 <https://github.com/MESMER-group/mesmer/pull/597>`_).
-- Enable `threshold_min_proba` to be `None` in `distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_).
-- Also use Nelder-Mead fit in `distrib_cov._minimize` for `option_NelderMead == "best_run"` when Powell fit was not successful (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_).
-- Return `logpmf` for discrete distributions in `distrib_cov._fg_fun_LL_n()` (`#602 <https://github.com/MESMER-group/mesmer/pull/602>`_).
+- Enable ``threshold_min_proba`` to be ``None`` in :py:class:`distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_).
+- Also use Nelder-Mead fit in :py:meth:`distrib_cov._minimize` for ``option_NelderMead == "best_run"`` when Powell fit was not successful (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_).
+- Return `logpmf` for discrete distributions in :py:meth:`distrib_cov._fg_fun_LL_n()` (`#602 <https://github.com/MESMER-group/mesmer/pull/602>`_).
 - Speed-up MESMER-X
 
   - add method to calculate params of a distribution (`#539 <https://github.com/MESMER-group/mesmer/pull/539>`_)
@@ -133,10 +135,10 @@ some refactoring, bugfixes and enhancements of the MESMER-M functionality. Note
 that this led to some numerical changes compared to the MESMER-M publication
 (Nath et al., `2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 
-- move MESMER-M scripts into mesmer (
+- move MESMER-M scripts into mesmer (\
   `#419 <https://github.com/MESMER-group/mesmer/pull/419>`_, and
   `#421 <https://github.com/MESMER-group/mesmer/pull/421>`_).
-- move the harmonic model and power transformer functionalities to the stats module (
+- move the harmonic model and power transformer functionalities to the stats module (\
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
 - add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
 - add integration tests for MESMER-M (`#501 <https://github.com/MESMER-group/mesmer/pull/501>`_)
@@ -159,24 +161,24 @@ Auto-Regression
 Yeo-Johnson power transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Ensure the power transformer yields the correct normalization for more cases (
+-  Ensure the power transformer yields the correct normalization for more cases (\
    `#440 <https://github.com/MESMER-group/mesmer/issues/440>`_):
 
    -  expand the upper bound of the first coefficient from :math:`1` to :math:`\infty`,
-      i.e. to 1e10  (
+      i.e. to 1e10  (\
       `#446 <https://github.com/MESMER-group/mesmer/pull/446>`_, `#501 <https://github.com/MESMER-group/mesmer/pull/501>`_)
-   -  remove jacobian ``rosen_der`` from fit (
+   -  remove jacobian ``rosen_der`` from fit (\
       `#447 <https://github.com/MESMER-group/mesmer/pull/447>`_)
-   -  change optimization method from *SLSQP* to *Nelder-Mead* (
+   -  change optimization method from *SLSQP* to *Nelder-Mead* (\
       `#455 <https://github.com/MESMER-group/mesmer/pull/455>`_)
--  adjust the first guess to assume the data is normally distributed (
+-  adjust the first guess to assume the data is normally distributed (\
    `#429 <https://github.com/MESMER-group/mesmer/pull/429>`_)
--  make (back-) transformations more stable by using `np.expm1` and `np.log1p`
+-  make (back-) transformations more stable by using :py:func:`np.expm1` and :py:func:`np.log1p`
    (`#494 <https://github.com/MESMER-group/mesmer/pull/494>`_)
--  rewrite power transformer to work with xarray, and refactor from a class structure to functions (
+-  rewrite power transformer to work with xarray, and refactor from a class structure to functions (\
    `#442 <https://github.com/MESMER-group/mesmer/pull/442>`_, and
    `#474 <https://github.com/MESMER-group/mesmer/pull/474>`_)
--  fix small code issues and clean the docstrings (
+-  fix small code issues and clean the docstrings (\
    `#436 <https://github.com/MESMER-group/mesmer/pull/436>`_,
    `#444 <https://github.com/MESMER-group/mesmer/pull/444>`_,
    `#439 <https://github.com/MESMER-group/mesmer/pull/439>`_,
@@ -193,9 +195,9 @@ Harmonic model
    - only fit orders up to local minimum and use coeffs from precious order as first guess (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_)
    - infer the harmonic model order from the coefficients (`#434 <https://github.com/MESMER-group/mesmer/pull/434>`_)
 -  return residuals instead of the loss for the optimization (`#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
--  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415/>_` and
+-  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_ and
    `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
--  add helper function to upsample yearly data to monthly resolution (
+-  add helper function to upsample yearly data to monthly resolution (\
    `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
    `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
@@ -207,7 +209,7 @@ Harmonic model
    `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
    `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_, and
    `#574 <https://github.com/MESMER-group/mesmer/pull/574>`_).
-- add tests (
+- add tests (\
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
 - add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
@@ -234,7 +236,7 @@ By `Mathias Hauser`_.
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
-- Removed support for python 3.7 and python 3.8 (
+- Removed support for python 3.7 and python 3.8 (\
   `#163 <https://github.com/MESMER-group/mesmer/issues/163>`_,
   `#365 <https://github.com/MESMER-group/mesmer/pull/365>`_,
   `#367 <https://github.com/MESMER-group/mesmer/pull/367>`_, and
@@ -288,7 +290,7 @@ New Features
      etc. methods around linear regression
      (`#134 <https://github.com/MESMER-group/mesmer/pull/134>`_).
      By `Mathias Hauser`_.
-   - Add xarray wrapper for fitting a linear regression (
+   - Add xarray wrapper for fitting a linear regression (\
      `#123 <https://github.com/MESMER-group/mesmer/pull/123>`_ and
      `#142 <https://github.com/MESMER-group/mesmer/pull/142>`_).
      By `Mathias Hauser`_.
@@ -301,7 +303,7 @@ New Features
    - Allow to `exclude` predictor variables in :py:meth:`mesmer.stats.LinearRegression.predict`
      (`#354 <https://github.com/MESMER-group/mesmer/pull/354>`_).
      By `Mathias Hauser`_.
-   - Fixed two bugs related to (non-dimension) coordinates (
+   - Fixed two bugs related to (non-dimension) coordinates (\
      `#332 <https://github.com/MESMER-group/mesmer/issues/332>`_,
      `#333 <https://github.com/MESMER-group/mesmer/issues/333>`_ and
      `#334 <https://github.com/MESMER-group/mesmer/pull/313>`_).
@@ -311,11 +313,11 @@ New Features
    - Add ``mesmer.stats.fit_auto_regression``: xarray wrapper to fit an auto regression model
      (`#139 <https://github.com/MESMER-group/mesmer/pull/139>`_).
      By `Mathias Hauser`_.
-   - Have ``mesmer.stats.fit_auto_regression`` return the variance instead of the standard deviation (
+   - Have ``mesmer.stats.fit_auto_regression`` return the variance instead of the standard deviation (\
      `#306 <https://github.com/MESMER-group/mesmer/issues/306>`_, and
      `#318 <https://github.com/MESMER-group/mesmer/pull/318>`_). By `Mathias Hauser`_.
    - Add ``draw_auto_regression_correlated`` and ``draw_auto_regression_uncorrelated``: to draw samples of a
-     (spatially-)correlated and uncorrelated auto regression model (
+     (spatially-)correlated and uncorrelated auto regression model (\
      `#322 <https://github.com/MESMER-group/mesmer/pull/322>`_,
      `#161 <https://github.com/MESMER-group/mesmer/pull/161>`_ and
      `#313 <https://github.com/MESMER-group/mesmer/pull/313>`_).
@@ -350,7 +352,7 @@ New Features
 - Added helper functions to process xarray-based model data:
    - Added functions to stack regular lat-lon grids to 1D grids and unstack them again (`#217
      <https://github.com/MESMER-group/mesmer/pull/217>`_). By `Mathias Hauser`_.
-   - Added functions to mask the ocean and Antarctica (
+   - Added functions to mask the ocean and Antarctica (\
      `#219 <https://github.com/MESMER-group/mesmer/pull/219>`_ and
      `#314 <https://github.com/MESMER-group/mesmer/pull/314>`_). By `Mathias Hauser`_.
    - Added functions to calculate the weighted global mean
