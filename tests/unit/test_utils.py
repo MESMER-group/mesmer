@@ -150,12 +150,18 @@ def test_minimize_local_discrete_warning():
     assert result == 1
 
 
-def test_minimize_local_discrete_error():
-    def func(i):
+def test_minimize_local_discrete_errors():
+    def func_minf(i):
         return float("-inf")
 
     with pytest.raises(ValueError, match=r"`fun` returned `\-inf`"):
-        mesmer.core.utils._minimize_local_discrete(func, [0])
+        mesmer.core.utils._minimize_local_discrete(func_minf, [0])
+
+    def func_inf(i):
+        return float("inf")
+
+    with pytest.raises(ValueError, match=r"First element is `inf`, aborting."):
+        mesmer.core.utils._minimize_local_discrete(func_inf, [0])
 
 
 @pytest.mark.parametrize("obj", (None, xr.DataArray()))
