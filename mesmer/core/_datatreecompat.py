@@ -29,10 +29,7 @@ else:
 
     def map_over_datasets(func, *args, **kwargs):
 
-        # https://github.com/pydata/xarray/issues/10009
-        func = functools.partial(func, **kwargs)
-
-        return _map_over_datasets(skip_empty_nodes(func), *args)
+        return _map_over_datasets(skip_empty_nodes(func), *args, kwargs=kwargs)
 
     # raise ValueError("Currently not supported")
 
