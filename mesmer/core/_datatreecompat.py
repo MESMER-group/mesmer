@@ -12,12 +12,11 @@ if Version(xr.__version__) < Version("2024.10"):
 
         return map_over_subtree(func)(*args, **kwargs)
 
-else:
+elif Version(xr.__version__) >= Version("2025.02"):
 
     def skip_empty_nodes(func):
         @functools.wraps(func)
         def _func(ds, *args, **kwargs):
-            # print(ds)
             if not ds:
                 return ds
             return func(ds, *args, **kwargs)
@@ -31,7 +30,11 @@ else:
 
         return _map_over_datasets(skip_empty_nodes(func), *args, kwargs=kwargs)
 
-    # raise ValueError("Currently not supported")
+else:
+    raise ImportError(
+        f"xarray version {xr.__version__} not supported - please upgrade to v2025.02 ("
+        "or later) or downgrade to v2024.09"
+    )
 
 __all__ = [
     "DataTree",
