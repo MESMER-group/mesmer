@@ -327,7 +327,7 @@ def test_assert_annual_data_wrong_freq(calendar, freq):
         mesmer.core.utils._assert_annual_data(time)
 
 
-def test_assert_annual_data_unkown_freq():
+def test_assert_annual_data_unknown_freq():
 
     time1 = _get_time("2000", periods=2, freq="YE")
     time2 = _get_time("2002", periods=3, freq="ME")

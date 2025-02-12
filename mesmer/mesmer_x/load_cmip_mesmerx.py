@@ -5,7 +5,7 @@
 """
 Functions to load in cmip5 and cmip6 data from the cmip-ng archive or ADDITIONAL DATA REPOSITORIES at ETHZ.
 Because MESMER-X has to use variables that are not provided by CMIP6, it must support the use of other repositories.
-WARNING: THIS CODE IS STILL ENTIRELY BASED ON THE ORIGINAL VERSION OF DATA STRCUTURES, WHICH ARE NESTED DICTIONARIES.
+WARNING: THIS CODE IS STILL ENTIRELY BASED ON THE ORIGINAL VERSION OF DATA STRUCTURES, WHICH ARE NESTED DICTIONARIES.
 """
 
 import copy as copy
@@ -223,7 +223,7 @@ def find_files_cmip(esm, var, scenario, cfg, prescribed_members=None):
         order[int(memb[: memb.find("i")])] = s
     sorted_order = list(order.keys())
     sorted_order.sort(reverse=False)
-    # putting at the end in the correct order, removing the first occurence
+    # putting at the end in the correct order, removing the first occurrence
     for i_s in sorted_order:
         path_runs_list.append(order[i_s])
         path_runs_list.remove(order[i_s])
@@ -499,7 +499,9 @@ def load_cmip_file(run_path, scen, cfg):
 
 
 def update_time_axis(time_axis, run_path):
-    """This script adapts a timeaxis inputed to return a list of *YEARS*. It helps in solving several issues:
+    """convert a timeaxis to list of *YEARS*
+
+     It helps in solving several issues:
      1. The cmip-ng archive uses only the 'np.datetime64' format. All the others formats are encountered in the cmip_X repository.
      2. Depending on files, some may not have the same format for time over the full length of the scenario.
      3. Limitation of np.datetime64 to 1678-2262 limits its use for scenarios extended up to 2300.

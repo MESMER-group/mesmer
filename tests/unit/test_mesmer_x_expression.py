@@ -216,7 +216,7 @@ def test_expression_covariate_c_digit():
 )
 def test_expression_covariate_wrong_underscores():
 
-    # not sure wath the correct behavior should be
+    # not sure what the correct behavior should be
     # - raise?
     # - get "T__C" as covariate?
 
