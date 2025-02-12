@@ -173,7 +173,7 @@ def test_global_mean_weights_passed(as_dataset):
     xr.testing.assert_allclose(result, expected)
 
 
-def test_equal_sceanrio_weights_from_datatree():
+def test_equal_scenario_weights_from_datatree():
     dt = DataTree()
 
     n_members_ssp119 = 3
@@ -234,7 +234,7 @@ def test_equal_sceanrio_weights_from_datatree():
     assert result2.equals(expected)
 
 
-def test_create_equal_sceanrio_weights_from_datatree_checks():
+def test_create_equal_scenario_weights_from_datatree_checks():
 
     dt = DataTree()
     ssp119 = xr.Dataset(

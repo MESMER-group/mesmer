@@ -7,7 +7,7 @@ Contributing to MESMER
 
 Overview
 --------
-Thanks for your interest in contributing to MESMER! We're excited to have you on board! This section of the documentation details how to get started with contributing and how to communicate. If something is unclear or you are stuck, never hestiate to contact the maintainers (`Mathias Hauser`_ or `Victoria Bauer`_) or open an issue on the `MESMER issue tracker`_.
+Thanks for your interest in contributing to MESMER! We're excited to have you on board! This section of the documentation details how to get started with contributing and how to communicate. If something is unclear or you are stuck, never hesitate to contact the maintainers (`Mathias Hauser`_ or `Victoria Bauer`_) or open an issue on the `MESMER issue tracker`_.
 
 All contributions are welcome. Some possible suggestions include:
 
@@ -106,7 +106,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 
    `origin` is the default name of the remote repository you cloned from, so in this case, your forked repository. Your changes are now on GitHub.
 5. **Create a Pull Request**: Open a pull request on the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ on GitHub by clicking on "Compare and pull request" either on the PR page of MESMER itself or in your own fork (a message should appear on the top of the page after you pushed). You will be prompted to give your PR a name and a short description, explaining what you did. There is also a small check list for you to fill out, asking if your PR solves any known issues from the `MESMER Issue Tracker`_, if you added test and documentation to your PR and added an entry to the `CHANGELOG`_.
-6. **Review Process**: Each pull request needs approval from a core contributor. You can mark your PR as a draft if you are not ready for the review yet and actively request a review in the side bar of your PR when you are ready. Before you request a review please make sure your changes pass all tests and pre-commit checks (you will see a green check mark under your PR if they do). If you need help with this (or anything else), don't hestiate to reach out to the team by writing a comment and tagging either `Mathias Hauser`_ or `Victoria Bauer`_. Please also be available for comments and discussion about your contribution to ensure your changes can be implemented.
+6. **Review Process**: Each pull request needs approval from a core contributor. You can mark your PR as a draft if you are not ready for the review yet and actively request a review in the side bar of your PR when you are ready. Before you request a review please make sure your changes pass all tests and pre-commit checks (you will see a green check mark under your PR if they do). If you need help with this (or anything else), don't hesitate to reach out to the team by writing a comment and tagging either `Mathias Hauser`_ or `Victoria Bauer`_. Please also be available for comments and discussion about your contribution to ensure your changes can be implemented.
 
    ​Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on ``sync`` in your fork. Afterwards, go to your local main branch and do:
 

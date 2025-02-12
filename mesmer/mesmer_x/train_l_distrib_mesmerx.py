@@ -299,7 +299,7 @@ class distrib_cov:
         func_first_guess=None,
         scores_fit=["func_optim", "NLL", "BIC"],
         options_optim=None,  # TODO: replace by options class?
-        options_solver=None,  # TODO: dito?
+        options_solver=None,  # TODO: ditto?
     ):
         """fit a conditional distribution.
 
@@ -664,7 +664,7 @@ class distrib_cov:
             )
 
     # TODO: don't do this in init. Give the user the option to either use this function
-    # or give their own weigths as soon as we switch the xarray wrapper into here and
+    # or give their own weights as soon as we switch the xarray wrapper into here and
     # the user actually initialized this class themselves
     def get_weights(self, n_bins_density=40):
 
@@ -683,7 +683,7 @@ class distrib_cov:
         histogram is then smoothed by a regular grid interpolator to give the density
         of the predictors in this "predictor space". Subsequently, the weights are
         the inverse of this density of the predictors. Consequently, Samples in regions
-        of this space with low densitiy will have higher weights, this is, "unusual" samples
+        of this space with low density will have higher weights, this is, "unusual" samples
         will have more weight.
 
         Parameters
