@@ -1,7 +1,8 @@
 from typing import overload
 
 import xarray as xr
-from datatree import DataTree
+
+from mesmer.core._datatreecompat import DataTree, map_over_datasets
 
 
 def _extract_single_dataarray_from_dt(dt: DataTree, name: str = "node") -> xr.DataArray:
@@ -157,14 +158,23 @@ def stack_datatrees_for_linear_regression(
     predictors_stacked = DataTree()
     for key, pred in predictors.items():
         # 1) broadcast to target
-        pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+        # TODO: use DataTree method again, once available
+        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+        pred_broadcast = map_over_datasets(
+            xr.Dataset.broadcast_like, pred, target, exclude=exclude_dim
+        )
+
         # 2) collapse into DataSets
         predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
         # 3) stack
         predictors_stacked[key] = DataTree(
             predictor_ds.stack(stack_dim, create_index=False)
         )
-    predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
+    # TODO: use DataTree method again, once available
+    # predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
+    predictors_stacked = map_over_datasets(
+        xr.Dataset.dropna, predictors_stacked, dim=stacked_dim
+    )
 
     # prepare target
     # 1) collapse into DataSet

@@ -3,11 +3,11 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree
 from statsmodels.tsa.arima_process import ArmaProcess
 
 import mesmer
 import mesmer.stats._auto_regression
+from mesmer.core._datatreecompat import DataTree
 
 
 def generate_ar_samples(ar, std=1, n_timesteps=100, n_ens=4):
