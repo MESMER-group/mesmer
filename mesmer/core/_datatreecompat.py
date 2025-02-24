@@ -15,7 +15,7 @@ if Version(xr.__version__) < Version("2024.10"):
 
         return map_over_subtree(func)(*args, **kwargs)
 
-elif Version(xr.__version__) >= Version("2025.02"):
+elif Version(xr.__version__) > Version("2025.01"):
 
     def skip_empty_nodes(func):
         @functools.wraps(func)
