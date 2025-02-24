@@ -3,7 +3,7 @@ import pathlib
 import pytest
 import xarray as xr
 
-# from datatree import Datatree, map_over_subtree
+# from mesmer.core._datatreecompat import Datatree, map_over_datasets
 import mesmer
 import mesmer.mesmer_x
 
@@ -58,7 +58,7 @@ def test_make_realisations_mesmer_x(
     # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
 
     # make global mean
-    # global_mean_dt = map_over_subtree(mesmer.weighted.global_mean)
+    # global_mean_dt = map_over_datasets(mesmer.weighted.global_mean)
     tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
     tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
 
