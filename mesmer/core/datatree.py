@@ -161,7 +161,7 @@ def stack_datatrees_for_linear_regression(
         # TODO: use DataTree method again, once available
         # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
         pred_broadcast = map_over_datasets(
-            xr.Dataset.broadcast_like, pred, target, exclude=exclude_dim
+            xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
         )
 
         # 2) collapse into DataSets
@@ -173,7 +173,7 @@ def stack_datatrees_for_linear_regression(
     # TODO: use DataTree method again, once available
     # predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
     predictors_stacked = map_over_datasets(
-        xr.Dataset.dropna, predictors_stacked, dim=stacked_dim
+        xr.Dataset.dropna, predictors_stacked, kwargs={"dim": stacked_dim}
     )
 
     # prepare target

@@ -204,13 +204,16 @@ def test_calibrate_mesmer(
         return ds
 
     tas_stacked = map_over_datasets(
-        mask_and_stack, tas_anoms, threshold_land=THRESHOLD_LAND
+        mask_and_stack, tas_anoms, kwargs={"threshold_land": THRESHOLD_LAND}
     )
 
     # train global trend module
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
     tas_globmean_smoothed = map_over_datasets(
-        mesmer.stats.lowess, tas_globmean_ensmean, "time", n_steps=50, use_coords=False
+        mesmer.stats.lowess,
+        tas_globmean_ensmean,
+        "time",
+        kwargs={"n_steps": 50, "use_coords": False},
     )
     hist_lowess_residuals = (
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
@@ -252,8 +255,7 @@ def test_calibrate_mesmer(
             mesmer.stats.lowess,
             hfds_globmean_ensmean,
             "time",
-            n_steps=50,
-            use_coords=False,
+            kwargs={"n_steps": 50, "use_coords": False},
         )
     else:
         hfds_globmean_smoothed = None

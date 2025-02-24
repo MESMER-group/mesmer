@@ -111,9 +111,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     tas_globmean_forcing = map_over_datasets(
         mesmer.stats.lowess,
         tas_globmean_ensmean,
-        dim="time",
-        n_steps=30,
-        use_coords=False,
+        kwargs={"dim": "time", "n_steps": 30, "use_coords": False},
     )
 
     def _get_hfds():
@@ -144,8 +142,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
             mesmer.stats.lowess,
             hfds_globmean_ensmean,
             "time",
-            n_steps=50,
-            use_coords=False,
+            kwargs={"n_steps": 50, "use_coords": False},
         )
         return hfds_globmean_smoothed
 
@@ -294,7 +291,7 @@ def test_make_realisations(
         mesmer.volc.superimpose_volcanic_influence,
         tas_forcing,
         volcanic_params,
-        hist_period=HIST_PERIOD,
+        kwargs={"hist_period": HIST_PERIOD},
     )
 
     # 2.) compute the global variability
@@ -308,7 +305,7 @@ def test_make_realisations(
     )
 
     global_variability = map_over_datasets(
-        xr.Dataset.rename, global_variability, samples="tas"
+        xr.Dataset.rename, global_variability, {"samples": "tas"}
     )
 
     # 3.) compute the local forced response
@@ -362,7 +359,7 @@ def test_make_realisations(
     )
 
     local_variability = map_over_datasets(
-        xr.Dataset.rename, local_variability, samples="tas"
+        xr.Dataset.rename, local_variability, kwargs={"samples": "tas"}
     )
 
     local_variability_total = local_variability_from_global_var + local_variability

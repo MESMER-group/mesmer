@@ -144,7 +144,9 @@ def _select_ar_order_scen_ens_dt(
     """
 
     ar_order_scen = map_over_datasets(
-        _extract_and_apply_to_da(select_ar_order), dt, dim=dim, maxlag=maxlag, ic=ic
+        _extract_and_apply_to_da(select_ar_order),
+        dt,
+        kwargs={"dim": dim, "maxlag": maxlag, "ic": ic},
     )
 
     # TODO: think about weighting?
@@ -244,7 +246,9 @@ def _fit_auto_regression_scen_ens_dt(
     """
 
     ar_params_scen = map_over_datasets(
-        _extract_and_apply_to_da(fit_auto_regression), dt, dim=dim, lags=int(lags)
+        _extract_and_apply_to_da(fit_auto_regression),
+        dt,
+        kwargs={"dim": dim, "lags": int(lags)},
     )
 
     # TODO: think about weighting! see https://github.com/MESMER-group/mesmer/issues/307
@@ -425,11 +429,13 @@ def draw_auto_regression_uncorrelated(
             _draw_auto_regression_uncorrelated,
             seed,
             ar_params,
-            time=time,
-            realisation=realisation,
-            buffer=buffer,
-            time_dim=time_dim,
-            realisation_dim=realisation_dim,
+            kwargs={
+                "time": time,
+                "realisation": realisation,
+                "buffer": buffer,
+                "time_dim": time_dim,
+                "realisation_dim": realisation_dim,
+            },
         )
 
     else:
@@ -562,11 +568,13 @@ def draw_auto_regression_correlated(
             seed,
             ar_params,
             covariance,
-            time=time,
-            realisation=realisation,
-            buffer=buffer,
-            time_dim=time_dim,
-            realisation_dim=realisation_dim,
+            kwargs={
+                "time": time,
+                "realisation": realisation,
+                "buffer": buffer,
+                "time_dim": time_dim,
+                "realisation_dim": realisation_dim,
+            },
         )
 
     else:
@@ -1033,11 +1041,13 @@ def draw_auto_regression_monthly(
             seed,
             ar_params,
             covariance,
-            time=time,
-            n_realisations=n_realisations,
-            buffer=buffer,
-            time_dim=time_dim,
-            realisation_dim=realisation_dim,
+            kwargs={
+                "time": time,
+                "n_realisations": n_realisations,
+                "buffer": buffer,
+                "time_dim": time_dim,
+                "realisation_dim": realisation_dim,
+            },
         )
 
     else:
