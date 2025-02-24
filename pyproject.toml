@@ -70,3 +70,19 @@ module = [
   "sklearn.*",
   "statsmodels.*",
 ]
+
+[tool.typos]
+
+[tool.typos.default]
+
+[tool.typos.default.extend-words]
+
+# abbreviations
+varn = "varn"
+strat = "strat"
+
+[tool.typos.type.jupyter]
+# avoid fixing the id hashes in jupyter notebooks
+extend-ignore-re = [
+    "\"id\": \".*\"",
+]

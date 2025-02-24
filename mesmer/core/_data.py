@@ -61,7 +61,7 @@ def _fetch_remote_data(name):
 
     cache_dir = pooch.os_cache("mesmer")
 
-    REMOTE_RESSOURCE = pooch.create(
+    REMOTE_RESOURCE = pooch.create(
         path=cache_dir,
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
@@ -73,4 +73,4 @@ def _fetch_remote_data(name):
     )
 
     # the file will be downloaded automatically the first time this is run.
-    return REMOTE_RESSOURCE.fetch(name)
+    return REMOTE_RESOURCE.fetch(name)

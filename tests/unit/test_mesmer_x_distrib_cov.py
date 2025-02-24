@@ -110,7 +110,7 @@ def test_distrib_cov_init():
     assert dist.boundaries_params == {
         "loc": [-10, 10],
         "scale": [0, 1.0],
-    }  # -1 -> 0 scince no negative values allowed
+    }  # -1 -> 0 since no negative values allowed
     assert dist.boundaries_coeffs == boundaries_coeffs
     assert dist.func_first_guess is None
     assert dist.n_coeffs == 2

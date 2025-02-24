@@ -130,7 +130,7 @@ def test_calibrate_mesmer_x(
         preds_start=predictor,
         expr_end="norm(loc=0, scale=1)",
     )
-    # TODO: add expression as varibale here or in function or before saving?
+    # TODO: add expression as variable here or in function or before saving?
 
     # make transformed target into DataArrays
     transf_target_xr_hist = xr.DataArray(

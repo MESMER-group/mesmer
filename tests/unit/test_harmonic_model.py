@@ -195,7 +195,7 @@ def test_fit_harmonic_model():
     result_comp = result.residuals.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(result_comp, expected, atol=1e-6)
 
-    # ensure predictons and residuals are consistent
+    # ensure predictions and residuals are consistent
     expected = noisy_monthly_target - predictions
 
     xr.testing.assert_equal(expected, result.residuals)
