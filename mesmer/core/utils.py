@@ -43,12 +43,13 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
 
     Raises
     ------
-    ValueError : if `func` returns negative infinity for any input.
+    ValueError : if `func` returns negative infinity for any input or first element is `inf`.
 
     Notes
     -----
     - The function determines the local minimum, i.e., the loop is aborted if
       `func(sequence[i-1]) >= func(sequence[i])`.
+    - If func returns `inf` for any input, the function will return the previous element.
     """
 
     current_min = float("inf")
@@ -73,9 +74,14 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
             sel = i - 1
             if sel == 0:
                 warnings.warn("First element is local minimum.", OptimizeWarning)
+            elif sel == -1:
+                raise ValueError("First element is `inf`, aborting.")
+
             return sequence[sel]
 
-    warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
+        warnings.warn(
+            "No local minimum found, returning the last element", OptimizeWarning
+        )
 
     return element
 
