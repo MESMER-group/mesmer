@@ -2,7 +2,8 @@ import warnings
 
 import numpy as np
 import xarray as xr
-from datatree import DataTree, map_over_subtree
+
+from mesmer.core._datatreecompat import DataTree, map_over_datasets
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -190,6 +191,6 @@ def equal_scenario_weights_from_datatree(
 
         return xr.Dataset({"weights": weights})
 
-    weights = map_over_subtree(_create_weights)(dt)
+    weights = map_over_datasets(_create_weights, dt)
 
     return weights
