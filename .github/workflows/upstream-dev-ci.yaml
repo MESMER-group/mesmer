@@ -22,7 +22,6 @@ jobs:
     name: upstream-dev
     runs-on: ubuntu-latest
     if: |
-    if: |
       github.repository == 'MESMER-group/mesmer'
       && (
           github.event_name == 'schedule'
