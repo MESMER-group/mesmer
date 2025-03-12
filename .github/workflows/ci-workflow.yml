@@ -18,6 +18,9 @@ jobs:
   test:
     name: py${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
+    if: |
+      github.repository == 'MESMER-group/mesmer'
+      && (github.event_name == 'push' || github.event_name == 'pull_request')
     strategy:
       fail-fast: false
       matrix:
