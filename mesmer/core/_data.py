@@ -3,7 +3,6 @@ from functools import cache
 import pandas as pd
 import pooch
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 
@@ -48,8 +47,7 @@ def _load_aod_obs(*, version, resample):
     aod = xr.DataArray(df.aod.values, coords={"time": time}, name="aod")
 
     if resample:
-        freq = "YE" if Version(xr.__version__) >= Version("2024.02") else "A"
-        aod = aod.resample(time=freq).mean()
+        aod = aod.resample(time="YE").mean()
 
     return aod
 
