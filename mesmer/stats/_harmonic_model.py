@@ -277,6 +277,7 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
 def fit_harmonic_model(
     yearly_predictor: xr.DataArray,
     monthly_target: xr.DataArray,
+    *,
     max_order: int = 6,
     time_dim: str = "time",
 ) -> xr.Dataset:
@@ -303,11 +304,33 @@ def fit_harmonic_model(
 
     """
 
-    if not isinstance(yearly_predictor, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_predictor)}")
+    _check_dataarray_form(
+        yearly_predictor, "yearly_predictor", ndim=2, required_dims={time_dim}
+    )
 
-    if not isinstance(monthly_target, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
+    _check_dataarray_form(
+        monthly_target, "monthly_target", ndim=2, required_dims={time_dim}
+    )
+
+    (gridcell_dim,) = set(monthly_target.dims) - {time_dim}
+
+    if gridcell_dim not in yearly_predictor.dims:
+        (gridcell_dim_yp,) = set(yearly_predictor.dims) - {time_dim}
+
+        msg = (
+            "Differently named `gridcell_dim`:\n"
+            f"- `{gridcell_dim_yp}` in `yearly_predictor`\n"
+            f"- `{gridcell_dim}` in `monthly_target`"
+        )
+        raise ValueError(msg)
+
+    if yearly_predictor[gridcell_dim].size != monthly_target[gridcell_dim].size:
+        msg = (
+            "yearly_predictor` and `monthly_target` don't have the same number of "
+            f"gridcells ({yearly_predictor[gridcell_dim].size} vs. "
+            f"{monthly_target[gridcell_dim].size})"
+        )
+        raise ValueError(msg)
 
     if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
