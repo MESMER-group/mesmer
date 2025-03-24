@@ -433,7 +433,7 @@ def draw_auto_regression_uncorrelated(
     ar_params = ar_params.expand_dims("__gridpoint__")
 
     if isinstance(seed, xr.Dataset):
-        seed = int(seed.seed.values)
+        seed = int(seed.seed.item())
 
     result = _draw_ar_corr_xr_internal(
         intercept=ar_params.intercept,
@@ -524,7 +524,7 @@ def draw_auto_regression_correlated(
     _check_dataarray_form(covariance, "covariance", ndim=2, shape=(size, size))
 
     if isinstance(seed, xr.Dataset):
-        seed = int(seed.seed.values)
+        seed = int(seed.seed.item())
 
     result = _draw_ar_corr_xr_internal(
         intercept=ar_params.intercept,
@@ -961,7 +961,7 @@ def draw_auto_regression_monthly(
     )
 
     if isinstance(seed, xr.Dataset):
-        seed = int(seed.seed.values)
+        seed = int(seed.seed.item())
 
     result = _draw_ar_corr_monthly_xr_internal(
         intercept=ar_params.intercept,
