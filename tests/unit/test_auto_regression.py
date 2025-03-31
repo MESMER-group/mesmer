@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 from mesmer.core._datatreecompat import DataTree
@@ -738,7 +737,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
 
 
 def test_fit_auto_regression_monthly():
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+    freq = "ME"
     n_years = 20
     n_gridcells = 10
     rng = np.random.default_rng(seed=0)
@@ -835,7 +834,7 @@ def test_draw_autoregression_monthly_np_rng():
 
 @pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_monthly(seed):
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+    freq = "ME"
 
     n_gridcells = 10
     n_realisations = 5
@@ -895,7 +894,7 @@ def test_draw_auto_regression_monthly_dt():
         }
     )
 
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+    freq = "ME"
 
     n_gridcells = 10
     n_realisation = 5

@@ -23,28 +23,29 @@ Breaking changes
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
-  `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_, and
-  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_):
+  `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,
+  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_, and
+  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_):
 
   ================= ============= =========
   Package           Old           New
   ================= ============= =========
   **cartopy**       not specified 0.22
-  **dask**          not specified 2023.8
+  **dask**          not specified 2024.3
   **joblib**        not specified 1.3
   **netcdf4**       not specified 1.6
-  **numpy**         not specified 1.24
-  **packaging**     not specified 23.1
-  **pandas**        2.0           no change
-  **pooch**         not specified 1.7
+  **numpy**         not specified 1.25
+  **packaging**     not specified 24.0
+  **pandas**        2.0           2.2
+  **pooch**         not specified 1.8
   **properscoring** not specified 0.1
   **pyproj**        not specified 3.6
-  **regionmask**    0.8           0.10
-  **scikit-learn**  not specified 1.3
-  **scipy**         not specified 1.11
+  **regionmask**    0.8           0.11
+  **scikit-learn**  not specified 1.4
+  **scipy**         not specified 1.12
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
-  **xarray**        2023.04       2023.7
+  **xarray**        2023.04       2024.2
   ================= ============= =========
 
 Deprecations
@@ -207,8 +208,9 @@ Harmonic model
    (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
    `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
    `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
-   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_, and
-   `#574 <https://github.com/MESMER-group/mesmer/pull/574>`_).
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_,
+   `#574 <https://github.com/MESMER-group/mesmer/pull/574>`_, and
+   `#589 <https://github.com/MESMER-group/mesmer/issues/589>`_).
 - add tests (\
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)

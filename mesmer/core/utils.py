@@ -2,9 +2,7 @@ import warnings
 from collections.abc import Callable, Iterable
 
 import numpy as np
-import pandas as pd
 import xarray as xr
-from packaging.version import Version
 
 
 class OptimizeWarning(UserWarning):
@@ -139,9 +137,7 @@ def upsample_yearly_data(
         )
 
     # make sure monthly and yearly data both start at the beginning of the period
-    # pandas v2.2 changed the time freq string for year
-    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    year = yearly_data.resample({time_dim: freq}).bfill()
+    year = yearly_data.resample({time_dim: "YS"}).bfill()
     month = monthly_time.resample({time_dim: "MS"}).bfill()
 
     # forward fill yearly values to monthly resolution
@@ -182,6 +178,8 @@ def _check_dataset_form(
     ValueError: if any of the conditions is violated
 
     """
+
+    __tracebackhide__ = True
 
     required_vars = _to_set(required_vars)
     optional_vars = _to_set(optional_vars)
@@ -229,6 +227,8 @@ def _check_dataarray_form(
     ValueError: if any of the conditions is violated
 
     """
+
+    __tracebackhide__ = True
 
     required_dims = _to_set(required_dims)
 
