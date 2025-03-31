@@ -1,4 +1,3 @@
-import operator
 import pathlib
 
 import pytest
@@ -188,11 +187,7 @@ def test_calibrate_mesmer(
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     # calculate anomalies w.r.t. the reference period
-    ref = dt["historical"].sel(time=REFERENCE_PERIOD).mean("time")
-
-    # https://github.com/pydata/xarray/issues/10013
-    # tas_anoms = dt - ref.ds
-    tas_anoms = map_over_datasets(operator.sub, dt, ref.ds)
+    tas_anoms = mesmer.anomaly.calc_anomaly(dt, REFERENCE_PERIOD)
 
     tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
 
@@ -241,12 +236,8 @@ def test_calibrate_mesmer(
     )
 
     if dt_hfds is not None:
-        hfds_ref = dt_hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
 
-        # TODO: use again, https://github.com/pydata/xarray/issues/10013
-        # hfds_anoms = dt_hfds - hfds_ref.ds
-
-        hfds_anoms = map_over_datasets(operator.sub, dt_hfds, hfds_ref.ds)
+        hfds_anoms = mesmer.anomaly.calc_anomaly(dt_hfds, REFERENCE_PERIOD)
 
         hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
 
