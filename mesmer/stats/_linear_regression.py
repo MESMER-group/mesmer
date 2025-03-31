@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 
+from mesmer.core._datatreecompat import DataTree, map_over_datasets
 from mesmer.core.datatree import (
     _extract_single_dataarray_from_dt,
     collapse_datatree_into_dataset,
@@ -112,12 +112,21 @@ class LinearRegression:
         # if predictors is a DataTree, rename all data variables to "pred" to avoid conflicts
         # not necessaey if predictors is empty DataTree or only data is in root, i.e. depth == 0
         if isinstance(predictors, DataTree) and not predictors.depth == 0:
-            predictors = map_over_subtree(
-                lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
-            )(predictors)
+            predictors = map_over_datasets(
+                lambda ds: ds.rename({var: "pred" for var in ds.data_vars}), predictors
+            )
 
         for key in required_predictors:
-            prediction = (predictors[key] * params[key]).transpose() + prediction
+
+            # TODO: fix once .transpose() is possible for DataTree
+            signal = predictors[key] * params[key]
+
+            if isinstance(signal, DataTree):
+                signal = map_over_datasets(xr.Dataset.transpose, signal)
+            else:
+                signal = signal.transpose()
+
+            prediction = signal + prediction
 
         if isinstance(prediction, DataTree):
             prediction = _extract_single_dataarray_from_dt(prediction)
@@ -283,7 +292,7 @@ def _fit_linear_regression_xr(
             (var,) = ds.data_vars
             return ds.rename({var: "pred"})
 
-        predictors = map_over_subtree(_rename_vars)(predictors)
+        predictors = map_over_datasets(_rename_vars, predictors)
         predictors_concat = collapse_datatree_into_dataset(
             predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
         )

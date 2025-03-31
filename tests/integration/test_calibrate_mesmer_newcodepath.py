@@ -1,12 +1,13 @@
+import operator
 import pathlib
 
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 from filefisher import FileFinder
 
 import mesmer
 import mesmer.core.datatree
+from mesmer.core._datatreecompat import DataTree, map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -183,13 +184,17 @@ def test_calibrate_mesmer(
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    dt = map_over_subtree(mesmer.grid.wrap_to_180)(dt)
+    dt = map_over_datasets(mesmer.grid.wrap_to_180, dt)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     # calculate anomalies w.r.t. the reference period
     ref = dt["historical"].sel(time=REFERENCE_PERIOD).mean("time")
-    tas_anoms = dt - ref.ds
-    tas_globmean = map_over_subtree(mesmer.weighted.global_mean)(tas_anoms)
+
+    # https://github.com/pydata/xarray/issues/10013
+    # tas_anoms = dt - ref.ds
+    tas_anoms = map_over_datasets(operator.sub, dt, ref.ds)
+
+    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
 
     # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
@@ -198,14 +203,17 @@ def test_calibrate_mesmer(
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked = map_over_subtree(mask_and_stack)(
-        tas_anoms, threshold_land=THRESHOLD_LAND
+    tas_stacked = map_over_datasets(
+        mask_and_stack, tas_anoms, kwargs={"threshold_land": THRESHOLD_LAND}
     )
 
     # train global trend module
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-        tas_globmean_ensmean, "time", n_steps=50, use_coords=False
+    tas_globmean_smoothed = map_over_datasets(
+        mesmer.stats.lowess,
+        tas_globmean_ensmean,
+        "time",
+        kwargs={"n_steps": 50, "use_coords": False},
     )
     hist_lowess_residuals = (
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
@@ -234,11 +242,20 @@ def test_calibrate_mesmer(
 
     if dt_hfds is not None:
         hfds_ref = dt_hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
-        hfds_anoms = dt_hfds - hfds_ref.ds
-        hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
+
+        # TODO: use again, https://github.com/pydata/xarray/issues/10013
+        # hfds_anoms = dt_hfds - hfds_ref.ds
+
+        hfds_anoms = map_over_datasets(operator.sub, dt_hfds, hfds_ref.ds)
+
+        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
+
         hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
+        hfds_globmean_smoothed = map_over_datasets(
+            mesmer.stats.lowess,
+            hfds_globmean_ensmean,
+            "time",
+            kwargs={"n_steps": 50, "use_coords": False},
         )
     else:
         hfds_globmean_smoothed = None
@@ -292,6 +309,7 @@ def test_calibrate_mesmer(
             .dropna("time")
             .drop_vars("scenario")
             .rename("residuals")
+            .to_dataset()
         )
 
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
