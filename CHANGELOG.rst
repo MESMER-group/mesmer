@@ -92,6 +92,7 @@ This release implements using :py:class:`DataTree` from `xarray-datatree` to han
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
 - Port the functionality to xarray's :py:class:`DataTree` implementation (`#607 <https://github.com/MESMER-group/mesmer/pull/607>`_).
+- Add function to compute anomalies over several scenarios stored in a DataTree (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
