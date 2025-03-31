@@ -179,6 +179,8 @@ def _check_dataset_form(
 
     """
 
+    __tracebackhide__ = True
+
     required_vars = _to_set(required_vars)
     optional_vars = _to_set(optional_vars)
 
@@ -225,6 +227,8 @@ def _check_dataarray_form(
     ValueError: if any of the conditions is violated
 
     """
+
+    __tracebackhide__ = True
 
     required_dims = _to_set(required_dims)
 
