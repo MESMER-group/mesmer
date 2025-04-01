@@ -4,10 +4,10 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
-from datatree import DataTree
 
 import mesmer
 import mesmer.stats._linear_regression
+from mesmer.core._datatreecompat import DataTree
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -15,6 +15,12 @@ def convert_to(dct: dict, data_type: str) -> dict | DataTree | xr.Dataset:
     if data_type == "dict":
         return dct
     elif data_type == "DataTree":
+
+        dct = {
+            key: value.to_dataset() if isinstance(value, xr.DataArray) else value
+            for key, value in dct.items()
+        }
+
         return DataTree.from_dict(dct)
     elif data_type == "xr_dataset":
         return xr.Dataset(dct)

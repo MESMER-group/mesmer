@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 
 import mesmer
+from mesmer.core._datatreecompat import DataTree, map_over_datasets
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -138,7 +138,7 @@ def test_extract_single_dataarray_from_dt():
     res = mesmer.datatree._extract_single_dataarray_from_dt(dt)
     xr.testing.assert_equal(res, da)
 
-    dt = DataTree(data=xr.Dataset({"tas": da, "tas2": da}))
+    dt = DataTree(xr.Dataset({"tas": da, "tas2": da}))
     with pytest.raises(
         ValueError,
         match="Node must only contain one data variable, node has tas2 and tas.",
@@ -204,10 +204,10 @@ def test_stack_linear_regression_datatrees():
         }
     )
 
-    weights = map_over_subtree(xr.ones_like)(target.sel(cells=0))
-    weights = map_over_subtree(
-        lambda ds: ds.rename({var: "weights" for var in ds.data_vars})
-    )(weights)
+    weights = map_over_datasets(xr.ones_like, target.sel(cells=0))
+    weights = map_over_datasets(
+        lambda ds: ds.rename({var: "weights" for var in ds.data_vars}), weights
+    )
 
     predictors_stacked, target_stacked, weights_stacked = (
         mesmer.datatree.stack_datatrees_for_linear_regression(

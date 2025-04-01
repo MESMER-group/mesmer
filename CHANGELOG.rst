@@ -91,6 +91,7 @@ This release implements using :py:class:`DataTree` from `xarray-datatree` to han
 - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
+- Port the functionality to xarray's :py:class:`DataTree` implementation (`#607 <https://github.com/MESMER-group/mesmer/pull/607>`_).
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
@@ -208,8 +209,9 @@ Harmonic model
    (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_,
    `#424 <https://github.com/MESMER-group/mesmer/pull/424>`_,
    `#433 <https://github.com/MESMER-group/mesmer/pull/433>`_,
-   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_, and
-   `#574 <https://github.com/MESMER-group/mesmer/pull/574>`_).
+   `#512 <https://github.com/MESMER-group/mesmer/pull/512>`_,
+   `#574 <https://github.com/MESMER-group/mesmer/pull/574>`_, and
+   `#589 <https://github.com/MESMER-group/mesmer/issues/589>`_).
 - add tests (\
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
