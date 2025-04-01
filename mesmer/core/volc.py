@@ -3,7 +3,7 @@ import warnings
 import xarray as xr
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
-from mesmer.core.utils import _check_dataarray_form, _assert_annual_data
+from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
 from mesmer.stats import LinearRegression
 
 
@@ -73,9 +73,7 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
     )
 
     time = tas_residuals[dim]
-    aod = _load_and_align_strat_aod_obs(
-        time, hist_period, version=version
-    )
+    aod = _load_and_align_strat_aod_obs(time, hist_period, version=version)
 
     # TODO: extract this out of the function?
     if tas_residuals.ndim == 2:
@@ -111,13 +109,11 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
     return params
 
 
-def _predict_volcanic_contribution(
-    time, hist_period, params, version="2022"
-):
+def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
     """
     predict volcanic contribution to temperature anomalies using aerosol optical depth
     observations as proxy
-    
+
     Parameters
     ----------
     time : xr.DataArray
@@ -142,9 +138,7 @@ def _predict_volcanic_contribution(
 
     # ensure the time axis of aod and the model data aligns
     _assert_annual_data(time)
-    aod = _load_and_align_strat_aod_obs(
-        time, hist_period, version=version
-    )
+    aod = _load_and_align_strat_aod_obs(time, hist_period, version=version)
 
     # set up linear regression model
     lr = LinearRegression()
