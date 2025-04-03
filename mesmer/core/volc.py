@@ -34,8 +34,9 @@ def _load_and_align_strat_aod_obs(time, hist_period, version="2022"):
     aod = aod.sel(time=hist_period)
 
     # replace time axis of aod -> so they have the same calendar
-    time_hist = time.sel({time.name: hist_period})
-    aod = aod.assign_coords({time.name: time_hist})
+    dim = time.name
+    time_hist = time.sel({dim: hist_period})
+    aod = aod.assign_coords({dim: time_hist})
 
     # expand aod to the full time period
     __, aod = xr.align(time, aod, fill_value=0.0, join="outer")  # type: ignore[assignment]
