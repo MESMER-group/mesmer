@@ -8,6 +8,7 @@ dependencies:
  - cartopy
  - dask
  - joblib
+ - filefisher
  - matplotlib-base
  - nc-time-axis
  - netcdf4
@@ -29,6 +30,3 @@ dependencies:
  - pytest-cov
  - pytest-xdist
  - ruff
- - pip
- - pip:
-    - filefisher>=1.0.1

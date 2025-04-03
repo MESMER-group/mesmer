@@ -32,6 +32,7 @@ Breaking changes
   ================= ============= =========
   **cartopy**       not specified 0.22
   **dask**          not specified 2024.3
+  **filefisher**    not required  1.1
   **joblib**        not specified 1.3
   **netcdf4**       not specified 1.6
   **numpy**         not specified 1.25
@@ -82,7 +83,10 @@ Data structure using xarray-datatree
 
 This release implements using :py:class:`DataTree` from `xarray-datatree` to handle multiple scenarios.
 
-- Add `filefisher` as dependency to handle file paths of several scenarios (`#586 <https://github.com/MESMER-group/mesmer/pull/586>`_ and `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_).
+- Add `filefisher` as dependency to handle file paths of several scenarios (\
+  `#586 <https://github.com/MESMER-group/mesmer/pull/586>`_,
+  `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_, and
+  `#629 <https://github.com/MESMER-group/mesmer/pull/629>`_).
 - Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
