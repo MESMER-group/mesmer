@@ -21,8 +21,7 @@ dependencies:
  - scipy=1.12
  - shapely=2.0
  - statsmodels=0.14
- - xarray=2024.2
- - xarray-datatree=0.0.13
+ - xarray=2025.2
  - pip=24.0
  - pip:
     - filefisher==1.0.1

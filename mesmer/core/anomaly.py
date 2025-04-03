@@ -1,5 +1,6 @@
 import operator
 
+import xarray as xr
 from mesmer.core._datatreecompat import DataTree, map_over_datasets
 
 
@@ -50,26 +51,23 @@ def calc_anomaly(
     # anomalies = dt - ref.ds
     anomalies = map_over_datasets(operator.sub, dt, ref.ds)
 
-    map_over_datasets(_assert_same_coords, dt, anomalies, ref_scenario)
+    _assert_same_coords(dt, anomalies, ref_scenario)
 
     return anomalies
 
 
 def _assert_same_coords(ref, anom, ref_scenario):
 
-    # TODO: use xr.group_subtrees?
 
-    # import xarray as xr
+    for path, (ref_scen, anom_scen) in xr.group_subtrees(ref, anom):
+        if not ref_scen.coords.equals(anom_scen.coords):
 
-    # for path, (l, r) in xr.group_subtrees(dt, dt_anom):
-    if not ref.coords.equals(anom.coords):
+            msg = (
+                f"Subtracting the reference changed the coordinates for '{path}'. "
+                f"Most likely because the ref_scenario ({ref_scenario}) is missing "
+                "some ensemble members.\n"
+            )
 
-        msg = (
-            f"Subtracting the reference changed the coordinates. "
-            f"Most likely because the ref_scenario ({ref_scenario}) is missing "
-            "some ensemble members.\n"
-        )
-
-        raise ValueError(msg)
+            raise ValueError(msg)
 
     return ref

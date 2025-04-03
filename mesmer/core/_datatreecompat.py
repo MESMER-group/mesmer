@@ -3,19 +3,7 @@ import functools
 import xarray as xr
 from packaging.version import Version
 
-if Version(xr.__version__) < Version("2024.10"):
-
-    from datatree import DataTree, map_over_subtree, open_datatree
-
-    def map_over_datasets(func, *args, kwargs=None):
-        "compatibility layer for older xarray versions"
-
-        if kwargs is None:
-            kwargs = {}
-
-        return map_over_subtree(func)(*args, **kwargs)
-
-elif Version(xr.__version__) > Version("2025.01"):
+if Version(xr.__version__) > Version("2025.01"):
 
     def skip_empty_nodes(func):
         @functools.wraps(func)
@@ -36,7 +24,7 @@ elif Version(xr.__version__) > Version("2025.01"):
 else:
     raise ImportError(
         f"xarray version {xr.__version__} not supported - please upgrade to v2025.02 ("
-        "or later) or downgrade to v2024.09"
+        "or later)"
     )
 
 __all__ = [
