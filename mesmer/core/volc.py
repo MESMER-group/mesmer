@@ -118,7 +118,7 @@ def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
     Parameters
     ----------
     time : xr.DataArray
-        DataArray containing the time axis to predict the volcanic contribution for.
+        DataArray containing the time coords to predict the volcanic contribution for.
     hist_period : slice
         Slice object indicating the years of the historical period. E.g.
         ``slice("1850", "2014")``.
