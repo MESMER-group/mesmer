@@ -34,7 +34,7 @@ IGNORE_DEPS = {
 
 POLICY_MONTHS = {"python": 30, "numpy": 18}
 POLICY_MONTHS_DEFAULT = 12
-POLICY_OVERRIDE: dict[str, tuple[int, int]] = {"xarray": (2025, 2)}
+POLICY_OVERRIDE: dict[str, tuple[int, int]] = {"xarray": (2025, 3)}
 errors = []
 
 

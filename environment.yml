@@ -22,7 +22,7 @@ dependencies:
  - scikit-learn
  - scipy
  - statsmodels>=0.14
- - xarray>=2025.02
+ - xarray>=2025.03
 # for testing
  - black!=23
  - pytest
