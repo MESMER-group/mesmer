@@ -1,12 +1,17 @@
 import operator
 
 import xarray as xr
-from mesmer.core._datatreecompat import DataTree, map_over_datasets
+
+from mesmer.core._datatreecompat import map_over_datasets
 
 
 def calc_anomaly(
-    dt: DataTree, reference_period: slice, *, time_dim="time", ref_scenario="historical"
-) -> DataTree:
+    dt: xr.DataTree,
+    reference_period: slice,
+    *,
+    time_dim="time",
+    ref_scenario="historical",
+) -> xr.DataTree:
     """subtract mean over the reference period
 
     Parameters
@@ -57,7 +62,6 @@ def calc_anomaly(
 
 
 def _assert_same_coords(ref, anom, ref_scenario):
-
 
     for path, (ref_scen, anom_scen) in xr.group_subtrees(ref, anom):
         if not ref_scen.coords.equals(anom_scen.coords):

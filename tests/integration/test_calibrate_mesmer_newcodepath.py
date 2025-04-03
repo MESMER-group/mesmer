@@ -6,7 +6,7 @@ from filefisher import FileFinder
 
 import mesmer
 import mesmer.core.datatree
-from mesmer.core._datatreecompat import DataTree, map_over_datasets
+from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -133,7 +133,7 @@ def test_calibrate_mesmer(
     scenarios_incl_hist.append("historical")
 
     # load data for each scenario
-    dt = DataTree()
+    dt = xr.DataTree()
     for scen in scenarios_incl_hist:
         files = fc_all.search(scenario=scen)
 
@@ -150,7 +150,7 @@ def test_calibrate_mesmer(
         # create a Dataset that holds each member along the member dimension
         scen_data = xr.concat(members, dim="member")
         # put the scenario dataset into the DataTree
-        dt[scen] = DataTree(scen_data)
+        dt[scen] = xr.DataTree(scen_data)
 
     # load additional data
     if use_hfds:
@@ -163,7 +163,7 @@ def test_calibrate_mesmer(
             member=unique_scen_members,
         )
 
-        dt_hfds = DataTree()
+        dt_hfds = xr.DataTree()
         for scen in scenarios_incl_hist:
             files = fc_hfds.search(scenario=scen)
 
@@ -177,7 +177,7 @@ def test_calibrate_mesmer(
                 members.append(ds)
 
             scen_data = xr.concat(members, dim="member")
-            dt_hfds[scen] = DataTree(scen_data)
+            dt_hfds[scen] = xr.DataTree(scen_data)
     else:
         dt_hfds = None
 
@@ -255,7 +255,7 @@ def test_calibrate_mesmer(
     # broadcast so all datasets have all the dimensions
     # gridcell can be excluded because it will be mapped in the Linear Regression
     target = tas_stacked
-    predictors = DataTree.from_dict(
+    predictors = xr.DataTree.from_dict(
         {"tas": tas_globmean_smoothed, "tas_resids": tas_resid_novolc}
     )
     if use_tas2:
@@ -292,9 +292,9 @@ def test_calibrate_mesmer(
         sample=("time", "member", "scenario")
     ).unstack("sample")
 
-    dt_resids = DataTree()
+    dt_resids = xr.DataTree()
     for scenario in tas_un_stacked_residuals.scenario.values:
-        dt_resids[scenario] = DataTree(
+        dt_resids[scenario] = xr.DataTree(
             tas_un_stacked_residuals.sel(scenario=scenario)
             .dropna("member", how="all")
             .dropna("time")

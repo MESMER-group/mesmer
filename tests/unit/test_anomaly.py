@@ -5,7 +5,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core._datatreecompat import DataTree, map_over_datasets
+from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def example_tas():
     )
     proj = xr.Dataset(data_vars={"tas": dta})
 
-    tas = DataTree.from_dict({"historical": hist, "proj": proj})
+    tas = xr.DataTree.from_dict({"historical": hist, "proj": proj})
 
     return tas
 
@@ -65,7 +65,7 @@ def test_calc_anomaly_errors(example_tas):
     # example_tas["proj1"] = example_tas["proj"].dataset.assign_coords(ens=["0", "3"])
 
     ds = example_tas["proj"].to_dataset().assign_coords(ens=["0", "3"])
-    example_tas["proj1"] = DataTree(ds)
+    example_tas["proj1"] = xr.DataTree(ds)
 
     with pytest.raises(
         ValueError, match="Subtracting the reference changed the coordinates."

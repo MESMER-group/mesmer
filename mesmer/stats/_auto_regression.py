@@ -7,7 +7,7 @@ import pandas as pd
 import scipy
 import xarray as xr
 
-from mesmer.core._datatreecompat import DataTree, map_over_datasets
+from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.datatree import (
     collapse_datatree_into_dataset,
 )
@@ -18,10 +18,10 @@ from mesmer.core.utils import (
 )
 
 
-def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
+def _scen_ens_inputs_to_dt(objs: Sequence) -> xr.DataTree:
     """Helper function to convert a sequence of objects to a DataTree"""
 
-    if isinstance(objs[0], DataTree):
+    if isinstance(objs[0], xr.DataTree):
         if len(objs) != 1:
             raise ValueError("Only one DataTree can be passed.")
         dt = objs[0]
@@ -31,7 +31,7 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
         # see https://github.com/pydata/xarray/issues/9486
         # with just da_dict = {f"da_{i}": da for i, da in enumerate(objs)}
         ds_dict = {f"scen_{i}": da._to_temp_dataset() for i, da in enumerate(objs)}
-        dt = DataTree.from_dict(ds_dict)
+        dt = xr.DataTree.from_dict(ds_dict)
 
     elif isinstance(objs[0], dict):
         if len(objs) != 1:
@@ -40,7 +40,7 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> DataTree:
         # TODO: in the future might be able to use DataTree.from_array_dict(da_dict)
         # see https://github.com/pydata/xarray/issues/9486
         ds_dict = {f"{key}": da._to_temp_dataset() for key, da in da_dict.items()}
-        dt = DataTree.from_dict(ds_dict)
+        dt = xr.DataTree.from_dict(ds_dict)
 
     else:
         raise ValueError(
@@ -67,7 +67,7 @@ def _extract_and_apply_to_da(func: Callable) -> Callable:
 
 
 def select_ar_order_scen_ens(
-    *objs: xr.DataArray | dict[str, xr.DataArray] | DataTree,
+    *objs: xr.DataArray | dict[str, xr.DataArray] | xr.DataTree,
     dim: str,
     ens_dim: str | None,
     maxlag: int,
@@ -106,7 +106,7 @@ def select_ar_order_scen_ens(
 
 
 def _select_ar_order_scen_ens_dt(
-    dt: DataTree,
+    dt: xr.DataTree,
     dim: str,
     ens_dim: str | None,
     maxlag: int,
@@ -172,7 +172,7 @@ def _select_ar_order_scen_ens_dt(
 
 
 def fit_auto_regression_scen_ens(
-    *objs: xr.DataArray | dict[str, xr.DataArray] | DataTree,
+    *objs: xr.DataArray | dict[str, xr.DataArray] | xr.DataTree,
     dim: str,
     ens_dim: str | None,
     lags: int | xr.DataArray,
@@ -212,7 +212,7 @@ def fit_auto_regression_scen_ens(
 
 
 def _fit_auto_regression_scen_ens_dt(
-    dt: DataTree, dim: str, ens_dim: str | None, lags: int | xr.DataArray
+    dt: xr.DataTree, dim: str, ens_dim: str | None, lags: int | xr.DataArray
 ) -> xr.Dataset:
     """
     fit an auto regression and potentially calculate the mean over ensemble members
@@ -424,7 +424,7 @@ def draw_auto_regression_uncorrelated(
 
     """
 
-    if isinstance(seed, DataTree):
+    if isinstance(seed, xr.DataTree):
         return map_over_datasets(
             _draw_auto_regression_uncorrelated,
             seed,
@@ -561,7 +561,7 @@ def draw_auto_regression_correlated(
 
     """
 
-    if isinstance(seed, DataTree):
+    if isinstance(seed, xr.DataTree):
 
         return map_over_datasets(
             _draw_auto_regression_correlated,
@@ -1034,7 +1034,7 @@ def draw_auto_regression_monthly(
 
     """
 
-    if isinstance(seed, DataTree):
+    if isinstance(seed, xr.DataTree):
 
         return map_over_datasets(
             _draw_auto_regression_monthly,

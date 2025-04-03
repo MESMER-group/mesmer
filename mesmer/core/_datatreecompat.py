@@ -14,7 +14,6 @@ if Version(xr.__version__) > Version("2025.01"):
 
         return _func
 
-    from xarray import DataTree, open_datatree
     from xarray import map_over_datasets as _map_over_datasets
 
     def map_over_datasets(func, *args, kwargs=None):
@@ -28,7 +27,5 @@ else:
     )
 
 __all__ = [
-    "DataTree",
     "map_over_datasets",
-    "open_datatree",
 ]

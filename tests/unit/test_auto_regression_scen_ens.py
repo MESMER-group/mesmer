@@ -7,7 +7,6 @@ from statsmodels.tsa.arima_process import ArmaProcess
 
 import mesmer
 import mesmer.stats._auto_regression
-from mesmer.core._datatreecompat import DataTree
 
 
 def generate_ar_samples(ar, std=1, n_timesteps=100, n_ens=4):
@@ -35,7 +34,7 @@ def _prepare_data(*dataarrays, data_format):
         data = {
             f"scen{i}": xr.Dataset({"tas": da}) for i, da in enumerate(dataarrays, 1)
         }
-        return DataTree.from_dict(data)  # type: ignore[attr-defined] not typed in datatree
+        return xr.DataTree.from_dict(data)  # type: ignore[attr-defined] not typed in datatree
     else:
         raise ValueError(f"Unknown format_type: {data_format}")
 
@@ -187,7 +186,7 @@ def test_fit_auto_regression_scen_ens_errors():
 
     # data tree
     data = {"scen1": xr.Dataset({"tas": da})}
-    dt1 = DataTree.from_dict(data)  # type: ignore[attr-defined] not typed in datatree
+    dt1 = xr.DataTree.from_dict(data)  # type: ignore[attr-defined] not typed in datatree
     dt2 = dt1.copy()
 
     with pytest.raises(ValueError, match="Only one DataTree can be passed."):
@@ -196,7 +195,7 @@ def test_fit_auto_regression_scen_ens_errors():
         )
 
     data = {"scen1": xr.Dataset({"tas": da, "tas2": da})}
-    dt = DataTree.from_dict(data)  # type: ignore[attr-defined]
+    dt = xr.DataTree.from_dict(data)  # type: ignore[attr-defined]
 
     with pytest.raises(ValueError, match="Dataset must have only one data variable."):
         mesmer.stats.fit_auto_regression_scen_ens(dt, dim="time", ens_dim="ens", lags=3)

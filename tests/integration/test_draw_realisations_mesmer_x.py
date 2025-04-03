@@ -3,7 +3,7 @@ import pathlib
 import pytest
 import xarray as xr
 
-# from mesmer.core._datatreecompat import Datatree, map_over_datasets
+# from mesmer.core._datatreecompat import map_over_datasets
 import mesmer
 import mesmer.mesmer_x
 
