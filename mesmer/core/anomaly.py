@@ -1,11 +1,17 @@
 import operator
 
-from mesmer.core._datatreecompat import DataTree, map_over_datasets
+import xarray as xr
+
+from mesmer.core._datatreecompat import map_over_datasets
 
 
 def calc_anomaly(
-    dt: DataTree, reference_period: slice, *, time_dim="time", ref_scenario="historical"
-) -> DataTree:
+    dt: xr.DataTree,
+    reference_period: slice,
+    *,
+    time_dim="time",
+    ref_scenario="historical",
+) -> xr.DataTree:
     """subtract mean over the reference period
 
     Parameters
@@ -50,26 +56,22 @@ def calc_anomaly(
     # anomalies = dt - ref.ds
     anomalies = map_over_datasets(operator.sub, dt, ref.ds)
 
-    map_over_datasets(_assert_same_coords, dt, anomalies, ref_scenario)
+    _assert_same_coords(dt, anomalies, ref_scenario)
 
     return anomalies
 
 
 def _assert_same_coords(ref, anom, ref_scenario):
 
-    # TODO: use xr.group_subtrees?
+    for path, (ref_scen, anom_scen) in xr.group_subtrees(ref, anom):
+        if not ref_scen.coords.equals(anom_scen.coords):
 
-    # import xarray as xr
+            msg = (
+                f"Subtracting the reference changed the coordinates for '{path}'. "
+                f"Most likely because the ref_scenario ({ref_scenario}) is missing "
+                "some ensemble members.\n"
+            )
 
-    # for path, (l, r) in xr.group_subtrees(dt, dt_anom):
-    if not ref.coords.equals(anom.coords):
-
-        msg = (
-            f"Subtracting the reference changed the coordinates. "
-            f"Most likely because the ref_scenario ({ref_scenario}) is missing "
-            "some ensemble members.\n"
-        )
-
-        raise ValueError(msg)
+            raise ValueError(msg)
 
     return ref

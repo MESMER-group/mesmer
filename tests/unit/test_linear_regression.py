@@ -7,11 +7,10 @@ import xarray as xr
 
 import mesmer
 import mesmer.stats._linear_regression
-from mesmer.core._datatreecompat import DataTree
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
-def convert_to(dct: dict, data_type: str) -> dict | DataTree | xr.Dataset:
+def convert_to(dct: dict, data_type: str) -> dict | xr.DataTree | xr.Dataset:
     if data_type == "dict":
         return dct
     elif data_type == "DataTree":
@@ -21,7 +20,7 @@ def convert_to(dct: dict, data_type: str) -> dict | DataTree | xr.Dataset:
             for key, value in dct.items()
         }
 
-        return DataTree.from_dict(dct)
+        return xr.DataTree.from_dict(dct)
     elif data_type == "xr_dataset":
         return xr.Dataset(dct)
     else:
@@ -643,7 +642,7 @@ def test_linear_regression_datatree_data_in_root(
     pred0 = trend_data_1D(slope=1, scale=0).rename("bar")
     pred1 = trend_data_1D(slope=1, scale=0).rename("foo")
     ds = xr.Dataset({"pred0": pred0, "pred1": pred1})
-    dt = DataTree(ds, name="root")
+    dt = xr.DataTree(ds, name="root")
     tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
 
     result = lr_method_or_function(dt, tgt, "time")

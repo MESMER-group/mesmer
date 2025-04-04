@@ -6,7 +6,6 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core._datatreecompat import DataTree
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
 from mesmer.stats import _auto_regression
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
@@ -175,7 +174,7 @@ def test_draw_auto_regression_uncorrelated(
 
 
 def test_draw_auto_regression_uncorrelated_dt(ar_params_1D):
-    seeds = DataTree.from_dict(
+    seeds = xr.DataTree.from_dict(
         {
             "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
             "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
@@ -331,7 +330,7 @@ def test_draw_auto_regression_correlated(
 
 
 def test_draw_auto_regression_correlated_dt(ar_params_2D, covariance):
-    seeds = DataTree.from_dict(
+    seeds = xr.DataTree.from_dict(
         {
             "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
             "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
@@ -887,7 +886,7 @@ def test_draw_auto_regression_monthly(seed):
 
 def test_draw_auto_regression_monthly_dt():
 
-    seeds = DataTree.from_dict(
+    seeds = xr.DataTree.from_dict(
         {
             "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
             "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),

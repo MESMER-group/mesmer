@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core._datatreecompat import DataTree, map_over_datasets
+from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.datatree import (
     _extract_single_dataarray_from_dt,
     collapse_datatree_into_dataset,
@@ -21,7 +21,7 @@ class LinearRegression:
 
     def fit(
         self,
-        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
@@ -60,7 +60,7 @@ class LinearRegression:
 
     def predict(
         self,
-        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         exclude: str | set[str] | None = None,
     ) -> xr.DataArray:
         """
@@ -111,7 +111,7 @@ class LinearRegression:
 
         # if predictors is a DataTree, rename all data variables to "pred" to avoid conflicts
         # not necessaey if predictors is empty DataTree or only data is in root, i.e. depth == 0
-        if isinstance(predictors, DataTree) and not predictors.depth == 0:
+        if isinstance(predictors, xr.DataTree) and not predictors.depth == 0:
             predictors = map_over_datasets(
                 lambda ds: ds.rename({var: "pred" for var in ds.data_vars}), predictors
             )
@@ -121,21 +121,21 @@ class LinearRegression:
             # TODO: fix once .transpose() is possible for DataTree
             signal = predictors[key] * params[key]
 
-            if isinstance(signal, DataTree):
+            if isinstance(signal, xr.DataTree):
                 signal = map_over_datasets(xr.Dataset.transpose, signal)
             else:
                 signal = signal.transpose()
 
             prediction = signal + prediction
 
-        if isinstance(prediction, DataTree):
+        if isinstance(prediction, xr.DataTree):
             prediction = _extract_single_dataarray_from_dt(prediction)
 
         return prediction.rename("prediction")
 
     def residuals(
         self,
-        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
     ) -> xr.DataArray:
         """
@@ -222,7 +222,7 @@ class LinearRegression:
 
 
 def _fit_linear_regression_xr(
-    predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+    predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
     target: xr.DataArray,
     dim: str,
     weights: xr.DataArray | None = None,
@@ -254,10 +254,10 @@ def _fit_linear_regression_xr(
         individual DataArray.
     """
     # if DataTree only has data in root, extract Dataset
-    if isinstance(predictors, DataTree) and predictors.depth == 0:
+    if isinstance(predictors, xr.DataTree) and predictors.depth == 0:
         predictors = predictors.to_dataset()
 
-    if not isinstance(predictors, dict | DataTree | xr.Dataset):
+    if not isinstance(predictors, dict | xr.DataTree | xr.Dataset):
         raise TypeError(
             f"predictors should be a dict, DataTree or xr.Dataset, got {type(predictors)}."
         )
@@ -271,7 +271,7 @@ def _fit_linear_regression_xr(
         raise ValueError("dim cannot currently be 'predictor'.")
 
     for key, pred in predictors.items():
-        if isinstance(pred, DataTree):
+        if isinstance(pred, xr.DataTree):
             pred = _extract_single_dataarray_from_dt(pred, name=f"predictor: {key}")
 
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
@@ -286,9 +286,9 @@ def _fit_linear_regression_xr(
         predictors_concat = predictors_concat.assign_coords(
             {"predictor": list(predictors.keys())}
         )
-    elif isinstance(predictors, DataTree):
+    elif isinstance(predictors, xr.DataTree):
         # rename all data variables to "pred" to avoid conflicts when concatenating
-        def _rename_vars(ds) -> DataTree:
+        def _rename_vars(ds) -> xr.DataTree:
             (var,) = ds.data_vars
             return ds.rename({var: "pred"})
 
