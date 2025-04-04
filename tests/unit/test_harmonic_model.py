@@ -216,22 +216,22 @@ def test_fit_harmonic_model_checks():
 
     monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
 
-    with pytest.raises(ValueError, match="yearly_predictor should be 2D, but is 1D"):
+    with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
         mesmer.stats.fit_harmonic_model(yearly_predictor.isel(cells=0), monthly_target)
 
-    with pytest.raises(ValueError, match="Differently named `gridcell_dim`:"):
+    with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
         mesmer.stats.fit_harmonic_model(
             yearly_predictor.rename(cells="gp"), monthly_target
         )
 
-    with pytest.raises(ValueError, match="Differently named `gridcell_dim`:"):
+    with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
         mesmer.stats.fit_harmonic_model(
             yearly_predictor, monthly_target.rename(cells="gp")
         )
 
     with pytest.raises(
         ValueError,
-        match=r"yearly_predictor` and `monthly_target` don't have the same number of gridcells \(6 vs\. 4\)",
+        match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 6 vs. 4",
     ):
         mesmer.stats.fit_harmonic_model(
             yearly_predictor, monthly_target.isel(cells=slice(None, 4))
@@ -239,7 +239,7 @@ def test_fit_harmonic_model_checks():
 
     with pytest.raises(
         ValueError,
-        match=r"yearly_predictor` and `monthly_target` don't have the same number of gridcells \(5 vs\. 6\)",
+        match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 5 vs. 6",
     ):
         mesmer.stats.fit_harmonic_model(
             yearly_predictor.isel(cells=slice(None, 5)), monthly_target
