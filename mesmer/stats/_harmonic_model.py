@@ -305,32 +305,29 @@ def fit_harmonic_model(
     """
 
     _check_dataarray_form(
-        yearly_predictor, "yearly_predictor", ndim=2, required_dims={time_dim}
+        yearly_predictor, "yearly_predictor", required_dims={time_dim}
     )
 
-    _check_dataarray_form(
-        monthly_target, "monthly_target", ndim=2, required_dims={time_dim}
-    )
+    _check_dataarray_form(monthly_target, "monthly_target", required_dims={time_dim})
 
-    (gridcell_dim,) = set(monthly_target.dims) - {time_dim}
-
-    if gridcell_dim not in yearly_predictor.dims:
-        (gridcell_dim_yp,) = set(yearly_predictor.dims) - {time_dim}
+    if set(yearly_predictor.dims) != set(monthly_target.dims):
 
         msg = (
-            "Differently named `gridcell_dim`:\n"
-            f"- `{gridcell_dim_yp}` in `yearly_predictor`\n"
-            f"- `{gridcell_dim}` in `monthly_target`"
+            "DataArray objects have different dimensions:\n"
+            f"- `{yearly_predictor.dims}` in `yearly_predictor`\n"
+            f"- `{monthly_target.dims}` in `monthly_target`"
         )
         raise ValueError(msg)
 
-    if yearly_predictor[gridcell_dim].size != monthly_target[gridcell_dim].size:
-        msg = (
-            "yearly_predictor` and `monthly_target` don't have the same number of "
-            f"gridcells ({yearly_predictor[gridcell_dim].size} vs. "
-            f"{monthly_target[gridcell_dim].size})"
-        )
-        raise ValueError(msg)
+    for dim in set(yearly_predictor.dims) - {time_dim}:
+
+        if yearly_predictor[dim].size != monthly_target[dim].size:
+            msg = (
+                f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
+                f"different size: {yearly_predictor[dim].size} vs. "
+                f"{monthly_target[dim].size}"
+            )
+            raise ValueError(msg)
 
     if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
