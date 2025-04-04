@@ -47,7 +47,7 @@ Breaking changes
   **scipy**         not specified 1.12
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
-  **xarray**        2023.04       2025.3
+  **xarray**        2023.04       2025.03
   ================= ============= =========
 
 Deprecations
