@@ -3,7 +3,7 @@ import functools
 import xarray as xr
 from packaging.version import Version
 
-if Version(xr.__version__) > Version("2025.01"):
+if Version(xr.__version__) >= Version("2025.03"):
 
     def skip_empty_nodes(func):
         @functools.wraps(func)
@@ -22,7 +22,7 @@ if Version(xr.__version__) > Version("2025.01"):
 
 else:
     raise ImportError(
-        f"xarray version {xr.__version__} not supported - please upgrade to v2025.02 ("
+        f"xarray version {xr.__version__} not supported - please upgrade to v2025.03 ("
         "or later)"
     )
 
