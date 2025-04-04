@@ -54,7 +54,8 @@ def calc_anomaly(
 
     # https://github.com/pydata/xarray/issues/10013
     # anomalies = dt - ref.ds
-    anomalies = map_over_datasets(operator.sub, dt, ref.ds)
+    with xr.set_options(keep_attrs=True):
+        anomalies = map_over_datasets(operator.sub, dt, ref.ds)
 
     _assert_same_coords(dt, anomalies, ref_scenario)
 

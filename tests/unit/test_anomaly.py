@@ -5,7 +5,6 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.fixture
@@ -22,8 +21,9 @@ def example_tas():
         dims=("ens", "time"),
         coords={"ens": ens_hist, "time": time_hist},
         name="tas",
+        attrs={"name": "tas"},
     )
-    hist = xr.Dataset(data_vars={"tas": dta})
+    hist = xr.Dataset(data_vars={"tas": dta}, attrs={"model": "foo"})
 
     data_proj = np.arange(4).reshape(2, 2) * 10
     time_proj = xr.date_range("2050-01-01", "2100-01-01", freq="50YS")
@@ -84,10 +84,8 @@ def test_calc_anomaly(example_tas):
     expected["historical"] = expected["historical"] - ref
     expected["proj"] = expected["proj"] - ref
 
-    def _assert(a, b):
-        xr.testing.assert_equal(a, b)
-        return a
+    xr.testing.assert_equal(result, expected)
 
-    map_over_datasets(_assert, result, expected)
-
-    # xr.testing.assert_equal(result, expected)
+    # ensure attrs are conserved
+    assert result["historical"].dataset.attrs == {"model": "foo"}
+    assert result["historical"].dataset.tas.attrs == {"name": "tas"}
