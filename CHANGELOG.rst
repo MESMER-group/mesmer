@@ -6,7 +6,7 @@ v0.11.0 - unreleased
 
 New Features
 ^^^^^^^^^^^^
-- Implemented new data structure using xarray-datatree, see `Data structure using xarray-datatree`_.
+- Implemented new data structure using ``xr.DataTree``, see `Data structure using DataTree`_.
 - Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
@@ -24,8 +24,9 @@ Breaking changes
 - The supported versions of some dependencies were changed
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
   `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,
-  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_, and
-  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_):
+  `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_,
+  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_, and
+  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_):
 
   ================= ============= =========
   Package           Old           New
@@ -46,7 +47,7 @@ Breaking changes
   **scipy**         not specified 1.12
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
-  **xarray**        2023.04       2024.2
+  **xarray**        2023.04       2025.3
   ================= ============= =========
 
 Deprecations
@@ -78,25 +79,31 @@ Internal Changes
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
 
-Data structure using xarray-datatree
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Data structure using DataTree
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This release implements using :py:class:`DataTree` from `xarray-datatree` to handle multiple scenarios.
+This release uses :py:class:`xr.DataTree` as data structure to handle multiple scenarios.
+This was originally done with the prototype `xarray-datatree` package. After the port of
+``DataTree`` to xarray stabilized, mesmer briefly supported both ``DataTree`` versions
+(the one in xarray-datatree and in xarray) before dropping support for `xarray-datatree`.
 
+- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
+- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
+- Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
+- Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
+- Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
+- Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
+- Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
+- PRs related to xarray and xarray-datatree:
+
+  - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
+  - Add upper pin to `xarray` version to support `xarray-datatree` (`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
+  - Port the functionality to xarray's :py:class:`DataTree` implementation (`#607 <https://github.com/MESMER-group/mesmer/pull/607>`_).
+  - Drop support for `xarray-datatree`  (`#627 <https://github.com/MESMER-group/mesmer/pull/627>`_).
 - Add `filefisher` as dependency to handle file paths of several scenarios (\
   `#586 <https://github.com/MESMER-group/mesmer/pull/586>`_,
   `#592 <https://github.com/MESMER-group/mesmer/pull/592>`_, and
   `#629 <https://github.com/MESMER-group/mesmer/pull/629>`_).
-- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
-- Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
-- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
-- Add upper pin to `xarray` version to support `xarray-datatree`(`#559 <https://github.com/MESMER-group/mesmer/pull/559>`_).
-- Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
-- Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
-- Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
-- Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
-- Port the functionality to xarray's :py:class:`DataTree` implementation (`#607 <https://github.com/MESMER-group/mesmer/pull/607>`_).
-- Add function to compute anomalies over several scenarios stored in a DataTree (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
