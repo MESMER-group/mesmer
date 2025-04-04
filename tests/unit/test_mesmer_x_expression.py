@@ -51,6 +51,32 @@ def test_expression_wrong_function():
         Expression("norm(scale=5, loc=mean())", expr_name="name")
 
 
+def test_expression_set_params():
+
+    expression_str = "norm(loc=0, scale=c1)"
+    expr = Expression(expression_str, expr_name="name")
+
+    assert expr.expression == expression_str
+    assert expr.expression_name == "name"
+
+    assert expr.distrib == sp.stats.norm
+    assert not expr.is_distrib_discrete
+
+    assert expr.parameters_list == ["loc", "scale"]
+
+    bounds = {"loc": [-inf, inf], "scale": [0, inf]}
+    assert expr.boundaries_parameters == bounds
+
+    param_expr = {"loc": "0", "scale": "c1"}
+    assert expr.parameters_expressions == param_expr
+
+    coeffs = ["c1"]
+    assert expr.coefficients_list == coeffs
+
+    coeffs_per_param = {"loc": [], "scale": ["c1"]}
+    assert expr.coefficients_dict == coeffs_per_param
+
+
 def test_expression_genextreme():
 
     expression_str = (
@@ -190,7 +216,7 @@ def test_expression_covariate_c_digit():
 )
 def test_expression_covariate_wrong_underscores():
 
-    # not sure wath the correct behavior should be
+    # not sure what the correct behavior should be
     # - raise?
     # - get "T__C" as covariate?
 
@@ -321,6 +347,30 @@ def test_evaluate_params_norm():
     mesmer.testing.assert_dict_allclose(params, expected)
 
 
+@pytest.mark.xfail(
+    reason="https://github.com/MESMER-group/mesmer/issues/525#issuecomment-2557261793"
+)
+def test_evaluate_params_norm_set_params_with_float():
+
+    expr = Expression("norm(loc= c1 * __T__, scale=0.1)", expr_name="name")
+    params = expr.evaluate_params([1], {"T": np.array([1, 2])})
+
+    assert isinstance(params, dict)
+
+    expected = {"loc": np.array([1, 2]), "scale": np.array([0.1, 0.1])}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+    # a second set of values
+    params = expr.evaluate_params([2], {"T": np.array([2, 5])})
+
+    expected = {"loc": np.array([4, 10]), "scale": np.array([0.1, 0.1])}
+
+    # assert frozen params are equal
+    mesmer.testing.assert_dict_allclose(params, expected)
+
+
 def test_evaluate_params_norm_dataset():
     # NOTE: not sure if passing DataArray to scipy distribution is a good idea
 
@@ -332,7 +382,7 @@ def test_evaluate_params_norm_dataset():
     params = expr.evaluate_params(coefficients_values, inputs_values)
 
     loc = xr.DataArray([1, 2], dims="x")
-    scale = xr.DataArray([2, 2], dims="x")
+    scale = xr.DataArray(2)
 
     expected = {"loc": loc, "scale": scale}
 
@@ -372,7 +422,7 @@ def test_evaluate_norm_dataset():
     assert isinstance(dist.dist, type(sp.stats.norm))
 
     loc = xr.DataArray([1, 2], dims="x")
-    scale = xr.DataArray([2, 2], dims="x")
+    scale = xr.DataArray(2)
 
     expected = {"loc": loc, "scale": scale}
 

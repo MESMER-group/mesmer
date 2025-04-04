@@ -1,9 +1,8 @@
 import warnings
+from collections.abc import Callable, Iterable
 
 import numpy as np
-import pandas as pd
 import xarray as xr
-from packaging.version import Version
 
 
 class OptimizeWarning(UserWarning):
@@ -22,7 +21,7 @@ def create_equal_dim_names(dim, suffixes):
     return tuple(f"{dim}{suffix}" for suffix in suffixes)
 
 
-def _minimize_local_discrete(func, sequence, **kwargs):
+def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
     """find the local minimum for a function that consumes discrete input
 
     Parameters
@@ -53,6 +52,7 @@ def _minimize_local_discrete(func, sequence, **kwargs):
     current_min = float("inf")
     # ensure it's a list because we cannot get an item from an iterable
     sequence = list(sequence)
+    element = None
 
     for i, element in enumerate(sequence):
 
@@ -107,7 +107,9 @@ def _assert_annual_data(time):
         )
 
 
-def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
+def upsample_yearly_data(
+    yearly_data: xr.DataArray, monthly_time: xr.DataArray, time_dim: str = "time"
+):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
     Parameters
@@ -117,6 +119,9 @@ def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
 
     monthly_time: xarray.DataArray
         Monthly time used to define the time coordinates of the upsampled data.
+
+    time_dim: str, default: 'time'
+        Name of the time dimension.
 
     Returns
     -------
@@ -132,9 +137,7 @@ def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
         )
 
     # make sure monthly and yearly data both start at the beginning of the period
-    # pandas v2.2 changed the time freq string for year
-    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    year = yearly_data.resample({time_dim: freq}).bfill()
+    year = yearly_data.resample({time_dim: "YS"}).bfill()
     month = monthly_time.resample({time_dim: "MS"}).bfill()
 
     # forward fill yearly values to monthly resolution
@@ -150,8 +153,8 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: str | set[str] = set(),
-    optional_vars: str | set[str] = set(),
+    required_vars: str | Iterable[str] | None = None,
+    optional_vars: str | Iterable[str] | None = None,
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
@@ -160,9 +163,9 @@ def _check_dataset_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    required_vars, str, set of str, optional
+    required_vars, str, iterable of str, optional
         Variables that obj is required to contain.
-    optional_vars: str, set of str, optional
+    optional_vars: str, iterable of str, optional
         Variables that the obj may contain, only
         relevant if `requires_other_vars` is True
     requires_other_vars: bool, default: False
@@ -175,6 +178,8 @@ def _check_dataset_form(
     ValueError: if any of the conditions is violated
 
     """
+
+    __tracebackhide__ = True
 
     required_vars = _to_set(required_vars)
     optional_vars = _to_set(optional_vars)
@@ -199,9 +204,9 @@ def _check_dataarray_form(
     obj,
     name: str = "obj",
     *,
-    ndim: int = None,
-    required_dims: str | set[str] = set(),
-    shape=None,
+    ndim: tuple[int, ...] | int | None = None,
+    required_dims: str | Iterable[str] | None = None,
+    shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
 
@@ -209,9 +214,9 @@ def _check_dataarray_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    ndim, int, optional
+    ndim, int or tuple of int, optional
         Number of required dimensions, can be a tuple of int if several are possible.
-    required_dims: str, set of str, optional
+    required_dims: str, iterable of str, optional
         Names of dims that are required for obj
     shape : tuple of ints, default: None
         Required shape. Ignored if None.
@@ -222,6 +227,8 @@ def _check_dataarray_form(
     ValueError: if any of the conditions is violated
 
     """
+
+    __tracebackhide__ = True
 
     required_dims = _to_set(required_dims)
 

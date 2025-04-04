@@ -28,8 +28,8 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats._select_ar_order_scen_ens
-   ~stats._fit_auto_regression_scen_ens
+   ~stats.select_ar_order_scen_ens
+   ~stats.fit_auto_regression_scen_ens
    ~stats.select_ar_order
    ~stats.fit_auto_regression
    ~stats.fit_auto_regression_monthly
@@ -131,6 +131,15 @@ Geospatial
    :toctree: generated/
 
    ~core.geospatial.geodist_exact
+
+
+Anomalies
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.anomaly.calc_anomaly
 
 
 Emulator functions

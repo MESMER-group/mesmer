@@ -12,7 +12,9 @@ from mesmer.core.utils import (
 )
 
 
-def adjust_covariance_ar1(covariance, ar_coefs):
+def adjust_covariance_ar1(
+    covariance: xr.DataArray, ar_coefs: xr.DataArray
+) -> xr.DataArray:
     """
     adjust localized empirical covariance matrix for autoregressive process of order one
 
@@ -77,8 +79,13 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
 
 
 def find_localized_empirical_covariance(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
-):
+    data: xr.DataArray,
+    weights: xr.DataArray,
+    localizer: dict[float | int, xr.DataArray | np.ndarray],
+    dim: str,
+    k_folds: int,
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
+) -> xr.Dataset:
     """determine localized empirical covariance by cross validation
 
     Parameters
@@ -87,7 +94,7 @@ def find_localized_empirical_covariance(
         2D DataArray with data to calculate the covariance for.
     weights : xr.DataArray
         Weights for the individual samples.
-    localizer : dict of DataArray```
+    localizer : dict of xr.DataArray
         Dictionary containing the localization radii as keys and the localization matrix
         as values. The localization must be 2D and of shape n_gridpoints x n_gridpoints.
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
@@ -145,8 +152,13 @@ def find_localized_empirical_covariance(
 
 
 def find_localized_empirical_covariance_monthly(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
-):
+    data: xr.DataArray,
+    weights: xr.DataArray,
+    localizer: dict[float | int, xr.DataArray | np.ndarray],
+    dim: str,
+    k_folds: int,
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
+) -> xr.Dataset:
     """determine localized empirical covariance by cross validation for each month. `data`
     should be the residuals of the cyclo-stationary AR(1) process, see
     :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`. Note that here,

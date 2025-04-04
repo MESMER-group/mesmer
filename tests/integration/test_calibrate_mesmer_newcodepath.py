@@ -1,11 +1,12 @@
 import pathlib
 
-import joblib
-import numpy as np
 import pytest
 import xarray as xr
+from filefisher import FileFinder
 
 import mesmer
+import mesmer.core.datatree
+from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -19,57 +20,56 @@ import mesmer
             False,
             "tas/one_scen_one_ens",
         ),
-        # TODO: Add the other test cases too
-        # pytest.param(
-        #     ["h-ssp585"],
-        #     False,
-        #     False,
-        #     "tas/one_scen_multi_ens",
-        #     marks=pytest.mark.slow,
-        # ),
-        # pytest.param(
-        #     ["h-ssp126", "h-ssp585"],
-        #     False,
-        #     False,
-        #     "tas/multi_scen_multi_ens",
-        # ),
-        # # tas and tas**2
-        # pytest.param(
-        #     ["h-ssp126"],
-        #     True,
-        #     False,
-        #     "tas_tas2/one_scen_one_ens",
-        #     marks=pytest.mark.slow,
-        # ),
-        # # tas and hfds
-        # pytest.param(
-        #     ["h-ssp126"],
-        #     False,
-        #     True,
-        #     "tas_hfds/one_scen_one_ens",
-        #     marks=pytest.mark.slow,
-        # ),
-        # # tas, tas**2, and hfds
-        # pytest.param(
-        #     ["h-ssp126"],
-        #     True,
-        #     True,
-        #     "tas_tas2_hfds/one_scen_one_ens",
-        # ),
-        # pytest.param(
-        #     ["h-ssp585"],
-        #     True,
-        #     True,
-        #     "tas_tas2_hfds/one_scen_multi_ens",
-        #     marks=pytest.mark.slow,
-        # ),
-        # pytest.param(
-        #     ["h-ssp126", "h-ssp585"],
-        #     True,
-        #     True,
-        #     "tas_tas2_hfds/multi_scen_multi_ens",
-        #     marks=pytest.mark.slow,
-        # ),
+        pytest.param(
+            ["ssp585"],
+            False,
+            False,
+            "tas/one_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            False,
+            False,
+            "tas/multi_scen_multi_ens",
+        ),
+        # tas and tas**2
+        pytest.param(
+            ["ssp126"],
+            True,
+            False,
+            "tas_tas2/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+        # tas and hfds
+        pytest.param(
+            ["ssp126"],
+            False,
+            True,
+            "tas_hfds/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+        # tas, tas**2, and hfds
+        pytest.param(
+            ["ssp126"],
+            True,
+            True,
+            "tas_tas2_hfds/one_scen_one_ens",
+        ),
+        pytest.param(
+            ["ssp585"],
+            True,
+            True,
+            "tas_tas2_hfds/one_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            True,
+            True,
+            "tas_tas2_hfds/multi_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
     ),
 )
 def test_calibrate_mesmer(
@@ -78,6 +78,7 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
+    update_expected_files=False,
 ):
 
     # define config values
@@ -86,46 +87,109 @@ def test_calibrate_mesmer(
     REFERENCE_PERIOD = slice("1850", "1900")
 
     HIST_PERIOD = slice("1850", "2014")
-    PROJ_PERIOD = slice("2015", "2100")
 
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    scenario = scenarios[0]
     test_cmip_generation = 6
 
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "one_scen_one_ens"
+    TEST_PATH = TEST_DATA_PATH / "output" / outname
+
+    PARAM_FILEFINDER = FileFinder(
+        path_pattern=TEST_PATH / "test-params/{module}/",
+        file_pattern="params_{module}_{esm}_{scen}.nc",
+    )
 
     cmip_data_path = (
         TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
     )
 
-    path_tas = cmip_data_path / "tas" / "ann" / "g025"
+    CMIP_FILEFINDER = FileFinder(
+        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
+    )
 
-    fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj = path_tas / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
+    fc_scens = CMIP_FILEFINDER.find_files(
+        variable="tas", scenario=scenarios, model=esm, resolution="g025", time_res="ann"
+    )
 
-    tas = xr.open_mfdataset(
-        [fN_hist, fN_proj],
-        combine="by_coords",
-        use_cftime=True,
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
-        drop_variables=["height", "file_qf"],
-    ).load()
+    # only get the historical members that are also in the future scenarios, but only once
+    unique_scen_members = fc_scens.df.member.unique()
+
+    fc_hist = CMIP_FILEFINDER.find_files(
+        variable="tas",
+        scenario="historical",
+        model=esm,
+        resolution="g025",
+        time_res="ann",
+        member=unique_scen_members,
+    )
+
+    fc_all = fc_hist.concat(fc_scens)
+
+    scenarios_incl_hist = scenarios.copy()
+    scenarios_incl_hist.append("historical")
+
+    # load data for each scenario
+    dt = xr.DataTree()
+    for scen in scenarios_incl_hist:
+        files = fc_all.search(scenario=scen)
+
+        # load all members for a scenario
+        members = []
+        for fN, meta in files.items():
+            ds = xr.open_dataset(fN, use_cftime=True)
+            # drop unnecessary variables
+            ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
+            # assign member-ID as coordinate
+            ds = ds.assign_coords({"member": meta["member"]})
+            members.append(ds)
+
+        # create a Dataset that holds each member along the member dimension
+        scen_data = xr.concat(members, dim="member")
+        # put the scenario dataset into the DataTree
+        dt[scen] = xr.DataTree(scen_data)
+
+    # load additional data
+    if use_hfds:
+        fc_hfds = CMIP_FILEFINDER.find_files(
+            variable="hfds",
+            scenario=scenarios_incl_hist,
+            model=esm,
+            resolution="g025",
+            time_res="ann",
+            member=unique_scen_members,
+        )
+
+        dt_hfds = xr.DataTree()
+        for scen in scenarios_incl_hist:
+            files = fc_hfds.search(scenario=scen)
+
+            members = []
+            for fN, meta in files.items():
+                ds = xr.open_dataset(fN, use_cftime=True)
+                ds = ds.drop_vars(
+                    ["height", "time_bnds", "file_qf", "area"], errors="ignore"
+                )
+                ds = ds.assign_coords({"member": meta["member"]})
+                members.append(ds)
+
+            scen_data = xr.concat(members, dim="member")
+            dt_hfds[scen] = xr.DataTree(scen_data)
+    else:
+        dt_hfds = None
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    tas = mesmer.grid.wrap_to_180(tas)
+    dt = map_over_datasets(mesmer.grid.wrap_to_180, dt)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
-    ref = tas.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
-    tas = tas - ref
-    tas_globmean = mesmer.weighted.global_mean(tas)
+    # calculate anomalies w.r.t. the reference period
+    tas_anoms = mesmer.anomaly.calc_anomaly(dt, REFERENCE_PERIOD)
+
+    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
 
     # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
@@ -134,95 +198,131 @@ def test_calibrate_mesmer(
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked = mask_and_stack(tas, threshold_land=THRESHOLD_LAND)
+    tas_stacked = map_over_datasets(
+        mask_and_stack, tas_anoms, kwargs={"threshold_land": THRESHOLD_LAND}
+    )
 
     # train global trend module
-    tas_globmean_lowess = mesmer.stats.lowess(
-        tas_globmean, "time", n_steps=50, use_coords=False
+    tas_globmean_ensmean = tas_globmean.mean(dim="member")
+    tas_globmean_smoothed = map_over_datasets(
+        mesmer.stats.lowess,
+        tas_globmean_ensmean,
+        "time",
+        kwargs={"n_steps": 50, "use_coords": False},
     )
-    tas_lowess_residuals = tas_globmean - tas_globmean_lowess
+    hist_lowess_residuals = (
+        tas_globmean["historical"] - tas_globmean_smoothed["historical"]
+    )
 
     volcanic_params = mesmer.volc.fit_volcanic_influence(
-        tas_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
+        hist_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
     )
 
-    tas_globmean_volc = mesmer.volc.superimpose_volcanic_influence(
-        tas_globmean_lowess, volcanic_params, hist_period=HIST_PERIOD, dim="time"
+    tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
+        tas_globmean_smoothed["historical"],
+        volcanic_params,
+        hist_period=HIST_PERIOD,
+        dim="time",
     )
 
     # train global variability module
-    def _split_hist_proj(
-        obj, dim="time", hist_period=HIST_PERIOD, proj_period=PROJ_PERIOD
-    ):
-        hist = obj.sel({dim: hist_period})
-        proj = obj.sel({dim: proj_period})
+    tas_resid_novolc = tas_globmean - tas_globmean_smoothed
 
-        return hist, proj
-
-    tas_hist_globmean_smooth_volc, tas_proj_smooth = _split_hist_proj(tas_globmean_volc)
-
-    tas_hist_resid_novolc = tas_globmean - tas_hist_globmean_smooth_volc
-    tas_proj_resid = tas_globmean - tas_proj_smooth
-
-    data = (tas_hist_resid_novolc.tas, tas_proj_resid.tas)
-
-    ar_order = mesmer.stats._select_ar_order_scen_ens(
-        *data, dim="time", ens_dim="ens", maxlag=12, ic="bic"
+    ar_order = mesmer.stats.select_ar_order_scen_ens(
+        tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"
     )
-    global_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
-        *data, dim="time", ens_dim="ens", lags=ar_order
+    global_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
+        tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
+
+    if dt_hfds is not None:
+
+        hfds_anoms = mesmer.anomaly.calc_anomaly(dt_hfds, REFERENCE_PERIOD)
+
+        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
+
+        hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
+        hfds_globmean_smoothed = map_over_datasets(
+            mesmer.stats.lowess,
+            hfds_globmean_ensmean,
+            "time",
+            kwargs={"n_steps": 50, "use_coords": False},
+        )
+    else:
+        hfds_globmean_smoothed = None
 
     # train local forced response module
-    predictors_split = {
-        "tas_globmean": [tas_hist_globmean_smooth_volc.tas, tas_proj_smooth.tas],
-        "tas_globmean_resid": [tas_hist_resid_novolc.tas, tas_proj_resid.tas],
-    }
+    # broadcast so all datasets have all the dimensions
+    # gridcell can be excluded because it will be mapped in the Linear Regression
+    target = tas_stacked
+    predictors = xr.DataTree.from_dict(
+        {"tas": tas_globmean_smoothed, "tas_resids": tas_resid_novolc}
+    )
+    if use_tas2:
+        predictors["tas2"] = tas_globmean_smoothed**2
+    if hfds_globmean_smoothed is not None:
+        predictors["hfds"] = hfds_globmean_smoothed
 
-    predictors = dict()
-    for key, value in predictors_split.items():
-        predictors[key] = xr.concat(value, dim="time")
+    weights = mesmer.weighted.equal_scenario_weights_from_datatree(
+        target, ens_dim="member", time_dim="time"
+    )
+
+    predictors_stacked, target_stacked, weights_stacked = (
+        mesmer.core.datatree.stack_datatrees_for_linear_regression(
+            predictors, target, weights, stacking_dims=["member", "time"]
+        )
+    )
 
     local_forced_response_lr = mesmer.stats.LinearRegression()
 
     local_forced_response_lr.fit(
-        predictors=predictors,
-        target=tas_stacked.tas,
-        dim="time",  # switch to sample?
+        predictors=predictors_stacked,
+        target=target_stacked.tas,
+        dim="sample",
+        weights=weights_stacked.weights,
     )
 
     # train local variability module
     # train local AR process
     tas_stacked_residuals = local_forced_response_lr.residuals(
-        predictors=predictors, target=tas_stacked.tas
+        predictors=predictors_stacked, target=target_stacked.tas
     )
 
-    tas_stacked_residuals_hist, tas_stacked_residuals_proj = _split_hist_proj(
-        tas_stacked_residuals
-    )
+    tas_un_stacked_residuals = tas_stacked_residuals.set_index(
+        sample=("time", "member", "scenario")
+    ).unstack("sample")
 
-    data = (tas_stacked_residuals_hist, tas_stacked_residuals_proj)
-    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
-        *data,
-        ens_dim="none",
+    dt_resids = xr.DataTree()
+    for scenario in tas_un_stacked_residuals.scenario.values:
+        dt_resids[scenario] = xr.DataTree(
+            tas_un_stacked_residuals.sel(scenario=scenario)
+            .dropna("member", how="all")
+            .dropna("time")
+            .drop_vars("scenario")
+            .rename("residuals")
+            .to_dataset()
+        )
+
+    local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
+        dt_resids,
+        ens_dim="member",
         dim="time",
         lags=1,
     )
 
     # train covariance
-    geodist = mesmer.geospatial.geodist_exact(tas_stacked.lon, tas_stacked.lat)
+    geodist = mesmer.geospatial.geodist_exact(
+        tas_stacked["historical"].ds.lon, tas_stacked["historical"].ds.lat
+    )
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
     )
 
-    weights = xr.ones_like(tas_globmean.tas)  # equal weights (for now?)
-    weights.name = "weights"
-
-    dim = "time"  # rename to "sample"
+    dim = "sample"
     k_folds = 30
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        tas_stacked_residuals, weights, phi_gc_localizer, dim, k_folds
+        tas_stacked_residuals, weights_stacked.weights, phi_gc_localizer, dim, k_folds
     )
 
     localized_ecov["localized_covariance_adjusted"] = (
@@ -231,78 +331,81 @@ def test_calibrate_mesmer(
         )
     )
 
-    # testing
-    assert_params_allclose(
-        TEST_PATH,
-        global_ar_params,
-        local_forced_response_lr,
-        local_ar_params,
-        localized_ecov,
+    # parameter paths
+    scen_str = "-".join(scenarios)
+
+    volcanic_file = PARAM_FILEFINDER.create_full_name(
+        module="volcanic",
+        esm=esm,
+        scen=scen_str,
     )
+    global_ar_file = PARAM_FILEFINDER.create_full_name(
+        module="global-variability",
+        esm=esm,
+        scen=scen_str,
+    )
+    local_forced_file = PARAM_FILEFINDER.create_full_name(
+        module="local-trends",
+        esm=esm,
+        scen=scen_str,
+    )
+    local_ar_file = PARAM_FILEFINDER.create_full_name(
+        module="local-variability",
+        esm=esm,
+        scen=scen_str,
+    )
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(
+        module="covariance",
+        esm=esm,
+        scen=scen_str,
+    )
+
+    if update_expected_files:
+        # save the parameters
+        volcanic_params.to_netcdf(volcanic_file)
+        global_ar_params.to_netcdf(global_ar_file)
+        local_forced_response_lr.to_netcdf(local_forced_file)
+        local_ar_params.to_netcdf(local_ar_file)
+        localized_ecov.to_netcdf(localized_ecov_file)
+        pytest.skip("Updated param files.")
+
+    else:
+        # testing
+        assert_params_allclose(
+            volcanic_params,
+            global_ar_params,
+            local_forced_response_lr.params,
+            local_ar_params,
+            localized_ecov,
+            volcanic_file,
+            global_ar_file,
+            local_forced_file,
+            local_ar_file,
+            localized_ecov_file,
+        )
 
 
 def assert_params_allclose(
-    TEST_PATH,
+    volcanic_params,
     global_ar_params,
-    local_forced_response_lr,
+    local_forced_params,
     local_ar_params,
     localized_ecov,
+    volcanic_file,
+    global_ar_file,
+    local_forced_file,
+    local_ar_file,
+    localized_ecov_file,
 ):
-    fN_bundle = TEST_PATH / "test-mesmer-bundle.pkl"
-    bundle = joblib.load(fN_bundle)
+    # test params
+    exp_volcanic_params = xr.open_dataset(volcanic_file, use_cftime=True)
+    exp_global_ar_params = xr.open_dataset(global_ar_file, use_cftime=True)
+    exp_local_forced_params = xr.open_dataset(local_forced_file, use_cftime=True)
+    exp_local_ar_params = xr.open_dataset(local_ar_file, use_cftime=True)
+    exp_localized_ecov = xr.open_dataset(localized_ecov_file, use_cftime=True)
 
-    # TODO: Test volcanic influence params too
-
-    # global variability
-    np.testing.assert_allclose(
-        bundle["params_gv"]["AR_int"], global_ar_params.intercept
-    )
-    np.testing.assert_equal(
-        bundle["params_gv"]["AR_order_sel"], global_ar_params.lags.max().values
-    )
-    np.testing.assert_allclose(bundle["params_gv"]["AR_coefs"], global_ar_params.coeffs)
-    np.testing.assert_allclose(
-        bundle["params_gv"]["AR_var_innovs"], global_ar_params.variance
-    )
-
-    # local forced response
-    np.testing.assert_allclose(
-        bundle["params_lt"]["intercept"]["tas"],
-        local_forced_response_lr.params.intercept,
-    )
-
-    np.testing.assert_allclose(
-        bundle["params_lt"]["coef_gttas"]["tas"],
-        local_forced_response_lr.params.tas_globmean,
-    )
-
-    np.testing.assert_allclose(
-        bundle["params_lv"]["coef_gvtas"]["tas"],
-        local_forced_response_lr.params.tas_globmean_resid,
-    )
-
-    # local variability
-    # AR process
-    np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_coef"]["tas"], local_ar_params.coeffs.squeeze()
-    )
-    np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_int"]["tas"], local_ar_params.intercept.squeeze()
-    )
-    np.testing.assert_allclose(
-        bundle["params_lv"]["AR1_var_innovs"]["tas"],
-        local_ar_params.variance.squeeze(),
-    )
-
-    # covariance
-    assert bundle["params_lv"]["L"]["tas"] == localized_ecov.localization_radius
-
-    np.testing.assert_allclose(
-        bundle["params_lv"]["ecov"]["tas"], localized_ecov.covariance
-    )
-
-    np.testing.assert_allclose(
-        bundle["params_lv"]["loc_ecov"]["tas"],
-        localized_ecov.localized_covariance,
-        atol=1e-7,
-    )
+    xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
+    xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
+    xr.testing.assert_allclose(local_forced_params, exp_local_forced_params)
+    xr.testing.assert_allclose(local_ar_params, exp_local_ar_params)
+    xr.testing.assert_allclose(localized_ecov, exp_localized_ecov)

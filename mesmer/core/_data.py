@@ -3,7 +3,6 @@ from functools import cache
 import pandas as pd
 import pooch
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 
@@ -43,13 +42,12 @@ def _load_aod_obs(*, version, resample):
         dtype={"year": str, "month": str},
     )
 
-    time = pd.to_datetime(df.year + df.month, format="%Y%m")
+    time = pd.to_datetime(df.year + df.month, format="%Y%m").astype("datetime64[ns]")
 
     aod = xr.DataArray(df.aod.values, coords={"time": time}, name="aod")
 
     if resample:
-        freq = "YE" if Version(xr.__version__) >= Version("2024.02") else "A"
-        aod = aod.resample(time=freq).mean()
+        aod = aod.resample(time="YE").mean()
 
     return aod
 
@@ -61,7 +59,7 @@ def _fetch_remote_data(name):
 
     cache_dir = pooch.os_cache("mesmer")
 
-    REMOTE_RESSOURCE = pooch.create(
+    REMOTE_RESOURCE = pooch.create(
         path=cache_dir,
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
@@ -73,4 +71,4 @@ def _fetch_remote_data(name):
     )
 
     # the file will be downloaded automatically the first time this is run.
-    return REMOTE_RESSOURCE.fetch(name)
+    return REMOTE_RESOURCE.fetch(name)

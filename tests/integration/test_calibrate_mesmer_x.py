@@ -1,4 +1,4 @@
-import importlib
+import pathlib
 
 import pytest
 import xarray as xr
@@ -42,7 +42,13 @@ import mesmer.mesmer_x
     ],
 )
 def test_calibrate_mesmer_x(
-    scenario, target_name, expr, expr_name, option_2ndfit, update_expected_files
+    scenario,
+    target_name,
+    expr,
+    expr_name,
+    option_2ndfit,
+    test_data_root_dir,
+    update_expected_files,
 ):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
@@ -50,7 +56,7 @@ def test_calibrate_mesmer_x(
 
     # TODO: replace with filefinder later
     # load data
-    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
+    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = (
         TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens" / "test-params"
     )
@@ -124,7 +130,7 @@ def test_calibrate_mesmer_x(
         preds_start=predictor,
         expr_end="norm(loc=0, scale=1)",
     )
-    # TODO: add expression as varibale here or in function or before saving?
+    # TODO: add expression as variable here or in function or before saving?
 
     # make transformed target into DataArrays
     transf_target_xr_hist = xr.DataArray(
@@ -139,7 +145,7 @@ def test_calibrate_mesmer_x(
     ).assign_coords(targ_stacked_hist.gridpoint.coords)
 
     # training of auto-regression with spatially correlated innovations
-    local_ar_params = mesmer.stats._fit_auto_regression_scen_ens(
+    local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         transf_target_xr_hist,
         transf_target_xr_ssp585,
         ens_dim=None,

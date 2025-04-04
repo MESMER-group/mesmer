@@ -31,8 +31,8 @@ def test_distrib_cov_init_all_default():
     assert dist.scores_fit == ["func_optim", "NLL", "BIC"]
     assert dist.xtol_req == 1e-06
     assert dist.ftol_req == 1e-06
-    assert dist.maxiter == 1000 * dist.n_coeffs * np.log(dist.n_coeffs)
-    assert dist.maxfev == 1000 * dist.n_coeffs * np.log(dist.n_coeffs)
+    assert dist.maxiter == 1000 * dist.n_coeffs * (np.log(dist.n_coeffs) + 1)
+    assert dist.maxfev == 1000 * dist.n_coeffs * (np.log(dist.n_coeffs) + 1)
     assert dist.method_fit == "Powell"
     assert dist.name_ftol == "ftol"
     assert dist.name_xtol == "xtol"
@@ -110,7 +110,7 @@ def test_distrib_cov_init():
     assert dist.boundaries_params == {
         "loc": [-10, 10],
         "scale": [0, 1.0],
-    }  # -1 -> 0 scince no negative values allowed
+    }  # -1 -> 0 since no negative values allowed
     assert dist.boundaries_coeffs == boundaries_coeffs
     assert dist.func_first_guess is None
     assert dist.n_coeffs == 2

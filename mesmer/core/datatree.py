@@ -1,8 +1,13 @@
+from typing import overload
+
 import xarray as xr
-from datatree import DataTree
+
+from mesmer.core._datatreecompat import map_over_datasets
 
 
-def _extract_single_dataarray_from_dt(dt: DataTree, name: str = "node") -> xr.DataArray:
+def _extract_single_dataarray_from_dt(
+    dt: xr.DataTree, name: str = "node"
+) -> xr.DataArray:
     """
     Extract a single DataArray from a DataTree node, holding a ``Dataset`` with one ``DataArray``.
     """
@@ -23,7 +28,7 @@ def _extract_single_dataarray_from_dt(dt: DataTree, name: str = "node") -> xr.Da
 
 
 def collapse_datatree_into_dataset(
-    dt: DataTree, dim: str, **concat_kwargs
+    dt: xr.DataTree, dim: str, **concat_kwargs
 ) -> xr.Dataset:
     """
     Take a ``DataTree`` and collapse **all its subtrees** into a single ``xr.Dataset`` along dim.
@@ -60,20 +65,42 @@ def collapse_datatree_into_dataset(
     return ds
 
 
+@overload
 def stack_datatrees_for_linear_regression(
-    predictors: DataTree,
-    target: DataTree,
-    weights: DataTree | None,
+    predictors: xr.DataTree,
+    target: xr.DataTree,
+    weights: None = None,
     *,
     stacking_dims: list[str],
     collapse_dim: str = "scenario",
     stacked_dim: str = "sample",
-) -> tuple[DataTree, xr.Dataset, xr.Dataset | None]:
+) -> tuple[xr.DataTree, xr.Dataset, None]: ...
+@overload
+def stack_datatrees_for_linear_regression(
+    predictors: xr.DataTree,
+    target: xr.DataTree,
+    weights: xr.DataTree,
+    *,
+    stacking_dims: list[str],
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset]: ...
+
+
+def stack_datatrees_for_linear_regression(
+    predictors: xr.DataTree,
+    target: xr.DataTree,
+    weights: xr.DataTree | None = None,
+    *,
+    stacking_dims: list[str],
+    collapse_dim: str = "scenario",
+    stacked_dim: str = "sample",
+) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset | None]:
     """
     prepares data for Linear Regression:
     1. Broadcasts predictors to target
     2. Collapses DataTrees into DataSets
-    3. Stacks the DataSets along the stacking dimension(s)
+    3. Stacks the Datasets along the stacking dimension(s)
 
     Parameters
     ----------
@@ -87,7 +114,7 @@ def stack_datatrees_for_linear_regression(
         A ``DataTree``holding the targets. Must be isomorphic to the predictor subtrees, i.e.
         have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must be at least 2D
         and contain `dim`, but may also contain a dimension for ensemble members.
-    weights : DataTree, default: None.
+    weights : DataTree or None, default: None
         Individual weights for each sample, must be isomorphic to target. Must at least contain
         `dim`, and must have the ensemble member dimension if target has it.
     stacking_dims : list[str]
@@ -100,7 +127,7 @@ def stack_datatrees_for_linear_regression(
 
     Returns
     -------
-    tuple
+    tuple of stacked predictors, target and weights
         Tuple of the prepared predictors, target and weights, where the predictors and target are
         stacked along the stacking dimensions and the weights are stacked along the stacking dimensions
         and the ensemble member dimension.
@@ -130,17 +157,26 @@ def stack_datatrees_for_linear_regression(
     exclude_dim = set(target.leaves[0].ds.dims) - set(stacking_dims)
 
     # prepare predictors
-    predictors_stacked = DataTree()
+    predictors_stacked = xr.DataTree()
     for key, pred in predictors.items():
         # 1) broadcast to target
-        pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+        # TODO: use DataTree method again, once available
+        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+        pred_broadcast = map_over_datasets(
+            xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
+        )
+
         # 2) collapse into DataSets
         predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
         # 3) stack
-        predictors_stacked[key] = DataTree(
+        predictors_stacked[key] = xr.DataTree(
             predictor_ds.stack(stack_dim, create_index=False)
         )
-    predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
+    # TODO: use DataTree method again, once available
+    # predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
+    predictors_stacked = map_over_datasets(
+        xr.Dataset.dropna, predictors_stacked, kwargs={"dim": stacked_dim}
+    )
 
     # prepare target
     # 1) collapse into DataSet

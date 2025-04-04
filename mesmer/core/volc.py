@@ -3,23 +3,23 @@ import warnings
 import xarray as xr
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
-from mesmer.core.utils import _check_dataarray_form
+from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
 from mesmer.stats import LinearRegression
 
 
-def _load_and_align_strat_aod_obs(data, hist_period, dim="time", version="2022"):
+def _load_and_align_strat_aod_obs(time, hist_period, version="2022"):
     """
     load stratospheric aerosol optical depth observations and align them to the to
-    calendar and time of `data` for the `hist_period`
+    calendar and time of `time`.
 
     Parameters
     ----------
-    data : xr.DataArray
-        Data to align aod data to.
+    time: xr.DataArray
+        DataArray containing the time coords to align the aerosol optical depth
+        observations to.
     hist_period : slice
-        Historical period for which the data should be aligned.
-    dim : str, default: "time"
-        Name of the time dimension in data.
+        Slice object indicating the years of the historical period. E.g.
+        ``slice("1850", "2014")``.
     version : str, default: "2022"
         Which version of the dataset to load. Currently only "2022" is available
 
@@ -30,22 +30,16 @@ def _load_and_align_strat_aod_obs(data, hist_period, dim="time", version="2022")
 
     """
 
-    from mesmer.core.utils import _assert_annual_data
-
-    time = data[dim]
-
-    _assert_annual_data(time)
-
-    time_hist = time.sel({dim: hist_period})
-
     aod = load_stratospheric_aerosol_optical_depth_obs(version=version, resample=True)
     aod = aod.sel(time=hist_period)
 
     # replace time axis of aod -> so they have the same calendar
+    dim = time.name
+    time_hist = time.sel({dim: hist_period})
     aod = aod.assign_coords({dim: time_hist})
 
     # expand aod to the full time period
-    __, aod = xr.align(time, aod, fill_value=0.0, join="outer")
+    __, aod = xr.align(time, aod, fill_value=0.0, join="outer")  # type: ignore[assignment]
 
     return aod
 
@@ -79,9 +73,8 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
         tas_residuals, ndim=(1, 2), required_dims=dim, name="tas_residuals"
     )
 
-    aod = _load_and_align_strat_aod_obs(
-        tas_residuals, hist_period, dim=dim, version=version
-    )
+    time = tas_residuals[dim]
+    aod = _load_and_align_strat_aod_obs(time, hist_period, version=version)
 
     # TODO: extract this out of the function?
     if tas_residuals.ndim == 2:
@@ -117,16 +110,36 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
     return params
 
 
-def _predict_volcanic_contribution(
-    tas_globmean_smooth, params, hist_period, dim="time", version="2022"
-):
+def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
+    """
+    predict volcanic contribution to temperature anomalies using aerosol optical depth
+    observations as proxy
+
+    Parameters
+    ----------
+    time : xr.DataArray
+        DataArray containing the time coords to predict the volcanic contribution for.
+    hist_period : slice
+        Slice object indicating the years of the historical period. E.g.
+        ``slice("1850", "2014")``.
+    params : xr.Dataset
+        Parameters of the linear regression fit, obtained from
+        ``fit_volcanic_influence``.
+    version : str, default: "2022"
+        Which version of the aerosol optical depth observations to use. Currently
+        only "2022" is valid.
+
+    Returns
+    -------
+    volcanic_contribution : xr.DataArray
+        DataArray containing the volcanic contribution to temperature anomalies.
+    """
 
     # TODO: check version from params
 
     # ensure the time axis of aod and the model data aligns
-    aod = _load_and_align_strat_aod_obs(
-        tas_globmean_smooth, hist_period, dim=dim, version=version
-    )
+    _assert_annual_data(time)
+    aod = _load_and_align_strat_aod_obs(time, hist_period, version=version)
 
     # set up linear regression model
     lr = LinearRegression()
@@ -168,8 +181,9 @@ def superimpose_volcanic_influence(
         Parameters of the linear regression fit to the residuals.
     """
 
+    time = tas_globmean_lowess[dim]
     volcanic_contribution = _predict_volcanic_contribution(
-        tas_globmean_lowess, params, hist_period, dim=dim, version=version
+        time, hist_period, params, version=version
     )
 
     tas_globmean_lowess_volc = tas_globmean_lowess + volcanic_contribution
