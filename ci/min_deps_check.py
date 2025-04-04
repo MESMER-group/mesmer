@@ -34,6 +34,7 @@ IGNORE_DEPS = {
 
 POLICY_MONTHS = {"python": 30, "numpy": 18}
 POLICY_MONTHS_DEFAULT = 12
+# xarray v2025.03 is needed for xr.DataTree support
 POLICY_OVERRIDE: dict[str, tuple[int, int]] = {"xarray": (2025, 3)}
 errors = []
 
