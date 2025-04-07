@@ -107,7 +107,7 @@ def predict_harmonic_model(
     -------
     predictions: xr.DataArray
         Fourier Series calculated over `yearly_predictor` with `coeffs`, has `time_dim` with values of `time` and
-        any additional dimesions of `yearly_predictor`.
+        any additional dimensions of `yearly_predictor`.
 
     """
     _check_dataarray_form(
