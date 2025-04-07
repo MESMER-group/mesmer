@@ -65,6 +65,41 @@ def collapse_datatree_into_dataset(
     return ds
 
 
+
+def stack_datatree(dt: xr.DataTree) -> xr.Dataset:
+
+    # TODO: allow passing indexes (but see below)
+
+    out = list()
+    for path, (node,) in xr.group_subtrees(dt):
+
+        if node.has_data:
+            ds = node.to_dataset()
+            ds = ds.expand_dims(scenario=[path])
+
+            # NOTE: we want time to be the fastest changing variable (i.e. we
+            # want to stack one member after the other) for this
+            #  "member" must be _before_ "time"
+
+            # the first three are equivalent - most likely because scenario is only
+            # a single entry and we concat after stacking (?)
+            ds = ds.stack(sample=("scenario", "member", "time"), create_index=False)
+            # ds = ds.stack(sample=("member", "time", "scenario"), create_index=False)
+            # ds = ds.stack(sample=("member", "scenario", "time"), create_index=False)
+
+            # these 3 do not work and lead to several
+            # ds = ds.stack(sample=("time", "member", "scenario"), create_index=False)
+            # ds = ds.stack(sample=("time", "scenario", "member"), create_index=False)
+            # ds = ds.stack(sample=("scenario", "time", "member"), create_index=False)
+
+            out.append(ds)
+
+    out = xr.concat(out, dim="sample")
+
+    return out
+
+
+
 @overload
 def stack_datatrees_for_linear_regression(
     predictors: xr.DataTree,
@@ -159,39 +194,21 @@ def stack_datatrees_for_linear_regression(
     # prepare predictors
     predictors_stacked = xr.DataTree()
     for key, pred in predictors.items():
-        # 1) broadcast to target
-        # TODO: use DataTree method again, once available
-        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+        # 1) broadcast to target (because pred is averaged over member)
         pred_broadcast = map_over_datasets(
             xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
         )
+        # TODO: use DataTree method again, once available
+        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
 
-        # 2) collapse into DataSets
-        predictor_ds = collapse_datatree_into_dataset(pred_broadcast, dim=collapse_dim)
-        # 3) stack
-        predictors_stacked[key] = xr.DataTree(
-            predictor_ds.stack(stack_dim, create_index=False)
-        )
-    # TODO: use DataTree method again, once available
-    # predictors_stacked = predictors_stacked.dropna(dim=stacked_dim)
-    predictors_stacked = map_over_datasets(
-        xr.Dataset.dropna, predictors_stacked, kwargs={"dim": stacked_dim}
-    )
+        predictors_stacked[key] = xr.DataTree(stack_datatree(pred_broadcast))
 
     # prepare target
-    # 1) collapse into DataSet
-    target_ds = collapse_datatree_into_dataset(target, dim=collapse_dim)
-    # 2) stack
-    target_stacked = target_ds.stack(stack_dim, create_index=False)
-    target_stacked = target_stacked.dropna(dim=stacked_dim)
+    target_stacked = stack_datatree(target)
 
     # prepare weights
     if weights is not None:
-        # 1) collapse into DataSet
-        weights_ds = collapse_datatree_into_dataset(weights, dim=collapse_dim)
-        # 2) stack
-        weights_stacked = weights_ds.stack(stack_dim, create_index=False)
-        weights_stacked = weights_stacked.dropna(dim=stacked_dim)
+        weights_stacked = stack_datatree(weights)
     else:
         weights_stacked = None
 
