@@ -185,8 +185,8 @@ def stack_datatrees_for_linear_regression(
     with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
     """
 
-    stacking_dims_all = stacking_dims + [collapse_dim]
-    stack_dim = {stacked_dim: stacking_dims_all}
+    # stacking_dims_all = stacking_dims + [collapse_dim]
+    # stack_dim = {stacked_dim: stacking_dims_all}
 
     # exclude target dimensions from broadcasting which are not in the stacking_dims
     exclude_dim = set(target.leaves[0].ds.dims) - set(stacking_dims)
