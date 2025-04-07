@@ -65,7 +65,6 @@ def collapse_datatree_into_dataset(
     return ds
 
 
-
 def stack_datatree(dt: xr.DataTree) -> xr.Dataset:
 
     # TODO: allow passing indexes (but see below)
@@ -97,7 +96,6 @@ def stack_datatree(dt: xr.DataTree) -> xr.Dataset:
     out = xr.concat(out, dim="sample")
 
     return out
-
 
 
 @overload
