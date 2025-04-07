@@ -406,9 +406,12 @@ def assert_params_allclose(
     xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
     xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
 
-
-    local_forced_params = local_forced_params.set_index(sample=("time", "member", "scenario"))
-    exp_local_forced_params = exp_local_forced_params.set_index(sample=("time", "member", "scenario"))
+    local_forced_params = local_forced_params.set_index(
+        sample=("time", "member", "scenario")
+    )
+    exp_local_forced_params = exp_local_forced_params.set_index(
+        sample=("time", "member", "scenario")
+    )
 
     exp_local_forced_params = exp_local_forced_params.reindex_like(local_forced_params)
 
