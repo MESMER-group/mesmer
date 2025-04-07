@@ -129,8 +129,7 @@ def test_calibrate_mesmer(
 
     fc_all = fc_hist.concat(fc_scens)
 
-    scenarios_incl_hist = scenarios.copy()
-    scenarios_incl_hist.append("historical")
+    scenarios_incl_hist = ["historical"] + scenarios
 
     # load data for each scenario
     dt = xr.DataTree()
@@ -406,6 +405,13 @@ def assert_params_allclose(
 
     xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
     xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
+
+
+    local_forced_params = local_forced_params.set_index(sample=("time", "member", "scenario"))
+    exp_local_forced_params = exp_local_forced_params.set_index(sample=("time", "member", "scenario"))
+
+    exp_local_forced_params = exp_local_forced_params.reindex_like(local_forced_params)
+
     xr.testing.assert_allclose(local_forced_params, exp_local_forced_params)
     xr.testing.assert_allclose(local_ar_params, exp_local_ar_params)
     xr.testing.assert_allclose(localized_ecov, exp_localized_ecov)
