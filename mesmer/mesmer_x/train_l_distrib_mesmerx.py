@@ -309,7 +309,7 @@ class distrib_cov:
         - (evaluation of weights for the sample)
         - tests on coefficients & parameters of the expression, in & out of sample
         - 1st optimizations for the first guess
-        - 2nd optimization with minimization of the negative log likehood or full
+        - 2nd optimization with minimization of the negative log likelihood or full
           conditioning negative loglikelihood
 
         Once this class has been initialized, the go-to function is fit(). It returns
@@ -840,7 +840,7 @@ class distrib_cov:
 
         test_coeff = self._test_coeffs_in_bounds(coefficients)
 
-        # tests on coeffs show already that it wont work: fill in the rest with False
+        # tests on coeffs show already that it won't work: fill in the rest with False
         if not test_coeff:
             return test_coeff, False, False, False
 
@@ -855,7 +855,7 @@ class distrib_cov:
             )
             test_param &= self._test_evol_params(params_add, self.data_targ_addtest)
 
-        # tests on params show already that it wont work: fill in the rest with False
+        # tests on params show already that it won't work: fill in the rest with False
         if not test_param:
             return test_coeff, test_param, False, False
 
@@ -1126,7 +1126,7 @@ class distrib_cov:
         # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
         if not (test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
-            # to have all points within support. NB: NLL doesnt behave well enough here)
+            # to have all points within support. NB: NLL does not behave well enough here)
             # two potential functions:
             if False:
                 # TODO: unreachable - add option or remove?

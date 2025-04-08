@@ -1184,7 +1184,7 @@ def _draw_auto_regression_monthly_np(
     Returns
     -------
     out : np.array of shape (n_samples, n_ts, n_gridpoints)
-        Predicted time series of the specified AR(1) including spatially correllated innovations.
+        Predicted time series of the specified AR(1) including spatially correlated innovations.
     """
     intercept = np.asarray(intercept)
     covariance = np.atleast_3d(covariance)
