@@ -213,9 +213,9 @@ def get_lambdas_from_covariates(
     """
     lc_dims = {"month", "coeff"}
     _check_dataarray_form(
-        lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
+        lambda_coeffs, name="lambda_coeffs", required_dims=lc_dims
     )
-    yp_dims = {str(dim) for dim in lambda_coeffs.dims} - lc_dims
+    yp_dims = set(lambda_coeffs.dims) - lc_dims
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=yp_dims)
 
     lambdas = xr.apply_ufunc(
@@ -249,7 +249,7 @@ def fit_yeo_johnson_transform(
         additional dimensions for example gridcells or members.
     monthly_residuals : ``xr.DataArray``
         Monthly residuals after removing harmonic model fits, used to fit for the optimal
-        transformation parameters (lambdas). Has time_dim which is of length len(yearly_pred[time_dim]) * 12
+        transformation parameters (lambdas). Has time_dim which is of length ``yearly_pred[time_dim].size * 12``
         and can also contain the same additional dimensions as yearly_pred.
     time_dim : str, default: "time"
         Name of the time dimension in the input data used to align monthly residuals and
@@ -265,9 +265,9 @@ def fit_yeo_johnson_transform(
     # TODO allow passing func instead of our fixed lambda_function?
 
     _check_dataarray_form(
-        monthly_residuals, name="monthly_residuals", required_dims=(time_dim)
+        monthly_residuals, name="monthly_residuals", required_dims=time_dim
     )
-    monthly_dims = {str(dim) for dim in monthly_residuals.dims}
+    monthly_dims = set(monthly_residuals.dims)
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=monthly_dims)
 
     lambda_coeffs = []
@@ -312,7 +312,7 @@ def yeo_johnson_transform(
         optimal transformation parameters (lambdas). Has time_dim which is of length len(yearly_pred[time_dim]) * 12
         and can also contain the same additional dimensions as yearly_pred.
     lambda_coeffs : ``xr.DataArray``
-        DataArray containing the estimated coefficients needed to estimate
+        DataArray containing the estimated coefficients needed to compute
         lambda with dimensions "month", "coeff" and additional dims on inputs. Calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
     time_dim : str, default: "time"
@@ -342,9 +342,9 @@ def yeo_johnson_transform(
     Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_.
     """
     _check_dataarray_form(
-        monthly_residuals, name="monthly_residuals", required_dims=(time_dim)
+        monthly_residuals, name="monthly_residuals", required_dims=time_dim
     )
-    monthly_dims = {str(dim) for dim in monthly_residuals.dims}
+    monthly_dims = set(monthly_residuals.dims)
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=monthly_dims)
     _check_dataarray_form(
         lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
@@ -382,10 +382,10 @@ def inverse_yeo_johnson_transform(
         yearly values used as predictors for the lambdas, must contain time_dim but can have
         additional dimensions for example gridcells or members.
     monthly_residuals : ``xr.DataArray``
-        The data to be transformed back to the original scale. Has time_dim which is of length len(yearly_pred[time_dim]) * 12
+        The data to be transformed back to the original scale. Has time_dim which is of length ``yearly_pred[time_dim].size * 12``
         and can also contain the same additional dimensions as yearly_pred.
     lambda_coeffs : ``xr.DataArray``
-        DataArray containing the estimated coefficients needed to estimate
+        DataArray containing the estimated coefficients needed to compute
         lambda with dimensions "month", "coeff" and additional dims on inputs. Calculated using
         :func:`lambda_function <mesmer.stats.lambda_function>`.
     time_dim : str, default: "time"
@@ -414,9 +414,9 @@ def inverse_yeo_johnson_transform(
     Note that :math:`X_{inv}` and :math:`X_{trans}` have the same sign.
     """
     _check_dataarray_form(
-        monthly_residuals, name="monthly_residuals", required_dims=(time_dim)
+        monthly_residuals, name="monthly_residuals", required_dims=time_dim
     )
-    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=(time_dim))
+    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=time_dim)
     _check_dataarray_form(
         lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
     )

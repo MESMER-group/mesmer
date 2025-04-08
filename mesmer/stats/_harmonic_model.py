@@ -115,11 +115,11 @@ def predict_harmonic_model(
         "yearly_predictor",
         required_dims=time_dim,
     )
-    dims = {str(dim) for dim in yearly_predictor.dims} - {time_dim}
+    dims = set(yearly_predictor.dims) - {time_dim}
     _check_dataarray_form(
         coeffs,
         "coeffs",
-        required_dims=dims.union({"coeff"}),
+        required_dims=dims | {"coeff"},
     )
 
     upsampled_y = mesmer.core.utils.upsample_yearly_data(
