@@ -65,7 +65,7 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
 
     Returns
     -------
-    parmams : xr.Dataset
+    params : xr.Dataset
         Parameters of the linear regression fit to the residuals.
     """
 
@@ -177,7 +177,7 @@ def superimpose_volcanic_influence(
 
     Returns
     -------
-    parmams : xr.Dataset
+    params : xr.Dataset
         Parameters of the linear regression fit to the residuals.
     """
 
