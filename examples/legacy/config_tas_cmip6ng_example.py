@@ -2,12 +2,13 @@
 Example configuration file
 """
 
+import importlib
 import os.path
 
 from mesmer.create_emulations import create_seed_dict
 
 # path to mesmer root directory
-MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
+MESMER_ROOT = importlib.resources.files("mesmer").parent
 
 # test data for example
 TEST_DATA_ROOT = os.path.join(
