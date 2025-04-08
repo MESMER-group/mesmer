@@ -214,7 +214,7 @@ def find_localized_empirical_covariance_monthly(
         )
         localized_ecov.append(res)
 
-    month = xr.Variable("month", range(1, 13))
+    month = xr.DataArray(range(1, 13), dims="month")
     return xr.concat(localized_ecov, dim=month)
 
 
