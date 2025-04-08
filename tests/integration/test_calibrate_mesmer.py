@@ -1,11 +1,16 @@
 import os.path
 import shutil
+import sys
 
 import joblib
 import pytest
 
 from mesmer.calibrate_mesmer import _calibrate_tas
 from mesmer.testing import assert_dict_allclose
+
+# skip tests on windows (because it's slow & this is the legacy code path)
+if sys.platform.startswith("win"):
+    pytest.skip("skipping windows-only tests", allow_module_level=True)
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
