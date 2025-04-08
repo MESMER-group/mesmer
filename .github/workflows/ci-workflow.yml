@@ -53,6 +53,7 @@ jobs:
         else
           echo "CONDA_ENV_FILE=ci/requirements/${{ matrix.env }}.yml" >> $GITHUB_ENV
         fi
+        echo "date=$(date +'%Y-%m-%d')"  >> $GITHUB_ENV
 
     - name: Create conda environment
       uses: mamba-org/setup-micromamba@v2
@@ -60,6 +61,9 @@ jobs:
         environment-name: mesmer-tests
         cache-downloads: true
         cache-downloads-key: "${{runner.os}}-${{runner.arch}}-py${{matrix.python-version}}-${{ env.CONDA_ENV_FILE }}"
+        cache-environment: true
+        cache-environment-key: "${{runner.os}}-${{runner.arch}}-py${{matrix.python-version}}-${{ env.CONDA_ENV_FILE }}-${{ env.date }}"
+
         micromamba-version: 'latest'
         environment-file: ${{ env.CONDA_ENV_FILE }}
         create-args: >-
