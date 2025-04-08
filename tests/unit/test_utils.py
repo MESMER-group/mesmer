@@ -2,17 +2,16 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer.core.utils
 
 
 def make_dummy_yearly_data(freq, calendar="standard"):
+
+    # NOTE: "YM" is a made-up "Year-Middle" freq string
     if freq == "YM":
-        freq = "AS-JUL" if Version(pd.__version__) < Version("2.2") else "YS-JUL"
-        time = xr.date_range(
-            start="2000", periods=5, freq=freq, calendar=calendar
-        ) + pd.Timedelta("14d")
+        time = xr.date_range(start="2000", periods=5, freq="YS-JUL", calendar=calendar)
+        time = time + pd.Timedelta("14d")
     else:
         time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
@@ -21,16 +20,18 @@ def make_dummy_yearly_data(freq, calendar="standard"):
 
 
 def make_dummy_monthly_data(freq, calendar="standard"):
-    if freq == "MM":
-        time = time = xr.date_range(
-            start="2000", periods=5 * 12, freq="MS", calendar=calendar
-        ) + pd.Timedelta("14d")
-    else:
-        time = xr.date_range(
-            start="2000-01", periods=5 * 12, freq=freq, calendar=calendar
-        )
 
-    data = xr.DataArray(np.ones(5 * 12), dims=("time"), coords={"time": time})
+    start = "2000-01"
+    periods = 5 * 12
+
+    # NOTE: "MM" is a made-up "Month-Middle" freq string
+    if freq == "MM":
+        time = xr.date_range(start=start, periods=periods, freq="MS", calendar=calendar)
+        time = time + pd.Timedelta("14d")
+    else:
+        time = xr.date_range(start=start, periods=periods, freq=freq, calendar=calendar)
+
+    data = xr.DataArray(np.arange(periods), dims=("time"), coords={"time": time})
     return data
 
 
@@ -38,14 +39,6 @@ def make_dummy_monthly_data(freq, calendar="standard"):
 @pytest.mark.parametrize("freq_m", ["MM", "MS", "ME"])
 @pytest.mark.parametrize("calendar", ["standard", "gregorian", "365_day"])
 def test_upsample_yearly_data(freq_y, freq_m, calendar):
-    if Version(pd.__version__) < Version("2.2"):
-        if freq_y == "YE":
-            freq_y = freq_y.replace("YE", "A")
-        elif "YS" in freq_y:
-            freq_y = freq_y.replace("YS", "AS")
-
-        if freq_m == "ME":
-            freq_m = freq_m.replace("ME", "M")
 
     yearly_data = make_dummy_yearly_data(freq_y, calendar=calendar)
     monthly_data = make_dummy_monthly_data(freq_m, calendar=calendar)
@@ -295,10 +288,6 @@ def _get_time(*args, **kwargs):
     calendar = kwargs.pop("calendar", "standard")
     freq = kwargs.pop("freq", None)
 
-    # translate freq strings
-    if freq and Version(xr.__version__) < Version("2024.02"):
-        freq = freq.replace("YE", "A").replace("ME", "M")
-
     time = xr.date_range(*args, calendar=calendar, freq=freq, **kwargs)
 
     return xr.DataArray(time, dims="time")
@@ -327,7 +316,7 @@ def test_assert_annual_data_wrong_freq(calendar, freq):
         mesmer.core.utils._assert_annual_data(time)
 
 
-def test_assert_annual_data_unkown_freq():
+def test_assert_annual_data_unknown_freq():
 
     time1 = _get_time("2000", periods=2, freq="YE")
     time2 = _get_time("2002", periods=3, freq="ME")

@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 
 import mesmer
+from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -19,7 +19,7 @@ def test_collapse_datatree_into_dataset():
     dim = xr.Variable("member", np.arange(2))
     leaf2 = xr.concat([ds1, ds2], dim=dim)
 
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
     collapse_dim = "scenario"
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
@@ -32,7 +32,7 @@ def test_collapse_datatree_into_dataset():
 
     # error if data set has no coords along dim (bc then it is not concatenable if lengths differ)
     leaf_missing_coords = leaf1.drop_vars("member")
-    dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
+    dt = xr.DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
     with pytest.raises(
         ValueError, match="cannot reindex or align along dimension 'member'"
     ):
@@ -41,7 +41,7 @@ def test_collapse_datatree_into_dataset():
     # Dimension along which to concatenate already exists
     leaf1_scen = leaf1.assign_coords({"scenario": "scen1"}).expand_dims(collapse_dim)
     leaf2_scen = leaf2.assign_coords({"scenario": "scen2"}).expand_dims(collapse_dim)
-    dt = DataTree.from_dict({"scen1": leaf1_scen, "scen2": leaf2_scen})
+    dt = xr.DataTree.from_dict({"scen1": leaf1_scen, "scen2": leaf2_scen})
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     assert isinstance(res, xr.Dataset)
@@ -50,7 +50,7 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(scen1.drop_vars("scenario"), leaf1)
 
     # only one leaf works
-    dt = DataTree.from_dict({"scen1": leaf1})
+    dt = xr.DataTree.from_dict({"scen1": leaf1})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     assert isinstance(res, xr.Dataset)
@@ -61,7 +61,7 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
 
     # test data in root works
-    dt = DataTree(leaf1, name="scen1")
+    dt = xr.DataTree(leaf1, name="scen1")
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     assert isinstance(res, xr.Dataset)
@@ -72,10 +72,10 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
 
     # nested DataTree works
-    dt = DataTree()
-    dt["scen1/sub_scen1"] = DataTree(leaf1)
-    dt["scen1/sub_scen2"] = DataTree(leaf2)
-    dt["scen2"] = DataTree(leaf2)
+    dt = xr.DataTree()
+    dt["scen1/sub_scen1"] = xr.DataTree(leaf1)
+    dt["scen1/sub_scen2"] = xr.DataTree(leaf2)
+    dt["scen2"] = xr.DataTree(leaf2)
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     assert isinstance(res, xr.Dataset)
@@ -89,7 +89,7 @@ def test_collapse_datatree_into_dataset():
     leaf3 = xr.merge(
         [ds1.assign_coords({"member": 1}), ds.assign_coords({"member": 1})]
     ).expand_dims("member")
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     assert isinstance(res, xr.Dataset)
@@ -103,7 +103,7 @@ def test_collapse_datatree_into_dataset():
     ds_with_different_time = ds1.shift(time=1)
 
     badleaf = ds_with_different_time.assign_coords({"member": 0}).expand_dims("member")
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": badleaf})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": badleaf})
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
@@ -117,13 +117,13 @@ def test_collapse_datatree_into_dataset():
     da2 = mesmer.testing.trend_data_2D(n_timesteps=n_ts, n_lat=n_lat, n_lon=n_lon)
     ds2 = xr.Dataset({"tas": da2})
 
-    dt = DataTree.from_dict({"mem1": ds1, "mem2": ds2})
+    dt = xr.DataTree.from_dict({"mem1": ds1, "mem2": ds2})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim="members")
 
     # empty nodes are removed before concatenating
     # NOTE: implicitly this is already there in the other tests, since the root node is always empty
     # but it is nice to have it explicitly too
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": DataTree()})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": xr.DataTree()})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     expected = leaf1.expand_dims(collapse_dim).assign_coords(
         {collapse_dim: np.array(["scen1"])}
@@ -133,19 +133,19 @@ def test_collapse_datatree_into_dataset():
 
 def test_extract_single_dataarray_from_dt():
     da = trend_data_1D(n_timesteps=30).rename("tas")
-    dt = DataTree.from_dict({"/": xr.Dataset({"tas": da})})
+    dt = xr.DataTree.from_dict({"/": xr.Dataset({"tas": da})})
 
     res = mesmer.datatree._extract_single_dataarray_from_dt(dt)
     xr.testing.assert_equal(res, da)
 
-    dt = DataTree(data=xr.Dataset({"tas": da, "tas2": da}))
+    dt = xr.DataTree(xr.Dataset({"tas": da, "tas2": da}))
     with pytest.raises(
         ValueError,
         match="Node must only contain one data variable, node has tas2 and tas.",
     ):
         mesmer.datatree._extract_single_dataarray_from_dt(dt)
 
-    dt = DataTree.from_dict(
+    dt = xr.DataTree.from_dict(
         {"scen1": xr.Dataset({"tas": da, "tas2": da}), "scen2": xr.Dataset({"tas": da})}
     )
 
@@ -165,7 +165,7 @@ def test_extract_single_dataarray_from_dt():
 
     # passing empty Dataree
     with pytest.raises(ValueError, match="node has no data."):
-        mesmer.datatree._extract_single_dataarray_from_dt(DataTree())
+        mesmer.datatree._extract_single_dataarray_from_dt(xr.DataTree())
 
 
 def test_stack_linear_regression_datatrees():
@@ -191,23 +191,23 @@ def test_stack_linear_regression_datatrees():
         {member_dim: np.arange(2)}
     )
 
-    target = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+    target = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
     d1D_1 = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts)})
     d1D_2 = d1D_1 * 2
     d1D_3 = d1D_1 * 3
     d1D_4 = d1D_1 * 4
-    predictors = DataTree.from_dict(
+    predictors = xr.DataTree.from_dict(
         {
-            "pred1": DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2}),
-            "pred2": DataTree.from_dict({"scen1": d1D_3, "scen2": d1D_4}),
+            "pred1": xr.DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2}),
+            "pred2": xr.DataTree.from_dict({"scen1": d1D_3, "scen2": d1D_4}),
         }
     )
 
-    weights = map_over_subtree(xr.ones_like)(target.sel(cells=0))
-    weights = map_over_subtree(
-        lambda ds: ds.rename({var: "weights" for var in ds.data_vars})
-    )(weights)
+    weights = map_over_datasets(xr.ones_like, target.sel(cells=0))
+    weights = map_over_datasets(
+        lambda ds: ds.rename({var: "weights" for var in ds.data_vars}), weights
+    )
 
     predictors_stacked, target_stacked, weights_stacked = (
         mesmer.datatree.stack_datatrees_for_linear_regression(

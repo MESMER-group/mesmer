@@ -1,9 +1,9 @@
-import importlib
+import pathlib
 
 import pytest
 import xarray as xr
 
-# from datatree import Datatree, map_over_subtree
+# from mesmer.core._datatreecompat import map_over_datasets
 import mesmer
 import mesmer.mesmer_x
 
@@ -30,7 +30,7 @@ import mesmer.mesmer_x
     ],
 )
 def test_make_realisations_mesmer_x(
-    scenario, target_name, expr, expr_name, update_expected_files
+    scenario, target_name, expr, expr_name, test_data_root_dir, update_expected_files
 ):
     # set some configuration parameters
     n_realizations = 1  # TODO: more is not possible atm
@@ -39,7 +39,7 @@ def test_make_realisations_mesmer_x(
     esm = "IPSL-CM6A-LR"
 
     # load data
-    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
+    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens"
     cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
 
@@ -58,7 +58,7 @@ def test_make_realisations_mesmer_x(
     # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
 
     # make global mean
-    # global_mean_dt = map_over_subtree(mesmer.weighted.global_mean)
+    # global_mean_dt = map_over_datasets(mesmer.weighted.global_mean)
     tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
     tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
 

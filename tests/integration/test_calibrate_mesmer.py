@@ -81,10 +81,10 @@ def test_calibrate_mesmer(
     update_expected_files,
 ):
 
-    ouput_dir = os.path.join(test_data_root_dir, "output", outname)
+    output_dir = os.path.join(test_data_root_dir, "output", outname)
 
-    expected_output_file = os.path.join(ouput_dir, "test-mesmer-bundle.pkl")
-    params_output_dir = os.path.join(ouput_dir, "params")
+    expected_output_file = os.path.join(output_dir, "test-mesmer-bundle.pkl")
+    params_output_dir = os.path.join(output_dir, "params")
 
     test_esms = ["IPSL-CM6A-LR"]
     test_scenarios_to_train = scenarios

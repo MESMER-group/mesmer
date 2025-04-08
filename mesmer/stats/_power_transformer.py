@@ -185,7 +185,9 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
     return res.x
 
 
-def get_lambdas_from_covariates(lambda_coeffs, yearly_pred):
+def get_lambdas_from_covariates(
+    lambda_coeffs: xr.DataArray, yearly_pred: xr.DataArray
+) -> xr.DataArray:
     """function that relates fitted coefficients and the yearly predictor
     to the lambdas. We usee a logistic function between 0 and 2 to estimate
     the lambdas, see :func:`lambda_function <mesmer.stats.lambda_function>`.
@@ -283,7 +285,11 @@ def fit_yeo_johnson_transform(
     return xr.concat(lambda_coeffs, dim=month)
 
 
-def yeo_johnson_transform(yearly_pred, monthly_residuals, lambda_coeffs):
+def yeo_johnson_transform(
+    yearly_pred: xr.DataArray,
+    monthly_residuals: xr.DataArray,
+    lambda_coeffs: xr.DataArray,
+) -> xr.Dataset:
     """
     transform `monthly_residuals` following Yeo-Johnson transformer
     with parameters :math:`\\lambda`, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.

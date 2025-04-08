@@ -8,27 +8,24 @@ dependencies:
  - cartopy
  - dask
  - joblib
+ - filefisher
  - matplotlib-base
  - nc-time-axis
  - netcdf4
  - numpy
  - packaging
- - pandas>=2.0
+ - pandas>=2.2
  - pooch
  - properscoring
  - pyproj
- - regionmask>=0.9
+ - regionmask>=0.11
  - scikit-learn
  - scipy
- - statsmodels>=0.13
- - xarray>=2023.04, <2024.10 # upper pin for xarray-datatree
- - xarray-datatree==0.0.13
+ - statsmodels>=0.14
+ - xarray>=2025.03
 # for testing
  - black!=23
  - pytest
  - pytest-cov
  - pytest-xdist
  - ruff
- - pip
- - pip:
-    - filefisher>=1.0.1

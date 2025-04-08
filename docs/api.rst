@@ -133,6 +133,15 @@ Geospatial
    ~core.geospatial.geodist_exact
 
 
+Anomalies
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.anomaly.calc_anomaly
+
+
 Emulator functions
 ==================
 

@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 
+from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.datatree import (
     _extract_single_dataarray_from_dt,
     collapse_datatree_into_dataset,
@@ -21,7 +21,7 @@ class LinearRegression:
 
     def fit(
         self,
-        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
@@ -60,8 +60,8 @@ class LinearRegression:
 
     def predict(
         self,
-        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
-        exclude=None,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        exclude: str | set[str] | None = None,
     ) -> xr.DataArray:
         """
         Predict using the linear model.
@@ -96,7 +96,8 @@ class LinearRegression:
             raise ValueError(f"Missing predictors: '{missing}'")
 
         if available_predictors - required_predictors:
-            superfluous = sorted(available_predictors - required_predictors)
+            superfluous = map(str, available_predictors - required_predictors)
+            superfluous = sorted(superfluous)
             superfluous = "', '".join(superfluous)
             raise ValueError(
                 f"Superfluous predictors: '{superfluous}', either params",
@@ -110,22 +111,31 @@ class LinearRegression:
 
         # if predictors is a DataTree, rename all data variables to "pred" to avoid conflicts
         # not necessaey if predictors is empty DataTree or only data is in root, i.e. depth == 0
-        if isinstance(predictors, DataTree) and not predictors.depth == 0:
-            predictors = map_over_subtree(
-                lambda ds: ds.rename({var: "pred" for var in ds.data_vars})
-            )(predictors)
+        if isinstance(predictors, xr.DataTree) and not predictors.depth == 0:
+            predictors = map_over_datasets(
+                lambda ds: ds.rename({var: "pred" for var in ds.data_vars}), predictors
+            )
 
         for key in required_predictors:
-            prediction = (predictors[key] * params[key]).transpose() + prediction
 
-        if isinstance(prediction, DataTree):
+            # TODO: fix once .transpose() is possible for DataTree
+            signal = predictors[key] * params[key]
+
+            if isinstance(signal, xr.DataTree):
+                signal = map_over_datasets(xr.Dataset.transpose, signal)
+            else:
+                signal = signal.transpose()
+
+            prediction = signal + prediction
+
+        if isinstance(prediction, xr.DataTree):
             prediction = _extract_single_dataarray_from_dt(prediction)
 
         return prediction.rename("prediction")
 
     def residuals(
         self,
-        predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
     ) -> xr.DataArray:
         """
@@ -179,7 +189,7 @@ class LinearRegression:
         self._params = params
 
     @classmethod
-    def from_netcdf(cls, filename, **kwargs):
+    def from_netcdf(cls, filename: str, **kwargs):
         """read params from a netCDF file
 
         Parameters
@@ -196,7 +206,7 @@ class LinearRegression:
 
         return obj
 
-    def to_netcdf(self, filename, **kwargs):
+    def to_netcdf(self, filename: str, **kwargs):
         """save params to a netCDF file
 
         Parameters
@@ -212,7 +222,7 @@ class LinearRegression:
 
 
 def _fit_linear_regression_xr(
-    predictors: dict[str, xr.DataArray] | DataTree | xr.Dataset,
+    predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
     target: xr.DataArray,
     dim: str,
     weights: xr.DataArray | None = None,
@@ -244,10 +254,10 @@ def _fit_linear_regression_xr(
         individual DataArray.
     """
     # if DataTree only has data in root, extract Dataset
-    if isinstance(predictors, DataTree) and predictors.depth == 0:
+    if isinstance(predictors, xr.DataTree) and predictors.depth == 0:
         predictors = predictors.to_dataset()
 
-    if not isinstance(predictors, dict | DataTree | xr.Dataset):
+    if not isinstance(predictors, dict | xr.DataTree | xr.Dataset):
         raise TypeError(
             f"predictors should be a dict, DataTree or xr.Dataset, got {type(predictors)}."
         )
@@ -261,7 +271,7 @@ def _fit_linear_regression_xr(
         raise ValueError("dim cannot currently be 'predictor'.")
 
     for key, pred in predictors.items():
-        if isinstance(pred, DataTree):
+        if isinstance(pred, xr.DataTree):
             pred = _extract_single_dataarray_from_dt(pred, name=f"predictor: {key}")
 
         _check_dataarray_form(pred, ndim=1, required_dims=dim, name=f"predictor: {key}")
@@ -276,15 +286,15 @@ def _fit_linear_regression_xr(
         predictors_concat = predictors_concat.assign_coords(
             {"predictor": list(predictors.keys())}
         )
-    elif isinstance(predictors, DataTree):
+    elif isinstance(predictors, xr.DataTree):
         # rename all data variables to "pred" to avoid conflicts when concatenating
-        def _rename_vars(ds) -> DataTree:
+        def _rename_vars(ds) -> xr.DataTree:
             (var,) = ds.data_vars
             return ds.rename({var: "pred"})
 
-        predictors = map_over_subtree(_rename_vars)(predictors)
+        predictors = map_over_datasets(_rename_vars, predictors)
         predictors_concat = collapse_datatree_into_dataset(
-            predictors, dim="predictor", join="exact", coords="minimal"
+            predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
         )
         predictors_concat = predictors_concat["pred"]
 

@@ -240,7 +240,7 @@ def test_first_guess_beta():
 
     # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
     # it is always (0, 1), thus the optimization with _fg_fun_others does not do anything
-    # NOTE: Step 7 (fg_with_global_opti) leads to a impovement of the first guess at the 6th digit after the comma, i.e. very small
+    # NOTE: Step 7 (fg_with_global_opti) leads to a improvement of the first guess at the 6th digit after the comma, i.e. very small
     result = dist.fg_coeffs
     expected = [a, b]
 

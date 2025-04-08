@@ -26,7 +26,7 @@ def _get_cos_sin(order):
 
     factor = 2 * np.pi / 12
     k = np.arange(1.0, order + 1)
-    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
+    alpha = np.arange(0, 12 * factor, step=factor).reshape(-1, 1) * k
 
     # combine cosine and sine into one array
     cos_sin = np.empty((12, order * 2))
@@ -80,7 +80,12 @@ def _generate_fourier_series_order_np(yearly_predictor, coeffs, order):
     return seasonal_cycle.ravel()
 
 
-def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
+def predict_harmonic_model(
+    yearly_predictor: xr.DataArray,
+    coeffs: xr.DataArray,
+    time: xr.DataArray,
+    time_dim: str = "time",
+) -> xr.DataArray:
     """construct a Fourier Series from yearly predictors with fitted coeffs.
 
     Parameters
@@ -269,7 +274,13 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
     return selected_order, coeffs, predictions
 
 
-def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="time"):
+def fit_harmonic_model(
+    yearly_predictor: xr.DataArray,
+    monthly_target: xr.DataArray,
+    *,
+    max_order: int = 6,
+    time_dim: str = "time",
+) -> xr.Dataset:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
 
@@ -293,11 +304,30 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
 
     """
 
-    if not isinstance(yearly_predictor, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_predictor)}")
+    _check_dataarray_form(
+        yearly_predictor, "yearly_predictor", required_dims={time_dim}
+    )
 
-    if not isinstance(monthly_target, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
+    _check_dataarray_form(monthly_target, "monthly_target", required_dims={time_dim})
+
+    if set(yearly_predictor.dims) != set(monthly_target.dims):
+
+        msg = (
+            "DataArray objects have different dimensions:\n"
+            f"- `{yearly_predictor.dims}` in `yearly_predictor`\n"
+            f"- `{monthly_target.dims}` in `monthly_target`"
+        )
+        raise ValueError(msg)
+
+    for dim in set(yearly_predictor.dims) - {time_dim}:
+
+        if yearly_predictor[dim].size != monthly_target[dim].size:
+            msg = (
+                f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
+                f"different size: {yearly_predictor[dim].size} vs. "
+                f"{monthly_target[dim].size}"
+            )
+            raise ValueError(msg)
 
     if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")

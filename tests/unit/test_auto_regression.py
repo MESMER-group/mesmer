@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
+from mesmer.stats import _auto_regression
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 
 
@@ -65,14 +65,14 @@ def test_select_ar_order_np():
     rng = np.random.default_rng(seed=0)
     data = rng.normal(size=100)
 
-    result = mesmer.stats._auto_regression._select_ar_order_np(data, 2)
+    result = _auto_regression._select_ar_order_np(data, 2)
     assert np.isnan(result)
 
-    result = mesmer.stats._auto_regression._select_ar_order_np(data[:10], 2)
+    result = _auto_regression._select_ar_order_np(data[:10], 2)
     assert result == 2
 
     with pytest.raises(ValueError):
-        mesmer.stats._auto_regression._select_ar_order_np(data[:6], 5)
+        _auto_regression._select_ar_order_np(data[:6], 5)
 
 
 @pytest.fixture
@@ -146,30 +146,73 @@ def test_draw_auto_regression_uncorrelated_2D_errors(ar_params_2D):
 
 
 @pytest.mark.parametrize("time", (3, 5))
-@pytest.mark.parametrize("realization", (2, 4))
+@pytest.mark.parametrize("realisation", (2, 4))
 @pytest.mark.parametrize("time_dim", ("time", "ts"))
-@pytest.mark.parametrize("realization_dim", ("realization", "sample"))
+@pytest.mark.parametrize("realisation_dim", ("realisation", "sample"))
 @pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_uncorrelated(
-    ar_params_1D, time, realization, time_dim, realization_dim, seed
+    ar_params_1D, time, realisation, time_dim, realisation_dim, seed
 ):
 
     result = mesmer.stats.draw_auto_regression_uncorrelated(
         ar_params_1D,
         time=time,
-        realisation=realization,
+        realisation=realisation,
         seed=seed,
         buffer=0,
         time_dim=time_dim,
-        realisation_dim=realization_dim,
+        realisation_dim=realisation_dim,
     )
 
     _check_dataarray_form(
         result,
         "result",
         ndim=2,
-        required_dims={time_dim, realization_dim},
-        shape=(time, realization),
+        required_dims={time_dim, realisation_dim},
+        shape=(time, realisation),
+    )
+
+
+def test_draw_auto_regression_uncorrelated_dt(ar_params_1D):
+    seeds = xr.DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
+            "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
+        }
+    )
+    n_realisation = 10
+    n_ts = 20
+
+    result = mesmer.stats.draw_auto_regression_uncorrelated(
+        ar_params_1D,
+        time=n_ts,
+        realisation=n_realisation,
+        seed=seeds,
+        buffer=10,
+        time_dim="time",
+        realisation_dim="realisation",
+    )
+
+    assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=2,
+        required_dims={"time", "realisation"},
+        shape=(n_ts, n_realisation),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=2,
+        required_dims={"time", "realisation"},
+        shape=(n_ts, n_realisation),
     )
 
 
@@ -192,13 +235,15 @@ def test_draw_auto_regression_uncorrelated_wrong_coords(
             **coords,
             seed=0,
             buffer=0,
+            time_dim="time",
+            realisation_dim="realisation",
         )
 
 
 @pytest.mark.parametrize("dim", ("time", "realisation"))
 def test_draw_auto_regression_uncorrelated_wrong_coords_2D(ar_params_1D, dim):
 
-    coords = {"time": 2, "realisation": 3}
+    coords = {"time": xr.DataArray([1, 2]), "realisation": xr.DataArray([3])}
 
     coords[dim] = xr.DataArray([[1, 2]])
 
@@ -208,6 +253,8 @@ def test_draw_auto_regression_uncorrelated_wrong_coords_2D(ar_params_1D, dim):
             **coords,
             seed=0,
             buffer=0,
+            time_dim="time",
+            realisation_dim="realisation",
         )
 
 
@@ -224,6 +271,8 @@ def test_draw_auto_regression_uncorrelated_coords(ar_params_1D, dim, coords):
         **coords_,
         seed=0,
         buffer=0,
+        time_dim="time",
+        realisation_dim="realisation",
     )
 
     assert result[dim].size == coords.size
@@ -250,23 +299,23 @@ def test_draw_auto_regression_correlated_wrong_input(ar_params_2D, covariance, d
 
 
 @pytest.mark.parametrize("time", (3, 5))
-@pytest.mark.parametrize("realization", (2, 4))
+@pytest.mark.parametrize("realisation", (2, 4))
 @pytest.mark.parametrize("time_dim", ("time", "ts"))
-@pytest.mark.parametrize("realization_dim", ("realization", "sample"))
+@pytest.mark.parametrize("realisation_dim", ("realisation", "sample"))
 @pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
 def test_draw_auto_regression_correlated(
-    ar_params_2D, covariance, time, realization, time_dim, realization_dim, seed
+    ar_params_2D, covariance, time, realisation, time_dim, realisation_dim, seed
 ):
 
     result = mesmer.stats.draw_auto_regression_correlated(
         ar_params_2D,
         covariance,
         time=time,
-        realisation=realization,
+        realisation=realisation,
         seed=seed,
         buffer=0,
         time_dim=time_dim,
-        realisation_dim=realization_dim,
+        realisation_dim=realisation_dim,
     )
 
     n_gridcells = ar_params_2D.intercept.size
@@ -275,8 +324,52 @@ def test_draw_auto_regression_correlated(
         result,
         "result",
         ndim=3,
-        required_dims={time_dim, "gridcell", realization_dim},
-        shape=(time, n_gridcells, realization),
+        required_dims={time_dim, "gridcell", realisation_dim},
+        shape=(time, n_gridcells, realisation),
+    )
+
+
+def test_draw_auto_regression_correlated_dt(ar_params_2D, covariance):
+    seeds = xr.DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
+            "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
+        }
+    )
+    n_realisation = 10
+    n_ts = 20
+
+    result = mesmer.stats.draw_auto_regression_correlated(
+        ar_params_2D,
+        covariance,
+        time=n_ts,
+        realisation=n_realisation,
+        seed=seeds,
+        buffer=10,
+        time_dim="time",
+        realisation_dim="realisation",
+    )
+
+    assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_ts, 2, n_realisation),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_ts, 2, n_realisation),
     )
 
 
@@ -300,13 +393,15 @@ def test_draw_auto_regression_correlated_wrong_coords(
             **coords,
             seed=0,
             buffer=0,
+            time_dim="time",
+            realisation_dim="realisation",
         )
 
 
 @pytest.mark.parametrize("dim", ("time", "realisation"))
 def test_draw_auto_regression_correlated_wrong_coords_2D(ar_params_2D, covariance, dim):
 
-    coords = {"time": 2, "realisation": 3}
+    coords = {"time": xr.DataArray([1, 2]), "realisation": xr.DataArray([3])}
 
     coords[dim] = xr.DataArray([[1, 2]])
 
@@ -317,6 +412,8 @@ def test_draw_auto_regression_correlated_wrong_coords_2D(ar_params_2D, covarianc
             **coords,
             seed=0,
             buffer=0,
+            time_dim="time",
+            realisation_dim="realisation",
         )
 
 
@@ -334,6 +431,8 @@ def test_draw_auto_regression_correlated_coords(ar_params_2D, covariance, dim, c
         **coords_,
         seed=0,
         buffer=0,
+        time_dim="time",
+        realisation_dim="realisation",
     )
 
     assert result[dim].size == coords.size
@@ -350,7 +449,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
     coefs = np.ones((ar_order, n_cells))
     variance = np.eye(n_cells)
 
-    result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+    result = _auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
         coeffs=coefs,
         covariance=variance,
@@ -371,7 +470,7 @@ def test_draw_auto_regression_correlated_np_shape(ar_order, n_cells, n_samples, 
 @pytest.mark.parametrize("intercept", [0, 1, 3.14])
 def test_draw_auto_regression_deterministic_intercept(intercept):
 
-    result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+    result = _auto_regression._draw_auto_regression_correlated_np(
         intercept=intercept,
         coeffs=np.array([[0]]),
         covariance=[0],
@@ -385,7 +484,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 
     np.testing.assert_equal(result, expected)
 
-    result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+    result = _auto_regression._draw_auto_regression_correlated_np(
         intercept=np.array([[0, intercept]]),
         coeffs=np.array([[0, 0]]),
         covariance=np.zeros((2, 2)),
@@ -405,7 +504,7 @@ def test_draw_auto_regression_deterministic_intercept(intercept):
 )
 def test_draw_auto_regression_deterministic_coefs_buffer():
 
-    result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+    result = _auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
         coeffs=np.array([[1]]),
         covariance=[0],
@@ -422,7 +521,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
     expected = np.array([0, 1, 1.5, 1.75, 1.875]).reshape(1, -1, 1)
 
     for i, buffer in enumerate([1, 2]):
-        result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+        result = _auto_regression._draw_auto_regression_correlated_np(
             intercept=1,
             coeffs=np.array([[0.5]]),
             covariance=[0],
@@ -437,7 +536,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
 
 def test_draw_auto_regression_random():
 
-    result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+    result = _auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
         coeffs=np.array([[0.375], [0.125]]),
         covariance=0.5,
@@ -458,7 +557,7 @@ def test_draw_auto_regression_correlated_eigh():
     with pytest.warns(
         LinAlgWarning, match="Covariance matrix is not positive definite"
     ):
-        result = mesmer.stats._auto_regression._draw_auto_regression_correlated_np(
+        result = _auto_regression._draw_auto_regression_correlated_np(
             intercept=1,
             coeffs=np.array([[0.5, 0.7], [0.3, 0.2]]),
             covariance=np.zeros((2, 2)),
@@ -532,7 +631,7 @@ def test_fit_auto_regression_xr_1D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "variance"],
+        required_vars={"intercept", "coeffs", "variance"},
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=0, shape=())
@@ -557,7 +656,7 @@ def test_fit_auto_regression_xr_2D(lags):
     _check_dataset_form(
         res,
         "_fit_auto_regression_result",
-        required_vars=["intercept", "coeffs", "variance"],
+        required_vars={"intercept", "coeffs", "variance"},
     )
 
     _check_dataarray_form(res.intercept, "intercept", ndim=1, shape=(n_cells,))
@@ -589,7 +688,7 @@ def test_fit_auto_regression_np(lags):
         mocked_auto_regression.return_value = mocked_auto_regression_result
         mocked_auto_regression_result.return_value = mock_auto_regressor
 
-        mesmer.stats._auto_regression._fit_auto_regression_np(data, lags=lags)
+        _auto_regression._fit_auto_regression_np(data, lags=lags)
 
         mocked_auto_regression.assert_called_once()
         mocked_auto_regression.assert_called_with(data, lags=lags)
@@ -604,13 +703,11 @@ def test_fit_autoregression_monthly_np_no_noise(slope, intercept):
     # test if autoregrerssion can fit using previous month as independent variable
     # and current month as dependent variable
     n_ts = 100
-    np.random.seed(0)
-    prev_month = np.random.normal(size=n_ts)
+    rng = np.random.default_rng(seed=0)
+    prev_month = rng.normal(size=n_ts)
     cur_month = prev_month * slope + intercept
 
-    result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
-        cur_month, prev_month
-    )
+    result = _auto_regression._fit_auto_regression_monthly_np(cur_month, prev_month)
     slope_fit, intercept_fit, residuals = result
     expected_resids = np.zeros_like(cur_month)
 
@@ -626,13 +723,11 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     # test if autoregrerssion can fit using previous month as independent variable
     # and current month as dependent variable
     n_ts = 5000
-    np.random.seed(0)
-    prev_month = np.random.normal(size=n_ts)
-    cur_month = prev_month * slope + intercept + np.random.normal(0, std, size=n_ts)
+    rng = np.random.default_rng(seed=0)
+    prev_month = rng.normal(size=n_ts)
+    cur_month = prev_month * slope + intercept + rng.normal(0, std, size=n_ts)
 
-    result = mesmer.stats._auto_regression._fit_auto_regression_monthly_np(
-        cur_month, prev_month
-    )
+    result = _auto_regression._fit_auto_regression_monthly_np(cur_month, prev_month)
     slope_fit, intercept_fit, residuals = result
 
     np.testing.assert_allclose(slope, slope_fit, atol=1e-1)
@@ -641,12 +736,13 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
 
 
 def test_fit_auto_regression_monthly():
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+    freq = "ME"
     n_years = 20
     n_gridcells = 10
-    np.random.seed(0)
+    rng = np.random.default_rng(seed=0)
+
     data = xr.DataArray(
-        np.random.normal(size=(n_years * 12, n_gridcells)),
+        rng.normal(size=(n_years * 12, n_gridcells)),
         dims=("time", "gridcell"),
         coords={
             "time": pd.date_range("2000-01-01", periods=n_years * 12, freq=freq),
@@ -673,7 +769,7 @@ def test_fit_auto_regression_monthly():
     )
 
     with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
-        mesmer.stats.fit_auto_regression_monthly(data.values)
+        mesmer.stats.fit_auto_regression_monthly(data.values)  # type: ignore[arg-type]
 
 
 @pytest.mark.filterwarnings(
@@ -684,15 +780,16 @@ def test_draw_auto_regression_monthly_np_buffer(buffer):
     n_realisations = 1
     n_gridcells = 10
     seed = 0
-    slope = np.random.uniform(-1, 1, size=(12, n_gridcells))
+    rng = np.random.default_rng(seed=seed)
+    slope = rng.uniform(-1, 1, size=(12, n_gridcells))
     intercept = np.ones((12, n_gridcells))
     covariance = np.zeros((12, n_gridcells, n_gridcells))
     n_ts = 120
 
-    res_wo_buffer = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
+    res_wo_buffer = _auto_regression._draw_auto_regression_monthly_np(
         intercept, slope, covariance, n_realisations, n_ts, seed, buffer=0
     )
-    res_w_buffer = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
+    res_w_buffer = _auto_regression._draw_auto_regression_monthly_np(
         intercept, slope, covariance, n_realisations, n_ts, seed, buffer=buffer
     )
 
@@ -715,11 +812,11 @@ def test_draw_autoregression_monthly_np_rng():
     covariance = np.tile(np.eye(n_gridcells), [12, 1, 1])
 
     # ensure reproducibility, i.e. reinitializing yields the same results
-    res = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
+    res = _auto_regression._draw_auto_regression_monthly_np(
         intercept, slope, covariance, n_realisations, n_ts, seed, buffer=1
     )
 
-    res2 = mesmer.stats._auto_regression._draw_auto_regression_monthly_np(
+    res2 = _auto_regression._draw_auto_regression_monthly_np(
         intercept, slope, covariance, n_realisations, n_ts, seed, buffer=1
     )
 
@@ -734,22 +831,23 @@ def test_draw_autoregression_monthly_np_rng():
     assert np.not_equal(jan, feb).any()
 
 
-def test_draw_auto_regression_monthly():
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
+@pytest.mark.parametrize("seed", [0, xr.Dataset({"seed": 0})])
+def test_draw_auto_regression_monthly(seed):
+    freq = "ME"
 
     n_gridcells = 10
     n_realisations = 5
     n_years = 10
-    seed = 0
     buffer = 10
-    np.random.seed(0)
+    rng = np.random.default_rng(seed=0)
+
     slopes = xr.DataArray(
-        np.random.normal(-0.99, 0.99, size=(12, n_gridcells)),
+        rng.normal(-0.99, 0.99, size=(12, n_gridcells)),
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
     intercepts = xr.DataArray(
-        np.random.normal(-10, 10, size=(12, n_gridcells)),
+        rng.normal(-10, 10, size=(12, n_gridcells)),
         dims=("month", "gridcell"),
         coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
     )
@@ -783,4 +881,79 @@ def test_draw_auto_regression_monthly():
         ndim=3,
         required_dims={"time", "gridcell", "realisation"},
         shape=(len(time), n_gridcells, n_realisations),
+    )
+
+
+def test_draw_auto_regression_monthly_dt():
+
+    seeds = xr.DataTree.from_dict(
+        {
+            "scen1": xr.DataArray(np.array([25]), name="seed").to_dataset(),
+            "scen2": xr.DataArray(np.array([42]), name="seed").to_dataset(),
+        }
+    )
+
+    freq = "ME"
+
+    n_gridcells = 10
+    n_realisation = 5
+    n_years = 10
+    buffer = 10
+
+    rng = np.random.default_rng(seed=0)
+
+    slopes = xr.DataArray(
+        rng.normal(-0.99, 0.99, size=(12, n_gridcells)),
+        dims=("month", "gridcell"),
+        coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
+    )
+    intercepts = xr.DataArray(
+        rng.normal(-10, 10, size=(12, n_gridcells)),
+        dims=("month", "gridcell"),
+        coords={"month": np.arange(1, 13), "gridcell": np.arange(n_gridcells)},
+    )
+    ar_params = xr.Dataset({"intercept": intercepts, "slope": slopes})
+
+    covariance = xr.DataArray(
+        np.tile(np.eye(n_gridcells), [12, 1, 1]),
+        dims=("month", "gridcell_i", "gridcell_j"),
+        coords={
+            "month": np.arange(1, 13),
+            "gridcell_i": np.arange(n_gridcells),
+            "gridcell_j": np.arange(n_gridcells),
+        },
+    )
+
+    time = pd.date_range("2000-01-01", periods=n_years * 12, freq=freq)
+    time = xr.DataArray(time, dims="time", coords={"time": time})
+
+    result = mesmer.stats.draw_auto_regression_monthly(
+        ar_params,
+        covariance,
+        time=time,
+        n_realisations=n_realisation,
+        seed=seeds,
+        buffer=buffer,
+    )
+
+    assert result["scen1"].to_dataset().var() is not result["scen2"].to_dataset().var()
+    _check_dataset_form(
+        result["scen1"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataset_form(
+        result["scen2"].to_dataset(), "result", required_vars={"samples"}
+    )
+    _check_dataarray_form(
+        result["scen1"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_years * 12, n_gridcells, n_realisation),
+    )
+    _check_dataarray_form(
+        result["scen2"].samples,
+        "samples",
+        ndim=3,
+        required_dims={"time", "gridcell", "realisation"},
+        shape=(n_years * 12, n_gridcells, n_realisation),
     )

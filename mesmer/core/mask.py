@@ -56,10 +56,10 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
 
     try:
-        mask_fraction = mesmer.core.regionmaskcompat._mask_3D_frac_approx(
+        mask_fraction = mesmer.core.regionmaskcompat._mask_3D_frac_approx(  # type: ignore[attr-defined]
             land_110, data[x_coords], data[y_coords]
         )
-    except mesmer.core.regionmaskcompat.InvalidCoordsError as e:
+    except mesmer.core.regionmaskcompat.InvalidCoordsError as e:  # type: ignore[attr-defined]
         raise ValueError(
             "Cannot calculate fractional mask for irregularly-spaced coords - use "
             "``mask_land`` instead."
