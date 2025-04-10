@@ -1,3 +1,4 @@
+import functools
 from typing import overload
 
 import xarray as xr
@@ -196,3 +197,17 @@ def stack_datatrees_for_linear_regression(
         weights_stacked = None
 
     return predictors_stacked, target_stacked, weights_stacked
+
+
+def _datatree_wrapper(func):
+    """wrapper to extend functions written for DataTree"""
+
+    @functools.wraps(func)
+    def inner(*args, **kwargs):
+
+        if any(isinstance(arg, xr.DataTree) for arg in args):
+            return map_over_datasets(func, *args, kwargs=kwargs)
+
+        return func(*args, **kwargs)
+
+    return inner
