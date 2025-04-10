@@ -6,7 +6,6 @@ from filefisher import FileFinder
 
 import mesmer
 import mesmer.core.datatree
-from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -183,13 +182,13 @@ def test_calibrate_mesmer(
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    dt = map_over_datasets(mesmer.grid.wrap_to_180, dt)
+    dt = mesmer.grid.wrap_to_180(dt)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     # calculate anomalies w.r.t. the reference period
     tas_anoms = mesmer.anomaly.calc_anomaly(dt, REFERENCE_PERIOD)
 
-    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
+    tas_globmean = mesmer.weighted.global_mean(tas_anoms)
 
     # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
@@ -198,17 +197,12 @@ def test_calibrate_mesmer(
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked = map_over_datasets(
-        mask_and_stack, tas_anoms, kwargs={"threshold_land": THRESHOLD_LAND}
-    )
+    tas_stacked = mask_and_stack(tas_anoms, threshold_land=THRESHOLD_LAND)
 
     # train global trend module
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_smoothed = map_over_datasets(
-        mesmer.stats.lowess,
-        tas_globmean_ensmean,
-        "time",
-        kwargs={"n_steps": 50, "use_coords": False},
+    tas_globmean_smoothed = mesmer.stats.lowess(
+        tas_globmean_ensmean, "time", n_steps=50, use_coords=False
     )
     hist_lowess_residuals = (
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
@@ -239,14 +233,11 @@ def test_calibrate_mesmer(
 
         hfds_anoms = mesmer.anomaly.calc_anomaly(dt_hfds, REFERENCE_PERIOD)
 
-        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
+        hfds_globmean = mesmer.weighted.global_mean(hfds_anoms)
 
         hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_datasets(
-            mesmer.stats.lowess,
-            hfds_globmean_ensmean,
-            "time",
-            kwargs={"n_steps": 50, "use_coords": False},
+        hfds_globmean_smoothed = mesmer.stats.lowess(
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
     else:
         hfds_globmean_smoothed = None
