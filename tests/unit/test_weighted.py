@@ -72,12 +72,14 @@ def test_lat_weights_2D_error_90(lat):
         mesmer.weighted.lat_weights(lat)
 
 
-@pytest.mark.parametrize("as_dataset", [True, False])
-def test_weighted_mean_errors_wrong_weights(as_dataset):
+def test_weighted_mean_errors_wrong_weights(datatype):
 
-    data = data_lon_lat(as_dataset)
+    if datatype == "DataTree":
+        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
+
+    data = data_lon_lat(datatype)
     weights = mesmer.weighted.lat_weights(data["lat"])
-    weights = weights.isel(lat=slice(None, weights.size - 3))
+    weights = weights.isel(lat=slice(None, -3))
 
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
         mesmer.weighted.weighted_mean(data, weights=weights, dims=("lat", "lon"))
@@ -86,10 +88,10 @@ def test_weighted_mean_errors_wrong_weights(as_dataset):
         mesmer.weighted.weighted_mean(data, weights=weights, dims=("lat", "lon"))
 
 
-def _test_weighted_mean(as_dataset, **kwargs):
+def _test_weighted_mean(datatype, **kwargs):
     # not checking the actual values
 
-    data = data_lon_lat(as_dataset, **kwargs)
+    data = data_lon_lat(datatype, **kwargs)
 
     y_dim = kwargs.get("y_dim", "lat")
     weights = mesmer.weighted.lat_weights(data[y_dim])
@@ -98,9 +100,16 @@ def _test_weighted_mean(as_dataset, **kwargs):
 
     result = mesmer.weighted.weighted_mean(data, weights=weights, dims=dims)
 
-    if as_dataset:
+    # if datatype == "DataTree":
+    #     assert isinstance(result, xr.DataTree)
+    #     result = result["node"].to_dataset()
+
+    if datatype in ("DataTree", "Dataset"):
         # ensure scalar is not broadcast
         assert result.scalar.ndim == 0
+
+        # TODO: enable again after https://github.com/pydata/xarray/pull/10219
+        # if datatype != "DataTree":
         assert result.attrs == {"key": "ds_attrs"}
 
         result_da = result.data
@@ -113,29 +122,37 @@ def _test_weighted_mean(as_dataset, **kwargs):
     assert result_da.attrs == {"key": "da_attrs"}
 
 
-@pytest.mark.parametrize("as_dataset", [True, False])
-def test_calc_weighted_mean_default(as_dataset):
+def test_calc_weighted_mean_default(datatype):
 
-    _test_weighted_mean(as_dataset)
+    if datatype == "DataTree":
+        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
+
+    _test_weighted_mean(datatype)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("x_dim", ("x", "lon"))
 @pytest.mark.parametrize("y_dim", ("y", "lat"))
-def test_calc_weighted_mean(as_dataset, x_dim, y_dim):
+def test_calc_weighted_mean(datatype, x_dim, y_dim):
+
+    if datatype == "DataTree":
+        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
 
     _test_weighted_mean(
-        as_dataset,
+        datatype,
         x_dim=x_dim,
         y_dim=y_dim,
     )
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_weighted_no_scalar_expand(as_dataset):
+def test_weighted_no_scalar_expand(datatype):
 
-    data = data_lon_lat(as_dataset)
-    weights = xr.ones_like(data.lat)
+    if datatype == "DataTree":
+        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
+
+    data = data_lon_lat(datatype)
+
+    lat = (data["node"].to_dataset() if datatype == "DataTree" else data).lat
+    weights = xr.ones_like(lat)
 
     result = mesmer.weighted.weighted_mean(data, weights=weights, dims="lon")
 
