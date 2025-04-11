@@ -191,3 +191,15 @@ def test_lowess_2D_combine_dim_it():
 
     xr.testing.assert_allclose(r1, r2)
     xr.testing.assert_allclose(r1, r3)
+
+
+def test_lowess_datatree():
+
+    ds = trend_data_1D().to_dataset()
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    result = mesmer.stats.lowess(dt, "time", frac=0.33, it=1)
+    expected = mesmer.stats.lowess(ds, "time", frac=0.33, it=1)
+    expected = xr.DataTree.from_dict({"node": expected})
+
+    xr.testing.assert_equal(result, expected)

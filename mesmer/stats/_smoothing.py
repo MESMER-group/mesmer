@@ -3,11 +3,13 @@ from typing import TypeVar
 import numpy as np
 import xarray as xr
 
+from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.utils import _check_dataarray_form
 
 T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")
 
 
+@_datatree_wrapper
 def lowess(
     data: T_Xarray,
     dim: str,
@@ -22,7 +24,7 @@ def lowess(
 
     Parameters
     ----------
-    data : xr.DataArray | xr.Dataset
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Data to smooth (y-values).
     dim : str
         Dimension along which to smooth (x-dimension)
@@ -44,8 +46,8 @@ def lowess(
 
     Returns
     -------
-    out : xr.DataArray | xr.Dataset same as `data`
-        LOWESS smoothed array
+    out : xr.DataArray | xr.Dataset | xr.DataTree
+        LOWESS smoothed array. Same type as `data`.
 
     See Also
     --------

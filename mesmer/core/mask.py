@@ -3,6 +3,7 @@ import regionmask
 import xarray as xr
 
 import mesmer
+from mesmer.core.datatree import _datatree_wrapper
 
 
 def _where_if_coords(obj, cond, coords):
@@ -21,12 +22,13 @@ def _where_if_coords(obj, cond, coords):
     return obj.where(cond)
 
 
+@_datatree_wrapper
 def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     """mask out ocean using fractional overlap
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataTree | xr.Dataset | xr.DataArray
         Array to mask.
     threshold : float
         Threshold above which land fraction to consider a grid point as a land grid
@@ -38,7 +40,7 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataTree | xr.Dataset | xr.DataArray
         Array with ocean grid points masked out.
 
     Notes
@@ -74,12 +76,13 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     return _where_if_coords(data, mask_bool, [y_coords, x_coords])
 
 
+@_datatree_wrapper
 def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     """mask out ocean
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataTree | xr.Dataset | xr.DataArray
         Array to mask.
     x_coords : str, default: "lon"
         Name of the x-coordinates.
@@ -88,7 +91,7 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataTree | xr.Dataset | xr.DataArray
         Array with ocean grid points masked out.
 
     Notes
@@ -109,19 +112,20 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     return _where_if_coords(data, mask_bool, [y_coords, x_coords])
 
 
+@_datatree_wrapper
 def mask_antarctica(data, *, y_coords="lat"):
     """mask out ocean
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataTree | xr.Dataset | xr.DataArray
         Array to mask.
     y_coords : str, default: "lat"
         Name of the y-coordinates.
 
     Returns
     -------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataTree | xr.Dataset | xr.DataArray
         Array with Antarctic grid points masked out.
 
     Notes
