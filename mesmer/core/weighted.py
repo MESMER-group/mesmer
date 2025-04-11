@@ -24,7 +24,8 @@ def _weighted_if_dim(obj, weights, dims):
     return obj.weighted(weights).mean(dims, keep_attrs=True)
 
 
-def lat_weights(lat_coords):
+@_datatree_wrapper
+def lat_weights(lat_coords, y_dim="lat"):
     """area weights based on the cosine of the latitude
 
     Parameters
@@ -39,6 +40,11 @@ def lat_weights(lat_coords):
 
     """
 
+    is_dataset = False
+    if isinstance(lat_coords, xr.Dataset):
+        lat_coords = lat_coords[y_dim]
+        is_dataset = True
+
     if np.ndim(lat_coords) > 1:
         warnings.warn("cos(lat) is not a good approximation for non-regular grids")
 
@@ -47,10 +53,16 @@ def lat_weights(lat_coords):
 
     weights = np.cos(np.deg2rad(lat_coords))
 
+    if isinstance(weights, xr.DataArray):
+        weights.name = "weights"
+
+    if is_dataset:
+        weights = weights.to_dataset()
+
     return weights
 
 
-def weighted_mean(data, weights, dims=None):
+def weighted_mean(data, weights, *, dims=None):
     """weighted mean - convenience function which ignores data_vars missing dims
 
     Parameters
@@ -70,8 +82,20 @@ def weighted_mean(data, weights, dims=None):
 
     """
 
+    # map_over_datasets does not work with keyword args, but I want to be able to pass
+    # weights as kw
+    return _weighted_mean(data, weights, dims)
+
+
+@_datatree_wrapper
+def _weighted_mean(data, weights, dims=None):
     if isinstance(dims, str):
         dims = [dims]
+
+    if isinstance(weights, xr.Dataset):
+        if "weights" not in weights:
+            raise ValueError()
+        weights = weights.weights
 
     # ensure grids are equal
     try:
@@ -109,7 +133,7 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     if weights is None:
         weights = lat_weights(data[y_dim])
 
-    return weighted_mean(data, weights, [x_dim, y_dim])
+    return weighted_mean(data, weights, dims=(x_dim, y_dim))
 
 
 def equal_scenario_weights_from_datatree(

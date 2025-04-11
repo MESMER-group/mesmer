@@ -74,11 +74,8 @@ def test_lat_weights_2D_error_90(lat):
 
 def test_weighted_mean_errors_wrong_weights(datatype):
 
-    if datatype == "DataTree":
-        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
-
     data = data_lon_lat(datatype)
-    weights = mesmer.weighted.lat_weights(data["lat"])
+    weights = mesmer.weighted.lat_weights(data, "lat")
     weights = weights.isel(lat=slice(None, -3))
 
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
@@ -94,23 +91,26 @@ def _test_weighted_mean(datatype, **kwargs):
     data = data_lon_lat(datatype, **kwargs)
 
     y_dim = kwargs.get("y_dim", "lat")
-    weights = mesmer.weighted.lat_weights(data[y_dim])
+    
+    # TODO: test where we pass DataArray weights
+    # lat = (data["node"].to_dataset() if datatype == "DataTree" else data)[y_dim]
+    weights = mesmer.weighted.lat_weights(data, y_dim)
 
     dims = list(kwargs.values()) if kwargs else ("lat", "lon")
 
     result = mesmer.weighted.weighted_mean(data, weights=weights, dims=dims)
 
-    # if datatype == "DataTree":
-    #     assert isinstance(result, xr.DataTree)
-    #     result = result["node"].to_dataset()
+    if datatype == "DataTree":
+        assert isinstance(result, xr.DataTree)
+        result = result["node"].to_dataset()
 
     if datatype in ("DataTree", "Dataset"):
         # ensure scalar is not broadcast
         assert result.scalar.ndim == 0
 
         # TODO: enable again after https://github.com/pydata/xarray/pull/10219
-        # if datatype != "DataTree":
-        assert result.attrs == {"key": "ds_attrs"}
+        if datatype != "DataTree":
+            assert result.attrs == {"key": "ds_attrs"}
 
         result_da = result.data
     else:
@@ -124,18 +124,12 @@ def _test_weighted_mean(datatype, **kwargs):
 
 def test_calc_weighted_mean_default(datatype):
 
-    if datatype == "DataTree":
-        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
-
     _test_weighted_mean(datatype)
 
 
 @pytest.mark.parametrize("x_dim", ("x", "lon"))
 @pytest.mark.parametrize("y_dim", ("y", "lat"))
 def test_calc_weighted_mean(datatype, x_dim, y_dim):
-
-    if datatype == "DataTree":
-        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
 
     _test_weighted_mean(
         datatype,
