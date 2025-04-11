@@ -126,3 +126,15 @@ def trend_data_3D(
 
     # reshape to 3D (time x lat x lon)
     return data.set_index(cells=("lat", "lon")).unstack("cells")
+
+
+def _convert(da: xr.DataArray, datatype):
+
+    if datatype == "DataArray":
+        return da
+
+    if datatype == "Dataset":
+        return da.to_dataset()
+
+    if datatype == "DataTree":
+        return xr.DataTree.from_dict({"node": da.to_dataset()})
