@@ -92,7 +92,10 @@ This was originally done with the prototype `xarray-datatree` package. After the
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 - Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
-- Add a wrapper to allow :py:class:`DataTree` in many data handling functions (`#632 <https://github.com/MESMER-group/mesmer/issues/632>`_).
+- Add a wrapper to allow :py:class:`DataTree` in many data handling functions (\
+  `#632 <https://github.com/MESMER-group/mesmer/issues/632>`_,
+  `#643 <https://github.com/MESMER-group/mesmer/pull/643>`_, and
+  `#641 <https://github.com/MESMER-group/mesmer/pull/641>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
 - PRs related to xarray and xarray-datatree:
