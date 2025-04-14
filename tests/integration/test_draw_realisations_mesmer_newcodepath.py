@@ -105,13 +105,11 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     tas = load_hist_scen_continuous(fc_hist, fc_scens)
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time")
     tas_anoms = tas - ref
-    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
+    tas_globmean = mesmer.weighted.global_mean(tas_anoms)
 
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_forcing = map_over_datasets(
-        mesmer.stats.lowess,
-        tas_globmean_ensmean,
-        kwargs={"dim": "time", "n_steps": 30, "use_coords": False},
+    tas_globmean_forcing = mesmer.stats.lowess(
+        tas_globmean_ensmean, dim="time", n_steps=30, use_coords=False
     )
 
     def _get_hfds():
@@ -136,13 +134,10 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         hfds = load_hist_scen_continuous(fc_hfds_hist, fc_hfds)
         hfds_ref = hfds.sel(time=REFERENCE_PERIOD).mean("time")
         hfds_anoms = hfds - hfds_ref
-        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
+        hfds_globmean = mesmer.weighted.global_mean(hfds_anoms)
         hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_datasets(
-            mesmer.stats.lowess,
-            hfds_globmean_ensmean,
-            "time",
-            kwargs={"n_steps": 50, "use_coords": False},
+        hfds_globmean_smoothed = mesmer.stats.lowess(
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
         return hfds_globmean_smoothed
 
@@ -287,11 +282,10 @@ def test_make_realisations(
 
     # 1.) superimpose volcanic influence
     volcanic_params = xr.open_dataset(volcanic_file)
-    tas_forcing = map_over_datasets(
-        mesmer.volc.superimpose_volcanic_influence,
+    tas_forcing = mesmer.volc.superimpose_volcanic_influence(
         tas_forcing,
         volcanic_params,
-        kwargs={"hist_period": HIST_PERIOD},
+        hist_period=HIST_PERIOD,
     )
 
     # 2.) compute the global variability
