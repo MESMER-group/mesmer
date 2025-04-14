@@ -12,6 +12,10 @@ import math
 import numpy as np
 import scipy as sp
 import xarray as xr
+from mesmer.core.datatree import (
+    collapse_datatree_into_dataset,
+)
+
 
 _DISCRETE_DISTRIBUTIONS = sp.stats._discrete_distns._distn_names
 _CONTINUOUS_DISTRIBUTIONS = sp.stats._continuous_distns._distn_names
@@ -323,17 +327,18 @@ class Expression:
             - dict(inp_i = values or np.array())
             - xr.Dataset(inp_i)
         forced_shape : None | tuple or list of dimensions
-            coefficients_values and inputs_values for transposition of the shape
+            coefficients_values and inputs_values for transposition of the shape.
+            Can include additional axes like 'realization'.
 
         Returns
         -------
         params: dict
             Realized parameters for the given expression, coefficients and covariates;
-            to pass ``self.distrib(**params)`` or it's methods.
+            to pass ``self.distrib(**params)`` or its methods.
 
         Warnings
         --------
-        with xarrays for coefficients_values and inputs_values, the outputs with have
+        with xarrays for coefficients_values and inputs_values, the outputs will have
         for shape first the one of the coefficient, then the one of the inputs
         --> trying to avoid this issue with 'forced_shape'
         """
@@ -378,18 +383,28 @@ class Expression:
         parameters_values = {}
         for param, expr in self._compiled_param_expr.items():
             parameters_values[param] = eval(expr, None, locals)
+            
+            # if constant parameter but varying inputs, need to broadcast
+            if isinstance(coefficients_values, xr.Dataset) and len(self.inputs_list) > 0 and parameters_values[param].ndim == 1:
+                parameters_values[param], _ = xr.broadcast(parameters_values[param], inputs_values)
 
-        # possibly forcing shape
+
+        # forcing the shape of the parameters if necessary
         if forced_shape is not None and len(self.inputs_list) > 0:
-
             for param in self.parameters_list:
+                # Add missing dimensions in forced_shape (e.g., 'realization')
+                for dim in forced_shape:
+                    if dim not in parameters_values[param].dims:
+                        parameters_values[param] = parameters_values[param].expand_dims(dim=dim, axis=0)
+                        
+                # Transpose the parameters to match the forced shape
                 dims_param = [
                     d for d in forced_shape if d in parameters_values[param].dims
                 ]
                 parameters_values[param] = parameters_values[param].transpose(
                     *dims_param
                 )
-
+                
         return parameters_values
 
     def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
@@ -426,110 +441,177 @@ class Expression:
         return self.distrib(**params)
 
 
-def probability_integral_transform(
-    data,
-    target_name,
-    expr_start,
-    expr_end,
-    coeffs_start=None,
-    preds_start=None,
-    coeffs_end=None,
-    preds_end=None,
-):
-    """
-    Probability integral transform of the data given parameters of a given distribution
-    into their equivalent in a standard normal distribution.
 
-    Parameters
-    ----------
-    data : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint', and one
-        2D variable with both coordinates
-    target_name : str
-        name of the variable to train
-    expr_start : str
-        string describing the starting expression
-    expr_end : str
-        string describing the starting expression
-    preds_start : not sure yet what data format will be used at the end.
-        Covariants of the starting expression. Default: empty Dataset.
-    coeffs_start : xarray dataset
-        Coefficients of the starting expression. Default: empty Dataset.
-    preds_end : not sure yet what data format will be used at the end.
-        Covariants of the ending expression. Default: empty Dataset.
-    coeffs_end : xarray dataset
-        Coefficients of the ending expression. Default: empty Dataset.
 
-    Returns
-    -------
-    transf_inputs : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
-        2D variable with both coordinates
+class probability_integral_transform:
+    def __init__(
+        self,
+        expr_start,
+        expr_end,
+        coeffs_start=None,
+        coeffs_end=None,
+    ):
+        """
+        Probability integral transform of the data given parameters of a given distribution
+        into their equivalent in a standard normal distribution.
 
-    Notes
-    -----
-    Assumptions:
-    - Context: The transformation may fail if the values are very unlikely, leading to a
-      CDF equal or too close from 0 or 1, which will raise issues.
-    - Current solution: During training, this problem is avoided thanks to the option
-      'threshold_min_proba', meaning that all points in sample would have a minimum
-      probability.
-    - Limit to solution: However, if transforming a sample not used during sample, and
-      in a domain not represented in the training sample, it may cause issues.
-    - Additional fix: If this situation is encountered, I suggest to block the CDF
-      values 'cdf_item' within a domain: values with a probability of 1.e-99 could be
-      forced to 1.e-9. Unless someone has a better idea! :D
-    Disclaimer:
-    - TODO
-    can only take 2D input aka only one realisation for the back-transformation
-
-    """
-    # preparation of distributions
-    expression_start = Expression(expr_start, "start")
-    expression_end = Expression(expr_end, "end")
-
-    if coeffs_start is None:
-        coeffs_start = xr.Dataset()
-    if coeffs_end is None:
-        coeffs_end = xr.Dataset()
-
-    # transformation
-    out = []
-
-    # loop to change with new data structure of MESMER
-    for i, item in enumerate(data):
-        data_item, scen = item
-        if preds_start is None:
-            preds_start_item = xr.Dataset()
+        Parameters
+        ----------
+        expr_start : str
+            string describing the starting expression
+        expr_end : str
+            string describing the starting expression
+        coeffs_start : xarray dataset
+            Coefficients of the starting expression. Default: None.
+        coeffs_end : xarray dataset
+            Coefficients of the ending expression. Default: None.
+        """
+        # preparation of distributions
+        self.expression_start = Expression(expr_start, "start")
+        self.expression_end = Expression(expr_end, "end")
+        
+        # preparation of coefficients
+        self.coeffs_start = self.prepare_coefficients(coeffs_start)
+        self.coeffs_end = self.prepare_coefficients(coeffs_end)
+    
+    def prepare_coefficients(self, coeffs):
+        """
+        Prepare coefficients for the expression
+        """
+        if coeffs is None:
+            return xr.Dataset()
+            
+        elif isinstance(coeffs, xr.Dataset):
+            # correcting format (easier for selection in Expression)
+            for coef in coeffs["coefficient"].values:
+                coeffs[coef] = coeffs["coefficients"].sel(coefficient=coef)
+            return coeffs
+        
         else:
-            preds_start_item = preds_start[i][0]
+            raise Exception(
+                "coefficients must be a xarray Dataset or None"
+            )
+    
+    
+    def transform(
+        self,
+        data,
+        target_name,
+        preds_start=None,
+        preds_end=None,
+        threshold_proba=1.e-9
+        ):
+        """
+        Probability integral transform of the data given parameters of a given distribution
+        into their equivalent in a standard normal distribution.
 
-        if preds_end is None:
-            preds_end_item = xr.Dataset()
+        Parameters
+        ----------
+        data : stacked Datatree
+            Data to transform. xarray Dataset with coordinate 'gridpoint'.
+        target_name : str
+            name of the variable to train
+        preds_start : stacked Datatree | None
+            Covariants of the starting expression. Default: None.
+        preds_end : stacked Datatree | None
+            Covariants of the ending expression. Default: None.
+        threshold_proba : float, default: 1.e-9.
+            Threshold for the probability of the sample on the starting distribution.
+            Applied both to the lower and upper bounds of the distribution.
+        Returns
+        -------
+        transf_inputs : not sure yet what data format will be used at the end.
+            Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
+            2D variable with both coordinates
+        """
+        if isinstance(data, xr.DataTree):
+            # check on similar format
+            if isinstance(preds_start, xr.Dataset) or isinstance(preds_end, xr.Dataset):
+                raise Exception("predictors must have the same format as data")
+            
+            # looping over scenarios of data
+            out = dict()
+            for scen, data_scen in data.items():
+                # preparing data to transform
+                data_scen = data_scen.to_dataset()
+                
+                # preparing predictors
+                ds_pred_start = self.prepare_predictors(preds_start, scen=scen)
+                ds_preds_end = self.prepare_predictors(preds_end, scen=scen)
+            
+                # transforming data
+                tmp = self._transform(data_scen, target_name, ds_pred_start, ds_preds_end, threshold_proba)
+            
+                # creating transf_data as a dataset with tmp as a variable
+                out[scen] = xr.Dataset(
+                    {target_name: (data_scen[target_name].dims, tmp)},
+                    coords=data_scen[target_name].coords
+                )
+            
+            # creating datatree
+            return xr.DataTree.from_dict(out)
+            
+        elif isinstance(data, xr.Dataset):
+            # check on similar format
+            if isinstance(preds_start, xr.DataTree) or isinstance(preds_end, xr.DataTree):
+                raise Exception("predictors must have the same format as data")
+            
+            # preparing predictors
+            ds_pred_start = self.prepare_predictors(preds_start)
+            ds_preds_end = self.prepare_predictors(preds_end)
+
+            # transforming data
+            tmp = self._transform(data, target_name, ds_pred_start, ds_preds_end, threshold_proba)
+            
+            # creating transf_data as a dataset with tmp as a variable
+            transf_data = xr.Dataset(
+                {target_name: (data[target_name].dims, tmp)},
+                coords=data[target_name].coords
+            )
+            return transf_data
+        
         else:
-            preds_end_item = preds_end[i][0]
+            raise Exception(
+                "data must be a xarray Dataset or Datatree"
+            )
+    
+    def prepare_predictors(self, preds, scen=None):
+        # preparation of predictors
+        if preds is None:
+            ds_preds = xr.Dataset()
+        else:
+            if scen is not None:
+                # taking only the correct scenario, while keeping the same format
+                preds = xr.DataTree.from_dict( {p:preds[p][scen] for p in preds} )
+            
+            # correcting format: must be dict(str, DataArray or array) for Expression
+            tmp = collapse_datatree_into_dataset(preds, dim="predictor")
+            var_name = [var for var in tmp.variables][0]
+            ds_preds = xr.Dataset()
+            for pp in tmp['predictor'].values:
+                ds_preds[pp] = tmp[var_name].sel(predictor=pp)
+        return ds_preds
 
-        print(f"Transforming {target_name}: {scen}", end="\r")
-
-        # calculation distributions for this scenario
-        params_start = expression_start.evaluate_params(
-            coeffs_start, preds_start_item, forced_shape=data_item[target_name].dims
-        )
-
-        params_end = expression_end.evaluate_params(
-            coeffs_end, preds_end_item, forced_shape=data_item[target_name].dims
-        )
-
+    def _transform(self, data, target_name, ds_pred_start, ds_preds_end, threshold_proba):
+        # parameters of starting distribution
+        params_start = self.expression_start.evaluate_params(
+            self.coeffs_start, ds_pred_start, forced_shape=data[target_name].dims
+            )
+        
         # probabilities of the sample on the starting distribution
-        cdf_item = expression_start.distrib.cdf(data_item[target_name], **params_start)
+        cdf_data = self.expression_start.distrib.cdf(data[target_name], **params_start)
+        
+        # avoiding very unlikely values
+        cdf_data[np.where(cdf_data < threshold_proba)] = threshold_proba
+        cdf_data[np.where(cdf_data > 1 - threshold_proba)] = 1 - threshold_proba
+        
+        # parameters of ending distribution
+        params_end = self.expression_end.evaluate_params(
+            self.coeffs_end, ds_preds_end, forced_shape=data[target_name].dims
+        )
 
-        # corresponding values on the ending distribution
-        transf_item = expression_end.distrib.ppf(cdf_item, **params_end)
-
-        # archiving
-        out.append((transf_item, scen))
-
-    return out
+        # values corresponding to probabilities of sample on the ending distribution
+        return self.expression_end.distrib.ppf(cdf_data, **params_end)
 
 
 def weighted_median(data, weights):
@@ -558,38 +640,3 @@ def weighted_median(data, weights):
     return w_median
 
 
-def listxrds_to_np(listds, name_var, forcescen, coords=None):
-    """
-    **Temporary** function to prepare the format of inputs for training. This is meant
-    to be used ONLY before the format of MESMERv1 data is confirmed.
-
-    Parameters
-    ----------
-    listds : list of xr Dataset
-        predictors or target.
-    name_var : str
-        name of the variable to select.
-    forcescen : list of str
-        names of the scenarios to select, in this specific order. used to ensure the
-        consistency between predictors & target.
-    coords : dict
-        default None (no selection). Otherwise, will loop over keys & values of
-        dictionary to select in listds.
-    """
-    # looping over scenarios
-    tmp = []
-
-    for scen in forcescen:
-
-        # could be replaced with a while, but still a quick loop
-        for item in listds:
-
-            if item[1] == scen:
-                # for each scenario, creating one unique series: consistency of members &
-                # scenarios have to be ensured while loading data
-                if coords is not None:
-                    tmp.append(item[0][name_var].loc[coords].values.flatten())
-                else:
-                    tmp.append(item[0][name_var].values.flatten())
-
-    return np.hstack(tmp)

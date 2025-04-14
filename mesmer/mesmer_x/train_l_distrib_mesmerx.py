@@ -13,17 +13,19 @@ import warnings
 import numpy as np
 import properscoring as ps
 import xarray as xr
-from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import basinhopping, minimize, shgo
+from scipy.stats import gaussian_kde
 
 from mesmer.core.geospatial import geodist_exact
 from mesmer.mesmer_x.train_utils_mesmerx import (
     Expression,
-    listxrds_to_np,
     weighted_median,
 )
 from mesmer.stats import gaspari_cohn
 
+
+# TODO: to replace with outputs from PR #607
+from mesmer.core.datatree import collapse_datatree_into_dataset
 
 def ignore_warnings(func):
     # adapted from https://stackoverflow.com/a/70292317
@@ -38,223 +40,7 @@ def ignore_warnings(func):
     return wrapper
 
 
-# TODO: enable distrib class and training func for xarray objs
-def xr_train_distrib(
-    predictors,
-    target,
-    target_name,
-    expr,  # TODO: replace by instance of Expression (instead of building it here)
-    expr_name,
-    option_2ndfit=True,
-    r_gasparicohn_2ndfit=500,
-    scores_fit=["func_optim", "NLL", "BIC"],
-):
-    """
-    train in each grid point the target a conditional distribution as described by expr
-    with the provided predictors
 
-    Parameters
-    ----------
-    predictors : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with a coordinate 'time' and 1D variable with
-        this coordinate
-
-    target : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
-        2D variable with both coordinates
-
-    target_name : str
-        name of the variable to train
-
-    expr : str
-        See docstring of mesmer.mesmer_x.train_utils_mesmerx.Expression
-
-    expr_name : str
-        Name of the expression.
-
-    option_2ndfit : boolean, default: True
-        If True, will do a first fit in each gridpoint, AND THEN, will do another fit
-        that uses as first guess the results of the first fit around each gridpoint.
-        It helps in reducing the risk of spurious fits. Default: False.
-        This is an experimental feature, that has not been extensively tested.
-
-    r_gasparicohn_2ndfit : float
-        Distance used in calculation of the correlation in Gaspari-Cohn matrix for the
-        2nd fit.
-
-    scores_fit : list, default: 'func_optim', 'NLL', 'BIC'
-        After the fit, several scores can be calculated to assess the quality of the fit
-
-        - func_optim: function optimized, as described in
-          options_optim['type_fun_optim']: negative log likelihood or full conditional
-          negative log likelihood
-        - NLL: Negative Log Likelihood
-
-          - BIC: Bayesian Information Criteria
-          - CRPS: Continuous Ranked Probability Score (warning, takes a long time to
-            compute)
-    """
-
-    # PREPARATION OF DATA: temporary because working on temporary format.
-
-    # - not implementing checks on the format of predictors & target, because their
-    #   current format is temporary and will be updated in MESMER v1
-    # - must make 100% sure that each point of the predictors is associated with its
-    #   corresponding point of the target: same ESM, same scenario, same member, same
-    #   timestep, same gridpoint
-    # - compiling list of scenarios, for similar order in listxrds_to_np, ensuring
-    #   consistency of series of predictors & target
-
-    list_scens_pred = [item[1] for item in predictors]
-    list_scens_targ = [item[1] for item in target]
-    list_scens = [scen for scen in list_scens_pred if scen in list_scens_targ]
-    list_scens.sort()
-    gridpoints = target[0][0].gridpoint.values
-
-    # PREPARATION OF FIT
-
-    # getting list of inputs from predictors
-    expression_fit = Expression(expr, expr_name)
-
-    # shaping predictors in current temporary format for use in np_train_distrib
-    predictors_np = {
-        inp: listxrds_to_np(listds=predictors, name_var=inp, forcescen=list_scens)
-        for inp in expression_fit.inputs_list
-    }
-
-    # preparing the Datasets of the fit:
-    # here, had the choice between two options: one variable for all coefficients
-    # (gridpoint, coefficient) or one variable for each coefficient (gridpoint).
-    # prefers 2nd option, because more similar to MESMER, and also because will
-    # facilitate future developments of MESMER-X on expressions depending on the
-    # gridpoint.
-
-    coefficients_xr = xr.Dataset()
-    for coef in expression_fit.coefficients_list:
-        coefficients_xr[coef] = xr.DataArray(
-            np.nan, coords={"gridpoint": gridpoints}, dims=("gridpoint",)
-        )
-
-    quality_xr = xr.Dataset()
-    for score in scores_fit:
-        quality_xr[score] = xr.DataArray(
-            np.nan, coords={"gridpoint": gridpoints}, dims=("gridpoint",)
-        )
-
-    # FIT
-
-    print(f"Fitting the variable {target_name} with the expression {expr}:")
-
-    # looping over grid points
-    # TODO: use applyufunc for this
-    # NOTE: important to preserve stacked gridpoint coords
-    for igp, gp in enumerate(gridpoints):
-        fraction = (igp + 1) / gridpoints.size
-        print(f"{fraction:0.1%}", end="\r")
-
-        # shaping target for this gridpoint
-        target_np = listxrds_to_np(
-            listds=target,
-            name_var=target_name,
-            forcescen=list_scens,
-            coords={"gridpoint": gp},
-        )
-
-        # training
-        coefficients_np, quality_np = np_train_distrib(
-            targ_np=target_np,
-            pred_np=predictors_np,
-            expr_fit=expression_fit,
-            scores_fit=scores_fit,
-        )
-
-        # TODO: assign to .values which is much faster (in the inner loop)
-        for ic, coef in enumerate(expression_fit.coefficients_list):
-            coefficients_xr[coef].loc[{"gridpoint": gp}] = coefficients_np[ic]
-
-        for score in scores_fit:
-            quality_xr[score].loc[{"gridpoint": gp}] = quality_np[score]
-
-    # SECOND FIT if required
-    if option_2ndfit:
-        # preparing the Datasets of the fit
-        coefficients_xr2 = coefficients_xr.copy()
-        quality_xr2 = quality_xr.copy()
-
-        # remnants of MESMERv0, because stuck with its format...
-        lon_l_vec = target[0][0][target_name].lon
-        lat_l_vec = target[0][0][target_name].lat
-
-        geodist = geodist_exact(lon_l_vec, lat_l_vec)
-
-        corr_gc = gaspari_cohn(geodist / r_gasparicohn_2ndfit)
-
-        sel_nonan = ~np.isnan(coefficients_xr[expression_fit.coefficients_list[0]])
-
-        print(
-            f"Fitting the variable {target_name} with the expression {expr}: (2nd round)"
-        )
-
-        for igp, gp in enumerate(gridpoints):
-            fraction = (igp + 1) / gridpoints.size
-            print(f"{fraction:0.1%}", end="\r")
-
-            # calculate first guess, with a weighted median based on Gaspari-Cohn
-            # matrix, while avoiding NaN values. Warning, weighted mean does not work
-            # well, because some gridpoints may have spurious values different by orders
-            # of magnitude.
-
-            fg = np.zeros(len(expression_fit.coefficients_list))
-            for ic, coef in enumerate(expression_fit.coefficients_list):
-                fg[ic] = weighted_median(
-                    data=coefficients_xr[coef].values[sel_nonan],
-                    weights=corr_gc[igp, sel_nonan.values],
-                )
-
-            # shaping target for this gridpoint
-            target_np = listxrds_to_np(
-                listds=target,
-                name_var=target_name,
-                forcescen=list_scens,
-                coords={"gridpoint": gp},
-            )
-
-            # training
-            coefficients_np, quality_np = np_train_distrib(
-                targ_np=target_np,
-                pred_np=predictors_np,
-                expr_fit=expression_fit,
-                scores_fit=scores_fit,
-                first_guess=fg,
-            )
-
-            # saving results
-            for ic, coef in enumerate(expression_fit.coefficients_list):
-                coefficients_xr2[coef].loc[{"gridpoint": gp}] = coefficients_np[ic]
-
-            for score in scores_fit:
-                quality_xr2[score].loc[{"gridpoint": gp}] = quality_np[score]
-
-    # TODO: add expr as variable to coefficients_xr?
-    return coefficients_xr, quality_xr
-
-
-def np_train_distrib(
-    targ_np,
-    pred_np,
-    expr_fit,
-    scores_fit=["func_optim", "NLL", "BIC"],
-    first_guess=None,
-):
-    dfit = distrib_cov(
-        data_targ=targ_np,
-        data_pred=pred_np,
-        expr_fit=expr_fit,
-        scores_fit=scores_fit,
-        first_guess=first_guess,
-    )
-    dfit.fit()
-    return dfit.coefficients_fit, dfit.quality_fit
 
 
 def _smooth_data(data, length=10):
@@ -283,64 +69,160 @@ def _finite_difference(f_high, f_low, x_high, x_low):
     return (f_high - f_low) / (x_high - x_low)
 
 
-class distrib_cov:
+def get_weights_uniform(targ_data, target, dims):
+    """
+    Generate uniform weights for the training sample.
 
+    Parameters
+    ----------
+    targ_data : DataTree
+        Target for the training sample. Each branch must be a scenario,
+        with a xarray dataset (time, member, gridpoint).
+        
+    target : str
+        Name of the target. Must be the name in the datasets in targ_data.
+        
+    dims : list of str
+        Dimensions of the data. Must be the same for all scenarios.
+
+    Returns
+    -------
+    weights : DataTree
+        Weights for the sample, uniform, summing to 1.
+
+    Example
+    -------
+    TODO
+
+    """
+    # preparing a datatree with ones everywhere
+    factor_rescale = 0
+    out = dict()
+    for scen in targ_data:
+        # identify the extra dimension
+        extra_dims = [dim for dim in targ_data[scen][target].dims if dim not in dims]
+        locator_extra_dims = {dim:0 for dim in extra_dims}
+
+        # create a DataArray of ones with the required shape
+        ones_array = xr.ones_like(targ_data[scen][target].loc[locator_extra_dims], dtype=float)
+        out[scen] = xr.DataTree(xr.Dataset({'weight':ones_array}))
+
+        # Accumulate the total size for rescaling
+        factor_rescale += ones_array.size
+
+    # Rescale
+    return xr.DataTree.from_dict(out) / factor_rescale
+
+
+
+def get_weights_density(pred_data, predictor, targ_data, target, dims):
+    """
+    Generate weights for the sample, based on the inverse of the density of the
+    predictors. More precisely, the density of the predictors is represented by a 
+    multidimensional kernel density estimate using gaussian kernels where each
+    dimension is one of the predictors. Subsequently, the weights are the inverse
+    of this density of the predictors. Consequently, samples in regions of this
+    space with low density will have higher weights, this is, "unusual" samples
+    will have more weight.
+
+    Parameters
+    ----------
+    pred_data : DataTree
+        Predictors for the training sample. Each branch must be a scenario,
+        with a xarray dataset (time, member). Each predictor is a variable.
+        
+    predictor : str
+        Name of the predictor. Must be the name in the datasets in pred_data.
+        
+    targ_data : DataTree
+        Target for the training sample. Each branch must be a scenario,
+        with a xarray dataset (time, member, gridpoint).
+        
+    target : str
+        Name of the target. Must be the name in the datasets in targ_data.
+        
+    dims : list of str
+        Dimensions of the data. Must be the same for all scenarios.
+
+    Returns
+    -------
+    weights : DataTree
+        Weights for the sample, based on the inverse of the density of the
+        predictors, summing to 1.
+
+    Example
+    -------
+    TODO
+
+    """
+
+    # checking if predictors have been provided
+    if len(pred_data) == 0:
+        # NB: may use no predictors when training stationary distributions for bencharmking.
+        print(f"no predictors provided, switching to uniform weights")
+        return get_weights_uniform(targ_data, target, dims)
+    
+    else:
+        # reshaping data for histogram
+        tmp_pred = {}
+        for var in pred_data:
+            if var not in tmp_pred:
+                tmp_pred[var] = np.array([])
+            for scen in pred_data[var]:
+                tmp_pred[var] = np.concat( [tmp_pred[var],pred_data[var][scen][predictor].values.flatten()] )
+        array_pred = np.array( list(tmp_pred.values()) )
+        
+        # representation with kernel-density estimate using gaussian kernels
+        # NB: more stable than np.histogramdd that implies too many assumptions
+        histo_kde = gaussian_kde(array_pred)
+        
+        # calculating density of points over the sample
+        density = histo_kde.pdf( x=array_pred )
+        
+        # preparing the datatree
+        weight, counter, factor_rescale = dict(), 0, 0
+        # using former var, ensuring correct order on dimensions
+        dims = pred_data[var][scen][predictor].dims
+        for scen in pred_data[var]:
+            # reshaping the weights for this scenario
+            n_dims = {dim:pred_data[var][scen][dim].size for dim in dims}
+            array_tmp = np.reshape(
+                density[counter:counter+pred_data[var][scen][predictor].size],
+                shape=[n_dims[dim] for dim in dims]
+                )
+            tmp = xr.DataArray(
+                data=array_tmp,
+                dims=dims,
+                coords={dim:pred_data[var][scen][dim] for dim in dims}
+                )
+            
+            # inverse of density
+            weight[scen] = xr.Dataset({'weight':1/tmp})
+            factor_rescale += weight[scen]['weight'].sum()
+            
+            # preparing next scenario
+            counter += pred_data[var][scen][predictor].size
+
+        return xr.DataTree.from_dict(weight) / factor_rescale
+
+
+
+class distrib_tests:
     def __init__(
         self,
-        data_targ,
-        data_pred,
         expr_fit: Expression,
-        data_targ_addtest=None,  # TODO: rename to data_targ_verification?
-        data_preds_addtest=None,  # TODO: rename to data_preds_verification?
         threshold_min_proba=1.0e-9,
         boundaries_params=None,
-        boundaries_coeffs=None,
-        first_guess=None,
-        func_first_guess=None,
-        scores_fit=["func_optim", "NLL", "BIC"],
-        options_optim=None,  # TODO: replace by options class?
-        options_solver=None,  # TODO: ditto?
-    ):
-        """fit a conditional distribution.
-
-        This is meant to provide flexibility in the provided expressions and robustness
-        in the training. The components included in this class are:
-
-        - (evaluation of weights for the sample)
-        - tests on coefficients & parameters of the expression, in & out of sample
-        - 1st optimizations for the first guess
-        - 2nd optimization with minimization of the negative log likelihood or full
-          conditioning negative loglikelihood
-
-        Once this class has been initialized, the go-to function is fit(). It returns
-        the vector of solutions for the problem proposed.
+        boundaries_coeffs=None
+        ):
+        """Class defining the tests to perform during first guess and training of distributions.
 
         Parameters
         ----------
-        data_targ : numpy array 1D
-            Sample of the target for fit of a conditional distribution
-            Normally the timeseries of the target at one gridpoint.
-
-        data_pred : dict of 1D vectors
-            Covariates for the conditional distribution. Each key must be the exact name
-            of the inputs used in 'expr_fit', and the values must be aligned with the
-            values in 'data_targ'.
-            Normally the timeseries of the global mean predictor.
-
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
             'expr_fit.expression'.
-
-        data_targ_addtest : numpy array 1D, default: None
-            Additional sample of the target. The fit will not be optimized on this data,
-            but will test that this data remains valid. Important to avoid points out of
-            support of the distribution.
-
-        data_preds_addtest : numpy array 1D, default: None
-            Additional sample of the covariates. The fit will not be optimized on this
-            data, but will test that this data remains valid. Important to avoid points
-            out of support of the distribution.
-
+        
         threshold_min_proba : float or None, default: 1e-9
             If numeric imposes a check during the fitting that every sample fulfills
             `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
@@ -356,391 +238,30 @@ class distrib_cov:
         boundaries_coeffs : dict, optional
             Prescribed boundaries on the coefficients of the expression. Default: None.
 
-        first_guess : numpy array, default: None
-            If provided, will use these values as first guess for the first guess.
-
-        func_first_guess : callable, default: None
-            If provided, and that 'first_guess' is not provided, will be called to
-            provide a first guess for the fit. This is an experimental feature, thus not
-            tested.
-            !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR
-            OWN RISKS.
-
-        scores_fit : list of str, default: ['func_optim', 'NLL', 'BIC']
-            After the fit, several scores can be calculated to assess the quality of the
-            fit:
-
-            - func_optim: function optimized, as described in
-              options_optim['type_fun_optim']: negative log likelihood or full
-              conditional negative log likelihood
-            - NLL: Negative Log Likelihood
-            - BIC: Bayesian Information Criteria
-            - CRPS: Continuous Ranked Probability Score (warning, takes a long time to
-              compute)
-
-        options_optim : dict, default: None
-            A dictionary with options for the function to optimize:
-
-            * type_fun_optim: string, default: "NLL"
-                If 'NLL', will optimize using the negative log likelihood. If 'fcNLL',
-                will use the full conditional negative log likelihood based on the
-                stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
-                and `exclude_trigger` only apply to 'fcNLL'.
-
-            * weighted_NLL: boolean, default: False
-                If True, the optimization function will based on the weighted sum of the
-                NLL, instead of the sum of the NLL. The weights are calculated as the
-                inverse density in the predictors.
-
-            * threshold_stopping_rule: float > 1, default: None
-                Maximum return period, used to define the threshold of the stopping
-                rule.
-                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
-                together.
-
-            * ind_year_thres: np.array, default: None
-                Positions in the predictors where the thresholds have to be tested.
-                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
-                together.
-
-            * exclude_trigger: boolean, default: None
-                Whether the threshold will be included or not in the stopping rule.
-                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
-                together.
-
-        options_solver : dict, optional
-            A dictionary with options for the solvers, used to determine an adequate
-            first guess and for the final optimization.
-
-            * method_fit: string, default: "Powell"
-                Type of algorithm used during the optimization, using the function
-                'minimize'. Prepared options: BFGS, L-BFGS-B, Nelder-Mead, Powell, TNC,
-                trust-constr. The default 'Powell', is HIGHLY RECOMMENDED for its
-                stability & speed.
-
-            * xtol_req: float, default: 1e-3
-                Accuracy of the fit in coefficients. Interpreted differently depending
-                on 'method_fit'.
-
-            * ftol_req: float, default: 1e-6
-                Accuracy of the fit in objective.
-
-            * maxiter: int, default: 10000
-                Maximum number of iteration of the optimization.
-
-            * maxfev: int, default: 10000
-                Maximum number of evaluation of the function during the optimization.
-
-            * error_failedfit : boolean, default: True.
-                If True, will raise an issue if the fit failed.
-
-            * fg_with_global_opti : boolean, default: False
-                If True, will add a step where the first guess is improved using a
-                global optimization. In theory, better, but in practice, no improvement
-                in performances, but makes the fit much slower (+ ~10s).
-
-        Notes
-        -----
-        This code is entirely based on the code used in MESMER-X ([1]_  and [2]_).
-        However, there are some minor differences. The reasons are mostly due to
-        streamlining of the code, removing deprecated features & implementing new ones.
-
-        - Streamlining:
-
-          - Instead of prescribing distribution & intricated inputs, using the class
-            'Expression'. Shortens a lot the code and keeps the same principle.
-          - The first guess has been extended to any expression. Also much shorter code.
-
-        - Deprecated:
-
-          - Fit of the logit of sample instead of the sample. It was used for
-            expressions with sigmoids, but did not improve the fit
-          - Test in the coefficients of a sigmoid to avoid simultaneous drifts. Appeared
-            mostly with logits, and not feasible with class 'expression'
-
-        - Removed
-          - In tests, was checking not only whether the coefficients or parameters were
-            exceeding boundaries, but also were close. Removed because of modifications
-            in first guess didn't work with situations with scale=0.
-          - Forcing values of certain parameters (eg mu for poisson) to be integers: to
-            implement in class 'expression'?
-
-        - Implemented:
-
-          - Additional sample used to test the validity of the fit through tests on
-            coefficients & parameters.
-          - Minimum probability for the points in the sample. Useful to avoid having
-            points becoming extremely unlikely, despite being in the sample.
-          - Optimization may be now account as well on the stopping rule (inspired b
-            https://github.com/OpheliaMiralles/pykelihood)
-          - Weighting points of the sample with inverse of their density. Useful to give
-            equivalent weights to the whole domain fitted.
-
-        - Reasons for choosing that over available alternatives:
-          - scipy.stats.fit: nothing about conditional distribution, all tests on
-            coefficients, parameters, values AND nothing about first guess
-          - pykelihood: not enough for the first guess
-            (https://github.com/OpheliaMiralles/pykelihood/blob/master/pykelihood/kernels.py)
-          - symfit: not enough for the first guess
-            (https://symfit.readthedocs.io/en/stable/fitting_types.html#likelihood)
-
-        .. [1] https://doi.org/10.1029%2F2022GL099012
-
-        .. [2] https://doi.org/10.5194/esd-14-1333-2023
-
         """
-
-        # preparing basic information
-        self.data_targ = data_targ
-
-        # can be different from length of predictors IF no predictors.
-        self.n_sample = len(self.data_targ)
-
-        if np.isnan(self.data_targ).any():
-            raise ValueError("nan values in target")
-
-        if np.isinf(self.data_targ).any():
-            raise ValueError("infinite values in target")
-
-        self.data_pred = data_pred
-
-        # TODO: raise error if data_pred is not a dict
-
-        if any(np.isnan(self.data_pred[pred]).any() for pred in self.data_pred):
-            raise ValueError("nan values in predictors")
-
-        if any(np.isinf(self.data_pred[pred]).any() for pred in self.data_pred):
-            raise ValueError("infinite values in predictors")
-
+        # initialization of expr_fit
         self.expr_fit = expr_fit
-
-        # preparing additional data
-        add_test = (data_targ_addtest is not None) and (data_preds_addtest is not None)
-        self.add_test = add_test
-
-        if not self.add_test and (
-            (data_targ_addtest is not None) or (data_preds_addtest is not None)
-        ):
-            raise ValueError(
-                "Only one of `data_targ_addtest` & `data_preds_addtest` have been"
-                " provided, not both of them."
-            )
-
-        self.data_targ_addtest = data_targ_addtest
-        self.data_preds_addtest = data_preds_addtest
-
+        
+        # initialization and basic checks on threshold_min_proba
+        self.threshold_min_proba = threshold_min_proba
         if threshold_min_proba is not None and (
             (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
         ):
             raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
 
-        self.threshold_min_proba = threshold_min_proba
-
-        # preparing information on boundaries
+        # initialization and basic checks on boundaries
         self.boundaries_params = self.expr_fit.boundaries_parameters
         if boundaries_params is not None:
             for param in boundaries_params:
-
                 lower_bound = np.max(
                     [boundaries_params[param][0], self.boundaries_params[param][0]]
                 )
                 upper_bound = np.min(
                     [boundaries_params[param][1], self.boundaries_params[param][1]]
                 )
-
                 self.boundaries_params[param] = [lower_bound, upper_bound]
-
         self.boundaries_coeffs = {} if boundaries_coeffs is None else boundaries_coeffs
 
-        # preparing additional information
-        self.first_guess = first_guess
-        self.func_first_guess = func_first_guess
-        self.n_coeffs = len(self.expr_fit.coefficients_list)
-
-        if (self.first_guess is not None) and (len(self.first_guess) != self.n_coeffs):
-            raise ValueError(
-                f"The provided first guess does not have the correct shape: {self.n_coeffs}"
-            )
-
-        self.scores_fit = scores_fit
-
-        # preparing information on solver
-        default_options_solver = {
-            "method_fit": "Powell",
-            "xtol_req": 1e-6,
-            "ftol_req": 1.0e-6,
-            "maxiter": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
-            "maxfev": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
-            "error_failedfit": False,
-            "fg_with_global_opti": False,
-        }
-
-        options_solver = options_solver or {}
-        if not isinstance(options_solver, dict):
-            raise ValueError("`options_solver` must be a dictionary")
-
-        # TODO: use get? (e.g. self.method_fit = options_solver.get("method_fit", "Powell")
-        options_solver = default_options_solver | options_solver
-
-        self.xtol_req = options_solver["xtol_req"]
-        self.ftol_req = options_solver["ftol_req"]
-        self.maxiter = options_solver["maxiter"]
-        self.maxfev = options_solver["maxfev"]
-        self.method_fit = options_solver["method_fit"]
-
-        if self.method_fit not in (
-            "BFGS",
-            "L-BFGS-B",
-            "Nelder-Mead",
-            "Powell",
-            "TNC",
-            "trust-constr",
-        ):
-            raise ValueError("method for this fit not prepared, to avoid")
-
-        xtol = {
-            "BFGS": "xrtol",
-            "L-BFGS-B": "gtol",
-            "Nelder-Mead": "xatol",
-            "Powell": "xtol",
-            "TNC": "xtol",
-            "trust-constr": "xtol",
-        }
-        ftol = {
-            "BFGS": "gtol",
-            "L-BFGS-B": "ftol",
-            "Nelder-Mead": "fatol",
-            "Powell": "ftol",
-            "TNC": "ftol",
-            "trust-constr": "gtol",
-        }
-
-        self.name_xtol = xtol[self.method_fit]
-        self.name_ftol = ftol[self.method_fit]
-        self.error_failedfit = options_solver["error_failedfit"]
-        self.fg_with_global_opti = options_solver["fg_with_global_opti"]
-
-        # preparing information on functions to optimize
-        default_options_optim = dict(
-            weighted_NLL=False,
-            type_fun_optim="NLL",
-            threshold_stopping_rule=None,
-            exclude_trigger=None,
-            ind_year_thres=None,
-        )
-
-        options_optim = options_optim or {}
-
-        if not isinstance(options_optim, dict):
-            raise ValueError("`options_optim` must be a dictionary")
-
-        options_optim = default_options_optim | options_optim
-
-        # preparing weights
-        # TODO: move this out of init or think of more flexible bins
-        self.weighted_NLL = options_optim["weighted_NLL"]
-        self.weights_driver = self.get_weights()
-
-        # preparing information for the stopping rule
-        self.type_fun_optim = options_optim["type_fun_optim"]
-        self.threshold_stopping_rule = options_optim["threshold_stopping_rule"]
-        self.ind_year_thres = options_optim["ind_year_thres"]
-        self.exclude_trigger = options_optim["exclude_trigger"]
-
-        if self.type_fun_optim == "NLL" and (
-            self.threshold_stopping_rule is not None or self.ind_year_thres is not None
-        ):
-            raise ValueError(
-                "`threshold_stopping_rule` and `ind_year_thres` not used for"
-                " `type_fun_optim='NLL'`"
-            )
-
-        if self.type_fun_optim == "fcNLL" and (
-            self.threshold_stopping_rule is None or self.ind_year_thres is None
-        ):
-            raise ValueError(
-                "`type_fun_optim='fcNLL'` needs both, `threshold_stopping_rule`"
-                "  and `ind_year_thres`."
-            )
-
-    # TODO: don't do this in init. Give the user the option to either use this function
-    # or give their own weights as soon as we switch the xarray wrapper into here and
-    # the user actually initialized this class themselves
-    def get_weights(self, n_bins_density=40):
-
-        if self.weighted_NLL:
-            weights_driver = self._get_weights_nll(n_bins_density=n_bins_density)
-        else:
-            weights_driver = np.ones(self.data_targ.shape)
-        # TODO: move the normalization into the function
-        return weights_driver / np.sum(weights_driver)
-
-    def _get_weights_nll(self, n_bins_density=40):
-        """
-        Generate weights for the sample, based on the inverse of the density of the
-        predictors. More precisely, the density of the predictors is measured by a
-        multidimensional histogram where each dimension is one of the predictors. The
-        histogram is then smoothed by a regular grid interpolator to give the density
-        of the predictors in this "predictor space". Subsequently, the weights are
-        the inverse of this density of the predictors. Consequently, Samples in regions
-        of this space with low density will have higher weights, this is, "unusual" samples
-        will have more weight.
-
-        Parameters
-        ----------
-        n_bins_density : int, default: 40
-            Number of bins used to calculate the density of the predictors.
-
-        Returns
-        -------
-        weights_driver : numpy array 1D
-            Weights for the sample, based on the inverse of the density of the
-            predictors.
-
-        Example
-        -------
-        TODO
-
-        """
-
-        # if no predictors, straightforward
-        if len(self.data_pred) == 0:
-            # TODO: isn't data_pred a dict and does therefore not have a shape? Yes. Also it is empty.
-            # TODO: Do we want to allow no predictor?
-            return np.ones(self.data_targ.shape)
-
-        # explode data_pred dictionary into a single array for all predictors
-        tmp = np.array(list(self.data_pred.values())).T
-
-        # assessing limits on each axis
-        # TODO *nan*min/max should not be necessary bc we already checked for nan values in the data?
-        mn, mx = np.nanmin(tmp, axis=0), np.nanmax(tmp, axis=0)
-
-        # TODO: at the moment bins == edges, either change bins to edges and do n_bins_density + 1
-        # or change bins = n_bins_density in histogramdd
-        bins = np.linspace(
-            (mn - 0.05 * (mx - mn)),
-            (mx + 0.05 * (mx - mn)),
-            n_bins_density,
-        )
-
-        # interpolating over whole region
-        gmt_hist, edges = np.histogramdd(sample=tmp, bins=bins.T)
-
-        gmt_bins_center = [0.5 * (edge[1:] + edge[:-1]) for edge in edges]
-
-        # TODO: add bounds_error=False, fill_value=None (extrapolates the values outside the grid)
-        interp = RegularGridInterpolator(
-            points=gmt_bins_center,
-            values=gmt_hist,
-            method="linear",
-            bounds_error=False,
-            fill_value=None,
-        )
-        # evaluate interpolated density at datapoints
-        density = interp(tmp)
-
-        return 1 / density  # inverse of density
 
     def _test_coeffs_in_bounds(self, values_coeffs):
 
@@ -805,13 +326,19 @@ class distrib_cov:
         thresh = self.threshold_min_proba
         return np.all(1 - cdf >= thresh) and np.all(cdf >= thresh)
 
-    def validate_coefficients(self, coefficients):
+    def validate_coefficients(self, data_pred, data_targ, coefficients):
         """validate coefficients
 
         Parameters
         ----------
         coefficients : numpy array 1D
             Coefficients to validate.
+            
+        data_pred : numpy array 1D
+            Predictors for the training sample.
+            
+        data_targ : numpy array 1D
+            Target for the training sample.
 
         Returns
         -------
@@ -845,15 +372,9 @@ class distrib_cov:
             return test_coeff, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
-        params = self.expr_fit.evaluate_params(coefficients, self.data_pred)
+        params = self.expr_fit.evaluate_params(coefficients, data_pred)
         # test for the validity of the parameters
-        test_param = self._test_evol_params(params, self.data_targ)
-
-        if self.add_test:
-            params_add = self.expr_fit.evaluate_params(
-                coefficients, self.data_preds_addtest
-            )
-            test_param &= self._test_evol_params(params_add, self.data_targ_addtest)
+        test_param = self._test_evol_params(params, data_targ)
 
         # tests on params show already that it won't work: fill in the rest with False
         if not test_param:
@@ -863,19 +384,573 @@ class distrib_cov:
         if self.threshold_min_proba is None:
             return test_coeff, test_param, True, params
 
-        test_proba = self._test_proba_value(params, self.data_targ)
-
-        if self.add_test:
-            test_proba &= self._test_proba_value(params_add, self.data_targ_addtest)
+        test_proba = self._test_proba_value(params, data_targ)
 
         # return values for each test and the distribution that has already been
         # evaluated
         return test_coeff, test_param, test_proba, params
+    
+    def get_var_data(self, data):
+        if isinstance(data, xr.DataArray):
+            return data
+        
+        elif isinstance(data, xr.Dataset):
+            var_name = [var for var in data.variables][0]
+            return data[var_name]
+        
+        elif isinstance(data, xr.DataTree):
+            # TODO: useless, datatree uses datasets anyway, so it will become a dataarray
+            new_data = xr.DataTree()
+            for pred in data:
+                var_name = [var for var in data[pred].variables][0]
+                _ = xr.DataTree(name=pred, parent=new_data, data=data[pred][var_name] )
+            return new_data
+            
+        else:
+            raise ValueError("data must be a DataArray, Dataset or DataTree")
 
-    # TODO: factor out into own module?
+
+    def validate_data(self, data_pred, data_targ, data_weights):
+        """validate data
+
+        Parameters
+        ----------
+        data_pred
+            Predictors for the training sample.
+            
+        data_targ
+            Target for the training sample.
+            
+        data_weights
+            Weights for the training sample.
+        -------
+        """
+        # basic checks on data_targ
+        self.check_data(data_targ, "target")
+        
+        # basic checks on data_pred
+        for pred in data_pred["predictor"]:
+            self.check_data(data_pred.sel(predictor=pred), pred)
+        
+        # basic checks on weights
+        self.check_data(data_weights, "weights")
+
+    def check_data(self, data, name):
+        """
+        basic check data
+        """
+        # getting variable
+        data = self.get_var_data(data)
+        
+        # getting datarray
+        data = self.get_var_data(data)
+        
+        # checking for NaN values
+        if np.isnan(data).any():
+            raise ValueError(f"nan values in {name}")
+
+        # checking for infinite values
+        if np.isinf(data).any():
+            raise ValueError(f"infinite values in {name}")
+        
+
+
+
+class distrib_optimizer:
+    def __init__(
+        self,
+        expr_fit: Expression,
+        class_tests: distrib_tests,
+        weights=None,
+        options_optim=None,  # TODO: replace by options class?
+        options_solver=None,  # TODO: ditto?        
+    ):
+        """Class to define optimizers used during first guess and training.
+
+        Parameters
+        ----------
+        expr_fit : class 'expression'
+            Expression to train. The string provided to the class can be found in
+            'expr_fit.expression'.
+            
+        class_tests : class 'distrib_tests'
+            Class defining the tests to perform during first guess and training
+            
+        weights : stacked datasets, default: None
+            Weights for the optimization. If None, will be set to 1.
+
+        options_optim : dict, default: None
+            A dictionary with options for the function to optimize:
+
+            * type_fun_optim: string, default: "nll"
+                If 'nll', will optimize using the negative log likelihood. If 'fcnll',
+                will use the full conditional negative log likelihood based on the
+                stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
+                and `exclude_trigger` only apply to 'fcnll'.
+
+            * threshold_stopping_rule: float > 1, default: None
+                Maximum return period, used to define the threshold of the stopping
+                rule.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+            * ind_year_thres: np.array, default: None
+                Positions in the predictors where the thresholds have to be tested.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+            * exclude_trigger: boolean, default: None
+                Whether the threshold will be included or not in the stopping rule.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+        options_solver : dict, optional
+            A dictionary with options for the solvers, used to determine an adequate
+            first guess and for the final optimization.
+
+            * method_fit: string, default: "Powell"
+                Type of algorithm used during the optimization, using the function
+                'minimize'. Prepared options: BFGS, L-BFGS-B, Nelder-Mead, Powell, TNC,
+                trust-constr. The default 'Powell', is HIGHLY RECOMMENDED for its
+                stability & speed.
+
+            * xtol_req: float, default: 1e-3
+                Accuracy of the fit in coefficients. Interpreted differently depending
+                on 'method_fit'.
+
+            * ftol_req: float, default: 1e-6
+                Accuracy of the fit in objective.
+
+            * maxiter: int, default: 10000
+                Maximum number of iteration of the optimization.
+
+            * maxfev: int, default: 10000
+                Maximum number of evaluation of the function during the optimization.
+
+            * error_failedfit : boolean, default: True.
+                If True, will raise an issue if the fit failed.
+
+            * fg_with_global_opti : boolean, default: False
+                If True, will add a step where the first guess is improved using a
+                global optimization. In theory, better, but in practice, no improvement
+                in performances, but makes the fit much slower (+ ~10s).
+        """
+        # initialization
+        self.expr_fit = expr_fit
+        self.class_tests = class_tests
+        self.n_coeffs = len(self.expr_fit.coefficients_list)
+
+        # preparing weights
+        if weights is None:
+            self.weights = 1
+        else:
+            self.weights = weights
+
+        # preparing solver
+        default_options_solver = {
+            "method_fit": "Powell",
+            "xtol_req": 1e-6,
+            "ftol_req": 1.0e-6,
+            "maxiter": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
+            "maxfev": 1000 * self.n_coeffs * (np.log(self.n_coeffs) + 1),
+            "error_failedfit": False,
+            "fg_with_global_opti": False,
+        }
+
+        options_solver = options_solver or {}
+        if not isinstance(options_solver, dict):
+            raise ValueError("`options_solver` must be a dictionary")
+
+        # TODO: use get? (e.g. self.method_fit = options_solver.get("method_fit", "Powell")
+        options_solver = default_options_solver | options_solver
+
+        self.xtol_req = options_solver["xtol_req"]
+        self.ftol_req = options_solver["ftol_req"]
+        self.maxiter = options_solver["maxiter"]
+        self.maxfev = options_solver["maxfev"]
+        self.method_fit = options_solver["method_fit"]
+
+        if self.method_fit not in (
+            "BFGS",
+            "L-BFGS-B",
+            "Nelder-Mead",
+            "Powell",
+            "TNC",
+            "trust-constr",
+        ):
+            raise ValueError("method for this fit not prepared, to avoid")
+
+        xtol = {
+            "BFGS": "xrtol",
+            "L-BFGS-B": "gtol",
+            "Nelder-Mead": "xatol",
+            "Powell": "xtol",
+            "TNC": "xtol",
+            "trust-constr": "xtol",
+        }
+        ftol = {
+            "BFGS": "gtol",
+            "L-BFGS-B": "ftol",
+            "Nelder-Mead": "fatol",
+            "Powell": "ftol",
+            "TNC": "ftol",
+            "trust-constr": "gtol",
+        }
+
+        self.name_xtol = xtol[self.method_fit]
+        self.name_ftol = ftol[self.method_fit]
+        self.error_failedfit = options_solver["error_failedfit"]
+        self.fg_with_global_opti = options_solver["fg_with_global_opti"]
+
+        # preparing information on function to optimize
+        default_options_optim = dict(
+            type_fun_optim="nll",
+            threshold_stopping_rule=None,
+            exclude_trigger=None,
+            ind_year_thres=None,
+        )
+
+        options_optim = options_optim or {}
+
+        if not isinstance(options_optim, dict):
+            raise ValueError("`options_optim` must be a dictionary")
+
+        options_optim = default_options_optim | options_optim
+
+        # preparing information for the stopping rule
+        self.type_fun_optim = options_optim["type_fun_optim"]
+        self.threshold_stopping_rule = options_optim["threshold_stopping_rule"]
+        self.ind_year_thres = options_optim["ind_year_thres"]
+        self.exclude_trigger = options_optim["exclude_trigger"]
+
+        if self.type_fun_optim == "nll" and (
+            self.threshold_stopping_rule is not None or self.ind_year_thres is not None
+        ):
+            raise ValueError(
+                "`threshold_stopping_rule` and `ind_year_thres` not used for"
+                " `type_fun_optim='nll'`"
+            )
+
+        if self.type_fun_optim == "fcnll" and (
+            self.threshold_stopping_rule is None or self.ind_year_thres is None
+        ):
+            raise ValueError(
+                "`type_fun_optim='fcnll'` needs both, `threshold_stopping_rule`"
+                "  and `ind_year_thres`."
+            )
+            
+    # FLEXIBLE MINIMIZER
+    def _minimize(
+        self, func, x0, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run"
+    ):
+        """
+        options_NelderMead: str
+            * dont_run: would minimize only the chosen solver in method_fit
+            * fail_run: would minimize using Nelder-Mead only if the chosen solver in
+              method_fit fails
+            * best_run: will minimize using Nelder-Mead and the chosen solver in
+              method_fit, then select the best results
+        """
+        fit = minimize(
+            func,
+            x0=x0,
+            args=args,
+            method=self.method_fit,
+            options={
+                "maxfev": self.maxfev * fact_maxfev_iter,
+                "maxiter": self.maxfev * fact_maxfev_iter,
+                self.name_xtol: self.xtol_req,
+                self.name_ftol: self.ftol_req,
+            },
+        )
+
+        # observed that Powell solver is much faster, but less robust. May rarely create
+        # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
+        # critical steps or when Powell fails.
+
+        if (option_NelderMead == "fail_run" and not fit.success) or (
+            option_NelderMead == "best_run"
+        ):
+            fit_NM = minimize(
+                func,
+                x0=x0,
+                args=args,
+                method="Nelder-Mead",
+                options={
+                    "maxfev": self.maxfev * fact_maxfev_iter,
+                    "maxiter": self.maxiter * fact_maxfev_iter,
+                    "xatol": self.xtol_req,
+                    "fatol": self.ftol_req,
+                },
+            )
+            if (option_NelderMead == "fail_run") or (
+                option_NelderMead == "best_run"
+                and (fit_NM.fun < fit.fun or not fit.success)
+            ):
+                fit = fit_NM
+        return fit
+
+    # OPTIMIZATION FUNCTIONS & SCORES
+    def func_optim(self, coefficients, data_pred, data_targ, data_weights):
+        # check whether these coefficients respect all conditions: if so, can compute a
+        # value for the optimization
+        test_coeff, test_param, test_proba, params = self.class_tests.validate_coefficients(
+            data_pred, data_targ, coefficients
+        )
+
+        if test_coeff and test_param and test_proba:
+            if self.type_fun_optim == "fcnll":
+                # compute full conditioning
+                # will apply the stopping rule: splitting data_fit into two sets of data
+                # using the given threshold
+                ind_data_ok, ind_data_stopped = self.stopping_rule(data_targ, params)
+                nll = self.neg_loglike(
+                    data_targ[ind_data_ok],
+                    {pp:params[ind_data_ok] for pp in params},
+                    data_weights[ind_data_ok]
+                    )
+                fc = self.fullcond_thres(
+                    data_targ[ind_data_stopped],
+                    {pp:params[ind_data_stopped] for pp in params},
+                    data_weights[ind_data_stopped]
+                    )
+                return nll + fc
+            elif self.type_fun_optim == "nll":
+                # compute negative loglikelihood
+                return self.neg_loglike(data_targ, params, data_weights)
+                
+            else:
+                raise Exception(
+                    f"Unknown type of optimization function: {self.type_fun_optim}"
+                    )
+        else:
+            # something wrong: returns a blocking value
+            return np.inf
+
+    def neg_loglike(self, data_targ, params, data_weights):
+        return -self.loglike(data_targ, params, data_weights)
+
+    def loglike(self, data_targ, params, data_weights):
+        # compute loglikelihood
+        if self.expr_fit.is_distrib_discrete:
+            LL = self.expr_fit.distrib.logpmf(data_targ, **params)
+        else:
+            LL = self.expr_fit.distrib.logpdf(data_targ, **params)
+
+        # weighted sum of the loglikelihood
+        value = np.sum(data_weights * LL)
+
+        if np.isnan(value):
+            return -np.inf
+
+        return value
+
+    def stopping_rule(self, data_targ, params):
+        # evaluating threshold over time
+        thres_t = self.expr_fit.distrib.isf(q=1 / self.threshold_stopping_rule, **params)
+
+        # selecting the minimum over the years to check
+        thres = np.min(thres_t[self.ind_year_threshold])
+
+        # identifying where exceedances occur
+        if self.exclude_trigger:
+            ind_data_stopped = data_targ > thres
+        else:
+            ind_data_stopped = data_targ >= thres
+
+        # identifying remaining positions
+        ind_data_ok = ~ind_data_stopped
+        return ind_data_ok, ind_data_stopped
+
+    def fullcond_thres(self, data_targ, params, data_weights):
+        # calculating 2nd term for full conditional of the NLL
+        # fc1 = distrib.logcdf(self.data_targ)
+        fc2 = self.expr_fit.distrib.sf(data_targ, **params)
+
+        # return np.sum( (self.weights * fc1)[self.ind_stopped_data] )
+        # TODO: not 100% sure here, to double-check
+
+        return np.log(np.sum((data_weights * fc2)[self.ind_stopped_data]))
+
+    def bic(self, data_targ, params, data_weights):
+        loglike = self.loglike(data_targ, params, data_weights)
+        n_coeffs = len(self.expr_fit.coefficients_list)
+        return n_coeffs * np.log(len(data_targ)) - 2 * loglike
+
+    def crps(self, data_targ, data_pred, data_weights, coeffs):
+        # ps.crps_quadrature cannot be applied on conditional distributions, thu
+        # calculating in each point of the sample, then averaging
+        # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE
+        tmp_cprs = []
+        for i in np.arange(len(data_targ)):
+            distrib = self.expr_fit.evaluate(
+                coeffs, {p: data_pred[p][i] for p in data_pred}
+            )
+            tmp_cprs.append(
+                ps.crps_quadrature(
+                    x=data_targ[i],
+                    cdf_or_dist=distrib,
+                    xmin=-10 * np.abs(data_targ[i]),
+                    xmax=10 * np.abs(data_targ[i]),
+                    tol=1.0e-4,
+                )
+            )
+
+        # averaging
+        return np.sum(data_weights * np.array(tmp_cprs))
+
+
+
+class distrib_firstguess:
+    def __init__(
+        self,
+        expr_fit: Expression,
+        class_optim: distrib_optimizer,
+        class_tests: distrib_tests,
+        first_guess=None,
+        func_first_guess=None,
+    ):
+        """Class to find the first guess.
+
+        Parameters
+        ----------
+        expr_fit : class 'expression'
+            Expression to train. The string provided to the class can be found in
+            'expr_fit.expression'.
+            
+        class_optim : class 'distrib_optimizer'
+            Class defining the optimizer used during first guess and training of
+            distributions.
+            
+        class_tests : class 'distrib_tests'
+            Class defining the tests to perform during first guess and training.
+        
+        first_guess : numpy array, default: None
+            If provided, will use these values as first guess for the first guess.
+
+        func_first_guess : callable, default: None
+            If provided, and that 'first_guess' is not provided, will be called to
+            provide a first guess for the fit. This is an experimental feature, thus not
+            tested.
+            !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR
+            OWN RISKS.
+
+        """
+        # initialization
+        self.expr_fit = expr_fit
+        self.class_optim = class_optim
+        self.class_tests = class_tests
+        self.first_guess = first_guess
+        self.func_first_guess = func_first_guess
+
+        # preparing additional information
+        self.n_coeffs = len(self.expr_fit.coefficients_list)
+
+        # basic checks
+        if (self.first_guess is not None) and (len(self.first_guess) != self.n_coeffs):
+            raise ValueError(
+                f"The provided first guess does not have the correct shape: {self.n_coeffs}"
+            )
+         
+    def find_fg(self,
+                predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+                target: xr.DataArray,
+                dim: str,
+                weights: xr.DataArray | None = None
+                ):
+        """
+        Find a first guess for all grid points.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray. 
+        dim : str
+            Dimension along which to fit the polynomials.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample.
+
+        Returns
+        -------
+        :obj:`xr.Dataset`
+            Dataset of first guess (gridpoint, coefficient)
+        """
+        # create first guess
+        coefficients_fg = self._find_fg_xr(predictors, target, dim, weights)
+        
+        # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
+        
+        return coefficients_fg
+        
+        
+    def _find_fg_xr(self,
+                    predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+                    target: xr.DataArray,
+                    dim: str,
+                    weights: xr.DataArray | None = None
+                    ):
+        """
+        Find a first guess for all grid points.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray. Must be 2D and contain `dim`.
+        dim : str
+            Dimension along which to find the first guess.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample. Must be 1D and contain `dim`.
+
+        Returns
+        -------
+        :obj:`xr.Dataset`
+            Dataset of first guess (gridpoint, coefficient)
+        """
+        # TODO: eventually some tests similarly to _linear_regression.py
+
+        # preparing predictors
+        ds_pred = collapse_datatree_into_dataset(predictors, dim="predictor")
+        self.predictor_dim = ds_pred.predictor.values
+        
+        # getting just dataarray in the datasets
+        data_targ = self.class_tests.get_var_data(target)
+        data_pred = self.class_tests.get_var_data(ds_pred)
+        data_weights = self.class_tests.get_var_data(weights)
+
+        # check data
+        self.class_tests.validate_data(data_pred, data_targ, data_weights)
+        
+        # search for each gridpoint 
+        result = xr.apply_ufunc(
+            self._find_fg_np,
+            data_pred,
+            data_targ,
+            data_weights,
+            input_core_dims=[[dim, "predictor"], [dim], [dim]],
+            output_core_dims=[["coefficient"]],
+            vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+        result['coefficient'] = self.expr_fit.coefficients_list        
+        return xr.Dataset( {'coefficients':result} )
+
+
     # suppress nan & inf warnings
     @ignore_warnings
-    def find_fg(self):
+    def _find_fg_np(self,
+                    data_pred,
+                    data_targ,
+                    data_weights
+                    ):
         """
         compute first guess of the coefficients, to ensure convergence of the incoming
         fit.
@@ -916,7 +991,7 @@ class distrib_cov:
                support of the distribution. Two possibilities tried: based on CDF or based on NLL^n. The idea is
                to penalize very unlikely values, both works, but NLL^n works as well for
                extremely unlikely values, that lead to division by 0 with CDF)
-            7. If required (self.fg_with_global_opti), global fit within boundaries
+            7. If required (self.class_optim.fg_with_global_opti), global fit within boundaries
 
         Risks for the method:
             The only risk that I identify is if the user sets boundaries on coefficients
@@ -976,6 +1051,12 @@ class distrib_cov:
         FLEXIBILITY. In particular, it is mandatory to test it for different
         situations: variables, grid points, distributions & expressions.
         """
+        # preparing handling of this gridpoint throughout class
+        self.data_targ = data_targ
+        self.data_weights = data_weights
+        # correcting format: must be dict(str, DataArray or array) for Expression
+        # TODO: to change with stabilization of data format
+        self.data_pred = {pp:data_pred[:,ii] for ii, pp in enumerate(self.predictor_dim)}
 
         # preparing derivatives to estimate derivatives of data along predictors,
         # and infer a very first guess for the coefficients facilitates the
@@ -983,29 +1064,20 @@ class distrib_cov:
         smooth_targ = _smooth_data(self.data_targ)
 
         mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
+        ind_targ_low = np.where(smooth_targ < mean_smooth_targ - std_smooth_targ)[0]
+        ind_targ_high = np.where(smooth_targ > mean_smooth_targ + std_smooth_targ)[0]
+        mean_high_preds = {pp:np.mean(self.data_pred[pp][ind_targ_high], axis=0) for pp in self.predictor_dim}
+        mean_low_preds = {pp:np.mean(self.data_pred[pp][ind_targ_low], axis=0) for pp in self.predictor_dim}
 
-        mean_m_one_std = mean_smooth_targ - std_smooth_targ
-        mean_p_one_std = mean_smooth_targ + std_smooth_targ
-
-        ind_targ_low = np.where(smooth_targ < mean_m_one_std)[0]
-        ind_targ_high = np.where(smooth_targ > mean_p_one_std)[0]
-
-        mean_low_preds = {
-            p: np.mean(self.data_pred[p][ind_targ_low]) for p in self.data_pred
-        }
-        mean_high_preds = {
-            p: np.mean(self.data_pred[p][ind_targ_high]) for p in self.data_pred
-        }
-
-        mean_low_targs = np.mean(smooth_targ[ind_targ_low])
-        mean_high_targs = np.mean(smooth_targ[ind_targ_high])
-
-        derivative_targ = {
-            p: _finite_difference(
-                mean_high_targs, mean_low_targs, mean_high_preds[p], mean_low_preds[p]
+        derivative_targ = {pp:_finite_difference(
+            np.mean(smooth_targ[ind_targ_high]),
+            np.mean(smooth_targ[ind_targ_low]),
+            mean_high_preds[pp],
+            mean_low_preds[pp]
             )
-            for p in self.data_pred
-        }
+                           for pp in self.predictor_dim
+                           }
+        
 
         # Initialize first guess
         if self.first_guess is None:
@@ -1022,6 +1094,7 @@ class distrib_cov:
                     mean_smooth_targ,
                 )
             }
+            # TODO: do we move the basinhopping part to the class optimizers?
             globalfit_d01 = basinhopping(
                 func=self._fg_fun_deriv01,
                 x0=self.fg_coeffs,
@@ -1039,9 +1112,6 @@ class distrib_cov:
             # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
             self.fg_coeffs = self.fg_coeffs.astype(float)
 
-        # TODO: this is used nowhere?
-        self.mem = np.copy(self.fg_coeffs)
-
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
         loc_coeffs = self.expr_fit.coefficients_dict.get("loc", [])
@@ -1053,7 +1123,7 @@ class distrib_cov:
         # location might not be used (beta distribution) or set in the expression
         if len(self.fg_ind_loc) > 0:
 
-            localfit_loc = self._minimize(
+            localfit_loc = self.class_optim._minimize(
                 func=self._fg_fun_loc,
                 x0=self.fg_coeffs[self.fg_ind_loc],
                 args=(smooth_targ,),
@@ -1079,7 +1149,7 @@ class distrib_cov:
             else:
                 x0 = self.fg_coeffs[self.fg_ind_sca]
 
-            localfit_sca = self._minimize(
+            localfit_sca = self.class_optim._minimize(
                 func=self._fg_fun_sca,
                 x0=x0,
                 fact_maxfev_iter=len(self.fg_ind_sca) / self.n_coeffs,
@@ -1101,7 +1171,7 @@ class distrib_cov:
 
             self.fg_ind_others = np.array(self.fg_ind_others)
 
-            localfit_others = self._minimize(
+            localfit_others = self.class_optim._minimize(
                 func=self._fg_fun_others,
                 x0=self.fg_coeffs[self.fg_ind_others],
                 fact_maxfev_iter=len(self.fg_ind_others) / self.n_coeffs,
@@ -1111,15 +1181,17 @@ class distrib_cov:
 
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
-        localfit_nll = self._minimize(
-            func=self._fg_fun_NLL_no_tests,
+        localfit_nll = self.class_optim._minimize(
+            func=self._fg_fun_nll_no_tests,
             x0=self.fg_coeffs,
             fact_maxfev_iter=1,
             option_NelderMead="best_run",
         )
         self.fg_coeffs = localfit_nll.x
 
-        test_coeff, test_param, test_proba, _ = self.validate_coefficients(
+        test_coeff, test_param, test_proba, _ = self.class_tests.validate_coefficients(
+            self.data_pred,
+            self.data_targ,
             self.fg_coeffs
         )
 
@@ -1129,14 +1201,14 @@ class distrib_cov:
             # to have all points within support. NB: NLL does not behave well enough here)
             # two potential functions:
             if False:
-                # TODO: unreachable - add option or remove?
+                # TODO: unreachable - add option or remove? not sure yet.
                 # fit coefficients on CDFs
                 fun_opti_prob = self._fg_fun_cdfs
             else:
                 # fit coefficients on log-likelihood to the power n
-                fun_opti_prob = self._fg_fun_LL_n
+                fun_opti_prob = self._fg_fun_ll_n
 
-            localfit_opti = self._minimize(
+            localfit_opti = self.class_optim._minimize(
                 func=fun_opti_prob,
                 x0=self.fg_coeffs,
                 fact_maxfev_iter=1,
@@ -1146,7 +1218,7 @@ class distrib_cov:
                 self.fg_coeffs = localfit_opti.x
 
         # Step 7: if required, global fit within boundaries
-        if self.fg_with_global_opti:
+        if self.class_optim.fg_with_global_opti:
 
             # find boundaries on each coefficient
             bounds = []
@@ -1166,59 +1238,11 @@ class distrib_cov:
             if not globalfit_all.success:
                 raise ValueError(
                     "Global optimization for first guess failed, please check boundaries_coeff or ",
-                    "disable fg_with_global_opti in options_solver.",
+                    "disable fg_with_global_opti in options_solver of class_optim.",
                 )
             self.fg_coeffs = globalfit_all.x
+        return self.fg_coeffs
 
-    def _minimize(
-        self, func, x0, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run"
-    ):
-        """
-        options_NelderMead: str
-            * dont_run: would minimize only the chosen solver in method_fit
-            * fail_run: would minimize using Nelder-Mead only if the chosen solver in
-              method_fit fails
-            * best_run: will minimize using Nelder-Mead and the chosen solver in
-              method_fit, then select the best results
-        """
-        fit = minimize(
-            func,
-            x0=x0,
-            args=args,
-            method=self.method_fit,
-            options={
-                "maxfev": self.maxfev * fact_maxfev_iter,
-                "maxiter": self.maxfev * fact_maxfev_iter,
-                self.name_xtol: self.xtol_req,
-                self.name_ftol: self.ftol_req,
-            },
-        )
-
-        # observed that Powell solver is much faster, but less robust. May rarely create
-        # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
-        # critical steps or when Powell fails.
-
-        if (option_NelderMead == "fail_run" and not fit.success) or (
-            option_NelderMead == "best_run"
-        ):
-            fit_NM = minimize(
-                func,
-                x0=x0,
-                args=args,
-                method="Nelder-Mead",
-                options={
-                    "maxfev": self.maxfev * fact_maxfev_iter,
-                    "maxiter": self.maxiter * fact_maxfev_iter,
-                    "xatol": self.xtol_req,
-                    "fatol": self.ftol_req,
-                },
-            )
-            if (option_NelderMead == "fail_run") or (
-                option_NelderMead == "best_run"
-                and (fit_NM.fun < fit.fun or not fit.success)
-            ):
-                fit = fit_NM
-        return fit
 
     def _fg_fun_deriv01(self, x, pred_high, pred_low, derivative_targ, mean_targ):
         r"""
@@ -1380,10 +1404,9 @@ class distrib_cov:
         # else:
         #     return worst_diff_bot**2 + worst_diff_top**2 # + margin?
 
-    def _fg_fun_NLL_no_tests(self, coefficients):
+    def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expr_fit.evaluate_params(coefficients, self.data_pred)
-        self.ind_data_ok = slice(None, self.data_targ.size)
-        return self.neg_loglike(params)
+        return self.class_optim.neg_loglike(self.data_targ, params, self.data_weights)    
 
     # TODO: remove?
     def _fg_fun_cdfs(self, x):
@@ -1403,7 +1426,7 @@ class distrib_cov:
         term_high = (thres - np.min(1 - cdf)) ** 2 / np.min(1 - cdf) ** 2
         return np.max([term_low, term_high])
 
-    def _fg_fun_LL_n(self, x, n=4):
+    def _fg_fun_ll_n(self, x, n=4):
         params = self.expr_fit.evaluate_params(x, self.data_pred)
 
         if self.expr_fit.is_distrib_discrete:
@@ -1421,163 +1444,380 @@ class distrib_cov:
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
-            test_c, test_p, test_v, _ = self.validate_coefficients(x)
+            test_c, test_p, test_v, _ = self.class_tests.validate_coefficients(
+                            self.data_pred,
+                            self.data_targ,
+                            x
+            )
             test = test_c and test_p and test_v
             x[i_c] += fact_coeff * x[i_c]
             iter += 1
         # TODO: returns value after test = False, but should it maybe be the last value before that?
         return x[i_c]
 
-    # OPTIMIZATION FUNCTIONS & SCORES
-    def func_optim(self, coefficients):
-        # check whether these coefficients respect all conditions: if so, can compute a
-        # value for the optimization
-        test_coeff, test_param, test_proba, params = self.validate_coefficients(
-            coefficients
+
+
+
+class distrib_train:
+    def __init__(
+        self,
+        expr_fit: Expression,
+        class_optim: distrib_optimizer,
+        class_tests: distrib_tests
+    ):
+        """Fit a conditional distribution.
+        
+        Parameters
+        ----------
+        expr_fit : class 'expression'
+            Expression to train. The string provided to the class can be found in
+            'expr_fit.expression'.
+            
+        class_optim : class 'distrib_optimizer'
+            Class defining the optimizer used during first guess and training of
+            distributions.
+            
+        class_tests : class 'distrib_tests'
+            Class defining the tests to perform during first guess and training.
+        """
+        # initialization
+        self.expr_fit = expr_fit
+        self.class_optim = class_optim
+        self.class_tests = class_tests
+        
+    def prepare_data(
+        self,
+        predictors,
+        target,
+        weights
+        ):
+        """
+        shaping data for fit or evaluation of scores.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample.
+
+        Returns
+        -------
+        :data_pred:`xr.Dataset`
+            shaped predictors for training (gridpoint, coefficient)
+        :data_targ:`xr.Dataset`
+            shaped sample for training (gridpoint, coefficient)
+        :data_weights:`xr.Dataset`
+            shaped weights for training (gridpoint, coefficient)
+        """
+        # preparing predictors
+        ds_pred = collapse_datatree_into_dataset(predictors, dim="predictor")
+        self.predictor_dim = ds_pred.predictor.values
+        
+        # getting just dataarray in the datasets
+        data_pred = self.class_tests.get_var_data(ds_pred)
+        data_targ = self.class_tests.get_var_data(target)
+        data_weights = self.class_tests.get_var_data(weights)
+        
+        return data_pred, data_targ, data_weights        
+        
+    def fit(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        first_guess: xr.DataArray,
+        dim: str,
+        weights: xr.DataArray | None = None,
+        option_smooth_coeffs: bool = False,
+        r_gasparicohn: float = 500
+        ):
+        """Wrapper to fit over all gridpoints.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray.
+        first_guess : xr.DataArray
+            First guess for the coefficients.
+        dim : str
+            Dimension along which to find the first guess.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample.
+        option_smooth_coeffs : bool, default: False
+            If True, smooth the provided coefficients using a weighted median.
+            The weights are the correlation matrix of the Gaspari-Cohn function.
+            This is typically used for the 2nd round of the fit.
+        r_gasparicohn : float, default: 500
+            Radius used to compute the correlation matrix of the Gaspari-Cohn function.
+            This is typically used for the 2nd round of the fit.
+
+        Returns
+        -------
+        :obj:`xr.Dataset`
+            Dataset of result of optimization (gridpoint, coefficient)
+        """
+        self.option_smooth_coeffs = option_smooth_coeffs
+        self.r_gasparicohn = r_gasparicohn
+        
+        # training
+        coefficients = self._fit_xr(
+            predictors,
+            target,
+            first_guess,
+            dim,
+            weights
+            )
+        
+        return coefficients
+        
+    def _fit_xr(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        first_guess: xr.DataArray,
+        dim: str,
+        weights: xr.DataArray | None = None,
+        ):
+        """
+        xarray wrapper to fit over all gridpoints.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray.
+        first_guess : xr.DataArray
+            First guess for the coefficients.
+        dim : str
+            Dimension along which to find the first guess.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample.
+
+        Returns
+        -------
+        :obj:`xr.Dataset`
+            Dataset of result of optimization (gridpoint, coefficient)
+        """
+        # checking for smoothing of coefficients, eg for 2nd round of fit
+        if self.option_smooth_coeffs:
+            # calculating distance between points
+            geodist = geodist_exact(target["lon"], target["lat"])
+
+            # deducing correlation matrix
+            corr_gc = gaspari_cohn(geodist / self.r_gasparicohn)
+            
+            # will avoid taking gridpoints with nan
+            gp_nonan = first_guess["coefficients"].notnull().all(dim="coefficient").values
+            #gp_nonan = gp_nonan.rename({})
+        
+            # creating new dataset of coefficients
+            second_guess = np.nan * xr.ones_like(first_guess["coefficients"])
+
+            # calculating for each coef and each gridpoint the weighted median
+            for coef in first_guess.coefficient.values:
+                for gp in first_guess.gridpoint.values:
+                    fg = weighted_median(
+                        data=first_guess["coefficients"].sel(coefficient=coef, gridpoint=gp_nonan).values,
+                        weights=corr_gc.sel(gridpoint_i=gp, gridpoint_j=gp_nonan).values,
+                    )
+                    second_guess.loc[dict(coefficient=coef, gridpoint=gp)] = fg
+                    
+            # preparing for training
+            first_guess["coefficients"] = second_guess
+            
+        # shaping data
+        data_pred, data_targ, data_weights = self.prepare_data(predictors, target, weights)
+
+        # check data
+        self.class_tests.validate_data(data_pred, data_targ, data_weights)
+        
+        # search for each gridpoint 
+        result = xr.apply_ufunc(
+            self._fit_np,
+            data_pred,
+            data_targ,
+            first_guess["coefficients"],
+            data_weights,
+            input_core_dims=[[dim, "predictor"], [dim], ["coefficient"], [dim]],
+            output_core_dims=[["coefficient"]],
+            vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
+            dask="parallelized",
+            output_dtypes=[float],
         )
+        result['coefficient'] = self.expr_fit.coefficients_list
+        return xr.Dataset( {'coefficients':result} )
 
-        if test_coeff and test_param and test_proba:
 
-            # check for the stopping rule
-            if self.type_fun_optim == "fcNLL":
-                # will apply the stopping rule: splitting data_fit into two sets of data
-                # using the given threshold
-                self.ind_data_ok, self.ind_data_stopped = self.stopping_rule(params)
-            else:
-                self.ind_data_ok = slice(None)
-
-            # compute negative loglikelihood
-            NLL = self.neg_loglike(params)
-
-            # eventually compute full conditioning
-            if self.type_fun_optim == "fcNLL":
-                FC = self.fullcond_thres(params)
-                optim = NLL + FC
-            else:
-                optim = NLL
-
-            # returns value for optimization
-            return optim
-        else:
-            # something wrong: returns a blocking value
-            return np.inf
-
-    def neg_loglike(self, params):
-        return -self.loglike(params)
-
-    def loglike(self, params):
-        # compute loglikelihood
-        if self.expr_fit.is_distrib_discrete:
-            LL = self.expr_fit.distrib.logpmf(self.data_targ, **params)
-        else:
-            LL = self.expr_fit.distrib.logpdf(self.data_targ, **params)
-
-        # weighted sum of the loglikelihood
-        value = np.sum((self.weights_driver * LL)[self.ind_data_ok])
-
-        if np.isnan(value):
-            return -np.inf
-
-        return value
-
-    def stopping_rule(self, distrib):
-        # evaluating threshold over time
-        thres_t = distrib.isf(q=1 / self.threshold_stopping_rule)
-
-        # selecting the minimum over the years to check
-        thres = np.min(thres_t[self.ind_year_threshold])
-
-        # identifying where exceedances occur
-        if self.exclude_trigger:
-            ind_data_stopped = self.data_targ > thres
-        else:
-            ind_data_stopped = self.data_targ >= thres
-
-        # identifying remaining positions
-        ind_data_ok = ~ind_data_stopped
-        return ind_data_ok, ind_data_stopped
-
-    def fullcond_thres(self, params):
-        # calculating 2nd term for full conditional of the NLL
-        # fc1 = distrib.logcdf(self.data_targ)
-        fc2 = self.expr_fit.distrib.sf(self.data_targ, **params)
-
-        # return np.sum( (self.weights_driver * fc1)[self.ind_stopped_data] )
-        # TODO: not 100% sure here, to double-check
-
-        return np.log(np.sum((self.weights_driver * fc2)[self.ind_stopped_data]))
-
-    def bic(self, params):
-        loglike = self.loglike(params)
-        return self.n_coeffs * np.log(self.n_sample) / self.n_sample - 2 * loglike
-
-    # TODO: remove /self.n_sample? bc weights are already normalized
-
-    def crps(self, coeffs):
-        # ps.crps_quadrature cannot be applied on conditional distributions, thu
-        # calculating in each point of the sample, then averaging
-        # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE
-
-        tmp_cprs = []
-        for i in np.arange(self.n_sample):
-            distrib = self.expr_fit.evaluate(
-                coeffs, {p: self.data_pred[p][i] for p in self.data_pred}
-            )
-            tmp_cprs.append(
-                ps.crps_quadrature(
-                    x=self.data_targ[i],
-                    cdf_or_dist=distrib,
-                    xmin=-10 * np.abs(self.data_targ[i]),
-                    xmax=10 * np.abs(self.data_targ[i]),
-                    tol=1.0e-4,
-                )
-            )
-
-        # averaging
-        return np.sum(self.weights_driver * np.array(tmp_cprs))
 
     @ignore_warnings  # suppress nan & inf warnings
-    def fit(self):
+    def _fit_np(self, pred, targ, fg, weights):
+        # basic check
+        if (fg is not None) and (len(fg) != len(self.expr_fit.coefficients_list)):
+            raise ValueError(
+                f"The provided first guess does not have the correct shape: {len(self.expr_fit.coefficients_list)}"
+            )
 
-        # Before fitting, need a good first guess, using 'find_fg'.
-        if self.func_first_guess is not None:
-            self.func_first_guess()
-        else:
-            self.find_fg()
+        # correcting format: must be dict(str, DataArray or array) for Expression
+        # TODO: to change with stabilization of data format
+        pred = {pp:pred[:,ii] for ii, pp in enumerate(self.predictor_dim)}
 
-        m = self._minimize(
-            func=self.func_optim,
-            x0=self.fg_coeffs,
+        # training
+        m = self.class_optim._minimize(
+            func=self.class_optim.func_optim,
+            x0=fg,
+            args=(pred, targ, weights),
             fact_maxfev_iter=1,
             option_NelderMead="best_run",
         )
 
         # checking if the fit has failed
-        if self.error_failedfit and not m.success:
+        if self.class_optim.error_failedfit and not m.success:
             raise ValueError("Failed fit.")
         else:
-            self.coefficients_fit = m.x
-            self.eval_quality_fit()
+            return m.x
 
-    def eval_quality_fit(self):
+    def eval_quality_fit(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        coefficients_fit: xr.DataArray,
+        dim: str,
+        weights: xr.DataArray | None = None,
+        scores_fit=["func_optim", "nll", "bic"]
+    ):
+        """Evaluate the scores for this fit.
+        
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray.
+        coefficients_fit : xr.DataArray
+            Result from the optimization for the coefficients.
+        dim : str
+            Dimension along which to calculate the scores.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample.
+        scores_fit : list of str, default: ['func_optim', 'nll', 'bic']
+            After the fit, several scores can be calculated to assess the performance:
+            - func_optim: function optimized, as described in
+              options_optim['type_fun_optim']: negative log likelihood or full
+              conditional negative log likelihood
+            - nll: Negative Log Likelihood
+            - bic: Bayesian Information Criteria
+            - crps: Continuous Ranked Probability Score (warning, takes a long time to
+              compute)
+        """
+        self.scores_fit = scores_fit
+        
+        # training
+        quality_fit = self._eval_quality_fit_xr(
+            predictors,
+            target,
+            coefficients_fit,
+            dim,
+            weights
+            )
+        return quality_fit
+    
+    def _eval_quality_fit_xr(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        coefficients_fit: xr.DataArray,
+        dim: str,
+        weights: xr.DataArray | None = None,
+    ):
+        """Evaluate the scores for this fit.
+        
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray.
+        coefficients_fit : xr.DataArray
+            Result from the optimization for the coefficients.
+        dim : str
+            Dimension along which to calculate the scores.
+        weights : xr.DataArray, default: None.
+            Individual weights for each sample.
+        scores_fit : list of str, default: ['func_optim', 'nll', 'bic']
+            After the fit, several scores can be calculated to assess the performance:
+            - func_optim: function optimized, as described in
+              options_optim['type_fun_optim']: negative log likelihood or full
+              conditional negative log likelihood
+            - nll: Negative Log Likelihood
+            - bic: Bayesian Information Criteria
+            - crps: Continuous Ranked Probability Score (warning, takes a long time to
+              compute)
+        """
+        # shaping data
+        data_pred, data_targ, data_weights = self.prepare_data(predictors, target, weights)
+
+        # check data
+        self.class_tests.validate_data(data_pred, data_targ, data_weights)
+
+        # search for each gridpoint 
+        result = xr.apply_ufunc(
+            self._eval_quality_fit_np,
+            data_pred,
+            data_targ,
+            coefficients_fit["coefficients"],
+            data_weights,
+            input_core_dims=[[dim, "predictor"], [dim], ["coefficient"], [dim]],
+            output_core_dims=[["score"]],
+            vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+        result['score'] = self.scores_fit
+        return xr.Dataset( {'scores':result} )
+
+
+    def _eval_quality_fit_np(self, data_pred, data_targ, coefficients_fit, data_weights):
         # initialize
-        self.quality_fit = {}
+        quality_fit = []
 
-        # basic result: optimized value
-        if "func_optim" in self.scores_fit:
-            self.quality_fit["func_optim"] = self.func_optim(self.coefficients_fit)
+        # correcting format: must be dict(str, DataArray or array) for Expression
+        # TODO: to change with stabilization of data format
+        data_pred = {pp:data_pred[:,ii] for ii, pp in enumerate(self.predictor_dim)}
+        
+        for score in self.scores_fit:
+            # basic result: optimized value
+            if score == "func_optim":
+                score = self.class_optim.func_optim(coefficients_fit, data_pred, data_targ, data_weights)
 
-        # distribution obtained
-        params = self.expr_fit.evaluate_params(self.coefficients_fit, self.data_pred)
+            # calculating parameters for the next ones
+            params = self.expr_fit.evaluate_params(coefficients_fit, data_pred)
+        
+            # NLL averaged over sample
+            if score == "nll":
+                score = self.class_optim.neg_loglike(data_targ, params, data_weights)
 
-        # NLL averaged over sample
-        if "NLL" in self.scores_fit:
-            self.quality_fit["NLL"] = self.neg_loglike(params)
+            # BIC averaged over sample
+            if score == "bic":
+                score = self.class_optim.bic(data_targ, params, data_weights)
 
-        # BIC averaged over sample
-        if "BIC" in self.scores_fit:
-            self.quality_fit["BIC"] = self.bic(params)
-
-        # CRPS
-        if "CRPS" in self.scores_fit:
-            self.quality_fit["CRPS"] = self.crps(self.coefficients_fit)
+            # CRPS
+            if score == "crps":
+                score = self.class_optim.crps(data_targ, data_pred, data_weights, coefficients_fit)
+                
+            quality_fit.append(score)
+        return np.array(quality_fit)

@@ -1,293 +1,366 @@
-# add pathway to folders 1 level higher (i.e., to mesmer and configs)
-import os
-import sys
-
+import filefinder # FutureWarning: filefinder --> filefisher
+import pathlib
 import joblib
-
-sys.path.append("../")
-
-# additional packages for this script
 import numpy as np
 import xarray as xr
 
-# import MESMER tools
-# from mesmer.calibrate_mesmer import train_lv
-# from mesmer.create_emulations import create_emus_lv
-# from mesmer.mesmer_x import *
-import mesmer.mesmer_x.train_l_distrib_mesmerx as mesmer_x_train
-import mesmer.mesmer_x.train_utils_mesmerx as mesmer_x_train_utils
+import mesmer
+import mesmer.mesmer_x
 
-# load in MESMER-X configurations used in this script
-from mesmer.mesmer_x.temporary_config_all import ConfigMesmerX
-from mesmer.mesmer_x.temporary_support import load_inputs_MESMERx
-from mesmer.utils import separate_hist_future
+# TODO: to replace with outputs from PR #607
+#import datatree
+from mesmer.core.datatree import stack_datatrees_for_linear_regression
+from mesmer.core._datatreecompat import map_over_datasets
 
-# load in MESMER scripts for treatment of data
-# from mesmer.io import (
-#     load_cmip,
-#     load_phi_gc,
-#     load_regs_ls_wgt_lon_lat,
-#     test_combination_vars,
-# )
 
 
 def main():
 
     # ==============================================================
     # 0. OPTIONS FOR THE SCRIPT
+    # target
+    target = "mrso_minmon"  # txx, mrso, fwils, fwisa, fwixd, fwixx, mrso_minmon
+    target_anomaly = False
+    dir_target = pathlib.Path("/net/exo/landclim/yquilcaille/annual_indicators")
+
+    # predictor
+    predictor = "tas"
+    dir_pred = pathlib.Path("/net/ch4/data/cmip6-Next_Generation/")
+
+    # Earth Sytem Model to emulate
+    esm = "IPSL-CM6A-LR"
     # ==============================================================
-    # variables to represent
-    targ = "mrso"  # txx, mrso, fwils, fwisa, fwixd, fwixx, mrso_minmon mrsomean??!
-    pred = "tas"
-    sub_pred = None  # 'hfds' hfds | (pr)
 
-    # options for server
-    # To control if run everything or using a bunch of processes
-    run_on_exo = False
-    # ==============================================================
-    # ==============================================================
 
     # ==============================================================
-    # 1. PREPARATION OF MESMER-X
+    # 1. CONFIGURATION PARAMETERS
+    THRESHOLD_LAND = 1 / 3
+    REFERENCE_PERIOD = slice("1850", "1900")
+    scenarios = ["historical", "ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
     # ==============================================================
-    # short preparation
-    # Priority of this script on the server. Value in [-20,19], default at 0, higher is nicer to others
-    if run_on_exo:
-        os.nice(19)
-    subindex_csl = int(sys.argv[1]) if run_on_exo else None
-    runs_per_process = 3
 
-    # paths
-    path_save_figures = "/home/yquilcaille/mesmer-x_figures/" + targ
-    path_save_results = "/net/exo/landclim/yquilcaille/mesmer-x_results/" + targ
 
-    # configuration
-    gen = 6
-    dir_cmipng = "/net/atmos/data/cmip" + str(gen) + "-ng/"
-    # /net/ch4/data/cmip6-Next_Generation/mrso/ann/g025
-
-    dir_cmip_X = {
-        "txx": "/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/IPCC_AR6_CH11/data/cmip6/tasmax/txx_regrid",
-        "mrso": "/net/ch4/data/cmip6-Next_Generation/mrso/ann/g025",
-        "mrsomean": "/landclim/yquilcaille/annual_indicators/mrsomean",
-        "mrso_minmon": "/landclim/yquilcaille/annual_indicators/mrso_minmon/ann/g025",
-        "fwixx": "/landclim_nobackup/yquilcaille/FWI_CMIP6/hurs_tasmax_sfcWind_pr/Drying-NSHeq_Day-continuous_Owinter-wDC/regridded/fwixx/ann/g025",
-        "fwisa": "/landclim_nobackup/yquilcaille/FWI_CMIP6/hurs_tasmax_sfcWind_pr/Drying-NSHeq_Day-continuous_Owinter-wDC/regridded/fwisa/ann/g025",
-        "fwixd": "/landclim_nobackup/yquilcaille/FWI_CMIP6/hurs_tasmax_sfcWind_pr/Drying-NSHeq_Day-continuous_Owinter-wDC/regridded/fwixd/ann/g025",
-        "fwils": "/landclim_nobackup/yquilcaille/FWI_CMIP6/hurs_tasmax_sfcWind_pr/Drying-NSHeq_Day-continuous_Owinter-wDC/regridded/fwils/ann/g025",
-    }[targ]
-    # '/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/IPCC_AR6_CH11/data/cmip6/mrso/sm_annmean'
-
-    # observations
-    dir_obs = "/net/exo/landclim/yquilcaille/mesmer-x/data/observations/"
-    # auxiliary data
-    dir_aux = "/net/exo/landclim/yquilcaille/mesmer-x/data/auxiliary/"
-    dir_mesmer_params = "/net/exo/landclim/yquilcaille/mesmer-x/calibrated_parameters/"
-    dir_mesmer_emus = "/net/exo/landclim/yquilcaille/mesmer-x/emulations/"
-    # emulation statistics
-    dir_stats = "/net/exo/landclim/yquilcaille/mesmer-x/statistics/"
-    # plots
-    dir_plots = "/net/exo/landclim/yquilcaille/mesmer-x/plots/"
-
-    cfg = ConfigMesmerX(
-        gen=gen,
-        paths={
-            "dir_cmipng": dir_cmipng,
-            "dir_cmip_X": dir_cmip_X,
-            "dir_obs": dir_obs,
-            "dir_aux": dir_aux,
-            "dir_mesmer_params": dir_mesmer_params,
-            "dir_mesmer_emus": dir_mesmer_emus,
-            "dir_stats": dir_stats,
-            "dir_plots": dir_plots,
-        },
-        esms="all",
+    # ==============================================================
+    # 2. LOADING: MUST BE ADAPTED BASED ON THE ARCHIVE OF THE USER
+    # preparing file finders: the structure depends on the archive!
+    CMIP_FILEFINDER_pred = filefinder.FileFinder(
+        path_pattern=dir_pred / "{variable}/{time_res}/{resolution}",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
+    )
+    CMIP_FILEFINDER_target = filefinder.FileFinder(
+        path_pattern=dir_target / "{variable}/{time_res}/{resolution}",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
-    # make paths if not existing
-    for path in [path_save_results, path_save_figures]:
-        if not os.path.exists(path):
-            os.makedirs(path)
+    # finding files: careful about naming of resolutions
+    fc_pred = CMIP_FILEFINDER_pred.find_files(
+        variable=predictor, scenario=scenarios, model=esm, resolution="g025", time_res="ann"
+    )
+    fc_target = CMIP_FILEFINDER_target.find_files(
+        variable=target, scenario=scenarios, model=esm, resolution="g025", time_res="ann"
+    )
+
+    # filtering
+    runs_targ, runs_pred = [], []
+    for r_pred in fc_pred.items():
+        r_targ = fc_target.search( **r_pred[1] | {'variable':target} )
+        if len(r_targ) == 1:
+            runs_pred.append(r_pred[0])
+            runs_targ.append(r_targ[0][0])
+
+    # loading: the preprocessing steps depend on the archive!
+    # TODO: the current filtering does not check whether runs stop in 2100/2300
+    cut_off = 2100
+    def preprocess_data(ds, stack_lat_lon):
+        # creating coordinate for member
+        ds = ds.assign_coords({'member':ds.attrs['variant_label']})
+        # mask and stack
+        ds = mesmer.core.mask.mask_ocean_fraction(ds, THRESHOLD_LAND)
+        ds = mesmer.core.mask.mask_antarctica(ds)
+        if stack_lat_lon:
+            ds = mesmer.core.grid.stack_lat_lon(ds, stack_dim="gridpoint")
+        ds = mesmer.core.grid.wrap_to_180(ds)
+        ds['time'] = ds.time.dt.year
+        ds = ds.sel(time=slice(1850, cut_off))
+        for dump_dim in ['time_bnds', 'file_qf', 'height']:
+            if dump_dim in ds:
+                ds = ds.drop_vars(dump_dim)
+        return ds
+
+    # loading & create datatree
+    def create_datatree_from_list(list_paths_ds, name_dt, stack_lat_lon):
+        out = dict()
+        for run in list_paths_ds:
+            # load
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = preprocess_data(ds=xr.open_dataset(run, decode_times=time_coder), stack_lat_lon=stack_lat_lon)
+            scen = ds.attrs['experiment_id']
+            if scen not in out:
+                # initialize
+                out[scen] = xr.DataTree(ds)
+            else:
+                # add run
+                dt_scen_bef = xr.Dataset(out[scen])
+                out[scen] = xr.DataTree(xr.concat( [dt_scen_bef, ds], dim='member' ))
+        return xr.DataTree.from_dict(out, name=name_dt)
+
+    tas_data = create_datatree_from_list(list_paths_ds=runs_pred, name_dt=predictor, stack_lat_lon=False)
+    targ_data = create_datatree_from_list(list_paths_ds=runs_targ, name_dt=target, stack_lat_lon=True)
+
+    # calculating anomalies if necessary
+    tas_data = mesmer.core.anomaly.calc_anomaly(tas_data, REFERENCE_PERIOD)
+    if target_anomaly:
+        targ_data = mesmer.core.anomaly.calc_anomaly(targ_data, REFERENCE_PERIOD)
+    
+    # calculating predictors
+    tas_globmean = map_over_datasets(mesmer.core.weighted.global_mean, tas_data)
+    
+    # example to calculate additional predictors
+    # calculating gmt at t-1 to set at t
+    tmp = dict()
+    for scen, (ds, ) in xr.group_subtrees(tas_globmean):
+        if scen == ".":
+            continue
+        ds = ds.to_dataset()
+        if scen == 'historical':
+            # repeating first value of historical
+            fill_value = ds.isel(time=0)
+        else:
+            # taking last value of historical
+            fill_value = tas_globmean['historical'].to_dataset().isel(time=-1).sel(member=ds['member'])
+        dat = ds.shift(shifts={'time':1})#, fill_value=fill_value)# doesnt work for some reason?
+        dat[{'time': 0}] = fill_value
+        tmp[scen] = dat
+    tas_glomean_tm1 = xr.DataTree.from_dict(tmp)
+    
+    # creating predictors for training
+    pred_data = xr.DataTree.from_dict({'gmt': tas_globmean, 'gmt_tm1': tas_glomean_tm1}, name="predictors")
+    # ==============================================================
+
 
     # ==============================================================
-    # ==============================================================
-
-    # ==============================================================
-    # 2. PREPARATION: based on data structures of the former version of MESMER
-    # ==============================================================
-    print("-------------------------------------------")
-    print("Objective: " + targ)
-    print("Predictor for the objective: " + pred)
-    if sub_pred is not None:
-        print("Sub-predictor for the predictor: " + sub_pred)
-    print("-------------------------------------------")
-    print(" ")
-
-    # load in the ESM runs
-    # just taking 1 esm (CanESM5) with several ensemble members for refactoring
-    esms = [cfg.esms[3]]  # cfg.esms
-    if run_on_exo:
-        esms = esms[
-            subindex_csl * runs_per_process : (subindex_csl + 1) * runs_per_process
-        ]
-
-    # preparing data
-    (
-        time,
-        PRED,
-        SUB_PRED,
-        reg_dict,
-        ls,
-        wgt_g,
-        lon,
-        lat,
-        land_targ,
-        land_pred,
-        phi_gc,
-        # ind, these were only for regional aggregation
-        # gp2reg,
-        # ww_reg,
-        used_esms,
-        dico_gps_nan,
-    ) = load_inputs_MESMERx(cfg, [targ, pred, sub_pred], esms)
-
-    # just for readability
-    print(" ")
-    # ==============================================================
-    # ==============================================================
-
-    # ==============================================================
-    # 3. EXAMPLE TO RUN MESMER-X
-    # ==============================================================
-    # --------------------------------------------------------------
-    # 3.1. PREPARING DATA FOR EXAMPLE: temporary reformatting of data: based on list of xarrays, one per scenario
-    # --------------------------------------------------------------
-    # esm test
-    esm = "CanESM5"
-
-    # variable
-    land_targ_s, time_s = separate_hist_future(land_targ[esm], time[esm], cfg)
-
-    # predictor GMT at t
-    pred_s, time_s = separate_hist_future(PRED[esm], time[esm], cfg)
-
-    # predictor GMT at t-1
-    tmp_pred = {
-        scen: np.hstack([PRED[esm][scen][:, 0, np.newaxis], PRED[esm][scen][:, :-1]])
-        for scen in PRED[esm].keys()
-    }
-    tmp_pred_s, time_s = separate_hist_future(tmp_pred, time[esm], cfg)
-
-    # preparing predictors
-    predictors = []
-    for scen in pred_s.keys():
-        predictors.append((xr.Dataset(), scen))
-        predictors[-1][0]["GMT_t"] = xr.DataArray(
-            pred_s[scen],
-            coords={"member": np.arange(pred_s[scen].shape[0]), "time": time_s[scen]},
-            dims=(
-                "member",
-                "time",
-            ),
-        )
-        predictors[-1][0]["GMT_tm1"] = xr.DataArray(
-            tmp_pred_s[scen],
-            coords={"member": np.arange(pred_s[scen].shape[0]), "time": time_s[scen]},
-            dims=(
-                "member",
-                "time",
-            ),
-        )
-
-    # preparing target
-    target = []
-    for scen in land_targ_s.keys():
-        target.append((xr.Dataset(), scen))
-        target[-1][0][targ] = xr.DataArray(
-            land_targ_s[scen],
-            coords={
-                "member": np.arange(land_targ_s[scen].shape[0]),
-                "time": time_s[scen],
-                "gridpoint": np.arange(land_targ_s[scen].shape[2]),
-            },
-            dims=(
-                "member",
-                "time",
-                "gridpoint",
-            ),
-        )
-    # --------------------------------------------------------------
-    # --------------------------------------------------------------
-
-    # --------------------------------------------------------------
-    # 3.2. EXAMPLE OF TRAINING
-    # --------------------------------------------------------------
-    expr_name = "cfgA"
-    expr = "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
-    # potential solution for extreme precipitations
-    # expr = "genextreme(loc=c1 + c2 * __GMT_t__, scale=c3*(c1 + c2 * __GMT_t__), c=c7)"
-    # testing
-    # expr = "skewnorm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6, a=c7)"
-    # testing
-    # expr = "norm(loc=c1 + c3 * __GMT_t__ + c4 * __GMT_tm1__, scale=c6)"
-
-    # training conditional distributions following 'expr' in all grid points
-    xr_coeffs_distrib, xr_qual = mesmer_x_train.xr_train_distrib(
-        predictors=predictors,
+    # 3. EXAMPLE TO TRAIN MESMER-X
+    # weight
+    weights = mesmer.mesmer_x.get_weights_uniform(
+        targ_data=targ_data,
         target=target,
-        target_name=targ,
-        expr=expr,
-        expr_name=expr_name,
-        option_2ndfit=False,
-        r_gasparicohn_2ndfit=500,
-        scores_fit=["func_optim", "NLL", "BIC"],
+        dims=("member", "time")
+        )
+    #weights_test = mesmer.core.weighted.equal_scenario_weights_from_datatree(targ_data, ens_dim="member", time_dim="time")
+    # NB: mesmer.core.weighted.equal_scenario_weights_from_datatree and
+    # mesmer.mesmer_x.get_weights_uniform are roughly equivalent, but
+    # the rescale differs two. The weights from MESMER-X sum up to 1 over
+    # all (member, time, scenario), while those of MESMER sum up to 1 over
+    # only (member).
+    
+    # or
+    
+    weights = mesmer.mesmer_x.get_weights_density(
+        pred_data=pred_data,
+        predictor=predictor,
+        targ_data=targ_data,
+        target=target,
+        dims=("member", "time")
+        )
+    
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # WARNING: FOR THE SAKE OF TIME, WRITING EASY STACKED DATASETS FROM NOW!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    stacked_pred, stacked_targ, stacked_weights = mesmer.core.datatree.stack_datatrees_for_linear_regression(
+        predictors=pred_data,
+        target=targ_data,
+        weights=weights,
+        stacking_dims=['member', 'time']
+        )
+    
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # WARNING: FOR TESTING, TAKES ONLY A SUBSET OF THE DATA
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    test_targ_data = targ_data.isel(gridpoint=slice(0,5))
+    test_stacked_targ = stacked_targ.isel(gridpoint=slice(0,5))
+    
+    # declaring analytical form of the conditional distribution
+    expr_name = "cfgA"
+    expr = "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __gmt__ + c4 * __gmt_tm1__ - c5) ), scale=c6)"
+    expression_fit = mesmer.mesmer_x.Expression(expr, expr_name)
+    
+    # preparing tests that will be used for first guess and training
+    tests_mx = mesmer.mesmer_x.distrib_tests(
+        expr_fit=expression_fit,
+        threshold_min_proba=1.0e-9,
+        boundaries_params=None,
+        boundaries_coeffs=None
     )
-
-    # probability integral transform: projection of the data on a standard normal distribution
-    transf_target = mesmer_x_train_utils.probability_integral_transform(  # noqa: F841
-        data=target,
-        target_name=targ,
+    
+    # preparing optimizers that will be used for first guess and training
+    optim_mx = mesmer.mesmer_x.distrib_optimizer(
+        expr_fit=expression_fit,
+        class_tests=tests_mx,
+        weights=stacked_weights,
+        options_optim=None,
+        options_solver=None
+    )
+    
+    # preparing first guess
+    fg_mx = mesmer.mesmer_x.distrib_firstguess(
+        expr_fit=expression_fit,
+        class_tests=tests_mx,
+        class_optim=optim_mx,
+        first_guess=None,
+        func_first_guess=None
+    )
+    coeffs_fg = fg_mx.find_fg(
+        predictors=stacked_pred,
+        target=test_stacked_targ,
+        weights=stacked_weights,
+        dim="sample"
+    )
+    
+    # training the conditional distribution
+    train_mx = mesmer.mesmer_x.distrib_train(
+        expr_fit=expression_fit,
+        class_tests=tests_mx,
+        class_optim=optim_mx
+    )
+    # first round
+    coefficients = train_mx.fit(
+        predictors=stacked_pred,
+        target=test_stacked_targ,
+        first_guess=coeffs_fg,
+        weights=stacked_weights,
+        dim="sample"
+    )
+    scores = train_mx.eval_quality_fit(
+        predictors=stacked_pred,
+        target=test_stacked_targ,
+        coefficients_fit=coefficients,
+        weights=stacked_weights,
+        dim="sample",
+        scores_fit=["func_optim", "nll", "bic"]
+        )
+    
+    # second round if necessary
+    if False:
+        coefficients = train_mx.fit(
+            predictors=stacked_pred,
+            target=test_stacked_targ,
+            first_guess=coefficients,
+            weights=stacked_weights,
+            dim="sample",
+            option_smooth_coeffs=True,
+            r_gasparicohn=500
+        )
+        scores = train_mx.eval_quality_fit(
+            predictors=stacked_pred,
+            target=test_stacked_targ,
+            coefficients_fit=coefficients2,
+            weights=stacked_weights,
+            dim="sample",
+            scores_fit=["func_optim", "nll", "bic"]
+            )
+    
+    # probability integral transform on non-stacked data for AR(1) process
+    pit = mesmer.mesmer_x.probability_integral_transform(
         expr_start=expr,
-        coeffs_start=xr_coeffs_distrib,
-        preds_start=predictors,
+        coeffs_start=coefficients,
         expr_end="norm(loc=0, scale=1)",
-    )
+        coeffs_end=None
+        )
+    transf_target = pit.transform(
+        data=test_targ_data,
+        target_name=target,
+        preds_start=pred_data,
+        preds_end=None
+        )
 
     # training of auto-regression with spatially correlated innovations
-    # NEW CODE OF MESMER: not applied on residuals, but on 'transf_target'
-    # TODO
+    # not applied on residuals, but on 'transf_target'
+    # (code based on test_calibrate_mesmer_newcodepath.py)
+    local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
+        transf_target,
+        ens_dim="member",
+        dim="time",
+        lags=1,
+    )
 
-    # --------------------------------------------------------------
+    # train covariance
+    geodist = mesmer.core.geospatial.geodist_exact(
+        lon=test_stacked_targ.lon,
+        lat=test_stacked_targ.lat
+    )
+    LOCALISATION_RADII = range(1750, 2001, 250)
+    phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
+        geodist=geodist,
+        localisation_radii=LOCALISATION_RADII
+    )
+    # TODO: should we both for MESMER and for MESMER-X remove the 
+    # residuals from the AR(1) process before calculating the covariance?
+    # is that we is happening in 'adjust_covariance_ar1'?
+    # TODO: using here weights from MESMER-X. I noticed that it affects the
+    # calculation in find_localized_empirical_covariance. Need to solve that.
+    localized_ecov = mesmer.stats.find_localized_empirical_covariance(
+        data=test_stacked_targ[target],
+        weights=stacked_weights.weight,
+        localizer=phi_gc_localizer,
+        dim="sample",
+        k_folds=30
+    )
+
+    localized_ecov["localized_covariance_adjusted"] = (
+        mesmer.stats.adjust_covariance_ar1(
+            localized_ecov.localized_covariance, local_ar_params.coeffs
+        )
+    )
+    
+    # TODO: add save of parameters. preferred option: netCDF. PR?
     # --------------------------------------------------------------
 
     # --------------------------------------------------------------
     # 3.3. EXAMPLE OF EMULATION
-    # --------------------------------------------------------------
-    # new scenario:
-    # NEW CODE OF MESMER, same structure as 'predictors' used for training, output=preds_newscen
+    # example of scenario: GMT rises by 1% every year from 2015 to 2100
+    name_newscenario = "new_scenario"
+    gmt_0 = tas_globmean['historical']['tas'].sel(time=2014).mean('member').values
+    new_tas_globmean = xr.DataArray(
+        gmt_0 * (1.01)**np.arange(1, 2100-2015+1),
+        coords={'time':np.arange(2015, 2100)},
+        dims=['time']
+        )
+    new_tas_globmean = xr.Dataset({predictor:new_tas_globmean})
+    new_tas_globmean_tm1 = new_tas_globmean.shift(time=1, fill_value=gmt_0)
+    new_pred_data = xr.DataTree.from_dict({
+        'gmt': xr.DataTree.from_dict({name_newscenario: new_tas_globmean}),
+        'gmt_tm1': xr.DataTree.from_dict({name_newscenario: new_tas_globmean_tm1})
+        }, name="predictors")       
 
-    preds_newscen = []  # TODO
-
-    # generate realizations based on the auto-regression with spatially correlated innovations
-    # NEW CODE OF MESMER, output = 'transf_emus'
-    transf_emus = []  # TODO
-
-    # probability integral transform: projection of the transformed data on the known distributions
-    emus = mesmer_x_train_utils.probability_integral_transform(
-        target_name=targ,
-        data=transf_emus,
-        expr_start="norm(loc=0, scale=1)",
-        expr_end=expr,
-        coeffs_end=xr_coeffs_distrib,
-        preds_end=preds_newscen,
+    # compute local variability
+    local_variability = mesmer.stats.draw_auto_regression_correlated(
+        local_ar_params,
+        localized_ecov["localized_covariance_adjusted"],
+        time=new_tas_globmean.time,
+        realisation=100,
+        seed=42,
+        buffer=42,
     )
-
-    joblib.dump(emus, cfg.paths["dir_mesmer_emus"] + "emus_" + targ + ".pkl")
+    datatree_localvar = xr.DataTree.from_dict({name_newscenario:xr.Dataset({target:local_variability})})
+    
+    # compute back-probability integral transform = emulations
+    back_pit = mesmer.mesmer_x.probability_integral_transform(
+        expr_start="norm(loc=0, scale=1)",
+        coeffs_start=None,
+        expr_end=expr,
+        coeffs_end=coefficients
+        )
+    emulations = back_pit.transform(
+        data=datatree_localvar,
+        target_name=target,
+        preds_start=None,
+        preds_end=new_pred_data
+        )
     # --------------------------------------------------------------
-    # --------------------------------------------------------------
-    # ==============================================================
     # ==============================================================
 
 
 if __name__ == "__main__":
     main()
+
+# %%
