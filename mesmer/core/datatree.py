@@ -209,6 +209,18 @@ def _datatree_wrapper(func):
     @functools.wraps(func)
     def inner(*args, **kwargs):
 
+        # check to ensure there are no DataTree in kwargs. Altough this is not very
+        # efficient, it has bitten me before.
+        dt_kwargs = [key for key, val in kwargs.items() if isinstance(val, xr.DataTree)]
+        if dt_kwargs:
+            dt_kwargs = "', '".join(dt_kwargs)
+            msg = (
+                "Passed a `DataTree` as keyword argument which is not allowed."
+                f" Passed `DataTree` kwargs: '{dt_kwargs}'"
+            )
+            raise TypeError(msg)
+
+
         if any(isinstance(arg, xr.DataTree) for arg in args):
             return map_over_datasets(func, *args, kwargs=kwargs)
 

@@ -6,7 +6,7 @@ import mesmer
 from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
-
+from mesmer.core.datatree import _datatree_wrapper
 
 def test_collapse_datatree_into_dataset():
     n_ts = 30
@@ -287,3 +287,38 @@ def test_stack_linear_regression_datatrees():
     target_aligned, pred1_aligned = xr.align(target_stacked, pred1, join="exact")
     xr.testing.assert_equal(target_stacked, target_aligned)
     xr.testing.assert_equal(pred1, pred1_aligned)
+
+
+def test_datatree_wrapper_dt_kwarg_errors():
+
+    @_datatree_wrapper
+    def func(arg):
+        return arg
+
+    dt = xr.DataTree()
+
+    with pytest.raises(TypeError, match="Passed a `DataTree` as keyword argument"):
+        func(arg=dt)
+
+
+
+def test_datatree_wrapper():
+
+    @_datatree_wrapper
+    def func(arg):
+        assert isinstance(arg, xr.Dataset)
+        return arg
+
+    da = xr.DataArray([1, 2, 3], dims="x")
+    ds = xr.Dataset(data_vars={"da": da})
+
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    result_ds = func(ds)
+    assert isinstance(result_ds, xr.Dataset)
+
+    result_dt = func(dt)
+    assert isinstance(result_dt, xr.DataTree)
+
+
+
