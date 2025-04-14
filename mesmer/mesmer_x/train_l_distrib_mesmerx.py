@@ -16,6 +16,8 @@ import xarray as xr
 from scipy.optimize import basinhopping, minimize, shgo
 from scipy.stats import gaussian_kde
 
+# TODO: to replace with outputs from PR #607
+from mesmer.core.datatree import collapse_datatree_into_dataset
 from mesmer.core.geospatial import geodist_exact
 from mesmer.mesmer_x.train_utils_mesmerx import (
     Expression,
@@ -23,9 +25,6 @@ from mesmer.mesmer_x.train_utils_mesmerx import (
 )
 from mesmer.stats import gaspari_cohn
 
-
-# TODO: to replace with outputs from PR #607
-from mesmer.core.datatree import collapse_datatree_into_dataset
 
 def ignore_warnings(func):
     # adapted from https://stackoverflow.com/a/70292317
@@ -38,9 +37,6 @@ def ignore_warnings(func):
             return func(*args, **kwargs)
 
     return wrapper
-
-
-
 
 
 def _smooth_data(data, length=10):
@@ -78,10 +74,10 @@ def get_weights_uniform(targ_data, target, dims):
     targ_data : DataTree
         Target for the training sample. Each branch must be a scenario,
         with a xarray dataset (time, member, gridpoint).
-        
+
     target : str
         Name of the target. Must be the name in the datasets in targ_data.
-        
+
     dims : list of str
         Dimensions of the data. Must be the same for all scenarios.
 
@@ -101,11 +97,13 @@ def get_weights_uniform(targ_data, target, dims):
     for scen in targ_data:
         # identify the extra dimension
         extra_dims = [dim for dim in targ_data[scen][target].dims if dim not in dims]
-        locator_extra_dims = {dim:0 for dim in extra_dims}
+        locator_extra_dims = {dim: 0 for dim in extra_dims}
 
         # create a DataArray of ones with the required shape
-        ones_array = xr.ones_like(targ_data[scen][target].loc[locator_extra_dims], dtype=float)
-        out[scen] = xr.DataTree(xr.Dataset({'weight':ones_array}))
+        ones_array = xr.ones_like(
+            targ_data[scen][target].loc[locator_extra_dims], dtype=float
+        )
+        out[scen] = xr.DataTree(xr.Dataset({"weight": ones_array}))
 
         # Accumulate the total size for rescaling
         factor_rescale += ones_array.size
@@ -114,11 +112,10 @@ def get_weights_uniform(targ_data, target, dims):
     return xr.DataTree.from_dict(out) / factor_rescale
 
 
-
 def get_weights_density(pred_data, predictor, targ_data, target, dims):
     """
     Generate weights for the sample, based on the inverse of the density of the
-    predictors. More precisely, the density of the predictors is represented by a 
+    predictors. More precisely, the density of the predictors is represented by a
     multidimensional kernel density estimate using gaussian kernels where each
     dimension is one of the predictors. Subsequently, the weights are the inverse
     of this density of the predictors. Consequently, samples in regions of this
@@ -130,17 +127,17 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
     pred_data : DataTree
         Predictors for the training sample. Each branch must be a scenario,
         with a xarray dataset (time, member). Each predictor is a variable.
-        
+
     predictor : str
         Name of the predictor. Must be the name in the datasets in pred_data.
-        
+
     targ_data : DataTree
         Target for the training sample. Each branch must be a scenario,
         with a xarray dataset (time, member, gridpoint).
-        
+
     target : str
         Name of the target. Must be the name in the datasets in targ_data.
-        
+
     dims : list of str
         Dimensions of the data. Must be the same for all scenarios.
 
@@ -159,9 +156,9 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
     # checking if predictors have been provided
     if len(pred_data) == 0:
         # NB: may use no predictors when training stationary distributions for bencharmking.
-        print(f"no predictors provided, switching to uniform weights")
+        print("no predictors provided, switching to uniform weights")
         return get_weights_uniform(targ_data, target, dims)
-    
+
     else:
         # reshaping data for histogram
         tmp_pred = {}
@@ -169,42 +166,43 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
             if var not in tmp_pred:
                 tmp_pred[var] = np.array([])
             for scen in pred_data[var]:
-                tmp_pred[var] = np.concat( [tmp_pred[var],pred_data[var][scen][predictor].values.flatten()] )
-        array_pred = np.array( list(tmp_pred.values()) )
-        
+                tmp_pred[var] = np.concat(
+                    [tmp_pred[var], pred_data[var][scen][predictor].values.flatten()]
+                )
+        array_pred = np.array(list(tmp_pred.values()))
+
         # representation with kernel-density estimate using gaussian kernels
         # NB: more stable than np.histogramdd that implies too many assumptions
         histo_kde = gaussian_kde(array_pred)
-        
+
         # calculating density of points over the sample
-        density = histo_kde.pdf( x=array_pred )
-        
+        density = histo_kde.pdf(x=array_pred)
+
         # preparing the datatree
         weight, counter, factor_rescale = dict(), 0, 0
         # using former var, ensuring correct order on dimensions
         dims = pred_data[var][scen][predictor].dims
         for scen in pred_data[var]:
             # reshaping the weights for this scenario
-            n_dims = {dim:pred_data[var][scen][dim].size for dim in dims}
+            n_dims = {dim: pred_data[var][scen][dim].size for dim in dims}
             array_tmp = np.reshape(
-                density[counter:counter+pred_data[var][scen][predictor].size],
-                shape=[n_dims[dim] for dim in dims]
-                )
+                density[counter : counter + pred_data[var][scen][predictor].size],
+                shape=[n_dims[dim] for dim in dims],
+            )
             tmp = xr.DataArray(
                 data=array_tmp,
                 dims=dims,
-                coords={dim:pred_data[var][scen][dim] for dim in dims}
-                )
-            
+                coords={dim: pred_data[var][scen][dim] for dim in dims},
+            )
+
             # inverse of density
-            weight[scen] = xr.Dataset({'weight':1/tmp})
-            factor_rescale += weight[scen]['weight'].sum()
-            
+            weight[scen] = xr.Dataset({"weight": 1 / tmp})
+            factor_rescale += weight[scen]["weight"].sum()
+
             # preparing next scenario
             counter += pred_data[var][scen][predictor].size
 
         return xr.DataTree.from_dict(weight) / factor_rescale
-
 
 
 class distrib_tests:
@@ -213,8 +211,8 @@ class distrib_tests:
         expr_fit: Expression,
         threshold_min_proba=1.0e-9,
         boundaries_params=None,
-        boundaries_coeffs=None
-        ):
+        boundaries_coeffs=None,
+    ):
         """Class defining the tests to perform during first guess and training of distributions.
 
         Parameters
@@ -222,7 +220,7 @@ class distrib_tests:
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
             'expr_fit.expression'.
-        
+
         threshold_min_proba : float or None, default: 1e-9
             If numeric imposes a check during the fitting that every sample fulfills
             `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
@@ -241,7 +239,7 @@ class distrib_tests:
         """
         # initialization of expr_fit
         self.expr_fit = expr_fit
-        
+
         # initialization and basic checks on threshold_min_proba
         self.threshold_min_proba = threshold_min_proba
         if threshold_min_proba is not None and (
@@ -261,7 +259,6 @@ class distrib_tests:
                 )
                 self.boundaries_params[param] = [lower_bound, upper_bound]
         self.boundaries_coeffs = {} if boundaries_coeffs is None else boundaries_coeffs
-
 
     def _test_coeffs_in_bounds(self, values_coeffs):
 
@@ -333,10 +330,10 @@ class distrib_tests:
         ----------
         coefficients : numpy array 1D
             Coefficients to validate.
-            
+
         data_pred : numpy array 1D
             Predictors for the training sample.
-            
+
         data_targ : numpy array 1D
             Target for the training sample.
 
@@ -389,26 +386,25 @@ class distrib_tests:
         # return values for each test and the distribution that has already been
         # evaluated
         return test_coeff, test_param, test_proba, params
-    
+
     def get_var_data(self, data):
         if isinstance(data, xr.DataArray):
             return data
-        
+
         elif isinstance(data, xr.Dataset):
             var_name = [var for var in data.variables][0]
             return data[var_name]
-        
+
         elif isinstance(data, xr.DataTree):
             # TODO: useless, datatree uses datasets anyway, so it will become a dataarray
             new_data = xr.DataTree()
             for pred in data:
                 var_name = [var for var in data[pred].variables][0]
-                _ = xr.DataTree(name=pred, parent=new_data, data=data[pred][var_name] )
+                _ = xr.DataTree(name=pred, parent=new_data, data=data[pred][var_name])
             return new_data
-            
+
         else:
             raise ValueError("data must be a DataArray, Dataset or DataTree")
-
 
     def validate_data(self, data_pred, data_targ, data_weights):
         """validate data
@@ -417,21 +413,21 @@ class distrib_tests:
         ----------
         data_pred
             Predictors for the training sample.
-            
+
         data_targ
             Target for the training sample.
-            
+
         data_weights
             Weights for the training sample.
         -------
         """
         # basic checks on data_targ
         self.check_data(data_targ, "target")
-        
+
         # basic checks on data_pred
         for pred in data_pred["predictor"]:
             self.check_data(data_pred.sel(predictor=pred), pred)
-        
+
         # basic checks on weights
         self.check_data(data_weights, "weights")
 
@@ -441,10 +437,10 @@ class distrib_tests:
         """
         # getting variable
         data = self.get_var_data(data)
-        
+
         # getting datarray
         data = self.get_var_data(data)
-        
+
         # checking for NaN values
         if np.isnan(data).any():
             raise ValueError(f"nan values in {name}")
@@ -452,8 +448,6 @@ class distrib_tests:
         # checking for infinite values
         if np.isinf(data).any():
             raise ValueError(f"infinite values in {name}")
-        
-
 
 
 class distrib_optimizer:
@@ -463,7 +457,7 @@ class distrib_optimizer:
         class_tests: distrib_tests,
         weights=None,
         options_optim=None,  # TODO: replace by options class?
-        options_solver=None,  # TODO: ditto?        
+        options_solver=None,  # TODO: ditto?
     ):
         """Class to define optimizers used during first guess and training.
 
@@ -472,10 +466,10 @@ class distrib_optimizer:
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
             'expr_fit.expression'.
-            
+
         class_tests : class 'distrib_tests'
             Class defining the tests to perform during first guess and training
-            
+
         weights : stacked datasets, default: None
             Weights for the optimization. If None, will be set to 1.
 
@@ -638,7 +632,7 @@ class distrib_optimizer:
                 "`type_fun_optim='fcnll'` needs both, `threshold_stopping_rule`"
                 "  and `ind_year_thres`."
             )
-            
+
     # FLEXIBLE MINIMIZER
     def _minimize(
         self, func, x0, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run"
@@ -694,8 +688,8 @@ class distrib_optimizer:
     def func_optim(self, coefficients, data_pred, data_targ, data_weights):
         # check whether these coefficients respect all conditions: if so, can compute a
         # value for the optimization
-        test_coeff, test_param, test_proba, params = self.class_tests.validate_coefficients(
-            data_pred, data_targ, coefficients
+        test_coeff, test_param, test_proba, params = (
+            self.class_tests.validate_coefficients(data_pred, data_targ, coefficients)
         )
 
         if test_coeff and test_param and test_proba:
@@ -706,23 +700,23 @@ class distrib_optimizer:
                 ind_data_ok, ind_data_stopped = self.stopping_rule(data_targ, params)
                 nll = self.neg_loglike(
                     data_targ[ind_data_ok],
-                    {pp:params[ind_data_ok] for pp in params},
-                    data_weights[ind_data_ok]
-                    )
+                    {pp: params[ind_data_ok] for pp in params},
+                    data_weights[ind_data_ok],
+                )
                 fc = self.fullcond_thres(
                     data_targ[ind_data_stopped],
-                    {pp:params[ind_data_stopped] for pp in params},
-                    data_weights[ind_data_stopped]
-                    )
+                    {pp: params[ind_data_stopped] for pp in params},
+                    data_weights[ind_data_stopped],
+                )
                 return nll + fc
             elif self.type_fun_optim == "nll":
                 # compute negative loglikelihood
                 return self.neg_loglike(data_targ, params, data_weights)
-                
+
             else:
                 raise Exception(
                     f"Unknown type of optimization function: {self.type_fun_optim}"
-                    )
+                )
         else:
             # something wrong: returns a blocking value
             return np.inf
@@ -747,7 +741,9 @@ class distrib_optimizer:
 
     def stopping_rule(self, data_targ, params):
         # evaluating threshold over time
-        thres_t = self.expr_fit.distrib.isf(q=1 / self.threshold_stopping_rule, **params)
+        thres_t = self.expr_fit.distrib.isf(
+            q=1 / self.threshold_stopping_rule, **params
+        )
 
         # selecting the minimum over the years to check
         thres = np.min(thres_t[self.ind_year_threshold])
@@ -800,7 +796,6 @@ class distrib_optimizer:
         return np.sum(data_weights * np.array(tmp_cprs))
 
 
-
 class distrib_firstguess:
     def __init__(
         self,
@@ -817,14 +812,14 @@ class distrib_firstguess:
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
             'expr_fit.expression'.
-            
+
         class_optim : class 'distrib_optimizer'
             Class defining the optimizer used during first guess and training of
             distributions.
-            
+
         class_tests : class 'distrib_tests'
             Class defining the tests to perform during first guess and training.
-        
+
         first_guess : numpy array, default: None
             If provided, will use these values as first guess for the first guess.
 
@@ -851,13 +846,14 @@ class distrib_firstguess:
             raise ValueError(
                 f"The provided first guess does not have the correct shape: {self.n_coeffs}"
             )
-         
-    def find_fg(self,
-                predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
-                target: xr.DataArray,
-                dim: str,
-                weights: xr.DataArray | None = None
-                ):
+
+    def find_fg(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        dim: str,
+        weights: xr.DataArray | None = None,
+    ):
         """
         Find a first guess for all grid points.
 
@@ -868,7 +864,7 @@ class distrib_firstguess:
             predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
             is a xr.Dataset, it must have each predictor as a DataArray.
         target : xr.DataArray
-            Target DataArray. 
+            Target DataArray.
         dim : str
             Dimension along which to fit the polynomials.
         weights : xr.DataArray, default: None.
@@ -881,18 +877,18 @@ class distrib_firstguess:
         """
         # create first guess
         coefficients_fg = self._find_fg_xr(predictors, target, dim, weights)
-        
+
         # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
-        
+
         return coefficients_fg
-        
-        
-    def _find_fg_xr(self,
-                    predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
-                    target: xr.DataArray,
-                    dim: str,
-                    weights: xr.DataArray | None = None
-                    ):
+
+    def _find_fg_xr(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        dim: str,
+        weights: xr.DataArray | None = None,
+    ):
         """
         Find a first guess for all grid points.
 
@@ -919,7 +915,7 @@ class distrib_firstguess:
         # preparing predictors
         ds_pred = collapse_datatree_into_dataset(predictors, dim="predictor")
         self.predictor_dim = ds_pred.predictor.values
-        
+
         # getting just dataarray in the datasets
         data_targ = self.class_tests.get_var_data(target)
         data_pred = self.class_tests.get_var_data(ds_pred)
@@ -927,8 +923,8 @@ class distrib_firstguess:
 
         # check data
         self.class_tests.validate_data(data_pred, data_targ, data_weights)
-        
-        # search for each gridpoint 
+
+        # search for each gridpoint
         result = xr.apply_ufunc(
             self._find_fg_np,
             data_pred,
@@ -940,17 +936,12 @@ class distrib_firstguess:
             dask="parallelized",
             output_dtypes=[float],
         )
-        result['coefficient'] = self.expr_fit.coefficients_list        
-        return xr.Dataset( {'coefficients':result} )
-
+        result["coefficient"] = self.expr_fit.coefficients_list
+        return xr.Dataset({"coefficients": result})
 
     # suppress nan & inf warnings
     @ignore_warnings
-    def _find_fg_np(self,
-                    data_pred,
-                    data_targ,
-                    data_weights
-                    ):
+    def _find_fg_np(self, data_pred, data_targ, data_weights):
         """
         compute first guess of the coefficients, to ensure convergence of the incoming
         fit.
@@ -1056,7 +1047,9 @@ class distrib_firstguess:
         self.data_weights = data_weights
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
-        self.data_pred = {pp:data_pred[:,ii] for ii, pp in enumerate(self.predictor_dim)}
+        self.data_pred = {
+            pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_dim)
+        }
 
         # preparing derivatives to estimate derivatives of data along predictors,
         # and infer a very first guess for the coefficients facilitates the
@@ -1066,18 +1059,24 @@ class distrib_firstguess:
         mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
         ind_targ_low = np.where(smooth_targ < mean_smooth_targ - std_smooth_targ)[0]
         ind_targ_high = np.where(smooth_targ > mean_smooth_targ + std_smooth_targ)[0]
-        mean_high_preds = {pp:np.mean(self.data_pred[pp][ind_targ_high], axis=0) for pp in self.predictor_dim}
-        mean_low_preds = {pp:np.mean(self.data_pred[pp][ind_targ_low], axis=0) for pp in self.predictor_dim}
+        mean_high_preds = {
+            pp: np.mean(self.data_pred[pp][ind_targ_high], axis=0)
+            for pp in self.predictor_dim
+        }
+        mean_low_preds = {
+            pp: np.mean(self.data_pred[pp][ind_targ_low], axis=0)
+            for pp in self.predictor_dim
+        }
 
-        derivative_targ = {pp:_finite_difference(
-            np.mean(smooth_targ[ind_targ_high]),
-            np.mean(smooth_targ[ind_targ_low]),
-            mean_high_preds[pp],
-            mean_low_preds[pp]
+        derivative_targ = {
+            pp: _finite_difference(
+                np.mean(smooth_targ[ind_targ_high]),
+                np.mean(smooth_targ[ind_targ_low]),
+                mean_high_preds[pp],
+                mean_low_preds[pp],
             )
-                           for pp in self.predictor_dim
-                           }
-        
+            for pp in self.predictor_dim
+        }
 
         # Initialize first guess
         if self.first_guess is None:
@@ -1190,9 +1189,7 @@ class distrib_firstguess:
         self.fg_coeffs = localfit_nll.x
 
         test_coeff, test_param, test_proba, _ = self.class_tests.validate_coefficients(
-            self.data_pred,
-            self.data_targ,
-            self.fg_coeffs
+            self.data_pred, self.data_targ, self.fg_coeffs
         )
 
         # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
@@ -1242,7 +1239,6 @@ class distrib_firstguess:
                 )
             self.fg_coeffs = globalfit_all.x
         return self.fg_coeffs
-
 
     def _fg_fun_deriv01(self, x, pred_high, pred_low, derivative_targ, mean_targ):
         r"""
@@ -1406,7 +1402,7 @@ class distrib_firstguess:
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expr_fit.evaluate_params(coefficients, self.data_pred)
-        return self.class_optim.neg_loglike(self.data_targ, params, self.data_weights)    
+        return self.class_optim.neg_loglike(self.data_targ, params, self.data_weights)
 
     # TODO: remove?
     def _fg_fun_cdfs(self, x):
@@ -1445,9 +1441,7 @@ class distrib_firstguess:
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
             test_c, test_p, test_v, _ = self.class_tests.validate_coefficients(
-                            self.data_pred,
-                            self.data_targ,
-                            x
+                self.data_pred, self.data_targ, x
             )
             test = test_c and test_p and test_v
             x[i_c] += fact_coeff * x[i_c]
@@ -1456,27 +1450,25 @@ class distrib_firstguess:
         return x[i_c]
 
 
-
-
 class distrib_train:
     def __init__(
         self,
         expr_fit: Expression,
         class_optim: distrib_optimizer,
-        class_tests: distrib_tests
+        class_tests: distrib_tests,
     ):
         """Fit a conditional distribution.
-        
+
         Parameters
         ----------
         expr_fit : class 'expression'
             Expression to train. The string provided to the class can be found in
             'expr_fit.expression'.
-            
+
         class_optim : class 'distrib_optimizer'
             Class defining the optimizer used during first guess and training of
             distributions.
-            
+
         class_tests : class 'distrib_tests'
             Class defining the tests to perform during first guess and training.
         """
@@ -1484,13 +1476,8 @@ class distrib_train:
         self.expr_fit = expr_fit
         self.class_optim = class_optim
         self.class_tests = class_tests
-        
-    def prepare_data(
-        self,
-        predictors,
-        target,
-        weights
-        ):
+
+    def prepare_data(self, predictors, target, weights):
         """
         shaping data for fit or evaluation of scores.
 
@@ -1517,14 +1504,14 @@ class distrib_train:
         # preparing predictors
         ds_pred = collapse_datatree_into_dataset(predictors, dim="predictor")
         self.predictor_dim = ds_pred.predictor.values
-        
+
         # getting just dataarray in the datasets
         data_pred = self.class_tests.get_var_data(ds_pred)
         data_targ = self.class_tests.get_var_data(target)
         data_weights = self.class_tests.get_var_data(weights)
-        
-        return data_pred, data_targ, data_weights        
-        
+
+        return data_pred, data_targ, data_weights
+
     def fit(
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
@@ -1533,8 +1520,8 @@ class distrib_train:
         dim: str,
         weights: xr.DataArray | None = None,
         option_smooth_coeffs: bool = False,
-        r_gasparicohn: float = 500
-        ):
+        r_gasparicohn: float = 500,
+    ):
         """Wrapper to fit over all gridpoints.
 
         Parameters
@@ -1566,18 +1553,12 @@ class distrib_train:
         """
         self.option_smooth_coeffs = option_smooth_coeffs
         self.r_gasparicohn = r_gasparicohn
-        
+
         # training
-        coefficients = self._fit_xr(
-            predictors,
-            target,
-            first_guess,
-            dim,
-            weights
-            )
-        
+        coefficients = self._fit_xr(predictors, target, first_guess, dim, weights)
+
         return coefficients
-        
+
     def _fit_xr(
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
@@ -1585,7 +1566,7 @@ class distrib_train:
         first_guess: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
-        ):
+    ):
         """
         xarray wrapper to fit over all gridpoints.
 
@@ -1616,11 +1597,13 @@ class distrib_train:
 
             # deducing correlation matrix
             corr_gc = gaspari_cohn(geodist / self.r_gasparicohn)
-            
+
             # will avoid taking gridpoints with nan
-            gp_nonan = first_guess["coefficients"].notnull().all(dim="coefficient").values
-            #gp_nonan = gp_nonan.rename({})
-        
+            gp_nonan = (
+                first_guess["coefficients"].notnull().all(dim="coefficient").values
+            )
+            # gp_nonan = gp_nonan.rename({})
+
             # creating new dataset of coefficients
             second_guess = np.nan * xr.ones_like(first_guess["coefficients"])
 
@@ -1628,21 +1611,27 @@ class distrib_train:
             for coef in first_guess.coefficient.values:
                 for gp in first_guess.gridpoint.values:
                     fg = weighted_median(
-                        data=first_guess["coefficients"].sel(coefficient=coef, gridpoint=gp_nonan).values,
-                        weights=corr_gc.sel(gridpoint_i=gp, gridpoint_j=gp_nonan).values,
+                        data=first_guess["coefficients"]
+                        .sel(coefficient=coef, gridpoint=gp_nonan)
+                        .values,
+                        weights=corr_gc.sel(
+                            gridpoint_i=gp, gridpoint_j=gp_nonan
+                        ).values,
                     )
                     second_guess.loc[dict(coefficient=coef, gridpoint=gp)] = fg
-                    
+
             # preparing for training
             first_guess["coefficients"] = second_guess
-            
+
         # shaping data
-        data_pred, data_targ, data_weights = self.prepare_data(predictors, target, weights)
+        data_pred, data_targ, data_weights = self.prepare_data(
+            predictors, target, weights
+        )
 
         # check data
         self.class_tests.validate_data(data_pred, data_targ, data_weights)
-        
-        # search for each gridpoint 
+
+        # search for each gridpoint
         result = xr.apply_ufunc(
             self._fit_np,
             data_pred,
@@ -1655,10 +1644,8 @@ class distrib_train:
             dask="parallelized",
             output_dtypes=[float],
         )
-        result['coefficient'] = self.expr_fit.coefficients_list
-        return xr.Dataset( {'coefficients':result} )
-
-
+        result["coefficient"] = self.expr_fit.coefficients_list
+        return xr.Dataset({"coefficients": result})
 
     @ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, pred, targ, fg, weights):
@@ -1670,7 +1657,7 @@ class distrib_train:
 
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
-        pred = {pp:pred[:,ii] for ii, pp in enumerate(self.predictor_dim)}
+        pred = {pp: pred[:, ii] for ii, pp in enumerate(self.predictor_dim)}
 
         # training
         m = self.class_optim._minimize(
@@ -1694,10 +1681,10 @@ class distrib_train:
         coefficients_fit: xr.DataArray,
         dim: str,
         weights: xr.DataArray | None = None,
-        scores_fit=["func_optim", "nll", "bic"]
+        scores_fit=["func_optim", "nll", "bic"],
     ):
         """Evaluate the scores for this fit.
-        
+
         Parameters
         ----------
         predictors : dict of xr.DataArray | DataTree | xr.Dataset
@@ -1723,17 +1710,13 @@ class distrib_train:
               compute)
         """
         self.scores_fit = scores_fit
-        
+
         # training
         quality_fit = self._eval_quality_fit_xr(
-            predictors,
-            target,
-            coefficients_fit,
-            dim,
-            weights
-            )
+            predictors, target, coefficients_fit, dim, weights
+        )
         return quality_fit
-    
+
     def _eval_quality_fit_xr(
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
@@ -1743,7 +1726,7 @@ class distrib_train:
         weights: xr.DataArray | None = None,
     ):
         """Evaluate the scores for this fit.
-        
+
         Parameters
         ----------
         predictors : dict of xr.DataArray | DataTree | xr.Dataset
@@ -1769,12 +1752,14 @@ class distrib_train:
               compute)
         """
         # shaping data
-        data_pred, data_targ, data_weights = self.prepare_data(predictors, target, weights)
+        data_pred, data_targ, data_weights = self.prepare_data(
+            predictors, target, weights
+        )
 
         # check data
         self.class_tests.validate_data(data_pred, data_targ, data_weights)
 
-        # search for each gridpoint 
+        # search for each gridpoint
         result = xr.apply_ufunc(
             self._eval_quality_fit_np,
             data_pred,
@@ -1787,26 +1772,29 @@ class distrib_train:
             dask="parallelized",
             output_dtypes=[float],
         )
-        result['score'] = self.scores_fit
-        return xr.Dataset( {'scores':result} )
+        result["score"] = self.scores_fit
+        return xr.Dataset({"scores": result})
 
-
-    def _eval_quality_fit_np(self, data_pred, data_targ, coefficients_fit, data_weights):
+    def _eval_quality_fit_np(
+        self, data_pred, data_targ, coefficients_fit, data_weights
+    ):
         # initialize
         quality_fit = []
 
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
-        data_pred = {pp:data_pred[:,ii] for ii, pp in enumerate(self.predictor_dim)}
-        
+        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_dim)}
+
         for score in self.scores_fit:
             # basic result: optimized value
             if score == "func_optim":
-                score = self.class_optim.func_optim(coefficients_fit, data_pred, data_targ, data_weights)
+                score = self.class_optim.func_optim(
+                    coefficients_fit, data_pred, data_targ, data_weights
+                )
 
             # calculating parameters for the next ones
             params = self.expr_fit.evaluate_params(coefficients_fit, data_pred)
-        
+
             # NLL averaged over sample
             if score == "nll":
                 score = self.class_optim.neg_loglike(data_targ, params, data_weights)
@@ -1817,7 +1805,9 @@ class distrib_train:
 
             # CRPS
             if score == "crps":
-                score = self.class_optim.crps(data_targ, data_pred, data_weights, coefficients_fit)
-                
+                score = self.class_optim.crps(
+                    data_targ, data_pred, data_weights, coefficients_fit
+                )
+
             quality_fit.append(score)
         return np.array(quality_fit)
