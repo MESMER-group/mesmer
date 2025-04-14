@@ -137,6 +137,7 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
 
     return _global_mean(data, weights, x_dim=x_dim, y_dim=y_dim)
 
+
 @_datatree_wrapper
 def _global_mean(data, weights, /, *, x_dim, y_dim):
 
