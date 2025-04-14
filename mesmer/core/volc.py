@@ -3,6 +3,7 @@ import warnings
 import xarray as xr
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
+from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
 from mesmer.stats import LinearRegression
 
@@ -151,6 +152,7 @@ def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
     return volcanic_contribution
 
 
+@_datatree_wrapper
 def superimpose_volcanic_influence(
     tas_globmean_lowess, params, hist_period, *, dim="time", version="2022"
 ):

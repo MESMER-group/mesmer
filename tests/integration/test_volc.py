@@ -2,6 +2,7 @@ import pytest
 import xarray as xr
 
 import mesmer
+from mesmer.testing import _convert
 
 
 def _get_volcanic_params(slope):
@@ -136,3 +137,26 @@ def test_superimpose_volcanic_influence_hist_period():
     expected.loc[{"time": slice("1951", None)}] = 0
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_superimpose_volcanic_influence_datatree():
+
+    slope = -1.5
+
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    data = xr.zeros_like(aod)
+    dt = _convert(data, "DataTree")
+
+    params = _get_volcanic_params(slope)
+
+    result = mesmer.volc.superimpose_volcanic_influence(
+        dt, params, slice("1850", "2014")
+    )
+    expected = slope * aod
+
+    assert isinstance(result, xr.DataTree)
+    # allclose not implemented for DataTree, just check dataset
+    xr.testing.assert_allclose(result["node"].to_dataset(), expected.to_dataset())
