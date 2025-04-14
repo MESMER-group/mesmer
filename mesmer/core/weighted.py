@@ -88,13 +88,13 @@ def weighted_mean(data, weights, *, dims=None):
 
     """
 
-    # map_over_datasets does not work with keyword args, but I want to be able to pass
+    # map_over_datasets does not work with kwargs, so need separate funct to be able to pass
     # weights as kw
     return _weighted_mean(data, weights, dims)
 
 
 @_datatree_wrapper
-def _weighted_mean(data, weights, dims=None):
+def _weighted_mean(data, weights, /, dims=None):
     if isinstance(dims, str):
         dims = [dims]
 
