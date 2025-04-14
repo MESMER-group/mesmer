@@ -1,3 +1,4 @@
+import functools
 from typing import overload
 
 import xarray as xr
@@ -196,3 +197,32 @@ def stack_datatrees_for_linear_regression(
         weights_stacked = None
 
     return predictors_stacked, target_stacked, weights_stacked
+
+
+def _datatree_wrapper(func):
+    """wrapper to extend functions so DataTree can be passed
+
+    NOTE: DataTree arguments __must__ be passed as args (positional) and not as
+    kwargs
+    """
+
+    @functools.wraps(func)
+    def inner(*args, **kwargs):
+
+        # check to ensure there are no DataTree in kwargs. Altough this is not very
+        # efficient, it has bitten me before.
+        dt_kwargs = [key for key, val in kwargs.items() if isinstance(val, xr.DataTree)]
+        if dt_kwargs:
+            dt_kwargs = "', '".join(dt_kwargs)
+            msg = (
+                "Passed a `DataTree` as keyword argument which is not allowed."
+                f" Passed `DataTree` kwargs: '{dt_kwargs}'"
+            )
+            raise TypeError(msg)
+
+        if any(isinstance(arg, xr.DataTree) for arg in args):
+            return map_over_datasets(func, *args, kwargs=kwargs)
+
+        return func(*args, **kwargs)
+
+    return inner

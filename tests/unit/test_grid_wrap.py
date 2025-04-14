@@ -1,8 +1,8 @@
 import numpy as np
-import pytest
 import xarray as xr
 
 import mesmer
+from mesmer.testing import _convert
 
 
 def test_lon_to_180():
@@ -55,8 +55,7 @@ def test_lon_to_360():
     assert result.attrs == expected.attrs
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_wrap_to_180(as_dataset):
+def test_wrap_to_180(datatype):
 
     attrs = {"name": "test"}
     obj = xr.DataArray(
@@ -76,11 +75,15 @@ def test_wrap_to_180(as_dataset):
     )
     expected.lon.attrs = {"coord": "attrs"}
 
-    if as_dataset:
-        obj = obj.to_dataset()
-        expected = expected.to_dataset()
+    obj = _convert(obj, datatype)
+    expected = _convert(expected, datatype)
 
     result = mesmer.grid.wrap_to_180(obj)
+    xr.testing.assert_identical(result, expected)
+
+    # TODO: rename not working on DataTree https://github.com/pydata/xarray/issues/10015
+    if datatype == "DataTree":
+        return
 
     obj = obj.rename(lon="longitude")
     expected = expected.rename(lon="longitude")
@@ -90,8 +93,7 @@ def test_wrap_to_180(as_dataset):
     xr.testing.assert_identical(result, expected)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_wrap_to_360(as_dataset):
+def test_wrap_to_360(datatype):
 
     attrs = {"name": "test"}
     obj = xr.DataArray(
@@ -111,11 +113,15 @@ def test_wrap_to_360(as_dataset):
     )
     expected.lon.attrs = {"coord": "attrs"}
 
-    if as_dataset:
-        obj = obj.to_dataset()
-        expected = expected.to_dataset()
+    obj = _convert(obj, datatype)
+    expected = _convert(expected, datatype)
 
     result = mesmer.grid.wrap_to_360(obj)
+    xr.testing.assert_identical(result, expected)
+
+    # TODO: rename not working on DataTree https://github.com/pydata/xarray/issues/10015
+    if datatype == "DataTree":
+        return
 
     obj = obj.rename(lon="longitude")
     expected = expected.rename(lon="longitude")
@@ -125,7 +131,7 @@ def test_wrap_to_360(as_dataset):
     xr.testing.assert_identical(result, expected)
 
 
-def _get_test_data_grid(lon, as_dataset):
+def _get_test_data_grid(lon, datatype):
     lat = np.arange(90, -91, -10)
 
     data = np.random.randn(lat.size, lon.size)
@@ -139,18 +145,14 @@ def _get_test_data_grid(lon, as_dataset):
         attrs=attrs,
     )
 
-    if as_dataset:
-        orig = orig.to_dataset()
-
-    return orig
+    return _convert(orig, datatype)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_wrap_to_360_roundtrip(as_dataset):
+def test_wrap_to_360_roundtrip(datatype):
 
     lon = np.arange(-180, 180)
 
-    orig = _get_test_data_grid(lon, as_dataset)
+    orig = _get_test_data_grid(lon, datatype)
 
     wrapped = mesmer.grid.wrap_to_360(orig)
     roundtripped = mesmer.grid.wrap_to_180(wrapped)
@@ -158,12 +160,11 @@ def test_wrap_to_360_roundtrip(as_dataset):
     xr.testing.assert_identical(orig, roundtripped)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_wrap_to_180_roundtrip(as_dataset):
+def test_wrap_to_180_roundtrip(datatype):
 
     lon = np.arange(0, 360)
 
-    orig = _get_test_data_grid(lon, as_dataset)
+    orig = _get_test_data_grid(lon, datatype)
 
     wrapped = mesmer.grid.wrap_to_180(orig)
     roundtripped = mesmer.grid.wrap_to_360(wrapped)
