@@ -3,6 +3,7 @@ import warnings
 import xarray as xr
 
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
+from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
 from mesmer.stats import LinearRegression
 
@@ -151,16 +152,17 @@ def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
     return volcanic_contribution
 
 
+@_datatree_wrapper
 def superimpose_volcanic_influence(
     tas_globmean_lowess, params, hist_period, *, dim="time", version="2022"
 ):
     """
     superimpose volcanic influence on smooth temperature anomalies using aerosol optical
-    depth  observations as proxy
+    depth observations as proxy
 
     Parameters
     ----------
-    tas_globmean_lowess : xr.DataArray
+    tas_globmean_lowess : xr.DataArray | xr.Dataset | xr.DataTree
         DataArray containing smooth global mean temperature anomalies to superimpose
         the volcanic influence.
     params : xr.Dataset
@@ -177,8 +179,8 @@ def superimpose_volcanic_influence(
 
     Returns
     -------
-    params : xr.Dataset
-        Parameters of the linear regression fit to the residuals.
+    tas : xr.DataArray | xr.Dataset | xr.DataTree
+        tas_globmean_lowess with the estimated volcanic influene superimposed
     """
 
     time = tas_globmean_lowess[dim]
