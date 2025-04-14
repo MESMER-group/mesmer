@@ -97,8 +97,6 @@ def _test_weighted_mean(datatype, **kwargs):
 
     y_dim = kwargs.get("y_dim", "lat")
 
-    # TODO: test where we pass DataArray weights
-    # lat = (data["node"].to_dataset() if datatype == "DataTree" else data)[y_dim]
     weights = mesmer.weighted.lat_weights(data, y_dim)
 
     dims = list(kwargs.values()) if kwargs else ("lat", "lon")
