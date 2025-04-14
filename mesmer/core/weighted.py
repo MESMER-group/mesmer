@@ -25,37 +25,43 @@ def _weighted_if_dim(obj, weights, dims):
 
 
 @_datatree_wrapper
-def lat_weights(lat_coords, y_dim="lat"):
+def lat_weights(data, y_dim="lat"):
     """area weights based on the cosine of the latitude
 
     Parameters
     ----------
-    lat_coords : xr.DataArray
+    lat_coords : xr.DataArray | xr.Dataset | xr.DataTree
         Latitude coordinates.
+    y_dim : str, default: "lat"
+        Name of the y dimension to retrieve the coordinates from.
 
     Returns
     -------
-    weights : xr.DataArray
-        Cosine weights of ``lat_coords``.
-
+    weights : xr.DataArray | xr.Dataset | xr.DataTree
+        Cosine weights of ``lat_coords``. If a Dataset or DataTree is passed the result
+        is stored in a DataArray named ``weights``.
     """
 
-    is_dataset = False
-    if isinstance(lat_coords, xr.Dataset):
-        lat_coords = lat_coords[y_dim]
-        is_dataset = True
+    is_dataset = isinstance(data, xr.Dataset)
+    is_dataarray_or_set = is_dataset or isinstance(data, xr.DataArray)
 
-    if np.ndim(lat_coords) > 1:
+    if is_dataarray_or_set:
+        data = data[y_dim]
+
+    if np.ndim(data) > 1:
         warnings.warn("cos(lat) is not a good approximation for non-regular grids")
 
-    if np.max(np.abs(lat_coords)) > 90:
+    if np.max(np.abs(data)) > 90:
         raise ValueError("`lat_coords` must be between -90 and 90 (inclusive)")
 
-    weights = np.cos(np.deg2rad(lat_coords))
+    weights = np.cos(np.deg2rad(data))
 
-    if isinstance(weights, xr.DataArray):
-        weights.name = "weights"
+    if not is_dataarray_or_set:
+        return weights
 
+    weights.name = "weights"
+
+    # map_over_datasets requires a Dataset
     if is_dataset:
         weights = weights.to_dataset()
 
@@ -94,7 +100,7 @@ def _weighted_mean(data, weights, dims=None):
 
     if isinstance(weights, xr.Dataset):
         if "weights" not in weights:
-            raise ValueError()
+            raise ValueError("weights does not contain a variable named weights")
         weights = weights.weights
 
     # ensure grids are equal
@@ -130,8 +136,13 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
 
     """
 
+        return _global_mean(data, weights, x_dim=x_dim, y_dim=y_dim)
+
+    @_datatree_wrapper
+    def _global_mean(data, weights, /, *, x_dim, y_dim):
+
     if weights is None:
-        weights = lat_weights(data[y_dim])
+        weights = lat_weights(data, y_dim)
 
     return weighted_mean(data, weights, dims=(x_dim, y_dim))
 
