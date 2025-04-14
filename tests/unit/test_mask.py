@@ -73,8 +73,6 @@ def _test_mask(func, datatype, threshold=None, **kwargs):
     kwargs = kwargs if threshold is None else {"threshold": threshold, **kwargs}
     result = func(data, **kwargs)
 
-    print(result)
-
     if datatype == "DataTree":
         assert isinstance(result, xr.DataTree)
         result = result["node"].to_dataset()
