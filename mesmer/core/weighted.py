@@ -112,7 +112,6 @@ def _weighted_mean(data, weights, /, dims=None):
     return _weighted_if_dim(data, weights, dims)
 
 
-@_datatree_wrapper
 def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     """calculate global weighted mean
 
