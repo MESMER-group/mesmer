@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.core._datatreecompat import map_over_datasets
+from mesmer.core.datatree import _datatree_wrapper
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -81,12 +82,13 @@ def weighted_mean(data, weights, dims=None):
     return _weighted_if_dim(data, weights, dims)
 
 
+@_datatree_wrapper
 def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     """calculate global weighted mean
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array reduce to the global mean.
     weights : xr.DataArray, optional
         DataArray containing the area of each grid cell (or a measure proportional to
@@ -99,7 +101,7 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
 
     Returns
     -------
-    obj : xr.Dataset | xr.DataArray
+    obj : xr.DataTree |  xr.Dataset | xr.DataArray
         Array converted to an unstructured grid.
 
     """
