@@ -220,7 +220,6 @@ def _datatree_wrapper(func):
             )
             raise TypeError(msg)
 
-
         if any(isinstance(arg, xr.DataTree) for arg in args):
             return map_over_datasets(func, *args, kwargs=kwargs)
 

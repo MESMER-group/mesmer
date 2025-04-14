@@ -4,9 +4,10 @@ import xarray as xr
 
 import mesmer
 from mesmer.core._datatreecompat import map_over_datasets
+from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
-from mesmer.core.datatree import _datatree_wrapper
+
 
 def test_collapse_datatree_into_dataset():
     n_ts = 30
@@ -301,7 +302,6 @@ def test_datatree_wrapper_dt_kwarg_errors():
         func(arg=dt)
 
 
-
 def test_datatree_wrapper():
 
     @_datatree_wrapper
@@ -319,6 +319,3 @@ def test_datatree_wrapper():
 
     result_dt = func(dt)
     assert isinstance(result_dt, xr.DataTree)
-
-
-
