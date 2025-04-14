@@ -282,12 +282,10 @@ def test_make_realisations(
 
     # 1.) superimpose volcanic influence
     volcanic_params = xr.open_dataset(volcanic_file)
-    # TODO: check superimpose_volcanic_influence
-    tas_forcing = map_over_datasets(
-        mesmer.volc.superimpose_volcanic_influence,
+    tas_forcing = mesmer.volc.superimpose_volcanic_influence(
         tas_forcing,
         volcanic_params,
-        kwargs={"hist_period": HIST_PERIOD},
+        hist_period=HIST_PERIOD,
     )
 
     # 2.) compute the global variability
