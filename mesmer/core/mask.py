@@ -28,7 +28,7 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to mask.
     threshold : float
         Threshold above which land fraction to consider a grid point as a land grid
@@ -40,7 +40,7 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with ocean grid points masked out.
 
     Notes
@@ -82,7 +82,7 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to mask.
     x_coords : str, default: "lon"
         Name of the x-coordinates.
@@ -91,7 +91,7 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with ocean grid points masked out.
 
     Notes
@@ -118,14 +118,14 @@ def mask_antarctica(data, *, y_coords="lat"):
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to mask.
     y_coords : str, default: "lat"
         Name of the y-coordinates.
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with Antarctic grid points masked out.
 
     Notes

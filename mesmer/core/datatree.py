@@ -200,7 +200,11 @@ def stack_datatrees_for_linear_regression(
 
 
 def _datatree_wrapper(func):
-    """wrapper to extend functions written for DataTree"""
+    """wrapper to extend functions so DataTree can be passed
+
+    NOTE: DataTree arguments __must__ be passed as args (positional) and not as
+    kwargs
+    """
 
     @functools.wraps(func)
     def inner(*args, **kwargs):

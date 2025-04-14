@@ -138,3 +138,5 @@ def _convert(da: xr.DataArray, datatype):
 
     if datatype == "DataTree":
         return xr.DataTree.from_dict({"node": da.to_dataset()})
+
+    raise ValueError(f"Unkown datatype: {datatype}")

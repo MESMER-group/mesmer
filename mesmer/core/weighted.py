@@ -112,7 +112,7 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array reduce to the global mean.
     weights : xr.DataArray, optional
         DataArray containing the area of each grid cell (or a measure proportional to

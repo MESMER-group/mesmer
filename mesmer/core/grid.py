@@ -35,14 +35,14 @@ def wrap_to_180(
 
     Parameters
     ----------
-    obj : xr.DataTree | xr.Dataset | xr.DataArray
+    obj : xr.DataArray | xr.Dataset | xr.DataTree
         object with longitude coordinates
     lon_name : str, default: "lon"
         name of the longitude ('lon', 'longitude', ...)
 
     Returns
     -------
-    wrapped : xr.DataTree | xr.Dataset | xr.DataArray
+    wrapped : xr.DataArray | xr.Dataset | xr.DataTree
         Another dataset or array wrapped around.
     """
 
@@ -63,14 +63,14 @@ def wrap_to_360(
 
     Parameters
     ----------
-    obj : xr.DataTree | xr.Dataset | xr.DataArray
+    obj : xr.DataArray | xr.Dataset | xr.DataTree
         object with longitude coordinates
     lon_name : str, default: "lon"
         name of the longitude ('lon', 'longitude', ...)
 
     Returns
     -------
-    wrapped : xr.DataTree | xr.Dataset | xr.DataArray
+    wrapped : xr.DataArray | xr.Dataset | xr.DataTree
         Another dataset or array wrapped around.
     """
 
@@ -96,7 +96,7 @@ def stack_lat_lon(
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to convert to an 1D grid.
     x_dim : str, default: "lon"
         Name of the x-dimension.
@@ -111,7 +111,7 @@ def stack_lat_lon(
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array converted to an 1D grid.
     """
 
@@ -136,7 +136,7 @@ def unstack_lat_lon_and_align(
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with 1D grid to unstack and align.
     coords_orig : xr.Dataset | xr.DataArray
         xarray object containing the original coordinates before it was converted to the
@@ -150,7 +150,7 @@ def unstack_lat_lon_and_align(
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array converted to a regular lat-lon grid.
     """
 
@@ -167,7 +167,7 @@ def unstack_lat_lon(data, *, x_dim="lon", y_dim="lat", stack_dim="gridcell"):
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with 1D grid to unstack and align.
     x_dim : str, default: "lon"
         Name of the x-dimension.
@@ -178,7 +178,7 @@ def unstack_lat_lon(data, *, x_dim="lon", y_dim="lat", stack_dim="gridcell"):
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array converted to a regular lat-lon grid (unaligned).
     """
 
@@ -195,7 +195,7 @@ def align_to_coords(data, coords_orig):
 
     Parameters
     ----------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Unstacked array with lat-lon to align.
     coords_orig : xr.Dataset | xr.DataArray
         xarray object containing the original coordinates before it was converted to the
@@ -203,7 +203,7 @@ def align_to_coords(data, coords_orig):
 
     Returns
     -------
-    data : xr.DataTree | xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array aligned with original grid.
     """
 
