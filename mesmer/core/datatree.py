@@ -1,11 +1,13 @@
 import functools
 from collections.abc import Callable
-from typing import TypeVar, overload
+from typing import ParamSpec, TypeVar, overload
 
 import xarray as xr
-from typing_extensions import ParamSpec
 
 from mesmer.core._datatreecompat import map_over_datasets
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def _extract_single_dataarray_from_dt(
@@ -199,10 +201,6 @@ def stack_datatrees_for_linear_regression(
         weights_stacked = None
 
     return predictors_stacked, target_stacked, weights_stacked
-
-
-P = ParamSpec("P")
-T = TypeVar("T")
 
 
 def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:

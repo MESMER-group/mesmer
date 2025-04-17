@@ -9,7 +9,7 @@ from mesmer.stats import LinearRegression
 
 
 def _load_and_align_strat_aod_obs(
-    time: xr.DataArray, hist_period: slice[str, str], version="2022"
+    time: xr.DataArray, hist_period: slice, version="2022"
 ):
     """
     load stratospheric aerosol optical depth observations and align them to the to
