@@ -84,10 +84,10 @@ def test_weighted_mean_errors_wrong_weights(datatype):
     weights = weights.isel(lat=slice(None, -3))
 
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
-        mesmer.weighted.weighted_mean(data, weights=weights, dims=("lat", "lon"))
+        mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
 
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
-        mesmer.weighted.weighted_mean(data, weights=weights, dims=("lat", "lon"))
+        mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
 
 
 def _test_weighted_mean(datatype, **kwargs):
@@ -101,7 +101,7 @@ def _test_weighted_mean(datatype, **kwargs):
 
     dims = list(kwargs.values()) if kwargs else ("lat", "lon")
 
-    result = mesmer.weighted.weighted_mean(data, weights=weights, dims=dims)
+    result = mesmer.weighted.weighted_mean(data, weights, dims=dims)
 
     if datatype == "DataTree":
         assert isinstance(result, xr.DataTree)
@@ -151,7 +151,7 @@ def test_weighted_no_scalar_expand(datatype):
     lat = (data["node"].to_dataset() if datatype == "DataTree" else data).lat
     weights = xr.ones_like(lat)
 
-    result = mesmer.weighted.weighted_mean(data, weights=weights, dims="lon")
+    result = mesmer.weighted.weighted_mean(data, weights, dims="lon")
 
     expected = data.mean("lon")
 
@@ -168,7 +168,7 @@ def test_global_mean_no_weights_passed(datatype, x_dim, y_dim):
 
     dims = (x_dim, y_dim)
     weights = mesmer.weighted.lat_weights(data, y_dim)
-    expected = mesmer.weighted.weighted_mean(data, weights=weights, dims=dims)
+    expected = mesmer.weighted.weighted_mean(data, weights, dims=dims)
 
     xr.testing.assert_equal(result, expected)
 
