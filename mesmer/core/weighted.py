@@ -30,14 +30,14 @@ def lat_weights(data, y_dim="lat"):
 
     Parameters
     ----------
-    lat_coords : xr.DataArray | xr.Dataset | xr.DataTree
+    data : xr.DataArray | xr.Dataset | xr.DataTree | array_like
         Latitude coordinates.
     y_dim : str, default: "lat"
         Name of the y dimension to retrieve the coordinates from.
 
     Returns
     -------
-    weights : xr.DataArray | xr.Dataset | xr.DataTree
+    weights : xr.DataArray | xr.Dataset | xr.DataTree | np.ndarray
         Cosine weights of ``lat_coords``. If a Dataset or DataTree is passed the result
         is stored in a DataArray named ``weights``.
     """
@@ -119,10 +119,10 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     ----------
     data : xr.DataArray | xr.Dataset | xr.DataTree
         Array reduce to the global mean.
-    weights : xr.DataArray, optional
-        DataArray containing the area of each grid cell (or a measure proportional to
+    weights : xr.DataArray | xr.Dataset | xr.DataTree | array_like, optional
+        Array containing the area of each grid cell (or a measure proportional to
         the grid cell area). If not given will compute it from the cosine of the
-        latitudes.
+        latitudes using ``lat_weights``.
     x_dim : str, default: "lon"
         Name of the x-dimension.
     y_dim : str, default: "lat"
@@ -133,6 +133,10 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     obj : xr.DataTree |  xr.Dataset | xr.DataArray
         Array converted to an unstructured grid.
 
+
+    See also
+    --------
+    lat_weights
     """
 
     return _global_mean(data, weights, x_dim=x_dim, y_dim=y_dim)
