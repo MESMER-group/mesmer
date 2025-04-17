@@ -1,3 +1,5 @@
+from typing import Literal, overload
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -7,7 +9,25 @@ import mesmer
 from mesmer.core._datatreecompat import map_over_datasets
 
 
-def data_lon_lat(datatype, x_dim="lon", y_dim="lat"):
+@overload
+def data_lon_lat(
+    datatype: Literal["DataArray"], x_dim="lon", y_dim="lat"
+) -> xr.DataArray: ...
+
+
+@overload
+def data_lon_lat(
+    datatype: Literal["Dataset"], x_dim="lon", y_dim="lat"
+) -> xr.Dataset: ...
+@overload
+def data_lon_lat(
+    datatype: Literal["DataTree"], x_dim="lon", y_dim="lat"
+) -> xr.DataTree: ...
+
+
+def data_lon_lat(
+    datatype: Literal["DataArray", "Dataset", "DataTree"], x_dim="lon", y_dim="lat"
+) -> xr.DataArray | xr.Dataset | xr.DataTree:
 
     lon = np.arange(0.5, 360, 2)
     lat = np.arange(90, -91, -2)
