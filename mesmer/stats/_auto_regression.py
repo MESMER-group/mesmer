@@ -349,17 +349,15 @@ def _select_ar_order_np(data, maxlag, ic="bic"):
     return selected_ar_order
 
 
-def _get_size_and_coord_dict(coords_or_size, dim, name):
+def _get_size_and_coord_dict(coords_or_size, dim, name) -> tuple[int, dict]:
 
     if isinstance(coords_or_size, int):
-        size, coord_dict = coords_or_size, {}
+        size = coords_or_size
+        coord_dict: dict = {}
 
         return size, coord_dict
 
-    # TODO: use public xr.Index when the minimum xarray version is v2023.08.0
-    xr_Index = xr.core.indexes.Index  # type: ignore[attr-defined]
-
-    if not isinstance(coords_or_size, xr.DataArray | xr_Index | pd.Index):
+    if not isinstance(coords_or_size, xr.DataArray | pd.Index):
         raise TypeError(
             f"expected '{name}' to be an `int`, pandas or xarray Index or a `DataArray`"
             f" got {type(coords_or_size)}"
@@ -810,8 +808,8 @@ def fit_auto_regression(
         kwargs={"lags": lags},
     )
 
-    if np.ndim(lags) == 0:
-        lags = np.arange(lags) + 1
+    if isinstance(lags, int):
+        lags = list(range(1, lags + 1))
 
     # return intercept, coeffs, variance, lags, nobs
     data_vars = {
@@ -907,8 +905,8 @@ def fit_auto_regression_monthly(
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
-    ar_params = []
-    residuals = []
+    ar_params_res = []
+    residuals_res = []
 
     for month in range(1, 13):
         if month == 1:
@@ -933,12 +931,12 @@ def fit_auto_regression_monthly(
             vectorize=True,
         )
 
-        ar_params.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-        residuals.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
+        ar_params_res.append(xr.Dataset({"slope": slope, "intercept": intercept}))
+        residuals_res.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
-    month = xr.Variable("month", np.arange(1, 13))
-    ar_params = xr.concat(ar_params, dim=month)
-    residuals = xr.concat(residuals, dim=time_dim).rename("residuals")
+    month_dim = xr.Variable("month", np.arange(1, 13))
+    ar_params = xr.concat(ar_params_res, dim=month_dim)
+    residuals = xr.concat(residuals_res, dim=time_dim).rename("residuals")
 
     return xr.merge([ar_params, residuals])
 

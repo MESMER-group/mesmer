@@ -167,10 +167,10 @@ def equal_scenario_weights_from_datatree(
         raise ValueError(f"DataTree must have a depth of 1, not {dt.depth}.")
 
     def _create_weights(ds: xr.Dataset) -> xr.Dataset:
-        dims = set(ds.dims)
-        if ens_dim not in dims:
+        ds_dims = set(ds.dims)
+        if ens_dim not in ds_dims:
             raise ValueError(f"Member dimension '{ens_dim}' not found in dataset.")
-        if time_dim not in dims:
+        if time_dim not in ds_dims:
             raise ValueError(f"Time dimension '{time_dim}' not found in dataset.")
 
         name, *others = ds.data_vars

@@ -8,7 +8,9 @@ from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
 from mesmer.stats import LinearRegression
 
 
-def _load_and_align_strat_aod_obs(time, hist_period, version="2022"):
+def _load_and_align_strat_aod_obs(
+    time: xr.DataArray, hist_period: slice[str, str], version="2022"
+):
     """
     load stratospheric aerosol optical depth observations and align them to the to
     calendar and time of `time`.
@@ -40,7 +42,7 @@ def _load_and_align_strat_aod_obs(time, hist_period, version="2022"):
     aod = aod.assign_coords({dim: time_hist})
 
     # expand aod to the full time period
-    __, aod = xr.align(time, aod, fill_value=0.0, join="outer")  # type: ignore[assignment]
+    __, aod = xr.align(time, aod, fill_value=0.0, join="outer")
 
     return aod
 

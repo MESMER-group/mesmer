@@ -78,7 +78,7 @@ def test_calibrate_mesmer(
     outname,
     test_data_root_dir,
     update_expected_files=False,
-):
+) -> None:
 
     # define config values
     THRESHOLD_LAND = 1 / 3
@@ -106,7 +106,7 @@ def test_calibrate_mesmer(
     )
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 

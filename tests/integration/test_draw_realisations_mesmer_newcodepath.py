@@ -23,7 +23,7 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     )
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
