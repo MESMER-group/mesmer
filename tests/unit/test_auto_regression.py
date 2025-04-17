@@ -735,7 +735,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     np.testing.assert_allclose(np.std(residuals), std, atol=1e-1)
 
 
-def test_fit_auto_regression_monthly():
+def test_fit_auto_regression_monthly() -> None:
     freq = "ME"
     n_years = 20
     n_gridcells = 10

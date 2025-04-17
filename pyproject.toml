@@ -61,6 +61,7 @@ warn_unused_ignores = true
 ignore_missing_imports = true
 module = [
   "cftime.*",
+  "filefisher.*",
   "joblib.*",
   "pooch.*",
   "properscoring.*",
