@@ -68,7 +68,8 @@ def lat_weights(data, y_dim="lat"):
     return weights
 
 
-def weighted_mean(data, weights, *, dims=None):
+@_datatree_wrapper
+def weighted_mean(data, weights, /, *, dims=None):
     """weighted mean - convenience function which ignores data_vars missing dims
 
     Parameters
@@ -88,13 +89,6 @@ def weighted_mean(data, weights, *, dims=None):
 
     """
 
-    # map_over_datasets does not work with kwargs, so need separate funct to be able to pass
-    # weights as kw
-    return _weighted_mean(data, weights, dims)
-
-
-@_datatree_wrapper
-def _weighted_mean(data, weights, /, dims=None):
     if isinstance(dims, str):
         dims = [dims]
 
