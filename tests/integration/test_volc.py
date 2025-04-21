@@ -75,14 +75,18 @@ def test_fit_volcanic_influence_self_longer():
     time = xr.Dataset(coords={"time": xr.date_range("1900", "2040", freq="YE")})
     aod, _ = xr.align(aod, time, join="right", fill_value=0.0)
 
-    with pytest.raises(ValueError, match="Passed array exeeds time of stratospheric"):
+    with pytest.raises(
+        ValueError, match="Time period of passed array (1900-2039) exeeds"
+    ):
         mesmer.volc.fit_volcanic_influence(-aod, None)
 
     # starts before
     time = xr.Dataset(coords={"time": xr.date_range("1800", "2000", freq="YE")})
     aod, _ = xr.align(aod, time, join="right", fill_value=0.0)
 
-    with pytest.raises(ValueError, match="Passed array exeeds time of stratospheric"):
+    with pytest.raises(
+        ValueError, match="Time period of passed array (1800-2000) exeeds"
+    ):
         mesmer.volc.fit_volcanic_influence(-aod, None)
 
 
@@ -172,14 +176,18 @@ def test_superimpose_volcanic_influence_loner_errors():
     time = xr.Dataset(coords={"time": xr.date_range("1900", "2040", freq="YE")})
     data, _ = xr.align(data, time, join="right", fill_value=0.0)
 
-    with pytest.raises(ValueError, match="Passed array exeeds time of stratospheric"):
+    with pytest.raises(
+        ValueError, match="Time period of passed array (1900-2039) exeeds"
+    ):
         mesmer.volc.superimpose_volcanic_influence(data, params)
 
     # starts before
     time = xr.Dataset(coords={"time": xr.date_range("1800", "2000", freq="YE")})
     data, _ = xr.align(data, time, join="right", fill_value=0.0)
 
-    with pytest.raises(ValueError, match="Passed array exeeds time of stratospheric"):
+    with pytest.raises(
+        ValueError, match="Time period of passed array (1800-2000) exeeds"
+    ):
         mesmer.volc.superimpose_volcanic_influence(data, params)
 
 
