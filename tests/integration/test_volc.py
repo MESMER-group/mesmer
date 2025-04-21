@@ -1,3 +1,5 @@
+import re
+
 import pytest
 import xarray as xr
 
@@ -76,7 +78,7 @@ def test_fit_volcanic_influence_self_longer():
     aod, _ = xr.align(aod, time, join="right", fill_value=0.0)
 
     with pytest.raises(
-        ValueError, match="Time period of passed array (1900-2039) exeeds"
+        ValueError, match=re.escape("Time period of passed array (1900-2039) exeeds")
     ):
         mesmer.volc.fit_volcanic_influence(-aod, None)
 
@@ -85,7 +87,7 @@ def test_fit_volcanic_influence_self_longer():
     aod, _ = xr.align(aod, time, join="right", fill_value=0.0)
 
     with pytest.raises(
-        ValueError, match="Time period of passed array (1800-2000) exeeds"
+        ValueError, match=re.escape("Time period of passed array (1800-1999) exeeds")
     ):
         mesmer.volc.fit_volcanic_influence(-aod, None)
 
@@ -177,7 +179,7 @@ def test_superimpose_volcanic_influence_loner_errors():
     data, _ = xr.align(data, time, join="right", fill_value=0.0)
 
     with pytest.raises(
-        ValueError, match="Time period of passed array (1900-2039) exeeds"
+        ValueError, match=re.escape("Time period of passed array (1900-2039) exeeds")
     ):
         mesmer.volc.superimpose_volcanic_influence(data, params)
 
@@ -186,7 +188,7 @@ def test_superimpose_volcanic_influence_loner_errors():
     data, _ = xr.align(data, time, join="right", fill_value=0.0)
 
     with pytest.raises(
-        ValueError, match="Time period of passed array (1800-2000) exeeds"
+        ValueError, match=re.escape("Time period of passed array (1800-1999) exeeds")
     ):
         mesmer.volc.superimpose_volcanic_influence(data, params)
 
