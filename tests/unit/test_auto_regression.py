@@ -679,11 +679,12 @@ def test_fit_auto_regression_np(lags):
     mock_auto_regressor.params = np.array([0.1, 0.25])
     mock_auto_regressor.sigma2 = 3.14
 
-    with mock.patch(
-        "statsmodels.tsa.ar_model.AutoReg"
-    ) as mocked_auto_regression, mock.patch(
-        "statsmodels.tsa.ar_model.AutoRegResults"
-    ) as mocked_auto_regression_result:
+    with (
+        mock.patch("statsmodels.tsa.ar_model.AutoReg") as mocked_auto_regression,
+        mock.patch(
+            "statsmodels.tsa.ar_model.AutoRegResults"
+        ) as mocked_auto_regression_result,
+    ):
 
         mocked_auto_regression.return_value = mocked_auto_regression_result
         mocked_auto_regression_result.return_value = mock_auto_regressor
