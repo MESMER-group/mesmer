@@ -9,7 +9,7 @@ from mesmer.stats import LinearRegression
 
 
 def _load_and_align_strat_aod_obs(
-    time: xr.DataArray, hist_period: slice, version="2022"
+    time: xr.DataArray, hist_period: slice | None, version="2022"
 ):
     """
     load stratospheric aerosol optical depth observations and align them to the to
@@ -20,9 +20,9 @@ def _load_and_align_strat_aod_obs(
     time: xr.DataArray
         DataArray containing the time coords to align the aerosol optical depth
         observations to.
-    hist_period : slice
+    hist_period : slice | None
         Slice object indicating the years of the historical period. E.g.
-        ``slice("1850", "2014")``.
+        ``slice("1850", "2014")``. If None uses the entire period in ``time``.
     version : str, default: "2022"
         Which version of the dataset to load. Currently only "2022" is available
 
@@ -34,6 +34,19 @@ def _load_and_align_strat_aod_obs(
     """
 
     aod = load_stratospheric_aerosol_optical_depth_obs(version=version, resample=True)
+
+    if hist_period is None:
+        beg, end = time[0].dt.year.item(), time[-1].dt.year.item()
+        aod_beg, aod_end = aod.time[0].dt.year.item(), aod.time[-1].dt.year.item()
+        if beg < aod_beg or end > aod_end:
+            raise ValueError(
+                f"Time period of passed array ({beg}-{end}) exeeds time of stratospheric"
+                " aerosol optical depth observations ({aod_beg}-{aod_end}). Do you need"
+                " to pass ``hist_period``?"
+            )
+
+        hist_period = slice(str(beg), str(end))
+
     aod = aod.sel(time=hist_period)
 
     # replace time axis of aod -> so they have the same calendar
@@ -47,7 +60,9 @@ def _load_and_align_strat_aod_obs(
     return aod
 
 
-def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2022"):
+def fit_volcanic_influence(
+    tas_residuals, hist_period=None, *, dim="time", version="2022"
+):
     """
     estimate volcanic influence on temperature residuals using aerosol optical depth
     observations as proxy
@@ -57,9 +72,9 @@ def fit_volcanic_influence(tas_residuals, hist_period, *, dim="time", version="2
     tas_residuals : xr.DataArray
         DataArray containing global mean temperature residual to estimate the volcanic
         influence from.
-    hist_period : slice
+    hist_period : slice | None
         Slice object indicating the years of the historical period. E.g.
-        ``slice("1850", "2014")``.
+        ``slice("1850", "2014")``.  If None uses the entire time period of ``tas_residuals``.
     dim : str, default: "time"
         Dimension along which to estimate the volcanic influence.
     version : str, default: "2022"
@@ -156,7 +171,7 @@ def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
 
 @_datatree_wrapper
 def superimpose_volcanic_influence(
-    tas_globmean_lowess, params, hist_period, *, dim="time", version="2022"
+    tas_globmean_lowess, params, hist_period=None, *, dim="time", version="2022"
 ):
     """
     superimpose volcanic influence on smooth temperature anomalies using aerosol optical
@@ -170,9 +185,10 @@ def superimpose_volcanic_influence(
     params : xr.Dataset
         Parameters of the linear regression fit, obtained from
         ``fit_volcanic_influence``.
-    hist_period : slice
+    hist_period : slice | None
         Slice object indicating the years of the historical period. E.g.
-        ``slice("1850", "2014")``.
+        ``slice("1850", "2014")``. If None uses the entire time period in
+        ``tas_globmean_lowess``.
     dim : str, default: "time"
         Dimension along which to estimate the volcanic influence.
     version : str, default: "2022"

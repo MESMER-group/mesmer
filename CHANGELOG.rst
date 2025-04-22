@@ -12,6 +12,8 @@ New Features
   By `Victoria Bauer`_.
 - Add python 3.13 to list of supported versions (`#547 <https://github.com/MESMER-group/mesmer/pull/547>`_).
   By `Mathias Hauser`_.
+- Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
+  `#649 <https://github.com/MESMER-group/mesmer/pull/649>`_). By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

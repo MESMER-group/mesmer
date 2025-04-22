@@ -85,8 +85,6 @@ def test_calibrate_mesmer(
 
     REFERENCE_PERIOD = slice("1850", "1900")
 
-    HIST_PERIOD = slice("1850", "2014")
-
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
@@ -208,15 +206,11 @@ def test_calibrate_mesmer(
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
     )
 
-    volcanic_params = mesmer.volc.fit_volcanic_influence(
-        hist_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
-    )
+    volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
     tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
         tas_globmean_smoothed["historical"],
         volcanic_params,
-        hist_period=HIST_PERIOD,
-        dim="time",
     )
 
     # train global variability module
