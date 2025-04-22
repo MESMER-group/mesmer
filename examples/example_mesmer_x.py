@@ -6,12 +6,8 @@ import xarray as xr
 
 import mesmer
 import mesmer.mesmer_x
-
 from mesmer.core.datatree import stack_datatrees_for_linear_regression
 from mesmer.core._datatreecompat import map_over_datasets
-
-# TODO: to replace with outputs from PR #607
-# import datatree
 
 
 def main():
