@@ -78,8 +78,8 @@ dev = [
     "ruff",
 ]
 
-[tool.setuptools]
-packages = ["mesmer"]
+[tool.setuptools.packages]
+find = {namespaces = false}  # Disable implicit namespaces
 
 
 [tool.setuptools_scm]
