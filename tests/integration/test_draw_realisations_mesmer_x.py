@@ -105,14 +105,11 @@ def test_make_realisations_mesmer_x(
         expr_start="norm(loc=0, scale=1)",
         coeffs_start=None,
         expr_end=expr,
-        coeffs_end=transform_params
-        )
+        coeffs_end=transform_params,
+    )
     emus = back_pit.transform(
-        data=transf_emus,
-        target_name=target_name,
-        preds_start=None,
-        preds_end=predictor
-        )
+        data=transf_emus, target_name=target_name, preds_start=None, preds_end=predictor
+    )
 
     expected_output_file = (
         TEST_PATH / f"test_make_realisations_expected_output_{expr_name}.nc"
