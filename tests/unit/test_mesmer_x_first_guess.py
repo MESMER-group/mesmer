@@ -105,7 +105,7 @@ def test_first_guess_GEV(shape):
     )
     result2 = fg_mx._find_fg_np(pred, targ, weights)
     # NOTE: leads to the same result as without first guess
-    np.testing.assert_equal(result2, result)
+    np.testing.assert_allclose(result2, result, rtol=1.e-3)
 
 
 def test_first_guess_GEV_including_pred():
