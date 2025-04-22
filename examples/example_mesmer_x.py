@@ -256,7 +256,7 @@ def main():
             option_smooth_coeffs=True,
             r_gasparicohn=500,
         )
-        
+
     # if scores requested
     if False:
         scores = train_mx.eval_quality_fit(
