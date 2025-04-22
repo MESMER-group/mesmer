@@ -5,11 +5,6 @@ import mesmer.mesmer_x
 
 
 def test_distrib_init_all_default():
-    rng = np.random.default_rng(0)
-    n = 250
-    pred = np.linspace(0, 1, n)
-    targ = rng.normal(loc=2 * pred, scale=0.1, size=n)
-
     expression = mesmer.mesmer_x.Expression(
         "norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1"
     )
@@ -50,11 +45,6 @@ def test_distrib_init_all_default():
 
 
 def test_distrib_init():
-    rng = np.random.default_rng(0)
-    n = 250
-    pred = np.linspace(0, 1, n)
-    targ = rng.normal(loc=2 * pred, scale=0.1, size=n)
-
     expression = mesmer.mesmer_x.Expression(
         "norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1"
     )
@@ -131,22 +121,22 @@ def test_distrib_init_errors():
     train_mx = mesmer.mesmer_x.distrib_train(expression, tests_mx, optim_mx)
 
     with pytest.raises(ValueError, match="nan values in predictors"):
-        result = fg_mx._find_fg_np(
+        _ = fg_mx._find_fg_np(
             np.array([1, 2, np.nan]), np.array([1, 2, 3]), np.array([1, 1, 1]) / 3
         )
 
     with pytest.raises(ValueError, match="infinite values in predictors"):
-        result = fg_mx._find_fg_np(
+        _ = fg_mx._find_fg_np(
             np.array([1, 2, np.inf]), np.array([1, 2, 3]), np.array([1, 1, 1]) / 3
         )
 
     with pytest.raises(ValueError, match="nan values in target"):
-        result = fg_mx._find_fg_np(
+        _ = fg_mx._find_fg_np(
             np.array([1, 2, 3]), np.array([1, 2, np.nan]), np.array([1, 1, 1]) / 3
         )
 
     with pytest.raises(ValueError, match="infinite values in target"):
-        result = fg_mx._find_fg_np(
+        _ = fg_mx._find_fg_np(
             np.array([1, 2, 3]), np.array([1, 2, np.inf]), np.array([1, 1, 1]) / 3
         )
 

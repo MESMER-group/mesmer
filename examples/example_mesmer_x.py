@@ -244,14 +244,6 @@ def main():
         weights=stacked_weights,
         dim="sample",
     )
-    scores = train_mx.eval_quality_fit(
-        predictors=stacked_pred,
-        target=test_stacked_targ,
-        coefficients_fit=coefficients,
-        weights=stacked_weights,
-        dim="sample",
-        scores_fit=["func_optim", "nll", "bic"],
-    )
 
     # second round if necessary
     if False:
@@ -264,6 +256,9 @@ def main():
             option_smooth_coeffs=True,
             r_gasparicohn=500,
         )
+        
+    # if scores requested
+    if False:
         scores = train_mx.eval_quality_fit(
             predictors=stacked_pred,
             target=test_stacked_targ,
@@ -364,14 +359,14 @@ def main():
         coeffs_end=coefficients,
     )
     # version with datatree
-    emulations = back_pit.transform(
+    _emulations = back_pit.transform(  # noqa: F841
         data=datatree_localvar,
         target_name=target,
         preds_start=None,
         preds_end=new_pred_data,
     )
     # version with dataset
-    emulations = back_pit.transform(
+    _emulations = back_pit.transform(  # noqa: F841
         data=dataset_localvar,
         target_name=target,
         preds_start=None,

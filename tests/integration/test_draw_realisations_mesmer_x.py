@@ -121,12 +121,12 @@ def test_make_realisations_mesmer_x(
     else:
         # load the output
         expected_emus = xr.open_dataarray(expected_output_file, use_cftime=True)
-        xr.testing.assert_allclose(emus, expected_emus)
+        xr.testing.assert_allclose(emus[target_name], expected_emus)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = expected_emus.set_index(gridpoint=("lat", "lon")).unstack(
             "gridpoint"
         )
-        expected_dims = {"lon", "lat", "time"}
+        expected_dims = {"realisation", "lon", "lat", "time"}
 
         assert set(exp_reshaped.dims) == expected_dims
