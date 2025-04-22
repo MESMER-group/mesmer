@@ -1,9 +1,13 @@
 import functools
-from typing import overload
+from collections.abc import Callable
+from typing import ParamSpec, TypeVar, overload
 
 import xarray as xr
 
 from mesmer.core._datatreecompat import map_over_datasets
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def _extract_single_dataarray_from_dt(
@@ -19,9 +23,9 @@ def _extract_single_dataarray_from_dt(
     ds = dt.to_dataset()
     var_name, *others = ds.keys()
     if others:
-        others = ", ".join(map(str, others))
+        o = ", ".join(map(str, others))
         raise ValueError(
-            f"Node must only contain one data variable, {name} has {others} and {var_name}."
+            f"Node must only contain one data variable, {name} has {o} and {var_name}."
         )
 
     da = ds[var_name]
@@ -199,24 +203,27 @@ def stack_datatrees_for_linear_regression(
     return predictors_stacked, target_stacked, weights_stacked
 
 
-def _datatree_wrapper(func):
+def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
     """wrapper to extend functions so DataTree can be passed
 
     NOTE: DataTree arguments __must__ be passed as args (positional) and not as
     kwargs
+
+    see https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
+    for the typing
     """
 
     @functools.wraps(func)
-    def inner(*args, **kwargs):
+    def inner(*args: P.args, **kwargs: P.kwargs) -> T:
 
         # check to ensure there are no DataTree in kwargs. Altough this is not very
         # efficient, it has bitten me before.
         dt_kwargs = [key for key, val in kwargs.items() if isinstance(val, xr.DataTree)]
         if dt_kwargs:
-            dt_kwargs = "', '".join(dt_kwargs)
+            dt_kwargs_names = "', '".join(dt_kwargs)
             msg = (
                 "Passed a `DataTree` as keyword argument which is not allowed."
-                f" Passed `DataTree` kwargs: '{dt_kwargs}'"
+                f" Passed `DataTree` kwargs: '{dt_kwargs_names}'"
             )
             raise TypeError(msg)
 

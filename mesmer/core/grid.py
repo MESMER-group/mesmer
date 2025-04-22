@@ -2,6 +2,7 @@ import pandas as pd
 import xarray as xr
 
 from mesmer.core.datatree import _datatree_wrapper
+from mesmer.core.types import T_DataArraySetTree
 
 
 def _lon_to_180(lon):
@@ -27,9 +28,7 @@ def _lon_to_360(lon):
 
 
 @_datatree_wrapper
-def wrap_to_180(
-    obj: xr.Dataset | xr.DataArray, lon_name: str = "lon"
-) -> xr.Dataset | xr.DataArray:
+def wrap_to_180(obj: T_DataArraySetTree, lon_name: str = "lon") -> T_DataArraySetTree:
     """
     wrap array with longitude to [-180..180)
 
@@ -48,16 +47,14 @@ def wrap_to_180(
 
     new_lon = _lon_to_180(obj[lon_name])
 
-    obj = obj.assign_coords(**{lon_name: new_lon})  # type: ignore[arg-type] xarray doesn't type
+    obj = obj.assign_coords(coords={lon_name: new_lon})
     obj = obj.sortby(lon_name)
 
     return obj
 
 
 @_datatree_wrapper
-def wrap_to_360(
-    obj: xr.Dataset | xr.DataArray, lon_name: str = "lon"
-) -> xr.Dataset | xr.DataArray:
+def wrap_to_360(obj: T_DataArraySetTree, lon_name: str = "lon") -> T_DataArraySetTree:
     """
     wrap array with longitude to [0..360)
 
@@ -76,7 +73,7 @@ def wrap_to_360(
 
     new_lon = _lon_to_360(obj[lon_name])
 
-    obj = obj.assign_coords(**{lon_name: new_lon})  # type: ignore[arg-type]
+    obj = obj.assign_coords(coords={lon_name: new_lon})
     obj = obj.sortby(lon_name)
 
     return obj

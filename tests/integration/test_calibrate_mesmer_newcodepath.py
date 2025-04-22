@@ -78,14 +78,12 @@ def test_calibrate_mesmer(
     outname,
     test_data_root_dir,
     update_expected_files=False,
-):
+) -> None:
 
     # define config values
     THRESHOLD_LAND = 1 / 3
 
     REFERENCE_PERIOD = slice("1850", "1900")
-
-    HIST_PERIOD = slice("1850", "2014")
 
     LOCALISATION_RADII = range(1750, 2001, 250)
 
@@ -106,7 +104,7 @@ def test_calibrate_mesmer(
     )
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
@@ -208,15 +206,11 @@ def test_calibrate_mesmer(
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
     )
 
-    volcanic_params = mesmer.volc.fit_volcanic_influence(
-        hist_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
-    )
+    volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
     tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
         tas_globmean_smoothed["historical"],
         volcanic_params,
-        hist_period=HIST_PERIOD,
-        dim="time",
     )
 
     # train global variability module

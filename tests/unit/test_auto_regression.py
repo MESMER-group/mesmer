@@ -679,11 +679,12 @@ def test_fit_auto_regression_np(lags):
     mock_auto_regressor.params = np.array([0.1, 0.25])
     mock_auto_regressor.sigma2 = 3.14
 
-    with mock.patch(
-        "statsmodels.tsa.ar_model.AutoReg"
-    ) as mocked_auto_regression, mock.patch(
-        "statsmodels.tsa.ar_model.AutoRegResults"
-    ) as mocked_auto_regression_result:
+    with (
+        mock.patch("statsmodels.tsa.ar_model.AutoReg") as mocked_auto_regression,
+        mock.patch(
+            "statsmodels.tsa.ar_model.AutoRegResults"
+        ) as mocked_auto_regression_result,
+    ):
 
         mocked_auto_regression.return_value = mocked_auto_regression_result
         mocked_auto_regression_result.return_value = mock_auto_regressor
@@ -735,7 +736,7 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     np.testing.assert_allclose(np.std(residuals), std, atol=1e-1)
 
 
-def test_fit_auto_regression_monthly():
+def test_fit_auto_regression_monthly() -> None:
     freq = "ME"
     n_years = 20
     n_gridcells = 10

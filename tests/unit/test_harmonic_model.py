@@ -198,7 +198,7 @@ def test_fit_harmonic_model():
     xr.testing.assert_equal(expected, result.residuals)
 
 
-def test_fit_harmonic_model_checks():
+def test_fit_harmonic_model_checks() -> None:
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 

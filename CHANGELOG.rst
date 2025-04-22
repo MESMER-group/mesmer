@@ -12,6 +12,8 @@ New Features
   By `Victoria Bauer`_.
 - Add python 3.13 to list of supported versions (`#547 <https://github.com/MESMER-group/mesmer/pull/547>`_).
   By `Mathias Hauser`_.
+- Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
+  `#649 <https://github.com/MESMER-group/mesmer/pull/649>`_). By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -78,6 +80,8 @@ Internal Changes
   By `Victoria Bauer`_.
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
+- Consolidate package metadata and configuration in `pyproject.toml` (`#650 <https://github.com/MESMER-group/mesmer/pull/650>`_).
+  By `Mathias Hauser`_.
 
 Data structure using DataTree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -94,6 +98,8 @@ This was originally done with the prototype `xarray-datatree` package. After the
 - Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
 - Add a wrapper to allow :py:class:`DataTree` in many data handling functions (\
   `#632 <https://github.com/MESMER-group/mesmer/issues/632>`_,
+  `#643 <https://github.com/MESMER-group/mesmer/pull/643>`_
+  `#641 <https://github.com/MESMER-group/mesmer/pull/641>`_, , and
   `#644 <https://github.com/MESMER-group/mesmer/pull/644>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
