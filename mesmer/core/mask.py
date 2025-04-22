@@ -29,7 +29,7 @@ def mask_ocean_fraction(
     threshold: float,
     *,
     x_coords: str = "lon",
-    y_coords: str = "lat"
+    y_coords: str = "lat",
 ) -> T_DataArraySetTree:
     """mask out ocean using fractional overlap
 
