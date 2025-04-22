@@ -3,9 +3,9 @@ import pathlib
 import pytest
 import xarray as xr
 
-# from datatree import Datatree, map_over_subtree
 import mesmer
 import mesmer.mesmer_x
+from mesmer.core.datatree import stack_datatrees_for_linear_regression
 
 # TODO: extend to more scenarios and members
 # TODO: extend predictors
@@ -75,8 +75,6 @@ def test_calibrate_mesmer_x(
         ["height", "file_qf", "time_bnds"]
     )
 
-    # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
-
     # make global mean
     # global_mean_dt = map_over_subtree(mesmer.weighted.global_mean)
     tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
@@ -91,101 +89,154 @@ def test_calibrate_mesmer_x(
     targ_hist = xr.open_dataset(fN_hist, use_cftime=True)
     targ_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True)
 
-    # target = DataTree({"hist": targ_hist, "ssp585": targ_ssp585})
-
     # stack target data
     def mask_and_stack(ds, threshold_land):
         ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
         ds = mesmer.mask.mask_antarctica(ds)
         ds = mesmer.grid.stack_lat_lon(ds, stack_dim="gridpoint")
         return ds
-
+    
     # mask_and_stack_dt = map_over_subtree(mask_and_stack)
     targ_stacked_hist = mask_and_stack(targ_hist, threshold_land=THRESHOLD_LAND)
     targ_stacked_ssp585 = mask_and_stack(targ_ssp585, threshold_land=THRESHOLD_LAND)
+    
+    # switching to stacked datasets as used for linear regression
+    tmp = xr.DataTree.from_dict({
+        'historical':tas_glob_mean_hist.expand_dims({"member":["r1i1p1f1"]}),
+        'ssp585':tas_glob_mean_ssp585.expand_dims({"member":["r1i1p1f1"]})
+        })
+    dt_pred = xr.DataTree.from_dict({'tas': tmp}, name="predictors")
+    dt_targ = xr.DataTree.from_dict({
+        'historical':targ_stacked_hist.expand_dims({"member":["r1i1p1f1"]}),
+        'ssp585':targ_stacked_ssp585.expand_dims({"member":["r1i1p1f1"]})
+        }, name=target_name)
 
-    # collect scenarios in a tuple
-    # NOTE: each of the datasets below could have a dimension along member
-    predictor = ((tas_glob_mean_hist, "hist"), (tas_glob_mean_ssp585, "ssp585"))
-    target = ((targ_stacked_hist, "hist"), (targ_stacked_ssp585, "ssp585"))
+    # weights
+    weights = mesmer.mesmer_x.get_weights_density(
+        pred_data=dt_pred,
+        predictor="tas",
+        targ_data=dt_targ,
+        target=target_name,
+        dims=("member", "time")
+        )
 
-    # do the training
-    transform_params, _ = mesmer.mesmer_x.xr_train_distrib(
-        predictors=predictor,
-        target=target,
-        target_name=target_name,
-        expr=expr,
-        expr_name=expr_name,
-        option_2ndfit=option_2ndfit,
-        r_gasparicohn_2ndfit=500,
-        scores_fit=["func_optim", "NLL", "BIC"],
+    # stacking
+    stacked_pred, stacked_targ, stacked_weights = mesmer.core.datatree.stack_datatrees_for_linear_regression(
+        predictors=dt_pred,
+        target=dt_targ,
+        weights=weights,
+        stacking_dims=['member', 'time']
+        )
+
+    # declaring analytical form of the conditional distribution
+    expression_fit = mesmer.mesmer_x.Expression(expr, expr_name)
+    
+    # preparing tests that will be used for first guess and training
+    tests_mx = mesmer.mesmer_x.distrib_tests(
+        expr_fit=expression_fit,
+        threshold_min_proba=1.0e-9,
+        boundaries_params=None,
+        boundaries_coeffs=None
     )
+    
+    # preparing optimizers that will be used for first guess and training
+    optim_mx = mesmer.mesmer_x.distrib_optimizer(
+        expr_fit=expression_fit,
+        class_tests=tests_mx,
+        options_optim=None,
+        options_solver=None
+    )
+    
+    # preparing first guess
+    fg_mx = mesmer.mesmer_x.distrib_firstguess(
+        expr_fit=expression_fit,
+        class_tests=tests_mx,
+        class_optim=optim_mx,
+        first_guess=None,
+        func_first_guess=None
+    )
+    coeffs_fg = fg_mx.find_fg(
+        predictors=stacked_pred,
+        target=stacked_targ,
+        weights=stacked_weights,
+        dim="sample"
+    )
+    
+    # training the conditional distribution
+    train_mx = mesmer.mesmer_x.distrib_train(
+        expr_fit=expression_fit,
+        class_tests=tests_mx,
+        class_optim=optim_mx
+    )
+    # first round
+    transform_params = train_mx.fit(
+        predictors=stacked_pred,
+        target=stacked_targ,
+        first_guess=coeffs_fg,
+        weights=stacked_weights,
+        dim="sample"
+    )
+    
+    # second round if necessary
+    if option_2ndfit:
+        transform_params = train_mx.fit(
+            predictors=stacked_pred,
+            target=stacked_targ,
+            first_guess=transform_params,
+            weights=stacked_weights,
+            dim="sample",
+            option_smooth_coeffs=True,
+            r_gasparicohn=500
+        )
 
-    # probability integral transform: projection of the data on a standard normal distribution
-    transf_target = mesmer.mesmer_x.probability_integral_transform(  # noqa: F841
-        data=target,
-        target_name=target_name,
+    # probability integral transform on non-stacked data for AR(1) process
+    pit = mesmer.mesmer_x.probability_integral_transform(
         expr_start=expr,
         coeffs_start=transform_params,
-        preds_start=predictor,
         expr_end="norm(loc=0, scale=1)",
-    )
-    # TODO: add expression as variable here or in function or before saving?
-
-    # make transformed target into DataArrays
-    transf_target_xr_hist = xr.DataArray(
-        transf_target[0][0],
-        dims=["time", "gridpoint"],
-        coords={"time": targ_stacked_hist.time},
-    ).assign_coords(targ_stacked_hist.gridpoint.coords)
-    transf_target_xr_ssp585 = xr.DataArray(
-        transf_target[1][0],
-        dims=["time", "gridpoint"],
-        coords={"time": targ_stacked_ssp585.time},
-    ).assign_coords(targ_stacked_hist.gridpoint.coords)
+        coeffs_end=None
+        )
+    transf_target = pit.transform(
+        data=dt_targ,
+        target_name=target_name,
+        preds_start=dt_pred,
+        preds_end=None
+        )
 
     # training of auto-regression with spatially correlated innovations
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
-        transf_target_xr_hist,
-        transf_target_xr_ssp585,
-        ens_dim=None,
+        transf_target,
+        ens_dim="member",
         dim="time",
         lags=1,
     )
 
     # estimate covariance matrix
     # prep distance matrix
-    geodist = mesmer.geospatial.geodist_exact(
-        targ_stacked_hist.lon, targ_stacked_hist.lat
+    geodist = mesmer.core.geospatial.geodist_exact(
+        lon=stacked_targ.lon,
+        lat=stacked_targ.lat
     )
     # prep localizer
+    LOCALISATION_RADII = range(1750, 2001, 250)
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-        geodist, range(4000, 6001, 500)
+        geodist=geodist,
+        localisation_radii=LOCALISATION_RADII
     )
 
-    # stack target
-    transf_target_stacked = xr.concat(
-        [transf_target_xr_hist, transf_target_xr_ssp585], dim="scenario"
-    )
-    transf_target_stacked = transf_target_stacked.assign_coords(
-        scenario=["hist", "ssp585"]
-    )
-    transf_target_stacked = transf_target_stacked.stack(
-        {"sample": ["time", "scenario"]}, create_index=False
-    ).dropna("sample")
-
-    # make weights
-    weights = xr.ones_like(transf_target_stacked.isel(gridpoint=0))
-
-    # find covariance
-    dim = "sample"
-    k_folds = 15
-
+    # TODO: should we both for MESMER and for MESMER-X remove the 
+    # residuals from the AR(1) process before calculating the covariance?
+    # is that we is happening in 'adjust_covariance_ar1'?
+    # TODO: using here weights from MESMER-X. I noticed that it affects the
+    # calculation in find_localized_empirical_covariance. Need to solve that.
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        transf_target_stacked, weights, phi_gc_localizer, dim, k_folds
+        data=stacked_targ[target_name],
+        weights=stacked_weights.weight,
+        localizer=phi_gc_localizer,
+        dim="sample",
+        k_folds=30
     )
 
-    # Adjust regularized covariance matrix
     localized_ecov["localized_covariance_adjusted"] = (
         mesmer.stats.adjust_covariance_ar1(
             localized_ecov.localized_covariance, local_ar_params.coeffs

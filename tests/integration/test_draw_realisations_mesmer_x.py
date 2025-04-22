@@ -33,7 +33,7 @@ def test_make_realisations_mesmer_x(
     scenario, target_name, expr, expr_name, test_data_root_dir, update_expected_files
 ):
     # set some configuration parameters
-    n_realizations = 1  # TODO: more is not possible atm
+    n_realizations = 1  # TODO: can now do more than 1 realization. change output data?
     seed = 0
     buffer = 10
     esm = "IPSL-CM6A-LR"
@@ -101,18 +101,18 @@ def test_make_realisations_mesmer_x(
     transf_emus = xr.Dataset({target_name: transf_emus})
 
     # back-transform the realizations
-    # can only take 2D input aka only one realisation atm
-    emus = mesmer.mesmer_x.probability_integral_transform(
-        target_name=target_name,
-        data=[(transf_emus.sel(realisation=0), scenario)],
+    back_pit = mesmer.mesmer_x.probability_integral_transform(
         expr_start="norm(loc=0, scale=1)",
+        coeffs_start=None,
         expr_end=expr,
-        coeffs_end=transform_params,
-        preds_end=[(predictor, scenario)],
-    )
-
-    emus = xr.DataArray(emus[0][0], dims=["time", "gridpoint"], coords={"time": time})
-    emus = emus.assign_coords(local_ar_params.gridpoint.coords)
+        coeffs_end=transform_params
+        )
+    emus = back_pit.transform(
+        data=transf_emus,
+        target_name=target_name,
+        preds_start=None,
+        preds_end=predictor
+        )
 
     expected_output_file = (
         TEST_PATH / f"test_make_realisations_expected_output_{expr_name}.nc"

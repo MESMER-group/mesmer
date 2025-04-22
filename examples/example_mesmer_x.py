@@ -6,6 +6,8 @@ import xarray as xr
 
 import mesmer
 import mesmer.mesmer_x
+
+from mesmer.core.datatree import stack_datatrees_for_linear_regression
 from mesmer.core._datatreecompat import map_over_datasets
 
 # TODO: to replace with outputs from PR #607
@@ -216,7 +218,6 @@ def main():
     optim_mx = mesmer.mesmer_x.distrib_optimizer(
         expr_fit=expression_fit,
         class_tests=tests_mx,
-        weights=stacked_weights,
         options_optim=None,
         options_solver=None,
     )
@@ -271,7 +272,7 @@ def main():
         scores = train_mx.eval_quality_fit(
             predictors=stacked_pred,
             target=test_stacked_targ,
-            coefficients_fit=coefficients2,
+            coefficients_fit=coefficients,
             weights=stacked_weights,
             dim="sample",
             scores_fit=["func_optim", "nll", "bic"],
@@ -357,23 +358,30 @@ def main():
         seed=42,
         buffer=42,
     )
-    datatree_localvar = xr.DataTree.from_dict(
-        {name_newscenario: xr.Dataset({target: local_variability})}
-    )
-
+    dataset_localvar = xr.Dataset({target:local_variability})
+    datatree_localvar = xr.DataTree.from_dict({name_newscenario:dataset_localvar})
+    
     # compute back-probability integral transform = emulations
     back_pit = mesmer.mesmer_x.probability_integral_transform(
         expr_start="norm(loc=0, scale=1)",
         coeffs_start=None,
         expr_end=expr,
-        coeffs_end=coefficients,
-    )
+        coeffs_end=coefficients
+        )
+    # version with datatree
     emulations = back_pit.transform(
         data=datatree_localvar,
         target_name=target,
         preds_start=None,
-        preds_end=new_pred_data,
-    )
+        preds_end=new_pred_data
+        )
+    # version with dataset
+    emulations = back_pit.transform(
+        data=dataset_localvar,
+        target_name=target,
+        preds_start=None,
+        preds_end=xr.Dataset( {'gmt':new_tas_globmean['tas'], 'gmt_tm1':new_tas_globmean_tm1['tas']} )
+        )
     # --------------------------------------------------------------
     # ==============================================================
 

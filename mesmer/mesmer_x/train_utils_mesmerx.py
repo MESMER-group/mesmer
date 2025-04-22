@@ -484,17 +484,18 @@ class probability_integral_transform:
         Prepare coefficients for the expression
         """
         if coeffs is None:
+            # creating an empty dataset for use
             return xr.Dataset()
 
         elif isinstance(coeffs, xr.Dataset):
-            # correcting format (easier for selection in Expression)
-            for coef in coeffs["coefficient"].values:
-                coeffs[coef] = coeffs["coefficients"].sel(coefficient=coef)
+            # no need to correct the format
             return coeffs
 
         else:
-            raise Exception("coefficients must be a xarray Dataset or None")
-
+            raise Exception(
+                "coefficients must be a xarray Dataset or None"
+            )
+    
     def transform(
         self,
         data,
@@ -585,7 +586,8 @@ class probability_integral_transform:
         # preparation of predictors
         if preds is None:
             ds_preds = xr.Dataset()
-        else:
+            
+        elif isinstance(preds, xr.DataTree):
             if scen is not None:
                 # taking only the correct scenario, while keeping the same format
                 preds = xr.DataTree.from_dict({p: preds[p][scen] for p in preds})
@@ -596,6 +598,11 @@ class probability_integral_transform:
             ds_preds = xr.Dataset()
             for pp in tmp["predictor"].values:
                 ds_preds[pp] = tmp[var_name].sel(predictor=pp)
+                
+        elif isinstance(preds, xr.Dataset):
+            # no need to correct format
+            ds_preds = preds
+                                
         return ds_preds
 
     def _transform(
