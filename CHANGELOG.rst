@@ -78,6 +78,8 @@ Internal Changes
   By `Victoria Bauer`_.
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
+- Consolidate package metadata and configuration in `pyproject.toml` (`#650 <https://github.com/MESMER-group/mesmer/pull/650>`_).
+  By `Mathias Hauser`_.
 
 Data structure using DataTree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
