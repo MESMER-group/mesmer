@@ -1,0 +1,3 @@
+# setuptools_scm automatically includes all tracked files in the sdist,
+# however, our test files are too big to include
+recursive-exclude tests *
