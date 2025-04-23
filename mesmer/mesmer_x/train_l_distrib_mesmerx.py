@@ -1509,7 +1509,7 @@ class distrib_firstguess:
             # this coefficient on scale causes problem
             return np.inf
 
-    def _fg_fun_others(self, x_others, margin0=1.e-3):
+    def _fg_fun_others(self, x_others, margin0=1.0e-3):
         """
         Loss function for other coefficients than loc and scale. Objective is to tune parameters such
         that target samples are within a likely range of the distribution. Instead of relying on the
