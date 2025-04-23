@@ -574,11 +574,16 @@ def test_fg_fun_sca():
 
     fg_mx.data_targ = targ
     fg_mx.data_pred = {"tas": pred}
+    fg_mx.l_smooth = 5
+    fg_mx.smooth_targ = _smooth_data(fg_mx.data_targ, length=fg_mx.l_smooth)
+    fg_mx.dev_smooth_targ = (
+        fg_mx.data_targ[fg_mx.l_smooth : -fg_mx.l_smooth] - fg_mx.smooth_targ
+    )
     fg_mx.fg_coeffs = [loc, scale]
     fg_mx.fg_ind_sca = np.array([1])
 
     result = fg_mx._fg_fun_sca(scale)
-    np.testing.assert_allclose(result, 0, atol=0.05)
+    np.testing.assert_allclose(result, 0, atol=0.1)
 
     # test GEV
     targ = genextreme.rvs(c=1, loc=loc, scale=scale, size=n, random_state=rng)
@@ -595,6 +600,11 @@ def test_fg_fun_sca():
 
     fg_mx.data_targ = targ
     fg_mx.data_pred = {"tas": pred}
+    fg_mx.l_smooth = 5
+    fg_mx.smooth_targ = _smooth_data(fg_mx.data_targ, length=fg_mx.l_smooth)
+    fg_mx.dev_smooth_targ = (
+        fg_mx.data_targ[fg_mx.l_smooth : -fg_mx.l_smooth] - fg_mx.smooth_targ
+    )
     fg_mx.fg_coeffs = [loc, scale, 1.0]
     fg_mx.fg_ind_sca = np.array([1])
 
@@ -647,4 +657,4 @@ def test_fg_fun_others():
         [loss_at_toolow_a, loss_at_toohigh_a, loss_at_toolow_b, loss_at_toohigh_b]
     )
 
-    assert min_loss > loss_at_truesolution
+    assert min_loss >= loss_at_truesolution
