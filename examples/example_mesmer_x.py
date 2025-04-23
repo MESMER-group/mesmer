@@ -259,7 +259,7 @@ def main():
 
     # if scores requested
     if False:
-        scores = train_mx.eval_quality_fit(
+        _scores = train_mx.eval_quality_fit(
             predictors=stacked_pred,
             target=test_stacked_targ,
             coefficients_fit=coefficients,

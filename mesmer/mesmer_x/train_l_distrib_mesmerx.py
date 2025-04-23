@@ -218,7 +218,7 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
             n_dims = {dim: pred_data[var][scen][dim].size for dim in dims}
             array_tmp = np.reshape(
                 density[counter : counter + pred_data[var][scen][predictor].size],
-                shape=[n_dims[dim] for dim in dims],
+                [n_dims[dim] for dim in dims],
             )
             tmp = xr.DataArray(
                 data=array_tmp,
@@ -1249,7 +1249,7 @@ class distrib_firstguess:
                     mean_low_preds[pp],
                 )
                 for pp in self.predictor_dim
-            }
+                }
 
             minimizer_kwargs = {
                 "args": (

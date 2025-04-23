@@ -457,38 +457,54 @@ def test_fg_func_deriv01():
 
     fg_mx.predictor_dim = fg_mx.expr_fit.inputs_list
     fg_mx.data_pred = {"tas": pred}
+    fg_mx.data_targ = targ
 
-    smooth_targ = _smooth_data(targ)
-    smooth_pred = {pp: _smooth_data(fg_mx.data_pred[pp]) for pp in fg_mx.predictor_dim}
-    mean_smooth_targ, std_smooth_targ = np.mean(smooth_targ), np.std(smooth_targ)
-    ind_targ_low = np.where(smooth_targ < mean_smooth_targ - std_smooth_targ)[0]
-    ind_targ_high = np.where(smooth_targ > mean_smooth_targ + std_smooth_targ)[0]
+    # smooting to help with location & scale
+    fg_mx.l_smooth = 5
+    fg_mx.smooth_targ = _smooth_data(fg_mx.data_targ, length=fg_mx.l_smooth)
+    fg_mx.dev_smooth_targ = fg_mx.data_targ[fg_mx.l_smooth:-fg_mx.l_smooth] - fg_mx.smooth_targ
+    fg_mx.smooth_pred = {
+        pp: _smooth_data(fg_mx.data_pred[pp], length=fg_mx.l_smooth) for pp in fg_mx.predictor_dim
+    }
+    
+    # preparation of coefficients
+    fg_mx.fg_coeffs = np.zeros(fg_mx.n_coeffs)
+    loc_coeffs = fg_mx.expr_fit.coefficients_dict.get("loc", [])
+    fg_mx.fg_ind_loc = np.array(
+        [fg_mx.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
+    )
+        
+    # preparation of derivatives
+    m_smooth_targ, s_smooth_targ = np.mean(fg_mx.smooth_targ), np.std(fg_mx.smooth_targ)
+    ind_targ_low = np.where(fg_mx.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
+    ind_targ_high = np.where(fg_mx.smooth_targ > m_smooth_targ + s_smooth_targ)[0]
     mean_high_preds = {
-        pp: np.mean(smooth_pred[pp][ind_targ_high], axis=0)
+        pp: np.mean(fg_mx.smooth_pred[pp][ind_targ_high], axis=0)
         for pp in fg_mx.predictor_dim
     }
     mean_low_preds = {
-        pp: np.mean(smooth_pred[pp][ind_targ_low], axis=0) for pp in fg_mx.predictor_dim
+        pp: np.mean(fg_mx.smooth_pred[pp][ind_targ_low], axis=0)
+        for pp in fg_mx.predictor_dim
     }
 
-    deriv_targ = {
+    derivative_targ = {
         pp: _finite_difference(
-            np.mean(smooth_targ[ind_targ_high]),
-            np.mean(smooth_targ[ind_targ_low]),
+            np.mean(fg_mx.smooth_targ[ind_targ_high]),
+            np.mean(fg_mx.smooth_targ[ind_targ_low]),
             mean_high_preds[pp],
             mean_low_preds[pp],
         )
         for pp in fg_mx.predictor_dim
-    }
+        }
 
     loss_at_toolow = fg_mx._fg_fun_deriv01(
-        [c1 / 2, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
+        [c1 / 2], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
     )
     loss_at_truesolution = fg_mx._fg_fun_deriv01(
-        [c1, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
+        [c1], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
     )
     loss_at_toohigh = fg_mx._fg_fun_deriv01(
-        [c1 * 2, c2], mean_high_preds, mean_low_preds, deriv_targ, mean_smooth_targ
+        [c1 * 2], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
     )
 
     assert loss_at_toolow > loss_at_truesolution
