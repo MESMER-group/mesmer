@@ -1249,7 +1249,7 @@ class distrib_firstguess:
                     mean_low_preds[pp],
                 )
                 for pp in self.predictor_dim
-                }
+            }
 
             minimizer_kwargs = {
                 "args": (
