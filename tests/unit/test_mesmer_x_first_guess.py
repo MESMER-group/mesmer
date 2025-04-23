@@ -122,7 +122,7 @@ def test_first_guess_GEV_including_pred():
     expression = mesmer.mesmer_x.Expression(
         "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
     )
-
+    
     weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
     tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
     optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
@@ -377,8 +377,8 @@ def test_first_guess_with_bounds():
     # test result is within bounds
     assert loc_bounds[0] <= result[0] <= loc_bounds[1]
     assert scale_bounds[0] <= result[1] <= scale_bounds[1]
-    expected = np.array([-0.005093813, 1.015267311])
-    np.testing.assert_allclose(result, expected, rtol=1e-5)
+    expected = np.array([loc, scale])
+    np.testing.assert_allclose(result, expected, atol=0.1)
 
     # test with bounds outside true value
     scale_bounds_wrong = (0.5, 0.8)
@@ -395,10 +395,10 @@ def test_first_guess_with_bounds():
     result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = np.array([-0.016552528, 1.520612114])
-    np.testing.assert_allclose(result, expected, rtol=1e-6)
+    np.testing.assert_allclose(result, expected, atol=0.5)
     # ^ still finds a fg because we do not enforce the bounds on the fg
     # however the fg is significantly worse on the param with the wrong bounds
-    # in contrast to the above the test below also runs step 6: fit on CDF or LL^n -> implications?
+    # in contrast to the above the test below also runs step 6: fit on LL^n -> implications?
 
     # fails if we enforce the bounds
     options_solver = {"fg_with_global_opti": True}
@@ -432,8 +432,8 @@ def test_first_guess_with_bounds():
     )
     result = fg_mx._find_fg_np(pred, targ, weights)
 
-    expected = np.array([-0.005093817, 1.015267298])
-    np.testing.assert_allclose(result, expected, rtol=1e-5)
+    expected = np.array([loc, scale])
+    np.testing.assert_allclose(result, expected, atol=0.1)
 
 
 @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")

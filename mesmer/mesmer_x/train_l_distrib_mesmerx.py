@@ -15,6 +15,7 @@ import properscoring
 import xarray as xr
 from scipy.optimize import basinhopping, minimize, shgo
 from scipy.stats import gaussian_kde
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 # TODO: to replace with outputs from PR #607
 from mesmer.core.datatree import collapse_datatree_into_dataset
@@ -39,16 +40,16 @@ def ignore_warnings(func):
     return wrapper
 
 
-def _smooth_data(data, length=10):
+def _smooth_data(data, length=5):
     """
-    Smooth 1D data using a Gaussian filter.
+    Smooth 1D data using convolution.
 
     Parameters
     ----------
     data : numpy array 1D
         Data to smooth
-    length: integer, default: 10
-        Length of the convolution window
+    length: integer, default: 5
+        The length of the half-window for the convolution.
 
     Returns
     -------
@@ -57,7 +58,12 @@ def _smooth_data(data, length=10):
     """
     # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
     # solved, to remove from issues.
-    return np.convolve(data, np.ones(length) / length, mode="valid")
+    tmp = np.convolve(data, np.ones(2*length+1)/(2*length+1), mode='valid')
+    # removing the bias in the mean
+    tmp += np.mean(data[length:-length]) - np.mean(tmp)
+    return tmp
+
+
 
 
 def _finite_difference(f_high, f_low, x_high, x_low):
@@ -194,7 +200,7 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
             if var not in tmp_pred:
                 tmp_pred[var] = np.array([])
             for scen in pred_data[var]:
-                tmp_pred[var] = np.concat(
+                tmp_pred[var] = np.concatenate(
                     [tmp_pred[var], pred_data[var][scen][predictor].values.flatten()]
                 )
         array_pred = np.array(list(tmp_pred.values()))
@@ -340,7 +346,7 @@ class distrib_tests:
 
         return True
 
-    def _test_evol_params(self, params, data):
+    def _test_evol_params(self, params):
 
         # checking set boundaries on parameters
         for param in self.boundaries_params:
@@ -349,10 +355,14 @@ class distrib_tests:
             param_values = params[param]
 
             # out of boundaries
-            # TODO: why >= (and not >) or < (and not <=)?
-            if np.any(param_values < bottom) or np.any(param_values >= top):
+            if np.any(param_values < bottom) or np.any(param_values > top):
                 return False
 
+        return True
+
+
+
+    def _test_support(self, params, data):
         # test of the support of the distribution: is there any data out of the
         # corresponding support? dont try testing if there are issues on the parameters
 
@@ -421,26 +431,33 @@ class distrib_tests:
 
         # tests on coeffs show already that it won't work: fill in the rest with False
         if not test_coeff:
-            return test_coeff, False, False, False
+            return test_coeff, False, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
         params = self.expr_fit.evaluate_params(coefficients, data_pred)
         # test for the validity of the parameters
-        test_param = self._test_evol_params(params, data_targ)
-
+        test_param = self._test_evol_params(params)
+        
         # tests on params show already that it won't work: fill in the rest with False
         if not test_param:
-            return test_coeff, test_param, False, False
+            return test_coeff, test_param, False, False, False
+
+        # test for the support of the distribution
+        test_support = self._test_support(params, data_targ)
+
+        # tests on params show already that it won't work: fill in the rest with False
+        if not test_support:
+            return test_coeff, test_param, test_support, False, False
 
         # test for the probability of the values
         if self.threshold_min_proba is None:
-            return test_coeff, test_param, True, params
+            return test_coeff, test_param, test_support, True, params
 
-        test_proba = self._test_proba_value(params, data_targ)
+        else:
+            test_proba = self._test_proba_value(params, data_targ)
 
-        # return values for each test and the distribution that has already been
-        # evaluated
-        return test_coeff, test_param, test_proba, params
+            # return values for each test and the evaluated distribution
+            return test_coeff, test_param, test_support, test_proba, params
 
     def get_var_data(self, data):
         if isinstance(data, np.ndarray):
@@ -795,11 +812,11 @@ class distrib_optimizer:
     def func_optim(self, coefficients, data_pred, data_targ, data_weights):
         # check whether these coefficients respect all conditions: if so, can compute a
         # value for the optimization
-        test_coeff, test_param, test_proba, params = (
+        test_coeff, test_param, test_distrib, test_proba, params = (
             self.class_tests.validate_coefficients(data_pred, data_targ, coefficients)
         )
 
-        if test_coeff and test_param and test_proba:
+        if test_coeff and test_param and test_distrib and test_proba:
             if self.type_fun_optim == "fcnll":
                 # compute full conditioning
                 # will apply the stopping rule: splitting data_fit into two sets of data
@@ -1177,77 +1194,28 @@ class distrib_firstguess:
             pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_dim)
         }
 
-        # preparing derivatives to estimate derivatives of data along predictors,
-        # and infer a very first guess for the coefficients facilitates the
-        # representation of the trends
-        self.smooth_targ = _smooth_data(self.data_targ)
+        # smooting to help with location & scale
+        self.l_smooth = 5
+        self.smooth_targ = _smooth_data(self.data_targ, length=self.l_smooth)
+        self.dev_smooth_targ = self.data_targ[self.l_smooth:-self.l_smooth] - self.smooth_targ
         self.smooth_pred = {
-            pp: _smooth_data(self.data_pred[pp]) for pp in self.predictor_dim
-        }
-
-        mean_smooth_targ, std_smooth_targ = np.mean(self.smooth_targ), np.std(
-            self.smooth_targ
-        )
-        ind_targ_low = np.where(self.smooth_targ < mean_smooth_targ - std_smooth_targ)[
-            0
-        ]
-        ind_targ_high = np.where(self.smooth_targ > mean_smooth_targ + std_smooth_targ)[
-            0
-        ]
-        mean_high_preds = {
-            pp: np.mean(self.smooth_pred[pp][ind_targ_high], axis=0)
-            for pp in self.predictor_dim
-        }
-        mean_low_preds = {
-            pp: np.mean(self.smooth_pred[pp][ind_targ_low], axis=0)
-            for pp in self.predictor_dim
-        }
-
-        derivative_targ = {
-            pp: _finite_difference(
-                np.mean(self.smooth_targ[ind_targ_high]),
-                np.mean(self.smooth_targ[ind_targ_low]),
-                mean_high_preds[pp],
-                mean_low_preds[pp],
-            )
-            for pp in self.predictor_dim
+            pp: _smooth_data(self.data_pred[pp], length=self.l_smooth) for pp in self.predictor_dim
         }
 
         # Initialize first guess
         if self.first_guess is None:
             self.fg_coeffs = np.zeros(self.n_coeffs)
-
-            # Step 1: fit coefficients of location (objective: generate an adequate
-            # first guess for the coefficients of location. proven to be necessary
-            # in many situations, & accelerate step 2)
-            minimizer_kwargs = {
-                "args": (
-                    mean_high_preds,
-                    mean_low_preds,
-                    derivative_targ,
-                    mean_smooth_targ,
-                )
-            }
-            # TODO: do we move the basinhopping part to the class optimizers?
-            globalfit_d01 = basinhopping(
-                func=self._fg_fun_deriv01,
-                x0=self.fg_coeffs,
-                niter=10,
-                minimizer_kwargs=minimizer_kwargs,
-            )
-            # warning, basinhopping tends to introduce non-reproductibility in fits,
-            # reduced when using 2nd round of fits
-
-            self.fg_coeffs = globalfit_d01.x
-
+            
         else:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
             # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
             self.fg_coeffs = self.fg_coeffs.astype(float)
+            
 
-        # Step 2: fit coefficients of location (objective: improving the subset of
-        # location coefficients)
+        # Step 1: fit coefficients of location (objective: generate an adequate
+        # first guess for the coefficients of location. proven to be necessary
+        # in many situations, & accelerate step 2)
         loc_coeffs = self.expr_fit.coefficients_dict.get("loc", [])
         # TODO: move to `Expression`
         self.fg_ind_loc = np.array(
@@ -1255,6 +1223,57 @@ class distrib_firstguess:
         )
 
         # location might not be used (beta distribution) or set in the expression
+        if len(self.fg_ind_loc) > 0:
+            
+            # preparing derivatives to estimate derivatives of data along predictors,
+            # and infer a very first guess for the coefficients facilitates the
+            # representation of the trends
+            m_smooth_targ, s_smooth_targ = np.mean(self.smooth_targ), np.std(self.smooth_targ)
+            ind_targ_low = np.where(self.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
+            ind_targ_high = np.where(self.smooth_targ > m_smooth_targ + s_smooth_targ)[0]
+            mean_high_preds = {
+                pp: np.mean(self.smooth_pred[pp][ind_targ_high], axis=0)
+                for pp in self.predictor_dim
+            }
+            mean_low_preds = {
+                pp: np.mean(self.smooth_pred[pp][ind_targ_low], axis=0)
+                for pp in self.predictor_dim
+            }
+
+            derivative_targ = {
+                pp: _finite_difference(
+                    np.mean(self.smooth_targ[ind_targ_high]),
+                    np.mean(self.smooth_targ[ind_targ_low]),
+                    mean_high_preds[pp],
+                    mean_low_preds[pp],
+                )
+                for pp in self.predictor_dim
+            }            
+            
+            minimizer_kwargs = {
+                "args": (
+                    mean_high_preds,
+                    mean_low_preds,
+                    derivative_targ,
+                    m_smooth_targ,
+                )
+            }
+            # TODO: do we move the basinhopping part to the class optimizers?
+            globalfit_d01 = basinhopping(
+                func=self._fg_fun_deriv01,
+                x0=self.fg_coeffs[self.fg_ind_loc],
+                niter=10,
+                interval=100,
+                minimizer_kwargs=minimizer_kwargs,
+            )
+            # warning, basinhopping tends to introduce non-reproductibility in fits,
+            # reduced when using 2nd round of fits
+
+            self.fg_coeffs[self.fg_ind_loc] = globalfit_d01.x
+
+
+        # Step 2: fit coefficients of location (objective: improving the subset of
+        # location coefficients)
         if len(self.fg_ind_loc) > 0:
 
             localfit_loc = self.class_optim._minimize(
@@ -1275,12 +1294,7 @@ class distrib_firstguess:
         )
         # scale might not be used or set in the expression
         if len(self.fg_ind_sca) > 0:
-            if self.first_guess is None:
-                # compared to all 0, better for ref level but worse for trend
-                x0 = np.full(len(scale_coeffs), fill_value=np.std(self.data_targ))
-
-            else:
-                x0 = self.fg_coeffs[self.fg_ind_sca]
+            x0 = self.fg_coeffs[self.fg_ind_sca]
 
             localfit_sca = self.class_optim._minimize(
                 func=self._fg_fun_sca,
@@ -1322,25 +1336,17 @@ class distrib_firstguess:
         )
         self.fg_coeffs = localfit_nll.x
 
-        test_coeff, test_param, test_proba, _ = self.class_tests.validate_coefficients(
+        test_coeff, test_param, test_distrib, test_proba, _ = self.class_tests.validate_coefficients(
             self.data_pred, self.data_targ, self.fg_coeffs
         )
 
         # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
-        if not (test_coeff and test_param and test_proba):
-            # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
+        if not (test_coeff and test_param and test_distrib and test_proba):
+            # Step 6: fit on LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL does not behave well enough here)
-            # two potential functions:
-            if False:
-                # TODO: unreachable - add option or remove? not sure yet.
-                # fit coefficients on CDFs
-                fun_opti_prob = self._fg_fun_cdfs
-            else:
-                # fit coefficients on log-likelihood to the power n
-                fun_opti_prob = self._fg_fun_ll_n
 
             localfit_opti = self.class_optim._minimize(
-                func=fun_opti_prob,
+                func=self._fg_fun_ll_n,
                 x0=self.fg_coeffs,
                 fact_maxfev_iter=1,
                 option_NelderMead="best_run",
@@ -1365,11 +1371,10 @@ class distrib_firstguess:
             # global minimization, using the one with the best performances in this
             # situation. sobol or halton, observed lower performances with
             # simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
-            self.tmp = (data_pred, data_targ, data_weights, bounds)
             globalfit_all = shgo(
                 func=self.class_optim.func_optim,
                 bounds=bounds,
-                args=(self.data_pred, data_targ, data_weights),
+                args=(self.data_pred, self.data_targ, self.data_weights),
                 sampling_method="sobol",
             )
             if not globalfit_all.success:
@@ -1380,7 +1385,7 @@ class distrib_firstguess:
             self.fg_coeffs = globalfit_all.x
         return self.fg_coeffs
 
-    def _fg_fun_deriv01(self, x, pred_high, pred_low, derivative_targ, mean_targ):
+    def _fg_fun_deriv01(self, x_loc, pred_high, pred_low, derivative_targ, mean_targ):
         r"""
         Loss function for very fist guess of the location coefficients. The objective is
         to 1) get a location with a similar change with the predictor as the target, and
@@ -1410,6 +1415,8 @@ class distrib_firstguess:
         float
             Loss value
         """
+        x = np.copy(self.fg_coeffs)
+        x[self.fg_ind_loc] = x_loc
         params = self.expr_fit.evaluate_params(x, pred_low)
         loc_low = params["loc"]
         params = self.expr_fit.evaluate_params(x, pred_high)
@@ -1454,8 +1461,13 @@ class distrib_firstguess:
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_loc] = x_loc
         params = self.expr_fit.evaluate_params(x, self.smooth_pred)
-        loc = params["loc"]
-        return np.mean((loc - self.smooth_targ) ** 2)
+        if self.class_tests._test_evol_params(params):
+            loc = params["loc"]
+            return np.mean((loc - self.smooth_targ) ** 2)
+        
+        else:
+            # this coefficient on location causes problem
+            return np.inf
 
     def _fg_fun_sca(self, x_sca):
         r"""
@@ -1483,80 +1495,52 @@ class distrib_firstguess:
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_sca] = x_sca
         params = self.expr_fit.evaluate_params(x, self.data_pred)
-        loc, sca = params["loc"], params["scale"]
-        dev = (self.data_targ - loc) ** 2
-        return np.abs(np.mean(dev - sca**2))
 
-    def _fg_fun_others(self, x_others, margin0=0.05):
+        if self.class_tests._test_evol_params(params):
+            if isinstance(params["scale"], np.ndarray):
+                sca = params["scale"][self.l_smooth:-self.l_smooth]
+            else:
+                sca = params["scale"]
+            return np.abs(np.mean(self.dev_smooth_targ ** 2 - sca ** 2))
+        
+        else:
+            # this coefficient on scale causes problem
+            return np.inf
+
+    def _fg_fun_others(self, x_others, margin0=0.025):
         """
-        loss function for other coefficients than loc and scale. Objective is to tune parameters such
-        that target samples are within the support of the distribution, with some margin. If we
-        find samples outside of the distribution support we employ an exponential loss function to minimize
-        the differences between the most extreme sample and the support bound. If all samples are within
-        the support, we optimize for coefficients that expand the support of the distribution.
+        Loss function for other coefficients than loc and scale. Objective is to tune parameters such
+        that target samples are within a likely range of the distribution. Instead of relying on the
+        support, we use the cumulative distribution function (CDF) to penalize unlikely samples.
         """
-        # preparing support
+        # prepare coefficients
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_others] = x_others
 
+        # evaluate parameters
         params = self.expr_fit.evaluate_params(x, self.data_pred)
-        bot, top = self.expr_fit.distrib.support(**params)
 
-        # distance between samples and bottom or top bound of support, negative if sample is out of support
-        diff_bot = self.data_targ - bot
-        diff_top = top - self.data_targ
+        if self.class_tests._test_evol_params(params):
+            # compute CDF values for the target samples
+            cdf_values = self.expr_fit.distrib.cdf(self.data_targ, **params)
 
-        # smallest difference -> if diff was negative, this gives the greatest distance to the support bound
-        # if diff was positive, this gives the diff that was closest to the support bound, i.e. in both cases
-        # the ~worst~ difference
-        worst_diff_bot = np.min(diff_bot)
-        worst_diff_top = np.min(diff_top)
+            if (np.min(cdf_values) < margin0) or (np.max(cdf_values) > 1 - margin0):
+                return np.inf
+            
+            else:
+                # penalize samples with CDF values close to 0 or 1 (unlikely samples)
+                penalty_low = np.maximum(0, margin0 - cdf_values) ** 2
+                penalty_high = np.maximum(0, cdf_values - (1 - margin0)) ** 2
 
-        # preparing margin on support
-        std = np.std(self.data_targ)
-        margin = margin0 * std
-
-        # optimization
-        if worst_diff_bot < 0:  # sample out of bottom support
-            # penalize larger distances more than small ones -> exponential
-            # limit of worst_diff_bottom --> 0- = 1/margin
-            return 1 / margin * np.exp(-worst_diff_bot)
-        elif worst_diff_top < 0:  # sample out of top support
-            # penalize larger distances more than small ones -> exponential
-            # limit of worst_diff_top --> 0+ = 1/margin
-            return 1 / margin * np.exp(-worst_diff_top)
-        else:  # all samples within support
-            return (worst_diff_bot - margin) ** 2 + (worst_diff_top - margin) ** 2
-
-        # TODO
-        # if bot == -np.inf:
-        #     return worst_diff_top**2
-        # elif top == np.inf:
-        #     return worst_diff_bot**2
-        # else:
-        #     return worst_diff_bot**2 + worst_diff_top**2 # + margin?
+                # sum penalties to compute the loss
+                return np.sum(penalty_low + penalty_high)
+        else:
+            # the coefficients cause problems
+            return np.inf
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expr_fit.evaluate_params(coefficients, self.data_pred)
         return self.class_optim.neg_loglike(self.data_targ, params, self.data_weights)
-
-    # TODO: remove?
-    def _fg_fun_cdfs(self, x):
-        params = self.expr_fit.evaluate_params(x, self.data_pred)
-        cdf = self.expr_fit.distrib.cdf(self.data_targ, **params)
-
-        if self.threshold_min_proba is None:
-            thres = 10 * 1.0e-9
-        else:
-            thres = np.min([0.1, 10 * self.threshold_min_proba])
-
-        if np.any(np.isnan(cdf)):
-            return np.inf
-
-        # DO NOT CHANGE THESE EXPRESSIONS!!
-        term_low = (thres - np.min(cdf)) ** 2 / np.min(cdf) ** 2
-        term_high = (thres - np.min(1 - cdf)) ** 2 / np.min(1 - cdf) ** 2
-        return np.max([term_low, term_high])
 
     def _fg_fun_ll_n(self, x, n=4):
         params = self.expr_fit.evaluate_params(x, self.data_pred)
@@ -1576,10 +1560,10 @@ class distrib_firstguess:
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
-            test_c, test_p, test_v, _ = self.class_tests.validate_coefficients(
+            test_c, test_p, test_d, test_v, _ = self.class_tests.validate_coefficients(
                 self.data_pred, self.data_targ, x
             )
-            test = test_c and test_p and test_v
+            test = test_c and test_p and test_d and test_v
             x[i_c] += fact_coeff * x[i_c]
             iter += 1
         # TODO: returns value after test = False, but should it maybe be the last value before that?
@@ -1749,8 +1733,6 @@ class distrib_train:
 
     @ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
-        self.tmp = (data_pred, data_targ, fg, data_weights)
-
         # check data
         if not isinstance(data_pred, np.ndarray):
             raise Exception("data_pred must be a numpy array.")
