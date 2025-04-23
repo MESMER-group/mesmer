@@ -15,7 +15,6 @@ import properscoring
 import xarray as xr
 from scipy.optimize import basinhopping, minimize, shgo
 from scipy.stats import gaussian_kde
-from statsmodels.nonparametric.smoothers_lowess import lowess
 
 # TODO: to replace with outputs from PR #607
 from mesmer.core.datatree import collapse_datatree_into_dataset
@@ -58,12 +57,10 @@ def _smooth_data(data, length=5):
     """
     # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
     # solved, to remove from issues.
-    tmp = np.convolve(data, np.ones(2*length+1)/(2*length+1), mode='valid')
+    tmp = np.convolve(data, np.ones(2 * length + 1) / (2 * length + 1), mode="valid")
     # removing the bias in the mean
     tmp += np.mean(data[length:-length]) - np.mean(tmp)
     return tmp
-
-
 
 
 def _finite_difference(f_high, f_low, x_high, x_low):
@@ -360,8 +357,6 @@ class distrib_tests:
 
         return True
 
-
-
     def _test_support(self, params, data):
         # test of the support of the distribution: is there any data out of the
         # corresponding support? dont try testing if there are issues on the parameters
@@ -437,7 +432,7 @@ class distrib_tests:
         params = self.expr_fit.evaluate_params(coefficients, data_pred)
         # test for the validity of the parameters
         test_param = self._test_evol_params(params)
-        
+
         # tests on params show already that it won't work: fill in the rest with False
         if not test_param:
             return test_coeff, test_param, False, False, False
@@ -1197,21 +1192,23 @@ class distrib_firstguess:
         # smooting to help with location & scale
         self.l_smooth = 5
         self.smooth_targ = _smooth_data(self.data_targ, length=self.l_smooth)
-        self.dev_smooth_targ = self.data_targ[self.l_smooth:-self.l_smooth] - self.smooth_targ
+        self.dev_smooth_targ = (
+            self.data_targ[self.l_smooth : -self.l_smooth] - self.smooth_targ
+        )
         self.smooth_pred = {
-            pp: _smooth_data(self.data_pred[pp], length=self.l_smooth) for pp in self.predictor_dim
+            pp: _smooth_data(self.data_pred[pp], length=self.l_smooth)
+            for pp in self.predictor_dim
         }
 
         # Initialize first guess
         if self.first_guess is None:
             self.fg_coeffs = np.zeros(self.n_coeffs)
-            
+
         else:
             # Using provided first guess, eg from 1st round of fits
             self.fg_coeffs = np.copy(self.first_guess)
             # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
             self.fg_coeffs = self.fg_coeffs.astype(float)
-            
 
         # Step 1: fit coefficients of location (objective: generate an adequate
         # first guess for the coefficients of location. proven to be necessary
@@ -1224,13 +1221,17 @@ class distrib_firstguess:
 
         # location might not be used (beta distribution) or set in the expression
         if len(self.fg_ind_loc) > 0:
-            
+
             # preparing derivatives to estimate derivatives of data along predictors,
             # and infer a very first guess for the coefficients facilitates the
             # representation of the trends
-            m_smooth_targ, s_smooth_targ = np.mean(self.smooth_targ), np.std(self.smooth_targ)
+            m_smooth_targ, s_smooth_targ = np.mean(self.smooth_targ), np.std(
+                self.smooth_targ
+            )
             ind_targ_low = np.where(self.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
-            ind_targ_high = np.where(self.smooth_targ > m_smooth_targ + s_smooth_targ)[0]
+            ind_targ_high = np.where(self.smooth_targ > m_smooth_targ + s_smooth_targ)[
+                0
+            ]
             mean_high_preds = {
                 pp: np.mean(self.smooth_pred[pp][ind_targ_high], axis=0)
                 for pp in self.predictor_dim
@@ -1248,8 +1249,8 @@ class distrib_firstguess:
                     mean_low_preds[pp],
                 )
                 for pp in self.predictor_dim
-            }            
-            
+            }
+
             minimizer_kwargs = {
                 "args": (
                     mean_high_preds,
@@ -1270,7 +1271,6 @@ class distrib_firstguess:
             # reduced when using 2nd round of fits
 
             self.fg_coeffs[self.fg_ind_loc] = globalfit_d01.x
-
 
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
@@ -1336,8 +1336,10 @@ class distrib_firstguess:
         )
         self.fg_coeffs = localfit_nll.x
 
-        test_coeff, test_param, test_distrib, test_proba, _ = self.class_tests.validate_coefficients(
-            self.data_pred, self.data_targ, self.fg_coeffs
+        test_coeff, test_param, test_distrib, test_proba, _ = (
+            self.class_tests.validate_coefficients(
+                self.data_pred, self.data_targ, self.fg_coeffs
+            )
         )
 
         # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
@@ -1464,7 +1466,7 @@ class distrib_firstguess:
         if self.class_tests._test_evol_params(params):
             loc = params["loc"]
             return np.mean((loc - self.smooth_targ) ** 2)
-        
+
         else:
             # this coefficient on location causes problem
             return np.inf
@@ -1498,11 +1500,11 @@ class distrib_firstguess:
 
         if self.class_tests._test_evol_params(params):
             if isinstance(params["scale"], np.ndarray):
-                sca = params["scale"][self.l_smooth:-self.l_smooth]
+                sca = params["scale"][self.l_smooth : -self.l_smooth]
             else:
                 sca = params["scale"]
-            return np.abs(np.mean(self.dev_smooth_targ ** 2 - sca ** 2))
-        
+            return np.abs(np.mean(self.dev_smooth_targ**2 - sca**2))
+
         else:
             # this coefficient on scale causes problem
             return np.inf
@@ -1526,7 +1528,7 @@ class distrib_firstguess:
 
             if (np.min(cdf_values) < margin0) or (np.max(cdf_values) > 1 - margin0):
                 return np.inf
-            
+
             else:
                 # penalize samples with CDF values close to 0 or 1 (unlikely samples)
                 penalty_low = np.maximum(0, margin0 - cdf_values) ** 2

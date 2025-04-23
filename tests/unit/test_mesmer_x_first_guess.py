@@ -122,7 +122,7 @@ def test_first_guess_GEV_including_pred():
     expression = mesmer.mesmer_x.Expression(
         "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
     )
-    
+
     weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
     tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
     optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
