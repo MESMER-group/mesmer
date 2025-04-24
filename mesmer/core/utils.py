@@ -14,7 +14,23 @@ class LinAlgWarning(UserWarning):
     pass
 
 
-def create_equal_dim_names(dim, suffixes):
+def _create_equal_dim_names(dim: str, suffixes: tuple[str, str]) -> tuple[str, str]:
+    """appends suffixes to a dimension name
+
+    required as two axes cannot share the same dimension name in xarray
+
+    Parameters
+    ----------
+    dim : str
+        Dimension name.
+    suffixes : tuple[str, str]
+        The suffixes to add to the dim name.
+
+    Returns
+    -------
+    suffixed_dims : tuple[str, str]
+        Dimension name with suffixes added
+    """
 
     if not len(suffixes) == 2:
         raise ValueError("must provide exactly two suffixes")
