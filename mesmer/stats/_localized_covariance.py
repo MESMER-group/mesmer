@@ -7,8 +7,8 @@ import xarray as xr
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
-    _minimize_local_discrete,
     _create_equal_dim_names,
+    _minimize_local_discrete,
 )
 
 
