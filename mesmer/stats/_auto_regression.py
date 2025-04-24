@@ -53,7 +53,7 @@ def _scen_ens_inputs_to_dt(objs: Sequence) -> xr.DataTree:
 
 def _extract_and_apply_to_da(func: Callable) -> Callable:
 
-    def inner(ds: xr.Dataset, **kwargs) -> xr.Dataset:
+    def _inner(ds: xr.Dataset, **kwargs) -> xr.Dataset:
 
         name, *others = ds.data_vars
         if others:
@@ -63,7 +63,7 @@ def _extract_and_apply_to_da(func: Callable) -> Callable:
 
         return x.to_dataset() if isinstance(x, xr.DataArray) else x
 
-    return inner
+    return _inner
 
 
 def select_ar_order_scen_ens(
@@ -962,16 +962,16 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
         The intercept of the AR(1) process.
     """
 
-    def lin_func(indep_var, slope, intercept):
+    def _lin_func(indep_var, slope, intercept):
         return slope * indep_var + intercept
 
     slope, intercept = scipy.optimize.curve_fit(
-        lin_func,
+        _lin_func,
         data_prev_month,  # independent variable
         data_month,  # dependent variable
     )[0]
 
-    residuals = data_month - lin_func(data_prev_month, slope, intercept)
+    residuals = data_month - _lin_func(data_prev_month, slope, intercept)
 
     return slope, intercept, residuals
 
