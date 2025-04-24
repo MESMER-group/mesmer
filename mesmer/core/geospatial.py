@@ -7,7 +7,7 @@ import numpy as np
 import pyproj
 import xarray as xr
 
-from mesmer.core.utils import create_equal_dim_names
+from mesmer.core.utils import _create_equal_dim_names
 
 
 def geodist_exact(
@@ -51,7 +51,7 @@ def geodist_exact(
     geodist = _geodist_exact(lon.values, lat.values)
 
     (dim,) = lon.dims
-    dims = create_equal_dim_names(dim, equal_dim_suffixes)
+    dims = _create_equal_dim_names(dim, equal_dim_suffixes)
 
     # TODO: assign coords?
     geodist = xr.DataArray(geodist, dims=dims)
