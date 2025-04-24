@@ -19,14 +19,6 @@ else:
         pass
 
 
-def mask_percentage(regions, lon, lat, **kwargs):
-
-    warnings.warn(
-        "`mask_percentage` has been renamed to `mask_3D_frac_approx`", FutureWarning
-    )
-    return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
-
-
 def mask_3D_frac_approx(
     regions: regionmask.Regions, lon, lat, **kwargs
 ) -> xr.DataArray:
