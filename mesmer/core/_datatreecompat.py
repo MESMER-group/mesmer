@@ -10,7 +10,7 @@ if Version(xr.__version__) < Version("2025.03"):
     )
 
 
-def skip_empty_nodes(func):
+def _skip_empty_nodes(func):
     @functools.wraps(func)
     def _func(ds, *args, **kwargs):
         if not ds:
@@ -53,7 +53,7 @@ def map_over_datasets(func, *args, kwargs=None):
 
     """
 
-    return xr.map_over_datasets(skip_empty_nodes(func), *args, kwargs=kwargs)
+    return xr.map_over_datasets(_skip_empty_nodes(func), *args, kwargs=kwargs)
 
 
 __all__ = [

@@ -214,7 +214,7 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
     """
 
     @functools.wraps(func)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> T:
+    def _inner(*args: P.args, **kwargs: P.kwargs) -> T:
 
         # check to ensure there are no DataTree in kwargs. Altough this is not very
         # efficient, it has bitten me before.
@@ -232,4 +232,4 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
 
         return func(*args, **kwargs)
 
-    return inner
+    return _inner
