@@ -6,7 +6,7 @@ import xarray as xr
 import mesmer
 
 
-def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files=False):
+def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
 
     # define config values
     THRESHOLD_LAND = 1 / 3

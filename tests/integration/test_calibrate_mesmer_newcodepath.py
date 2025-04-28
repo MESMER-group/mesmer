@@ -77,7 +77,7 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
-    update_expected_files=False,
+    update_expected_files,
 ) -> None:
 
     # define config values

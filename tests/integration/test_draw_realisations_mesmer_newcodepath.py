@@ -224,7 +224,7 @@ def test_make_realisations(
     n_realisations,
     outname,
     test_data_root_dir,
-    update_expected_files=False,
+    update_expected_files,
 ):
     esm = "IPSL-CM6A-LR"
 

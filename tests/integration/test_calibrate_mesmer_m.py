@@ -36,7 +36,7 @@ def _load_data(*filenames):
 
 
 @pytest.mark.slow
-def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files=False):
+def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     # define config values
     THRESHOLD_LAND = 1 / 3
 
