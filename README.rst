@@ -55,13 +55,7 @@ not, see https://www.gnu.org/licenses/.
 The full list of code contributors can be found in AUTHORS or on
 `github.com/contributors <https://github.com/MESMER-group/mesmer/graphs/contributors>`_
 
-Acknowledgement
----------------
+Mesmer bundles data from the IPSL-CM6A-LR model, available under a `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`__ license,
+in `tests/test-data/calibrate-coarse-grid/cmip6-ng/`. Used in example notebooks and tests. For details see
+`data README <tests/test-data/calibrate-coarse-grid/cmip6-ng>`_.
 
-We use
-We acknowledge the World Climate Research Programme, which, through its Working Group on
-Coupled Modelling, coordinated and promoted CMIP6. We thank the climate modeling groups
-for producing and making available their model output, the Earth System Grid Federation
-(ESGF) for archiving the data and providing access, and the multiple funding agencies
-who support CMIP6 and ESGF. We thank Urs Beyerle for downloading and curating the
-CMIP6 data at ETH Zurich, and Lukas Brunner and Ruth Lorenz for processing the data.
