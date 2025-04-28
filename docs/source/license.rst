@@ -1,0 +1,4 @@
+MESMER license
+==============
+
+.. literalinclude:: ../../LICENSE
