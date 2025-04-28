@@ -101,6 +101,8 @@ Load observations
 .. autosummary::
    :toctree: generated/
 
+   ~io.load_obs.load_obs
+   ~io.load_obs.load_obs_tblend
    ~io.load_obs.load_strat_aod
 
 Save mesmer bundle
