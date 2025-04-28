@@ -30,12 +30,12 @@ def ignore_warnings(func):
     # TODO: don't suppress all warnings
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def _wrapper(*args, **kwargs):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             return func(*args, **kwargs)
 
-    return wrapper
+    return _wrapper
 
 
 # TODO: enable distrib class and training func for xarray objs

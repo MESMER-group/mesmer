@@ -176,6 +176,7 @@ class LinearRegression:
 
     @params.setter
     def params(self, params):
+        """The parameters of this estimator."""
 
         _check_dataset_form(
             params,
