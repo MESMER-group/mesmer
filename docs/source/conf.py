@@ -56,6 +56,7 @@ version = ".".join(release.split(".")[:2])
 
 # add sphinx extension modules
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",

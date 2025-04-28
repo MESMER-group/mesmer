@@ -31,6 +31,8 @@
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Versions
+   :caption: Additional info
 
    changelog
+   authors
+   license
