@@ -38,8 +38,9 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 def _load_aod_obs(*, resample):
 
     # TODO: use pooch
-    filename = importlib.resources.files("mesmer").parent / "data/tau.line_2012.12.txt"
     # filename = _fetch_remote_data(f"tau.line_2012.12.txt")
+    path = importlib.resources.files("mesmer").parent / "data/obs"
+    filename = path / "tau.line_2012.12.txt"
 
     arr = pd.read_csv(filename, sep=r"\s+", header=2)["global"].to_numpy()
 
