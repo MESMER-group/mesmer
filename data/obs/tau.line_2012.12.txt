@@ -1,6 +1,6 @@
  Global and Hemispheric Mean Aerosol Optical Depth at 550 nm
  -----------------------------------------------------------
-   
+
 year/mon  global N.Hemis S.Hemis
 1850.042  0.0044  0.0044  0.0044
 1850.125  0.0042  0.0042  0.0042
