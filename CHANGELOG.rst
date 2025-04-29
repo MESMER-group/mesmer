@@ -244,6 +244,13 @@ Harmonic model
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
+Data
+^^^^
+
+- Directly source the stratospheric aerosol optical depth data from NASA instead of using
+  the version from Climate Explorer (`#665 <https://github.com/MESMER-group/mesmer/pull/665>`_).
+  By `Mathias Hauser`_.
+
 v0.10.0 - 2024.01.04
 --------------------
 
