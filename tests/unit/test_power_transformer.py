@@ -199,7 +199,9 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
     """
 
     n_cells = n_lat * n_lon
-    time = xr.cftime_range(start="2000-01-01", periods=n_timesteps, freq="MS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_timesteps, freq="MS", use_cftime=True
+    )
 
     ts_array = np.empty((n_cells, n_timesteps))
     rng = np.random.default_rng(0)

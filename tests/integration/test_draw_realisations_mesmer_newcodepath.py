@@ -365,7 +365,8 @@ def test_make_realisations(
         result.to_netcdf(expected_output_file)
         pytest.skip("Updated expected output file.")
     else:
-        expected = xr.open_datatree(expected_output_file, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        expected = xr.open_datatree(expected_output_file, decode_times=time_coder)
         for scen in scenarios:
             exp_scen = expected[scen].to_dataset()
             res_scen = result[scen].to_dataset()

@@ -21,7 +21,8 @@ def _load_data(*filenames):
     #     drop_variables=["height", "file_qf"],
     # ).load()
 
-    load_opt = {"drop_variables": ["height", "file_qf"], "use_cftime": True}
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    load_opt = {"drop_variables": ["height", "file_qf"], "decode_times": time_coder}
     datasets = [xr.open_dataset(fN, **load_opt) for fN in filenames]
 
     ds = xr.combine_by_coords(
@@ -152,31 +153,32 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     # testing
     else:
         # load expected values
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         expected_hm_params = xr.open_dataset(
             TEST_PATH
             / "harmonic_model"
             / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
-            use_cftime=True,
+            decode_times=time_coder,
         )
         expected_pt_params = xr.open_dataset(
             TEST_PATH
             / "power_transformer"
             / f"params_power_transformer_tas_{esm}_{scenario}.nc",
-            use_cftime=True,
+            decode_times=time_coder,
         )
         expected_AR1_params = xr.open_dataset(
             TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
-            use_cftime=True,
+            decode_times=time_coder,
         )
         expected_localized_ecov = xr.open_dataset(
             TEST_PATH
             / "local_variability"
             / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
-            use_cftime=True,
+            decode_times=time_coder,
         )
         expected_m_time = xr.open_dataset(
             TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
-            use_cftime=True,
+            decode_times=time_coder,
         )
 
         # the following parameters should be exactly the same
