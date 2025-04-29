@@ -33,7 +33,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     tas_y = xr.open_mfdataset(
         [fN_hist_ann, fN_proj_ann],
         combine="by_coords",
-        use_cftime=True,
+        decode_times=time_coder,
         combine_attrs="override",
         data_vars="minimal",
         compat="override",

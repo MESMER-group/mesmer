@@ -59,7 +59,8 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
 
     def load_hist(meta, fc_hist):
         fN = _get_hist_path(meta, fc_hist)
-        return xr.open_dataset(fN, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        return xr.open_dataset(fN, decode_times=time_coder)
 
     def load_hist_scen_continuous(fc_hist, fc_scens):
         dt = xr.DataTree()
@@ -75,7 +76,8 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
                 except FileNotFoundError:
                     continue
 
-                proj = xr.open_dataset(fN, use_cftime=True)
+                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                proj = xr.open_dataset(fN, decode_times=time_coder)
 
                 ds = xr.combine_by_coords(
                     [hist, proj],
