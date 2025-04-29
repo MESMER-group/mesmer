@@ -163,9 +163,6 @@ def test_calc_weighted_mean(datatype, x_dim, y_dim):
 
 def test_weighted_no_scalar_expand(datatype):
 
-    if datatype == "DataTree":
-        pytest.skip(reason="DataTree not (yet) supported in weighted_mean")
-
     data = data_lon_lat(datatype)
 
     lat = (data["node"].to_dataset() if datatype == "DataTree" else data).lat
@@ -175,7 +172,10 @@ def test_weighted_no_scalar_expand(datatype):
 
     expected = data.mean("lon")
 
-    xr.testing.assert_allclose(result, expected)
+    if datatype == "DataTree":
+        map_over_datasets(xr.testing.assert_allclose, result, expected)
+    else:
+        xr.testing.assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize("x_dim", ("x", "lon"))
