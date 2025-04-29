@@ -1,4 +1,3 @@
-import importlib
 from functools import cache
 
 import numpy as np
@@ -37,7 +36,7 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 @cache
 def _load_aod_obs(*, resample):
 
-    filename = _fetch_remote_data(f"obs/tau.line_2012.12.txt")
+    filename = _fetch_remote_data("obs/tau.line_2012.12.txt")
 
     arr = pd.read_csv(filename, sep=r"\s+", header=2)["global"].to_numpy()
 
