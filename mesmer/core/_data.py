@@ -37,10 +37,7 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
 @cache
 def _load_aod_obs(*, resample):
 
-    # TODO: use pooch
-    # filename = _fetch_remote_data(f"tau.line_2012.12.txt")
-    path = importlib.resources.files("mesmer").parent / "data/obs"
-    filename = path / "tau.line_2012.12.txt"
+    filename = _fetch_remote_data(f"obs/tau.line_2012.12.txt")
 
     arr = pd.read_csv(filename, sep=r"\s+", header=2)["global"].to_numpy()
 
@@ -78,7 +75,7 @@ def _fetch_remote_data(name):
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
         registry={
-            "tau.line_2012.12.txt": "40b245c8fc871b75da40803c8dffee78fe9707758702297b6b9945e5ed003393",
+            "obs/tau.line_2012.12.txt": "9aa43f83bfc8e69b9e4c21c894a7a2e7b5ddf7ec32d2e9b55b12ce5bddc36451",
         },
         version=f"v{mesmer.__version__}",
         version_dev="main",
