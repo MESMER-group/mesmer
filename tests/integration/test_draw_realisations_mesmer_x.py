@@ -48,11 +48,11 @@ def test_make_realisations_mesmer_x(
 
     fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_ssp585 = path_tas / f"tas_ann_{esm}_ssp585_r1i1p1f1_g025.nc"
-
-    tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    tas_hist = xr.open_dataset(fN_hist, decode_times=time_coder).drop_vars(
         ["height", "file_qf", "time_bnds"]
     )
-    tas_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True).drop_vars(
+    tas_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder).drop_vars(
         ["height", "file_qf", "time_bnds"]
     )
     # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
@@ -123,7 +123,8 @@ def test_make_realisations_mesmer_x(
         pytest.skip(f"Updated {expected_output_file}")
     else:
         # load the output
-        expected_emus = xr.open_dataarray(expected_output_file, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        expected_emus = xr.open_dataarray(expected_output_file, decode_times=time_coder)
         xr.testing.assert_allclose(emus, expected_emus)
 
         # make sure we can get onto a lat lon grid from what is saved

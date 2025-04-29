@@ -29,10 +29,11 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
 
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
     tas_y = xr.open_mfdataset(
         [fN_hist_ann, fN_proj_ann],
         combine="by_coords",
-        use_cftime=True,
+        decode_times=time_coder,
         combine_attrs="override",
         data_vars="minimal",
         compat="override",
@@ -46,27 +47,27 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
         PARAMS_PATH
         / "harmonic_model"
         / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
+        decode_times=time_coder,
     )
     pt_params = xr.open_dataset(
         PARAMS_PATH
         / "power_transformer"
         / f"params_power_transformer_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
+        decode_times=time_coder,
     )
     AR1_params = xr.open_dataset(
         PARAMS_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
+        decode_times=time_coder,
     )
     localized_ecov = xr.open_dataset(
         PARAMS_PATH
         / "local_variability"
         / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
+        decode_times=time_coder,
     )
     m_time = xr.open_dataset(
         PARAMS_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
+        decode_times=time_coder,
     )
 
     # preprocess yearly data
@@ -114,7 +115,8 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
 
     # testing
     else:
-        exp = xr.open_dataset(test_file, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        exp = xr.open_dataset(test_file, decode_times=time_coder)
         xr.testing.assert_allclose(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved

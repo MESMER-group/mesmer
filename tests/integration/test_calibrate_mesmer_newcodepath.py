@@ -137,7 +137,8 @@ def test_calibrate_mesmer(
         # load all members for a scenario
         members = []
         for fN, meta in files.items():
-            ds = xr.open_dataset(fN, use_cftime=True)
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = xr.open_dataset(fN, decode_times=time_coder)
             # drop unnecessary variables
             ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
             # assign member-ID as coordinate
@@ -166,7 +167,8 @@ def test_calibrate_mesmer(
 
             members = []
             for fN, meta in files.items():
-                ds = xr.open_dataset(fN, use_cftime=True)
+                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                ds = xr.open_dataset(fN, decode_times=time_coder)
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
                 )
@@ -383,11 +385,14 @@ def assert_params_allclose(
     localized_ecov_file,
 ):
     # test params
-    exp_volcanic_params = xr.open_dataset(volcanic_file, use_cftime=True)
-    exp_global_ar_params = xr.open_dataset(global_ar_file, use_cftime=True)
-    exp_local_forced_params = xr.open_dataset(local_forced_file, use_cftime=True)
-    exp_local_ar_params = xr.open_dataset(local_ar_file, use_cftime=True)
-    exp_localized_ecov = xr.open_dataset(localized_ecov_file, use_cftime=True)
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    exp_volcanic_params = xr.open_dataset(volcanic_file, decode_times=time_coder)
+    exp_global_ar_params = xr.open_dataset(global_ar_file, decode_times=time_coder)
+    exp_local_forced_params = xr.open_dataset(
+        local_forced_file, decode_times=time_coder
+    )
+    exp_local_ar_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    exp_localized_ecov = xr.open_dataset(localized_ecov_file, decode_times=time_coder)
 
     xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
     xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
