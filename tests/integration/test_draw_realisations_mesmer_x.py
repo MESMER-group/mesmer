@@ -41,7 +41,7 @@ def test_make_realisations_mesmer_x(
     # load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens"
-    cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path
 
     # load predictor data
     path_tas = cmip6_data_path / "tas" / "ann" / "g025"

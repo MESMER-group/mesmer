@@ -13,14 +13,11 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     REFERENCE_PERIOD = slice("1850", "1900")
 
     esm = "IPSL-CM6A-LR"
-    cmip_generation = 6
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
+    pathlib.Path(test_data_root_dir)
 
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{cmip_generation}-ng"
-    )
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
         path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),

@@ -52,7 +52,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon" / "test-params"
-    cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     # load annual data
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
