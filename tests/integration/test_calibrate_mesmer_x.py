@@ -68,10 +68,11 @@ def test_calibrate_mesmer_x(
     fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_ssp585 = path_tas / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
 
-    tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    tas_hist = xr.open_dataset(fN_hist, decode_times=time_coder).drop_vars(
         ["height", "file_qf", "time_bnds"]
     )
-    tas_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True).drop_vars(
+    tas_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder).drop_vars(
         ["height", "file_qf", "time_bnds"]
     )
 
@@ -88,8 +89,9 @@ def test_calibrate_mesmer_x(
     fN_hist = path_target / f"{target_name}_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_ssp585 = path_target / f"{target_name}_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
 
-    targ_hist = xr.open_dataset(fN_hist, use_cftime=True)
-    targ_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True)
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    targ_hist = xr.open_dataset(fN_hist, decode_times=time_coder)
+    targ_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder)
 
     # target = DataTree({"hist": targ_hist, "ssp585": targ_ssp585})
 
