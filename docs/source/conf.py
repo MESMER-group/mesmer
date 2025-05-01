@@ -103,3 +103,8 @@ html_theme = "sphinx_book_theme"
 # html_static_path = []
 
 pygments_style = "sphinx"
+
+
+linkcheck_allowed_redirects = {
+    r'https://doi.org/.*': '.*'
+}

@@ -43,7 +43,7 @@ def mask_3D_frac_approx(
     Notes
     -----
     - assumes equally-spaced lat & lon!
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in
+    - copied from Mathias Hauser: https://github.com/regionmask/regionmask/issues/38 in
       August 2020
     - prototype of what will eventually be integrated in his regionmask package
 
@@ -129,7 +129,7 @@ def sample_coord(coord):
 
     Notes
     -----
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38
+    - copied from Mathias Hauser: https://github.com/regionmask/regionmask/issues/38
       in August 2020
     -> prototype of what will eventually be integrated in his regionmask package
 
