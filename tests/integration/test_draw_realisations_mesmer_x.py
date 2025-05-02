@@ -122,7 +122,7 @@ def test_make_realisations_mesmer_x(
         # load the output
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         expected_emus = xr.open_dataarray(expected_output_file, decode_times=time_coder)
-        xr.testing.assert_allclose(emus, expected_emus)
+        xr.testing.assert_allclose(emus[target_name], expected_emus)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = expected_emus.set_index(gridpoint=("lat", "lon")).unstack(
