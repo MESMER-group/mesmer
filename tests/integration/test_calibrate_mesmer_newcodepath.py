@@ -88,7 +88,6 @@ def test_calibrate_mesmer(
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    test_cmip_generation = 6
 
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
@@ -99,9 +98,7 @@ def test_calibrate_mesmer(
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
 
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
-    )
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
         path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),

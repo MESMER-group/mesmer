@@ -23,7 +23,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
-    cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
     fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
