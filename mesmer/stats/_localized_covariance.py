@@ -7,8 +7,8 @@ import xarray as xr
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
+    _create_equal_dim_names,
     _minimize_local_discrete,
-    create_equal_dim_names,
 )
 
 
@@ -130,7 +130,7 @@ def find_localized_empirical_covariance(
     all_dims = data.dims
 
     (sample_dim,) = set(all_dims) - {dim}
-    out_dims = create_equal_dim_names(sample_dim, equal_dim_suffixes)
+    out_dims = _create_equal_dim_names(sample_dim, equal_dim_suffixes)
 
     out = xr.apply_ufunc(
         _find_localized_empirical_covariance_np,

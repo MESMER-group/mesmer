@@ -23,6 +23,8 @@ Breaking changes
   By `Victoria Bauer`_.
 - Removed support for python 3.9 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
   By `Mathias Hauser`_.
+- Removed the deprecated function :py:func:`mask_percentage` (`#654 <https://github.com/MESMER-group/mesmer/pull/654>`_)
+  By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
   `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,
@@ -81,6 +83,8 @@ Internal Changes
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
 - Consolidate package metadata and configuration in `pyproject.toml` (`#650 <https://github.com/MESMER-group/mesmer/pull/650>`_).
+  By `Mathias Hauser`_.
+- Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
   By `Mathias Hauser`_.
 
 Data structure using DataTree
@@ -239,6 +243,13 @@ Harmonic model
 - add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
+
+Data
+^^^^
+
+- Directly source the stratospheric aerosol optical depth data from NASA instead of using
+  the version from Climate Explorer (`#665 <https://github.com/MESMER-group/mesmer/pull/665>`_).
+  By `Mathias Hauser`_.
 
 v0.10.0 - 2024.01.04
 --------------------

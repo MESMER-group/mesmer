@@ -31,12 +31,12 @@ def ignore_warnings(func):
     # TODO: don't suppress all warnings
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def _wrapper(*args, **kwargs):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             return func(*args, **kwargs)
 
-    return wrapper
+    return _wrapper
 
 
 def _smooth_data(data, length=5):

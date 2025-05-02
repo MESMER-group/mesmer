@@ -19,14 +19,6 @@ else:
         pass
 
 
-def mask_percentage(regions, lon, lat, **kwargs):
-
-    warnings.warn(
-        "`mask_percentage` has been renamed to `mask_3D_frac_approx`", FutureWarning
-    )
-    return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
-
-
 def mask_3D_frac_approx(
     regions: regionmask.Regions, lon, lat, **kwargs
 ) -> xr.DataArray:
@@ -51,7 +43,7 @@ def mask_3D_frac_approx(
     Notes
     -----
     - assumes equally-spaced lat & lon!
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in
+    - copied from Mathias Hauser: https://github.com/regionmask/regionmask/issues/38 in
       August 2020
     - prototype of what will eventually be integrated in his regionmask package
 
@@ -137,7 +129,7 @@ def sample_coord(coord):
 
     Notes
     -----
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38
+    - copied from Mathias Hauser: https://github.com/regionmask/regionmask/issues/38
       in August 2020
     -> prototype of what will eventually be integrated in his regionmask package
 
