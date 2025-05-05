@@ -173,8 +173,7 @@ def test_stack_linear_regression_datatrees():
     n_ts, n_lat, n_lon = 30, 2, 3
     member_dim = "member"
     time_dim = "time"
-    stacking_dims = [time_dim, member_dim]
-    collapse_dim = "scenario"
+    scenario_dim = "scenario"
     stacked_dim = "sample"
 
     d2D_1 = xr.Dataset(
@@ -211,13 +210,14 @@ def test_stack_linear_regression_datatrees():
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
+        mesmer.datatree.broadcast_and_stack_scenarios(
             predictors,
             target,
             weights,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
+            member_dim=member_dim,
+            time_dim=time_dim,
+            scenario_dim=scenario_dim,
+            sample_dim=stacked_dim,
         )
     )
 
@@ -261,26 +261,16 @@ def test_stack_linear_regression_datatrees():
     xr.testing.assert_equal(weights_stacked, weights_aligned)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
-            predictors,
-            target,
-            None,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
-        )
+        mesmer.datatree.broadcast_and_stack_scenarios(predictors, target, None)
     )
     assert weights_stacked is None, "Weights should be None if not provided"
 
     # check if exclude_dim can be empty
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
+        mesmer.datatree.broadcast_and_stack_scenarios(
             predictors,
             target.sel(cells=0),
             weights,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
         )
     )
 

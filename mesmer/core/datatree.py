@@ -70,31 +70,52 @@ def collapse_datatree_into_dataset(
     return ds
 
 
-def stack_datatree(dt: xr.DataTree) -> xr.Dataset:
+def stack_datatree(
+    dt: xr.DataTree,
+    time_dim: str = "time",
+    member_dim: str = "member",
+    scenario_dim: str = "scenario",
+    sample_dim: str = "sample",
+) -> xr.Dataset:
+    """
+    stack datatree along a new dimension, named sample_dim. Each node needs a time- and
+    member-dimension. The scenario dimension from the name of each node.
 
-    # TODO: allow passing indexes (but see below)
+    Parameters
+    ----------
+    dt : xr.DataTree
+        DataTree to stack
+    time_dim : str, default: "time"
+        Name of the time dimension.
+    member_dim : str, default: "member"
+        Name of the member dimension.
+    scenario_dim : str, default: "scenario"
+        Name of the scenario dimension.
+    sample_dim : str, default: "sample"
+        Name of the sample dimension.
+
+    Returns
+    -------
+    stacked : xr.Dataset
+        Dataset stacked along the sample dimension
+    """
 
     out = list()
     for path, (node,) in xr.group_subtrees(dt):
 
         if node.has_data:
             ds = node.to_dataset()
-            ds = ds.expand_dims(scenario=[path])
+            ds = ds.expand_dims({scenario_dim: [path]})
 
             # NOTE: we want time to be the fastest changing variable (i.e. we
             # want to stack one member after the other) for this
             #  "member" must be _before_ "time"
 
-            # the first three are equivalent - most likely because scenario is only
-            # a single entry and we concat after stacking (?)
-            ds = ds.stack(sample=("scenario", "member", "time"), create_index=False)
-            # ds = ds.stack(sample=("member", "time", "scenario"), create_index=False)
-            # ds = ds.stack(sample=("member", "scenario", "time"), create_index=False)
+            # otherwise the order does not matter - probably because scenario is only
+            # a single entry and we concat after stacking
 
-            # these 3 do not work and lead to several
-            # ds = ds.stack(sample=("time", "member", "scenario"), create_index=False)
-            # ds = ds.stack(sample=("time", "scenario", "member"), create_index=False)
-            # ds = ds.stack(sample=("scenario", "time", "member"), create_index=False)
+            dim = {sample_dim: (scenario_dim, member_dim, time_dim)}
+            ds = ds.stack(dim, create_index=False)
 
             out.append(ds)
 
@@ -104,64 +125,71 @@ def stack_datatree(dt: xr.DataTree) -> xr.Dataset:
 
 
 @overload
-def stack_datatrees_for_linear_regression(
+def broadcast_and_stack_scenarios(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: None = None,
     *,
-    stacking_dims: list[str],
-    collapse_dim: str = "scenario",
-    stacked_dim: str = "sample",
+    time_dim: str = "time",
+    member_dim: str = "member",
+    scenario_dim: str = "scenario",
+    sample_dim: str = "sample",
 ) -> tuple[xr.DataTree, xr.Dataset, None]: ...
 @overload
-def stack_datatrees_for_linear_regression(
+def broadcast_and_stack_scenarios(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: xr.DataTree,
     *,
-    stacking_dims: list[str],
-    collapse_dim: str = "scenario",
-    stacked_dim: str = "sample",
+    time_dim: str = "time",
+    member_dim: str = "member",
+    scenario_dim: str = "scenario",
+    sample_dim: str = "sample",
 ) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset]: ...
 
 
-def stack_datatrees_for_linear_regression(
+def broadcast_and_stack_scenarios(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: xr.DataTree | None = None,
     *,
-    stacking_dims: list[str],
-    collapse_dim: str = "scenario",
-    stacked_dim: str = "sample",
+    time_dim: str = "time",
+    member_dim: str = "member",
+    scenario_dim: str = "scenario",
+    sample_dim: str = "sample",
 ) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset | None]:
     """
-    prepares data for Linear Regression:
+    prepare predictors, target, and weights for statistical functions, i.e. converts
+    several nD DataTree nodes into a single 2D Dataset with sample and target dimensions,
+    where sample consists of the time, member, and scenario dimensions, and the target
+    dimension is
+
     1. Broadcasts predictors to target
-    2. Collapses DataTrees into DataSets
-    3. Stacks the Datasets along the stacking dimension(s)
+    2. Stacks the DataTree along the sample dimension
 
     Parameters
     ----------
     predictors : DataTree
         A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
         must have subtrees for each predictor, each of which has to have at least one
-        non-empty leaf, holding a ``xr.Dataset`` representing a scenario. The subtrees of
-        different predictors must be isomorphic (i.e. have the save scenarios). The ``xr.Dataset``
-        must at least contain `dim` and each ``xr.Dataset`` must only hold one data variable.
+        non-empty leaf representing a scenario. The subtrees of different predictors must
+        be isomorphic (i.e. have the save scenarios). The ``xr.Dataset`` must contain
+        ``time_dim`` and ``scenario_dim`` and only hold one data variable.
     target : DataTree
-        A ``DataTree``holding the targets. Must be isomorphic to the predictor subtrees, i.e.
-        have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must be at least 2D
-        and contain `dim`, but may also contain a dimension for ensemble members.
+        A ``DataTree`` holding the targets. Must be isomorphic to the predictor subtrees, i.e.
+        have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must contain
+       ``time_dim`` and ``scenario_dim``.
     weights : DataTree or None, default: None
-        Individual weights for each sample, must be isomorphic to target. Must at least contain
-        `dim`, and must have the ensemble member dimension if target has it.
-    stacking_dims : list[str]
-        Dimension(s) to stack.
-    collapse_dim : str, default: "scenario"
-        Dimension along which to collapse the DataTrees, will automatically be added to the
-        stacking dims.
-    stacked_dim : str, default: "sample"
-        Name of the stacked dimension.
+        Individual weights for each sample, must be isomorphic to target. Must contain
+        ``time_dim`` and ``scenario_dim`` and if target has it.
+    time_dim : str, default: "time"
+        Name of the time dimension.
+    member_dim : str, default: "member"
+        Name of the member dimension.
+    scenario_dim : str, default: "scenario"
+        Name of the scenario dimension.
+    sample_dim : str, default: "sample"
+        Name of the sample dimension.
 
     Returns
     -------
@@ -188,30 +216,38 @@ def stack_datatrees_for_linear_regression(
     with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
     """
 
-    # stacking_dims_all = stacking_dims + [collapse_dim]
-    # stack_dim = {stacked_dim: stacking_dims_all}
-
     # exclude target dimensions from broadcasting which are not in the stacking_dims
-    exclude_dim = set(target.leaves[0].ds.dims) - set(stacking_dims)
+    # i.e. avoid broadcasting lat/ lon
+    exclude_dim = set(target.leaves[0].ds.dims) - {time_dim, member_dim}
+
+    dims = {
+        "time_dim": time_dim,
+        "member_dim": member_dim,
+        "scenario_dim": scenario_dim,
+        "sample_dim": sample_dim,
+    }
 
     # prepare predictors
     predictors_stacked = xr.DataTree()
     for key, pred in predictors.items():
+
         # 1) broadcast to target (because pred is averaged over member)
+
+        # TODO: use DataTree method again, once available
+        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
         pred_broadcast = map_over_datasets(
             xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
         )
-        # TODO: use DataTree method again, once available
-        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
 
-        predictors_stacked[key] = xr.DataTree(stack_datatree(pred_broadcast))
+        # 2) stack
+        predictors_stacked[key] = xr.DataTree(stack_datatree(pred_broadcast, **dims))
 
     # prepare target
-    target_stacked = stack_datatree(target)
+    target_stacked = stack_datatree(target, **dims)
 
     # prepare weights
     if weights is not None:
-        weights_stacked = stack_datatree(weights)
+        weights_stacked = stack_datatree(weights, **dims)
     else:
         weights_stacked = None
 
