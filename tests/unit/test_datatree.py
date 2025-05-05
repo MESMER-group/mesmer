@@ -344,7 +344,7 @@ def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
     )
 
     # =========
-    data = np.concat([np.arange(6), np.arange(2) * 10])
+    data = np.concatenate([np.arange(6), np.arange(2) * 10])
     time = [0, 1, 2, 0, 1, 2, 0, 1]
     member = ["a1"] * 3 + ["a2"] * 3 + ["a3"] * 2
     scen = ["scen1"] * 6 + ["scen2"] * 2
