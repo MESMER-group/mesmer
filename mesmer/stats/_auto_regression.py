@@ -901,6 +901,7 @@ def fit_auto_regression_monthly(
     -------
     obj : ``xr.Dataset``
         Dataset containing
+
         - the ``intercept`` for each month of the AR(1) process,
         - the ``slope`` for each month and
         - the ``residuals`` (needed for the estimation of the covariance matrices).
