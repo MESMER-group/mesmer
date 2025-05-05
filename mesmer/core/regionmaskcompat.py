@@ -10,22 +10,18 @@ from packaging.version import Version
 
 if Version(regionmask.__version__) >= Version("0.12.0"):
 
-    from regionmask.core.mask import InvalidCoordsError
+    from regionmask.core.mask import (
+        InvalidCoordsError,  # pyright: ignore[reportAssignmentType]
+    )
 else:
 
-    class InvalidCoordsError(ValueError):
+    class InvalidCoordsError(ValueError):  # type: ignore[no-redef]
         pass
 
 
-def mask_percentage(regions, lon, lat, **kwargs):
-
-    warnings.warn(
-        "`mask_percentage` has been renamed to `mask_3D_frac_approx`", FutureWarning
-    )
-    return _mask_3D_frac_approx(regions, lon, lat, **kwargs)
-
-
-def mask_3D_frac_approx(regions, lon, lat, **kwargs):
+def mask_3D_frac_approx(
+    regions: regionmask.Regions, lon, lat, **kwargs
+) -> xr.DataArray:
     """3D mask of the fractional overlap of a set of regions for the given lat/ lon grid
 
     Parameters
@@ -47,7 +43,7 @@ def mask_3D_frac_approx(regions, lon, lat, **kwargs):
     Notes
     -----
     - assumes equally-spaced lat & lon!
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38 in
+    - copied from Mathias Hauser: https://github.com/regionmask/regionmask/issues/38 in
       August 2020
     - prototype of what will eventually be integrated in his regionmask package
 
@@ -72,9 +68,13 @@ def _mask_3D_frac_approx(regions, lon, lat, **kwargs):
         return _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs)
 
 
-def _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs):
+def _mask_3D_frac_approx_internal(
+    regions: regionmask.Regions, lon, lat, **kwargs
+) -> xr.DataArray:
 
-    backend = regionmask.core.mask._determine_method(lon, lat)
+    backend = regionmask.core.mask._determine_method(
+        lon, lat
+    )  # pyright: ignore[reportAttributeAccessIssue]
     if "rasterize" not in backend:
         raise InvalidCoordsError("'lon' and 'lat' must be 1D and equally spaced.")
 
@@ -98,18 +98,16 @@ def _mask_3D_frac_approx_internal(regions, lon, lat, **kwargs):
     numbers = np.unique(mask.values[~isnan])
     numbers = numbers.astype(int)
 
-    mask_sampled = list()
+    res: list[xr.DataArray] = list()
     for num in numbers:
         # coarsen the mask again
         mask_coarse = mask == num
         # set points beyond 90° to NaN so we get the correct fraction
         mask_coarse = mask_coarse.where(sel)
         mask_coarse = mask_coarse.coarsen({lat_name: 10, lon_name: 10}).mean()
-        mask_sampled.append(mask_coarse)
+        res.append(mask_coarse)
 
-    mask_sampled = xr.concat(
-        mask_sampled, dim="region", compat="override", coords="minimal"
-    )
+    mask_sampled = xr.concat(res, dim="region", compat="override", coords="minimal")
 
     abbrevs = regions[numbers].abbrevs
     names = regions[numbers].names
@@ -131,7 +129,7 @@ def sample_coord(coord):
 
     Notes
     -----
-    - copied from Mathias Hauser: https://github.com/mathause/regionmask/issues/38
+    - copied from Mathias Hauser: https://github.com/regionmask/regionmask/issues/38
       in August 2020
     -> prototype of what will eventually be integrated in his regionmask package
 

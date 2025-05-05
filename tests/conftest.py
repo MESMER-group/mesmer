@@ -19,6 +19,11 @@ def update_expected_files(request):
     return request.config.getoption("--update-expected-files")
 
 
+@pytest.fixture(params=("DataArray", "Dataset", "DataTree"))
+def datatype(request):
+    return request.param
+
+
 # add markers and options
 
 

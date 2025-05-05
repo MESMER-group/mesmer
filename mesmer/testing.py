@@ -2,6 +2,45 @@ import numpy as np
 import xarray as xr
 
 
+def assert_allclose_allowed_failures(
+    actual, desired, *, rtol=1e-07, atol=0, allowed_failures=0
+):
+    """check arrays are close but allow a number of failures
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional
+        Relative tolerance.
+    atol : float, optional
+        Absolute tolerance.
+    allowed_failures : int, default: 0
+        Number of points that may violate the tolerance criteria
+
+    Notes
+    -----
+    Only for numpy arrays at the moment.
+
+    """
+
+    __tracebackhide__ = True
+
+    def comparison(actual, desired):
+
+        __tracebackhide__ = True
+
+        isclose = np.isclose(actual, desired, rtol=rtol, atol=atol)
+        n_not_isclose = (~isclose).sum()
+        if n_not_isclose > allowed_failures:
+            return isclose
+        return True
+
+    np.testing.assert_array_compare(comparison, actual, desired)
+
+
 def assert_dict_allclose(first, second, first_name="left", second_name="right"):
 
     if not isinstance(first, dict) or not isinstance(second, dict):
@@ -38,7 +77,7 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
             assert first_val == second_val, key
 
 
-def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1):
+def trend_data_1D(n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0):
 
     time = np.arange(n_timesteps)
 
@@ -50,7 +89,9 @@ def trend_data_1D(n_timesteps=30, intercept=0, slope=1, scale=1):
     return xr.DataArray(data, dims=("time"), coords={"time": time}, name="data")
 
 
-def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
+def trend_data_2D(
+    n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
+) -> xr.DataArray:
 
     n_cells = n_lat * n_lon
     time = np.arange(n_timesteps)
@@ -70,7 +111,9 @@ def trend_data_2D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=
     return xr.DataArray(data, dims=("cells", "time"), coords=coords, name="data")
 
 
-def trend_data_3D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=1):
+def trend_data_3D(
+    n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
+):
 
     data = trend_data_2D(
         n_timesteps=n_timesteps,
@@ -83,3 +126,17 @@ def trend_data_3D(n_timesteps=30, n_lat=3, n_lon=2, intercept=0, slope=1, scale=
 
     # reshape to 3D (time x lat x lon)
     return data.set_index(cells=("lat", "lon")).unstack("cells")
+
+
+def _convert(da: xr.DataArray, datatype):
+
+    if datatype == "DataArray":
+        return da
+
+    if datatype == "Dataset":
+        return da.to_dataset()
+
+    if datatype == "DataTree":
+        return xr.DataTree.from_dict({"node": da.to_dataset()})
+
+    raise ValueError(f"Unkown datatype: {datatype}")

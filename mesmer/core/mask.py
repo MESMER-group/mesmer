@@ -3,6 +3,8 @@ import regionmask
 import xarray as xr
 
 import mesmer
+from mesmer.core.datatree import _datatree_wrapper
+from mesmer.core.types import T_DataArraySetTree
 
 
 def _where_if_coords(obj, cond, coords):
@@ -21,12 +23,19 @@ def _where_if_coords(obj, cond, coords):
     return obj.where(cond)
 
 
-def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
+@_datatree_wrapper
+def mask_ocean_fraction(
+    data: T_DataArraySetTree,
+    threshold: float,
+    *,
+    x_coords: str = "lon",
+    y_coords: str = "lat",
+) -> T_DataArraySetTree:
     """mask out ocean using fractional overlap
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to mask.
     threshold : float
         Threshold above which land fraction to consider a grid point as a land grid
@@ -38,12 +47,12 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with ocean grid points masked out.
 
     Notes
     -----
-    - Uses the 1:110m land mask from Natural Earth (http://www.naturalearthdata.com).
+    - Uses the 1:110m land mask from Natural Earth (https://www.naturalearthdata.com).
     - The fractional overlap of individual grid points and the land mask can only be
       computed for regularly-spaced 1D x- and y-coordinates. For irregularly spaced
       coordinates use :py:func:`mesmer.mask.mask_land`.
@@ -74,12 +83,15 @@ def mask_ocean_fraction(data, threshold, *, x_coords="lon", y_coords="lat"):
     return _where_if_coords(data, mask_bool, [y_coords, x_coords])
 
 
-def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
+@_datatree_wrapper
+def mask_ocean(
+    data: T_DataArraySetTree, *, x_coords: str = "lon", y_coords: str = "lat"
+) -> T_DataArraySetTree:
     """mask out ocean
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to mask.
     x_coords : str, default: "lon"
         Name of the x-coordinates.
@@ -88,12 +100,12 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
 
     Returns
     -------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with ocean grid points masked out.
 
     Notes
     -----
-    - Uses the 1:110m land mask from Natural Earth (http://www.naturalearthdata.com).
+    - Uses the 1:110m land mask from Natural Earth (https://www.naturalearthdata.com).
     - Whether a grid cell is in the ocean or on land is based on its center. For
       regularly spaced coordinates use :py:func:`mesmer.mask.mask_land_fraction`.
     """
@@ -109,19 +121,22 @@ def mask_ocean(data, *, x_coords="lon", y_coords="lat"):
     return _where_if_coords(data, mask_bool, [y_coords, x_coords])
 
 
-def mask_antarctica(data, *, y_coords="lat"):
+@_datatree_wrapper
+def mask_antarctica(
+    data: T_DataArraySetTree, *, y_coords: str = "lat"
+) -> T_DataArraySetTree:
     """mask out ocean
 
     Parameters
     ----------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array to mask.
     y_coords : str, default: "lat"
         Name of the y-coordinates.
 
     Returns
     -------
-    data : xr.Dataset | xr.DataArray
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Array with Antarctic grid points masked out.
 
     Notes

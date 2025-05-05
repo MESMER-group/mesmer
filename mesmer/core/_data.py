@@ -1,9 +1,9 @@
 from functools import cache
 
+import numpy as np
 import pandas as pd
 import pooch
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 
@@ -24,32 +24,40 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
         DataArray of stratospheric aerosol optical depth observations.
     """
 
-    aod = _load_aod_obs(version=version, resample=resample)
+    if version != "2022":
+        raise ValueError("No version other than '2022' is currently available.")
+
+    aod = _load_aod_obs(resample=resample)
 
     return aod.copy()
 
 
 # use an inner function as @cache does not nicely preserve the signature
 @cache
-def _load_aod_obs(*, version, resample):
+def _load_aod_obs(*, resample):
 
-    filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
+    filename = _fetch_remote_data("obs/tau.line_2012.12.txt")
 
-    df = pd.read_csv(
-        filename,
-        sep=r"\s+",
-        skiprows=11,
-        names=("year", "month", "aod"),
-        dtype={"year": str, "month": str},
-    )
+    arr = pd.read_csv(filename, sep=r"\s+", header=2)["global"].to_numpy()
 
-    time = pd.to_datetime(df.year + df.month, format="%Y%m")
+    # TODO: remove rounding and re-generate output files
+    # we originally used the same data from climate explorer (see https://github.com/MESMER-group/mesmer/blob/461a1d89db4ee2e93016c8a38d126d521d460fc9/data/isaod_gl_2022.dat)
+    # climate explorer rounded the data to 3 digits (compared to 4 in the NASA file)
+    # this was done in fortran using a REAL number, written as f6.3 - which leads to
+    # inconsistent rounding ("5" is sometimes rounded up, sometimes down)
+    # do the same to avoid re-generating all files
+    # https://gitlab.com/KNMI-OSS/climexp/climexp_data/-/blob/3c9f735b0e8c7aabf5e4b6c351c4870182833ea7/NASAData/saod2dat.f90#L7
+    # https://gitlab.com/KNMI-OSS/climexp/climexp_data/-/blob/3c9f735b0e8c7aabf5e4b6c351c4870182833ea7/NASAData/saod2dat.f90#L42
+    rounded = np.array([float(f"{v:6.3f}") for v in arr.astype(np.float32)])
 
-    aod = xr.DataArray(df.aod.values, coords={"time": time}, name="aod")
+    time = pd.date_range("1850-01-01", "2012-09-01", freq="MS")
+    time_full = pd.date_range("1850-01-01", "2022-12-01", freq="MS")
+
+    aod = xr.DataArray(rounded, coords={"time": time}, name="aod")
+    aod = aod.reindex_like(xr.Dataset(coords={"time": time_full}), fill_value=0.0)
 
     if resample:
-        freq = "YE" if Version(xr.__version__) >= Version("2024.02") else "A"
-        aod = aod.resample(time=freq).mean()
+        aod = aod.resample(time="YE").mean()
 
     return aod
 
@@ -61,16 +69,16 @@ def _fetch_remote_data(name):
 
     cache_dir = pooch.os_cache("mesmer")
 
-    REMOTE_RESSOURCE = pooch.create(
+    REMOTE_RESOURCE = pooch.create(
         path=cache_dir,
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
         registry={
-            "isaod_gl_2022.dat": "3d26e78bf0ee96a02c99e2a7a448dafda0ac847a5c914a75c7d9745e95fe68ee",
+            "obs/tau.line_2012.12.txt": "9aa43f83bfc8e69b9e4c21c894a7a2e7b5ddf7ec32d2e9b55b12ce5bddc36451",
         },
         version=f"v{mesmer.__version__}",
         version_dev="main",
     )
 
     # the file will be downloaded automatically the first time this is run.
-    return REMOTE_RESSOURCE.fetch(name)
+    return REMOTE_RESOURCE.fetch(name)

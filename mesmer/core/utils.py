@@ -1,9 +1,9 @@
 import warnings
+from collections.abc import Callable, Iterable
+from typing import cast
 
 import numpy as np
-import pandas as pd
 import xarray as xr
-from packaging.version import Version
 
 
 class OptimizeWarning(UserWarning):
@@ -14,7 +14,23 @@ class LinAlgWarning(UserWarning):
     pass
 
 
-def create_equal_dim_names(dim, suffixes):
+def _create_equal_dim_names(dim: str, suffixes: tuple[str, str]) -> tuple[str, str]:
+    """appends suffixes to a dimension name
+
+    required as two axes cannot share the same dimension name in xarray
+
+    Parameters
+    ----------
+    dim : str
+        Dimension name.
+    suffixes : tuple[str, str]
+        The suffixes to add to the dim name.
+
+    Returns
+    -------
+    suffixed_dims : tuple[str, str]
+        Dimension name with suffixes added
+    """
 
     if not len(suffixes) == 2:
         raise ValueError("must provide exactly two suffixes")
@@ -22,7 +38,7 @@ def create_equal_dim_names(dim, suffixes):
     return tuple(f"{dim}{suffix}" for suffix in suffixes)
 
 
-def _minimize_local_discrete(func, sequence, **kwargs):
+def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
     """find the local minimum for a function that consumes discrete input
 
     Parameters
@@ -85,7 +101,7 @@ def _minimize_local_discrete(func, sequence, **kwargs):
     return last_valid_element
 
 
-def _to_set(arg):
+def _to_set(arg) -> set:
 
     if arg is None:
         arg = set()
@@ -114,7 +130,9 @@ def _assert_annual_data(time):
         )
 
 
-def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
+def upsample_yearly_data(
+    yearly_data: xr.DataArray, monthly_time: xr.DataArray, time_dim: str = "time"
+):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
     Parameters
@@ -124,6 +142,9 @@ def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
 
     monthly_time: xarray.DataArray
         Monthly time used to define the time coordinates of the upsampled data.
+
+    time_dim: str, default: 'time'
+        Name of the time dimension.
 
     Returns
     -------
@@ -139,9 +160,7 @@ def upsample_yearly_data(yearly_data, monthly_time, time_dim="time"):
         )
 
     # make sure monthly and yearly data both start at the beginning of the period
-    # pandas v2.2 changed the time freq string for year
-    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    year = yearly_data.resample({time_dim: freq}).bfill()
+    year = yearly_data.resample({time_dim: "YS"}).bfill()
     month = monthly_time.resample({time_dim: "MS"}).bfill()
 
     # forward fill yearly values to monthly resolution
@@ -157,8 +176,8 @@ def _check_dataset_form(
     obj,
     name: str = "obj",
     *,
-    required_vars: str | set[str] = set(),
-    optional_vars: str | set[str] = set(),
+    required_vars: str | Iterable[str] | None = None,
+    optional_vars: str | Iterable[str] | None = None,
     requires_other_vars: bool = False,
 ):
     """check if a dataset conforms to some conditions
@@ -167,9 +186,9 @@ def _check_dataset_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    required_vars, str, set of str, optional
+    required_vars, str, iterable of str, optional
         Variables that obj is required to contain.
-    optional_vars: str, set of str, optional
+    optional_vars: str, iterable of str, optional
         Variables that the obj may contain, only
         relevant if `requires_other_vars` is True
     requires_other_vars: bool, default: False
@@ -183,6 +202,8 @@ def _check_dataset_form(
 
     """
 
+    __tracebackhide__ = True
+
     required_vars = _to_set(required_vars)
     optional_vars = _to_set(optional_vars)
 
@@ -193,8 +214,8 @@ def _check_dataset_form(
 
     missing_vars = required_vars - data_vars
     if missing_vars:
-        missing_vars = ",".join(missing_vars)
-        raise ValueError(f"{name} is missing the required data_vars: {missing_vars}")
+        missing = ",".join(missing_vars)
+        raise ValueError(f"{name} is missing the required data_vars: {missing}")
 
     n_vars_except = len(data_vars - (required_vars | optional_vars))
     if requires_other_vars and n_vars_except == 0:
@@ -206,9 +227,9 @@ def _check_dataarray_form(
     obj,
     name: str = "obj",
     *,
-    ndim: int = None,
-    required_dims: str | set[str] = set(),
-    shape=None,
+    ndim: tuple[int, ...] | int | None = None,
+    required_dims: str | Iterable[str] | None = None,
+    shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
 
@@ -216,9 +237,9 @@ def _check_dataarray_form(
         object to check.
     name : str, default: 'obj'
         Name to use in error messages.
-    ndim, int, optional
+    ndim, int or tuple of int, optional
         Number of required dimensions, can be a tuple of int if several are possible.
-    required_dims: str, set of str, optional
+    required_dims: str, iterable of str, optional
         Names of dims that are required for obj
     shape : tuple of ints, default: None
         Required shape. Ignored if None.
@@ -230,16 +251,18 @@ def _check_dataarray_form(
 
     """
 
+    __tracebackhide__ = True
+
     required_dims = _to_set(required_dims)
 
     if not isinstance(obj, xr.DataArray):
         raise TypeError(f"Expected {name} to be an xr.DataArray, got {type(obj)}")
 
-    ndim = (ndim,) if np.isscalar(ndim) else ndim
+    ndim = cast(tuple[int], (ndim,) if np.isscalar(ndim) else ndim)
     if ndim is not None and obj.ndim not in ndim:
         *a, b = map(lambda x: f"{x}D", ndim)
-        ndim = (a and ", ".join(a) + " or " or "") + b
-        raise ValueError(f"{name} should be {ndim}, but is {obj.ndim}D")
+        ndim_options = (a and ", ".join(a) + " or " or "") + b
+        raise ValueError(f"{name} should be {ndim_options}, but is {obj.ndim}D")
 
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))

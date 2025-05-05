@@ -9,11 +9,11 @@ from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
-def test_lowess_errors():
+def test_lowess_errors() -> None:
     data = trend_data_2D()
 
     with pytest.raises(ValueError, match="Can only pass a single dimension."):
-        mesmer.stats.lowess(data, ("lat", "lon"), frac=0.3)
+        mesmer.stats.lowess(data, ("lat", "lon"), frac=0.3)  # type: ignore[arg-type]
 
     with pytest.raises(ValueError, match="data should be 1D"):
         mesmer.stats.lowess(data.to_dataset(), "data", frac=0.3)
@@ -74,7 +74,8 @@ def test_lowess_n_steps(n_steps):
 def test_lowess_use_coords():
 
     data = trend_data_1D()
-    time = data.time.values
+    # make copy as it's read only
+    time = np.array(data.time.values)
     time[-1] = time[-1] + 10
     data = data.assign_coords(time=time)
 
@@ -138,7 +139,7 @@ def test_lowess_2D():
     result = mesmer.stats.lowess(data, "time", frac=0.3)
 
     _check_dataarray_form(
-        result, "result", ndim=2, required_dims=("time", "cells"), shape=data.shape
+        result, "result", ndim=2, required_dims={"time", "cells"}, shape=data.shape
     )
 
 
@@ -190,3 +191,15 @@ def test_lowess_2D_combine_dim_it():
 
     xr.testing.assert_allclose(r1, r2)
     xr.testing.assert_allclose(r1, r3)
+
+
+def test_lowess_datatree():
+
+    ds = trend_data_1D().to_dataset()
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    result = mesmer.stats.lowess(dt, "time", frac=0.33, it=1)
+    expected = mesmer.stats.lowess(ds, "time", frac=0.33, it=1)
+    expected = xr.DataTree.from_dict({"node": expected})
+
+    xr.testing.assert_equal(result, expected)

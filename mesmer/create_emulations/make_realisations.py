@@ -6,10 +6,10 @@
 import numpy as np
 import xarray as xr
 
-from .create_emus_gv import create_emus_gv
-from .create_emus_lt import create_emus_lt
-from .create_emus_lv import create_emus_lv
-from .merge_emus import create_emus_l
+from mesmer.create_emulations.create_emus_gv import create_emus_gv
+from mesmer.create_emulations.create_emus_lt import create_emus_lt
+from mesmer.create_emulations.create_emus_lv import create_emus_lv
+from mesmer.create_emulations.merge_emus import create_emus_l
 
 
 def create_seed_dict(esms, scenarios, scen_seed_offset=0):

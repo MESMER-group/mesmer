@@ -7,21 +7,23 @@ channels:
 dependencies:
  - python=3.10
  - cartopy=0.22
- - dask=2023.8
+ - dask=2024.3
+ - filefisher=1.1
  - joblib=1.3
  - netcdf4=1.6
- - numpy=1.24
- - packaging=23.1
- - pandas=2.0
- - pooch=1.7
+ - numpy=1.25
+ - packaging=24.0
+ - pandas=2.2
+ - pooch=1.8
  - properscoring=0.1
  - pyproj=3.6
- - regionmask=0.10
- - scikit-learn=1.3
- - scipy=1.11
+ - regionmask=0.11
+ - scikit-learn=1.4
+ - scipy=1.12
  - shapely=2.0
  - statsmodels=0.14
- - xarray=2023.7
+ - xarray=2025.03
 # for testing
  - pytest
  - pytest-cov
+ - pytest-xdist

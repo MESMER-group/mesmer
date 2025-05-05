@@ -14,9 +14,8 @@ import numpy as np
 import xarray as xr
 
 import mesmer
-
-from ..io.load_constant_files import load_regs_ls_wgt_lon_lat
-from ..utils import convert_dict_to_arr, extract_land
+from mesmer.io.load_constant_files import load_regs_ls_wgt_lon_lat
+from mesmer.utils import convert_dict_to_arr, extract_land
 
 
 def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
@@ -356,7 +355,8 @@ def _load_cmipng_file(run_path, gen, scen):
     if gen == 5:
 
         # use_cftime because of employed calendar,
-        data = xr.open_dataset(run_path, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        data = xr.open_dataset(run_path, decode_times=time_coder)
 
         # rename to time for consistency with cmip6
         data = data.rename({"year": "time"})

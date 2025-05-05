@@ -246,6 +246,7 @@ def main():
     # probability integral transform: projection of the data on a standard normal distribution
     transf_target = mesmer_x_train_utils.probability_integral_transform(  # noqa: F841
         data=target,
+        target_name=targ,
         expr_start=expr,
         coeffs_start=xr_coeffs_distrib,
         preds_start=predictors,
@@ -273,6 +274,7 @@ def main():
 
     # probability integral transform: projection of the transformed data on the known distributions
     emus = mesmer_x_train_utils.probability_integral_transform(
+        target_name=targ,
         data=transf_emus,
         expr_start="norm(loc=0, scale=1)",
         expr_end=expr,

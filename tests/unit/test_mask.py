@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 import mesmer
 
 
-def data_lon_lat(as_dataset, x_coords="lon", y_coords="lat"):
+def data_lon_lat(datatype, x_coords="lon", y_coords="lat"):
 
     lon = np.arange(0.5, 360, 2)
     lat = np.arange(90, -91, -2)
@@ -21,15 +22,17 @@ def data_lon_lat(as_dataset, x_coords="lon", y_coords="lat"):
 
     ds = xr.Dataset(data_vars={"data": da, "scalar": 1}, attrs={"key": "ds_attrs"})
 
-    if as_dataset:
+    if datatype == "Dataset":
         return ds
+    elif datatype == "DataTree":
+        return xr.DataTree.from_dict({"node": ds})
     return ds.data
 
 
 @pytest.mark.parametrize("threshold", ([0, 1], -0.1, 1.1))
 def test_ocean_land_fraction_errors(threshold):
 
-    data = data_lon_lat(as_dataset=True)
+    data = data_lon_lat("Dataset")
 
     with pytest.raises(
         ValueError, match="`threshold` must be a scalar between 0 and 1"
@@ -53,7 +56,7 @@ def test_ocean_land_fraction_irregular():
 
 def test_ocean_land_fraction_threshold():
     # check that the threshold has an influence
-    data = data_lon_lat(as_dataset=True)
+    data = data_lon_lat("Dataset")
 
     result_033 = mesmer.mask.mask_ocean_fraction(data, threshold=0.33)
     result_066 = mesmer.mask.mask_ocean_fraction(data, threshold=0.66)
@@ -61,18 +64,27 @@ def test_ocean_land_fraction_threshold():
     assert not (result_033.data == result_066.data).all()
 
 
-def _test_mask(func, as_dataset, threshold=None, **kwargs):
+def _test_mask(func, datatype, threshold=None, **kwargs):
     # not checking the actual mask
 
-    data = data_lon_lat(as_dataset=as_dataset, **kwargs)
+    data = data_lon_lat(datatype, **kwargs)
+
+    print(data)
 
     kwargs = kwargs if threshold is None else {"threshold": threshold, **kwargs}
     result = func(data, **kwargs)
 
-    if as_dataset:
+    if datatype == "DataTree":
+        assert isinstance(result, xr.DataTree)
+        result = result["node"].to_dataset()
+
+    if datatype in ("DataTree", "Dataset"):
         # ensure scalar is not broadcast
         assert result.scalar.ndim == 0
-        assert result.attrs == {"key": "ds_attrs"}
+
+        # NOTE: DataTree attrs fixed in https://github.com/pydata/xarray/pull/10219
+        if datatype != "DataTree" or Version(xr.__version__) > Version("2025.3.1"):
+            assert result.attrs == {"key": "ds_attrs"}
 
         result_da = result.data
     else:
@@ -84,55 +96,45 @@ def _test_mask(func, as_dataset, threshold=None, **kwargs):
     assert result_da.attrs == {"key": "da_attrs"}
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_ocean_land_fraction_default(as_dataset):
+def test_ocean_land_fraction_default(datatype):
 
-    _test_mask(mesmer.mask.mask_ocean_fraction, as_dataset, threshold=0.5)
+    _test_mask(mesmer.mask.mask_ocean_fraction, datatype, threshold=0.5)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("x_coords", ("x", "lon"))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
-def test_ocean_land_fraction(as_dataset, x_coords, y_coords):
+def test_ocean_land_fraction(datatype, x_coords, y_coords):
 
     _test_mask(
         mesmer.mask.mask_ocean_fraction,
-        as_dataset,
+        datatype,
         threshold=0.5,
         x_coords=x_coords,
         y_coords=y_coords,
     )
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_ocean_land_default(
-    as_dataset,
-):
+def test_ocean_land_default(datatype):
 
-    _test_mask(mesmer.mask.mask_ocean, as_dataset)
+    _test_mask(mesmer.mask.mask_ocean, datatype)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
 @pytest.mark.parametrize("x_coords", ("x", "lon"))
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
-def test_mask_land(as_dataset, x_coords, y_coords):
+def test_mask_land(datatype, x_coords, y_coords):
 
-    _test_mask(mesmer.mask.mask_ocean, as_dataset, x_coords=x_coords, y_coords=y_coords)
-
-
-@pytest.mark.parametrize("as_dataset", (True, False))
-def test_mask_antarctiva_default(
-    as_dataset,
-):
-
-    _test_mask(mesmer.mask.mask_antarctica, as_dataset)
+    _test_mask(mesmer.mask.mask_ocean, datatype, x_coords=x_coords, y_coords=y_coords)
 
 
-@pytest.mark.parametrize("as_dataset", (True, False))
+def test_mask_antarctiva_default(datatype):
+
+    _test_mask(mesmer.mask.mask_antarctica, datatype)
+
+
 @pytest.mark.parametrize("y_coords", ("y", "lat"))
-def test_mask_antarctiva(as_dataset, y_coords):
+def test_mask_antarctiva(datatype, y_coords):
 
-    _test_mask(mesmer.mask.mask_antarctica, as_dataset, y_coords=y_coords)
+    _test_mask(mesmer.mask.mask_antarctica, datatype, y_coords=y_coords)
 
 
 def test_mask_ocean_2D_grid():

@@ -5,10 +5,11 @@ Required dependencies
 ---------------------
 
 - Python (3.10 or later)
-- `dask <https://dask.org/>`__
+- `dask <https://www.dask.org/>`__
+- `filefisher <https://filefisher.readthedocs.io/en/latest/>`__
 - `joblib <https://joblib.readthedocs.io/en/latest/>`__
 - `netcdf4 <https://unidata.github.io/netcdf4-python/>`__
-- `numpy <http://www.numpy.org/>`__
+- `numpy <https://numpy.org>`__
 - `pandas <https://pandas.pydata.org/>`__
 - `regionmask <https://regionmask.readthedocs.io/en/stable/>`__
 - `pooch <https://www.fatiando.org/pooch/latest/>`__
@@ -17,7 +18,9 @@ Required dependencies
 - `scikit-learn <https://scikit-learn.org/stable/>`__
 - `scipy <https://scipy.org/>`__
 - `statsmodels <https://www.statsmodels.org/stable/index.html>`__
-- `xarray <http://xarray.pydata.org/>`__
+- `xarray <https://docs.xarray.dev/en/stable/>`__
+
+Please note that we only support datatree version 0.0.13 and will switch to the xarray internal datatree module in the future.
 
 Optional dependencies
 ---------------------

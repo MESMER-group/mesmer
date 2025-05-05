@@ -8,7 +8,7 @@ tests/test-data/output/*/*/params
 devel/*
 
 # output folder of examples/train_create_emus_automated.py
-examples/output
+examples/**/output
 
 startup
 tmp/

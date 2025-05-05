@@ -5,15 +5,14 @@ Functions to calibrate all modules of MESMER
 import logging
 import warnings
 
+from mesmer.calibrate_mesmer.train_gt import train_gt
+from mesmer.calibrate_mesmer.train_gv import train_gv
+from mesmer.calibrate_mesmer.train_lt import train_lt
+from mesmer.calibrate_mesmer.train_lv import train_lv
+from mesmer.create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
 from mesmer.create_emulations.utils import concatenate_hist_future
-
-from ..create_emulations import create_emus_lt, create_emus_lv, gather_gt_data
-from ..io import load_cmip_data_all_esms, load_phi_gc, save_mesmer_bundle
-from ..utils import separate_hist_future
-from .train_gt import train_gt
-from .train_gv import train_gv
-from .train_lt import train_lt
-from .train_lv import train_lv
+from mesmer.io import load_cmip_data_all_esms, load_phi_gc, save_mesmer_bundle
+from mesmer.utils import separate_hist_future
 
 LOGGER = logging.getLogger(__name__)
 
