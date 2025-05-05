@@ -9,7 +9,7 @@ from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
-def test_lowess_errors():
+def test_lowess_errors() -> None:
     data = trend_data_2D()
 
     with pytest.raises(ValueError, match="Can only pass a single dimension."):

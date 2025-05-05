@@ -1,5 +1,6 @@
 import warnings
 from collections.abc import Callable, Iterable
+from typing import cast
 
 import numpy as np
 import xarray as xr
@@ -13,7 +14,23 @@ class LinAlgWarning(UserWarning):
     pass
 
 
-def create_equal_dim_names(dim, suffixes):
+def _create_equal_dim_names(dim: str, suffixes: tuple[str, str]) -> tuple[str, str]:
+    """appends suffixes to a dimension name
+
+    required as two axes cannot share the same dimension name in xarray
+
+    Parameters
+    ----------
+    dim : str
+        Dimension name.
+    suffixes : tuple[str, str]
+        The suffixes to add to the dim name.
+
+    Returns
+    -------
+    suffixed_dims : tuple[str, str]
+        Dimension name with suffixes added
+    """
 
     if not len(suffixes) == 2:
         raise ValueError("must provide exactly two suffixes")
@@ -78,7 +95,7 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
     return element
 
 
-def _to_set(arg):
+def _to_set(arg) -> set:
 
     if arg is None:
         arg = set()
@@ -191,8 +208,8 @@ def _check_dataset_form(
 
     missing_vars = required_vars - data_vars
     if missing_vars:
-        missing_vars = ",".join(missing_vars)
-        raise ValueError(f"{name} is missing the required data_vars: {missing_vars}")
+        missing = ",".join(missing_vars)
+        raise ValueError(f"{name} is missing the required data_vars: {missing}")
 
     n_vars_except = len(data_vars - (required_vars | optional_vars))
     if requires_other_vars and n_vars_except == 0:
@@ -235,11 +252,11 @@ def _check_dataarray_form(
     if not isinstance(obj, xr.DataArray):
         raise TypeError(f"Expected {name} to be an xr.DataArray, got {type(obj)}")
 
-    ndim = (ndim,) if np.isscalar(ndim) else ndim
+    ndim = cast(tuple[int], (ndim,) if np.isscalar(ndim) else ndim)
     if ndim is not None and obj.ndim not in ndim:
         *a, b = map(lambda x: f"{x}D", ndim)
-        ndim = (a and ", ".join(a) + " or " or "") + b
-        raise ValueError(f"{name} should be {ndim}, but is {obj.ndim}D")
+        ndim_options = (a and ", ".join(a) + " or " or "") + b
+        raise ValueError(f"{name} should be {ndim_options}, but is {obj.ndim}D")
 
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))

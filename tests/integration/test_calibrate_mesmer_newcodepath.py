@@ -77,20 +77,17 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
-    update_expected_files=False,
-):
+    update_expected_files,
+) -> None:
 
     # define config values
     THRESHOLD_LAND = 1 / 3
 
     REFERENCE_PERIOD = slice("1850", "1900")
 
-    HIST_PERIOD = slice("1850", "2014")
-
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    test_cmip_generation = 6
 
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
@@ -101,12 +98,10 @@ def test_calibrate_mesmer(
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
 
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
-    )
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
@@ -139,7 +134,8 @@ def test_calibrate_mesmer(
         # load all members for a scenario
         members = []
         for fN, meta in files.items():
-            ds = xr.open_dataset(fN, use_cftime=True)
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = xr.open_dataset(fN, decode_times=time_coder)
             # drop unnecessary variables
             ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
             # assign member-ID as coordinate
@@ -168,7 +164,8 @@ def test_calibrate_mesmer(
 
             members = []
             for fN, meta in files.items():
-                ds = xr.open_dataset(fN, use_cftime=True)
+                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                ds = xr.open_dataset(fN, decode_times=time_coder)
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
                 )
@@ -208,15 +205,11 @@ def test_calibrate_mesmer(
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
     )
 
-    volcanic_params = mesmer.volc.fit_volcanic_influence(
-        hist_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
-    )
+    volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
     tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
         tas_globmean_smoothed["historical"],
         volcanic_params,
-        hist_period=HIST_PERIOD,
-        dim="time",
     )
 
     # train global variability module
@@ -389,11 +382,14 @@ def assert_params_allclose(
     localized_ecov_file,
 ):
     # test params
-    exp_volcanic_params = xr.open_dataset(volcanic_file, use_cftime=True)
-    exp_global_ar_params = xr.open_dataset(global_ar_file, use_cftime=True)
-    exp_local_forced_params = xr.open_dataset(local_forced_file, use_cftime=True)
-    exp_local_ar_params = xr.open_dataset(local_ar_file, use_cftime=True)
-    exp_localized_ecov = xr.open_dataset(localized_ecov_file, use_cftime=True)
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    exp_volcanic_params = xr.open_dataset(volcanic_file, decode_times=time_coder)
+    exp_global_ar_params = xr.open_dataset(global_ar_file, decode_times=time_coder)
+    exp_local_forced_params = xr.open_dataset(
+        local_forced_file, decode_times=time_coder
+    )
+    exp_local_ar_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    exp_localized_ecov = xr.open_dataset(localized_ecov_file, decode_times=time_coder)
 
     xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
     xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
