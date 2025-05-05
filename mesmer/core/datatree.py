@@ -72,8 +72,9 @@ def collapse_datatree_into_dataset(
 
 def stack_datatree(
     dt: xr.DataTree,
+    *,
+    member_dim: str | None = "member",
     time_dim: str = "time",
-    member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
 ) -> xr.Dataset:
@@ -85,10 +86,10 @@ def stack_datatree(
     ----------
     dt : xr.DataTree
         DataTree to stack
+    member_dim : str | None, default: "member"
+        Name of the member dimension.
     time_dim : str, default: "time"
         Name of the time dimension.
-    member_dim : str, default: "member"
-        Name of the member dimension.
     scenario_dim : str, default: "scenario"
         Name of the scenario dimension.
     sample_dim : str, default: "sample"
@@ -100,28 +101,41 @@ def stack_datatree(
         Dataset stacked along the sample dimension
     """
 
+    # NOTE: we want time to be the fastest changing variable (i.e. we want to stack one
+    # member after the other) for this "member" _must_ be _before_ "time"
+
+    # otherwise the order does not matter - probably because scenario is only
+    # a single entry and we concat after stacking
+
+    if member_dim is None:
+        dims = (scenario_dim, time_dim)
+    else:
+        dims = (scenario_dim, member_dim, time_dim)
+
     out = list()
     for path, (node,) in xr.group_subtrees(dt):
 
         if node.has_data:
             ds = node.to_dataset()
+
+            if member_dim is not None and member_dim not in ds.dims:
+                available_dims = "', '".join(ds.dims)
+                msg = (
+                    f"`member_dim` ('{member_dim}') not available in node '{path}' "
+                    f"with available dims: '{available_dims}'. If no `member_dim` is "
+                    "available, set it to `None`."
+                )
+
+                raise ValueError(msg)
+
             ds = ds.expand_dims({scenario_dim: [path]})
-
-            # NOTE: we want time to be the fastest changing variable (i.e. we
-            # want to stack one member after the other) for this
-            #  "member" must be _before_ "time"
-
-            # otherwise the order does not matter - probably because scenario is only
-            # a single entry and we concat after stacking
-
-            dim = {sample_dim: (scenario_dim, member_dim, time_dim)}
-            ds = ds.stack(dim, create_index=False)
+            ds = ds.stack({sample_dim: dims}, create_index=False)
 
             out.append(ds)
 
-    out = xr.concat(out, dim="sample")
+    out = xr.concat(out, dim=sample_dim)
 
-    return out
+    return out.transpose(sample_dim, ...)
 
 
 @overload
