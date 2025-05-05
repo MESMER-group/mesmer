@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import pytest
 
@@ -18,19 +16,12 @@ def _get_default_kwargs(
     gen=6,
 ):
 
-    # get data path
-    test_cmip_data_root_dir = os.path.join(
-        test_data_root_dir,
-        "calibrate-coarse-grid",
-        f"cmip{gen}-ng",
-    )
-
     # mock cfg class
     class cfg:
         def __init__(self):
             self.gen = gen
             self.ref = dict(type=type, start=start, end=end)
-            self.dir_cmipng = test_cmip_data_root_dir
+            self.dir_cmipng = mesmer.example_data.cmip6_ng_path()
 
     return {"esm": esm, "scen": scen, "cfg": cfg()}
 

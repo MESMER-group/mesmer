@@ -32,7 +32,7 @@ def test_sample_coord():
     np.testing.assert_allclose(actual, expected)
 
 
-def test_mask_percentage_deprecated(small_region):
+def test_mask_3D_frac_approx_deprecated(small_region):
 
     lon = lat = np.array([0, 1, 2])
 
@@ -42,7 +42,7 @@ def test_mask_percentage_deprecated(small_region):
 
 @pytest.mark.parametrize("dim", ["lon", "lat"])
 @pytest.mark.parametrize("invalid_coords", ([0, 1, 3], [[0, 1, 2]]))
-def test_mask_percentage_wrong_coords(small_region, dim, invalid_coords):
+def test_mask_3D_frac_approx_wrong_coords(small_region, dim, invalid_coords):
 
     valid_coords = [0, 1, 2]
     latlon = {"lon": valid_coords, "lat": valid_coords}
@@ -56,7 +56,7 @@ def test_mask_percentage_wrong_coords(small_region, dim, invalid_coords):
 
 
 @pytest.mark.parametrize("lat", ((-91, 90), (-90, 92), (-91, 92)))
-def test_mask_percentage_lon_beyond_90(small_region, lat):
+def test_mask_3D_frac_approx_lon_beyond_90(small_region, lat):
 
     lat = np.arange(*lat)
     lon = np.arange(0, 360, 10)
@@ -65,7 +65,7 @@ def test_mask_percentage_lon_beyond_90(small_region, lat):
         mask_3D_frac_approx(small_region, lon, lat)
 
 
-def test_mask_percentage_coords():
+def test_mask_3D_frac_approx_coords():
     # ensure coords are the same (as they might by averaged)
 
     lat = np.arange(90, -90, -1)
@@ -84,7 +84,7 @@ def test_mask_percentage_coords():
     assert result.region.item() == 0
 
 
-def test_mask_percentage_poles():
+def test_mask_3D_frac_approx_poles():
     # all points should be 1 for a global mask
 
     lat = np.arange(90, -91, -5)
@@ -97,7 +97,7 @@ def test_mask_percentage_poles():
     assert (result == 1).all()
 
 
-def test_mask_percentage_southpole():
+def test_mask_3D_frac_approx_southpole():
     # all at the southpole should be 1 - irrespective of where exactly the southernmost
     # latitude is
 
@@ -112,7 +112,7 @@ def test_mask_percentage_southpole():
         assert (result.isel(lat=0) == 1).all()
 
 
-def test_mask_percentage_northpole():
+def test_mask_3D_frac_approx_northpole():
     # all at the southpole should be 1 - irrespective of where exactly the southernmost
     # latitude is
 
@@ -127,7 +127,7 @@ def test_mask_percentage_northpole():
         assert (result.isel(lat=0) == 1).all()
 
 
-def test_mask_percentage():
+def test_mask_3D_frac_approx():
 
     lon = np.array([15, 30])
     lat = np.array([15, 30])
@@ -156,7 +156,7 @@ def test_mask_percentage():
 
 @pytest.mark.parametrize("lat_name", ("lat", "y"))
 @pytest.mark.parametrize("lon_name", ("lon", "x"))
-def test_mask_percentage_coord_names(lat_name, lon_name):
+def test_mask_3D_frac_approx_coord_names(lat_name, lon_name):
 
     lon = np.array([15, 30])
     lat = np.array([15, 30])

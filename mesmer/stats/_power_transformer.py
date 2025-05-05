@@ -281,8 +281,8 @@ def fit_yeo_johnson_transform(
         res = res.assign_coords({"coeff": np.arange(len(res.coeff))})
         lambda_coeffs.append(res.rename("lambda_coeffs"))
 
-    month = xr.DataArray(np.arange(1, 13), dims="month")
-    return xr.concat(lambda_coeffs, dim=month)
+    month_dim = xr.DataArray(np.arange(1, 13), dims="month")
+    return xr.concat(lambda_coeffs, dim=month_dim)
 
 
 def yeo_johnson_transform(

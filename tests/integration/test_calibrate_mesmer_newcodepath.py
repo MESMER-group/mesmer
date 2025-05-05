@@ -6,7 +6,6 @@ from filefisher import FileFinder
 
 import mesmer
 import mesmer.core.datatree
-from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -78,20 +77,17 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
-    update_expected_files=False,
-):
+    update_expected_files,
+) -> None:
 
     # define config values
     THRESHOLD_LAND = 1 / 3
 
     REFERENCE_PERIOD = slice("1850", "1900")
 
-    HIST_PERIOD = slice("1850", "2014")
-
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    test_cmip_generation = 6
 
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
@@ -102,12 +98,10 @@ def test_calibrate_mesmer(
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
 
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
-    )
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
@@ -140,7 +134,8 @@ def test_calibrate_mesmer(
         # load all members for a scenario
         members = []
         for fN, meta in files.items():
-            ds = xr.open_dataset(fN, use_cftime=True)
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = xr.open_dataset(fN, decode_times=time_coder)
             # drop unnecessary variables
             ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
             # assign member-ID as coordinate
@@ -169,7 +164,8 @@ def test_calibrate_mesmer(
 
             members = []
             for fN, meta in files.items():
-                ds = xr.open_dataset(fN, use_cftime=True)
+                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                ds = xr.open_dataset(fN, decode_times=time_coder)
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
                 )
@@ -183,13 +179,13 @@ def test_calibrate_mesmer(
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    dt = map_over_datasets(mesmer.grid.wrap_to_180, dt)
+    dt = mesmer.grid.wrap_to_180(dt)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     # calculate anomalies w.r.t. the reference period
     tas_anoms = mesmer.anomaly.calc_anomaly(dt, REFERENCE_PERIOD)
 
-    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
+    tas_globmean = mesmer.weighted.global_mean(tas_anoms)
 
     # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
@@ -198,31 +194,22 @@ def test_calibrate_mesmer(
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked = map_over_datasets(
-        mask_and_stack, tas_anoms, kwargs={"threshold_land": THRESHOLD_LAND}
-    )
+    tas_stacked = mask_and_stack(tas_anoms, threshold_land=THRESHOLD_LAND)
 
     # train global trend module
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_smoothed = map_over_datasets(
-        mesmer.stats.lowess,
-        tas_globmean_ensmean,
-        "time",
-        kwargs={"n_steps": 50, "use_coords": False},
+    tas_globmean_smoothed = mesmer.stats.lowess(
+        tas_globmean_ensmean, "time", n_steps=50, use_coords=False
     )
     hist_lowess_residuals = (
         tas_globmean["historical"] - tas_globmean_smoothed["historical"]
     )
 
-    volcanic_params = mesmer.volc.fit_volcanic_influence(
-        hist_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
-    )
+    volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
     tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
         tas_globmean_smoothed["historical"],
         volcanic_params,
-        hist_period=HIST_PERIOD,
-        dim="time",
     )
 
     # train global variability module
@@ -239,14 +226,11 @@ def test_calibrate_mesmer(
 
         hfds_anoms = mesmer.anomaly.calc_anomaly(dt_hfds, REFERENCE_PERIOD)
 
-        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
+        hfds_globmean = mesmer.weighted.global_mean(hfds_anoms)
 
         hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_datasets(
-            mesmer.stats.lowess,
-            hfds_globmean_ensmean,
-            "time",
-            kwargs={"n_steps": 50, "use_coords": False},
+        hfds_globmean_smoothed = mesmer.stats.lowess(
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
     else:
         hfds_globmean_smoothed = None
@@ -398,11 +382,14 @@ def assert_params_allclose(
     localized_ecov_file,
 ):
     # test params
-    exp_volcanic_params = xr.open_dataset(volcanic_file, use_cftime=True)
-    exp_global_ar_params = xr.open_dataset(global_ar_file, use_cftime=True)
-    exp_local_forced_params = xr.open_dataset(local_forced_file, use_cftime=True)
-    exp_local_ar_params = xr.open_dataset(local_ar_file, use_cftime=True)
-    exp_localized_ecov = xr.open_dataset(localized_ecov_file, use_cftime=True)
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    exp_volcanic_params = xr.open_dataset(volcanic_file, decode_times=time_coder)
+    exp_global_ar_params = xr.open_dataset(global_ar_file, decode_times=time_coder)
+    exp_local_forced_params = xr.open_dataset(
+        local_forced_file, decode_times=time_coder
+    )
+    exp_local_ar_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    exp_localized_ecov = xr.open_dataset(localized_ecov_file, decode_times=time_coder)
 
     xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
     xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)

@@ -56,6 +56,7 @@ version = ".".join(release.split(".")[:2])
 
 # add sphinx extension modules
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
@@ -102,3 +103,6 @@ html_theme = "sphinx_book_theme"
 # html_static_path = []
 
 pygments_style = "sphinx"
+
+
+linkcheck_allowed_redirects = {r"https://doi.org/.*": ".*"}

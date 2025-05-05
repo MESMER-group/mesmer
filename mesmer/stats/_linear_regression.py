@@ -92,15 +92,14 @@ class LinearRegression:
 
         if required_predictors - available_predictors:
             missing = sorted(required_predictors - available_predictors)
-            missing = "', '".join(missing)
-            raise ValueError(f"Missing predictors: '{missing}'")
+            missing_preds = "', '".join(missing)
+            raise ValueError(f"Missing predictors: '{missing_preds}'")
 
         if available_predictors - required_predictors:
-            superfluous = map(str, available_predictors - required_predictors)
-            superfluous = sorted(superfluous)
-            superfluous = "', '".join(superfluous)
+            superfluous = sorted(map(str, available_predictors - required_predictors))
+            superfluous_preds = "', '".join(superfluous)
             raise ValueError(
-                f"Superfluous predictors: '{superfluous}', either params",
+                f"Superfluous predictors: '{superfluous_preds}', either params",
                 "for this predictor are missing or you forgot to add it to 'exclude'.",
             )
 
@@ -177,6 +176,7 @@ class LinearRegression:
 
     @params.setter
     def params(self, params):
+        """The parameters of this estimator."""
 
         _check_dataset_form(
             params,
@@ -294,10 +294,10 @@ def _fit_linear_regression_xr(
 
         predictors = map_over_datasets(_rename_vars, predictors)
         # TODO: reconsider collapse_datatree_into_dataset?
-        predictors_concat = collapse_datatree_into_dataset(
+        predictors_concat_ds = collapse_datatree_into_dataset(
             predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
         )
-        predictors_concat = predictors_concat["pred"]
+        predictors_concat = predictors_concat_ds["pred"]
 
     _check_dataarray_form(target, required_dims=dim, name="target")
 

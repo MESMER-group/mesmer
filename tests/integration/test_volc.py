@@ -1,7 +1,10 @@
+import re
+
 import pytest
 import xarray as xr
 
 import mesmer
+from mesmer.testing import _convert
 
 
 def _get_volcanic_params(slope):
@@ -18,31 +21,75 @@ def _get_volcanic_params(slope):
 
 def test_fit_volcanic_influence_errors():
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Expected tas_residuals to be an xr.DataArray"):
         mesmer.volc.fit_volcanic_influence(xr.Dataset(), slice("1850", "2014"))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="tas_residuals should be 1D or 2D, but is 0D"):
         mesmer.volc.fit_volcanic_influence(xr.DataArray(), slice("1850", "2014"))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="tas_residuals should be 1D or 2D, but is 3D"):
         data = mesmer.testing.trend_data_3D()
         mesmer.volc.fit_volcanic_influence(data, slice("1850", "2014"))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="tas_residuals is missing the required dims: sample"
+    ):
         data = mesmer.testing.trend_data_1D()
         mesmer.volc.fit_volcanic_influence(data, slice("1850", "2014"), dim="sample")
 
 
-def test_fit_volcanic_influence_self():
+@pytest.mark.parametrize(
+    "hist_period", (None, slice("1850", "2014"), slice("1900", "2000"))
+)
+def test_fit_volcanic_influence_self(hist_period):
 
     aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
-    result = mesmer.volc.fit_volcanic_influence(-aod, slice("1850", "2014"))
+    result = mesmer.volc.fit_volcanic_influence(-aod, hist_period)
     expected = _get_volcanic_params(-1.0)
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_fit_volcanic_influence_self_shorter():
+    # test it works when passing data shorter than aod obs
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    result = mesmer.volc.fit_volcanic_influence(
+        -aod.sel(time=slice("1900", "2000")), None
+    )
+    expected = _get_volcanic_params(-1.0)
+
+    xr.testing.assert_allclose(result, expected)
+
+
+def test_fit_volcanic_influence_self_longer():
+    # test it works when passing data longer than aod obs
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    # ends later
+    time = xr.Dataset(coords={"time": xr.date_range("1900", "2040", freq="YE")})
+    aod, _ = xr.align(aod, time, join="right", fill_value=0.0)
+
+    with pytest.raises(
+        ValueError, match=re.escape("Time period of passed array (1900-2039) exeeds")
+    ):
+        mesmer.volc.fit_volcanic_influence(-aod, None)
+
+    # starts before
+    time = xr.Dataset(coords={"time": xr.date_range("1800", "2000", freq="YE")})
+    aod, _ = xr.align(aod, time, join="right", fill_value=0.0)
+
+    with pytest.raises(
+        ValueError, match=re.escape("Time period of passed array (1800-1999) exeeds")
+    ):
+        mesmer.volc.fit_volcanic_influence(-aod, None)
 
 
 def test_fit_volcanic_warns_positive():
@@ -66,9 +113,9 @@ def test_fit_volcanic_influence_2D():
         version="2022", resample=True
     )
 
-    aod = xr.concat([aod, -aod], dim="ens")
+    aod_ens = xr.concat([aod, -aod], dim="ens")
 
-    result = mesmer.volc.fit_volcanic_influence(-aod, slice("1850", "2014"))
+    result = mesmer.volc.fit_volcanic_influence(-aod_ens, slice("1850", "2014"))
     expected = _get_volcanic_params(0)
 
     xr.testing.assert_allclose(result, expected)
@@ -99,7 +146,8 @@ def test_fit_volcanic_influence_hist_period():
 
 
 @pytest.mark.parametrize("slope", [0, -1, -2])
-def test_superimpose_volcanic_influence(slope):
+@pytest.mark.parametrize("hist_period", (None, slice("1850", "2014")))
+def test_superimpose_volcanic_influence(slope, hist_period):
 
     aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
@@ -109,13 +157,40 @@ def test_superimpose_volcanic_influence(slope):
 
     params = _get_volcanic_params(slope)
 
-    result = mesmer.volc.superimpose_volcanic_influence(
-        data, params, slice("1850", "2014")
-    )
+    result = mesmer.volc.superimpose_volcanic_influence(data, params, hist_period)
 
     expected = slope * aod
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_superimpose_volcanic_influence_loner_errors():
+
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    data = xr.zeros_like(aod)
+
+    params = _get_volcanic_params(1)
+
+    # ends later
+    time = xr.Dataset(coords={"time": xr.date_range("1900", "2040", freq="YE")})
+    data, _ = xr.align(data, time, join="right", fill_value=0.0)
+
+    with pytest.raises(
+        ValueError, match=re.escape("Time period of passed array (1900-2039) exeeds")
+    ):
+        mesmer.volc.superimpose_volcanic_influence(data, params)
+
+    # starts before
+    time = xr.Dataset(coords={"time": xr.date_range("1800", "2000", freq="YE")})
+    data, _ = xr.align(data, time, join="right", fill_value=0.0)
+
+    with pytest.raises(
+        ValueError, match=re.escape("Time period of passed array (1800-1999) exeeds")
+    ):
+        mesmer.volc.superimpose_volcanic_influence(data, params)
 
 
 def test_superimpose_volcanic_influence_hist_period():
@@ -136,3 +211,26 @@ def test_superimpose_volcanic_influence_hist_period():
     expected.loc[{"time": slice("1951", None)}] = 0
 
     xr.testing.assert_allclose(result, expected)
+
+
+def test_superimpose_volcanic_influence_datatree():
+
+    slope = -1.5
+
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    data = xr.zeros_like(aod)
+    dt = _convert(data, "DataTree")
+
+    params = _get_volcanic_params(slope)
+
+    result = mesmer.volc.superimpose_volcanic_influence(
+        dt, params, slice("1850", "2014")
+    )
+    expected = slope * aod
+
+    assert isinstance(result, xr.DataTree)
+    # allclose not implemented for DataTree, just check dataset
+    xr.testing.assert_allclose(result["node"].to_dataset(), expected.to_dataset())

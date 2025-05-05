@@ -12,6 +12,8 @@ New Features
   By `Victoria Bauer`_.
 - Add python 3.13 to list of supported versions (`#547 <https://github.com/MESMER-group/mesmer/pull/547>`_).
   By `Mathias Hauser`_.
+- Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
+  `#649 <https://github.com/MESMER-group/mesmer/pull/649>`_). By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -20,6 +22,8 @@ Breaking changes
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
 - Removed support for python 3.9 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
+  By `Mathias Hauser`_.
+- Removed the deprecated function :py:func:`mask_percentage` (`#654 <https://github.com/MESMER-group/mesmer/pull/654>`_)
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
@@ -78,6 +82,10 @@ Internal Changes
   By `Victoria Bauer`_.
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
+- Consolidate package metadata and configuration in `pyproject.toml` (`#650 <https://github.com/MESMER-group/mesmer/pull/650>`_).
+  By `Mathias Hauser`_.
+- Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
+  By `Mathias Hauser`_.
 
 Data structure using DataTree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,6 +100,11 @@ This was originally done with the prototype `xarray-datatree` package. After the
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 - Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
+- Add a wrapper to allow :py:class:`DataTree` in many data handling functions (\
+  `#632 <https://github.com/MESMER-group/mesmer/issues/632>`_,
+  `#643 <https://github.com/MESMER-group/mesmer/pull/643>`_
+  `#641 <https://github.com/MESMER-group/mesmer/pull/641>`_, , and
+  `#644 <https://github.com/MESMER-group/mesmer/pull/644>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
 - PRs related to xarray and xarray-datatree:
@@ -230,6 +243,13 @@ Harmonic model
 - add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
+
+Data
+^^^^
+
+- Directly source the stratospheric aerosol optical depth data from NASA instead of using
+  the version from Climate Explorer (`#665 <https://github.com/MESMER-group/mesmer/pull/665>`_).
+  By `Mathias Hauser`_.
 
 v0.10.0 - 2024.01.04
 --------------------

@@ -8,22 +8,17 @@ import mesmer
 from mesmer.core._datatreecompat import map_over_datasets
 
 
-def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
+def create_forcing_data(scenarios, use_hfds, use_tas2):
     # define config values
     REFERENCE_PERIOD = slice("1850", "1900")
 
     esm = "IPSL-CM6A-LR"
-    cmip_generation = 6
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{cmip_generation}-ng"
-    )
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
@@ -59,7 +54,8 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
 
     def load_hist(meta, fc_hist):
         fN = _get_hist_path(meta, fc_hist)
-        return xr.open_dataset(fN, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        return xr.open_dataset(fN, decode_times=time_coder)
 
     def load_hist_scen_continuous(fc_hist, fc_scens):
         dt = xr.DataTree()
@@ -75,7 +71,8 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
                 except FileNotFoundError:
                     continue
 
-                proj = xr.open_dataset(fN, use_cftime=True)
+                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                proj = xr.open_dataset(fN, decode_times=time_coder)
 
                 ds = xr.combine_by_coords(
                     [hist, proj],
@@ -105,13 +102,11 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
     tas = load_hist_scen_continuous(fc_hist, fc_scens)
     ref = tas.sel(time=REFERENCE_PERIOD).mean("time")
     tas_anoms = tas - ref
-    tas_globmean = map_over_datasets(mesmer.weighted.global_mean, tas_anoms)
+    tas_globmean = mesmer.weighted.global_mean(tas_anoms)
 
     tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_forcing = map_over_datasets(
-        mesmer.stats.lowess,
-        tas_globmean_ensmean,
-        kwargs={"dim": "time", "n_steps": 30, "use_coords": False},
+    tas_globmean_forcing = mesmer.stats.lowess(
+        tas_globmean_ensmean, dim="time", n_steps=30, use_coords=False
     )
 
     def _get_hfds():
@@ -136,13 +131,10 @@ def create_forcing_data(test_data_root_dir, scenarios, use_hfds, use_tas2):
         hfds = load_hist_scen_continuous(fc_hfds_hist, fc_hfds)
         hfds_ref = hfds.sel(time=REFERENCE_PERIOD).mean("time")
         hfds_anoms = hfds - hfds_ref
-        hfds_globmean = map_over_datasets(mesmer.weighted.global_mean, hfds_anoms)
+        hfds_globmean = mesmer.weighted.global_mean(hfds_anoms)
         hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_datasets(
-            mesmer.stats.lowess,
-            hfds_globmean_ensmean,
-            "time",
-            kwargs={"n_steps": 50, "use_coords": False},
+        hfds_globmean_smoothed = mesmer.stats.lowess(
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
         )
         return hfds_globmean_smoothed
 
@@ -229,7 +221,7 @@ def test_make_realisations(
     n_realisations,
     outname,
     test_data_root_dir,
-    update_expected_files=False,
+    update_expected_files,
 ):
     esm = "IPSL-CM6A-LR"
 
@@ -276,9 +268,7 @@ def test_make_realisations(
             xr.Dataset({"seed": xr.DataArray(seed_list.pop())})
         )
 
-    tas_forcing, hfds, tas2 = create_forcing_data(
-        test_data_root_dir, scenarios, use_hfds, use_tas2
-    )
+    tas_forcing, hfds, tas2 = create_forcing_data(scenarios, use_hfds, use_tas2)
     scen0 = scenarios[0]
     time = tas_forcing[scen0].time
 
@@ -287,11 +277,10 @@ def test_make_realisations(
 
     # 1.) superimpose volcanic influence
     volcanic_params = xr.open_dataset(volcanic_file)
-    tas_forcing = map_over_datasets(
-        mesmer.volc.superimpose_volcanic_influence,
+    tas_forcing = mesmer.volc.superimpose_volcanic_influence(
         tas_forcing,
         volcanic_params,
-        kwargs={"hist_period": HIST_PERIOD},
+        hist_period=HIST_PERIOD,
     )
 
     # 2.) compute the global variability
@@ -371,7 +360,8 @@ def test_make_realisations(
         result.to_netcdf(expected_output_file)
         pytest.skip("Updated expected output file.")
     else:
-        expected = xr.open_datatree(expected_output_file, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        expected = xr.open_datatree(expected_output_file, decode_times=time_coder)
         for scen in scenarios:
             exp_scen = expected[scen].to_dataset()
             res_scen = result[scen].to_dataset()

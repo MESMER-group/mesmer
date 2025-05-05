@@ -2,20 +2,17 @@
 Example configuration file
 """
 
+import importlib
 import os.path
 
+import mesmer
 from mesmer.create_emulations import create_seed_dict
 
 # path to mesmer root directory
-MESMER_ROOT = os.path.join(os.path.dirname(__file__), "..")
-
-# test data for example
-TEST_DATA_ROOT = os.path.join(
-    MESMER_ROOT, "tests", "test-data", "calibrate-coarse-grid"
-)
+MESMER_ROOT = importlib.resources.files("mesmer").parent
 
 # folder for output of example
-EXAMPLE_OUTPUT_ROOT = os.path.join(MESMER_ROOT, "examples", "output")
+EXAMPLE_OUTPUT_ROOT = os.path.join(MESMER_ROOT, "examples", "legacy", "output")
 
 # ---------------------------------------------------------------------------------
 
@@ -24,8 +21,8 @@ gen = 6
 
 # directories:
 
-# cmip-ng
-dir_cmipng = os.path.join(TEST_DATA_ROOT, f"cmip{gen}-ng")
+# cmip-ng test data for example
+dir_cmipng = mesmer.example_data.cmip6_ng_path()
 
 # mesmer output
 dir_aux = os.path.join(EXAMPLE_OUTPUT_ROOT, "auxiliary")
