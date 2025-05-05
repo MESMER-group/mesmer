@@ -5,6 +5,7 @@ import xarray as xr
 from filefisher import FileFinder
 
 import mesmer
+from mesmer.core._datatreecompat import map_over_datasets
 import mesmer.core.datatree
 
 
@@ -135,7 +136,7 @@ def test_calibrate_mesmer(
     data = xr.DataTree()
     for scen in scenarios_incl_hist:
         # load data for each scenario
-        data[scen] = xr.DataTree(xr.Dataset())
+        data[scen] = xr.DataTree()
 
         for var in variables:
             files = fc_all.search(variable=var, scenario=scen)
@@ -153,7 +154,7 @@ def test_calibrate_mesmer(
             # create a Dataset that holds each member along the member dimension
             scen_data = xr.concat(members, dim="member")
             # put the scenario dataset into the DataTree
-            data[scen][var] = scen_data[var]
+            data[scen] = data[scen].assign({f"{var}": scen_data[var]})
 
     # data preprocessing
     # create global mean tas anomlies timeseries
@@ -182,13 +183,15 @@ def test_calibrate_mesmer(
     )
 
     # train global variability module
-    tas_resid_novolc = globmean - globmean_smoothed
+    tas_glob_mean = map_over_datasets(lambda ds: ds.drop_vars("hfds"), globmean)
+    tas_resid_novolc = tas_glob_mean - globmean_smoothed
+    tas_resid_novolc = map_over_datasets(lambda ds: ds.rename({"tas": "tas_resids"}), tas_resid_novolc)
 
     ar_order = mesmer.stats.select_ar_order_scen_ens(
-        resid_novolc.drop_vars("hfds"), dim="time", ens_dim="member", maxlag=12, ic="bic"
+        tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"
     )
     global_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
-        resid_novolc.drop_vars("hfds"), dim="time", ens_dim="member", lags=ar_order
+        tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
 
     # train local forced response module
@@ -201,12 +204,13 @@ def test_calibrate_mesmer(
 
     stacked_data = mask_and_stack(anoms, threshold_land=THRESHOLD_LAND)
 
-    # broadcast so all datasets have all the dimensions
-    # gridcell can be excluded because it will be mapped in the Linear Regression
-    target = stacked_data.sel("tas")
-    predictors = xr.merge(global_mean_smoothed, tas_resid_novolc.rename({"tas": "tas_resids"}))
+    target = map_over_datasets(lambda ds: ds.drop_vars("hfds"), stacked_data)
+
+    predictors = globmean_smoothed.assign(tas_resid_novolc)
     if use_tas2:
-        predictors = xr.merge(predictors, tas_globmean_smoothed**2)
+        predictors = predictors.assign(
+            tas2=globmean_smoothed**2
+            )
 
     weights = mesmer.weighted.equal_scenario_weights_from_datatree(
         target, ens_dim="member", time_dim="time"
