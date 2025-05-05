@@ -335,7 +335,7 @@ def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
 
     dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
 
-    result = mesmer.datatree.stack_datatree(
+    result = mesmer.datatree._stack_datatree(
         dt,
         member_dim=member_dim,
         time_dim=time_dim,
@@ -374,7 +374,7 @@ def test_stack_datatree_missing_member_dim():
     with pytest.raises(
         ValueError, match=r"`member_dim` \('member'\) not available in node 'scen'"
     ):
-        mesmer.datatree.stack_datatree(dt)
+        mesmer.datatree._stack_datatree(dt)
 
 
 def test_stack_datatree_no_member_dim():
@@ -386,7 +386,7 @@ def test_stack_datatree_no_member_dim():
 
     dt = xr.DataTree.from_dict({"scen": ds})
 
-    result = mesmer.datatree.stack_datatree(dt, member_dim=None)
+    result = mesmer.datatree._stack_datatree(dt, member_dim=None)
 
     # =========
     scen = ["scen"] * 2
@@ -427,7 +427,7 @@ def test_stack_datatree_keep_other_dims():
 
     dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
 
-    result = mesmer.datatree.stack_datatree(dt)
+    result = mesmer.datatree._stack_datatree(dt)
 
     mesmer.core.utils._check_dataset_form(result, "result", required_vars="var")
     mesmer.core.utils._check_dataarray_form(

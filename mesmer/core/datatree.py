@@ -70,7 +70,7 @@ def collapse_datatree_into_dataset(
     return ds
 
 
-def stack_datatree(
+def _stack_datatree(
     dt: xr.DataTree,
     *,
     member_dim: str | None = "member",
@@ -80,20 +80,20 @@ def stack_datatree(
 ) -> xr.Dataset:
     """
     stack datatree along a new dimension, named sample_dim. Each node needs a time- and
-    member-dimension. The scenario dimension from the name of each node.
+    member-dimension. The scenario dimension will be filled with the names of each node.
 
     Parameters
     ----------
     dt : xr.DataTree
         DataTree to stack
     member_dim : str | None, default: "member"
-        Name of the member dimension.
+        Name of the member dimension already present on each dataset.
     time_dim : str, default: "time"
-        Name of the time dimension.
+        Name of the time dimension already present in each dataset.
     scenario_dim : str, default: "scenario"
-        Name of the scenario dimension.
+        Name of the scenario dimension that will used in the stacked dataset.
     sample_dim : str, default: "sample"
-        Name of the sample dimension.
+        Name of the stacked dimension.
 
     Returns
     -------
@@ -168,7 +168,7 @@ def broadcast_and_stack_scenarios(
     weights: xr.DataTree | None = None,
     *,
     time_dim: str = "time",
-    member_dim: str = "member",
+    member_dim: str | None = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
 ) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset | None]:
@@ -188,14 +188,13 @@ def broadcast_and_stack_scenarios(
         must have subtrees for each predictor, each of which has to have at least one
         non-empty leaf representing a scenario. The subtrees of different predictors must
         be isomorphic (i.e. have the save scenarios). The ``xr.Dataset`` must contain
-        ``time_dim`` and ``scenario_dim`` and only hold one data variable.
+        ``time_dim`` and only hold one data variable.
     target : DataTree
         A ``DataTree`` holding the targets. Must be isomorphic to the predictor subtrees, i.e.
         have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must contain
-       ``time_dim`` and ``scenario_dim``.
+       ``time_dim``.
     weights : DataTree or None, default: None
-        Individual weights for each sample, must be isomorphic to target. Must contain
-        ``time_dim`` and ``scenario_dim`` and if target has it.
+        Individual weights for each sample, must be isomorphic to target.
     time_dim : str, default: "time"
         Name of the time dimension.
     member_dim : str, default: "member"
@@ -254,14 +253,14 @@ def broadcast_and_stack_scenarios(
         )
 
         # 2) stack
-        predictors_stacked[key] = xr.DataTree(stack_datatree(pred_broadcast, **dims))
+        predictors_stacked[key] = xr.DataTree(_stack_datatree(pred_broadcast, **dims))
 
     # prepare target
-    target_stacked = stack_datatree(target, **dims)
+    target_stacked = _stack_datatree(target, **dims)
 
     # prepare weights
     if weights is not None:
-        weights_stacked = stack_datatree(weights, **dims)
+        weights_stacked = _stack_datatree(weights, **dims)
     else:
         weights_stacked = None
 
