@@ -905,7 +905,8 @@ def fit_auto_regression_monthly(
         - the ``intercept`` for each month of the AR(1) process,
         - the ``slope`` for each month and
         - the ``residuals`` (needed for the estimation of the covariance matrices).
-        `ìntercept``and ``slope`` have "month" and the additional dims of the input data as dimensions,
+
+        ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
         the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
