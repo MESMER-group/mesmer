@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. include:: ../README.rst
+.. include:: ../../README.rst
 
 .. toctree::
    :maxdepth: 2
@@ -12,7 +12,6 @@
 
    installation
    publications
-   tutorials
 
 .. toctree::
    :maxdepth: 2
@@ -32,6 +31,9 @@
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Versions
+   :caption: Additional info
 
    changelog
+   authors
+   license
+   data_provenance
