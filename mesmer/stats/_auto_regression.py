@@ -156,6 +156,7 @@ def _select_ar_order_scen_ens_dt(
         return ds
 
     ar_order_ens_median = map_over_datasets(_ens_quantile, ar_order_scen, ens_dim)
+
     ar_order_ens_median_ds = collapse_datatree_into_dataset(
         ar_order_ens_median, dim="scen"
     )
@@ -257,6 +258,7 @@ def _fit_auto_regression_scen_ens_dt(
         return ds
 
     ar_params_scen = map_over_datasets(_ens_mean, ar_params_scen, ens_dim)
+
     ar_params_scen = collapse_datatree_into_dataset(ar_params_scen, dim="scen")
 
     # return the mean over all scenarios
