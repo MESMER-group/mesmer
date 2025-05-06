@@ -1,5 +1,6 @@
 import pathlib
 
+from git.util import T
 import pytest
 import xarray as xr
 
@@ -27,7 +28,7 @@ import mesmer.mesmer_x
             "expr1",
             False,
             False,
-            #marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
@@ -36,7 +37,7 @@ import mesmer.mesmer_x
             "expr1_2ndfit",
             True,
             False,
-            #marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
     ],
 )
@@ -75,10 +76,16 @@ def test_calibrate_mesmer_x(
         ["height", "file_qf", "time_bnds"]
     )
 
+    tas = xr.DataTree.from_dict(
+        {
+            "historical": tas_hist,
+            "ssp585": tas_ssp585,
+        }
+    )
+
     # make global mean
     # global_mean_dt = map_over_subtree(mesmer.weighted.global_mean)
-    tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
-    tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
+    tas_glob_mean = mesmer.weighted.global_mean(tas)
 
     # load target data
     path_target = cmip6_data_path / target_name / "ann" / "g025"
@@ -89,6 +96,16 @@ def test_calibrate_mesmer_x(
     time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
     targ_hist = xr.open_dataset(fN_hist, decode_times=time_coder)
     targ_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder)
+    # make sure times align
+    targ_hist["time"] = tas_hist["time"]
+    targ_ssp585["time"] = tas_ssp585["time"]
+
+    target_data = xr.DataTree.from_dict(
+        {
+            "historical": targ_hist,
+            "ssp585": targ_ssp585,
+        }
+    )
 
     # stack target data
     def mask_and_stack(ds, threshold_land):
@@ -98,30 +115,15 @@ def test_calibrate_mesmer_x(
         return ds
 
     # mask_and_stack_dt = map_over_subtree(mask_and_stack)
-    targ_stacked_hist = mask_and_stack(targ_hist, threshold_land=THRESHOLD_LAND)
-    targ_stacked_ssp585 = mask_and_stack(targ_ssp585, threshold_land=THRESHOLD_LAND)
+    target_data = mask_and_stack(target_data, threshold_land=THRESHOLD_LAND)
+    pred_data = xr.DataTree.from_dict({"tas": tas_glob_mean})
 
-    # switching to stacked datasets as used for linear regression
-    tmp = xr.DataTree.from_dict(
-        {
-            "historical": tas_glob_mean_hist.expand_dims({"member": ["r1i1p1f1"]}),
-            "ssp585": tas_glob_mean_ssp585.expand_dims({"member": ["r1i1p1f1"]}),
-        }
-    )
-    dt_pred = xr.DataTree.from_dict({"tas": tmp}, name="predictors")
-    dt_targ = xr.DataTree.from_dict(
-        {
-            "historical": targ_stacked_hist.expand_dims({"member": ["r1i1p1f1"]}),
-            "ssp585": targ_stacked_ssp585.expand_dims({"member": ["r1i1p1f1"]}),
-        },
-        name=target_name,
-    )
-
+    # stack datasets
     # weights
     weights = mesmer.mesmer_x.get_weights_density(
-        pred_data=dt_pred,
+        pred_data=pred_data,
         predictor="tas",
-        targ_data=dt_targ,
+        targ_data=target_data,
         target=target_name,
         dims=("member", "time"),
     )
@@ -129,9 +131,10 @@ def test_calibrate_mesmer_x(
     # stacking
     stacked_pred, stacked_targ, stacked_weights = (
         mesmer.core.datatree.broadcast_and_stack_scenarios(
-            predictors=dt_pred,
-            target=dt_targ,
+            predictors=pred_data,
+            target=target_data,
             weights=weights,
+            member_dim=None,
             )
     )
 
@@ -202,7 +205,7 @@ def test_calibrate_mesmer_x(
         coeffs_end=None,
     )
     transf_target = pit.transform(
-        data=dt_targ, target_name=target_name, preds_start=dt_pred, preds_end=None
+        data=target_data, target_name=target_name, preds_start=pred_data, preds_end=None
     )
 
     # training of auto-regression with spatially correlated innovations
@@ -216,7 +219,7 @@ def test_calibrate_mesmer_x(
     # estimate covariance matrix
     # prep distance matrix
     geodist = mesmer.core.geospatial.geodist_exact(
-        lon=stacked_targ.lon, lat=stacked_targ.lat
+        lon=target_data["historical"].lon, lat=target_data["historical"].lat
     )
     # prep localizer
     LOCALISATION_RADII = range(1750, 2001, 250)
