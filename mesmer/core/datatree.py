@@ -148,7 +148,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, None]: ...
+) -> tuple[xr.Dataset, xr.Dataset, None]: ...
 @overload
 def broadcast_and_stack_scenarios(
     predictors: xr.DataTree,
@@ -159,7 +159,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset]: ...
+) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset]: ...
 
 
 def broadcast_and_stack_scenarios(
@@ -171,7 +171,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str | None = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset | None]:
+) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset | None]:
     """
     prepare predictors, target, and weights for statistical functions, i.e. converts
     several nD DataTree nodes into a single 2D Dataset with sample and target dimensions,
@@ -241,19 +241,16 @@ def broadcast_and_stack_scenarios(
     }
 
     # prepare predictors
-    predictors_stacked = xr.DataTree()
-    for key, pred in predictors.items():
+    # 1) broadcast to target (because pred is averaged over member)
 
-        # 1) broadcast to target (because pred is averaged over member)
+    # TODO: use DataTree method again, once available
+    # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+    pred_broadcast = map_over_datasets(
+        xr.Dataset.broadcast_like, predictors, target, kwargs={"exclude": exclude_dim}
+    )
 
-        # TODO: use DataTree method again, once available
-        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
-        pred_broadcast = map_over_datasets(
-            xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
-        )
-
-        # 2) stack
-        predictors_stacked[key] = xr.DataTree(_stack_datatree(pred_broadcast, **dims))
+    # 2) stack
+    predictors_stacked = _stack_datatree(pred_broadcast, **dims)
 
     # prepare target
     target_stacked = _stack_datatree(target, **dims)
