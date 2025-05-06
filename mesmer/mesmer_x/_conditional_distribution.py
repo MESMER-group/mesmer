@@ -2,18 +2,30 @@
 # Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
+import functools
+import warnings
 
 import numpy as np
 import xarray as xr
 
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
-from mesmer.mesmer_x.train_utils_mesmerx import (
-    Expression,
-    weighted_median,
-)
+from mesmer.mesmer_x._expression import Expression
+from mesmer.mesmer_x._distrib_tests import distrib_tests
+from mesmer.mesmer_x._optimizers import distrib_optimizer
+from mesmer.mesmer_x._probability_integral_transform import weighted_median
 from mesmer.stats import gaspari_cohn
 
+def ignore_warnings(func):
+
+    # adapted from https://stackoverflow.com/a/70292317
+    # TODO: don't suppress all warnings
+    @functools.wraps(func)
+    def _wrapper(*args, **kwargs):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            return func(*args, **kwargs)
+    return _wrapper
 
 class ConditionalDistribution:
     def __init__(

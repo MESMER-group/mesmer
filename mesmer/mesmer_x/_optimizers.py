@@ -5,14 +5,10 @@
 
 import numpy as np
 import properscoring
-import xarray as xr
 from scipy.optimize import minimize
 
-from mesmer.mesmer_x.train_utils_mesmerx import (
-    Expression,
-)
-
-
+from mesmer.mesmer_x._distrib_tests import distrib_tests
+from mesmer.mesmer_x._expression import Expression
 
 class distrib_optimizer:
     def __init__(
