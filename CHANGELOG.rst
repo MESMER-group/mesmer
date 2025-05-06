@@ -10,6 +10,8 @@ New Features
 - Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
+- Implemented option to allow for singular covariance matrices in the crossvalidation of localization radii (`#493 <https://github.com/MESMER-group/mesmer/pull/493>`_).
+  By `Victoria Bauer`_.
 - Add python 3.13 to list of supported versions (`#547 <https://github.com/MESMER-group/mesmer/pull/547>`_).
   By `Mathias Hauser`_.
 - Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
@@ -82,6 +84,9 @@ Internal Changes
   By `Victoria Bauer`_.
 - Use ruff instead of isort and flake8 to lint the code base (`#490 <https://github.com/MESMER-group/mesmer/pull/490>`_).
   By `Mathias Hauser`_.
+- Allow singular covariance matrices for localization radius selection. For this purpose, eigenvalue decomposition is implemented
+  as fallback for singular matrices also in the crossvalidation of localization radii (`#493 <https://github.com/MESMER-group/mesmer/pull/493>`_).
+  By `Victoria Bauer`_.
 - Consolidate package metadata and configuration in `pyproject.toml` (`#650 <https://github.com/MESMER-group/mesmer/pull/650>`_).
   By `Mathias Hauser`_.
 - Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
