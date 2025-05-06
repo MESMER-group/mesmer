@@ -90,31 +90,38 @@ def predict_harmonic_model(
 
     Parameters
     ----------
-    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
-        Predictor containing one value per year.
-    coeffs : xr.DataArray of shape (n_gridcells, n_coeffs)
-        coefficients of Fourier Series for each gridcell. Note that coeffs
-        may contain nans (for higher orders, that have not been fit).
-    time: xr.DataArray of shape (n_years * 12)
+    yearly_predictor : xr.DataArray
+        yearly values used as predictors, must contain `time_dim` but can have
+        additional dimensions for example gridcells or members.
+    coeffs : xr.DataArray
+        coefficients of Fourier Series, must have "coeff" dim and additional dims of
+        `yearly_predictor`. Note that coeffs may contain nans (for higher orders, that have not been fit).
+    time: xr.DataArray
         A ``xr.DataArray`` containing cftime objects which will be used as coordinates
         for the monthly output values
     time_dim: str, default: "time"
-        Name for the time dimension of the output ``xr.DataArray``.
+        Name of the time dimension on `yearly_predictor`. Will also be the name of the time_dim
+        of the output ``xr.DataArray``.
 
     Returns
     -------
-    predictions: xr.DataArray of shape (n_years * 12, n_gridcells)
-        Fourier Series calculated over `yearly_predictor` with `coeffs`.
+    predictions: xr.DataArray
+        Fourier Series calculated over `yearly_predictor` with `coeffs`, has `time_dim` with values of `time` and
+        any additional dimensions of `yearly_predictor`.
 
     """
-    _, n_gridcells = yearly_predictor.shape
     _check_dataarray_form(
         yearly_predictor,
         "yearly_predictor",
-        ndim=2,
         required_dims=time_dim,
-        shape=(time.size // 12, n_gridcells),
     )
+    dims = set(yearly_predictor.dims) - {time_dim}
+    _check_dataarray_form(
+        coeffs,
+        "coeffs",
+        required_dims=dims | {"coeff"},
+    )
+
     upsampled_y = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, time, time_dim
     )
@@ -286,21 +293,27 @@ def fit_harmonic_model(
 
     Parameters
     ----------
-    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
-        Yearly values used as predictors, containing one value per year.
-    monthly_target : xr.DataArray of shape (n_months, n_gridcells)
+    yearly_predictor : xr.DataArray
+        Yearly values used as predictors, containing one value per year. Contains `time_dim`
+        and possibly additional dimenions for example for gridcells or members.
+    monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
         ´yearly_predictor´ (starting with January!). So `n_months` = 12 :math:`\\cdot` `n_years`.
+        Must contain `time_dim` and possibly additional dimensions as `yearly_predictor`.
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
         maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
+    time_dim: str, default: "time"
+        Name of the time dimension on `yearly_predictor` and `monthly_target`.
 
     Returns
     -------
     data_vars : `xr.Dataset`
-        Dataset containing the selected order of Fourier Series (`selected_order`),
-        the estimated coefficients of the Fourier Series (`coeffs`) and the resulting
-        residuals of the model (`residuals`).
+        Dataset containing
+
+        - the selected order of Fourier Series (`selected_order`),
+        - the estimated coefficients of the Fourier Series (`coeffs`), and
+        - the residuals of the model (`residuals`).
 
     """
 

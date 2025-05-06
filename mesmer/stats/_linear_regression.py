@@ -293,6 +293,7 @@ def _fit_linear_regression_xr(
             return ds.rename({var: "pred"})
 
         predictors = map_over_datasets(_rename_vars, predictors)
+
         predictors_concat_ds = collapse_datatree_into_dataset(
             predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
         )
