@@ -202,9 +202,8 @@ def test_calibrate_mesmer(
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    stacked_data = mask_and_stack(anoms, threshold_land=THRESHOLD_LAND)
-
-    target = map_over_datasets(lambda ds: ds.drop_vars("hfds"), stacked_data)
+    target = map_over_datasets(lambda ds: ds.drop_vars("hfds"), anoms)
+    target = mask_and_stack(target, threshold_land=THRESHOLD_LAND)
 
     predictors = mesmer.datatree.merge([globmean_smoothed, tas_resid_novolc])
 
@@ -258,7 +257,7 @@ def test_calibrate_mesmer(
 
     # train covariance
     geodist = mesmer.geospatial.geodist_exact(
-        stacked_data["historical"].ds.lon, stacked_data["historical"].ds.lat
+        target["historical"].ds.lon, target["historical"].ds.lat
     )
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
