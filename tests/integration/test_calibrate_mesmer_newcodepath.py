@@ -1,3 +1,4 @@
+import glob
 import pathlib
 
 import pytest
@@ -206,11 +207,10 @@ def test_calibrate_mesmer(
 
     target = map_over_datasets(lambda ds: ds.drop_vars("hfds"), stacked_data)
 
-    predictors = globmean_smoothed.assign(tas_resid_novolc)
+    predictors = mesmer.datatree.merge([globmean_smoothed, tas_resid_novolc])
+
     if use_tas2:
-        predictors = predictors.assign(
-            tas2=globmean_smoothed**2
-            )
+        predictors = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), predictors)
 
     weights = mesmer.weighted.equal_scenario_weights_from_datatree(
         target, ens_dim="member", time_dim="time"
