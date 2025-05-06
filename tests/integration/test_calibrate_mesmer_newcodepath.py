@@ -258,7 +258,7 @@ def test_calibrate_mesmer(
 
     # train covariance
     geodist = mesmer.geospatial.geodist_exact(
-        tas_stacked["historical"].ds.lon, tas_stacked["historical"].ds.lat
+        stacked_data["historical"].ds.lon, stacked_data["historical"].ds.lat
     )
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
