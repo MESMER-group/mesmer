@@ -11,7 +11,6 @@ from mesmer.core.datatree import (
 )
 
 
-
 class probability_integral_transform:
     def __init__(
         self,

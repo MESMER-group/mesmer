@@ -2,10 +2,6 @@
 # Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
-"""
-Refactored code for the training of distributions
-
-"""
 
 import functools
 import warnings
@@ -17,18 +13,6 @@ from scipy.optimize import basinhopping, shgo
 from mesmer.mesmer_x.train_utils_mesmerx import (
     Expression,
 )
-
-def ignore_warnings(func):
-    # adapted from https://stackoverflow.com/a/70292317
-    # TODO: don't suppress all warnings
-
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            return func(*args, **kwargs)
-
-    return _wrapper
 
 def _finite_difference(f_high, f_low, x_high, x_low):
     return (f_high - f_low) / (x_high - x_low)

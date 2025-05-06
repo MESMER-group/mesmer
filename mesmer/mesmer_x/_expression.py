@@ -2,10 +2,6 @@
 # Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
-"""
-Refactored code for the training of distributions
-
-"""
 
 import math
 
