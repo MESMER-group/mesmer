@@ -89,7 +89,6 @@ def test_calibrate_mesmer(
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    test_cmip_generation = 6
     variables = ["tas"]
     if use_hfds:
         variables.append("hfds")
