@@ -3,7 +3,7 @@ import pytest
 from scipy.stats import beta, binom, gamma, genextreme, hypergeom, laplace, truncnorm
 
 import mesmer.mesmer_x
-from mesmer.mesmer_x.train_l_distrib_mesmerx import _finite_difference, _smooth_data
+from mesmer.mesmer_x._first_guess import _finite_difference, _smooth_data
 
 
 def test_first_guess_standard_normal():

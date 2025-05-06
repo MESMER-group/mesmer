@@ -27,7 +27,7 @@ import mesmer.mesmer_x
             "expr1",
             False,
             False,
-            marks=pytest.mark.slow,
+            #marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
@@ -36,7 +36,7 @@ import mesmer.mesmer_x
             "expr1_2ndfit",
             True,
             False,
-            marks=pytest.mark.slow,
+            #marks=pytest.mark.slow,
         ),
     ],
 )
@@ -128,12 +128,11 @@ def test_calibrate_mesmer_x(
 
     # stacking
     stacked_pred, stacked_targ, stacked_weights = (
-        mesmer.core.datatree.stack_datatrees_for_linear_regression(
+        mesmer.core.datatree.broadcast_and_stack_scenarios(
             predictors=dt_pred,
             target=dt_targ,
             weights=weights,
-            stacking_dims=["member", "time"],
-        )
+            )
     )
 
     # declaring analytical form of the conditional distribution
@@ -171,7 +170,7 @@ def test_calibrate_mesmer_x(
     )
 
     # training the conditional distribution
-    train_mx = mesmer.mesmer_x.distrib_train(
+    train_mx = mesmer.mesmer_x.ConditionalDistribution(
         expr_fit=expression_fit, class_tests=tests_mx, class_optim=optim_mx
     )
     # first round

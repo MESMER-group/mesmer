@@ -14,7 +14,7 @@ def test_distrib_init_all_default():
     fg_mx = mesmer.mesmer_x.distrib_firstguess(
         expression, tests_mx, optim_mx, None, None
     )
-    train_mx = mesmer.mesmer_x.distrib_train(expression, tests_mx, optim_mx)
+    train_mx = mesmer.mesmer_x.ConditionalDistribution(expression, tests_mx, optim_mx)
 
     assert tests_mx.expr_fit is expression
     assert optim_mx.expr_fit is expression
@@ -118,7 +118,7 @@ def test_distrib_init_errors():
     fg_mx = mesmer.mesmer_x.distrib_firstguess(
         expression, tests_mx, optim_mx, None, None
     )
-    train_mx = mesmer.mesmer_x.distrib_train(expression, tests_mx, optim_mx)
+    train_mx = mesmer.mesmer_x.ConditionalDistribution(expression, tests_mx, optim_mx)
 
     with pytest.raises(ValueError, match="nan values in predictors"):
         _ = fg_mx._find_fg_np(
