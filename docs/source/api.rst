@@ -89,6 +89,14 @@ Gaspari-Cohn correlation matrix
 Data handling
 =============
 
+Example and test data
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.example_data.cmip6_ng_path
+
 Grid manipulation
 -----------------
 

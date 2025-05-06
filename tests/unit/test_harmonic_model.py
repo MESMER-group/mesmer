@@ -40,12 +40,16 @@ def test_generate_fourier_series_np():
 def test_predict_harmonic_model():
     n_years = 10
     n_lat, n_lon, n_gridcells = 2, 3, 2 * 3
-    time = xr.cftime_range(start="2000-01-01", periods=n_years, freq="YS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_years, freq="YS", use_cftime=True
+    )
     yearly_predictor = xr.DataArray(
         np.zeros((n_years, n_gridcells)), dims=["time", "cells"], coords={"time": time}
     )
 
-    time = xr.cftime_range(start="2000-01-01", periods=n_years * 12, freq="MS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_years * 12, freq="MS", use_cftime=True
+    )
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
 
     coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
@@ -141,11 +145,13 @@ def test_fit_harmonic_model():
         "time", "cells"
     )
 
-    yearly_predictor["time"] = xr.cftime_range(
-        start="2000-01-01", periods=n_ts, freq="YS"
+    yearly_predictor["time"] = xr.date_range(
+        start="2000-01-01", periods=n_ts, freq="YS", use_cftime=True
     )
 
-    time = xr.cftime_range(start="2000-01-01", periods=n_ts * 12, freq="MS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_ts * 12, freq="MS", use_cftime=True
+    )
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
 
     monthly_target = predict_harmonic_model(

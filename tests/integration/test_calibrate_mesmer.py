@@ -4,6 +4,7 @@ import shutil
 import joblib
 import pytest
 
+import mesmer
 from mesmer.calibrate_mesmer import _calibrate_tas
 from mesmer.testing import assert_dict_allclose
 
@@ -91,11 +92,7 @@ def test_calibrate_mesmer(
     test_threshold_land = 1 / 3
     test_output_file = os.path.join(tmpdir, "test_calibrate_mesmer_output.pkl")
     test_cmip_generation = 6
-    test_cmip_data_root_dir = os.path.join(
-        test_data_root_dir,
-        "calibrate-coarse-grid",
-        f"cmip{test_cmip_generation}-ng",
-    )
+    test_cmip_data_root_dir = mesmer.example_data.cmip6_ng_path()
     test_auxiliary_data_dir = os.path.join(
         test_data_root_dir,
         "calibrate-coarse-grid",

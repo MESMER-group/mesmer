@@ -173,8 +173,7 @@ def test_stack_linear_regression_datatrees():
     n_ts, n_lat, n_lon = 30, 2, 3
     member_dim = "member"
     time_dim = "time"
-    stacking_dims = [time_dim, member_dim]
-    collapse_dim = "scenario"
+    scenario_dim = "scenario"
     stacked_dim = "sample"
 
     d2D_1 = xr.Dataset(
@@ -211,13 +210,14 @@ def test_stack_linear_regression_datatrees():
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
+        mesmer.datatree.broadcast_and_stack_scenarios(
             predictors,
             target,
             weights,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
+            member_dim=member_dim,
+            time_dim=time_dim,
+            scenario_dim=scenario_dim,
+            sample_dim=stacked_dim,
         )
     )
 
@@ -233,7 +233,7 @@ def test_stack_linear_regression_datatrees():
         target_stacked.tas,
         ndim=2,
         required_dims={"cells", "sample"},
-        shape=(n_lat * n_lon, n_samples),
+        shape=(n_samples, n_lat * n_lon),
     )
     _check_dataarray_form(
         weights_stacked.weights, ndim=1, required_dims={"sample"}, shape=(n_samples,)
@@ -261,26 +261,16 @@ def test_stack_linear_regression_datatrees():
     xr.testing.assert_equal(weights_stacked, weights_aligned)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
-            predictors,
-            target,
-            None,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
-        )
+        mesmer.datatree.broadcast_and_stack_scenarios(predictors, target, None)
     )
     assert weights_stacked is None, "Weights should be None if not provided"
 
     # check if exclude_dim can be empty
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
+        mesmer.datatree.broadcast_and_stack_scenarios(
             predictors,
             target.sel(cells=0),
             weights,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
         )
     )
 
@@ -319,3 +309,131 @@ def test_datatree_wrapper():
 
     result_dt = func(dt)
     assert isinstance(result_dt, xr.DataTree)
+
+
+@pytest.mark.parametrize("scenario_dim", ("scenario", "scen"))
+@pytest.mark.parametrize("time_dim", ("time", "t"))
+@pytest.mark.parametrize("member_dim", ("member", "m"))
+@pytest.mark.parametrize("sample_dim", ("sample", "s"))
+def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
+
+    time = np.arange(3)
+    data = np.arange(6).reshape(2, 3).T
+    da1 = xr.DataArray(
+        data,
+        dims=(time_dim, member_dim),
+        coords={time_dim: time, member_dim: ["a1", "a2"]},
+    )
+    ds1 = xr.Dataset(data_vars={"var": da1})
+
+    time = np.arange(2)
+    data = np.arange(2).reshape(2, 1) * 10
+    da2 = xr.DataArray(
+        data, dims=(time_dim, member_dim), coords={time_dim: time, member_dim: ["a3"]}
+    )
+    ds2 = xr.Dataset(data_vars={"var": da2})
+
+    dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
+
+    result = mesmer.datatree._stack_datatree(
+        dt,
+        member_dim=member_dim,
+        time_dim=time_dim,
+        scenario_dim=scenario_dim,
+        sample_dim=sample_dim,
+    )
+
+    # =========
+    data = np.concatenate([np.arange(6), np.arange(2) * 10])
+    time = [0, 1, 2, 0, 1, 2, 0, 1]
+    member = ["a1"] * 3 + ["a2"] * 3 + ["a3"] * 2
+    scen = ["scen1"] * 6 + ["scen2"] * 2
+
+    da = xr.DataArray(
+        data,
+        dims=sample_dim,
+        coords={
+            time_dim: (sample_dim, time),
+            member_dim: (sample_dim, member),
+            scenario_dim: (sample_dim, scen),
+        },
+    )
+    expected = xr.Dataset(data_vars={"var": da})
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_stack_datatree_missing_member_dim():
+
+    time = np.arange(2)
+    data = np.arange(2)
+    da = xr.DataArray(data, coords={"time": time})
+    ds = xr.Dataset(data_vars={"var": da})
+    dt = xr.DataTree.from_dict({"scen": ds})
+
+    with pytest.raises(
+        ValueError, match=r"`member_dim` \('member'\) not available in node 'scen'"
+    ):
+        mesmer.datatree._stack_datatree(dt)
+
+
+def test_stack_datatree_no_member_dim():
+
+    time = np.arange(2)
+    data = np.arange(2)
+    da = xr.DataArray(data, coords={"time": time})
+    ds = xr.Dataset(data_vars={"var": da})
+
+    dt = xr.DataTree.from_dict({"scen": ds})
+
+    result = mesmer.datatree._stack_datatree(dt, member_dim=None)
+
+    # =========
+    scen = ["scen"] * 2
+
+    da = xr.DataArray(
+        data,
+        dims="sample",
+        coords={
+            "time": ("sample", time),
+            "scenario": ("sample", scen),
+        },
+    )
+    expected = xr.Dataset(data_vars={"var": da})
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_stack_datatree_keep_other_dims():
+
+    time = np.arange(2)
+    data = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+
+    da = xr.DataArray(
+        data,
+        dims=("time", "member", "gridpoint"),
+        coords={"time": time, "member": ["a1", "a2", "a3"]},
+    )
+    ds1 = xr.Dataset(data_vars={"var": da})
+
+    time = np.arange(3)
+    data = np.arange(3 * 4).reshape(3, 1, 4)
+    da2 = xr.DataArray(
+        data,
+        dims=("time", "member", "gridpoint"),
+        coords={"time": time, "member": ["a3"]},
+    )
+    ds2 = xr.Dataset(data_vars={"var": da2})
+
+    dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
+
+    result = mesmer.datatree._stack_datatree(dt)
+
+    mesmer.core.utils._check_dataset_form(result, "result", required_vars="var")
+    mesmer.core.utils._check_dataarray_form(
+        result["var"],
+        "result.var",
+        ndim=2,
+        required_dims=("sample", "gridpoint"),
+        shape=(9, 4),
+    )
