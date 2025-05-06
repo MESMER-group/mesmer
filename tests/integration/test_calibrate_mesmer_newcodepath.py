@@ -1,4 +1,3 @@
-import glob
 import pathlib
 
 import pytest
@@ -6,8 +5,8 @@ import xarray as xr
 from filefisher import FileFinder
 
 import mesmer
-from mesmer.core._datatreecompat import map_over_datasets
 import mesmer.core.datatree
+from mesmer.core._datatreecompat import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -69,7 +68,7 @@ import mesmer.core.datatree
             True,
             True,
             "tas_tas2_hfds/multi_scen_multi_ens",
-            #marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
     ),
 )
@@ -112,7 +111,11 @@ def test_calibrate_mesmer(
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
-        variable=variables, scenario=scenarios, model=esm, resolution="g025", time_res="ann"
+        variable=variables,
+        scenario=scenarios,
+        model=esm,
+        resolution="g025",
+        time_res="ann",
     )
 
     # only get the historical members that are also in the future scenarios, but only once
@@ -131,7 +134,7 @@ def test_calibrate_mesmer(
 
     scenarios_incl_hist = scenarios.copy()
     scenarios_incl_hist.append("historical")
-    
+
     data = xr.DataTree()
     for scen in scenarios_incl_hist:
         # load data for each scenario
@@ -171,9 +174,7 @@ def test_calibrate_mesmer(
     globmean_smoothed = mesmer.stats.lowess(
         globmean_ensmean, "time", n_steps=50, use_coords=False
     )
-    hist_lowess_residuals = (
-        globmean["historical"] - globmean_smoothed["historical"]
-    )
+    hist_lowess_residuals = globmean["historical"] - globmean_smoothed["historical"]
 
     volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
@@ -185,7 +186,9 @@ def test_calibrate_mesmer(
     # train global variability module
     tas_glob_mean = map_over_datasets(lambda ds: ds.drop_vars("hfds"), globmean)
     tas_resid_novolc = tas_glob_mean - globmean_smoothed
-    tas_resid_novolc = map_over_datasets(lambda ds: ds.rename({"tas": "tas_resids"}), tas_resid_novolc)
+    tas_resid_novolc = map_over_datasets(
+        lambda ds: ds.rename({"tas": "tas_resids"}), tas_resid_novolc
+    )
 
     ar_order = mesmer.stats.select_ar_order_scen_ens(
         tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"

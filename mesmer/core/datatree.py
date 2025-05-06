@@ -295,24 +295,35 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
 
     return _inner
 
-from collections.abc import Mapping, Iterable
-from xarray.core.types import CompatOptions, JoinOptions, CombineAttrsOptions
-from xarray.core import dtypes
 
-def merge(objects: Iterable[xr.DataTree],
-          compat: CompatOptions = "no_conflicts",
-          join: JoinOptions = "outer",
-          fill_value: object = dtypes.NA,
-          combine_attrs: CombineAttrsOptions = "override", ):
-    
-    from xarray.core.utils import result_name
-    from xarray.core.datatree_mapping import _handle_errors_with_path_context, _check_all_return_values
+from collections.abc import Iterable, Mapping
+
+from xarray.core import dtypes
+from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
+
+
+def merge(
+    objects: Iterable[xr.DataTree],
+    compat: CompatOptions = "no_conflicts",
+    join: JoinOptions = "outer",
+    fill_value: object = dtypes.NA,
+    combine_attrs: CombineAttrsOptions = "override",
+):
+
     from typing import cast
-    
-    kwargs = {"compat": compat,
-              "join": join,
-              "fill_value": fill_value,
-              "combine_attrs": combine_attrs}
+
+    from xarray.core.datatree_mapping import (
+        _check_all_return_values,
+        _handle_errors_with_path_context,
+    )
+    from xarray.core.utils import result_name
+
+    kwargs = {
+        "compat": compat,
+        "join": join,
+        "fill_value": fill_value,
+        "combine_attrs": combine_attrs,
+    }
 
     # Walk all trees simultaneously, applying func to all nodes that lie in same position in different trees
     # We don't know which arguments are DataTrees so we zip all arguments together as iterables
