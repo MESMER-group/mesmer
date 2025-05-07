@@ -14,7 +14,7 @@ import mesmer.mesmer_x._optimizers as distrib_optimizers
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
 from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._probability_integral_transform import weighted_median
+from mesmer.mesmer_x._weighting import weighted_median
 from mesmer.stats import gaspari_cohn
 from mesmer.core.utils import _check_dataset_form
 
@@ -113,7 +113,7 @@ class ConditionalDistributionOptions:
             If `None` this test is skipped.
         """
 
-        n_coeffs = len(expression.coefficients_list)
+        n_coeffs = expression.n_coeffs if not expression.n_coeffs == 0 else 1
 
         # preparing solver
         default_options_solver = {
