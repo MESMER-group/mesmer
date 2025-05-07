@@ -101,9 +101,9 @@ def find_first_guess(
         data_pred,
         data_targ,
         data_weights,
-        first_guess,
+        #first_guess,
         kwargs={"conditional_distrib": conditional_distrib},
-        input_core_dims=[[dim, "predictor"], [dim], [dim], [dim, "coefficient"]],
+        input_core_dims=[[dim, "predictor"], [dim], [dim]], #[dim, "coefficient"]],
         output_core_dims=[["coefficient"]],
         vectorize=True,
         dask="parallelized",
@@ -115,10 +115,10 @@ def find_first_guess(
         out[coef] = result.isel(coefficient=icoef)
     return out
 
-def _find_fg_np(data_pred, data_targ, data_weights, first_guess, conditional_distrib: ConditionalDistribution):
+def _find_fg_np(data_pred, data_targ, data_weights, conditional_distrib: ConditionalDistribution):
 
-    fg = FirstGuess(conditional_distrib, data_pred, data_targ, data_weights, first_guess)
-    
+    fg = FirstGuess(conditional_distrib, data_pred, data_targ, data_weights)
+
     # TODO split up into the several steps
     return fg._find_fg_allsteps()
 
@@ -129,7 +129,7 @@ class FirstGuess:
         data_pred,
         data_targ,
         data_weights,
-        first_guess,
+        first_guess=None,
         func_first_guess=None,
     ):
         """
@@ -186,20 +186,23 @@ class FirstGuess:
             pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)
         }
 
+        self.data_targ = data_targ
+
         # smooting to help with location & scale
         self.l_smooth = 5
-        self.data_targ = data_targ
         self.smooth_targ = _smooth_data(data_targ, length=self.l_smooth)
         self.smooth_targ_dev = (
             data_targ[self.l_smooth : -self.l_smooth] - self.smooth_targ
         )
         self.smooth_pred = {
-            pp: _smooth_data(data_pred[pp], length=self.l_smooth)
+            pp: _smooth_data(self.data_pred[pp], length=self.l_smooth)
             for pp in self.predictor_names
         }
 
         self.data_weights = data_weights
 
+        if first_guess == None:
+            first_guess = np.zeros(self.n_coeffs)
         self.fg_coeffs = np.copy(first_guess)
         # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
         self.fg_coeffs = self.fg_coeffs.astype(float)
