@@ -58,40 +58,51 @@ def find_first_guess(
     conditional_distrib: ConditionalDistribution,
     predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
     target: xr.DataArray,
-    dim: str,
     weights: xr.DataArray,
+    sample_dim: str = "sample",
     first_guess: xr.Dataset | None = None,
 ):
     """
-    Find a first guess for all grid points.
+    Find a first guess for all coefficients of a conditional distribution for each grid point.
 
     Parameters
     ----------
+    conditional_distrib : ConditionalDistribution
+        Conditional distribution object to find the first guess for.
     predictors : dict of xr.DataArray | DataTree | xr.Dataset
         A dict of DataArray objects used as predictors or a DataTree, holding each
-        predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
+        predictor in a leaf. Each predictor must be 1D and contain `sample_dim`. If predictors
         is a xr.Dataset, it must have each predictor as a DataArray.
     target : xr.DataArray
-        Target DataArray.
-    dim : str
-        Dimension along which to fit the polynomials.
+        Target DataArray, contains at least `sample_dim`.
     weights : xr.DataArray.
-        Individual weights for each sample.
+        Individual weights for each sample, must be 1D along `sample_dim`.
+    sample_dim : str
+        Dimension along which to fit the first guess.
+    first_guess : xr.Dataset, default: None
+        If provided, will use these values as first guess for the first guess. If None,
+        will use all zeros. Must contain the first guess for each coefficient in a 
+        DataArray with the name of the coefficient.
 
     Returns
     -------
     :obj:`xr.Dataset`
-        Dataset of first guess (gridpoint, coefficient)
+        Dataset of first guess for each coefficient of the conditional distribution as a 
+        data variable with the name of the coefficient.
     """
     # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
 
-    # TODO: make fg if none
+    # make fg if none
     if first_guess is None:
-        pass
+        first_guess = xr.Dataset()
+        fg_dims = set(target.dims) - {sample_dim}
+        fg_size = [target.sizes[dim] for dim in fg_dims]
+        for coef in conditional_distrib.expression.coefficients_list:
+            first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
 
     # preparing data
-    data_pred, data_targ, data_weights = distrib_tests.prepare_data(
-        predictors, target, weights
+    data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data( # type: ignore
+        predictors, target, weights, first_guess
     )
 
     # search for each gridpoint
@@ -100,14 +111,15 @@ def find_first_guess(
         data_pred,
         data_targ,
         data_weights,
-        # first_guess,
+        first_guess,
         kwargs={"conditional_distrib": conditional_distrib},
-        input_core_dims=[[dim, "predictor"], [dim], [dim]],  # [dim, "coefficient"]],
+        input_core_dims=[[sample_dim, "predictor"], [sample_dim], [sample_dim], ["coefficient"]],
         output_core_dims=[["coefficient"]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
     )
+
     # creating a dataset with the coefficients
     out = xr.Dataset()
     for icoef, coef in enumerate(conditional_distrib.expression.coefficients_list):
@@ -116,10 +128,10 @@ def find_first_guess(
 
 
 def _find_fg_np(
-    data_pred, data_targ, data_weights, conditional_distrib: ConditionalDistribution
+    data_pred, data_targ, data_weights, first_guess, conditional_distrib: ConditionalDistribution
 ):
 
-    fg = FirstGuess(conditional_distrib, data_pred, data_targ, data_weights)
+    fg = FirstGuess(conditional_distrib, data_pred, data_targ, data_weights, first_guess)
 
     # TODO split up into the several steps
     return fg._find_fg_allsteps()
@@ -132,7 +144,7 @@ class FirstGuess:
         data_pred,
         data_targ,
         data_weights,
-        first_guess=None,
+        first_guess,
         func_first_guess=None,
     ):
         """
@@ -204,8 +216,6 @@ class FirstGuess:
 
         self.data_weights = data_weights
 
-        if first_guess is None:
-            first_guess = np.zeros(self.n_coeffs)
         self.fg_coeffs = np.copy(first_guess)
         # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
         self.fg_coeffs = self.fg_coeffs.astype(float)
