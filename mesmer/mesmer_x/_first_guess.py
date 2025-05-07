@@ -33,8 +33,6 @@ def _smooth_data(data, length=5):
     obj: numpy array 1D
         Smoothed data
     """
-    # TODO: performs badly at the edges, see https://github.com/MESMER-group/mesmer/issues/581
-    # solved, to remove from issues.
     tmp = np.convolve(data, np.ones(2 * length + 1) / (2 * length + 1), mode="valid")
     # removing the bias in the mean
     tmp += np.mean(data[length:-length]) - np.mean(tmp)
@@ -308,18 +306,18 @@ class distrib_firstguess:
 
         # filling required info if not run through _xr_wrapper
         if not hasattr(self, "predictor_dim"):
-            self.predictor_dim = self.expr_fit.inputs_list
+            self.predictor_dim = self.expr_fit.predictors_list
 
         # ensuring format of numpy predictors
         if data_pred.ndim == 0:
-            if len(self.expr_fit.inputs_list) == 0:
+            if len(self.expr_fit.predictors_list) == 0:
                 data_pred = np.ones((data_targ.size, 1))
             else:
                 raise Exception("Missing data on the predictors.")
         elif data_pred.ndim == 1:
             data_pred = data_pred[:, np.newaxis]
         elif data_pred.ndim == 2:
-            if len(self.expr_fit.inputs_list) == data_pred.shape[0]:
+            if len(self.expr_fit.predictors_list) == data_pred.shape[0]:
                 data_pred = data_pred.T
         else:
             raise Exception("Numpy predictors should not have a shape greater than 2.")

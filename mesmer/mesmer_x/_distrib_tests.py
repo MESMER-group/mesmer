@@ -11,18 +11,15 @@ from mesmer.mesmer_x._expression import Expression
 class distrib_tests:
     def __init__(
         self,
-        expr_fit: Expression,
+        Expression: Expression,
         threshold_min_proba=1.0e-9,
-        boundaries_params=None,
-        boundaries_coeffs=None,
     ):
         """Class defining the tests to perform during first guess and training of distributions.
 
         Parameters
         ----------
-        expr_fit : class 'expression'
-            Expression to train. The string provided to the class can be found in
-            'expr_fit.expression'.
+        Expression : class 'Expression'
+            Expression to train. See :py:class:`Expression` for more details.
 
         threshold_min_proba : float or None, default: 1e-9
             If numeric imposes a check during the fitting that every sample fulfills
@@ -31,17 +28,9 @@ class distrib_tests:
             Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
             ensure that all points are feasible with the fitted distribution.
             If `None` this test is skipped.
-
-        boundaries_params : dict, default: None
-            Prescribed boundaries on the parameters of the expression. Some basic
-            boundaries are already provided through 'expr_fit.boundaries_params'.
-
-        boundaries_coeffs : dict, optional
-            Prescribed boundaries on the coefficients of the expression. Default: None.
-
         """
-        # initialization of expr_fit
-        self.expr_fit = expr_fit
+        # initialization of Expression
+        self.Expression = Expression
 
         # initialization and basic checks on threshold_min_proba
         self.threshold_min_proba = threshold_min_proba
@@ -50,33 +39,19 @@ class distrib_tests:
         ):
             raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
 
-        # initialization and basic checks on boundaries
-        self.boundaries_params = self.expr_fit.boundaries_parameters
-        if boundaries_params is not None:
-            for param in boundaries_params:
-                lower_bound = np.max(
-                    [boundaries_params[param][0], self.boundaries_params[param][0]]
-                )
-                upper_bound = np.min(
-                    [boundaries_params[param][1], self.boundaries_params[param][1]]
-                )
-                self.boundaries_params[param] = [lower_bound, upper_bound]
-        self.boundaries_coeffs = {} if boundaries_coeffs is None else boundaries_coeffs
-
     def _test_coeffs_in_bounds(self, values_coeffs):
 
         # checking set boundaries on coefficients
-        for coeff in self.boundaries_coeffs:
-            bottom, top = self.boundaries_coeffs[coeff]
+        for coeff in self.Expression.boundaries_coeffs:
+            bottom, top = self.Expression.boundaries_coeffs[coeff]
 
-            # TODO: move this check to __init__ NOTE: also used in fg
-            if coeff not in self.expr_fit.coefficients_list:
+            if coeff not in self.Expression.coefficients_list:
                 raise ValueError(
                     f"Provided wrong boundaries on coefficient, {coeff}"
-                    " does not exist in expr_fit"
+                    " does not exist in Expression"
                 )
 
-            values = values_coeffs[self.expr_fit.coefficients_list.index(coeff)]
+            values = values_coeffs[self.Expression.coefficients_list.index(coeff)]
 
             if np.any(values < bottom) or np.any(top < values):
                 # out of boundaries
@@ -87,8 +62,8 @@ class distrib_tests:
     def _test_evol_params(self, params):
 
         # checking set boundaries on parameters
-        for param in self.boundaries_params:
-            bottom, top = self.boundaries_params[param]
+        for param in self.Expression.boundaries_params:
+            bottom, top = self.Expression.boundaries_params[param]
 
             param_values = params[param]
 
@@ -102,7 +77,7 @@ class distrib_tests:
         # test of the support of the distribution: is there any data out of the
         # corresponding support? dont try testing if there are issues on the parameters
 
-        bottom, top = self.expr_fit.distrib.support(**params)
+        bottom, top = self.Expression.distrib.support(**params)
 
         # out of support
         if (
@@ -124,7 +99,7 @@ class distrib_tests:
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
 
-        cdf = self.expr_fit.distrib.cdf(data, **params)
+        cdf = self.Expression.distrib.cdf(data, **params)
         thresh = self.threshold_min_proba
         return np.all(1 - cdf >= thresh) and np.all(cdf >= thresh)
 
@@ -145,11 +120,11 @@ class distrib_tests:
         Returns
         -------
         test_coeff : boolean
-            True if the coefficients are within self.boundaries_coeffs. If
+            True if the coefficients are within self.Expression.boundaries_coeffs. If
             False, all other tests will also be set to False and not tested.
 
         test_param : boolean
-            True if parameters are within self.boundaries_params and within the support of the distribution.
+            True if parameters are within self.Expression.boundaries_params and within the support of the distribution.
             False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
 
         test_proba : boolean
@@ -170,7 +145,7 @@ class distrib_tests:
             return test_coeff, False, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
-        params = self.expr_fit.evaluate_params(coefficients, data_pred)
+        params = self.Expression.evaluate_params(coefficients, data_pred)
         # test for the validity of the parameters
         test_param = self._test_evol_params(params)
 
@@ -301,7 +276,7 @@ class distrib_tests:
 
         else:
             raise Exception(
-                "predictors is supposed to be a dict of xr.DataArray, xr.Dataset or xr.DataTree"
+                "predictors is supposed to be a dict of xr.DataArray, a xr.Dataset or a xr.DataTree"
             )
 
         # check format of target
