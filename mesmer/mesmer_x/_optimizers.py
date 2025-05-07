@@ -181,7 +181,7 @@ def fullcond_thres(
 
 def bic(expression, data_targ, params, data_weights):
     ll = loglike(expression, data_targ, params, data_weights)
-    n_coeffs = len(expression.coefficients_list)
+    n_coeffs = expression.n_coeffs
     return n_coeffs * np.log(len(data_targ)) - 2 * ll
 
 

@@ -223,6 +223,8 @@ class Expression:
                         # not a coefficient, move to the next
                         pass
 
+        self.n_coeffs = len(self.coefficients_list)
+        
         # save coefficient indices
         loc_coeffs = self.coefficients_dict.get("loc", [])
         self.ind_loc_coeffs = np.array(

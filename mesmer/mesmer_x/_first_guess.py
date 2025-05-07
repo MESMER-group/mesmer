@@ -172,9 +172,6 @@ class FirstGuess:
         self.expression = conditional_distrib.expression
         self.func_first_guess = func_first_guess
 
-        # preparing additional information
-        self.n_coeffs = len(self.expression.coefficients_list)
-
         distrib_tests.validate_data(data_pred, data_targ, data_weights)
 
         expression = self.expression
@@ -384,7 +381,7 @@ class FirstGuess:
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
         if len(fg_ind_loc) > 0:
-            fact_maxfev_iter = len(fg_ind_loc) / self.n_coeffs
+            fact_maxfev_iter = len(fg_ind_loc) / self.expression.n_coeffs
 
             localfit_loc = distrib_optimizers._minimize(
                 func=self._fg_fun_loc,
@@ -407,7 +404,7 @@ class FirstGuess:
         # scale might not be used or set in the expression
         if len(fg_ind_sca) > 0:
             x0 = self.fg_coeffs[fg_ind_sca]
-            fact_maxfev_iter = len(fg_ind_sca) / self.n_coeffs
+            fact_maxfev_iter = len(fg_ind_sca) / self.expression.n_coeffs
 
             localfit_sca = distrib_optimizers._minimize(
                 func=self._fg_fun_sca,
@@ -431,7 +428,7 @@ class FirstGuess:
         ]
         if len(other_params) > 0:
             fg_ind_others = self.expression.ind_others
-            fact_maxfev_iter = len(fg_ind_others) / self.n_coeffs
+            fact_maxfev_iter = len(fg_ind_others) / self.expression.n_coeffs
 
             localfit_others = distrib_optimizers._minimize(
                 func=self._fg_fun_others,
@@ -503,7 +500,7 @@ class FirstGuess:
             bounds = []
 
             # TODO: does this assume the coeffs are ordered?
-            for i_c in np.arange(self.n_coeffs):
+            for i_c in np.arange(self.expression.n_coeffs):
                 a = self.find_bound(i_c=i_c, x0=fg_coeffs, fact_coeff=-0.05)
                 b = self.find_bound(i_c=i_c, x0=fg_coeffs, fact_coeff=0.05)
                 vals_bounds = (a, b)
