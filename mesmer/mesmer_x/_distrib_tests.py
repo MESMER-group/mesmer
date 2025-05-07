@@ -6,7 +6,7 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import collapse_datatree_into_dataset
+from mesmer.core.datatree import collapse_datatree_into_dataset, map_over_datasets
 from mesmer.mesmer_x._expression import Expression
 
 
@@ -149,29 +149,6 @@ def validate_coefficients(
         return test_coeff, test_param, test_support, test_proba, params
 
 
-def get_var_data(data):
-    if isinstance(data, np.ndarray):
-        return data
-
-    elif isinstance(data, xr.DataArray):
-        return data
-
-    elif isinstance(data, xr.Dataset):
-        var_name = [var for var in data.variables][0]
-        return data[var_name]
-
-    elif isinstance(data, xr.DataTree):
-        # TODO: useless, datatree uses datasets anyway, so it will become a dataarray
-        new_data = xr.DataTree()
-        for pred in data:
-            var_name = [var for var in data[pred].variables][0]
-            _ = xr.DataTree(name=pred, parent=new_data, data=data[pred][var_name])
-        return new_data
-
-    else:
-        raise ValueError("data must be a DataArray, Dataset or DataTree")
-
-
 def validate_data(data_pred, data_targ, data_weights):
     """
     check data for nans or infs
@@ -203,9 +180,9 @@ def validate_data(data_pred, data_targ, data_weights):
     _check_data(data_weights, "weights")
 
 
-def prepare_data(predictors, target, weights):
+def prepare_data(predictors, target, weights, first_guess = None):
     """
-    shaping data for first guess, training or evaluation of scores.
+    shaping data into DataArrays for first guess, training or evaluation of scores.
 
     Parameters
     ----------
@@ -214,34 +191,48 @@ def prepare_data(predictors, target, weights):
         xr.Dataset, each key/item being a predictor; a xr.Dataset with a coordinate
         being the list of predictors, and a variable that contains all predictors; or
         a xr.DataTree with one branch per predictor.
-    target : xr.DataArray | xr.Dataset
+    target : xr.DataArray
         Target DataArray.
-    weights : xr.DataArray | xr.Dataset
+    weights : xr.DataArray
         Individual weights for each sample.
+    first_guess : xr.Dataset | None default None
+        First guess. If provided the function will return a DataArray, with the
+        predictor variables stacked along a "predictor" dimension.
 
     Returns
     -------
-    :data_pred:`xr.Dataset`
+    :data_pred:`xr.DataArray`
         shaped predictors for training (predictor, sample)
-    :data_targ:`xr.Dataset`
+    :data_targ:`xr.DataArray`
         shaped sample for training (sample, gridpoint)
-    :data_weights:`xr.Dataset`
+    :data_weights:`xr.DataArray`
         shaped weights for training (sample)
+    :data_first_guess:`xr.DataArray` | None
+        shaped first guess for training (coefficients, gridpoint)
     """
-    # check format of predictors
-    if isinstance(predictors, dict):
-        tmp = {key: get_var_data(predictors[key]) for key in predictors}
-        ds_pred = xr.Dataset(tmp)
-
-    elif isinstance(predictors, xr.Dataset):
-        if "predictor" not in predictors.coords:
-            raise Exception(
-                "If predictors are provided as xr.Dataset, it must contain a coordinate 'predictor'."
-            )
-
+    # check formats
+    if isinstance(predictors, dict | xr.Dataset):
+        predictors_concat = xr.concat(
+            tuple(predictors.values()),
+            dim="predictor",
+            join="exact",
+            coords="minimal",
+        )
+        predictors_concat = predictors_concat.assign_coords(
+            {"predictor": list(predictors.keys())}
+        )
     elif isinstance(predictors, xr.DataTree):
-        # preparing predictors
-        ds_pred = collapse_datatree_into_dataset(predictors, dim="predictor")
+        # rename all data variables to "pred" to avoid conflicts when concatenating
+        def _rename_vars(ds) -> xr.DataTree:
+            (var,) = ds.data_vars
+            return ds.rename({var: "pred"})
+
+        predictors = map_over_datasets(_rename_vars, predictors)
+
+        predictors_concat_ds = collapse_datatree_into_dataset(
+            predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
+        )
+        predictors_concat = predictors_concat_ds["pred"]
 
     else:
         raise Exception(
@@ -255,10 +246,16 @@ def prepare_data(predictors, target, weights):
     # check format of weights
     if not (isinstance(weights, xr.Dataset) or isinstance(weights, xr.DataArray)):
         raise Exception("the weights must be a xr.Dataset or xr.DataArray.")
+    
+    if isinstance(first_guess, xr.Dataset):
+        first_guess_concat = xr.concat(
+            tuple(first_guess.values()),
+            dim="coefficient",
+            join="exact",
+            coords="minimal",
+        )
+        first_guess = first_guess_concat.assign_coords(
+            {"coefficient": list(first_guess.keys())}
+        )
 
-    # getting just dataarray in the datasets
-    data_pred = get_var_data(ds_pred)
-    data_targ = get_var_data(target)
-    data_weights = get_var_data(weights)
-
-    return data_pred, data_targ, data_weights
+    return predictors_concat, target, weights, first_guess
