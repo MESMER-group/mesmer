@@ -124,7 +124,7 @@ def find_first_guess(
     out = xr.Dataset()
     for icoef, coef in enumerate(conditional_distrib.expression.coefficients_list):
         out[coef] = result.isel(coefficient=icoef)
-    return out
+    return out.drop_vars("coefficient")
 
 
 def _find_fg_np(

@@ -3,7 +3,6 @@ from mesmer.mesmer_x._conditional_distribution import (
     ConditionalDistributionOptions,
 )
 from mesmer.mesmer_x._distrib_tests import (
-    get_var_data,
     prepare_data,
     validate_coefficients,
     validate_data,

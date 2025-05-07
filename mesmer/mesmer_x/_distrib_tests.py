@@ -248,14 +248,6 @@ def prepare_data(predictors, target, weights, first_guess = None):
         raise Exception("the weights must be a xr.Dataset or xr.DataArray.")
     
     if isinstance(first_guess, xr.Dataset):
-        first_guess_concat = xr.concat(
-            tuple(first_guess.values()),
-            dim="coefficient",
-            join="exact",
-            coords="minimal",
-        )
-        first_guess = first_guess_concat.assign_coords(
-            {"coefficient": list(first_guess.keys())}
-        )
+        first_guess = first_guess.to_dataarray(dim="coefficient")
 
     return predictors_concat, target, weights, first_guess

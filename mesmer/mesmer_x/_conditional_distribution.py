@@ -240,13 +240,13 @@ class ConditionalDistribution:
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
-        first_guess: xr.DataArray,
-        dim: str,
+        first_guess: xr.Dataset,
         weights: xr.DataArray,
+        sample_dim: str = "sample",
         option_smooth_coeffs: bool = False,
         r_gasparicohn: float = 500,
     ):
-        """Wrapper to fit over all gridpoints.
+        """fit conditional distribution over all gridpoints.
 
         Parameters
         ----------
@@ -257,11 +257,12 @@ class ConditionalDistribution:
         target : xr.DataArray
             Target DataArray.
         first_guess : xr.Dataset
-            First guess for the coefficients.
-        dim : str
-            Dimension along which to find the first guess.
+            First guess for the coefficients, each coefficient is a data variable in the Dataset
+            and has the corresponding name of the coefficient in the expression.
         weights : xr.DataArray.
             Individual weights for each sample.
+        sample_dim : str
+            Dimension along which to fit the distribution.
         option_smooth_coeffs : bool, default: False
             If True, smooth the provided coefficients using a weighted median.
             The weights are the correlation matrix of the Gaspari-Cohn function.
@@ -273,24 +274,22 @@ class ConditionalDistribution:
         Returns
         -------
         :obj:`xr.Dataset`
-            Dataset of result of optimization (gridpoint, coefficient)
+            Fitted coefficients of the conditional distribution (gridpoint, coefficient)
         """
         self.option_smooth_coeffs = option_smooth_coeffs
         self.r_gasparicohn = r_gasparicohn
 
         # training
-        coefficients = self._fit_xr(predictors, target, first_guess, dim, weights)
-
-        return coefficients
+        return self._fit_xr(predictors, target, first_guess, weights, sample_dim)
 
     def _fit_xr(
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
-        first_guess: xr.DataArray,
-        dim: str,
+        first_guess: xr.Dataset,
         weights: xr.DataArray,
-    ):
+        sample_dim: str,
+    ) -> xr.Dataset:
         """
         xarray wrapper to fit over all gridpoints.
 
@@ -304,8 +303,8 @@ class ConditionalDistribution:
             Target DataArray.
         first_guess : xr.Dataset
             First guess for the coefficients.
-        dim : str
-            Dimension along which to find the first guess.
+        sample_dim : str
+            Dimension along which to fit the distribution.
         weights : xr.DataArray.
             Individual weights for each sample.
 
@@ -343,22 +342,19 @@ class ConditionalDistribution:
             first_guess = second_guess
 
         # shaping inputs
-        data_pred, data_targ, data_weights = distrib_tests.prepare_data(
-            predictors, target, weights
+        data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data( # type: ignore
+            predictors, target, weights, first_guess
         )
         self.predictor_dim = data_pred.predictor.values
-
-        # shaping coefficients
-        da_first_guess = first_guess.to_dataarray(dim="coefficient")
 
         # search for each gridpoint
         result = xr.apply_ufunc(
             self._fit_np,
             data_pred,
             data_targ,
-            da_first_guess,
+            first_guess,
             data_weights,
-            input_core_dims=[[dim, "predictor"], [dim], ["coefficient"], [dim]],
+            input_core_dims=[[sample_dim, "predictor"], [sample_dim], ["coefficient"], [sample_dim]],
             output_core_dims=[["coefficient"]],
             vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
             dask="parallelized",
@@ -368,7 +364,7 @@ class ConditionalDistribution:
         out = xr.Dataset()
         for icoef, coef in enumerate(self.expression.coefficients_list):
             out[coef] = result.isel(coefficient=icoef)
-        return out
+        return out.drop_vars("coefficient")
 
     @ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
@@ -396,7 +392,7 @@ class ConditionalDistribution:
             func=distrib_optimizers.func_optim,
             x0=fg,
             method_fit=self.options.method_fit,
-            args=(data_pred, data_targ, data_weights),
+            args=(data_pred, data_targ, data_weights, self.expression, self.options.threshold_min_proba, self.options.type_fun_optim, self.options.threshold_stopping_rule, self.options.exclude_trigger, self.options.ind_year_thres),
             option_NelderMead="best_run",
             options={
                 "maxfev": self.options.maxfev,
@@ -490,7 +486,7 @@ class ConditionalDistribution:
               compute)
         """
         # shaping inputs
-        data_pred, data_targ, data_weights = distrib_tests.prepare_data(
+        data_pred, data_targ, data_weights, _ = distrib_tests.prepare_data(
             predictors, target, weights
         )
         self.predictor_dim = data_pred.predictor.values

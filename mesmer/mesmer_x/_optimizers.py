@@ -64,11 +64,11 @@ def _minimize(
 
 # OPTIMIZATION FUNCTIONS & SCORES
 def func_optim(
-    expression: Expression,
     coefficients,
     data_pred,
     data_targ,
     data_weights,
+    expression: Expression,
     threshold_min_proba,
     type_fun_optim,
     threshold_stopping_rule,
