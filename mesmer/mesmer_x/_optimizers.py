@@ -10,6 +10,7 @@ from scipy.optimize import minimize
 from mesmer.mesmer_x._distrib_tests import distrib_tests
 from mesmer.mesmer_x._expression import Expression
 
+
 class distrib_optimizer:
     def __init__(
         self,

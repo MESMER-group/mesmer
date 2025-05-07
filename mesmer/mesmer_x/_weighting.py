@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 from scipy.stats import gaussian_kde
 
+
 def get_weights_uniform(targ_data, target, dims):
     """
     Generate uniform weights for the training sample.

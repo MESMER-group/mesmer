@@ -10,11 +10,12 @@ import xarray as xr
 
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
-from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._distrib_tests import distrib_tests
+from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._optimizers import distrib_optimizer
 from mesmer.mesmer_x._probability_integral_transform import weighted_median
 from mesmer.stats import gaspari_cohn
+
 
 def ignore_warnings(func):
 
@@ -25,7 +26,9 @@ def ignore_warnings(func):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             return func(*args, **kwargs)
+
     return _wrapper
+
 
 class ConditionalDistribution:
     def __init__(

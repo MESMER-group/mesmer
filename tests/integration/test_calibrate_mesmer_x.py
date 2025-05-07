@@ -1,6 +1,5 @@
 import pathlib
 
-from git.util import T
 import pytest
 import xarray as xr
 
@@ -135,7 +134,7 @@ def test_calibrate_mesmer_x(
             target=target_data,
             weights=weights,
             member_dim=None,
-            )
+        )
     )
 
     # declaring analytical form of the conditional distribution

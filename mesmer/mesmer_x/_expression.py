@@ -19,20 +19,22 @@ _DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 class Expression:
 
-    def __init__(self, 
-                 expr: str, 
-                 expr_name: str, 
-                 boundaries_params: dict = {}, 
-                 boundaries_coeffs: dict = {}):
+    def __init__(
+        self,
+        expr: str,
+        expr_name: str,
+        boundaries_params: dict = {},
+        boundaries_coeffs: dict = {},
+    ):
         """Symbolic expression of a conditional distribution.
 
         When initialized, the class identifies the distribution, predictors, parameters and
-        coefficients. The expression is then compiled so that it can be evaluated. 
+        coefficients. The expression is then compiled so that it can be evaluated.
 
         Parameters
         ----------
         expr : str
-            Mathematical expression of the conditional distribution as a string. 
+            Mathematical expression of the conditional distribution as a string.
 
         expr_name : str
             Name for the expression.
@@ -40,15 +42,15 @@ class Expression:
         boundaries_params : dict
             Boundaries for the parameters. The keys are the names of the parameters, and
             the values are lists of two elements, the lower and upper bounds. The default
-            is an empty dict, which will set the boundaries to [-inf, inf] for all parameters 
-            found in the expression, except `scale` which must be positive, so the lower boundary 
+            is an empty dict, which will set the boundaries to [-inf, inf] for all parameters
+            found in the expression, except `scale` which must be positive, so the lower boundary
             will be set to 0. These boundaries will later be enforced when fitting the conditional
             distribution.
 
         boundaries_coeffs : dict
             Boundaries for the coefficients. The keys are the names of the coefficients as
             they are written in the expression, and the values are lists of two elements,
-            the lower and upper bounds. The default is an empty dict. These boundaries will later 
+            the lower and upper bounds. The default is an empty dict. These boundaries will later
             be enforced when fitting the conditional distribution.
 
         Notes
@@ -59,18 +61,18 @@ class Expression:
               or continuous): https://docs.scipy.org/doc/scipy/reference/stats.html
 
             - the parameters: all names for the parameters of the distributions must be
-              provided (as named in the `scipy.stats` distribution): loc, scale, shape, 
+              provided (as named in the `scipy.stats` distribution): loc, scale, shape,
               mu, a, b, c, etc.
-            
+
             - predictors: predictors that the distribution will be conditional to, must
-              be written like a variable in python and surrounded by "__": 
+              be written like a variable in python and surrounded by "__":
               e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__, __GMT, _GMT_ etc.
 
-            - coefficients: coefficients of the predictors, must be named "c#", with # being 
+            - coefficients: coefficients of the predictors, must be named "c#", with # being
               the number of the coefficient: e.g. c1, c2, c3.
 
             - mathematical terms: mathematical terms for the evolutions are be written as they
-              would be normally in python. Names of packages should be included. Spaces do not 
+              would be normally in python. Names of packages should be included. Spaces do not
               matter in the equations
 
         .. warning::
@@ -186,7 +188,7 @@ class Expression:
                     self.boundaries_params[param] = [0, np.inf]
                 else:
                     self.boundaries_params[param] = [-np.inf, np.inf]
-        
+
     def _find_coefficients(self):
         """
         coefficients are supposed to be written as "c#", with "#" being a number.
@@ -310,7 +312,9 @@ class Expression:
             for param, expr in self.parameters_expressions.items()
         }
 
-    def evaluate_params(self, coefficients_values, predictors_values, forced_shape=None):
+    def evaluate_params(
+        self, coefficients_values, predictors_values, forced_shape=None
+    ):
         """
         Evaluates the parameters for the provided predictors and coefficients
 
@@ -442,5 +446,7 @@ class Expression:
         the dimensions of the coefficients first, then the ones of the predictors
         """
 
-        params = self.evaluate_params(coefficients_values, predictors_values, forced_shape)
+        params = self.evaluate_params(
+            coefficients_values, predictors_values, forced_shape
+        )
         return self.distrib(**params)

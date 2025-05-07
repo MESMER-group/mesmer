@@ -10,12 +10,14 @@ import numpy as np
 import xarray as xr
 from scipy.optimize import basinhopping, shgo
 
-from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._distrib_tests import distrib_tests
+from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._optimizers import distrib_optimizer
+
 
 def _finite_difference(f_high, f_low, x_high, x_low):
     return (f_high - f_low) / (x_high - x_low)
+
 
 def _smooth_data(data, length=5):
     """
@@ -38,6 +40,7 @@ def _smooth_data(data, length=5):
     tmp += np.mean(data[length:-length]) - np.mean(tmp)
     return tmp
 
+
 def ignore_warnings(func):
 
     # adapted from https://stackoverflow.com/a/70292317
@@ -47,6 +50,7 @@ def ignore_warnings(func):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             return func(*args, **kwargs)
+
     return _wrapper
 
 
