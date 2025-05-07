@@ -10,9 +10,9 @@ import xarray as xr
 
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
-from mesmer.mesmer_x._distrib_tests import distrib_tests
+import mesmer.mesmer_x._distrib_tests as distrib_tests
 from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._optimizers import distrib_optimizer
+import mesmer.mesmer_x._optimizers as distrib_optimizers
 from mesmer.mesmer_x._probability_integral_transform import weighted_median
 from mesmer.stats import gaspari_cohn
 
@@ -29,33 +29,209 @@ def ignore_warnings(func):
 
     return _wrapper
 
+class ConditionalDistributionOptions:
+    def __init__(
+        self,
+        expression: Expression,
+        threshold_min_proba=1.0e-9,
+        options_optim=None,
+        options_solver=None,
+    ):
+        """Class to define optimizers used during first guess and training.
+
+        Parameters
+        ----------
+        expression : py:class:Expression
+            Expression to train. The string provided to the class can be found in
+            'expr_fit.expression'.
+
+        options_optim : dict, default: None
+            A dictionary with options for the function to optimize:
+
+            * type_fun_optim: string, default: "nll"
+                If 'nll', will optimize using the negative log likelihood. If 'fcnll',
+                will use the full conditional negative log likelihood based on the
+                stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
+                and `exclude_trigger` only apply to 'fcnll'.
+
+            * threshold_stopping_rule: float > 1, default: None
+                Maximum return period, used to define the threshold of the stopping
+                rule.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+            * ind_year_thres: np.array, default: None
+                Positions in the predictors where the thresholds have to be tested.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+            * exclude_trigger: boolean, default: None
+                Whether the threshold will be included or not in the stopping rule.
+                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
+                together.
+
+        options_solver : dict, optional
+            A dictionary with options for the solvers, used to determine an adequate
+            first guess and for the final optimization.
+
+            * method_fit: string, default: "Powell"
+                Type of algorithm used during the optimization, using the function
+                'minimize'. Prepared options: BFGS, L-BFGS-B, Nelder-Mead, Powell, TNC,
+                trust-constr. The default 'Powell', is HIGHLY RECOMMENDED for its
+                stability & speed.
+
+            * xtol_req: float, default: 1e-3
+                Accuracy of the fit in coefficients. Interpreted differently depending
+                on 'method_fit'.
+
+            * ftol_req: float, default: 1e-6
+                Accuracy of the fit in objective.
+
+            * maxiter: int, default: 10000
+                Maximum number of iteration of the optimization.
+
+            * maxfev: int, default: 10000
+                Maximum number of evaluation of the function during the optimization.
+
+            * error_failedfit : boolean, default: True.
+                If True, will raise an issue if the fit failed.
+
+            * fg_with_global_opti : boolean, default: False
+                If True, will add a step where the first guess is improved using a
+                global optimization. In theory, better, but in practice, no improvement
+                in performances, but makes the fit much slower (+ ~10s).
+
+        threshold_min_proba :  float or None, default: 1e-9
+            If numeric imposes a check during the fitting that every sample fulfills
+            `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
+            i.e. each sample lies within some confidence interval of the distribution.
+            Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
+            ensure that all points are feasible with the fitted distribution.
+            If `None` this test is skipped.
+        """
+
+        n_coeffs = len(expression.coefficients_list)
+
+        # preparing solver
+        default_options_solver = {
+            "method_fit": "Powell",
+            "xtol_req": 1e-6,
+            "ftol_req": 1.0e-6,
+            "maxiter": 1000 * n_coeffs * (np.log(n_coeffs) + 1),
+            "maxfev": 1000 * n_coeffs * (np.log(n_coeffs) + 1),
+            "error_failedfit": False,
+            "fg_with_global_opti": False,
+        }
+
+        options_solver = options_solver or {}
+        if not isinstance(options_solver, dict):
+            raise ValueError("`options_solver` must be a dictionary")
+
+        # TODO: use get? (e.g. self.method_fit = options_solver.get("method_fit", "Powell")
+        options_solver = default_options_solver | options_solver
+
+        self.xtol_req = options_solver["xtol_req"]
+        self.ftol_req = options_solver["ftol_req"]
+        self.maxiter = options_solver["maxiter"]
+        self.maxfev = options_solver["maxfev"]
+        self.method_fit = options_solver["method_fit"]
+
+        if self.method_fit not in (
+            "BFGS",
+            "L-BFGS-B",
+            "Nelder-Mead",
+            "Powell",
+            "TNC",
+            "trust-constr",
+        ):
+            raise ValueError("method for this fit not prepared, to avoid")
+
+        xtol = {
+            "BFGS": "xrtol",
+            "L-BFGS-B": "gtol",
+            "Nelder-Mead": "xatol",
+            "Powell": "xtol",
+            "TNC": "xtol",
+            "trust-constr": "xtol",
+        }
+        ftol = {
+            "BFGS": "gtol",
+            "L-BFGS-B": "ftol",
+            "Nelder-Mead": "fatol",
+            "Powell": "ftol",
+            "TNC": "ftol",
+            "trust-constr": "gtol",
+        }
+
+        self.name_xtol = xtol[self.method_fit]
+        self.name_ftol = ftol[self.method_fit]
+        self.error_failedfit = options_solver["error_failedfit"]
+        self.fg_with_global_opti = options_solver["fg_with_global_opti"]
+
+        # preparing information on function to optimize
+        default_options_optim = dict(
+            type_fun_optim="nll",
+            threshold_stopping_rule=None,
+            exclude_trigger=None,
+            ind_year_thres=None,
+        )
+
+        options_optim = options_optim or {}
+
+        if not isinstance(options_optim, dict):
+            raise ValueError("`options_optim` must be a dictionary")
+
+        options_optim = default_options_optim | options_optim
+
+        # preparing information for the stopping rule
+        self.type_fun_optim = options_optim["type_fun_optim"]
+        self.threshold_stopping_rule = options_optim["threshold_stopping_rule"]
+        self.ind_year_thres = options_optim["ind_year_thres"]
+        self.exclude_trigger = options_optim["exclude_trigger"]
+
+        if self.type_fun_optim == "nll" and (
+            self.threshold_stopping_rule is not None or self.ind_year_thres is not None
+        ):
+            raise ValueError(
+                "`threshold_stopping_rule` and `ind_year_thres` not used for"
+                " `type_fun_optim='nll'`"
+            )
+
+        if self.type_fun_optim == "fcnll" and (
+            self.threshold_stopping_rule is None or self.ind_year_thres is None
+        ):
+            raise ValueError(
+                "`type_fun_optim='fcnll'` needs both, `threshold_stopping_rule`"
+                "  and `ind_year_thres`."
+            )
+    
+        # initialization and basic checks on threshold_min_proba
+        self.threshold_min_proba = threshold_min_proba
+        if threshold_min_proba is not None and (
+            (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
+        ):
+            raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
 
 class ConditionalDistribution:
     def __init__(
         self,
-        expr_fit: Expression,
-        class_tests: distrib_tests,
-        class_optim: distrib_optimizer,
+        expression: Expression,
+        options: ConditionalDistributionOptions,
     ):
-        """Fit a conditional distribution.
+        """
+        A conditional distribution.
 
         Parameters
         ----------
-        expr_fit : class 'expression'
-            Expression to train. The string provided to the class can be found in
-            'expr_fit.expression'.
-
-        class_tests : class 'distrib_tests'
-            Class defining the tests to perform during first guess and training.
-
-        class_optim : class 'distrib_optimizer'
-            Class defining the optimizer used during first guess and training of
+        Expression : class py:class:Expression
+            Expression defining the conditional distribution.
+        options : class py:class:ConditionalDistributionOptions
+            Class defining the optimizer options used during first guess and training of
             distributions.
         """
         # initialization
-        self.expr_fit = expr_fit
-        self.class_optim = class_optim
-        self.class_tests = class_tests
+        self.expression = expression
+        self.options = options
 
     def fit(
         self,
@@ -150,7 +326,7 @@ class ConditionalDistribution:
             second_guess = np.nan * xr.ones_like(first_guess)
 
             # calculating for each coef and each gridpoint the weighted median
-            for coef in self.expr_fit.coefficients_list:
+            for coef in self.expression.coefficients_list:
                 for gp in first_guess.gridpoint.values:
                     fg = weighted_median(
                         data=first_guess[coef].sel(gridpoint=gp_nonan).values,
@@ -164,8 +340,8 @@ class ConditionalDistribution:
             first_guess = second_guess
 
         # shaping inputs
-        data_pred, data_targ, data_weights = self.class_tests.prepare_data(
-            predictors, target, weights
+        data_pred, data_targ, data_weights = distrib_tests.prepare_data(
+            self, predictors, target, weights
         )
         self.predictor_dim = data_pred.predictor.values
 
@@ -187,7 +363,7 @@ class ConditionalDistribution:
         )
         # creating a dataset with the coefficients
         out = xr.Dataset()
-        for icoef, coef in enumerate(self.expr_fit.coefficients_list):
+        for icoef, coef in enumerate(self.expression.coefficients_list):
             out[coef] = result.isel(coefficient=icoef)
         return out
 
@@ -200,12 +376,12 @@ class ConditionalDistribution:
             raise Exception("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise Exception("data_weights must be a numpy array.")
-        self.class_tests.validate_data(data_pred, data_targ, data_weights)
+        distrib_tests.validate_data(self, data_pred, data_targ, data_weights)
 
         # basic check on first guess
-        if (fg is not None) and (len(fg) != len(self.expr_fit.coefficients_list)):
+        if (fg is not None) and (len(fg) != len(self.expression.coefficients_list)):
             raise ValueError(
-                f"The provided first guess does not have the correct shape: {len(self.expr_fit.coefficients_list)}"
+                f"The provided first guess does not have the correct shape: {len(self.expression.coefficients_list)}"
             )
 
         # correcting format: must be dict(str, DataArray or array) for Expression
@@ -213,16 +389,17 @@ class ConditionalDistribution:
         data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_dim)}
 
         # training
-        m = self.class_optim._minimize(
-            func=self.class_optim.func_optim,
+        m = distrib_optimizers._minimize(
+            func=distrib_optimizers.func_optim,
             x0=fg,
+            conditional_distrib_options=self.options,
             args=(data_pred, data_targ, data_weights),
             fact_maxfev_iter=1,
             option_NelderMead="best_run",
         )
 
         # checking if the fit has failed
-        if self.class_optim.error_failedfit and not m.success:
+        if self.options.error_failedfit and not m.success:
             raise ValueError("Failed fit.")
         else:
             return m.x
@@ -305,8 +482,8 @@ class ConditionalDistribution:
               compute)
         """
         # shaping inputs
-        data_pred, data_targ, data_weights = self.class_tests.prepare_data(
-            predictors, target, weights
+        data_pred, data_targ, data_weights = distrib_tests.prepare_data(
+            self, predictors, target, weights
         )
         self.predictor_dim = data_pred.predictor.values
 
@@ -339,7 +516,7 @@ class ConditionalDistribution:
             raise Exception("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise Exception("data_weights must be a numpy array.")
-        self.class_tests.validate_data(data_pred, data_targ, data_weights)
+        distrib_tests.validate_data(self, data_pred, data_targ, data_weights)
 
         # initialize
         quality_fit = []
@@ -351,25 +528,25 @@ class ConditionalDistribution:
         for score in self.scores_fit:
             # basic result: optimized value
             if score == "func_optim":
-                score = self.class_optim.func_optim(
-                    coefficients_fit, data_pred, data_targ, data_weights
+                score = distrib_optimizers.func_optim(
+                    self, coefficients_fit, data_pred, data_targ, data_weights
                 )
 
             # calculating parameters for the next ones
-            params = self.expr_fit.evaluate_params(coefficients_fit, data_pred)
+            params = self.expression.evaluate_params(coefficients_fit, data_pred)
 
             # NLL averaged over sample
             if score == "nll":
-                score = self.class_optim.neg_loglike(data_targ, params, data_weights)
+                score = distrib_optimizers.neg_loglike(self.expression, data_targ, params, data_weights)
 
             # BIC averaged over sample
             if score == "bic":
-                score = self.class_optim.bic(data_targ, params, data_weights)
+                score = distrib_optimizers.bic(self.options, data_targ, params, data_weights)
 
             # CRPS
             if score == "crps":
-                score = self.class_optim.crps(
-                    data_targ, data_pred, data_weights, coefficients_fit
+                score = distrib_optimizers.crps(
+                    self.options, data_targ, data_pred, data_weights, coefficients_fit
                 )
 
             quality_fit.append(score)
