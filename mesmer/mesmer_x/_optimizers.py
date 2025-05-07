@@ -7,12 +7,11 @@ import numpy as np
 import properscoring
 from scipy.optimize import minimize
 
-from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution, ConditionalDistributionOptions
 from mesmer.mesmer_x._expression import Expression
 import mesmer.mesmer_x._distrib_tests as distrib_tests
 
 def _minimize(
-    func, x0, conditional_distrib_options: ConditionalDistributionOptions, args=(), fact_maxfev_iter=1.0, option_NelderMead="dont_run",
+    func, x0, method_fit, args, options, option_NelderMead="dont_run",
 ):
     """
     options_NelderMead: str
@@ -26,13 +25,8 @@ def _minimize(
         func,
         x0=x0,
         args=args,
-        method=conditional_distrib_options.method_fit,
-        options={
-            "maxfev": conditional_distrib_options.maxfev * fact_maxfev_iter,
-            "maxiter": conditional_distrib_options.maxfev * fact_maxfev_iter,
-            conditional_distrib_options.name_xtol: conditional_distrib_options.xtol_req,
-            conditional_distrib_options.name_ftol: conditional_distrib_options.ftol_req,
-        },
+        method=method_fit,
+        options=options,
     )
 
     # observed that Powell solver is much faster, but less robust. May rarely create
@@ -48,10 +42,10 @@ def _minimize(
             args=args,
             method="Nelder-Mead",
             options={
-                "maxfev": conditional_distrib_options.maxfev * fact_maxfev_iter,
-                "maxiter": conditional_distrib_options.maxiter * fact_maxfev_iter,
-                "xatol": conditional_distrib_options.xtol_req,
-                "fatol": conditional_distrib_options.ftol_req,
+                "maxfev": options["maxfev"],
+                "maxiter": options["maxiter"],
+                "xatol": options["xatol"],
+                "fatol": options["fatol"],
             },
         )
         if (option_NelderMead == "fail_run") or (
@@ -62,41 +56,42 @@ def _minimize(
     return fit
 
 # OPTIMIZATION FUNCTIONS & SCORES
-def func_optim(conditional_distrib: ConditionalDistribution, coefficients, data_pred, data_targ, data_weights):
+def func_optim(expression: Expression, coefficients, data_pred, data_targ, data_weights, 
+               threshold_min_proba, type_fun_optim, threshold_stopping_rule, exclude_trigger, ind_year_thres):
     # check whether these coefficients respect all conditions: if so, can compute a
     # value for the optimization
-    distrib_options = conditional_distrib.options
 
     test_coeff, test_param, test_distrib, test_proba, params = (
-        distrib_tests.validate_coefficients(conditional_distrib, data_pred, data_targ, coefficients)
+        distrib_tests.validate_coefficients(expression, data_pred, data_targ, coefficients, threshold_min_proba)
     )
 
     if test_coeff and test_param and test_distrib and test_proba:
-        if distrib_options.type_fun_optim == "fcnll":
+        if type_fun_optim == "fcnll":
             # compute full conditioning
             # will apply the stopping rule: splitting data_fit into two sets of data
             # using the given threshold
-            ind_data_ok, ind_data_stopped = stopping_rule(conditional_distrib, data_targ, params)
+            ind_data_ok, ind_data_stopped = stopping_rule(expression, data_targ, params, threshold_stopping_rule, ind_year_thres, exclude_trigger)
             nll = neg_loglike(
-                conditional_distrib.expression,
+                expression,
                 data_targ[ind_data_ok],
                 {pp: params[ind_data_ok] for pp in params},
                 data_weights[ind_data_ok],
             )
             fc = fullcond_thres(
-                conditional_distrib,
+                expression,
                 data_targ[ind_data_stopped],
                 {pp: params[ind_data_stopped] for pp in params},
                 data_weights[ind_data_stopped],
+                ind_data_stopped
             )
             return nll + fc
-        elif distrib_options.type_fun_optim == "nll":
+        elif type_fun_optim == "nll":
             # compute negative loglikelihood
-            return neg_loglike(conditional_distrib.expression, data_targ, params, data_weights)
+            return neg_loglike(expression, data_targ, params, data_weights)
 
         else:
             raise Exception(
-                f"Unknown type of optimization function: {distrib_options.type_fun_optim}"
+                f"Unknown type of optimization function: {type_fun_optim}"
             )
     else:
         # something wrong: returns a blocking value
@@ -120,17 +115,23 @@ def loglike(expression: Expression, data_targ, params, data_weights):
 
     return value
 
-def stopping_rule(conditional_distrib: ConditionalDistribution, data_targ, params):
+def stopping_rule(expression: Expression, 
+                  data_targ, 
+                  params,
+                  threshold_stopping_rule,
+                  ind_year_thres,
+                  exclude_trigger,
+                  ):
     # evaluating threshold over time
-    thres_t = conditional_distrib.expression.distrib.isf(
-        q=1 / conditional_distrib.options.threshold_stopping_rule, **params # type: ignore
+    thres_t = expression.distrib.isf(
+        q=1 / threshold_stopping_rule, **params # type: ignore
     )
 
     # selecting the minimum over the years to check
-    thres = np.min(thres_t[conditional_distrib.options.ind_year_thres])
+    thres = np.min(thres_t[ind_year_thres])
 
     # identifying where exceedances occur
-    if conditional_distrib.options.exclude_trigger:
+    if exclude_trigger:
         ind_data_stopped = data_targ > thres
     else:
         ind_data_stopped = data_targ >= thres
@@ -139,25 +140,25 @@ def stopping_rule(conditional_distrib: ConditionalDistribution, data_targ, param
     ind_data_ok = ~ind_data_stopped
     return ind_data_ok, ind_data_stopped
 
-def fullcond_thres(conditional_distrib: ConditionalDistribution, data_targ, params, data_weights):
+def fullcond_thres(expression: Expression, data_targ, params, data_weights, ind_data_stopped):
     # calculating 2nd term for full conditional of the NLL
     # fc1 = distrib.logcdf(conditional_distrib.data_targ)
-    fc2 = conditional_distrib.expression.distrib.sf(data_targ, **params)
+    fc2 = expression.distrib.sf(data_targ, **params)
 
-    return np.log(np.sum((data_weights * fc2)[conditional_distrib.options.ind_stopped_data]))
+    return np.log(np.sum((data_weights * fc2)[ind_data_stopped]))
 
-def bic(conditional_distrib, data_targ, params, data_weights):
-    loglike = conditional_distrib.options.loglike(data_targ, params, data_weights)
-    n_coeffs = len(conditional_distrib.expr_fit.coefficients_list)
-    return n_coeffs * np.log(len(data_targ)) - 2 * loglike
+def bic(expression, data_targ, params, data_weights):
+    ll = loglike(expression, data_targ, params, data_weights)
+    n_coeffs = len(expression.coefficients_list)
+    return n_coeffs * np.log(len(data_targ)) - 2 * ll
 
-def crps(conditional_distrib, data_targ, data_pred, data_weights, coeffs):
+def crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
     # properscoring.crps_quadrature cannot be applied on conditional distributions, thu
     # calculating in each point of the sample, then averaging
     # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE
     tmp_cprs = []
     for i in np.arange(len(data_targ)):
-        distrib = conditional_distrib.expr_fit.evaluate(
+        distrib = expression.evaluate(
             coeffs, {p: data_pred[p][i] for p in data_pred}
         )
         tmp_cprs.append(
