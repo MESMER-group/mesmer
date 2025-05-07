@@ -7,11 +7,17 @@ import numpy as np
 import properscoring
 from scipy.optimize import minimize
 
-from mesmer.mesmer_x._expression import Expression
 import mesmer.mesmer_x._distrib_tests as distrib_tests
+from mesmer.mesmer_x._expression import Expression
+
 
 def _minimize(
-    func, x0, method_fit, args, options, option_NelderMead="dont_run",
+    func,
+    x0,
+    method_fit,
+    args,
+    options,
+    option_NelderMead="dont_run",
 ):
     """
     options_NelderMead: str
@@ -55,14 +61,27 @@ def _minimize(
             fit = fit_NM
     return fit
 
+
 # OPTIMIZATION FUNCTIONS & SCORES
-def func_optim(expression: Expression, coefficients, data_pred, data_targ, data_weights, 
-               threshold_min_proba, type_fun_optim, threshold_stopping_rule, exclude_trigger, ind_year_thres):
+def func_optim(
+    expression: Expression,
+    coefficients,
+    data_pred,
+    data_targ,
+    data_weights,
+    threshold_min_proba,
+    type_fun_optim,
+    threshold_stopping_rule,
+    exclude_trigger,
+    ind_year_thres,
+):
     # check whether these coefficients respect all conditions: if so, can compute a
     # value for the optimization
 
     test_coeff, test_param, test_distrib, test_proba, params = (
-        distrib_tests.validate_coefficients(expression, data_pred, data_targ, coefficients, threshold_min_proba)
+        distrib_tests.validate_coefficients(
+            expression, data_pred, data_targ, coefficients, threshold_min_proba
+        )
     )
 
     if test_coeff and test_param and test_distrib and test_proba:
@@ -70,7 +89,14 @@ def func_optim(expression: Expression, coefficients, data_pred, data_targ, data_
             # compute full conditioning
             # will apply the stopping rule: splitting data_fit into two sets of data
             # using the given threshold
-            ind_data_ok, ind_data_stopped = stopping_rule(expression, data_targ, params, threshold_stopping_rule, ind_year_thres, exclude_trigger)
+            ind_data_ok, ind_data_stopped = stopping_rule(
+                expression,
+                data_targ,
+                params,
+                threshold_stopping_rule,
+                ind_year_thres,
+                exclude_trigger,
+            )
             nll = neg_loglike(
                 expression,
                 data_targ[ind_data_ok],
@@ -82,7 +108,7 @@ def func_optim(expression: Expression, coefficients, data_pred, data_targ, data_
                 data_targ[ind_data_stopped],
                 {pp: params[ind_data_stopped] for pp in params},
                 data_weights[ind_data_stopped],
-                ind_data_stopped
+                ind_data_stopped,
             )
             return nll + fc
         elif type_fun_optim == "nll":
@@ -90,15 +116,15 @@ def func_optim(expression: Expression, coefficients, data_pred, data_targ, data_
             return neg_loglike(expression, data_targ, params, data_weights)
 
         else:
-            raise Exception(
-                f"Unknown type of optimization function: {type_fun_optim}"
-            )
+            raise Exception(f"Unknown type of optimization function: {type_fun_optim}")
     else:
         # something wrong: returns a blocking value
         return np.inf
 
+
 def neg_loglike(expression: Expression, data_targ, params, data_weights):
     return -loglike(expression, data_targ, params, data_weights)
+
 
 def loglike(expression: Expression, data_targ, params, data_weights):
     # compute loglikelihood
@@ -115,16 +141,18 @@ def loglike(expression: Expression, data_targ, params, data_weights):
 
     return value
 
-def stopping_rule(expression: Expression, 
-                  data_targ, 
-                  params,
-                  threshold_stopping_rule,
-                  ind_year_thres,
-                  exclude_trigger,
-                  ):
+
+def stopping_rule(
+    expression: Expression,
+    data_targ,
+    params,
+    threshold_stopping_rule,
+    ind_year_thres,
+    exclude_trigger,
+):
     # evaluating threshold over time
     thres_t = expression.distrib.isf(
-        q=1 / threshold_stopping_rule, **params # type: ignore
+        q=1 / threshold_stopping_rule, **params  # type: ignore
     )
 
     # selecting the minimum over the years to check
@@ -140,17 +168,22 @@ def stopping_rule(expression: Expression,
     ind_data_ok = ~ind_data_stopped
     return ind_data_ok, ind_data_stopped
 
-def fullcond_thres(expression: Expression, data_targ, params, data_weights, ind_data_stopped):
+
+def fullcond_thres(
+    expression: Expression, data_targ, params, data_weights, ind_data_stopped
+):
     # calculating 2nd term for full conditional of the NLL
     # fc1 = distrib.logcdf(conditional_distrib.data_targ)
     fc2 = expression.distrib.sf(data_targ, **params)
 
     return np.log(np.sum((data_weights * fc2)[ind_data_stopped]))
 
+
 def bic(expression, data_targ, params, data_weights):
     ll = loglike(expression, data_targ, params, data_weights)
     n_coeffs = len(expression.coefficients_list)
     return n_coeffs * np.log(len(data_targ)) - 2 * ll
+
 
 def crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
     # properscoring.crps_quadrature cannot be applied on conditional distributions, thu
@@ -158,9 +191,7 @@ def crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
     # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE
     tmp_cprs = []
     for i in np.arange(len(data_targ)):
-        distrib = expression.evaluate(
-            coeffs, {p: data_pred[p][i] for p in data_pred}
-        )
+        distrib = expression.evaluate(coeffs, {p: data_pred[p][i] for p in data_pred})
         tmp_cprs.append(
             properscoring.crps_quadrature(
                 x=data_targ[i],

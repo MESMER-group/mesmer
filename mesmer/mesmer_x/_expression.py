@@ -222,21 +222,19 @@ class Expression:
                     else:
                         # not a coefficient, move to the next
                         pass
-        
+
         # save coefficient indices
-        loc_coeffs = self.coefficients_dict.get("loc", []) 
+        loc_coeffs = self.coefficients_dict.get("loc", [])
         self.ind_loc_coeffs = np.array(
             [self.coefficients_list.index(c) for c in loc_coeffs]
-            )
-        
+        )
+
         scale_coeffs = self.coefficients_dict.get("scale", [])
         self.ind_sca_coeffs = np.array(
             [self.coefficients_list.index(c) for c in scale_coeffs]
-            )
-        
-        other_params = [
-            p for p in self.parameters_list if p not in ["loc", "scale"]
-        ]
+        )
+
+        other_params = [p for p in self.parameters_list if p not in ["loc", "scale"]]
         if len(other_params) > 0:
             fg_ind_others = []
             for param in other_params:

@@ -9,6 +9,7 @@ import xarray as xr
 from mesmer.core.datatree import collapse_datatree_into_dataset
 from mesmer.mesmer_x._expression import Expression
 
+
 def _test_coeffs_in_bounds(expression: Expression, values_coeffs):
 
     # checking set boundaries on coefficients
@@ -29,6 +30,7 @@ def _test_coeffs_in_bounds(expression: Expression, values_coeffs):
 
     return True
 
+
 def _test_evol_params(expression: Expression, params):
 
     # checking set boundaries on parameters
@@ -42,6 +44,7 @@ def _test_evol_params(expression: Expression, params):
             return False
 
     return True
+
 
 def _test_support(expression: Expression, params, data):
     # test of the support of the distribution: is there any data out of the
@@ -60,6 +63,7 @@ def _test_support(expression: Expression, params, data):
 
     return True
 
+
 def _test_proba_value(expression: Expression, threshold_min_proba, params, data):
     """
     Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
@@ -72,7 +76,10 @@ def _test_proba_value(expression: Expression, threshold_min_proba, params, data)
     cdf = expression.distrib.cdf(data, **params)
     return np.all(1 - cdf >= threshold_min_proba) and np.all(cdf >= threshold_min_proba)
 
-def validate_coefficients(expression: Expression, data_pred, data_targ, coefficients, threshold_min_proba):
+
+def validate_coefficients(
+    expression: Expression, data_pred, data_targ, coefficients, threshold_min_proba
+):
     """validate coefficients
 
     Parameters
@@ -134,10 +141,13 @@ def validate_coefficients(expression: Expression, data_pred, data_targ, coeffici
         return test_coeff, test_param, test_support, True, params
 
     else:
-        test_proba = _test_proba_value(expression, threshold_min_proba, params, data_targ)
+        test_proba = _test_proba_value(
+            expression, threshold_min_proba, params, data_targ
+        )
 
         # return values for each test and the evaluated distribution
         return test_coeff, test_param, test_support, test_proba, params
+
 
 def get_var_data(data):
     if isinstance(data, np.ndarray):
@@ -161,6 +171,7 @@ def get_var_data(data):
     else:
         raise ValueError("data must be a DataArray, Dataset or DataTree")
 
+
 def validate_data(data_pred, data_targ, data_weights):
     """
     check data for nans or infs
@@ -177,6 +188,7 @@ def validate_data(data_pred, data_targ, data_weights):
         Weights for the training sample.
     -------
     """
+
     def _check_data(data, name):
         # checking for NaN values
         if np.isnan(data).any():
@@ -185,10 +197,11 @@ def validate_data(data_pred, data_targ, data_weights):
         # checking for infinite values
         if np.isinf(data).any():
             raise ValueError(f"infinite values in {name}")
-    
+
     _check_data(data_targ, "target")
     _check_data(data_pred, "predictors")
     _check_data(data_weights, "weights")
+
 
 def prepare_data(predictors, target, weights):
     """
@@ -217,10 +230,7 @@ def prepare_data(predictors, target, weights):
     """
     # check format of predictors
     if isinstance(predictors, dict):
-        tmp = {
-            key: get_var_data(predictors[key])
-            for key in predictors
-        }
+        tmp = {key: get_var_data(predictors[key]) for key in predictors}
         ds_pred = xr.Dataset(tmp)
 
     elif isinstance(predictors, xr.Dataset):

@@ -8,11 +8,12 @@ import warnings
 import numpy as np
 import xarray as xr
 
+import mesmer.mesmer_x._distrib_tests as distrib_tests
+import mesmer.mesmer_x._optimizers as distrib_optimizers
+
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
-import mesmer.mesmer_x._distrib_tests as distrib_tests
 from mesmer.mesmer_x._expression import Expression
-import mesmer.mesmer_x._optimizers as distrib_optimizers
 from mesmer.mesmer_x._probability_integral_transform import weighted_median
 from mesmer.stats import gaspari_cohn
 
@@ -28,6 +29,7 @@ def ignore_warnings(func):
             return func(*args, **kwargs)
 
     return _wrapper
+
 
 class ConditionalDistributionOptions:
     def __init__(
@@ -204,13 +206,14 @@ class ConditionalDistributionOptions:
                 "`type_fun_optim='fcnll'` needs both, `threshold_stopping_rule`"
                 "  and `ind_year_thres`."
             )
-    
+
         # initialization and basic checks on threshold_min_proba
         self.threshold_min_proba = threshold_min_proba
         if threshold_min_proba is not None and (
             (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
         ):
             raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
+
 
 class ConditionalDistribution:
     def __init__(
@@ -400,7 +403,7 @@ class ConditionalDistribution:
                 "maxiter": self.options.maxiter,
                 self.options.name_xtol: self.options.xtol_req,
                 self.options.name_ftol: self.options.ftol_req,
-            }
+            },
         )
 
         # checking if the fit has failed
@@ -534,7 +537,11 @@ class ConditionalDistribution:
             # basic result: optimized value
             if score == "func_optim":
                 score = distrib_optimizers.func_optim(
-                    self.expression, coefficients_fit, data_pred, data_targ, data_weights,
+                    self.expression,
+                    coefficients_fit,
+                    data_pred,
+                    data_targ,
+                    data_weights,
                     self.options.threshold_min_proba,
                     self.options.type_fun_optim,
                     self.options.threshold_stopping_rule,
@@ -547,16 +554,24 @@ class ConditionalDistribution:
 
             # NLL averaged over sample
             if score == "nll":
-                score = distrib_optimizers.neg_loglike(self.expression, data_targ, params, data_weights)
+                score = distrib_optimizers.neg_loglike(
+                    self.expression, data_targ, params, data_weights
+                )
 
             # BIC averaged over sample
             if score == "bic":
-                score = distrib_optimizers.bic(self.options, data_targ, params, data_weights)
+                score = distrib_optimizers.bic(
+                    self.options, data_targ, params, data_weights
+                )
 
             # CRPS
             if score == "crps":
                 score = distrib_optimizers.crps(
-                    self.expression, data_targ, data_pred, data_weights, coefficients_fit
+                    self.expression,
+                    data_targ,
+                    data_pred,
+                    data_weights,
+                    coefficients_fit,
                 )
 
             quality_fit.append(score)

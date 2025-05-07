@@ -7,13 +7,12 @@ import functools
 import warnings
 
 import numpy as np
-from numpy.linalg import cond
 import xarray as xr
 from scipy.optimize import basinhopping, shgo
 
-from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
 import mesmer.mesmer_x._distrib_tests as distrib_tests
 import mesmer.mesmer_x._optimizers as distrib_optimizers
+from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
 
 
 def _finite_difference(f_high, f_low, x_high, x_low):
@@ -62,7 +61,7 @@ def find_first_guess(
     dim: str,
     weights: xr.DataArray,
     first_guess: xr.Dataset | None = None,
-    ):
+):
     """
     Find a first guess for all grid points.
 
@@ -101,9 +100,9 @@ def find_first_guess(
         data_pred,
         data_targ,
         data_weights,
-        #first_guess,
+        # first_guess,
         kwargs={"conditional_distrib": conditional_distrib},
-        input_core_dims=[[dim, "predictor"], [dim], [dim]], #[dim, "coefficient"]],
+        input_core_dims=[[dim, "predictor"], [dim], [dim]],  # [dim, "coefficient"]],
         output_core_dims=[["coefficient"]],
         vectorize=True,
         dask="parallelized",
@@ -115,12 +114,16 @@ def find_first_guess(
         out[coef] = result.isel(coefficient=icoef)
     return out
 
-def _find_fg_np(data_pred, data_targ, data_weights, conditional_distrib: ConditionalDistribution):
+
+def _find_fg_np(
+    data_pred, data_targ, data_weights, conditional_distrib: ConditionalDistribution
+):
 
     fg = FirstGuess(conditional_distrib, data_pred, data_targ, data_weights)
 
     # TODO split up into the several steps
     return fg._find_fg_allsteps()
+
 
 class FirstGuess:
     def __init__(
@@ -161,7 +164,7 @@ class FirstGuess:
         self.n_coeffs = len(self.expression.coefficients_list)
 
         distrib_tests.validate_data(data_pred, data_targ, data_weights)
-        
+
         expression = self.expression
 
         self.predictor_names = expression.predictors_list
@@ -201,7 +204,7 @@ class FirstGuess:
 
         self.data_weights = data_weights
 
-        if first_guess == None:
+        if first_guess is None:
             first_guess = np.zeros(self.n_coeffs)
         self.fg_coeffs = np.copy(first_guess)
         # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
@@ -325,7 +328,9 @@ class FirstGuess:
             m_smooth_targ = np.mean(self.smooth_targ)
             s_smooth_targ = np.std(self.smooth_targ)
             ind_targ_low = np.where(self.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
-            ind_targ_high = np.where(self.smooth_targ > m_smooth_targ + s_smooth_targ)[0]
+            ind_targ_high = np.where(self.smooth_targ > m_smooth_targ + s_smooth_targ)[
+                0
+            ]
             mean_high_preds = {
                 pp: np.mean(self.smooth_pred[pp][ind_targ_high], axis=0)
                 for pp in self.predictor_names
@@ -369,7 +374,7 @@ class FirstGuess:
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
         if len(fg_ind_loc) > 0:
-            fact_maxfev_iter=len(fg_ind_loc) / self.n_coeffs
+            fact_maxfev_iter = len(fg_ind_loc) / self.n_coeffs
 
             localfit_loc = distrib_optimizers._minimize(
                 func=self._fg_fun_loc,
@@ -377,13 +382,12 @@ class FirstGuess:
                 args=(),
                 method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
-                options = {
+                options={
                     "maxfev": self.options.maxfev * fact_maxfev_iter,
                     "maxiter": self.options.maxiter * fact_maxfev_iter,
                     self.options.name_xtol: self.options.xtol_req,
                     self.options.name_ftol: self.options.ftol_req,
-
-                }
+                },
             )
             self.fg_coeffs[fg_ind_loc] = localfit_loc.x
 
@@ -393,7 +397,7 @@ class FirstGuess:
         # scale might not be used or set in the expression
         if len(fg_ind_sca) > 0:
             x0 = self.fg_coeffs[fg_ind_sca]
-            fact_maxfev_iter=len(fg_ind_sca) / self.n_coeffs
+            fact_maxfev_iter = len(fg_ind_sca) / self.n_coeffs
 
             localfit_sca = distrib_optimizers._minimize(
                 func=self._fg_fun_sca,
@@ -401,13 +405,12 @@ class FirstGuess:
                 args=(),
                 method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
-                options = {
+                options={
                     "maxfev": self.options.maxfev * fact_maxfev_iter,
                     "maxiter": self.options.maxiter * fact_maxfev_iter,
                     self.options.name_xtol: self.options.xtol_req,
                     self.options.name_ftol: self.options.ftol_req,
-
-                }
+                },
             )
             self.fg_coeffs[fg_ind_sca] = localfit_sca.x
 
@@ -418,7 +421,7 @@ class FirstGuess:
         ]
         if len(other_params) > 0:
             fg_ind_others = self.expression.ind_others
-            fact_maxfev_iter=len(fg_ind_others) / self.n_coeffs
+            fact_maxfev_iter = len(fg_ind_others) / self.n_coeffs
 
             localfit_others = distrib_optimizers._minimize(
                 func=self._fg_fun_others,
@@ -426,13 +429,12 @@ class FirstGuess:
                 args=(),
                 method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
-                options = {
+                options={
                     "maxfev": self.options.maxfev * fact_maxfev_iter,
                     "maxiter": self.options.maxiter * fact_maxfev_iter,
                     self.options.name_xtol: self.options.xtol_req,
                     self.options.name_ftol: self.options.ftol_req,
-
-                }
+                },
             )
             self.fg_coeffs[fg_ind_others] = localfit_others.x
 
@@ -444,18 +446,22 @@ class FirstGuess:
             args=(),
             method_fit=self.options.method_fit,
             option_NelderMead="best_run",
-            options = {
+            options={
                 "maxfev": self.options.maxfev,
                 "maxiter": self.options.maxiter,
                 self.options.name_xtol: self.options.xtol_req,
                 self.options.name_ftol: self.options.ftol_req,
-            }
+            },
         )
         fg_coeffs = localfit_nll.x
 
         test_coeff, test_param, test_distrib, test_proba, _ = (
             distrib_tests.validate_coefficients(
-                self.expression, self.data_pred, self.data_targ, fg_coeffs, self.options.threshold_min_proba
+                self.expression,
+                self.data_pred,
+                self.data_targ,
+                fg_coeffs,
+                self.options.threshold_min_proba,
             )
         )
 
@@ -470,12 +476,12 @@ class FirstGuess:
                 args=(),
                 method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
-                options = {
+                options={
                     "maxfev": self.options.maxfev,
                     "maxiter": self.options.maxiter,
                     self.options.name_xtol: self.options.xtol_req,
                     self.options.name_ftol: self.options.ftol_req,
-                }
+                },
             )
             if ~np.any(np.isnan(localfit_opti.x)):
                 fg_coeffs = localfit_opti.x
@@ -666,7 +672,9 @@ class FirstGuess:
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expression.evaluate_params(coefficients, self.data_pred)
-        return distrib_optimizers.neg_loglike(self.expression, self.data_targ, params, self.data_weights)
+        return distrib_optimizers.neg_loglike(
+            self.expression, self.data_targ, params, self.data_weights
+        )
 
     def _fg_fun_ll_n(self, x, n=4):
         params = self.expression.evaluate_params(x, self.data_pred)
@@ -687,7 +695,11 @@ class FirstGuess:
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
             test_c, test_p, test_d, test_v, _ = distrib_tests.validate_coefficients(
-                self.expression, self.data_pred, self.data_targ, x, self.options.threshold_min_proba
+                self.expression,
+                self.data_pred,
+                self.data_targ,
+                x,
+                self.options.threshold_min_proba,
             )
             test = test_c and test_p and test_d and test_v
             x[i_c] += fact_coeff * x[i_c]
