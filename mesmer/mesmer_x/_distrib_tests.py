@@ -7,21 +7,21 @@ import numpy as np
 import xarray as xr
 
 from mesmer.core.datatree import collapse_datatree_into_dataset
-from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
+from mesmer.mesmer_x._expression import Expression
 
-def _test_coeffs_in_bounds(conditional_distrib: ConditionalDistribution, values_coeffs):
+def _test_coeffs_in_bounds(expression: Expression, values_coeffs):
 
     # checking set boundaries on coefficients
-    for coeff in conditional_distrib.expression.boundaries_coeffs:
-        bottom, top = conditional_distrib.expression.boundaries_coeffs[coeff]
+    for coeff in expression.boundaries_coeffs:
+        bottom, top = expression.boundaries_coeffs[coeff]
 
-        if coeff not in conditional_distrib.expression.coefficients_list:
+        if coeff not in expression.coefficients_list:
             raise ValueError(
                 f"Provided wrong boundaries on coefficient, {coeff}"
                 " does not exist in Expression"
             )
 
-        values = values_coeffs[conditional_distrib.expression.coefficients_list.index(coeff)]
+        values = values_coeffs[expression.coefficients_list.index(coeff)]
 
         if np.any(values < bottom) or np.any(top < values):
             # out of boundaries
@@ -29,11 +29,11 @@ def _test_coeffs_in_bounds(conditional_distrib: ConditionalDistribution, values_
 
     return True
 
-def _test_evol_params(conditional_distrib: ConditionalDistribution, params):
+def _test_evol_params(expression: Expression, params):
 
     # checking set boundaries on parameters
-    for param in conditional_distrib.expression.boundaries_params:
-        bottom, top = conditional_distrib.expression.boundaries_params[param]
+    for param in expression.boundaries_params:
+        bottom, top = expression.boundaries_params[param]
 
         param_values = params[param]
 
@@ -43,11 +43,11 @@ def _test_evol_params(conditional_distrib: ConditionalDistribution, params):
 
     return True
 
-def _test_support(conditional_distrib: ConditionalDistribution, params, data):
+def _test_support(expression: Expression, params, data):
     # test of the support of the distribution: is there any data out of the
     # corresponding support? dont try testing if there are issues on the parameters
 
-    bottom, top = conditional_distrib.expression.distrib.support(**params)
+    bottom, top = expression.distrib.support(**params)
 
     # out of support
     if (
@@ -60,7 +60,7 @@ def _test_support(conditional_distrib: ConditionalDistribution, params, data):
 
     return True
 
-def _test_proba_value(conditional_distrib: ConditionalDistribution, params, data):
+def _test_proba_value(expression: Expression, threshold_min_proba, params, data):
     """
     Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
     Ensures that data lies within a confidence interval of threshold_min_proba for the tested
@@ -69,11 +69,10 @@ def _test_proba_value(conditional_distrib: ConditionalDistribution, params, data
     # NOTE: DONT write 'x=data', because 'x' may be called differently for some
     # distribution (eg 'k' for poisson).
 
-    cdf = conditional_distrib.expression.distrib.cdf(data, **params)
-    thresh = conditional_distrib.options.threshold_min_proba
-    return np.all(1 - cdf >= thresh) and np.all(cdf >= thresh)
+    cdf = expression.distrib.cdf(data, **params)
+    return np.all(1 - cdf >= threshold_min_proba) and np.all(cdf >= threshold_min_proba)
 
-def validate_coefficients(conditional_distrib: ConditionalDistribution, data_pred, data_targ, coefficients):
+def validate_coefficients(expression: Expression, data_pred, data_targ, coefficients, threshold_min_proba):
     """validate coefficients
 
     Parameters
@@ -108,34 +107,34 @@ def validate_coefficients(conditional_distrib: ConditionalDistribution, data_pre
 
     """
 
-    test_coeff = _test_coeffs_in_bounds(conditional_distrib, coefficients)
+    test_coeff = _test_coeffs_in_bounds(expression, coefficients)
 
     # tests on coeffs show already that it won't work: fill in the rest with False
     if not test_coeff:
         return test_coeff, False, False, False, False
 
     # evaluate the distribution for the predictors and this iteration of coeffs
-    params = conditional_distrib.expression.evaluate_params(coefficients, data_pred)
+    params = expression.evaluate_params(coefficients, data_pred)
     # test for the validity of the parameters
-    test_param = _test_evol_params(conditional_distrib, params)
+    test_param = _test_evol_params(expression, params)
 
     # tests on params show already that it won't work: fill in the rest with False
     if not test_param:
         return test_coeff, test_param, False, False, False
 
     # test for the support of the distribution
-    test_support = _test_support(conditional_distrib, params, data_targ)
+    test_support = _test_support(expression, params, data_targ)
 
     # tests on params show already that it won't work: fill in the rest with False
     if not test_support:
         return test_coeff, test_param, test_support, False, False
 
     # test for the probability of the values
-    if conditional_distrib.options.threshold_min_proba is None:
+    if threshold_min_proba is None:
         return test_coeff, test_param, test_support, True, params
 
     else:
-        test_proba = _test_proba_value(conditional_distrib, params, data_targ)
+        test_proba = _test_proba_value(expression, threshold_min_proba, params, data_targ)
 
         # return values for each test and the evaluated distribution
         return test_coeff, test_param, test_support, test_proba, params
@@ -163,7 +162,8 @@ def get_var_data(data):
         raise ValueError("data must be a DataArray, Dataset or DataTree")
 
 def validate_data(data_pred, data_targ, data_weights):
-    """validate data
+    """
+    check data for nans or infs
 
     Parameters
     ----------
@@ -177,29 +177,18 @@ def validate_data(data_pred, data_targ, data_weights):
         Weights for the training sample.
     -------
     """
-    # basic checks on data_targ
-    check_data(data_targ, "target")
+    def _check_data(data, name):
+        # checking for NaN values
+        if np.isnan(data).any():
+            raise ValueError(f"nan values in {name}")
 
-    # basic checks on data_pred
-    check_data(data_pred, "predictors")
-
-    # basic checks on weights
-    check_data(data_weights, "weights")
-
-def check_data(data, name):
-    """
-    basic check data
-    """
-    # getting variable. useful if calling _fit_np | _find_fg_np with wrong format
-    data = get_var_data(data)
-
-    # checking for NaN values
-    if np.isnan(data).any():
-        raise ValueError(f"nan values in {name}")
-
-    # checking for infinite values
-    if np.isinf(data).any():
-        raise ValueError(f"infinite values in {name}")
+        # checking for infinite values
+        if np.isinf(data).any():
+            raise ValueError(f"infinite values in {name}")
+    
+    _check_data(data_targ, "target")
+    _check_data(data_pred, "predictors")
+    _check_data(data_weights, "weights")
 
 def prepare_data(predictors, target, weights):
     """
@@ -220,11 +209,11 @@ def prepare_data(predictors, target, weights):
     Returns
     -------
     :data_pred:`xr.Dataset`
-        shaped predictors for training (gridpoint, coefficient)
+        shaped predictors for training (predictor, sample)
     :data_targ:`xr.Dataset`
-        shaped sample for training (gridpoint, coefficient)
+        shaped sample for training (sample, gridpoint)
     :data_weights:`xr.Dataset`
-        shaped weights for training (gridpoint, coefficient)
+        shaped weights for training (sample)
     """
     # check format of predictors
     if isinstance(predictors, dict):
