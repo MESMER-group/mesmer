@@ -1,7 +1,7 @@
 from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution, ConditionalDistributionOptions
-from mesmer.mesmer_x._distrib_tests import validate_coefficients, get_var_data, validate_data, check_data, prepare_data
+from mesmer.mesmer_x._distrib_tests import validate_coefficients, get_var_data, validate_data, prepare_data
 from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._first_guess import distrib_firstguess
+from mesmer.mesmer_x._first_guess import find_first_guess
 from mesmer.mesmer_x._optimizers import func_optim, neg_loglike, loglike, stopping_rule, fullcond_thres, bic, crps
 from mesmer.mesmer_x._probability_integral_transform import (
     probability_integral_transform,
@@ -17,12 +17,11 @@ __all__ = [
     "validate_coefficients",
     "get_var_data",
     "validate_data",
-    "check_data",
     "prepare_data",
     # expression
     "Expression",
     # first guess
-    "distrib_firstguess",
+    "find_first_guess",
     # optimizers
     "func_optim",
     "neg_loglike",
