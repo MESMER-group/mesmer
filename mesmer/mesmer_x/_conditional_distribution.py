@@ -341,7 +341,7 @@ class ConditionalDistribution:
 
         # shaping inputs
         data_pred, data_targ, data_weights = distrib_tests.prepare_data(
-            self, predictors, target, weights
+            predictors, target, weights
         )
         self.predictor_dim = data_pred.predictor.values
 
@@ -376,7 +376,7 @@ class ConditionalDistribution:
             raise Exception("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise Exception("data_weights must be a numpy array.")
-        distrib_tests.validate_data(self, data_pred, data_targ, data_weights)
+        distrib_tests.validate_data(data_pred, data_targ, data_weights)
 
         # basic check on first guess
         if (fg is not None) and (len(fg) != len(self.expression.coefficients_list)):
@@ -392,10 +392,15 @@ class ConditionalDistribution:
         m = distrib_optimizers._minimize(
             func=distrib_optimizers.func_optim,
             x0=fg,
-            conditional_distrib_options=self.options,
+            method_fit=self.options.method_fit,
             args=(data_pred, data_targ, data_weights),
-            fact_maxfev_iter=1,
             option_NelderMead="best_run",
+            options={
+                "maxfev": self.options.maxfev,
+                "maxiter": self.options.maxiter,
+                self.options.name_xtol: self.options.xtol_req,
+                self.options.name_ftol: self.options.ftol_req,
+            }
         )
 
         # checking if the fit has failed
@@ -483,7 +488,7 @@ class ConditionalDistribution:
         """
         # shaping inputs
         data_pred, data_targ, data_weights = distrib_tests.prepare_data(
-            self, predictors, target, weights
+            predictors, target, weights
         )
         self.predictor_dim = data_pred.predictor.values
 
@@ -516,7 +521,7 @@ class ConditionalDistribution:
             raise Exception("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise Exception("data_weights must be a numpy array.")
-        distrib_tests.validate_data(self, data_pred, data_targ, data_weights)
+        distrib_tests.validate_data(data_pred, data_targ, data_weights)
 
         # initialize
         quality_fit = []
@@ -529,7 +534,12 @@ class ConditionalDistribution:
             # basic result: optimized value
             if score == "func_optim":
                 score = distrib_optimizers.func_optim(
-                    self, coefficients_fit, data_pred, data_targ, data_weights
+                    self.expression, coefficients_fit, data_pred, data_targ, data_weights,
+                    self.options.threshold_min_proba,
+                    self.options.type_fun_optim,
+                    self.options.threshold_stopping_rule,
+                    self.options.ind_year_thres,
+                    self.options.exclude_trigger,
                 )
 
             # calculating parameters for the next ones
@@ -546,7 +556,7 @@ class ConditionalDistribution:
             # CRPS
             if score == "crps":
                 score = distrib_optimizers.crps(
-                    self.options, data_targ, data_pred, data_weights, coefficients_fit
+                    self.expression, data_targ, data_pred, data_weights, coefficients_fit
                 )
 
             quality_fit.append(score)
