@@ -19,7 +19,7 @@ from mesmer.mesmer_x._optimizers import (
     stopping_rule,
 )
 from mesmer.mesmer_x._probability_integral_transform import (
-    probability_integral_transform,
+    ProbabilityIntegralTransform,
     weighted_median,
 )
 from mesmer.mesmer_x._weighting import get_weights_density, get_weights_uniform
@@ -30,7 +30,6 @@ __all__ = [
     "ConditionalDistributionOptions",
     # tests
     "validate_coefficients",
-    "get_var_data",
     "validate_data",
     "prepare_data",
     # expression
@@ -46,7 +45,7 @@ __all__ = [
     "bic",
     "crps",
     # probability integral transform
-    "probability_integral_transform",
+    "ProbabilityIntegralTransform",
     "weighted_median",
     # weighting
     "get_weights_density",

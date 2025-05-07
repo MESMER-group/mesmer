@@ -16,6 +16,7 @@ from mesmer.core.geospatial import geodist_exact
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._probability_integral_transform import weighted_median
 from mesmer.stats import gaspari_cohn
+from mesmer.core.utils import _check_dataset_form
 
 
 def ignore_warnings(func):
@@ -235,6 +236,7 @@ class ConditionalDistribution:
         # initialization
         self.expression = expression
         self.options = options
+        self._coefficients = None
 
     def fit(
         self,
@@ -280,7 +282,13 @@ class ConditionalDistribution:
         self.r_gasparicohn = r_gasparicohn
 
         # training
-        return self._fit_xr(predictors, target, first_guess, weights, sample_dim)
+        coefficients = self._fit_xr(predictors, target, first_guess, weights, sample_dim)
+        coefficients = coefficients.assign_attrs(
+            {"expression_name": self.expression.expression_name,
+             "expression": self.expression.expression}
+        )  # add expression as attribute
+        
+        self._coefficients = coefficients
 
     def _fit_xr(
         self,
@@ -364,6 +372,7 @@ class ConditionalDistribution:
         out = xr.Dataset()
         for icoef, coef in enumerate(self.expression.coefficients_list):
             out[coef] = result.isel(coefficient=icoef)
+
         return out.drop_vars("coefficient")
 
     @ignore_warnings  # suppress nan & inf warnings
@@ -572,3 +581,73 @@ class ConditionalDistribution:
 
             quality_fit.append(score)
         return np.array(quality_fit)
+    
+    @property
+    def coefficients(self):
+        """The coefficients of this conditional distribution."""
+
+        if self._coefficients is None:
+            raise ValueError(
+                "'coefficients' not set - call `fit` or assign them to "
+                "`ConditionalDistribution().coefficients`."
+            )
+
+        return self._coefficients
+
+    @coefficients.setter
+    def coefficients(self, coefficients):
+        """The coefficients of this conditional distribution."""
+
+        required_vars = set(self.expression.coefficients_list)
+        _check_dataset_form(
+            coefficients,
+            "coefficients",
+            required_vars=required_vars,
+            # optional_vars="weights",
+            requires_other_vars=True,
+        )
+
+        self._coefficients = coefficients
+
+    @classmethod
+    def from_netcdf(cls, filename: str, **kwargs):
+        """read coefficients from a netCDF file with default options
+
+        Parameters
+        ----------
+            Name of the netCDF file to open.
+        **kwargs : Any
+            Additional keyword arguments passed to ``xr.open_dataset``
+        """
+        ds = xr.open_dataset(filename, **kwargs)
+        expression_str = ds.attrs.get("expression", None)
+        if expression_str is None:
+            raise ValueError(
+                "The netCDF file does not contain the 'expression' attribute."
+            )
+        
+        expression_name = ds.attrs.get("expression_name", None)
+        if expression_name is None:
+            raise ValueError(
+                "The netCDF file does not contain the 'expression_name' attribute."
+            )
+        
+        expression = Expression(expression_str, expression_name)
+        obj = cls(expression, ConditionalDistributionOptions(expression))
+        obj.coefficients = ds
+
+        return obj
+
+    def to_netcdf(self, filename: str, **kwargs):
+        """save coefficients dataset to a netCDF file
+
+        Parameters
+        ----------
+        filename : str
+            Name of the netCDF file to save.
+        **kwargs : Any
+            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+        """
+
+        coefficients = self.coefficients
+        coefficients.to_netcdf(filename, **kwargs)
