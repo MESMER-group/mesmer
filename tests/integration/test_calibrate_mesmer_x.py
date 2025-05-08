@@ -33,8 +33,8 @@ from mesmer.mesmer_x import (
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
             False,
-            False,
-            marks=pytest.mark.slow,
+            True,
+            #marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
@@ -241,7 +241,7 @@ def test_calibrate_mesmer_x(
 
     if update_expected_files:
         # save the parameters
-        transform_coeffs.to_netcdf(distrib_file)
+        distrib.to_netcdf(distrib_file)
         local_ar_params.to_netcdf(local_ar_file)
         localized_ecov.to_netcdf(localized_ecov_file)
         pytest.skip("Updated param files.")
