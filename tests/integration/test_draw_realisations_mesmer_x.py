@@ -2,35 +2,37 @@ import pathlib
 
 import pytest
 import xarray as xr
-
-# from mesmer.core._datatreecompat import map_over_datasets
 import mesmer
-import mesmer.mesmer_x
+from mesmer.mesmer_x import (
+    ConditionalDistribution,
+    ConditionalDistributionOptions,
+    Expression,
+    ProbabilityIntegralTransform,
+)
+
 
 
 @pytest.mark.parametrize(
-    ("scenario", "target_name", "expr", "expr_name", "update_expected_files"),
+    ("scenario", "target_name", "expr_name", "update_expected_files"),
     [
         pytest.param(
             "ssp585",
             "tasmax",
-            "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
             False,
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
             "tasmax",
-            "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1_2ndfit",
             False,
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
     ],
 )
 def test_make_realisations_mesmer_x(
-    scenario, target_name, expr, expr_name, test_data_root_dir, update_expected_files
+    scenario, target_name, expr_name, test_data_root_dir, update_expected_files
 ):
     # set some configuration parameters
     n_realizations = 1  # TODO: can now do more than 1 realization. change output data?
@@ -68,12 +70,11 @@ def test_make_realisations_mesmer_x(
 
     # load the parameters
     file_end = f"{target_name}_{expr_name}_{esm}_{scenario}"
-    transform_params = xr.open_dataset(
+    distrib_orig = ConditionalDistribution.from_netcdf(
         TEST_PATH
         / "test-params"
         / "distrib"
-        / f"params_transform_distrib_{file_end}.nc"
-    )
+        / f"params_transform_distrib_{file_end}.nc")
 
     local_ar_params = xr.open_dataset(
         TEST_PATH
@@ -101,14 +102,16 @@ def test_make_realisations_mesmer_x(
     transf_emus = xr.Dataset({target_name: transf_emus})
 
     # back-transform the realizations
-    back_pit = mesmer.mesmer_x.probability_integral_transform(
-        expr_start="norm(loc=0, scale=1)",
-        coeffs_start=None,
-        expr_end=expr,
-        coeffs_end=transform_params,
+    expr_tranf = Expression("norm(loc=0, scale=1)", "standard_normal")
+    distrib_transf = ConditionalDistribution(expr_tranf, ConditionalDistributionOptions(expr_tranf))
+
+    back_pit = ProbabilityIntegralTransform(
+        distrib_orig = distrib_transf,
+        distrib_targ = distrib_orig,
     )
+
     emus = back_pit.transform(
-        data=transf_emus, target_name=target_name, preds_start=None, preds_end=predictor
+        data=transf_emus, target_name=target_name, preds_orig=None, preds_targ=predictor
     )
 
     expected_output_file = (

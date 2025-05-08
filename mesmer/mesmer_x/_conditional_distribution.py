@@ -617,7 +617,7 @@ class ConditionalDistribution:
             "coefficients",
             required_vars=required_vars,
             # optional_vars="weights",
-            requires_other_vars=True,
+            requires_other_vars=False,
         )
 
         self._coefficients = coefficients
