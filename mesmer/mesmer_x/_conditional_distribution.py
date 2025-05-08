@@ -353,7 +353,7 @@ class ConditionalDistribution:
         data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data( # type: ignore
             predictors, target, weights, first_guess
         )
-        self.predictor_dim = data_pred.predictor.values
+        self.predictor_names = data_pred.coords["predictor"].values
 
         # search for each gridpoint
         result = xr.apply_ufunc(
@@ -377,13 +377,6 @@ class ConditionalDistribution:
 
     @ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
-        # check data
-        if not isinstance(data_pred, np.ndarray):
-            raise Exception("data_pred must be a numpy array.")
-        if not isinstance(data_targ, np.ndarray):
-            raise Exception("data_targ must be a numpy array.")
-        if not isinstance(data_weights, np.ndarray):
-            raise Exception("data_weights must be a numpy array.")
         distrib_tests.validate_data(data_pred, data_targ, data_weights)
 
         # basic check on first guess
@@ -394,7 +387,8 @@ class ConditionalDistribution:
 
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
-        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_dim)}
+        # NOTE: extremely important that the order is the right one
+        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)}
 
         # training
         m = distrib_optimizers._minimize(
@@ -498,7 +492,7 @@ class ConditionalDistribution:
         data_pred, data_targ, data_weights, _ = distrib_tests.prepare_data(
             predictors, target, weights
         )
-        self.predictor_dim = data_pred.predictor.values
+        self.predictor_names = data_pred.predictor.values
 
         # shaping coefficients
         da_coefficients = coefficients_fit.to_dataarray(dim="coefficient")
@@ -536,7 +530,7 @@ class ConditionalDistribution:
 
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
-        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_dim)}
+        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)}
 
         for score in self.scores_fit:
             # basic result: optimized value

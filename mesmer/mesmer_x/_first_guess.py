@@ -105,6 +105,9 @@ def find_first_guess(
         predictors, target, weights, first_guess
     )
 
+    # NOTE: extremely important that the order is the right one
+    predictor_names = data_pred.coords["predictor"].values.tolist()
+
     # search for each gridpoint
     result = xr.apply_ufunc(
         _find_fg_np,
@@ -112,7 +115,7 @@ def find_first_guess(
         data_targ,
         data_weights,
         first_guess,
-        kwargs={"conditional_distrib": conditional_distrib},
+        kwargs={"conditional_distrib": conditional_distrib, "predictor_names": predictor_names},
         input_core_dims=[[sample_dim, "predictor"], [sample_dim], [sample_dim], ["coefficient"]],
         output_core_dims=[["coefficient"]],
         vectorize=True,
@@ -128,10 +131,10 @@ def find_first_guess(
 
 
 def _find_fg_np(
-    data_pred, data_targ, data_weights, first_guess, conditional_distrib: ConditionalDistribution
+    data_pred, data_targ, data_weights, first_guess, conditional_distrib: ConditionalDistribution, predictor_names,
 ):
 
-    fg = FirstGuess(conditional_distrib, data_pred, data_targ, data_weights, first_guess)
+    fg = FirstGuess(conditional_distrib, data_pred, predictor_names, data_targ, data_weights, first_guess)
 
     # TODO split up into the several steps
     return fg._find_fg_allsteps()
@@ -142,6 +145,7 @@ class FirstGuess:
         self,
         conditional_distrib: ConditionalDistribution,
         data_pred,
+        predictor_names,
         data_targ,
         data_weights,
         first_guess,
@@ -171,13 +175,10 @@ class FirstGuess:
         self.options = conditional_distrib.options
         self.expression = conditional_distrib.expression
         self.func_first_guess = func_first_guess
+        self.predictor_names = predictor_names
+        n_preds = len(self.predictor_names)
 
         distrib_tests.validate_data(data_pred, data_targ, data_weights)
-
-        expression = self.expression
-
-        self.predictor_names = expression.predictors_list
-        n_preds = len(self.predictor_names)
 
         # ensuring format of numpy predictors
         if data_pred.ndim == 0:
@@ -194,6 +195,7 @@ class FirstGuess:
             raise Exception("Numpy predictors should not have a shape greater than 2.")
 
         # build dictionary
+        # NOTE: extremely important that the order is the right one
         self.data_pred = {
             pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)
         }
