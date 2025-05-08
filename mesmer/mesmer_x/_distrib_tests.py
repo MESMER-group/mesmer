@@ -180,7 +180,7 @@ def validate_data(data_pred, data_targ, data_weights):
     _check_data(data_weights, "weights")
 
 
-def prepare_data(predictors, target, weights, first_guess = None):
+def prepare_data(predictors, target, weights, first_guess=None):
     """
     shaping data into DataArrays for first guess, training or evaluation of scores.
 
@@ -246,7 +246,7 @@ def prepare_data(predictors, target, weights, first_guess = None):
     # check format of weights
     if not (isinstance(weights, xr.Dataset) or isinstance(weights, xr.DataArray)):
         raise Exception("the weights must be a xr.Dataset or xr.DataArray.")
-    
+
     if isinstance(first_guess, xr.Dataset):
         first_guess = first_guess.to_dataarray(dim="coefficient")
 

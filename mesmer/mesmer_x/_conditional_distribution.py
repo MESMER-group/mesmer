@@ -13,10 +13,10 @@ import mesmer.mesmer_x._optimizers as distrib_optimizers
 
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
+from mesmer.core.utils import _check_dataset_form
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._weighting import weighted_median
 from mesmer.stats import gaspari_cohn
-from mesmer.core.utils import _check_dataset_form
 
 
 def ignore_warnings(func):
@@ -282,12 +282,16 @@ class ConditionalDistribution:
         self.r_gasparicohn = r_gasparicohn
 
         # training
-        coefficients = self._fit_xr(predictors, target, first_guess, weights, sample_dim)
+        coefficients = self._fit_xr(
+            predictors, target, first_guess, weights, sample_dim
+        )
         coefficients = coefficients.assign_attrs(
-            {"expression_name": self.expression.expression_name,
-             "expression": self.expression.expression}
+            {
+                "expression_name": self.expression.expression_name,
+                "expression": self.expression.expression,
+            }
         )  # add expression as attribute
-        
+
         self._coefficients = coefficients
 
     def _fit_xr(
@@ -350,7 +354,7 @@ class ConditionalDistribution:
             first_guess = second_guess
 
         # shaping inputs
-        data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data( # type: ignore
+        data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data(  # type: ignore
             predictors, target, weights, first_guess
         )
         self.predictor_names = data_pred.coords["predictor"].values
@@ -362,7 +366,12 @@ class ConditionalDistribution:
             data_targ,
             first_guess,
             data_weights,
-            input_core_dims=[[sample_dim, "predictor"], [sample_dim], ["coefficient"], [sample_dim]],
+            input_core_dims=[
+                [sample_dim, "predictor"],
+                [sample_dim],
+                ["coefficient"],
+                [sample_dim],
+            ],
             output_core_dims=[["coefficient"]],
             vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
             dask="parallelized",
@@ -395,7 +404,17 @@ class ConditionalDistribution:
             func=distrib_optimizers.func_optim,
             x0=fg,
             method_fit=self.options.method_fit,
-            args=(data_pred, data_targ, data_weights, self.expression, self.options.threshold_min_proba, self.options.type_fun_optim, self.options.threshold_stopping_rule, self.options.exclude_trigger, self.options.ind_year_thres),
+            args=(
+                data_pred,
+                data_targ,
+                data_weights,
+                self.expression,
+                self.options.threshold_min_proba,
+                self.options.type_fun_optim,
+                self.options.threshold_stopping_rule,
+                self.options.exclude_trigger,
+                self.options.ind_year_thres,
+            ),
             option_NelderMead="best_run",
             options={
                 "maxfev": self.options.maxfev,
@@ -575,7 +594,7 @@ class ConditionalDistribution:
 
             quality_fit.append(score)
         return np.array(quality_fit)
-    
+
     @property
     def coefficients(self):
         """The coefficients of this conditional distribution."""
@@ -619,13 +638,13 @@ class ConditionalDistribution:
             raise ValueError(
                 "The netCDF file does not contain the 'expression' attribute."
             )
-        
+
         expression_name = ds.attrs.get("expression_name", None)
         if expression_name is None:
             raise ValueError(
                 "The netCDF file does not contain the 'expression_name' attribute."
             )
-        
+
         expression = Expression(expression_str, expression_name)
         obj = cls(expression, ConditionalDistributionOptions(expression))
         obj.coefficients = ds

@@ -4,6 +4,7 @@
 # https://www.gnu.org/licenses/
 
 import math
+import warnings
 
 import numpy as np
 import scipy as sp
@@ -189,6 +190,15 @@ class Expression:
                 else:
                     self.boundaries_params[param] = [-np.inf, np.inf]
 
+            if (
+                "scale" in self.boundaries_params
+                and self.boundaries_params["scale"][0] < 0
+            ):
+                warnings.warn(
+                    "Found lower boundary on scale parameter that is negative, setting to 0."
+                )
+                self.boundaries_params["scale"][0] = 0
+
     def _find_coefficients(self):
         """
         coefficients are supposed to be written as "c#", with "#" being a number.
@@ -224,7 +234,7 @@ class Expression:
                         pass
 
         self.n_coeffs = len(self.coefficients_list)
-        
+
         # save coefficient indices
         loc_coeffs = self.coefficients_dict.get("loc", [])
         self.ind_loc_coeffs = np.array(

@@ -207,6 +207,7 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
             "The format for targ_data must be a xr.DataTree, xr.Dataset or a np.array."
         )
 
+
 def weighted_median(data, weights):
     """
     Args:
