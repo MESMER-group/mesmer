@@ -2,8 +2,21 @@ import numpy as np
 import pytest
 from scipy.stats import beta, binom, gamma, genextreme, hypergeom, laplace, truncnorm
 
-import mesmer.mesmer_x
-from mesmer.mesmer_x._first_guess import _finite_difference, _smooth_data
+from mesmer.mesmer_x import (
+    ConditionalDistribution,
+    ConditionalDistributionOptions,
+    Expression,
+)
+from mesmer.mesmer_x._first_guess import (
+    FirstGuess,
+    _find_fg_np,
+    _finite_difference,
+)
+from mesmer.mesmer_x._weighting import get_weights_uniform
+
+
+def fg_default(n_coeffs):
+    return np.zeros(n_coeffs)
 
 
 def test_first_guess_standard_normal():
@@ -12,15 +25,22 @@ def test_first_guess_standard_normal():
     pred = np.ones(n)
     targ = rng.normal(loc=0, scale=1, size=n)
 
-    expression = mesmer.mesmer_x.Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
+
+    weights = get_weights_uniform(targ, "tas", None)
+    fg_coeffs = fg_default(2)
+
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
+    )
 
     np.testing.assert_allclose(result, [0.0, 1.0], atol=0.02)
 
@@ -34,17 +54,23 @@ def test_first_guess_standard_normal_including_pred():
     c3 = 1.0
     targ = rng.normal(loc=c1 * pred + c2, scale=c3, size=n)
 
-    expression = mesmer.mesmer_x.Expression(
-        "norm(loc=c1*__tas__+c2, scale=c3)", expr_name="exp1"
+    expression = Expression("norm(loc=c1*__tas__+c2, scale=c3)", expr_name="exp1")
+
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    weights = get_weights_uniform(targ, "tas", None)
+    fg_coeffs = fg_default(3)
+
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.03)
 
@@ -57,15 +83,23 @@ def test_first_guess_provided(first_guess):
     loc, scale = 1, 1
     targ = rng.normal(loc=loc, scale=scale, size=n)
 
-    expression = mesmer.mesmer_x.Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
+
+    weights = get_weights_uniform(targ, "tas", None)
+    fg_coeffs = fg_default(2)
+
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
+    )
 
     np.testing.assert_allclose(result, [loc, scale], rtol=0.02)
 
@@ -82,28 +116,39 @@ def test_first_guess_GEV(shape):
     # distribution with loc, scale, and shape parameters
     targ = genextreme.rvs(c=shape, loc=loc, scale=scale, size=n, random_state=rng)
 
-    expression = mesmer.mesmer_x.Expression(
-        "genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1"
+    expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
+
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    weights = get_weights_uniform(targ, "tas", None)
+    fg_coeffs = fg_default(3)
+
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = [loc, scale, shape]
 
     # test right order of magnitude
     np.testing.assert_allclose(result, expected, rtol=0.4)
 
-    # any difference if we provide a first guess?
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, [loc, scale, shape], None
+    # any difference if we provide a close first guess?
+    result2 = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=[loc, scale, shape],
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result2 = fg_mx._find_fg_np(pred, targ, weights)
+
     # NOTE: leads to the same result as without first guess
     np.testing.assert_allclose(result2, result, rtol=1.0e-3)
 
@@ -119,17 +164,25 @@ def test_first_guess_GEV_including_pred():
     # distribution with loc, scale, and shape parameters
     targ = genextreme.rvs(c=shape, loc=pred**c1, scale=scale, size=n, random_state=rng)
 
-    expression = mesmer.mesmer_x.Expression(
+    expression = Expression(
         "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
     )
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
+
+    weights = get_weights_uniform(targ, "tas", None)
+    fg_coeffs = fg_default(3)
+
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
+    )
 
     expected = [c1, scale, shape]
 
@@ -147,9 +200,7 @@ def test_first_guess_truncnorm():
     a = -1.2  # nr of stds from loc at which to truncate
     b = 1.2
     targ = truncnorm.rvs(loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng)
-    expression = mesmer.mesmer_x.Expression(
-        "truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1"
-    )
+    weights = get_weights_uniform(targ, "tas", None)
 
     # NOTE: this is an interesting case to test because the fact that the distribution is truncated
     # makes the optimization for the scale biased in step 3: here we fit the scale to be close to the
@@ -157,17 +208,22 @@ def test_first_guess_truncnorm():
     # thus the first fit for the scale is too small, then the fit for the bounds is too large, but step 5
     # does a good job in fixing this.
 
-    # needs first guess different from 0, 0 for a and b, degenerate otherwise, also degenerate if a == b
+    expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
+    )
 
+    # needs first guess different from 0, 0 for a and b, degenerate otherwise, also degenerate if a == b
     first_guess = [0.0, 1.0, -1, 2.0]
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, first_guess, None
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=first_guess,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = [loc, scale, a, b]
 
@@ -182,20 +238,22 @@ def test_fg_binom():
     n_trials = 10
     p = 0.5
     targ = binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1"
+    expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
     first_guess = [11, 0.4]
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, first_guess, None
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=first_guess,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = [n_trials, p]
 
@@ -211,20 +269,23 @@ def test_fg_hypergeom():
     n_draws = 10
     n_success = 2
     targ = hypergeom.rvs(M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)", expr_name="exp1"
+    expr_str = "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)"
+    expression = Expression(expr_str, expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
     first_guess = [99, 9, 1]
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, first_guess, None
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=first_guess,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = [M, n_draws, n_success]
 
@@ -238,16 +299,21 @@ def test_fg_hypergeom():
 
     first_guess = [99, 9, 1]
     boundaries_coeffs = {"c1": (80, 110), "c2": (5, 10), "c3": (1, 3)}
+    expression = Expression(
+        expr_str, expr_name="exp1", boundaries_coeffs=boundaries_coeffs
+    )
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
+    )
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(
-        expression, 1.0e-9, None, boundaries_coeffs
+    result_with_bounds = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=first_guess,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, first_guess, None
-    )
-    result_with_bounds = fg_mx._find_fg_np(pred, targ, weights)
 
     np.testing.assert_equal(result, result_with_bounds)
 
@@ -262,25 +328,29 @@ def test_first_guess_beta():
     loc = 0
     scale = 1
     targ = beta.rvs(a, b, loc, scale, size=n, random_state=rng)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1"
+    expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
+
+    options_solver = {"fg_with_global_opti": True}
+
+    distrib = ConditionalDistribution(
+        expression,
+        ConditionalDistributionOptions(expression, options_solver=options_solver),
     )
 
     # we need a first guess here because our default first guess is zeros, which leads
     # to a degenerate distribution in the case of a beta distribution
     first_guess = [1.0, 1.0]
-    options_solver = {"fg_with_global_opti": True}
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(
-        expression, tests_mx, None, options_solver
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=first_guess,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, first_guess, None
-    )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
     # it is always (0, 1), thus the optimization with _fg_fun_others does not do anything
@@ -300,23 +370,25 @@ def test_first_guess_gamma():
     scale = 1
     targ = gamma.rvs(a, loc, scale, size=n, random_state=rng)
 
-    expression = mesmer.mesmer_x.Expression(
-        "gamma(loc=0, scale=1, a=c1)", expr_name="exp1"
+    expression = Expression("gamma(loc=0, scale=1, a=c1)", expr_name="exp1")
+    weights = get_weights_uniform(targ, "tas", None)
+
+    options_solver = {"fg_with_global_opti": True}
+    distrib = ConditionalDistribution(
+        expression,
+        ConditionalDistributionOptions(expression, options_solver=options_solver),
     )
 
     # we need a first guess different from zero for gamma distribution
     first_guess = [1.0]
-    options_solver = {"fg_with_global_opti": True}
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(
-        expression, tests_mx, None, options_solver
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=first_guess,
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, first_guess, None
-    )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = [a]
 
@@ -330,18 +402,20 @@ def test_fg_fun_scale_laplace():
     loc = 2
     scale = 1
     targ = laplace.rvs(loc=loc, scale=scale, size=n, random_state=rng)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "laplace(loc=c1, scale=c2)", expr_name="exp1"
+    expression = Expression("laplace(loc=c1, scale=c2)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = [loc, scale]
 
@@ -359,20 +433,27 @@ def test_first_guess_with_bounds():
     scale_bounds = (0.5, 1.5)
 
     targ = rng.normal(loc=loc, scale=scale, size=n)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-
-    boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds}
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(
-        expression, 1.0e-9, None, boundaries_coeffs
+    expr_str = "norm(loc=c1, scale=c2)"
+    expression = Expression(
+        expr_str,
+        expr_name="exp1",
+        boundaries_coeffs={"c1": loc_bounds, "c2": scale_bounds},
     )
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
+
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
+    )
 
     # test result is within bounds
     assert loc_bounds[0] <= result[0] <= loc_bounds[1]
@@ -382,17 +463,23 @@ def test_first_guess_with_bounds():
 
     # test with bounds outside true value
     scale_bounds_wrong = (0.5, 0.8)
-    boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds_wrong}
+    expression = Expression(
+        expr_str,
+        expr_name="exp2",
+        boundaries_coeffs={"c1": loc_bounds, "c2": scale_bounds_wrong},
+    )
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
+    )
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(
-        expression, 1.0e-9, None, boundaries_coeffs
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
-    )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = np.array([-0.016552528, 1.520612114])
     np.testing.assert_allclose(result, expected, atol=0.5)
@@ -402,41 +489,45 @@ def test_first_guess_with_bounds():
 
     # fails if we enforce the bounds
     options_solver = {"fg_with_global_opti": True}
+    distrib = ConditionalDistribution(
+        expression,
+        ConditionalDistributionOptions(expression, options_solver=options_solver),
+    )
 
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(
-        expression, 1.0e-9, None, boundaries_coeffs
-    )
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(
-        expression, tests_mx, None, options_solver
-    )
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
-    )
     with pytest.raises(ValueError, match="Global optimization for first guess failed,"):
-        result = fg_mx._find_fg_np(pred, targ, weights)
+        _find_fg_np(
+            data_pred=pred,
+            data_targ=targ,
+            data_weights=weights,
+            first_guess=fg_default(2),
+            conditional_distrib=distrib,
+            predictor_names=["tas"],
+        )
 
     # when does step 7 actually succeed?
     # when we do enforce a global optimum but the bounds are good
     boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds}
-
-    weights = mesmer.mesmer_x.get_weights_uniform(targ, "tas", None)
-    tests_mx = mesmer.mesmer_x.distrib_tests(
-        expression, 1.0e-9, None, boundaries_coeffs
+    expression = Expression(
+        expr_str, expr_name="exp1", boundaries_coeffs=boundaries_coeffs
     )
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(
-        expression, tests_mx, None, options_solver
+    distrib = ConditionalDistribution(
+        expression,
+        ConditionalDistributionOptions(expression, options_solver=options_solver),
     )
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    result = _find_fg_np(
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
+        conditional_distrib=distrib,
+        predictor_names=["tas"],
     )
-    result = fg_mx._find_fg_np(pred, targ, weights)
 
     expected = np.array([loc, scale])
     np.testing.assert_allclose(result, expected, atol=0.1)
 
 
-@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
+# @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")
 def test_fg_func_deriv01():
     rng = np.random.default_rng(0)
     n = 251
@@ -444,69 +535,52 @@ def test_fg_func_deriv01():
     c1 = 2.0
     c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "norm(loc=c1*__tas__, scale=c2)", expr_name="exp1"
+    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
-    )
-
-    fg_mx.predictor_dim = fg_mx.expr_fit.inputs_list
-    fg_mx.data_pred = {"tas": pred}
-    fg_mx.data_targ = targ
-
-    # smooting to help with location & scale
-    fg_mx.l_smooth = 5
-    fg_mx.smooth_targ = _smooth_data(fg_mx.data_targ, length=fg_mx.l_smooth)
-    fg_mx.dev_smooth_targ = (
-        fg_mx.data_targ[fg_mx.l_smooth : -fg_mx.l_smooth] - fg_mx.smooth_targ
-    )
-    fg_mx.smooth_pred = {
-        pp: _smooth_data(fg_mx.data_pred[pp], length=fg_mx.l_smooth)
-        for pp in fg_mx.predictor_dim
-    }
-
-    # preparation of coefficients
-    fg_mx.fg_coeffs = np.zeros(fg_mx.n_coeffs)
-    loc_coeffs = fg_mx.expr_fit.coefficients_dict.get("loc", [])
-    fg_mx.fg_ind_loc = np.array(
-        [fg_mx.expr_fit.coefficients_list.index(c) for c in loc_coeffs]
+    fg = FirstGuess(
+        distrib,
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
     )
 
     # preparation of derivatives
-    m_smooth_targ, s_smooth_targ = np.mean(fg_mx.smooth_targ), np.std(fg_mx.smooth_targ)
-    ind_targ_low = np.where(fg_mx.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
-    ind_targ_high = np.where(fg_mx.smooth_targ > m_smooth_targ + s_smooth_targ)[0]
+    m_smooth_targ, s_smooth_targ = np.mean(fg.smooth_targ), np.std(fg.smooth_targ)
+    ind_targ_low = np.where(fg.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
+    ind_targ_high = np.where(fg.smooth_targ > m_smooth_targ + s_smooth_targ)[0]
     mean_high_preds = {
-        pp: np.mean(fg_mx.smooth_pred[pp][ind_targ_high], axis=0)
-        for pp in fg_mx.predictor_dim
+        pp: np.mean(fg.smooth_pred[pp][ind_targ_high], axis=0)
+        for pp in fg.predictor_names
     }
     mean_low_preds = {
-        pp: np.mean(fg_mx.smooth_pred[pp][ind_targ_low], axis=0)
-        for pp in fg_mx.predictor_dim
+        pp: np.mean(fg.smooth_pred[pp][ind_targ_low], axis=0)
+        for pp in fg.predictor_names
     }
 
     derivative_targ = {
         pp: _finite_difference(
-            np.mean(fg_mx.smooth_targ[ind_targ_high]),
-            np.mean(fg_mx.smooth_targ[ind_targ_low]),
+            np.mean(fg.smooth_targ[ind_targ_high]),
+            np.mean(fg.smooth_targ[ind_targ_low]),
             mean_high_preds[pp],
             mean_low_preds[pp],
         )
-        for pp in fg_mx.predictor_dim
+        for pp in fg.predictor_names
     }
 
-    loss_at_toolow = fg_mx._fg_fun_deriv01(
+    loss_at_toolow = fg._fg_fun_deriv01(
         [c1 / 2], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
     )
-    loss_at_truesolution = fg_mx._fg_fun_deriv01(
+    loss_at_truesolution = fg._fg_fun_deriv01(
         [c1], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
     )
-    loss_at_toohigh = fg_mx._fg_fun_deriv01(
+    loss_at_toohigh = fg._fg_fun_deriv01(
         [c1 * 2], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
     )
 
@@ -523,32 +597,28 @@ def test_fg_fun_loc():
     c1 = 2.0
     c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "norm(loc=c1*__tas__, scale=c2)", expr_name="exp1"
+    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    fg = FirstGuess(
+        distrib,
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
     )
-
-    fg_mx.predictor_dim = fg_mx.expr_fit.inputs_list
-    fg_mx.data_pred = {"tas": pred}
-    fg_mx.smooth_targ = _smooth_data(targ)
-    fg_mx.smooth_pred = {
-        pp: _smooth_data(fg_mx.data_pred[pp]) for pp in fg_mx.predictor_dim
-    }
-    fg_mx.fg_coeffs = [0.0, 0.0]
-    fg_mx.fg_ind_loc = np.array([0])
 
     # test local minima at true coefficients
     delta = 1.0e-4
 
-    loss_at_toolow = fg_mx._fg_fun_loc(c1 - delta)
-    loss_at_truesolution = fg_mx._fg_fun_loc(c1)
-    loss_at_toohigh = fg_mx._fg_fun_loc(c1 + delta)
+    loss_at_toolow = fg._fg_fun_loc(c1 - delta)
+    loss_at_truesolution = fg._fg_fun_loc(c1)
+    loss_at_toohigh = fg._fg_fun_loc(c1 + delta)
 
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution
@@ -563,62 +633,52 @@ def test_fg_fun_sca():
 
     # test normal
     targ = rng.normal(loc=loc, scale=scale, size=n)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
+    )
+    fg = FirstGuess(
+        distrib,
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=[loc, scale],
     )
 
-    fg_mx.data_targ = targ
-    fg_mx.data_pred = {"tas": pred}
-    fg_mx.l_smooth = 5
-    fg_mx.smooth_targ = _smooth_data(fg_mx.data_targ, length=fg_mx.l_smooth)
-    fg_mx.dev_smooth_targ = (
-        fg_mx.data_targ[fg_mx.l_smooth : -fg_mx.l_smooth] - fg_mx.smooth_targ
-    )
-    fg_mx.fg_coeffs = [loc, scale]
-    fg_mx.fg_ind_sca = np.array([1])
-
-    result = fg_mx._fg_fun_sca(scale)
+    result = fg._fg_fun_sca(scale)
     np.testing.assert_allclose(result, 0, atol=0.1)
 
     # test GEV
     targ = genextreme.rvs(c=1, loc=loc, scale=scale, size=n, random_state=rng)
+    weights = get_weights_uniform(targ, "tas", None)
 
-    expression = mesmer.mesmer_x.Expression(
-        "genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1"
+    expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
-
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    fg = FirstGuess(
+        distrib,
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=[loc, scale, 1.0],
     )
-
-    fg_mx.data_targ = targ
-    fg_mx.data_pred = {"tas": pred}
-    fg_mx.l_smooth = 5
-    fg_mx.smooth_targ = _smooth_data(fg_mx.data_targ, length=fg_mx.l_smooth)
-    fg_mx.dev_smooth_targ = (
-        fg_mx.data_targ[fg_mx.l_smooth : -fg_mx.l_smooth] - fg_mx.smooth_targ
-    )
-    fg_mx.fg_coeffs = [loc, scale, 1.0]
-    fg_mx.fg_ind_sca = np.array([1])
 
     # test local minimum at true value
     delta = 1.0  # don't get closer than this since for a GEV the variance is not necessarily close to the scale
-    loss_at_toolow = fg_mx._fg_fun_sca(scale - delta)
-    loss_at_truesolution = fg_mx._fg_fun_sca(scale)
-    loss_at_toohigh = fg_mx._fg_fun_sca(scale + delta)
+    loss_at_toolow = fg._fg_fun_sca(scale - delta)
+    loss_at_truesolution = fg._fg_fun_sca(scale)
+    loss_at_toohigh = fg._fg_fun_sca(scale + delta)
 
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution
 
 
-@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/582")
+# @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/582")
 def test_fg_fun_others():
     rng = np.random.default_rng(0)
     n = 251
@@ -628,30 +688,37 @@ def test_fg_fun_others():
     a = -1.2  # nr of stds from loc at which to truncate
     b = 1.2
     targ = truncnorm.rvs(loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng)
-    expression = mesmer.mesmer_x.Expression(
-        "truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1"
+    weights = get_weights_uniform(targ, "tas", None)
+
+    expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
-    tests_mx = mesmer.mesmer_x.distrib_tests(expression, 1.0e-9, None, None)
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(expression, tests_mx, None, None)
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expression, tests_mx, optim_mx, None, None
+    fg = FirstGuess(
+        distrib,
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=np.array([loc, scale, a, b]),
     )
 
-    fg_mx.data_targ = targ
-    fg_mx.data_pred = {"tas": pred}
-    fg_mx.fg_coeffs = [loc, scale, a, b]
-    fg_mx.fg_ind_others = np.array([2, 3])
+    np.testing.assert_equal(fg.data_targ, targ)
+    assert list(fg.data_pred.keys()) == ["tas"]
+    np.testing.assert_equal(fg.data_pred["tas"], pred)
+    np.testing.assert_equal(fg.fg_coeffs, np.array([loc, scale, a, b]))
+    np.testing.assert_equal(fg.expression.ind_others, np.array([2, 3]))
 
     # test local minimum at true value
     delta = 1
-    loss_at_toolow_a = fg_mx._fg_fun_others([a - delta, b])
-    loss_at_toohigh_a = fg_mx._fg_fun_others([a + delta, b])
+    loss_at_toolow_a = fg._fg_fun_others([a - delta, b])
+    loss_at_toohigh_a = fg._fg_fun_others([a + delta, b])
 
-    loss_at_toolow_b = fg_mx._fg_fun_others([a, b - delta])
-    loss_at_toohigh_b = fg_mx._fg_fun_others([a, b + delta])
+    loss_at_toolow_b = fg._fg_fun_others([a, b - delta])
+    loss_at_toohigh_b = fg._fg_fun_others([a, b + delta])
 
-    loss_at_truesolution = fg_mx._fg_fun_others([a, b])
+    loss_at_truesolution = fg._fg_fun_others([a, b])
 
     min_loss = np.min(
         [loss_at_toolow_a, loss_at_toohigh_a, loss_at_toolow_b, loss_at_toohigh_b]
