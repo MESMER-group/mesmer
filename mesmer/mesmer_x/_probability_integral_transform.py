@@ -88,8 +88,8 @@ class ProbabilityIntegralTransform:
                 data_scen = data_scen.to_dataset()
 
                 # preparing predictors
-                ds_preds_orig = self.prepare_predictors(preds_orig, scen=scen)
-                ds_preds_targ = self.prepare_predictors(preds_targ, scen=scen)
+                ds_preds_orig = self._prepare_predictors(preds_orig, scen=scen)
+                ds_preds_targ = self._prepare_predictors(preds_targ, scen=scen)
 
                 # transforming data
                 tmp = self._transform(
@@ -117,8 +117,8 @@ class ProbabilityIntegralTransform:
                 raise Exception("predictors must have the same format as data")
 
             # preparing predictors
-            ds_preds_orig = self.prepare_predictors(preds_orig)
-            ds_preds_targ = self.prepare_predictors(preds_targ)
+            ds_preds_orig = self._prepare_predictors(preds_orig)
+            ds_preds_targ = self._prepare_predictors(preds_targ)
 
             # transforming data
             tmp = self._transform(
@@ -135,7 +135,7 @@ class ProbabilityIntegralTransform:
         else:
             raise Exception("data must be a xarray Dataset or Datatree")
 
-    def prepare_predictors(self, preds, scen=None):
+    def _prepare_predictors(self, preds, scen=None):
         # preparation of predictors
         if preds is None:
             ds_preds = xr.Dataset()
