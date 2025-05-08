@@ -24,8 +24,8 @@ class Expression:
         self,
         expr: str,
         expr_name: str,
-        boundaries_params: dict = {},
-        boundaries_coeffs: dict = {},
+        boundaries_params: dict | None = None,
+        boundaries_coeffs: dict | None = None,
     ):
         """Symbolic expression of a conditional distribution.
 
@@ -40,18 +40,18 @@ class Expression:
         expr_name : str
             Name for the expression.
 
-        boundaries_params : dict
+        boundaries_params : dict, optional
             Boundaries for the parameters. The keys are the names of the parameters, and
             the values are lists of two elements, the lower and upper bounds. The default
-            is an empty dict, which will set the boundaries to [-inf, inf] for all parameters
+            is None, which will set the boundaries to [-inf, inf] for all parameters
             found in the expression, except `scale` which must be positive, so the lower boundary
             will be set to 0. These boundaries will later be enforced when fitting the conditional
             distribution.
 
-        boundaries_coeffs : dict
+        boundaries_coeffs : dict, optional
             Boundaries for the coefficients. The keys are the names of the coefficients as
             they are written in the expression, and the values are lists of two elements,
-            the lower and upper bounds. The default is an empty dict. These boundaries will later
+            the lower and upper bounds. The default is None. These boundaries will later
             be enforced when fitting the conditional distribution.
 
         Notes
@@ -91,8 +91,13 @@ class Expression:
         # basic initialization
         self.expression = expr
         self.expression_name = expr_name
-        self.boundaries_params = boundaries_params
-        self.boundaries_coeffs = boundaries_coeffs
+        # NOTE: default for the params cannot be {} because the dict is mutable and causes leaks in the tests
+        self.boundaries_params = (
+            boundaries_params if boundaries_params is not None else {}
+        )
+        self.boundaries_coeffs = (
+            boundaries_coeffs if boundaries_coeffs is not None else {}
+        )
 
         # identify distribution
         self._interpret_distrib()
@@ -183,6 +188,7 @@ class Expression:
 
         # prepare boundaries on parameters
         # default is [-inf, inf] except for scale which must be positive
+
         for param in self.parameters_list:
             if param not in self.boundaries_params:
                 if param == "scale":

@@ -20,9 +20,12 @@ from mesmer.mesmer_x._optimizers import (
 )
 from mesmer.mesmer_x._probability_integral_transform import (
     ProbabilityIntegralTransform,
+)
+from mesmer.mesmer_x._weighting import (
+    get_weights_density,
+    get_weights_uniform,
     weighted_median,
 )
-from mesmer.mesmer_x._weighting import get_weights_density, get_weights_uniform
 
 __all__ = [
     # conditional distribution
@@ -46,8 +49,8 @@ __all__ = [
     "crps",
     # probability integral transform
     "ProbabilityIntegralTransform",
-    "weighted_median",
     # weighting
     "get_weights_density",
     "get_weights_uniform",
+    "weighted_median",
 ]
