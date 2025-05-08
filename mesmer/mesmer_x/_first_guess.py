@@ -81,13 +81,13 @@ def find_first_guess(
         Dimension along which to fit the first guess.
     first_guess : xr.Dataset, default: None
         If provided, will use these values as first guess for the first guess. If None,
-        will use all zeros. Must contain the first guess for each coefficient in a 
+        will use all zeros. Must contain the first guess for each coefficient in a
         DataArray with the name of the coefficient.
 
     Returns
     -------
     :obj:`xr.Dataset`
-        Dataset of first guess for each coefficient of the conditional distribution as a 
+        Dataset of first guess for each coefficient of the conditional distribution as a
         data variable with the name of the coefficient.
     """
     # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
@@ -101,7 +101,7 @@ def find_first_guess(
             first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
 
     # preparing data
-    data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data( # type: ignore
+    data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data(  # type: ignore
         predictors, target, weights, first_guess
     )
 
@@ -115,8 +115,16 @@ def find_first_guess(
         data_targ,
         data_weights,
         first_guess,
-        kwargs={"conditional_distrib": conditional_distrib, "predictor_names": predictor_names},
-        input_core_dims=[[sample_dim, "predictor"], [sample_dim], [sample_dim], ["coefficient"]],
+        kwargs={
+            "conditional_distrib": conditional_distrib,
+            "predictor_names": predictor_names,
+        },
+        input_core_dims=[
+            [sample_dim, "predictor"],
+            [sample_dim],
+            [sample_dim],
+            ["coefficient"],
+        ],
         output_core_dims=[["coefficient"]],
         vectorize=True,
         dask="parallelized",
@@ -131,10 +139,22 @@ def find_first_guess(
 
 
 def _find_fg_np(
-    data_pred, data_targ, data_weights, first_guess, conditional_distrib: ConditionalDistribution, predictor_names,
+    data_pred,
+    data_targ,
+    data_weights,
+    first_guess,
+    conditional_distrib: ConditionalDistribution,
+    predictor_names,
 ):
 
-    fg = FirstGuess(conditional_distrib, data_pred, predictor_names, data_targ, data_weights, first_guess)
+    fg = FirstGuess(
+        conditional_distrib,
+        data_pred,
+        predictor_names,
+        data_targ,
+        data_weights,
+        first_guess,
+    )
 
     # TODO split up into the several steps
     return fg._find_fg_allsteps()
@@ -180,6 +200,18 @@ class FirstGuess:
 
         distrib_tests.validate_data(data_pred, data_targ, data_weights)
 
+        # check first guess
+        self.fg_coeffs = np.copy(first_guess)
+        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
+        self.fg_coeffs = self.fg_coeffs.astype(float)
+        # check if the first guess is valid
+        if not len(self.fg_coeffs) == self.expression.n_coeffs:
+            raise ValueError(
+                "The provided first guess does not have the correct shape: "
+                f"expected {self.expression.n_coeffs} (number of coeffs in expression)",
+                f"got {len(self.fg_coeffs)}.",
+            )
+
         # ensuring format of numpy predictors
         if data_pred.ndim == 0:
             if n_preds == 0:
@@ -214,10 +246,6 @@ class FirstGuess:
         }
 
         self.data_weights = data_weights
-
-        self.fg_coeffs = np.copy(first_guess)
-        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
-        self.fg_coeffs = self.fg_coeffs.astype(float)
 
     # suppress nan & inf warnings
     @ignore_warnings
@@ -515,7 +543,17 @@ class FirstGuess:
             globalfit_all = shgo(
                 func=distrib_optimizers.func_optim,
                 bounds=bounds,
-                args=(self.data_pred, self.data_targ, self.data_weights),
+                args=(
+                    self.data_pred,
+                    self.data_targ,
+                    self.data_weights,
+                    self.expression,
+                    self.options.threshold_min_proba,
+                    self.options.type_fun_optim,
+                    self.options.threshold_stopping_rule,
+                    self.options.exclude_trigger,
+                    self.options.ind_year_thres,
+                ),
                 sampling_method="sobol",
             )
             if not globalfit_all.success:
