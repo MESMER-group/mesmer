@@ -2,6 +2,7 @@ import pathlib
 
 import pytest
 import xarray as xr
+
 import mesmer
 from mesmer.mesmer_x import (
     ConditionalDistribution,
@@ -9,7 +10,6 @@ from mesmer.mesmer_x import (
     Expression,
     ProbabilityIntegralTransform,
 )
-
 
 
 @pytest.mark.parametrize(
@@ -74,7 +74,8 @@ def test_make_realisations_mesmer_x(
         TEST_PATH
         / "test-params"
         / "distrib"
-        / f"params_transform_distrib_{file_end}.nc")
+        / f"params_transform_distrib_{file_end}.nc"
+    )
 
     local_ar_params = xr.open_dataset(
         TEST_PATH
@@ -103,11 +104,13 @@ def test_make_realisations_mesmer_x(
 
     # back-transform the realizations
     expr_tranf = Expression("norm(loc=0, scale=1)", "standard_normal")
-    distrib_transf = ConditionalDistribution(expr_tranf, ConditionalDistributionOptions(expr_tranf))
+    distrib_transf = ConditionalDistribution(
+        expr_tranf, ConditionalDistributionOptions(expr_tranf)
+    )
 
     back_pit = ProbabilityIntegralTransform(
-        distrib_orig = distrib_transf,
-        distrib_targ = distrib_orig,
+        distrib_orig=distrib_transf,
+        distrib_targ=distrib_orig,
     )
 
     emus = back_pit.transform(
