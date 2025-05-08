@@ -33,7 +33,11 @@ class ProbabilityIntegralTransform:
         self.expression_targ = distrib_targ.expression
 
         # preparation of coefficients
-        self.coefficients_orig = distrib_orig.coefficients
+        try:
+            self.coefficients_orig = distrib_orig.coefficients
+        except ValueError:
+            # if the target distribution does not have coefficients, we set them empty
+            self.coefficients_orig = xr.Dataset()
 
         try:
             self.coefficients_targ = distrib_targ.coefficients
