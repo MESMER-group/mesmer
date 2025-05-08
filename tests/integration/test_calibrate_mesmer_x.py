@@ -4,7 +4,14 @@ import pytest
 import xarray as xr
 
 import mesmer
-import mesmer.mesmer_x
+from mesmer.mesmer_x import (
+    ConditionalDistribution,
+    ConditionalDistributionOptions,
+    Expression,
+    ProbabilityIntegralTransform,
+    find_first_guess,
+    get_weights_density,
+)
 
 # TODO: extend to more scenarios and members
 # TODO: extend predictors
@@ -119,7 +126,7 @@ def test_calibrate_mesmer_x(
 
     # stack datasets
     # weights
-    weights = mesmer.mesmer_x.get_weights_density(
+    weights = get_weights_density(
         pred_data=pred_data,
         predictor="tas",
         targ_data=target_data,
@@ -138,73 +145,53 @@ def test_calibrate_mesmer_x(
     )
 
     # declaring analytical form of the conditional distribution
-    expression_fit = mesmer.mesmer_x.Expression(expr, expr_name)
-
-    # preparing tests that will be used for first guess and training
-    tests_mx = mesmer.mesmer_x.distrib_tests(
-        expr_fit=expression_fit,
-        threshold_min_proba=1.0e-9,
-        boundaries_params=None,
-        boundaries_coeffs=None,
-    )
-
-    # preparing optimizers that will be used for first guess and training
-    optim_mx = mesmer.mesmer_x.distrib_optimizer(
-        expr_fit=expression_fit,
-        class_tests=tests_mx,
-        options_optim=None,
-        options_solver=None,
+    expression = Expression(expr, expr_name)
+    distrib = ConditionalDistribution(
+        expression, ConditionalDistributionOptions(expression)
     )
 
     # preparing first guess
-    fg_mx = mesmer.mesmer_x.distrib_firstguess(
-        expr_fit=expression_fit,
-        class_tests=tests_mx,
-        class_optim=optim_mx,
-        first_guess=None,
-        func_first_guess=None,
-    )
-    coeffs_fg = fg_mx.find_fg(
+    coeffs_fg = find_first_guess(
+        distrib,
         predictors=stacked_pred,
-        target=stacked_targ,
-        weights=stacked_weights,
-        dim="sample",
+        target=stacked_targ.tasmax,
+        weights=stacked_weights.weight,
+        first_guess=None,
     )
 
     # training the conditional distribution
-    train_mx = mesmer.mesmer_x.ConditionalDistribution(
-        expr_fit=expression_fit, class_tests=tests_mx, class_optim=optim_mx
-    )
-    # first round
-    transform_params = train_mx.fit(
+    distrib.fit(
         predictors=stacked_pred,
-        target=stacked_targ,
+        target=stacked_targ.tasmax,
         first_guess=coeffs_fg,
-        weights=stacked_weights,
-        dim="sample",
+        weights=stacked_weights.weight,
     )
+    transform_coeffs = distrib.coefficients
 
     # second round if necessary
     if option_2ndfit:
-        transform_params = train_mx.fit(
+        distrib.fit(
             predictors=stacked_pred,
-            target=stacked_targ,
-            first_guess=transform_params,
-            weights=stacked_weights,
-            dim="sample",
+            target=stacked_targ.tasmax,
+            first_guess=transform_coeffs,
+            weights=stacked_weights.weight,
             option_smooth_coeffs=True,
             r_gasparicohn=500,
         )
+        transform_coeffs = distrib.coefficients
 
     # probability integral transform on non-stacked data for AR(1) process
-    pit = mesmer.mesmer_x.probability_integral_transform(
-        expr_start=expr,
-        coeffs_start=transform_params,
-        expr_end="norm(loc=0, scale=1)",
-        coeffs_end=None,
+    target_expr = Expression("norm(loc=0, scale=1)", "standard_normal")
+    target_distrib = ConditionalDistribution(
+        target_expr,
+        ConditionalDistributionOptions(target_expr),
     )
+
+    pit = ProbabilityIntegralTransform(distrib, target_distrib)
     transf_target = pit.transform(
-        data=target_data, target_name=target_name, preds_start=pred_data, preds_end=None
+        data=target_data,
+        target_name=target_name,
+        preds_orig=pred_data,
     )
 
     # training of auto-regression with spatially correlated innovations
@@ -254,7 +241,7 @@ def test_calibrate_mesmer_x(
 
     if update_expected_files:
         # save the parameters
-        transform_params.to_netcdf(distrib_file)
+        transform_coeffs.to_netcdf(distrib_file)
         local_ar_params.to_netcdf(local_ar_file)
         localized_ecov.to_netcdf(localized_ecov_file)
         pytest.skip("Updated param files.")
@@ -262,7 +249,8 @@ def test_calibrate_mesmer_x(
     else:
         # load the parameters
         expected_transform_params = xr.open_dataset(distrib_file)
-        xr.testing.assert_allclose(transform_params, expected_transform_params)
+        expected_transform_params = expected_transform_params.drop_vars("coefficient")
+        xr.testing.assert_allclose(transform_coeffs, expected_transform_params)
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
         xr.testing.assert_allclose(
