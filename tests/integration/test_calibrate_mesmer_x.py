@@ -33,8 +33,8 @@ from mesmer.mesmer_x import (
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
             False,
-            True,
-            # marks=pytest.mark.slow,
+            False,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
@@ -249,7 +249,6 @@ def test_calibrate_mesmer_x(
     else:
         # load the parameters
         expected_transform_params = xr.open_dataset(distrib_file)
-        expected_transform_params = expected_transform_params.drop_vars("coefficient")
         xr.testing.assert_allclose(transform_coeffs, expected_transform_params)
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
