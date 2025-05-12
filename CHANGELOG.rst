@@ -46,7 +46,7 @@ Breaking changes
   **pooch**         not specified 1.8
   **properscoring** not specified 0.1
   **pyproj**        not specified 3.6
-  **regionmask**    0.8           0.11
+  **regionmask**    0.8           0.12
   **scikit-learn**  not specified 1.4
   **scipy**         not specified 1.12
   **shapely**       not specified 2.0
