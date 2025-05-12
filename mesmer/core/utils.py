@@ -258,9 +258,20 @@ def _check_dataarray_form(
         ndim_options = (a and ", ".join(a) + " or " or "") + b
         raise ValueError(f"{name} should be {ndim_options}, but is {obj.ndim}D")
 
-    if required_dims - set(obj.dims):
-        missing_dims = " ,".join(required_dims - set(obj.dims))
-        raise ValueError(f"{name} is missing the required dims: {missing_dims}")
+    _assert_required_dims(obj, name=name, required_dims=required_dims)
 
     if shape is not None and obj.shape != shape:
         raise ValueError(f"{name} has wrong shape - expected {shape}, got {obj.shape}")
+
+
+def _assert_required_dims(
+    obj, name: str = "obj", required_dims: str | Iterable[str] | None = None
+):
+
+    __tracebackhide__ = True
+
+    required_dims = _to_set(required_dims)
+
+    if required_dims - set(obj.dims):
+        missing_dims = " ,".join(required_dims - set(obj.dims))
+        raise ValueError(f"{name} is missing the required dims: {missing_dims}")
