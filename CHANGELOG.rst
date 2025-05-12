@@ -29,8 +29,10 @@ Breaking changes
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
   `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,
   `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_,
-  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_, and
-  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_):
+  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
+  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_, and
+  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
+  ):
 
   ================= ============= =========
   Package           Old           New
@@ -85,6 +87,8 @@ Internal Changes
 - Consolidate package metadata and configuration in `pyproject.toml` (`#650 <https://github.com/MESMER-group/mesmer/pull/650>`_).
   By `Mathias Hauser`_.
 - Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
+  By `Mathias Hauser`_.
+- Removed the ``regionmaskcompat.py`` module. It is no longer needed after requiring *regionmask* v0.12  (`#683 <https://github.com/MESMER-group/mesmer/pull/683>`_).
   By `Mathias Hauser`_.
 
 Data structure using DataTree
