@@ -2,7 +2,6 @@ import numpy as np
 import regionmask
 import xarray as xr
 
-import mesmer
 from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.types import T_DataArraySetTree
 
@@ -65,10 +64,8 @@ def mask_ocean_fraction(
     land_110 = regionmask.defined_regions.natural_earth_v5_0_0.land_110
 
     try:
-        mask_fraction = mesmer.core.regionmaskcompat._mask_3D_frac_approx(
-            land_110, data[x_coords], data[y_coords]
-        )
-    except mesmer.core.regionmaskcompat.InvalidCoordsError as e:
+        mask_fraction = land_110.mask_3D_frac_approx(data[x_coords], data[y_coords])
+    except regionmask.core.mask.InvalidCoordsError as e:
         raise ValueError(
             "Cannot calculate fractional mask for irregularly-spaced coords - use "
             "``mask_land`` instead."

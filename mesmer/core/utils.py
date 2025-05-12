@@ -5,6 +5,8 @@ from typing import cast
 import numpy as np
 import xarray as xr
 
+from mesmer.core.datatree import _datatree_wrapper
+
 
 class OptimizeWarning(UserWarning):
     pass
@@ -124,29 +126,37 @@ def _assert_annual_data(time):
         )
 
 
+@_datatree_wrapper
 def upsample_yearly_data(
-    yearly_data: xr.DataArray, monthly_time: xr.DataArray, time_dim: str = "time"
+    yearly_data: xr.DataArray | xr.Dataset | xr.DataTree,
+    monthly_time: xr.DataArray | xr.Dataset | xr.DataTree,
+    time_dim: str = "time",
 ):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
     Parameters
     ----------
-    yearly_data : xarray.DataArray
+    yearly_data : xarray.DataArray | xr.Dataset | xr.DataTree
         Yearly values to upsample.
 
-    monthly_time: xarray.DataArray
+    monthly_time : xarray.DataArray | xr.Dataset | xr.DataTree
         Monthly time used to define the time coordinates of the upsampled data.
 
-    time_dim: str, default: 'time'
+    time_dim : str, default: 'time'
         Name of the time dimension.
 
     Returns
     -------
     upsampled_yearly_data: xarray.DataArray
-        Upsampled yearly temperature values containing the yearly values for every month of the corresponding year.
+        Upsampled yearly temperature values containing the yearly values for every month
+        of the corresponding year.
     """
-    _check_dataarray_form(yearly_data, "yearly_data", required_dims=time_dim)
-    _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims=time_dim)
+    _assert_required_dims(yearly_data, "yearly_data", required_dims=time_dim)
+    _assert_required_dims(monthly_time, "monthly_time", required_dims=time_dim)
+
+    # read out time coords - this also works if it's already time coords
+    monthly_time = monthly_time[time_dim]
+    _check_dataarray_form(monthly_time, "monthly_time", ndim=1)
 
     if yearly_data[time_dim].size * 12 != monthly_time.size:
         raise ValueError(
