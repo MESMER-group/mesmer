@@ -247,8 +247,6 @@ def _check_dataarray_form(
 
     __tracebackhide__ = True
 
-    required_dims = _to_set(required_dims)
-
     if not isinstance(obj, xr.DataArray):
         raise TypeError(f"Expected {name} to be an xr.DataArray, got {type(obj)}")
 
