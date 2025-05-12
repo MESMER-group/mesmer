@@ -1,9 +1,7 @@
 import numpy as np
 import regionmask
 import xarray as xr
-import regionmask
 
-import mesmer
 from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.types import T_DataArraySetTree
 
