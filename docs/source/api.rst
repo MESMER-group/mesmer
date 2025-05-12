@@ -119,7 +119,6 @@ Masking regions
    ~core.mask.mask_ocean_fraction
    ~core.mask.mask_ocean
    ~core.mask.mask_antarctica
-   ~core.regionmaskcompat.mask_3D_frac_approx
 
 Weighted operations: calculate global mean
 ------------------------------------------
