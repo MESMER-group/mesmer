@@ -1,9 +1,14 @@
+import sys
+
 import numpy as np
 import pytest
 
 import mesmer
 from mesmer.io._load_cmipng import _load_cmipng_var
 from mesmer.testing import assert_dict_allclose
+
+# skip slow legacy tests on windows
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="slow on windows")
 
 
 def _get_default_kwargs(

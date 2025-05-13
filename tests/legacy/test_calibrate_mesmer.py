@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import sys
 
 import joblib
 import pytest
@@ -7,6 +8,9 @@ import pytest
 import mesmer
 from mesmer.calibrate_mesmer import _calibrate_tas
 from mesmer.testing import assert_dict_allclose
+
+# skip slow legacy tests on windows
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="slow on windows")
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
