@@ -85,7 +85,6 @@ find = {namespaces = false}  # Disable implicit namespaces
 
 [tool.setuptools_scm]
 fallback_version = "999"
-version_scheme = "no-guess-dev"
 
 [tool.ruff]
 # also check notebooks
