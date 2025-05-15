@@ -37,12 +37,12 @@ Breaking changes
   ================= ============= =========
   Package           Old           New
   ================= ============= =========
-  **cartopy**       not specified 0.22
-  **dask**          not specified 2024.3
+  **cartopy**       not specified 0.23
+  **dask**          not specified 2024.5
   **filefisher**    not required  1.1
-  **joblib**        not specified 1.3
+  **joblib**        not specified 1.4
   **netcdf4**       not specified 1.6
-  **numpy**         not specified 1.25
+  **numpy**         not specified 1.26
   **packaging**     not specified 24.0
   **pandas**        2.0           2.2
   **pooch**         not specified 1.8
@@ -50,7 +50,7 @@ Breaking changes
   **pyproj**        not specified 3.6
   **regionmask**    0.8           0.12
   **scikit-learn**  not specified 1.4
-  **scipy**         not specified 1.12
+  **scipy**         not specified 1.13
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
   **xarray**        2023.04       2025.03
