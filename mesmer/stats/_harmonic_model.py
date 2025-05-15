@@ -287,6 +287,7 @@ def fit_harmonic_model(
     *,
     max_order: int = 6,
     time_dim: str = "time",
+    sample_dim: str = "sample",
 ) -> xr.Dataset:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
@@ -317,11 +318,11 @@ def fit_harmonic_model(
 
     """
 
-    _check_dataarray_form(
-        yearly_predictor, "yearly_predictor", required_dims={time_dim}
-    )
+    # _check_dataarray_form(
+    #     yearly_predictor, "yearly_predictor", required_dims={time_dim}
+    # )
 
-    _check_dataarray_form(monthly_target, "monthly_target", required_dims={time_dim})
+    # _check_dataarray_form(monthly_target, "monthly_target", required_dims={time_dim})
 
     if set(yearly_predictor.dims) != set(monthly_target.dims):
 
@@ -332,22 +333,24 @@ def fit_harmonic_model(
         )
         raise ValueError(msg)
 
-    for dim in set(yearly_predictor.dims) - {time_dim}:
+    # for dim in set(yearly_predictor.dims) - {time_dim}:
 
-        if yearly_predictor[dim].size != monthly_target[dim].size:
-            msg = (
-                f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
-                f"different size: {yearly_predictor[dim].size} vs. "
-                f"{monthly_target[dim].size}"
-            )
-            raise ValueError(msg)
+    #     if yearly_predictor[dim].size != monthly_target[dim].size:
+    #         msg = (
+    #             f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
+    #             f"different size: {yearly_predictor[dim].size} vs. "
+    #             f"{monthly_target[dim].size}"
+    #         )
+    #         raise ValueError(msg)
 
-    if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
+    if not monthly_target[time_dim][0].dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
+
+    time_dim = sample_dim
 
     # subtract annual mean to have seasonal anomalies around 0
     seasonal_deviations = monthly_target - yearly_predictor
