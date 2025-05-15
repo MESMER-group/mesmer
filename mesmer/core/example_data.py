@@ -3,6 +3,7 @@ import pathlib
 
 
 def cmip6_ng_path(*, relative=False):
+    """path of the cmip6_ng example data"""
 
     try:
         path = importlib.resources.files("mesmer").parent / "data" / "cmip6-ng"

@@ -891,17 +891,23 @@ def fit_auto_regression_monthly(
 
     Parameters
     ----------
-    monthly_data : ``xr.DataArray`` of shape (n_timesteps, n_gridpoints)
-        A ``xr.DataArray`` to estimate the auto regression over. Each month has a value.
+    monthly_data : ``xr.DataArray``
+        A ``xr.DataArray`` to estimate the auto regression over, must contain `time_dim` and can have more dims,
+        for example a gridcell and/or a member dim. Each month has a value.
     time_dim : str
         Name of the time dimension (dimension along which to fit the auto regression).
 
     Returns
     -------
     obj : ``xr.Dataset``
-        Dataset containing the estimated parameters of the AR(1) process, the ``intercept`` and the
-        ``slope`` for each month and gridpoint. Additionally, the ``residuals`` are returned. These
-        are needed for the estimation of the covariance matrix.
+        Dataset containing
+
+        - the ``intercept`` for each month of the AR(1) process,
+        - the ``slope`` for each month and
+        - the ``residuals`` (needed for the estimation of the covariance matrices).
+
+        ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
+        the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
     _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")

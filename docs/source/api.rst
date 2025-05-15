@@ -89,6 +89,14 @@ Gaspari-Cohn correlation matrix
 Data handling
 =============
 
+Example and test data
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.example_data.cmip6_ng_path
+
 Grid manipulation
 -----------------
 
@@ -111,7 +119,6 @@ Masking regions
    ~core.mask.mask_ocean_fraction
    ~core.mask.mask_ocean
    ~core.mask.mask_antarctica
-   ~core.regionmaskcompat.mask_3D_frac_approx
 
 Weighted operations: calculate global mean
 ------------------------------------------

@@ -1,4 +1,5 @@
 import os.path
+import sys
 
 import joblib
 import numpy as np
@@ -11,6 +12,10 @@ import mesmer.create_emulations
 # - write test of what happens if you pass in a time dictionary of the wrong length
 
 # NOTE: the scenario only changes the params - so we only do "one_scen_one_ens"
+
+
+# skip slow legacy tests on windows
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="slow on windows")
 
 
 @pytest.mark.parametrize(
