@@ -131,6 +131,7 @@ def upsample_yearly_data(
     yearly_data: xr.DataArray | xr.Dataset | xr.DataTree,
     monthly_time: xr.DataArray | xr.Dataset | xr.DataTree,
     time_dim: str = "time",
+    sample_dim: str = "sample",
 ):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
@@ -151,8 +152,10 @@ def upsample_yearly_data(
         Upsampled yearly temperature values containing the yearly values for every month
         of the corresponding year.
     """
-    _assert_required_dims(yearly_data, "yearly_data", required_dims=time_dim)
-    _assert_required_dims(monthly_time, "monthly_time", required_dims=time_dim)
+
+    # TODO: check for coords (?)
+    # _assert_required_dims(yearly_data, "yearly_data", required_dims=time_dim)
+    # _assert_required_dims(monthly_time, "monthly_time", required_dims=time_dim)
 
     # read out time coords - this also works if it's already time coords
     monthly_time = monthly_time[time_dim]
@@ -162,6 +165,20 @@ def upsample_yearly_data(
         raise ValueError(
             "Length of monthly time not equal to 12 times the length of yearly data."
         )
+
+    if sample_dim in yearly_data.dims:
+        # upsampling with non-monotonic time coords
+        upsampled_yearly_data = (
+            # repeats the data along new dimension
+            yearly_data.expand_dims({"__new__": 12})
+            # target dim must have new name
+            .stack(__sample__=(sample_dim, "__new__"), create_index=False)
+            # so we need to rename it back
+            .rename(__sample__=sample_dim)
+            .assign_coords({time_dim: monthly_time})
+        )
+
+        return upsampled_yearly_data
 
     # make sure monthly and yearly data both start at the beginning of the period
     year = yearly_data.resample({time_dim: "YS"}).bfill()
