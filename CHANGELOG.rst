@@ -30,9 +30,9 @@ Breaking changes
   `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,
   `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_,
   `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
-  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_, and
-  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
-  ):
+  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
+  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_, and
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,):
 
   ================= ============= =========
   Package           Old           New
