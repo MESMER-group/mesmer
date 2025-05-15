@@ -7,8 +7,8 @@ channels:
 dependencies:
  - cartopy
  - dask
- - joblib
  - filefisher
+ - joblib
  - matplotlib-base
  - nc-time-axis
  - netcdf4
