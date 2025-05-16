@@ -308,28 +308,56 @@ def test_check_dataarray_form_required_dims(required_dims):
     mesmer.core.utils._check_dataarray_form(da, required_dims={"x", "y"})
 
 
-@pytest.mark.parametrize("required_dims", ("foo", ["foo"], ["foo", "bar"]))
+def test_check_dataarray_form_required_coords():
+
+    da = xr.DataArray(np.ones((2, 2)), dims=("x", "y"))
+
+    # x & y are dims but not coords
+    for required_coords in ("foo", ["foo"], ["foo", "bar"], "x", "y"):
+        with pytest.raises(ValueError, match="obj is missing the required coords"):
+            mesmer.core.utils._check_dataarray_form(da, required_coords=required_coords)
+
+    with pytest.raises(ValueError, match="obj is missing the required coords"):
+        mesmer.core.utils._check_dataarray_form(da, required_coords="x")
+
+    # add coords and non-dimension coords
+    da = da.assign_coords(x=[0, 1], y=["a", "b"], c=("x", [0, 1]))
+
+    # no error
+    mesmer.core.utils._check_dataarray_form(da, required_coords="c")
+    mesmer.core.utils._check_dataarray_form(da, required_coords="x")
+    mesmer.core.utils._check_dataarray_form(da, required_coords="y")
+    mesmer.core.utils._check_dataarray_form(da, required_coords=["x", "y"])
+    mesmer.core.utils._check_dataarray_form(da, required_coords={"x", "y"})
+
+
 @pytest.mark.parametrize("to_dataset", (True, False))
-def test_assert_required_dims(required_dims, to_dataset):
+def test_assert_required_dims(to_dataset):
 
     obj = xr.DataArray(np.ones((2, 2)), dims=("x", "y"), name="data")
 
     if to_dataset:
         obj = obj.to_dataset()
 
-    with pytest.raises(ValueError, match="obj is missing the required dims"):
-        mesmer.core.utils._assert_required_dims(obj, required_dims=required_dims)
+    # x & y are dims but not coords
+    for required_coords in ("foo", ["foo"], ["foo", "bar"], "x", "y"):
+        with pytest.raises(ValueError, match="obj is missing the required coords"):
+            mesmer.core.utils._assert_required_coords(
+                obj, required_coords=required_coords
+            )
 
-    with pytest.raises(ValueError, match="test is missing the required dims"):
-        mesmer.core.utils._assert_required_dims(
-            obj, required_dims=required_dims, name="test"
-        )
+    with pytest.raises(ValueError, match="obj is missing the required coords"):
+        mesmer.core.utils._assert_required_coords(obj, required_coords="x")
+
+    # add coords and non-dimension coords
+    obj = obj.assign_coords(x=[0, 1], y=["a", "b"], c=("x", [0, 1]))
 
     # no error
-    mesmer.core.utils._assert_required_dims(obj, required_dims="x")
-    mesmer.core.utils._assert_required_dims(obj, required_dims="y")
-    mesmer.core.utils._assert_required_dims(obj, required_dims=["x", "y"])
-    mesmer.core.utils._assert_required_dims(obj, required_dims={"x", "y"})
+    mesmer.core.utils._assert_required_coords(obj, required_coords="c")
+    mesmer.core.utils._assert_required_coords(obj, required_coords="x")
+    mesmer.core.utils._assert_required_coords(obj, required_coords="y")
+    mesmer.core.utils._assert_required_coords(obj, required_coords=["x", "y"])
+    mesmer.core.utils._assert_required_coords(obj, required_coords={"x", "y"})
 
 
 def test_check_dataarray_form_shape():
