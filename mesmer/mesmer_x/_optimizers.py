@@ -17,7 +17,7 @@ def _minimize(
     method_fit,
     args,
     options,
-    option_NelderMead="dont_run",
+    option_NelderMead: Literal["dont_run", "fail_run", "best_run"] = "dont_run",
 ):
     """
     options_NelderMead: str

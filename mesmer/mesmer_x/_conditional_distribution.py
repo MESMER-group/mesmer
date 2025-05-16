@@ -113,7 +113,7 @@ class ConditionalDistributionOptions:
             If `None` this test is skipped.
         """
 
-        n_coeffs = expression.n_coeffs if not expression.n_coeffs == 0 else 1
+        n_coeffs = expression.n_coeffs if expression.n_coeffs != 0 else 1
 
         # preparing solver
         default_options_solver = {
@@ -213,7 +213,7 @@ class ConditionalDistributionOptions:
         if threshold_min_proba is not None and (
             (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
         ):
-            raise ValueError("`threshold_min_proba` must be in (0, 0.5)")
+            raise ValueError("`threshold_min_proba` must be in [0, 0.5]")
 
 
 class ConditionalDistribution:
@@ -342,7 +342,7 @@ class ConditionalDistribution:
             gp_nonan = first_guess.notnull().to_array().all(dim=["variable"]).values
 
             # creating new dataset of coefficients
-            second_guess = np.nan * xr.ones_like(first_guess)
+            second_guess = xr.full_like(first_guess, fill_value=np.nan)
 
             # calculating for each coef and each gridpoint the weighted median
             for coef in self.expression.coefficients_list:
@@ -384,8 +384,8 @@ class ConditionalDistribution:
         )
         # creating a dataset with the coefficients
         out = xr.Dataset()
-        for icoef, coef in enumerate(self.expression.coefficients_list):
-            out[coef] = result.isel(coefficient=icoef)
+        for i, coef in enumerate(self.expression.coefficients_list):
+            out[coef] = result.isel(coefficient=i)
 
         return out.drop_vars("coefficient")
 
@@ -394,7 +394,7 @@ class ConditionalDistribution:
         distrib_tests._validate_data(data_pred, data_targ, data_weights)
 
         # basic check on first guess
-        if (fg is not None) and (len(fg) != len(self.expression.coefficients_list)):
+        if fg is not None and len(fg) != len(self.expression.coefficients_list):
             raise ValueError(
                 f"The provided first guess does not have the correct shape: {len(self.expression.coefficients_list)}"
             )
