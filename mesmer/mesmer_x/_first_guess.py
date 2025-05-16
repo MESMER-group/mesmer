@@ -686,7 +686,7 @@ class FirstGuess:
             # this coefficient on scale causes problem
             return np.inf
 
-    def _fg_fun_others(self, x_others, margin0=1.0e-3):
+    def _fg_fun_others(self, x_others, margin=1.0e-3):
         """
         Loss function for other coefficients than loc and scale. Objective is to tune parameters such
         that target samples are within a likely range of the distribution. Instead of relying on the
@@ -703,13 +703,13 @@ class FirstGuess:
             # compute CDF values for the target samples
             cdf_values = self.expression.distrib.cdf(self.data_targ, **params)
 
-            if (np.min(cdf_values) < margin0) or (np.max(cdf_values) > 1 - margin0):
+            if (np.min(cdf_values) < margin) or (np.max(cdf_values) > 1 - margin):
                 return np.inf
 
             else:
                 # penalize samples with CDF values close to 0 or 1 (unlikely samples)
-                penalty_low = np.maximum(0, margin0 - cdf_values) ** 2
-                penalty_high = np.maximum(0, cdf_values - (1 - margin0)) ** 2
+                penalty_low = np.maximum(0, margin - cdf_values) ** 2
+                penalty_high = np.maximum(0, cdf_values - (1 - margin)) ** 2
 
                 # sum penalties to compute the loss
                 return np.sum(penalty_low + penalty_high)
