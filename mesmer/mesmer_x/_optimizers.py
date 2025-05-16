@@ -63,7 +63,7 @@ def _minimize(
 
 
 # OPTIMIZATION FUNCTIONS & SCORES
-def func_optim(
+def _func_optim(
     coefficients,
     data_pred,
     data_targ,
@@ -79,7 +79,7 @@ def func_optim(
     # value for the optimization
 
     test_coeff, test_param, test_distrib, test_proba, params = (
-        distrib_tests.validate_coefficients(
+        distrib_tests._validate_coefficients(
             expression, data_pred, data_targ, coefficients, threshold_min_proba
         )
     )
@@ -89,7 +89,7 @@ def func_optim(
             # compute full conditioning
             # will apply the stopping rule: splitting data_fit into two sets of data
             # using the given threshold
-            ind_data_ok, ind_data_stopped = stopping_rule(
+            ind_data_ok, ind_data_stopped = _stopping_rule(
                 expression,
                 data_targ,
                 params,
@@ -97,13 +97,13 @@ def func_optim(
                 ind_year_thres,
                 exclude_trigger,
             )
-            nll = neg_loglike(
+            nll = _neg_loglike(
                 expression,
                 data_targ[ind_data_ok],
                 {pp: params[ind_data_ok] for pp in params},
                 data_weights[ind_data_ok],
             )
-            fc = fullcond_thres(
+            fc = _fullcond_thres(
                 expression,
                 data_targ[ind_data_stopped],
                 {pp: params[ind_data_stopped] for pp in params},
@@ -113,7 +113,7 @@ def func_optim(
             return nll + fc
         elif type_fun_optim == "nll":
             # compute negative loglikelihood
-            return neg_loglike(expression, data_targ, params, data_weights)
+            return _neg_loglike(expression, data_targ, params, data_weights)
 
         else:
             raise Exception(f"Unknown type of optimization function: {type_fun_optim}")
@@ -122,11 +122,11 @@ def func_optim(
         return np.inf
 
 
-def neg_loglike(expression: Expression, data_targ, params, data_weights):
-    return -loglike(expression, data_targ, params, data_weights)
+def _neg_loglike(expression: Expression, data_targ, params, data_weights):
+    return -_loglike(expression, data_targ, params, data_weights)
 
 
-def loglike(expression: Expression, data_targ, params, data_weights):
+def _loglike(expression: Expression, data_targ, params, data_weights):
     # compute loglikelihood
     if expression.is_distrib_discrete:
         LL = expression.distrib.logpmf(data_targ, **params)
@@ -142,7 +142,7 @@ def loglike(expression: Expression, data_targ, params, data_weights):
     return value
 
 
-def stopping_rule(
+def _stopping_rule(
     expression: Expression,
     data_targ,
     params,
@@ -169,7 +169,7 @@ def stopping_rule(
     return ind_data_ok, ind_data_stopped
 
 
-def fullcond_thres(
+def _fullcond_thres(
     expression: Expression, data_targ, params, data_weights, ind_data_stopped
 ):
     # calculating 2nd term for full conditional of the NLL
@@ -179,13 +179,13 @@ def fullcond_thres(
     return np.log(np.sum((data_weights * fc2)[ind_data_stopped]))
 
 
-def bic(expression, data_targ, params, data_weights):
-    ll = loglike(expression, data_targ, params, data_weights)
+def _bic(expression, data_targ, params, data_weights):
+    ll = _loglike(expression, data_targ, params, data_weights)
     n_coeffs = expression.n_coeffs
     return n_coeffs * np.log(len(data_targ)) - 2 * ll
 
 
-def crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
+def _crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
     # properscoring.crps_quadrature cannot be applied on conditional distributions, thu
     # calculating in each point of the sample, then averaging
     # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE

@@ -77,7 +77,7 @@ def _test_proba_value(expression: Expression, threshold_min_proba, params, data)
     return np.all(1 - cdf >= threshold_min_proba) and np.all(cdf >= threshold_min_proba)
 
 
-def validate_coefficients(
+def _validate_coefficients(
     expression: Expression, data_pred, data_targ, coefficients, threshold_min_proba
 ):
     """validate coefficients
@@ -149,7 +149,7 @@ def validate_coefficients(
         return test_coeff, test_param, test_support, test_proba, params
 
 
-def validate_data(data_pred, data_targ, data_weights):
+def _validate_data(data_pred, data_targ, data_weights):
     """
     check data for nans or infs
 
@@ -180,7 +180,7 @@ def validate_data(data_pred, data_targ, data_weights):
     _check_data(data_weights, "weights")
 
 
-def prepare_data(predictors, target, weights, first_guess=None):
+def _prepare_data(predictors, target, weights, first_guess=None):
     """
     shaping data into DataArrays for first guess, training or evaluation of scores.
 

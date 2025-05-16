@@ -101,7 +101,7 @@ def find_first_guess(
             first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
 
     # preparing data
-    data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data(  # type: ignore
+    data_pred, data_targ, data_weights, first_guess = distrib_tests._prepare_data(  # type: ignore
         predictors, target, weights, first_guess
     )
 
@@ -198,7 +198,7 @@ class FirstGuess:
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)
 
-        distrib_tests.validate_data(data_pred, data_targ, data_weights)
+        distrib_tests._validate_data(data_pred, data_targ, data_weights)
 
         # check first guess
         self.fg_coeffs = np.copy(first_guess)
@@ -493,7 +493,7 @@ class FirstGuess:
         fg_coeffs = localfit_nll.x
 
         test_coeff, test_param, test_distrib, test_proba, _ = (
-            distrib_tests.validate_coefficients(
+            distrib_tests._validate_coefficients(
                 self.expression,
                 self.data_pred,
                 self.data_targ,
@@ -541,7 +541,7 @@ class FirstGuess:
             # situation. sobol or halton, observed lower performances with
             # simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
             globalfit_all = shgo(
-                func=distrib_optimizers.func_optim,
+                func=distrib_optimizers._func_optim,
                 bounds=bounds,
                 args=(
                     self.data_pred,
@@ -719,7 +719,7 @@ class FirstGuess:
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expression.evaluate_params(coefficients, self.data_pred)
-        return distrib_optimizers.neg_loglike(
+        return distrib_optimizers._neg_loglike(
             self.expression, self.data_targ, params, self.data_weights
         )
 
@@ -741,7 +741,7 @@ class FirstGuess:
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
-            test_c, test_p, test_d, test_v, _ = distrib_tests.validate_coefficients(
+            test_c, test_p, test_d, test_v, _ = distrib_tests._validate_coefficients(
                 self.expression,
                 self.data_pred,
                 self.data_targ,

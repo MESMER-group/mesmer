@@ -354,7 +354,7 @@ class ConditionalDistribution:
             first_guess = second_guess
 
         # shaping inputs
-        data_pred, data_targ, data_weights, first_guess = distrib_tests.prepare_data(  # type: ignore
+        data_pred, data_targ, data_weights, first_guess = distrib_tests._prepare_data(  # type: ignore
             predictors, target, weights, first_guess
         )
         self.predictor_names = data_pred.coords["predictor"].values
@@ -386,7 +386,7 @@ class ConditionalDistribution:
 
     @ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
-        distrib_tests.validate_data(data_pred, data_targ, data_weights)
+        distrib_tests._validate_data(data_pred, data_targ, data_weights)
 
         # basic check on first guess
         if (fg is not None) and (len(fg) != len(self.expression.coefficients_list)):
@@ -401,7 +401,7 @@ class ConditionalDistribution:
 
         # training
         m = distrib_optimizers._minimize(
-            func=distrib_optimizers.func_optim,
+            func=distrib_optimizers._func_optim,
             x0=fg,
             method_fit=self.options.method_fit,
             args=(
@@ -508,7 +508,7 @@ class ConditionalDistribution:
               compute)
         """
         # shaping inputs
-        data_pred, data_targ, data_weights, _ = distrib_tests.prepare_data(
+        data_pred, data_targ, data_weights, _ = distrib_tests._prepare_data(
             predictors, target, weights
         )
         self.predictor_names = data_pred.predictor.values
@@ -542,7 +542,7 @@ class ConditionalDistribution:
             raise Exception("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise Exception("data_weights must be a numpy array.")
-        distrib_tests.validate_data(data_pred, data_targ, data_weights)
+        distrib_tests._validate_data(data_pred, data_targ, data_weights)
 
         # initialize
         quality_fit = []
@@ -554,7 +554,7 @@ class ConditionalDistribution:
         for score in self.scores_fit:
             # basic result: optimized value
             if score == "func_optim":
-                score = distrib_optimizers.func_optim(
+                score = distrib_optimizers._func_optim(
                     self.expression,
                     coefficients_fit,
                     data_pred,
@@ -572,19 +572,19 @@ class ConditionalDistribution:
 
             # NLL averaged over sample
             if score == "nll":
-                score = distrib_optimizers.neg_loglike(
+                score = distrib_optimizers._neg_loglike(
                     self.expression, data_targ, params, data_weights
                 )
 
             # BIC averaged over sample
             if score == "bic":
-                score = distrib_optimizers.bic(
+                score = distrib_optimizers._bic(
                     self.options, data_targ, params, data_weights
                 )
 
             # CRPS
             if score == "crps":
-                score = distrib_optimizers.crps(
+                score = distrib_optimizers._crps(
                     self.expression,
                     data_targ,
                     data_pred,
