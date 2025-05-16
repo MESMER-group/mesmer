@@ -72,6 +72,35 @@ def test_upsample_yearly_data_dataset():
     assert isinstance(upsampled_years, xr.Dataset)
 
 
+def test_upsample_yearly_data_no_dimension_coords():
+
+    y = make_dummy_yearly_data(freq="YM")
+    m = make_dummy_monthly_data(freq="MS")
+
+    # create stacked data whith time as non-dimension coords
+    ens = xr.Variable("ens", ["a", "b"])
+    yearly_data = xr.concat([y, y], dim=ens).stack(sample=("ens", "time"))
+    monthly_data = xr.concat([m, m], dim=ens).stack(sample=("ens", "time"))
+
+    # cannot handle MultiIndex dimension
+    with pytest.raises(
+        ValueError,
+        match=r"The dimension of the time coords \(sample\) is a pandas.MultiIndex",
+    ):
+        mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
+
+    yearly_data = yearly_data.reset_index("sample")
+
+    upsampled_years = mesmer.core.utils.upsample_yearly_data(
+        yearly_data, monthly_data.time
+    )
+
+    # while passing monthly_data works it is not "equal" - remove for check
+    monthly_data = monthly_data.reset_index("sample")
+
+    xr.testing.assert_equal(upsampled_years.time, monthly_data.time)
+
+
 def test_upsample_yearly_data_datatree():
 
     yearly_data = make_dummy_yearly_data(freq="YM")
@@ -97,12 +126,12 @@ def test_upsample_yearly_data_wrong_dims():
     yearly_data = yearly_data.rename({"time": "year"})
     monthly_data = make_dummy_monthly_data("MM")
 
-    with pytest.raises(ValueError, match="yearly_data is missing the required dims"):
+    with pytest.raises(ValueError, match="yearly_data is missing the required coords"):
         mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
 
     yearly_data = make_dummy_yearly_data("YS")
     monthly_data = monthly_data.rename({"time": "months"})
-    with pytest.raises(ValueError, match="monthly_time is missing the required dims"):
+    with pytest.raises(ValueError, match="monthly_time is missing the required coords"):
         mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data.months)
 
     monthly_data = make_dummy_monthly_data("MM")
