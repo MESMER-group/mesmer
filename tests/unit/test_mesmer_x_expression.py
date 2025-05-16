@@ -51,6 +51,21 @@ def test_expression_wrong_function():
         Expression("norm(scale=5, loc=mean())", expr_name="name")
 
 
+def test_expression_warn_scale_bound():
+
+    with pytest.warns(
+        UserWarning,
+        match=r"Found lower boundary on scale parameter that is negative, setting to 0.",
+    ):
+        expr = Expression(
+            "norm(scale=5, loc=2)",
+            expr_name="name",
+            boundaries_params={"scale": [-1, 5]},
+        )
+
+    assert expr.boundaries_params["scale"] == [0, 5]
+
+
 def test_expression_set_params():
 
     expression_str = "norm(loc=0, scale=c1)"
@@ -65,7 +80,7 @@ def test_expression_set_params():
     assert expr.parameters_list == ["loc", "scale"]
 
     bounds = {"loc": [-inf, inf], "scale": [0, inf]}
-    assert expr.boundaries_parameters == bounds
+    assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "0", "scale": "c1"}
     assert expr.parameters_expressions == param_expr
@@ -94,7 +109,7 @@ def test_expression_genextreme():
     assert expr.parameters_list == ["c", "loc", "scale"]
 
     bounds = {"c": [-inf, inf], "loc": [-inf, inf], "scale": [0, inf]}
-    assert expr.boundaries_parameters == bounds
+    assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "c1+c2*pred1", "scale": "c3+c4*pred2**2", "c": "c5"}
     assert expr.parameters_expressions == param_expr
@@ -121,7 +136,7 @@ def test_expression_norm():
     assert expr.parameters_list == ["loc", "scale"]
 
     bounds = {"loc": [-inf, inf], "scale": [0, inf]}
-    assert expr.boundaries_parameters == bounds
+    assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "c1+(c2-c1)/(1+np.exp(c3*GMT_t+c4*GMT_tm1-c5))", "scale": "c6"}
     assert expr.parameters_expressions == param_expr
@@ -149,7 +164,7 @@ def test_expression_binom():
     assert expr.parameters_list == ["n", "p", "loc"]
 
     bounds = {"n": [-inf, inf], "loc": [-inf, inf], "p": [-inf, inf]}
-    assert expr.boundaries_parameters == bounds
+    assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "c1", "n": "5", "p": "7"}
     assert expr.parameters_expressions == param_expr
@@ -177,7 +192,7 @@ def test_expression_exponpow():
     assert expr.parameters_list == ["loc", "scale"]
 
     bounds = {"b": [inf, inf], "loc": [-inf, inf], "scale": [0, inf]}
-    assert expr.boundaries_parameters == bounds
+    assert expr.boundaries_params == bounds
 
     param_expr = {
         "loc": "c1",
@@ -293,10 +308,10 @@ def test_evaluate_missing_covariates_dict():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
 
-    with pytest.raises(ValueError, match="Missing information for the input: 'T'"):
+    with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
         expr.evaluate([1, 1], {})
 
-    with pytest.raises(ValueError, match="Missing information for the input: 'F'"):
+    with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
         expr.evaluate([1, 1], {"T": 1})
 
 
@@ -304,10 +319,10 @@ def test_evaluate_missing_covariates_ds():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
 
-    with pytest.raises(ValueError, match="Missing information for the input: 'T'"):
+    with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
         expr.evaluate([1, 1], xr.Dataset())
 
-    with pytest.raises(ValueError, match="Missing information for the input: 'F'"):
+    with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
         expr.evaluate([1, 1], xr.Dataset(data_vars={"T": 1}))
 
 
@@ -319,10 +334,10 @@ def test_evaluate_covariates_wrong_shape():
     F = np.array([1, 1])
     data_vars = {"T": T, "F": F}
 
-    with pytest.raises(ValueError, match="shapes of inputs must be equal"):
+    with pytest.raises(ValueError, match="shapes of predictors must be equal"):
         expr.evaluate([1, 1], data_vars)
 
-    with pytest.raises(ValueError, match="shapes of inputs must be equal"):
+    with pytest.raises(ValueError, match="shapes of predictors must be equal"):
         expr.evaluate([1, 1], xr.Dataset(data_vars=data_vars))
 
 
