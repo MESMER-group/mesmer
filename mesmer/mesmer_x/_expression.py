@@ -91,13 +91,16 @@ class Expression:
         # basic initialization
         self.expression = expr
         self.expression_name = expr_name
-        # NOTE: default for the params cannot be {} because the dict is mutable and causes leaks in the tests
-        self.boundaries_params = (
-            boundaries_params if boundaries_params is not None else {}
-        )
-        self.boundaries_coeffs = (
-            boundaries_coeffs if boundaries_coeffs is not None else {}
-        )
+        # NOTE: default for the params cannot be {} because the dict is mutable and
+        # causes leaks in the tests
+
+        if boundaries_params is None:
+            boundaries_params = {}
+        self.boundaries_params = boundaries_params
+
+        if boundaries_coeffs is None:
+            boundaries_coeffs = {}
+        self.boundaries_coeffs = boundaries_coeffs
 
         # identify distribution
         self._interpret_distrib()
