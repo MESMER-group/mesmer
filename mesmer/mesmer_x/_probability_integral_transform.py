@@ -79,7 +79,7 @@ class ProbabilityIntegralTransform:
         if isinstance(data, xr.DataTree):
             # check on similar format
             if isinstance(preds_orig, xr.Dataset) or isinstance(preds_targ, xr.Dataset):
-                raise Exception("predictors must have the same format as data")
+                raise TypeError("predictors must have the same type as data")
 
             # looping over scenarios of data
             out = dict()
@@ -114,7 +114,7 @@ class ProbabilityIntegralTransform:
             if isinstance(preds_orig, xr.DataTree) or isinstance(
                 preds_targ, xr.DataTree
             ):
-                raise Exception("predictors must have the same format as data")
+                raise TypeError("predictors must have the same type as data")
 
             # preparing predictors
             ds_preds_orig = self._prepare_predictors(preds_orig)
@@ -133,7 +133,7 @@ class ProbabilityIntegralTransform:
             return transf_data
 
         else:
-            raise Exception("data must be a xarray Dataset or Datatree")
+            raise TypeError("data must be a xarray Dataset or Datatree")
 
     def _prepare_predictors(self, preds, scen=None):
         # preparation of predictors

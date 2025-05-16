@@ -217,14 +217,14 @@ class FirstGuess:
             if n_preds == 0:
                 data_pred = np.ones((data_targ.size, 1))
             else:
-                raise Exception("Missing data on the predictors.")
+                raise ValueError("Missing data on the predictors.")
         elif data_pred.ndim == 1:
             data_pred = data_pred[:, np.newaxis]
         elif data_pred.ndim == 2:
             if n_preds == data_pred.shape[0]:
                 data_pred = data_pred.T
         else:
-            raise Exception("Numpy predictors should not have a shape greater than 2.")
+            raise ValueError("Numpy predictors should not have a shape greater than 2.")
 
         # build dictionary
         # NOTE: extremely important that the order is the right one

@@ -79,7 +79,7 @@ def get_weights_uniform(targ_data, target, dims):
         return ones_array / ones_array.size
 
     else:
-        raise Exception(
+        raise TypeError(
             "The format for targ_data must be a xr.DataTree, xr.Dataset or a np.array."
         )
 
@@ -203,7 +203,7 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
         return (1 / density) / np.sum(1 / density)
 
     else:
-        raise Exception(
+        raise TypeError(
             "The format for targ_data must be a xr.DataTree, xr.Dataset or a np.array."
         )
 

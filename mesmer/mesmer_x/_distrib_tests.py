@@ -235,17 +235,17 @@ def _prepare_data(predictors, target, weights, first_guess=None):
         predictors_concat = predictors_concat_ds["pred"]
 
     else:
-        raise Exception(
+        raise TypeError(
             "predictors is supposed to be a dict of xr.DataArray, a xr.Dataset or a xr.DataTree"
         )
 
     # check format of target
     if not (isinstance(target, xr.Dataset) or isinstance(target, xr.DataArray)):
-        raise Exception("the target must be a xr.Dataset or xr.DataArray.")
+        raise TypeError("the target must be a xr.Dataset or xr.DataArray.")
 
     # check format of weights
     if not (isinstance(weights, xr.Dataset) or isinstance(weights, xr.DataArray)):
-        raise Exception("the weights must be a xr.Dataset or xr.DataArray.")
+        raise TypeError("the weights must be a xr.Dataset or xr.DataArray.")
 
     if isinstance(first_guess, xr.Dataset):
         first_guess = first_guess.to_dataarray(dim="coefficient")

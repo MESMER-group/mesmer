@@ -542,11 +542,11 @@ class ConditionalDistribution:
     ):
         # check data
         if not isinstance(data_pred, np.ndarray):
-            raise Exception("data_pred must be a numpy array.")
+            raise TypeError("data_pred must be a numpy array.")
         if not isinstance(data_targ, np.ndarray):
-            raise Exception("data_targ must be a numpy array.")
+            raise TypeError("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
-            raise Exception("data_weights must be a numpy array.")
+            raise TypeError("data_weights must be a numpy array.")
         distrib_tests._validate_data(data_pred, data_targ, data_weights)
 
         # initialize

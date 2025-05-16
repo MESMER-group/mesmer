@@ -116,7 +116,7 @@ def _func_optim(
             return _neg_loglike(expression, data_targ, params, data_weights)
 
         else:
-            raise Exception(f"Unknown type of optimization function: {type_fun_optim}")
+            raise TypeError(f"Unknown type of optimization function: {type_fun_optim}")
     else:
         # something wrong: returns a blocking value
         return np.inf
