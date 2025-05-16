@@ -245,8 +245,9 @@ class ConditionalDistribution:
         first_guess: xr.Dataset,
         weights: xr.DataArray,
         sample_dim: str = "sample",
-        option_smooth_coeffs: bool = False,
+        smooth_coeffs: bool = False,
         r_gasparicohn: float = 500,
+        option_smooth_coeffs: None=None,
     ):
         """fit conditional distribution over all gridpoints.
 
@@ -278,7 +279,11 @@ class ConditionalDistribution:
         :obj:`xr.Dataset`
             Fitted coefficients of the conditional distribution (gridpoint, coefficient)
         """
-        self.option_smooth_coeffs = option_smooth_coeffs
+
+        if option_smooth_coeffs is not None:
+            raise ValueError("option_smooth_coeffs has been renamed to smooth_coeffs")
+
+        self.smooth_coeffs = smooth_coeffs
         self.r_gasparicohn = r_gasparicohn
 
         # training
@@ -326,7 +331,7 @@ class ConditionalDistribution:
             Dataset of result of optimization (gridpoint, coefficient)
         """
         # checking for smoothing of coefficients, eg for 2nd round of fit
-        if self.option_smooth_coeffs:
+        if self.smooth_coeffs:
             # calculating distance between points
             geodist = geodist_exact(target["lon"], target["lat"])
 

@@ -175,7 +175,7 @@ def test_calibrate_mesmer_x(
             target=stacked_targ.tasmax,
             first_guess=transform_coeffs,
             weights=stacked_weights.weight,
-            option_smooth_coeffs=True,
+            smooth_coeffs=True,
             r_gasparicohn=500,
         )
         transform_coeffs = distrib.coefficients
