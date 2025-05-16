@@ -133,8 +133,8 @@ def find_first_guess(
 
     # creating a dataset with the coefficients
     out = xr.Dataset()
-    for icoef, coef in enumerate(conditional_distrib.expression.coefficients_list):
-        out[coef] = result.isel(coefficient=icoef)
+    for i, coef in enumerate(conditional_distrib.expression.coefficients_list):
+        out[coef] = result.isel(coefficient=i)
     return out.drop_vars("coefficient")
 
 
@@ -578,7 +578,7 @@ class FirstGuess:
 
         Parameters
         ----------
-        x : numpy array
+        x_loc : numpy array
             Coefficients for the location
         pred_high : dict[str, numpy array]
             Predictors for the high samples of the targets
@@ -712,7 +712,7 @@ class FirstGuess:
                 penalty_high = np.maximum(0, cdf_values - (1 - margin)) ** 2
 
                 # sum penalties to compute the loss
-                return np.sum(penalty_low + penalty_high)
+                return penalty_low.sum() + penalty_high.sum()
         else:
             # the coefficients cause problems
             return np.inf

@@ -82,9 +82,9 @@ class Expression:
 
         Examples
         --------
-        `my_expr = Expression("genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5", "my_expr1")`
-        `my_expr = Expression("norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)", "my_expr2")`
-        `my_expr = Expression("exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3), "my_expr3")`
+        `expr1 = Expression("genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5", "expr1")`
+        `expr2 = Expression("norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)", "expr2")`
+        `expr3 = Expression("exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3), "expr3")`
         """
         # TODO: Forcing values of certain parameters (eg mu for poisson) to be integers?
 
@@ -253,7 +253,7 @@ class Expression:
         )
 
         other_params = [p for p in self.parameters_list if p not in ["loc", "scale"]]
-        if len(other_params) > 0:
+        if other_params:
             fg_ind_others = []
             for param in other_params:
                 for c in self.coefficients_dict[param]:
