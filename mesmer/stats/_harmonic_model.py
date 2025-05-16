@@ -287,7 +287,6 @@ def fit_harmonic_model(
     *,
     max_order: int = 6,
     time_dim: str = "time",
-    sample_dim: str = "sample",
 ) -> xr.Dataset:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
@@ -299,7 +298,7 @@ def fit_harmonic_model(
         and possibly additional dimenions for example for gridcells or members.
     monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
-        ´yearly_predictor´ (starting with January!). So `n_months` = 12 :math:`\\cdot` `n_years`.
+        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot` `n_years`.
         Must contain `time_dim` and possibly additional dimensions as `yearly_predictor`.
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
@@ -318,11 +317,11 @@ def fit_harmonic_model(
 
     """
 
-    # _check_dataarray_form(
-    #     yearly_predictor, "yearly_predictor", required_dims={time_dim}
-    # )
+    _check_dataarray_form(
+        yearly_predictor, "yearly_predictor", required_coords={time_dim}
+    )
 
-    # _check_dataarray_form(monthly_target, "monthly_target", required_dims={time_dim})
+    _check_dataarray_form(monthly_target, "monthly_target", required_coords={time_dim})
 
     if set(yearly_predictor.dims) != set(monthly_target.dims):
 
@@ -343,14 +342,12 @@ def fit_harmonic_model(
     #         )
     #         raise ValueError(msg)
 
-    if not monthly_target[time_dim][0].dt.month == 1:
-        raise ValueError("Monthly target data must start with January.")
-
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
 
-    time_dim = sample_dim
+    # we need to pass the dim (which may be `time_dim` or `sample_dim`)
+    (sample_dim,) = monthly_target[time_dim].dims
 
     # subtract annual mean to have seasonal anomalies around 0
     seasonal_deviations = monthly_target - yearly_predictor
@@ -359,8 +356,8 @@ def fit_harmonic_model(
         _fit_fourier_order_np,
         yearly_predictor,
         seasonal_deviations,
-        input_core_dims=[[time_dim], [time_dim]],
-        output_core_dims=([], ["coeff"], [time_dim]),
+        input_core_dims=[[sample_dim], [sample_dim]],
+        output_core_dims=([], ["coeff"], [sample_dim]),
         vectorize=True,
         output_dtypes=[int, float, float],
         kwargs={"max_order": max_order},
@@ -373,7 +370,7 @@ def fit_harmonic_model(
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
-        "residuals": resids.transpose(time_dim, ...),
+        "residuals": resids.transpose(sample_dim, ...),
     }
 
     return xr.Dataset(data_vars)
