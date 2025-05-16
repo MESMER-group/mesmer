@@ -229,7 +229,7 @@ class FirstGuess:
         # build dictionary
         # NOTE: extremely important that the order is the right one
         self.data_pred = {
-            pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)
+            key: data_pred[:, i] for i, key in enumerate(self.predictor_names)
         }
 
         self.data_targ = data_targ

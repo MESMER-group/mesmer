@@ -402,7 +402,7 @@ class ConditionalDistribution:
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
         # NOTE: extremely important that the order is the right one
-        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)}
+        data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
         # training
         m = distrib_optimizers._minimize(
@@ -554,7 +554,7 @@ class ConditionalDistribution:
 
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
-        data_pred = {pp: data_pred[:, ii] for ii, pp in enumerate(self.predictor_names)}
+        data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
         for score in self.scores_fit:
             # basic result: optimized value
