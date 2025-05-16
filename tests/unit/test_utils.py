@@ -15,7 +15,9 @@ def make_dummy_yearly_data(freq, calendar="standard"):
     else:
         time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
-    data = xr.DataArray([1.0, 2.0, 3.0, 4.0, 5.0], dims=("time"), coords={"time": time})
+    data = xr.DataArray(
+        [1.0, 2.0, 3.0, 4.0, 5.0], dims=("time"), coords={"time": time}, name="data"
+    )
     return data
 
 
@@ -31,7 +33,9 @@ def make_dummy_monthly_data(freq, calendar="standard"):
     else:
         time = xr.date_range(start=start, periods=periods, freq=freq, calendar=calendar)
 
-    data = xr.DataArray(np.arange(periods), dims=("time"), coords={"time": time})
+    data = xr.DataArray(
+        np.arange(periods), dims=("time"), coords={"time": time}, name="data"
+    )
     return data
 
 
@@ -54,6 +58,40 @@ def test_upsample_yearly_data(freq_y, freq_m, calendar):
     assert (upsampled_years.groupby("time.year") == yearly_data).all()
 
 
+def test_upsample_yearly_data_dataset():
+
+    yearly_data = make_dummy_yearly_data(freq="YM")
+    monthly_data = make_dummy_monthly_data(freq="MS")
+
+    yearly_data = yearly_data.to_dataset()
+
+    upsampled_years = mesmer.core.utils.upsample_yearly_data(
+        yearly_data, monthly_data.time
+    )
+    xr.testing.assert_equal(upsampled_years.time, monthly_data.time)
+    assert isinstance(upsampled_years, xr.Dataset)
+
+
+def test_upsample_yearly_data_datatree():
+
+    yearly_data = make_dummy_yearly_data(freq="YM")
+    monthly_data = make_dummy_monthly_data(freq="MS")
+
+    # only yearly_data is a DataTree
+    yearly_data = xr.DataTree.from_dict({"scen": yearly_data.to_dataset()})
+
+    upsampled_years = mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data)
+    xr.testing.assert_equal(upsampled_years["scen"].time, monthly_data.time)
+    assert isinstance(upsampled_years, xr.DataTree)
+
+    # yearly_ data and monthly_data is a DataTree
+    monthly_data = xr.DataTree.from_dict({"scen": monthly_data.to_dataset()})
+
+    upsampled_years = mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data)
+    xr.testing.assert_equal(upsampled_years["scen"].time, monthly_data["scen"].time)
+    assert isinstance(upsampled_years, xr.DataTree)
+
+
 def test_upsample_yearly_data_wrong_dims():
     yearly_data = make_dummy_yearly_data("YS")
     yearly_data = yearly_data.rename({"time": "year"})
@@ -69,6 +107,8 @@ def test_upsample_yearly_data_wrong_dims():
 
     monthly_data = make_dummy_monthly_data("MM")
     monthly_data = monthly_data.expand_dims({"extra": 1})
+    time = monthly_data["time"].expand_dims({"extra": 1})
+    monthly_data = monthly_data.assign_coords(time=time)
     with pytest.raises(ValueError, match="monthly_time should be 1D, but is 2D"):
         mesmer.core.utils.upsample_yearly_data(yearly_data, monthly_data)
 
@@ -266,6 +306,58 @@ def test_check_dataarray_form_required_dims(required_dims):
     mesmer.core.utils._check_dataarray_form(da, required_dims="y")
     mesmer.core.utils._check_dataarray_form(da, required_dims=["x", "y"])
     mesmer.core.utils._check_dataarray_form(da, required_dims={"x", "y"})
+
+
+def test_check_dataarray_form_required_coords():
+
+    da = xr.DataArray(np.ones((2, 2)), dims=("x", "y"))
+
+    # x & y are dims but not coords
+    for required_coords in ("foo", ["foo"], ["foo", "bar"], "x", "y"):
+        with pytest.raises(ValueError, match="obj is missing the required coords"):
+            mesmer.core.utils._check_dataarray_form(da, required_coords=required_coords)
+
+    with pytest.raises(ValueError, match="obj is missing the required coords"):
+        mesmer.core.utils._check_dataarray_form(da, required_coords="x")
+
+    # add coords and non-dimension coords
+    da = da.assign_coords(x=[0, 1], y=["a", "b"], c=("x", [0, 1]))
+
+    # no error
+    mesmer.core.utils._check_dataarray_form(da, required_coords="c")
+    mesmer.core.utils._check_dataarray_form(da, required_coords="x")
+    mesmer.core.utils._check_dataarray_form(da, required_coords="y")
+    mesmer.core.utils._check_dataarray_form(da, required_coords=["x", "y"])
+    mesmer.core.utils._check_dataarray_form(da, required_coords={"x", "y"})
+
+
+@pytest.mark.parametrize("to_dataset", (True, False))
+def test_assert_required_dims(to_dataset):
+
+    obj = xr.DataArray(np.ones((2, 2)), dims=("x", "y"), name="data")
+
+    if to_dataset:
+        obj = obj.to_dataset()
+
+    # x & y are dims but not coords
+    for required_coords in ("foo", ["foo"], ["foo", "bar"], "x", "y"):
+        with pytest.raises(ValueError, match="obj is missing the required coords"):
+            mesmer.core.utils._assert_required_coords(
+                obj, required_coords=required_coords
+            )
+
+    with pytest.raises(ValueError, match="obj is missing the required coords"):
+        mesmer.core.utils._assert_required_coords(obj, required_coords="x")
+
+    # add coords and non-dimension coords
+    obj = obj.assign_coords(x=[0, 1], y=["a", "b"], c=("x", [0, 1]))
+
+    # no error
+    mesmer.core.utils._assert_required_coords(obj, required_coords="c")
+    mesmer.core.utils._assert_required_coords(obj, required_coords="x")
+    mesmer.core.utils._assert_required_coords(obj, required_coords="y")
+    mesmer.core.utils._assert_required_coords(obj, required_coords=["x", "y"])
+    mesmer.core.utils._assert_required_coords(obj, required_coords={"x", "y"})
 
 
 def test_check_dataarray_form_shape():
