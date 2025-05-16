@@ -3,6 +3,8 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
+from typing import Literal
+
 import numpy as np
 import properscoring
 from scipy.optimize import minimize
