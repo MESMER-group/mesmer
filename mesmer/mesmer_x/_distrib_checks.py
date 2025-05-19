@@ -24,7 +24,7 @@ def _test_coeffs_in_bounds(expression: Expression, values_coeffs):
     return True
 
 
-def _test_param_bounds(expression: Expression, params):
+def _params_in_bounds(expression: Expression, params):
 
     # checking set boundaries on parameters
     for param, (bot, top) in expression.boundaries_params.items():
@@ -42,7 +42,7 @@ def _test_param_bounds(expression: Expression, params):
     return True
 
 
-def _test_support(expression: Expression, params, data):
+def _params_in_distr_support(expression: Expression, params, data):
     # test of the support of the distribution: is there any data out of the
     # corresponding support? dont try testing if there are issues on the parameters
 
@@ -119,14 +119,14 @@ def _validate_coefficients(
     # evaluate the distribution for the predictors and this iteration of coeffs
     params = expression.evaluate_params(coefficients, data_pred)
     # test for the validity of the parameters
-    test_param = _test_param_bounds(expression, params)
+    test_param = _params_in_bounds(expression, params)
 
     # tests on params show already that it won't work: fill in the rest with False
     if not test_param:
         return test_coeff, test_param, False, False, False
 
     # test for the support of the distribution
-    test_support = _test_support(expression, params, data_targ)
+    test_support = _params_in_distr_support(expression, params, data_targ)
 
     # tests on params show already that it won't work: fill in the rest with False
     if not test_support:
