@@ -267,8 +267,9 @@ class ConditionalDistribution:
         if option_smooth_coeffs is not None:
             raise ValueError("option_smooth_coeffs has been renamed to smooth_coeffs")
 
-        self.smooth_coeffs = smooth_coeffs
-        self.r_gasparicohn = r_gasparicohn
+        # checking for smoothing of coefficients, eg for 2nd round of fit
+        if smooth_coeffs:
+            first_guess = self._smoothen_first_guess(target, first_guess, r_gasparicohn)
 
         # training
         coefficients = self._fit_xr(
@@ -282,6 +283,51 @@ class ConditionalDistribution:
         )  # add expression as attribute
 
         self._coefficients = coefficients
+
+    def _smoothen_first_guess(
+        self, target: xr.DataArray, first_guess: xr.Dataset, r_gasparicohn
+    ):
+        """
+        smoothen first guess over
+
+        Parameters
+        ----------
+        target : xr.DataArray
+            Target DataArray.
+        first_guess : xr.Dataset
+            First guess for the coefficients.
+        sample_dim : str
+            Dimension along which to fit the distribution.
+
+        Returns
+        -------
+        first_guess : :obj:`xr.Dataset`
+            Smoothed ``first_guess``
+        """
+
+        # calculating distance between points
+        geodist = geodist_exact(target["lon"], target["lat"])
+
+        # deducing correlation matrix
+        corr_gc = gaspari_cohn(geodist / r_gasparicohn)
+
+        # will avoid taking gridpoints with nan
+        gp_nonan = first_guess.notnull().to_array().all(dim=["variable"]).values
+
+        # creating new dataset of coefficients
+        second_guess = xr.full_like(first_guess, fill_value=np.nan)
+
+        # calculating for each coef and each gridpoint the weighted median
+        for coef in self.expression.coefficients_list:
+            for gp in first_guess.gridpoint.values:
+                fg = weighted_median(
+                    data=first_guess[coef].sel(gridpoint=gp_nonan).values,
+                    weights=corr_gc.sel(gridpoint_i=gp, gridpoint_j=gp_nonan).values,
+                )
+                second_guess[coef].loc[dict(gridpoint=gp)] = fg
+
+        # preparing for training
+        return second_guess
 
     def _fit_xr(
         self,
@@ -314,33 +360,6 @@ class ConditionalDistribution:
         :obj:`xr.Dataset`
             Dataset of result of optimization (gridpoint, coefficient)
         """
-        # checking for smoothing of coefficients, eg for 2nd round of fit
-        if self.smooth_coeffs:
-            # calculating distance between points
-            geodist = geodist_exact(target["lon"], target["lat"])
-
-            # deducing correlation matrix
-            corr_gc = gaspari_cohn(geodist / self.r_gasparicohn)
-
-            # will avoid taking gridpoints with nan
-            gp_nonan = first_guess.notnull().to_array().all(dim=["variable"]).values
-
-            # creating new dataset of coefficients
-            second_guess = xr.full_like(first_guess, fill_value=np.nan)
-
-            # calculating for each coef and each gridpoint the weighted median
-            for coef in self.expression.coefficients_list:
-                for gp in first_guess.gridpoint.values:
-                    fg = weighted_median(
-                        data=first_guess[coef].sel(gridpoint=gp_nonan).values,
-                        weights=corr_gc.sel(
-                            gridpoint_i=gp, gridpoint_j=gp_nonan
-                        ).values,
-                    )
-                    second_guess[coef].loc[dict(gridpoint=gp)] = fg
-
-            # preparing for training
-            first_guess = second_guess
 
         # shaping inputs
         data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore

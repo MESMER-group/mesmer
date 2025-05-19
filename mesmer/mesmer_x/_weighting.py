@@ -218,7 +218,7 @@ def weighted_median(data, weights):
       https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
       @author Jack Peterson (jack@tinybike.net)
     """
-    data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
+    data, weights = np.asarray(data).squeeze(), np.asarray(weights).squeeze()
     s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
     midpoint = 0.5 * sum(s_weights)
 
