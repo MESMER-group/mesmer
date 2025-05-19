@@ -222,9 +222,9 @@ class FirstGuess:
         # smooting to help with location & scale
         self.l_smooth = 5
         self.smooth_targ = _smooth_data(data_targ, length=self.l_smooth)
-        self.smooth_targ_dev = (
+        self.smooth_targ_dev_sq = (
             data_targ[self.l_smooth : -self.l_smooth] - self.smooth_targ
-        )
+        ) ** 2
         self.smooth_pred = {
             pp: _smooth_data(self.data_pred[pp], length=self.l_smooth)
             for pp in self.predictor_names
@@ -665,7 +665,7 @@ class FirstGuess:
                 sca = params["scale"][self.l_smooth : -self.l_smooth]
             else:
                 sca = params["scale"]
-            return np.abs(np.mean(self.smooth_targ_dev**2 - sca**2))
+            return np.abs(np.mean(self.smooth_targ_dev_sq - sca**2))
 
         else:
             # this coefficient on scale causes problem
