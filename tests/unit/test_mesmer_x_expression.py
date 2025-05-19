@@ -79,7 +79,7 @@ def test_expression_set_params():
 
     assert expr.parameters_list == ["loc", "scale"]
 
-    bounds = {"loc": [-inf, inf], "scale": [0, inf]}
+    bounds = {"scale": [0, inf]}
     assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "0", "scale": "c1"}
@@ -108,7 +108,7 @@ def test_expression_genextreme():
 
     assert expr.parameters_list == ["c", "loc", "scale"]
 
-    bounds = {"c": [-inf, inf], "loc": [-inf, inf], "scale": [0, inf]}
+    bounds = {"scale": [0, inf]}
     assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "c1+c2*pred1", "scale": "c3+c4*pred2**2", "c": "c5"}
@@ -135,7 +135,7 @@ def test_expression_norm():
 
     assert expr.parameters_list == ["loc", "scale"]
 
-    bounds = {"loc": [-inf, inf], "scale": [0, inf]}
+    bounds = {"scale": [0, inf]}
     assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "c1+(c2-c1)/(1+np.exp(c3*GMT_t+c4*GMT_tm1-c5))", "scale": "c6"}
@@ -163,7 +163,7 @@ def test_expression_binom():
 
     assert expr.parameters_list == ["n", "p", "loc"]
 
-    bounds = {"n": [-inf, inf], "loc": [-inf, inf], "p": [-inf, inf]}
+    bounds = {}
     assert expr.boundaries_params == bounds
 
     param_expr = {"loc": "c1", "n": "5", "p": "7"}
@@ -191,7 +191,7 @@ def test_expression_exponpow():
 
     assert expr.parameters_list == ["loc", "scale"]
 
-    bounds = {"b": [inf, inf], "loc": [-inf, inf], "scale": [0, inf]}
+    bounds = {"scale": [0, inf]}
     assert expr.boundaries_params == bounds
 
     param_expr = {
