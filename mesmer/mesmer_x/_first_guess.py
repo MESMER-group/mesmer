@@ -10,8 +10,8 @@ import numpy as np
 import xarray as xr
 from scipy.optimize import basinhopping, shgo
 
-import mesmer.mesmer_x._distrib_tests as distrib_tests
-import mesmer.mesmer_x._optimizers as distrib_optimizers
+import mesmer.mesmer_x._distrib_checks as _distrib_checks
+import mesmer.mesmer_x._optimizers as _optimizers
 from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
 
 
@@ -101,7 +101,7 @@ def find_first_guess(
             first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
 
     # preparing data
-    data_pred, data_targ, data_weights, first_guess = distrib_tests._prepare_data(  # type: ignore
+    data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore
         predictors, target, weights, first_guess
     )
 
@@ -198,7 +198,7 @@ class FirstGuess:
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)
 
-        distrib_tests._validate_data(data_pred, data_targ, data_weights)
+        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
 
         # check first guess
         self.fg_coeffs = np.copy(first_guess)
@@ -413,7 +413,7 @@ class FirstGuess:
         if len(fg_ind_loc) > 0:
             fact_maxfev_iter = len(fg_ind_loc) / self.expression.n_coeffs
 
-            localfit_loc = distrib_optimizers._minimize(
+            localfit_loc = _optimizers._minimize(
                 func=self._fg_fun_loc,
                 x0=self.fg_coeffs[fg_ind_loc],
                 args=(),
@@ -436,7 +436,7 @@ class FirstGuess:
             x0 = self.fg_coeffs[fg_ind_sca]
             fact_maxfev_iter = len(fg_ind_sca) / self.expression.n_coeffs
 
-            localfit_sca = distrib_optimizers._minimize(
+            localfit_sca = _optimizers._minimize(
                 func=self._fg_fun_sca,
                 x0=x0,
                 args=(),
@@ -460,7 +460,7 @@ class FirstGuess:
             fg_ind_others = self.expression.ind_others
             fact_maxfev_iter = len(fg_ind_others) / self.expression.n_coeffs
 
-            localfit_others = distrib_optimizers._minimize(
+            localfit_others = _optimizers._minimize(
                 func=self._fg_fun_others,
                 x0=self.fg_coeffs[fg_ind_others],
                 args=(),
@@ -477,7 +477,7 @@ class FirstGuess:
 
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
-        localfit_nll = distrib_optimizers._minimize(
+        localfit_nll = _optimizers._minimize(
             func=self._fg_fun_nll_no_tests,
             x0=self.fg_coeffs,
             args=(),
@@ -493,7 +493,7 @@ class FirstGuess:
         fg_coeffs = localfit_nll.x
 
         test_coeff, test_param, test_distrib, test_proba, _ = (
-            distrib_tests._validate_coefficients(
+            _distrib_checks._validate_coefficients(
                 self.expression,
                 self.data_pred,
                 self.data_targ,
@@ -507,7 +507,7 @@ class FirstGuess:
             # Step 6: fit on LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL does not behave well enough here)
 
-            localfit_opti = distrib_optimizers._minimize(
+            localfit_opti = _optimizers._minimize(
                 func=self._fg_fun_ll_n,
                 x0=fg_coeffs,
                 args=(),
@@ -541,7 +541,7 @@ class FirstGuess:
             # situation. sobol or halton, observed lower performances with
             # simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
             globalfit_all = shgo(
-                func=distrib_optimizers._func_optim,
+                func=_optimizers._func_optim,
                 bounds=bounds,
                 args=(
                     self.data_pred,
@@ -640,7 +640,7 @@ class FirstGuess:
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_loc_coeffs] = x_loc
         params = self.expression.evaluate_params(x, self.smooth_pred)
-        if distrib_tests._test_evol_params(self.expression, params):
+        if _distrib_checks._test_evol_params(self.expression, params):
             loc = params["loc"]
             return np.mean((loc - self.smooth_targ) ** 2)
 
@@ -675,7 +675,7 @@ class FirstGuess:
         x[self.expression.ind_sca_coeffs] = x_sca
         params = self.expression.evaluate_params(x, self.data_pred)
 
-        if distrib_tests._test_evol_params(self.expression, params):
+        if _distrib_checks._test_evol_params(self.expression, params):
             if isinstance(params["scale"], np.ndarray):
                 sca = params["scale"][self.l_smooth : -self.l_smooth]
             else:
@@ -699,7 +699,7 @@ class FirstGuess:
         # evaluate parameters
         params = self.expression.evaluate_params(x, self.data_pred)
 
-        if distrib_tests._test_evol_params(self.expression, params):
+        if _distrib_checks._test_evol_params(self.expression, params):
             # compute CDF values for the target samples
             cdf_values = self.expression.distrib.cdf(self.data_targ, **params)
 
@@ -719,7 +719,7 @@ class FirstGuess:
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expression.evaluate_params(coefficients, self.data_pred)
-        return distrib_optimizers._neg_loglike(
+        return _optimizers._neg_loglike(
             self.expression, self.data_targ, params, self.data_weights
         )
 
@@ -741,7 +741,7 @@ class FirstGuess:
         # not to require to make this part more complex.
         x, iter, itermax, test = np.copy(x0), 0, 100, True
         while test and (iter < itermax):
-            test_c, test_p, test_d, test_v, _ = distrib_tests._validate_coefficients(
+            test_c, test_p, test_d, test_v, _ = _distrib_checks._validate_coefficients(
                 self.expression,
                 self.data_pred,
                 self.data_targ,

@@ -8,12 +8,10 @@ import warnings
 import numpy as np
 import xarray as xr
 
-import mesmer.mesmer_x._distrib_tests as distrib_tests
-import mesmer.mesmer_x._optimizers as distrib_optimizers
-
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
 from mesmer.core.utils import _check_dataset_form
+from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._weighting import weighted_median
 from mesmer.stats import gaspari_cohn
@@ -359,7 +357,7 @@ class ConditionalDistribution:
             first_guess = second_guess
 
         # shaping inputs
-        data_pred, data_targ, data_weights, first_guess = distrib_tests._prepare_data(  # type: ignore
+        data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore
             predictors, target, weights, first_guess
         )
         self.predictor_names = data_pred.coords["predictor"].values
@@ -391,7 +389,7 @@ class ConditionalDistribution:
 
     @ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
-        distrib_tests._validate_data(data_pred, data_targ, data_weights)
+        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
 
         # basic check on first guess
         if fg is not None and len(fg) != len(self.expression.coefficients_list):
@@ -405,8 +403,8 @@ class ConditionalDistribution:
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
         # training
-        m = distrib_optimizers._minimize(
-            func=distrib_optimizers._func_optim,
+        m = _optimizers._minimize(
+            func=_optimizers._func_optim,
             x0=fg,
             method_fit=self.options.method_fit,
             args=(
@@ -513,7 +511,7 @@ class ConditionalDistribution:
               compute)
         """
         # shaping inputs
-        data_pred, data_targ, data_weights, _ = distrib_tests._prepare_data(
+        data_pred, data_targ, data_weights, _ = _distrib_checks._prepare_data(
             predictors, target, weights
         )
         self.predictor_names = data_pred.predictor.values
@@ -547,7 +545,7 @@ class ConditionalDistribution:
             raise TypeError("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise TypeError("data_weights must be a numpy array.")
-        distrib_tests._validate_data(data_pred, data_targ, data_weights)
+        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
 
         # initialize
         quality_fit = []
@@ -559,7 +557,7 @@ class ConditionalDistribution:
         for score in self.scores_fit:
             # basic result: optimized value
             if score == "func_optim":
-                score = distrib_optimizers._func_optim(
+                score = _optimizers._func_optim(
                     self.expression,
                     coefficients_fit,
                     data_pred,
@@ -577,19 +575,17 @@ class ConditionalDistribution:
 
             # NLL averaged over sample
             if score == "nll":
-                score = distrib_optimizers._neg_loglike(
+                score = _optimizers._neg_loglike(
                     self.expression, data_targ, params, data_weights
                 )
 
             # BIC averaged over sample
             if score == "bic":
-                score = distrib_optimizers._bic(
-                    self.options, data_targ, params, data_weights
-                )
+                score = _optimizers._bic(self.options, data_targ, params, data_weights)
 
             # CRPS
             if score == "crps":
-                score = distrib_optimizers._crps(
+                score = _optimizers._crps(
                     self.expression,
                     data_targ,
                     data_pred,

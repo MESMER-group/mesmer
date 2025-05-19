@@ -9,7 +9,7 @@ import numpy as np
 import properscoring
 from scipy.optimize import minimize
 
-import mesmer.mesmer_x._distrib_tests as distrib_tests
+import mesmer.mesmer_x._distrib_checks as _distrib_checks
 from mesmer.mesmer_x._expression import Expression
 
 
@@ -81,7 +81,7 @@ def _func_optim(
     # value for the optimization
 
     test_coeff, test_param, test_distrib, test_proba, params = (
-        distrib_tests._validate_coefficients(
+        _distrib_checks._validate_coefficients(
             expression, data_pred, data_targ, coefficients, threshold_min_proba
         )
     )

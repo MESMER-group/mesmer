@@ -2,7 +2,7 @@ from mesmer.mesmer_x._conditional_distribution import (
     ConditionalDistribution,
     ConditionalDistributionOptions,
 )
-from mesmer.mesmer_x._distrib_tests import (
+from mesmer.mesmer_x._distrib_checks import (
     _prepare_data,
     _validate_coefficients,
     _validate_data,
