@@ -362,15 +362,17 @@ class FirstGuess:
                 for pp in self.predictor_names
             }
 
-            derivative_targ = {
-                pp: _finite_difference(
-                    np.mean(self.smooth_targ[ind_targ_high]),
-                    np.mean(self.smooth_targ[ind_targ_low]),
-                    mean_high_preds[pp],
-                    mean_low_preds[pp],
-                )
-                for pp in self.predictor_names
-            }
+            derivative_targ = np.array(
+                [
+                    _finite_difference(
+                        np.mean(self.smooth_targ[ind_targ_high]),
+                        np.mean(self.smooth_targ[ind_targ_low]),
+                        mean_high_preds[pp],
+                        mean_low_preds[pp],
+                    )
+                    for pp in self.predictor_names
+                ]
+            )
 
             minimizer_kwargs = {
                 "args": (
@@ -586,18 +588,18 @@ class FirstGuess:
         params = self.expression.evaluate_params(x, pred_high)
         loc_high = params["loc"]
 
-        derivative_loc = {
-            p: _finite_difference(loc_high, loc_low, pred_high[p], pred_low[p])
-            for p in self.data_pred
-        }
+        derivative_loc = np.array(
+            [
+                _finite_difference(loc_high, loc_low, pred_high[p], pred_low[p])
+                for p in self.data_pred
+            ]
+        )
 
         return (
-            np.sum(
-                [(derivative_loc[p] - derivative_targ[p]) ** 2 for p in self.data_pred]
-                # ^ change of the location with the predictor should be similar to the change of the target with the predictor
-            )
+            # change of the location with the predictor should be similar to the change of the target with the predictor
+            np.sum((derivative_loc - derivative_targ) ** 2)
+            # location should not be too far from the mean of the samples
             + (0.5 * (loc_low + loc_high) - mean_targ) ** 2
-            # ^ location should not be too far from the mean of the samples
         )
 
     def _fg_fun_loc(self, x_loc):
