@@ -118,6 +118,8 @@ class Expression:
         # correct expressions of parameters
         self._correct_expr_parameters()
 
+        self._check_boundaries_coeffs()
+
         # compile expression for faster eval
         self._compile_expression()
 
@@ -194,7 +196,6 @@ class Expression:
         # only set bounds for scale - avoids comparing values to deault of +- inf
         if "scale" not in self.boundaries_params:
             self.boundaries_params["scale"] = [0, np.inf]
-
 
         if "scale" in self.boundaries_params and self.boundaries_params["scale"][0] < 0:
             warnings.warn(
@@ -340,6 +341,16 @@ class Expression:
                 self.parameters_expressions[param] = self.parameters_expressions[
                     param
                 ].replace(f"__{i}__", i)
+
+    def _check_boundaries_coeffs(self):
+
+        for coeff in self.boundaries_coeffs:
+
+            if coeff not in self.coefficients_list:
+                raise ValueError(
+                    f"Provided wrong boundaries on coefficient, {coeff}"
+                    " does not exist in Expression"
+                )
 
     def _compile_expression(self):
         """compile expression for faster eval"""

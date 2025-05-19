@@ -13,14 +13,7 @@ from mesmer.mesmer_x._expression import Expression
 def _test_coeffs_in_bounds(expression: Expression, values_coeffs):
 
     # checking set boundaries on coefficients
-    for coeff in expression.boundaries_coeffs:
-        bottom, top = expression.boundaries_coeffs[coeff]
-
-        if coeff not in expression.coefficients_list:
-            raise ValueError(
-                f"Provided wrong boundaries on coefficient, {coeff}"
-                " does not exist in Expression"
-            )
+    for coeff, (bottom, top) in expression.boundaries_coeffs.items():
 
         values = values_coeffs[expression.coefficients_list.index(coeff)]
 
@@ -41,8 +34,8 @@ def _test_param_bounds(expression: Expression, params):
         # out of boundaries
         if (
             # only check values if bot/ top are not -+inf
-            (not np.isinf(bot) and np.any(param_values < bot)) or
-            (not np.isinf(top) and np.any(param_values > top))
+            (not np.isinf(bot) and np.any(param_values < bot))
+            or (not np.isinf(top) and np.any(param_values > top))
         ):
             return False
 
