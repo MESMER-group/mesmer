@@ -625,7 +625,7 @@ class FirstGuess:
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_loc_coeffs] = x_loc
         params = self.expression.evaluate_params(x, self.smooth_pred)
-        if _distrib_checks._test_evol_params(self.expression, params):
+        if _distrib_checks._test_param_bounds(self.expression, params):
             loc = params["loc"]
             return np.mean((loc - self.smooth_targ) ** 2)
 
@@ -660,7 +660,7 @@ class FirstGuess:
         x[self.expression.ind_sca_coeffs] = x_sca
         params = self.expression.evaluate_params(x, self.data_pred)
 
-        if _distrib_checks._test_evol_params(self.expression, params):
+        if _distrib_checks._test_param_bounds(self.expression, params):
             if isinstance(params["scale"], np.ndarray):
                 sca = params["scale"][self.l_smooth : -self.l_smooth]
             else:
@@ -684,7 +684,7 @@ class FirstGuess:
         # evaluate parameters
         params = self.expression.evaluate_params(x, self.data_pred)
 
-        if _distrib_checks._test_evol_params(self.expression, params):
+        if _distrib_checks._test_param_bounds(self.expression, params):
             # compute CDF values for the target samples
             cdf_values = self.expression.distrib.cdf(self.data_targ, **params)
 

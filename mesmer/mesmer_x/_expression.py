@@ -191,13 +191,10 @@ class Expression:
 
         # prepare boundaries on parameters
         # default is [-inf, inf] except for scale which must be positive
+        # only set bounds for scale - avoids comparing values to deault of +- inf
+        if "scale" not in self.boundaries_params:
+            self.boundaries_params["scale"] = [0, np.inf]
 
-        for param in self.parameters_list:
-            if param not in self.boundaries_params:
-                if param == "scale":
-                    self.boundaries_params[param] = [0, np.inf]
-                else:
-                    self.boundaries_params[param] = [-np.inf, np.inf]
 
         if "scale" in self.boundaries_params and self.boundaries_params["scale"][0] < 0:
             warnings.warn(
