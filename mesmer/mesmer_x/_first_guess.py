@@ -3,9 +3,6 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
-import functools
-import warnings
-
 import numpy as np
 import xarray as xr
 from scipy.optimize import basinhopping, shgo
@@ -13,6 +10,7 @@ from scipy.optimize import basinhopping, shgo
 import mesmer.mesmer_x._distrib_checks as _distrib_checks
 import mesmer.mesmer_x._optimizers as _optimizers
 from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
+from mesmer.mesmer_x._utils import _ignore_warnings
 
 
 def _finite_difference(f_high, f_low, x_high, x_low):
@@ -39,19 +37,6 @@ def _smooth_data(data, length=5):
     # removing the bias in the mean
     tmp += np.mean(data[length:-length]) - np.mean(tmp)
     return tmp
-
-
-def ignore_warnings(func):
-
-    # adapted from https://stackoverflow.com/a/70292317
-    # TODO: don't suppress all warnings
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            return func(*args, **kwargs)
-
-    return _wrapper
 
 
 def find_first_guess(
@@ -248,7 +233,7 @@ class FirstGuess:
         self.data_weights = data_weights
 
     # suppress nan & inf warnings
-    @ignore_warnings
+    @_ignore_warnings
     def _find_fg_allsteps(self):
         """
         compute first guess of the coefficients, to ensure convergence of the incoming

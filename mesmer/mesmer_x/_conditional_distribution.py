@@ -2,8 +2,6 @@
 # Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
-import functools
-import warnings
 
 import numpy as np
 import xarray as xr
@@ -13,21 +11,9 @@ from mesmer.core.geospatial import geodist_exact
 from mesmer.core.utils import _check_dataset_form
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
+from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.mesmer_x._weighting import weighted_median
 from mesmer.stats import gaspari_cohn
-
-
-def ignore_warnings(func):
-
-    # adapted from https://stackoverflow.com/a/70292317
-    # TODO: don't suppress all warnings
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            return func(*args, **kwargs)
-
-    return _wrapper
 
 
 class ConditionalDistributionOptions:
@@ -387,7 +373,7 @@ class ConditionalDistribution:
 
         return out.drop_vars("coefficient")
 
-    @ignore_warnings  # suppress nan & inf warnings
+    @_ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
         _distrib_checks._validate_data(data_pred, data_targ, data_weights)
 
