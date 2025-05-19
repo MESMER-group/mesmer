@@ -571,7 +571,7 @@ class FirstGuess:
             Predictors for the high samples of the targets
         pred_low : dict[str, numpy array]
             Predictors for the low samples of the targets
-        derivative_targ : dict
+        derivative_targ : numpy array
             Derivatives of the target samples for every predictor
         mean_targ : float
             Mean of the (smoothed) target samples

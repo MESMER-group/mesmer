@@ -564,15 +564,17 @@ def test_fg_func_deriv01():
         for pp in fg.predictor_names
     }
 
-    derivative_targ = {
-        pp: _finite_difference(
-            np.mean(fg.smooth_targ[ind_targ_high]),
-            np.mean(fg.smooth_targ[ind_targ_low]),
-            mean_high_preds[pp],
-            mean_low_preds[pp],
-        )
-        for pp in fg.predictor_names
-    }
+    derivative_targ = np.array(
+        [
+            _finite_difference(
+                np.mean(fg.smooth_targ[ind_targ_high]),
+                np.mean(fg.smooth_targ[ind_targ_low]),
+                mean_high_preds[pp],
+                mean_low_preds[pp],
+            )
+            for pp in fg.predictor_names
+        ]
+    )
 
     loss_at_toolow = fg._fg_fun_deriv01(
         [c1 / 2], mean_high_preds, mean_low_preds, derivative_targ, m_smooth_targ
