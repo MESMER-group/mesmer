@@ -231,7 +231,7 @@ class ConditionalDistribution:
         sample_dim: str = "sample",
         smooth_coeffs: bool = False,
         r_gasparicohn: float = 500,
-        option_smooth_coeffs: None = None,
+        option_smooth_coeffs: None = None,  # deprecated in favor of smooth_coeffs
     ):
         """fit conditional distribution over all gridpoints.
 
