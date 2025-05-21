@@ -629,7 +629,11 @@ class FirstGuess:
         params = self.expression.evaluate_params(x, self.smooth_pred)
         if _distrib_checks._params_in_bounds(self.expression, params):
             loc = params["loc"]
-            return np.mean((loc - self.smooth_targ) ** 2)
+
+            # corresponds to
+            # np.mean((loc - self.smooth_targ) ** 2)
+            diff = loc - self.smooth_targ
+            return np.dot(diff @ diff)  # / diff.size
 
         else:
             # this coefficient on location causes problem
