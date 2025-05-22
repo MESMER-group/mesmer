@@ -633,7 +633,7 @@ class FirstGuess:
             # corresponds to
             # np.mean((loc - self.smooth_targ) ** 2)
             diff = loc - self.smooth_targ
-            return np.dot(diff @ diff)  # / diff.size
+            return np.dot(diff, diff)  # / diff.size
 
         else:
             # this coefficient on location causes problem
