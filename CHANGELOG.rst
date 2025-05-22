@@ -230,8 +230,9 @@ Harmonic model
 -  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_ and
    `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 -  add helper function to upsample yearly data to monthly resolution (\
-   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
-   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
+   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_, and
+   `#688 <https://github.com/MESMER-group/mesmer/pull/688>`_).
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
   move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
 - fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
