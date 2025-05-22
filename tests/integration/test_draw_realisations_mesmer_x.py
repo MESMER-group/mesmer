@@ -3,37 +3,39 @@ import pathlib
 import pytest
 import xarray as xr
 
-# from mesmer.core._datatreecompat import map_over_datasets
 import mesmer
-import mesmer.mesmer_x
+from mesmer.mesmer_x import (
+    ConditionalDistribution,
+    ConditionalDistributionOptions,
+    Expression,
+    ProbabilityIntegralTransform,
+)
 
 
 @pytest.mark.parametrize(
-    ("scenario", "target_name", "expr", "expr_name", "update_expected_files"),
+    ("scenario", "target_name", "expr_name", "update_expected_files"),
     [
         pytest.param(
             "ssp585",
             "tasmax",
-            "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
             False,
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
             "tasmax",
-            "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1_2ndfit",
             False,
-            marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
     ],
 )
 def test_make_realisations_mesmer_x(
-    scenario, target_name, expr, expr_name, test_data_root_dir, update_expected_files
+    scenario, target_name, expr_name, test_data_root_dir, update_expected_files
 ):
     # set some configuration parameters
-    n_realizations = 1  # TODO: more is not possible atm
+    n_realizations = 1  # TODO: can now do more than 1 realization. change output data?
     seed = 0
     buffer = 10
     esm = "IPSL-CM6A-LR"
@@ -68,7 +70,7 @@ def test_make_realisations_mesmer_x(
 
     # load the parameters
     file_end = f"{target_name}_{expr_name}_{esm}_{scenario}"
-    transform_params = xr.open_dataset(
+    distrib_orig = ConditionalDistribution.from_netcdf(
         TEST_PATH
         / "test-params"
         / "distrib"
@@ -101,18 +103,19 @@ def test_make_realisations_mesmer_x(
     transf_emus = xr.Dataset({target_name: transf_emus})
 
     # back-transform the realizations
-    # can only take 2D input aka only one realisation atm
-    emus = mesmer.mesmer_x.probability_integral_transform(
-        target_name=target_name,
-        data=[(transf_emus.sel(realisation=0), scenario)],
-        expr_start="norm(loc=0, scale=1)",
-        expr_end=expr,
-        coeffs_end=transform_params,
-        preds_end=[(predictor, scenario)],
+    expr_tranf = Expression("norm(loc=0, scale=1)", "standard_normal")
+    distrib_transf = ConditionalDistribution(
+        expr_tranf, ConditionalDistributionOptions(expr_tranf)
     )
 
-    emus = xr.DataArray(emus[0][0], dims=["time", "gridpoint"], coords={"time": time})
-    emus = emus.assign_coords(local_ar_params.gridpoint.coords)
+    back_pit = ProbabilityIntegralTransform(
+        distrib_orig=distrib_transf,
+        distrib_targ=distrib_orig,
+    )
+
+    emus = back_pit.transform(
+        data=transf_emus, target_name=target_name, preds_orig=None, preds_targ=predictor
+    )
 
     expected_output_file = (
         TEST_PATH / f"test_make_realisations_expected_output_{expr_name}.nc"
@@ -125,12 +128,12 @@ def test_make_realisations_mesmer_x(
         # load the output
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         expected_emus = xr.open_dataarray(expected_output_file, decode_times=time_coder)
-        xr.testing.assert_allclose(emus, expected_emus)
+        xr.testing.assert_allclose(emus[target_name], expected_emus)
 
         # make sure we can get onto a lat lon grid from what is saved
         exp_reshaped = expected_emus.set_index(gridpoint=("lat", "lon")).unstack(
             "gridpoint"
         )
-        expected_dims = {"lon", "lat", "time"}
+        expected_dims = {"realisation", "lon", "lat", "time"}
 
         assert set(exp_reshaped.dims) == expected_dims
