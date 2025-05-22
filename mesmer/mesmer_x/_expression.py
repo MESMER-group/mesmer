@@ -360,6 +360,38 @@ class Expression:
             for param, expr in self.parameters_expressions.items()
         }
 
+    def _evaluate_params_fast(self, coefficients_values, predictors_values):
+        "as evaluate_params but without checks and coefficients_values as np.ndarray"
+
+        coefficients_values = {
+            c: coefficients_values[i] for i, c in enumerate(self.coefficients_list)
+        }
+
+        locals = {**coefficients_values, **predictors_values}
+
+        parameters_values = {}
+        for param, expr in self._compiled_param_expr.items():
+            parameters_values[param] = eval(expr, None, locals)
+
+        return parameters_values
+
+    def _evaluate_one_param_fast(self, coefficients_values, predictors_values, name):
+        "as _evaluate_params_fast but for one param only"
+
+        coefficients_values = {
+            c: coefficients_values[i]
+            for i, c in enumerate(self.coefficients_dict[name])
+        }
+
+        locals = {**coefficients_values, **predictors_values}
+
+        return eval(self._compiled_param_expr[name], None, locals)
+
+        # for param, expr in self._compiled_param_expr.items():
+        #     parameters_values[param] = eval(expr, None, locals)
+
+        # return parameters_values
+
     def evaluate_params(
         self, coefficients_values, predictors_values, forced_shape=None
     ):
@@ -403,6 +435,8 @@ class Expression:
 
         # Check 1: are all the coefficients provided?
         if isinstance(coefficients_values, dict | xr.Dataset):
+            # raise TypeError()
+
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
