@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterable
 from typing import cast
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from mesmer.core.datatree import _datatree_wrapper
@@ -151,8 +152,9 @@ def upsample_yearly_data(
         Upsampled yearly temperature values containing the yearly values for every month
         of the corresponding year.
     """
-    _assert_required_dims(yearly_data, "yearly_data", required_dims=time_dim)
-    _assert_required_dims(monthly_time, "monthly_time", required_dims=time_dim)
+
+    _assert_required_coords(yearly_data, "yearly_data", required_coords=time_dim)
+    _assert_required_coords(monthly_time, "monthly_time", required_coords=time_dim)
 
     # read out time coords - this also works if it's already time coords
     monthly_time = monthly_time[time_dim]
@@ -163,15 +165,27 @@ def upsample_yearly_data(
             "Length of monthly time not equal to 12 times the length of yearly data."
         )
 
-    # make sure monthly and yearly data both start at the beginning of the period
-    year = yearly_data.resample({time_dim: "YS"}).bfill()
-    month = monthly_time.resample({time_dim: "MS"}).bfill()
+    # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
+    # i.e., time_dim and sample_dim may or may not be the same
+    (sample_dim,) = monthly_time.dims
 
-    # forward fill yearly values to monthly resolution
-    upsampled_yearly_data = year.reindex_like(month, method="ffill")
+    if isinstance(yearly_data.indexes.get(sample_dim), pd.MultiIndex):
+        raise ValueError(
+            f"The dimension of the time coords ({sample_dim}) is a pandas.MultiIndex,"
+            " which is currently not supported. Potentially call"
+            f" `yearly_data.reset_index('{sample_dim}')` first."
+        )
 
-    # make sure the time dimension of the upsampled data is the same as the original monthly time
-    upsampled_yearly_data = year.reindex_like(monthly_time, method="ffill")
+    upsampled_yearly_data = (
+        # repeats the data along new dimension
+        yearly_data.expand_dims({"__new__": 12})
+        # stack to remove new dim; target dim must have new name
+        .stack(__sample__=(sample_dim, "__new__"), create_index=False)
+        # so we need to rename it back
+        .swap_dims(__sample__=sample_dim)
+        # and ensure the time coords the ones from the monthly data
+        .assign_coords({time_dim: (sample_dim, monthly_time.values)})
+    )
 
     return upsampled_yearly_data
 
