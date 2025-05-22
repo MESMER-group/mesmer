@@ -34,8 +34,8 @@ def _params_in_bounds(expression: Expression, params):
         # out of boundaries
         if (
             # only check values if bot/ top are not -+inf
-            (not np.isinf(bot) and param_values.min() < bot)
-            or (not np.isinf(top) and param_values.max() > top)
+            (not np.isinf(bot) and np.min(param_values) < bot)
+            or (not np.isinf(top) and np.max(param_values) > top)
         ):
             return False
 
