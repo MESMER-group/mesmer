@@ -594,10 +594,11 @@ class FirstGuess:
                 for p in self.data_pred
             ]
         )
-
+        diff = derivative_loc - derivative_targ
         return (
             # change of the location with the predictor should be similar to the change of the target with the predictor
-            np.sum((derivative_loc - derivative_targ) ** 2)
+            # np.sum((derivative_loc - derivative_targ) ** 2)
+            np.dot(diff, diff)
             # location should not be too far from the mean of the samples
             + (0.5 * (loc_low + loc_high) - mean_targ) ** 2
         )

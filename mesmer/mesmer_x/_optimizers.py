@@ -136,7 +136,8 @@ def _loglike(expression: Expression, data_targ, params, data_weights):
         LL = expression.distrib.logpdf(data_targ, **params)
 
     # weighted sum of the loglikelihood
-    value = np.sum(data_weights * LL)
+    # value = np.sum(data_weights * LL)
+    value = np.dot(data_weights, LL)
 
     if np.isnan(value):
         return -np.inf
