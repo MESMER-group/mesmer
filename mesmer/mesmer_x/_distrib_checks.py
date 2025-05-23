@@ -42,6 +42,24 @@ def _params_in_bounds(expression: Expression, params):
     return True
 
 
+def _param_in_bounds(expression: Expression, param_values, name):
+    """as params_in_bounds but for a single param (faster)"""
+
+    # short circuit if no boundaries are given (the boundaries are +-inf)
+    if name in expression.boundaries_params:
+        (bot, top) = expression.boundaries_params[name]
+
+        # out of boundaries
+        if (
+            # only check values if bot/ top are not -+inf
+            (not np.isinf(bot) and np.min(param_values) < bot)
+            or (not np.isinf(top) and np.max(param_values) > top)
+        ):
+            return False
+
+    return True
+
+
 def _params_in_distr_support(expression: Expression, params, data):
     # test of the support of the distribution: is there any data out of the
     # corresponding support? dont try testing if there are issues on the parameters
