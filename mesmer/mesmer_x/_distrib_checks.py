@@ -135,7 +135,7 @@ def _validate_coefficients(
         return test_coeff, False, False, False, False
 
     # evaluate the distribution for the predictors and this iteration of coeffs
-    params = expression.evaluate_params(coefficients, data_pred)
+    params = expression._evaluate_params_fast(coefficients, data_pred)
     # test for the validity of the parameters
     test_param = _params_in_bounds(expression, params)
 

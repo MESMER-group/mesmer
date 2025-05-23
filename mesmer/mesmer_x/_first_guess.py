@@ -583,10 +583,9 @@ class FirstGuess:
         """
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_loc_coeffs] = x_loc
-        params = self.expression.evaluate_params(x, pred_low)
-        loc_low = params["loc"]
-        params = self.expression.evaluate_params(x, pred_high)
-        loc_high = params["loc"]
+
+        loc_low = self.expression._evaluate_one_param_fast(x, pred_low, "loc")
+        loc_high = self.expression._evaluate_one_param_fast(x, pred_high, "loc")
 
         derivative_loc = np.array(
             [
@@ -627,9 +626,8 @@ class FirstGuess:
         """
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_loc_coeffs] = x_loc
-        params = self.expression.evaluate_params(x, self.smooth_pred)
-        if _distrib_checks._params_in_bounds(self.expression, params):
-            loc = params["loc"]
+        loc = self.expression._evaluate_one_param_fast(x, self.smooth_pred, "loc")
+        if _distrib_checks._param_in_bounds(self.expression, loc, "loc"):
 
             # corresponds to
             # np.mean((loc - self.smooth_targ) ** 2)
@@ -665,14 +663,13 @@ class FirstGuess:
         """
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_sca_coeffs] = x_sca
-        params = self.expression.evaluate_params(x, self.data_pred)
+        scale = self.expression._evaluate_one_param_fast(x, self.data_pred, "scale")
 
-        if _distrib_checks._params_in_bounds(self.expression, params):
-            if isinstance(params["scale"], np.ndarray):
-                sca = params["scale"][self.l_smooth : -self.l_smooth]
-            else:
-                sca = params["scale"]
-            return np.abs(np.mean(self.smooth_targ_dev_sq - sca**2))
+        if _distrib_checks._param_in_bounds(self.expression, scale, "scale"):
+            if isinstance(scale, np.ndarray):
+                scale = scale[self.l_smooth : -self.l_smooth]
+
+            return np.abs(np.mean(self.smooth_targ_dev_sq - scale**2))
 
         else:
             # this coefficient on scale causes problem
@@ -689,7 +686,7 @@ class FirstGuess:
         x[self.expression.ind_others] = x_others
 
         # evaluate parameters
-        params = self.expression.evaluate_params(x, self.data_pred)
+        params = self.expression._evaluate_params_fast(x, self.data_pred)
 
         if _distrib_checks._params_in_bounds(self.expression, params):
             # compute CDF values for the target samples
@@ -710,13 +707,13 @@ class FirstGuess:
             return np.inf
 
     def _fg_fun_nll_no_tests(self, coefficients):
-        params = self.expression.evaluate_params(coefficients, self.data_pred)
+        params = self.expression._evaluate_params_fast(coefficients, self.data_pred)
         return _optimizers._neg_loglike(
             self.expression, self.data_targ, params, self.data_weights
         )
 
     def _fg_fun_ll_n(self, x, n=4):
-        params = self.expression.evaluate_params(x, self.data_pred)
+        params = self.expression._evaluate_params_fast(x, self.data_pred)
 
         if self.expression.is_distrib_discrete:
             LL = np.sum(self.expression.distrib.logpmf(self.data_targ, **params) ** n)
