@@ -387,11 +387,6 @@ class Expression:
 
         return eval(self._compiled_param_expr[name], None, locals)
 
-        # for param, expr in self._compiled_param_expr.items():
-        #     parameters_values[param] = eval(expr, None, locals)
-
-        # return parameters_values
-
     def evaluate_params(
         self, coefficients_values, predictors_values, forced_shape=None
     ):
