@@ -712,14 +712,15 @@ class FirstGuess:
             self.expression, self.data_targ, params, self.data_weights
         )
 
-    def _fg_fun_ll_n(self, x, n=4):
+    def _fg_fun_ll_n(self, x):
+        n = 3
         params = self.expression._evaluate_params_fast(x, self.data_pred)
 
         if self.expression.is_distrib_discrete:
             LL = np.sum(self.expression.distrib.logpmf(self.data_targ, **params) ** n)
         else:
             LL = np.sum(self.expression.distrib.logpdf(self.data_targ, **params) ** n)
-        return LL
+        return -LL
 
     def find_bound(self, i_c, x0, fact_coeff):
         """
