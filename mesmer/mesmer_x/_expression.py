@@ -239,6 +239,15 @@ class Expression:
 
         self.n_coeffs = len(self.coefficients_list)
 
+        coefficients_idx = {}
+        for param in self.parameters_list:
+            idx = [
+                self.coefficients_list.index(c) for c in self.coefficients_dict[param]
+            ]
+            coefficients_idx[param] = np.array(idx, dtype=int)
+
+        self.coefficients_idx = coefficients_idx
+
         # save coefficient indices
         loc_coeffs = self.coefficients_dict.get("loc", [])
         self.ind_loc_coeffs = np.array(
