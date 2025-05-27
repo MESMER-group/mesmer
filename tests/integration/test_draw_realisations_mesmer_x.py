@@ -20,14 +20,14 @@ from mesmer.mesmer_x import (
             "tasmax",
             "expr1",
             False,
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
             "tasmax",
             "expr1_2ndfit",
             False,
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
     ],
 )
