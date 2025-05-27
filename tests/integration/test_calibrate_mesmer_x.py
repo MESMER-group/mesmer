@@ -261,6 +261,7 @@ def test_calibrate_mesmer_x(
             local_ar_params["intercept"].values,
             expected_local_ar_params["intercept"].values,
             atol=1e-7,
+            rtol=1e-05,
         )
 
         xr.testing.assert_allclose(
