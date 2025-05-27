@@ -10,7 +10,7 @@ from mesmer.core.datatree import collapse_datatree_into_dataset, map_over_datase
 from mesmer.mesmer_x._expression import Expression
 
 
-def _test_coeffs_in_bounds(expression: Expression, values_coeffs):
+def _coeffs_in_bounds(expression: Expression, values_coeffs):
 
     # checking set boundaries on coefficients
     for coeff, (bottom, top) in expression.boundaries_coeffs.items():
@@ -128,7 +128,7 @@ def _validate_coefficients(
 
     """
 
-    test_coeff = _test_coeffs_in_bounds(expression, coefficients)
+    test_coeff = _coeffs_in_bounds(expression, coefficients)
 
     # tests on coeffs show already that it won't work: fill in the rest with False
     if not test_coeff:
