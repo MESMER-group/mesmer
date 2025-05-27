@@ -1,5 +1,6 @@
 import pathlib
 
+import numpy as np
 import pytest
 import xarray as xr
 
@@ -255,6 +256,13 @@ def test_calibrate_mesmer_x(
         )
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
+
+        np.testing.assert_allclose(
+            local_ar_params["intercept"].values,
+            expected_local_ar_params["intercept"].values,
+            atol=1e-7,
+        )
+
         xr.testing.assert_allclose(
             local_ar_params["intercept"],
             expected_local_ar_params["intercept"],
