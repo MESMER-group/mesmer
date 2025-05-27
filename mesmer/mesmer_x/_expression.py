@@ -389,7 +389,9 @@ class Expression:
 
         coefficients_values = {
             c: coefficients_values[i]
-            for i, c in enumerate(self.coefficients_dict[name])
+            for i, c in zip(
+                self.coefficients_idx[name], self.coefficients_dict[name], strict=True
+            )
         }
 
         locals = {**coefficients_values, **predictors_values}
