@@ -689,23 +689,22 @@ class FirstGuess:
         # evaluate parameters
         params = self.expression._evaluate_params_fast(x, self.data_pred)
 
-        if _distrib_checks._params_in_bounds(self.expression, params):
-            # compute CDF values for the target samples
-            cdf_values = self.expression.distrib.cdf(self.data_targ, **params)
-
-            if (np.min(cdf_values) < margin) or (np.max(cdf_values) > 1 - margin):
-                return np.inf
-
-            else:
-                # penalize samples with CDF values close to 0 or 1 (unlikely samples)
-                penalty_low = np.maximum(0, margin - cdf_values) ** 2
-                penalty_high = np.maximum(0, cdf_values - (1 - margin)) ** 2
-
-                # sum penalties to compute the loss
-                return penalty_low.sum() + penalty_high.sum()
-        else:
+        if not _distrib_checks._params_in_bounds(self.expression, params):
             # the coefficients cause problems
             return np.inf
+
+        # compute CDF values for the target samples
+        cdf_values = self.expression.distrib.cdf(self.data_targ, **params)
+
+        if np.min(cdf_values) < margin or np.max(cdf_values) > 1 - margin:
+            return np.inf
+
+        # penalize samples with CDF values close to 0 or 1 (unlikely samples)
+        penalty_low = np.maximum(0, margin - cdf_values) ** 2
+        penalty_high = np.maximum(0, cdf_values - (1 - margin)) ** 2
+
+        # sum penalties to compute the loss
+        return penalty_low.sum() + penalty_high.sum()
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expression._evaluate_params_fast(coefficients, self.data_pred)
