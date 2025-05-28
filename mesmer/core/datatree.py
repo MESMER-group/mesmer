@@ -304,6 +304,31 @@ def merge(
     fill_value: object = dtypes.NA,
     combine_attrs: CombineAttrsOptions = "override",
 ):
+    """
+    Merge the datasets of each node of isomorphic DataTree objects together.
+    Wraps `xarray.merge <https://docs.xarray.dev/en/stable/generated/xarray.merge.html>`_.
+
+    Parameters
+    ----------
+    objects : Iterable of DataTree
+        The DataTree objects to merge. All DataTree objects must have the same structure, i.e. be isomorphic.
+    compat : {'no_conflicts', 'identical', 'equals', 'override', 'broadcast_equals'}, default: 'no_conflicts'
+        String indicating how to compare variables of the same name for potential conflicts,
+        for details see `xarray.merge`.
+    join : {'outer', 'inner', 'left', 'right'}, default: 'outer'
+        String indicating how to join the datasets of the DataTree objects, for details see
+        `xarray.merge`.
+    fill_value : object, default: dtypes.NA
+        Value to use for missing data, for details see `xarray.merge`.
+    combine_attrs : {'no_conflicts', 'identical', 'equals', 'override', 'drop'}, default: 'override'
+        String indicating how to combine attributes of the datasets, for details see
+        `xarray.merge`.
+    
+    Returns
+    -------
+    xr.DataTree
+        A new DataTree object containing the merged datasets from each node of the input DataTree objects.
+    """
     kwargs = {
         "compat": compat,
         "join": join,
