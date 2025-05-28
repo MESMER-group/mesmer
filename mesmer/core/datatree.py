@@ -185,7 +185,7 @@ def broadcast_and_stack_scenarios(
     ----------
     predictors : DataTree
         A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
-        must have nodes for each scenario, each of which holds a Dataset where the 
+        must have nodes for each scenario, each of which holds a Dataset where the
         predictor(s) are contained as data variables. The ``xr.Dataset`` must contain
         ``time_dim`` and at least one data variable.
     target : DataTree
@@ -291,7 +291,7 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
     return _inner
 
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 
 from xarray.core import dtypes
 from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
@@ -310,4 +310,6 @@ def merge(
         "fill_value": fill_value,
         "combine_attrs": combine_attrs,
     }
-    return map_over_datasets(lambda *objs, **kwargs: xr.merge(objs, **kwargs), *objects, kwargs=kwargs)
+    return map_over_datasets(
+        lambda *objs, **kwargs: xr.merge(objs, **kwargs), *objects, kwargs=kwargs
+    )

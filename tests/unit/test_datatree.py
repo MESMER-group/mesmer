@@ -193,11 +193,15 @@ def test_broadcast_and_stack_scenarios():
 
     target = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
-    d1D_1 = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts),
-                        "tas2": trend_data_1D(n_timesteps=n_ts) ** 2,
-                        "hfds": trend_data_1D(n_timesteps=n_ts) * 0.5})
+    d1D_1 = xr.Dataset(
+        {
+            "tas": trend_data_1D(n_timesteps=n_ts),
+            "tas2": trend_data_1D(n_timesteps=n_ts) ** 2,
+            "hfds": trend_data_1D(n_timesteps=n_ts) * 0.5,
+        }
+    )
     d1D_2 = d1D_1 * 2
-    
+
     predictors = xr.DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2})
 
     weights = map_over_datasets(xr.ones_like, target.sel(cells=0))
@@ -271,7 +275,9 @@ def test_broadcast_and_stack_scenarios():
         )
     )
 
-    target_aligned, predictors_aligned = xr.align(target_stacked, predictors_stacked, join="exact")
+    target_aligned, predictors_aligned = xr.align(
+        target_stacked, predictors_stacked, join="exact"
+    )
     xr.testing.assert_equal(target_stacked, target_aligned)
     xr.testing.assert_equal(predictors_stacked, predictors_aligned)
 
