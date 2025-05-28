@@ -183,7 +183,7 @@ def test_calibrate_mesmer(
     )
 
     # train global variability module
-    tas_glob_mean = map_over_datasets(lambda ds: ds.drop_vars("hfds"), globmean)
+    tas_glob_mean = map_over_datasets(lambda ds: ds[["tas"]], globmean)
     tas_resid_novolc = tas_glob_mean - globmean_smoothed
     tas_resid_novolc = map_over_datasets(
         lambda ds: ds.rename({"tas": "tas_resids"}), tas_resid_novolc
@@ -204,7 +204,7 @@ def test_calibrate_mesmer(
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    target = map_over_datasets(lambda ds: ds.drop_vars("hfds"), anoms)
+    target = map_over_datasets(lambda ds: ds[["tas"]], anoms)
     target = mask_and_stack(target, threshold_land=THRESHOLD_LAND)
 
     predictors = mesmer.datatree.merge([globmean_smoothed, tas_resid_novolc])
