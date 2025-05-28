@@ -626,16 +626,14 @@ class FirstGuess:
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_loc_coeffs] = x_loc
         loc = self.expression._evaluate_one_param_fast(x, self.smooth_pred, "loc")
-        if _distrib_checks._param_in_bounds(self.expression, loc, "loc"):
 
-            # corresponds to
-            # np.mean((loc - self.smooth_targ) ** 2)
-            diff = loc - self.smooth_targ
-            return np.dot(diff, diff)  # / diff.size
-
-        else:
+        if not _distrib_checks._param_in_bounds(self.expression, loc, "loc"):
             # this coefficient on location causes problem
             return np.inf
+
+        # np.mean((loc - self.smooth_targ) ** 2)
+        diff = loc - self.smooth_targ
+        return np.dot(diff, diff)
 
     def _fg_fun_scale(self, x_scale):
         r"""
