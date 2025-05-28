@@ -417,14 +417,14 @@ class FirstGuess:
 
         # Step 3: fit coefficients of scale (objective: improving the subset of
         # scale coefficients)
-        fg_ind_sca = self.expression.ind_sca_coeffs
+        ind_scale = self.expression.ind_scale_coeffs
         # scale might not be used or set in the expression
-        if len(fg_ind_sca) > 0:
-            x0 = self.fg_coeffs[fg_ind_sca]
-            fact_maxfev_iter = len(fg_ind_sca) / self.expression.n_coeffs
+        if len(ind_scale) > 0:
+            x0 = self.fg_coeffs[ind_scale]
+            fact_maxfev_iter = len(ind_scale) / self.expression.n_coeffs
 
-            localfit_sca = _optimizers._minimize(
-                func=self._fg_fun_sca,
+            localfit_scale = _optimizers._minimize(
+                func=self._fg_fun_scale,
                 x0=x0,
                 args=(),
                 method_fit=self.options.method_fit,
@@ -436,7 +436,7 @@ class FirstGuess:
                     self.options.name_ftol: self.options.ftol_req,
                 },
             )
-            self.fg_coeffs[fg_ind_sca] = localfit_sca.x
+            self.fg_coeffs[ind_scale] = localfit_scale.x
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
@@ -640,7 +640,7 @@ class FirstGuess:
             # this coefficient on location causes problem
             return np.inf
 
-    def _fg_fun_sca(self, x_sca):
+    def _fg_fun_scale(self, x_scale):
         r"""
         Loss function for the scale coefficients. The objective is to get a scale such that
         the deviation of the distribution is close to the scale, thus we fit a mean squared
@@ -664,18 +664,17 @@ class FirstGuess:
 
         """
         x = np.copy(self.fg_coeffs)
-        x[self.expression.ind_sca_coeffs] = x_sca
+        x[self.expression.ind_scale_coeffs] = x_scale
         scale = self.expression._evaluate_one_param_fast(x, self.data_pred, "scale")
 
-        if _distrib_checks._param_in_bounds(self.expression, scale, "scale"):
-            if isinstance(scale, np.ndarray):
-                scale = scale[self.l_smooth : -self.l_smooth]
-
-            return np.abs(np.mean(self.smooth_targ_dev_sq - scale**2))
-
-        else:
+        if not _distrib_checks._param_in_bounds(self.expression, scale, "scale"):
             # this coefficient on scale causes problem
             return np.inf
+
+        if isinstance(scale, np.ndarray):
+            scale = scale[self.l_smooth : -self.l_smooth]
+
+        return np.abs(np.mean(self.smooth_targ_dev_sq - scale**2))
 
     def _fg_fun_others(self, x_others, margin=1.0e-3):
         """

@@ -650,7 +650,7 @@ def test_fg_fun_sca():
         first_guess=[loc, scale],
     )
 
-    result = fg._fg_fun_sca(scale)
+    result = fg._fg_fun_scale(scale)
     np.testing.assert_allclose(result, 0, atol=0.1)
 
     # test GEV
@@ -672,9 +672,9 @@ def test_fg_fun_sca():
 
     # test local minimum at true value
     delta = 1.0  # don't get closer than this since for a GEV the variance is not necessarily close to the scale
-    loss_at_toolow = fg._fg_fun_sca(scale - delta)
-    loss_at_truesolution = fg._fg_fun_sca(scale)
-    loss_at_toohigh = fg._fg_fun_sca(scale + delta)
+    loss_at_toolow = fg._fg_fun_scale(scale - delta)
+    loss_at_truesolution = fg._fg_fun_scale(scale)
+    loss_at_toohigh = fg._fg_fun_scale(scale + delta)
 
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution

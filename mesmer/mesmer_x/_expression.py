@@ -255,7 +255,7 @@ class Expression:
         )
 
         scale_coeffs = self.coefficients_dict.get("scale", [])
-        self.ind_sca_coeffs = np.array(
+        self.ind_scale_coeffs = np.array(
             [self.coefficients_list.index(c) for c in scale_coeffs]
         )
 
