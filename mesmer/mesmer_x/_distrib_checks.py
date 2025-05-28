@@ -189,10 +189,18 @@ def _validate_data(data_pred, data_targ, data_weights):
 
     data_weights
         Weights for the training sample.
-    -------
     """
 
-    def _check_data(data, name):
+    def _assert_data_valid(data, name):
+        """check data for nans or infs
+
+        Parameters
+        ----------
+        data : array-like
+            Data to check
+        name : str
+            Name to use in error message
+        """
         # checking for NaN values
         if np.isnan(data).any():
             raise ValueError(f"nan values in {name}")
@@ -201,9 +209,9 @@ def _validate_data(data_pred, data_targ, data_weights):
         if np.isinf(data).any():
             raise ValueError(f"infinite values in {name}")
 
-    _check_data(data_targ, "target")
-    _check_data(data_pred, "predictors")
-    _check_data(data_weights, "weights")
+    _assert_data_valid(data_targ, "target")
+    _assert_data_valid(data_pred, "predictors")
+    _assert_data_valid(data_weights, "weights")
 
 
 def _prepare_data(predictors, target, weights, first_guess=None):
