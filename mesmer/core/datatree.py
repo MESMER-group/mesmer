@@ -179,18 +179,17 @@ def broadcast_and_stack_scenarios(
     dimension is
 
     1. Broadcasts predictors to target
-    2. Stacks the DataTree along the sample dimension
+    2. Stacks the DataTrees along the sample dimension
 
     Parameters
     ----------
     predictors : DataTree
         A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
-        must have subtrees for each predictor, each of which has to have at least one
-        non-empty leaf representing a scenario. The subtrees of different predictors must
-        be isomorphic (i.e. have the save scenarios). The ``xr.Dataset`` must contain
-        ``time_dim`` and only hold one data variable.
+        must have nodes for each scenario, each of which holds a Dataset where the 
+        predictor(s) are contained as data variables. The ``xr.Dataset`` must contain
+        ``time_dim`` and at least one data variable.
     target : DataTree
-        A ``DataTree`` holding the targets. Must be isomorphic to the predictor subtrees, i.e.
+        A ``DataTree`` holding the targets. Must be isomorphic to the predictor tree, i.e.
         have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must contain
        ``time_dim``.
     weights : DataTree or None, default: None
@@ -217,14 +216,10 @@ def broadcast_and_stack_scenarios(
     broadcasting of the predictors.
 
     Example for how the predictor ``DataTree`` should look like:
-    ├─ tas
-    │  ├─ hist
-    │  ├─ scen1
-    │  └─ ...
-    ├─ hfds
-    │  ├─ hist
-    │  ├─ scen1
-    │  └─ ...
+    ├─ hist
+    |        datavars: tas, hfds...
+    ├─ scen1
+    |        datavars: tas, hfds...
     └─ ...
     with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
     """
