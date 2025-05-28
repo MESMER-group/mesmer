@@ -309,43 +309,10 @@ def merge(
     fill_value: object = dtypes.NA,
     combine_attrs: CombineAttrsOptions = "override",
 ):
-
-    from typing import cast
-
-    from xarray.core.datatree_mapping import (
-        _check_all_return_values,
-        _handle_errors_with_path_context,
-    )
-    from xarray.core.utils import result_name
-
     kwargs = {
         "compat": compat,
         "join": join,
         "fill_value": fill_value,
         "combine_attrs": combine_attrs,
     }
-
-    # Walk all trees simultaneously, applying func to all nodes that lie in same position in different trees
-    # We don't know which arguments are DataTrees so we zip all arguments together as iterables
-    # Store tuples of results in a dict because we don't yet know how many trees we need to rebuild to return
-    out_data_objects: dict[str, xr.Dataset | None | tuple[xr.Dataset | None, ...]] = {}
-
-    tree_args = [obj for obj in objects if isinstance(obj, xr.DataTree)]
-    name = result_name(tree_args)
-
-    for path, node_tree_args in xr.group_subtrees(*tree_args):
-        node_dataset_args = [arg.dataset for arg in node_tree_args]
-        for i, arg in enumerate(objects):
-            if not isinstance(arg, xr.DataTree):
-                node_dataset_args.insert(i, arg)
-
-        func_with_error_context = _handle_errors_with_path_context(path)(xr.merge)
-        results = func_with_error_context(node_dataset_args, **kwargs)
-        out_data_objects[path] = results
-
-    num_return_values = _check_all_return_values(out_data_objects)
-
-    if num_return_values is None:
-        # one return value
-        out_data = cast(Mapping[str, xr.Dataset | None], out_data_objects)
-        return xr.DataTree.from_dict(out_data, name=name)
+    return map_over_datasets(lambda *objs, **kwargs: xr.merge(objs, **kwargs), *objects, kwargs=kwargs)
