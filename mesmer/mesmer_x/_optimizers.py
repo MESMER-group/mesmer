@@ -124,7 +124,6 @@ def _func_optim(
         raise TypeError(f"Unknown type of optimization function: {type_fun_optim}")
 
 
-
 def _neg_loglike(expression: Expression, data_targ, params, data_weights):
     return -_loglike(expression, data_targ, params, data_weights)
 
