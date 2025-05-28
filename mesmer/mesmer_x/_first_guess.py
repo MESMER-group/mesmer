@@ -479,7 +479,7 @@ class FirstGuess:
         )
         fg_coeffs = localfit_nll.x
 
-        test_coeff, test_param, test_distrib, test_proba, _ = (
+        coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, _ = (
             _distrib_checks._validate_coefficients(
                 self.expression,
                 self.data_pred,
@@ -490,7 +490,9 @@ class FirstGuess:
         )
 
         # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
-        if not (test_coeff and test_param and test_distrib and test_proba):
+        if not (
+            coeffs_in_bounds and params_in_bounds and params_in_support and test_proba
+        ):
             # Step 6: fit on LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL does not behave well enough here)
 

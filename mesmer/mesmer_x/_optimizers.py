@@ -80,13 +80,13 @@ def _func_optim(
     # check whether these coefficients respect all conditions: if so, can compute a
     # value for the optimization
 
-    test_coeff, test_param, test_distrib, test_proba, params = (
+    coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params = (
         _distrib_checks._validate_coefficients(
             expression, data_pred, data_targ, coefficients, threshold_min_proba
         )
     )
 
-    if test_coeff and test_param and test_distrib and test_proba:
+    if coeffs_in_bounds and params_in_bounds and params_in_support and test_proba:
         if type_fun_optim == "fcnll":
             # compute full conditioning
             # will apply the stopping rule: splitting data_fit into two sets of data

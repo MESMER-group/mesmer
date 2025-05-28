@@ -98,8 +98,9 @@ def _validate_coefficients(
 
     Parameters
     ----------
-    coefficients : numpy array 1D
-        Coefficients to validate.
+    expression: Expression
+        Expression to validate the coefficients for.
+
 
     data_pred : numpy array 1D
         Predictors for the training sample.
@@ -107,13 +108,24 @@ def _validate_coefficients(
     data_targ : numpy array 1D
         Target for the training sample.
 
+    coefficients : numpy array 1D
+        Coefficients to validate.
+
+    threshold_min_proba : float | None
+        Minimal probability of each data sample in the distribution.
+
+
     Returns
     -------
-    test_coeff : boolean
+
+    coeffs_in_bounds : bool
         True if the coefficients are within conditional_distrib.expression.boundaries_coeffs. If
         False, all other tests will also be set to False and not tested.
 
-    test_param : boolean
+    params_in_bounds : bool
+        True if the params are within conditional_distrib.expression.boundaries_params
+
+    params_in_support : boolean
         True if parameters are within conditional_distrib.expression.boundaries_params and within the support of the distribution.
         False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
 
@@ -123,36 +135,36 @@ def _validate_coefficients(
         is above conditional_distrib.threshold_min_proba.
         False if not or if test_coeff or test_param or test_coeff is False.
 
-    distrib : distrib_cov
-        The distribution that has been evaluated for the given coefficients.
+    params : distrib_cov
+        The evaluated params for the given coefficients.
 
     """
 
-    test_coeff = _coeffs_in_bounds(expression, coefficients)
+    coeffs_in_bounds = _coeffs_in_bounds(expression, coefficients)
 
     # tests on coeffs show already that it won't work: fill in the rest with False
-    if not test_coeff:
-        return test_coeff, False, False, False, False
+    if not coeffs_in_bounds:
+        return coeffs_in_bounds, False, False, False, False
 
     # evaluate the distribution for the predictors and this iteration of coeffs
     params = expression._evaluate_params_fast(coefficients, data_pred)
     # test for the validity of the parameters
-    test_param = _params_in_bounds(expression, params)
+    params_in_bounds = _params_in_bounds(expression, params)
 
     # tests on params show already that it won't work: fill in the rest with False
-    if not test_param:
-        return test_coeff, test_param, False, False, False
+    if not params_in_bounds:
+        return coeffs_in_bounds, params_in_bounds, False, False, False
 
     # test for the support of the distribution
-    test_support = _params_in_distr_support(expression, params, data_targ)
+    params_in_support = _params_in_distr_support(expression, params, data_targ)
 
     # tests on params show already that it won't work: fill in the rest with False
-    if not test_support:
-        return test_coeff, test_param, test_support, False, False
+    if not params_in_support:
+        return coeffs_in_bounds, params_in_bounds, params_in_support, False, False
 
     # test for the probability of the values
     if threshold_min_proba is None:
-        return test_coeff, test_param, test_support, True, params
+        return coeffs_in_bounds, params_in_bounds, params_in_support, True, params
 
     else:
         test_proba = _test_proba_value(
@@ -160,7 +172,7 @@ def _validate_coefficients(
         )
 
         # return values for each test and the evaluated distribution
-        return test_coeff, test_param, test_support, test_proba, params
+        return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
 
 
 def _validate_data(data_pred, data_targ, data_weights):
