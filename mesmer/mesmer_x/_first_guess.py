@@ -440,10 +440,7 @@ class FirstGuess:
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
-        other_params = [
-            p for p in self.expression.parameters_list if p not in ["loc", "scale"]
-        ]
-        if len(other_params) > 0:
+        if self.expression.ind_others.any():
             fg_ind_others = self.expression.ind_others
             fact_maxfev_iter = len(fg_ind_others) / self.expression.n_coeffs
 
