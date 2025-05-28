@@ -86,42 +86,43 @@ def _func_optim(
         )
     )
 
-    if coeffs_in_bounds and params_in_bounds and params_in_support and test_proba:
-        if type_fun_optim == "fcnll":
-            # compute full conditioning
-            # will apply the stopping rule: splitting data_fit into two sets of data
-            # using the given threshold
-            ind_data_ok, ind_data_stopped = _stopping_rule(
-                expression,
-                data_targ,
-                params,
-                threshold_stopping_rule,
-                ind_year_thres,
-                exclude_trigger,
-            )
-            nll = _neg_loglike(
-                expression,
-                data_targ[ind_data_ok],
-                {pp: params[ind_data_ok] for pp in params},
-                data_weights[ind_data_ok],
-            )
-            fc = _fullcond_thres(
-                expression,
-                data_targ[ind_data_stopped],
-                {pp: params[ind_data_stopped] for pp in params},
-                data_weights[ind_data_stopped],
-                ind_data_stopped,
-            )
-            return nll + fc
-        elif type_fun_optim == "nll":
-            # compute negative loglikelihood
-            return _neg_loglike(expression, data_targ, params, data_weights)
-
-        else:
-            raise TypeError(f"Unknown type of optimization function: {type_fun_optim}")
-    else:
+    if not (coeffs_in_bounds and params_in_bounds and params_in_support and test_proba):
         # something wrong: returns a blocking value
         return np.inf
+
+    if type_fun_optim == "fcnll":
+        # compute full conditioning
+        # will apply the stopping rule: splitting data_fit into two sets of data
+        # using the given threshold
+        ind_data_ok, ind_data_stopped = _stopping_rule(
+            expression,
+            data_targ,
+            params,
+            threshold_stopping_rule,
+            ind_year_thres,
+            exclude_trigger,
+        )
+        nll = _neg_loglike(
+            expression,
+            data_targ[ind_data_ok],
+            {pp: params[ind_data_ok] for pp in params},
+            data_weights[ind_data_ok],
+        )
+        fc = _fullcond_thres(
+            expression,
+            data_targ[ind_data_stopped],
+            {pp: params[ind_data_stopped] for pp in params},
+            data_weights[ind_data_stopped],
+            ind_data_stopped,
+        )
+        return nll + fc
+    elif type_fun_optim == "nll":
+        # compute negative loglikelihood
+        return _neg_loglike(expression, data_targ, params, data_weights)
+
+    else:
+        raise TypeError(f"Unknown type of optimization function: {type_fun_optim}")
+
 
 
 def _neg_loglike(expression: Expression, data_targ, params, data_weights):
