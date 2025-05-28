@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from scipy.stats import beta, binom, gamma, genextreme, hypergeom, laplace, truncnorm
+import scipy as sp
 
 from mesmer.mesmer_x import (
     ConditionalDistribution,
@@ -114,7 +114,9 @@ def test_first_guess_GEV(shape):
     loc = 1.0
     scale = 0.5
     # distribution with loc, scale, and shape parameters
-    targ = genextreme.rvs(c=shape, loc=loc, scale=scale, size=n, random_state=rng)
+    targ = sp.stats.genextreme.rvs(
+        c=shape, loc=loc, scale=scale, size=n, random_state=rng
+    )
 
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
 
@@ -162,7 +164,9 @@ def test_first_guess_GEV_including_pred():
     scale = 1.0
     shape = 0.5
     # distribution with loc, scale, and shape parameters
-    targ = genextreme.rvs(c=shape, loc=pred**c1, scale=scale, size=n, random_state=rng)
+    targ = sp.stats.genextreme.rvs(
+        c=shape, loc=pred**c1, scale=scale, size=n, random_state=rng
+    )
 
     expression = Expression(
         "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
@@ -199,7 +203,9 @@ def test_first_guess_truncnorm():
     scale = 0.1
     a = -1.2  # nr of stds from loc at which to truncate
     b = 1.2
-    targ = truncnorm.rvs(loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng)
+    targ = sp.stats.truncnorm.rvs(
+        loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng
+    )
     weights = get_weights_uniform(targ, "tas", None)
 
     # NOTE: this is an interesting case to test because the fact that the distribution is truncated
@@ -237,7 +243,7 @@ def test_fg_binom():
 
     n_trials = 10
     p = 0.5
-    targ = binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
+    targ = sp.stats.binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
@@ -268,7 +274,9 @@ def test_fg_hypergeom():
     M = 100
     n_draws = 10
     n_success = 2
-    targ = hypergeom.rvs(M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n)
+    targ = sp.stats.hypergeom.rvs(
+        M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n
+    )
     weights = get_weights_uniform(targ, "tas", None)
 
     expr_str = "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)"
@@ -327,7 +335,7 @@ def test_first_guess_beta():
     b = 2
     loc = 0
     scale = 1
-    targ = beta.rvs(a, b, loc, scale, size=n, random_state=rng)
+    targ = sp.stats.beta.rvs(a, b, loc, scale, size=n, random_state=rng)
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
@@ -368,7 +376,7 @@ def test_first_guess_gamma():
     a = 2
     loc = 0
     scale = 1
-    targ = gamma.rvs(a, loc, scale, size=n, random_state=rng)
+    targ = sp.stats.gamma.rvs(a, loc, scale, size=n, random_state=rng)
 
     expression = Expression("gamma(loc=0, scale=1, a=c1)", expr_name="exp1")
     weights = get_weights_uniform(targ, "tas", None)
@@ -401,7 +409,7 @@ def test_fg_fun_scale_laplace():
     pred = np.ones(n)
     loc = 2
     scale = 1
-    targ = laplace.rvs(loc=loc, scale=scale, size=n, random_state=rng)
+    targ = sp.stats.laplace.rvs(loc=loc, scale=scale, size=n, random_state=rng)
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("laplace(loc=c1, scale=c2)", expr_name="exp1")
@@ -626,7 +634,7 @@ def test_fg_fun_loc():
     assert loss_at_toohigh > loss_at_truesolution
 
 
-def test_fg_fun_sca():
+def test_fg_fun_scale():
     rng = np.random.default_rng(0)
     n = 251
     pred = np.ones(n)
@@ -654,7 +662,7 @@ def test_fg_fun_sca():
     np.testing.assert_allclose(result, 0, atol=0.1)
 
     # test GEV
-    targ = genextreme.rvs(c=1, loc=loc, scale=scale, size=n, random_state=rng)
+    targ = sp.stats.genextreme.rvs(c=1, loc=loc, scale=scale, size=n, random_state=rng)
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
@@ -689,7 +697,9 @@ def test_fg_fun_others():
     scale = 1
     a = -1.2  # nr of stds from loc at which to truncate
     b = 1.2
-    targ = truncnorm.rvs(loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng)
+    targ = sp.stats.truncnorm.rvs(
+        loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng
+    )
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
