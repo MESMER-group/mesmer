@@ -180,6 +180,10 @@ class FirstGuess:
         self.options = conditional_distrib.options
         self.expression = conditional_distrib.expression
         self.func_first_guess = func_first_guess
+
+        if predictor_names is None:
+            predictor_names = []
+
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)
 
@@ -198,18 +202,14 @@ class FirstGuess:
             )
 
         # ensuring format of numpy predictors
-        if data_pred.ndim == 0:
-            if n_preds == 0:
-                data_pred = np.ones((data_targ.size, 1))
+        if n_preds:
+            if data_pred.ndim == 1:
+                data_pred = data_pred[:, np.newaxis]
+            elif data_pred.ndim == 2:
+                if n_preds == data_pred.shape[0]:
+                    data_pred = data_pred.T
             else:
-                raise ValueError("Missing data on the predictors.")
-        elif data_pred.ndim == 1:
-            data_pred = data_pred[:, np.newaxis]
-        elif data_pred.ndim == 2:
-            if n_preds == data_pred.shape[0]:
-                data_pred = data_pred.T
-        else:
-            raise ValueError("Numpy predictors should not have a shape greater than 2.")
+                raise ValueError("Numpy predictors should not have a shape greater than 2.")
 
         # build dictionary
         # NOTE: extremely important that the order is the right one
@@ -342,7 +342,7 @@ class FirstGuess:
         fg_ind_loc = self.expression.ind_loc_coeffs
 
         # location might not be used (beta distribution) or set in the expression
-        if len(fg_ind_loc) > 0:
+        if len(fg_ind_loc) > 0 and len(self.predictor_names) > 0:
 
             # preparing derivatives to estimate derivatives of data along predictors,
             # and infer a very first guess for the coefficients facilitates the

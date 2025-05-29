@@ -209,8 +209,9 @@ def _validate_data(data_pred, data_targ, data_weights):
         if np.isinf(data).any():
             raise ValueError(f"infinite values in {name}")
 
+    if data_pred is not None:
+        _assert_data_valid(data_pred, "predictors")
     _assert_data_valid(data_targ, "target")
-    _assert_data_valid(data_pred, "predictors")
     _assert_data_valid(data_weights, "weights")
 
 

@@ -22,7 +22,6 @@ def fg_default(n_coeffs):
 def test_first_guess_standard_normal():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
     targ = rng.normal(loc=0, scale=1, size=n)
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
@@ -34,12 +33,12 @@ def test_first_guess_standard_normal():
     fg_coeffs = fg_default(2)
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     np.testing.assert_allclose(result, [0.0, 1.0], atol=0.02)
@@ -79,7 +78,6 @@ def test_first_guess_standard_normal_including_pred():
 def test_first_guess_provided(first_guess):
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
     loc, scale = 1, 1
     targ = rng.normal(loc=loc, scale=scale, size=n)
 
@@ -93,12 +91,12 @@ def test_first_guess_provided(first_guess):
     fg_coeffs = fg_default(2)
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     np.testing.assert_allclose(result, [loc, scale], rtol=0.02)
@@ -109,7 +107,6 @@ def test_first_guess_GEV(shape):
     # NOTE: shape is difficult to estimate
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
 
     loc = 1.0
     scale = 0.5
@@ -128,12 +125,12 @@ def test_first_guess_GEV(shape):
     fg_coeffs = fg_default(3)
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     expected = [loc, scale, shape]
@@ -143,12 +140,12 @@ def test_first_guess_GEV(shape):
 
     # any difference if we provide a close first guess?
     result2 = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=[loc, scale, shape],
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     # NOTE: leads to the same result as without first guess
@@ -197,7 +194,6 @@ def test_first_guess_GEV_including_pred():
 def test_first_guess_truncnorm():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
 
     loc = 1.0
     scale = 0.1
@@ -223,12 +219,12 @@ def test_first_guess_truncnorm():
     first_guess = [0.0, 1.0, -1, 2.0]
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     expected = [loc, scale, a, b]
@@ -323,13 +319,15 @@ def test_fg_hypergeom():
         predictor_names=["tas"],
     )
 
+    print(result)
+    print(result_with_bounds)
+
     np.testing.assert_equal(result, result_with_bounds)
 
 
 def test_first_guess_beta():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
 
     a = 2
     b = 2
@@ -352,12 +350,12 @@ def test_first_guess_beta():
     first_guess = [1.0, 1.0]
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
@@ -371,7 +369,6 @@ def test_first_guess_beta():
 def test_first_guess_gamma():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
 
     a = 2
     loc = 0
@@ -390,12 +387,12 @@ def test_first_guess_gamma():
     # we need a first guess different from zero for gamma distribution
     first_guess = [1.0]
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     expected = [a]
@@ -406,7 +403,6 @@ def test_first_guess_gamma():
 def test_fg_fun_scale_laplace():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
     loc = 2
     scale = 1
     targ = sp.stats.laplace.rvs(loc=loc, scale=scale, size=n, random_state=rng)
@@ -417,12 +413,12 @@ def test_fg_fun_scale_laplace():
         expression, ConditionalDistributionOptions(expression)
     )
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     expected = [loc, scale]
@@ -433,7 +429,6 @@ def test_fg_fun_scale_laplace():
 def test_first_guess_with_bounds():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
 
     loc = 0
     loc_bounds = (-1, 1)
@@ -455,12 +450,12 @@ def test_first_guess_with_bounds():
     )
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     # test result is within bounds
@@ -481,12 +476,12 @@ def test_first_guess_with_bounds():
     )
 
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     expected = np.array([-0.016552528, 1.520612114])
@@ -504,12 +499,12 @@ def test_first_guess_with_bounds():
 
     with pytest.raises(ValueError, match="Global optimization for first guess failed,"):
         _find_fg_np(
-            data_pred=pred,
+            data_pred=None,
             data_targ=targ,
             data_weights=weights,
             first_guess=fg_default(2),
             conditional_distrib=distrib,
-            predictor_names=["tas"],
+            predictor_names=None,
         )
 
     # when does step 7 actually succeed?
@@ -523,12 +518,12 @@ def test_first_guess_with_bounds():
         ConditionalDistributionOptions(expression, options_solver=options_solver),
     )
     result = _find_fg_np(
-        data_pred=pred,
+        data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
         conditional_distrib=distrib,
-        predictor_names=["tas"],
+        predictor_names=None,
     )
 
     expected = np.array([loc, scale])
@@ -637,7 +632,6 @@ def test_fg_fun_loc():
 def test_fg_fun_scale():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.ones(n)
     loc = 0.0
     scale = 1.0
 
@@ -651,8 +645,8 @@ def test_fg_fun_scale():
     )
     fg = FirstGuess(
         distrib,
-        data_pred=pred,
-        predictor_names=["tas"],
+        data_pred=None,
+        predictor_names=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=[loc, scale],
@@ -671,8 +665,8 @@ def test_fg_fun_scale():
     )
     fg = FirstGuess(
         distrib,
-        data_pred=pred,
-        predictor_names=["tas"],
+        data_pred=None,
+        predictor_names=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=[loc, scale, 1.0],
@@ -695,8 +689,7 @@ def test_fg_fun_others():
     pred = np.ones(n)
     loc = 0
     scale = 1
-    a = -1.2  # nr of stds from loc at which to truncate
-    b = 1.2
+    a, b = -1.2, 1.2  # nr of stds from loc at which to truncate
     targ = sp.stats.truncnorm.rvs(
         loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng
     )
