@@ -68,7 +68,7 @@ from mesmer.core._datatreecompat import map_over_datasets
             True,
             True,
             "tas_tas2_hfds/multi_scen_multi_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
     ),
 )
