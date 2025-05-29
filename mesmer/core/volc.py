@@ -205,7 +205,7 @@ def superimpose_volcanic_influence(
     time = tas_globmean_lowess[dim]
     volcanic_contribution = _predict_volcanic_contribution(
         time, hist_period, params, version=version
-    )
+    ).prediction
 
     tas_globmean_lowess_volc = tas_globmean_lowess + volcanic_contribution
 
