@@ -8,7 +8,7 @@ import mesmer
 from mesmer.core._datatreecompat import map_over_datasets
 
 
-def create_forcing_data(scenarios, use_hfds, use_tas2):
+def create_forcing_data(scenarios, use_hfds):
     # define config values
     REFERENCE_PERIOD = slice("1850", "1900")
 
@@ -240,7 +240,7 @@ def test_make_realisations(
             xr.Dataset({"seed": xr.DataArray(seed_list.pop())})
         )
 
-    forcing_data = create_forcing_data(scenarios, use_hfds, use_tas2)
+    forcing_data = create_forcing_data(scenarios, use_hfds)
     scen0 = scenarios[0]
     time = forcing_data[scen0].time
 
@@ -256,6 +256,9 @@ def test_make_realisations(
             volcanic_params,
             hist_period=HIST_PERIOD,
         )
+    
+    if use_tas2:
+        forcing_data = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), forcing_data)
 
     # 2.) compute the global variability
     global_ar_params = xr.open_dataset(global_ar_file)
