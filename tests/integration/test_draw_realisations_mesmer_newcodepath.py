@@ -13,6 +13,9 @@ def create_forcing_data(scenarios, use_hfds, use_tas2):
     REFERENCE_PERIOD = slice("1850", "1900")
 
     esm = "IPSL-CM6A-LR"
+    variables = ["tas"]
+    if use_hfds:
+        variables.append("hfds")
 
     # define paths and load data
     cmip_data_path = mesmer.example_data.cmip6_ng_path()
@@ -23,14 +26,18 @@ def create_forcing_data(scenarios, use_hfds, use_tas2):
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
-        variable="tas", scenario=scenarios, model=esm, resolution="g025", time_res="ann"
+        variable=variables,
+        scenario=scenarios,
+        model=esm,
+        resolution="g025",
+        time_res="ann",
     )
 
     # only get the historical members that are also in the future scenarios, but only once
     unique_scen_members = fc_scens.df.member.unique()
 
     fc_hist = CMIP_FILEFINDER.find_files(
-        variable="tas",
+        variable=variables,
         scenario="historical",
         model=esm,
         resolution="g025",
@@ -57,15 +64,17 @@ def create_forcing_data(scenarios, use_hfds, use_tas2):
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         return xr.open_dataset(fN, decode_times=time_coder)
 
-    def load_hist_scen_continuous(fc_hist, fc_scens):
-        dt = xr.DataTree()
-        for scen in fc_scens.df.scenario.unique():
-            files = fc_scens.search(scenario=scen)
+    data = xr.DataTree()
+    for scen in scenarios:
+        # load data for each scenario together with historical data
+        data[scen] = xr.DataTree()
 
+        for var in variables:
+            files = fc_scens.search(variable=var, scenario=scen)
+
+            # load all members for a scenario
             members = []
-
             for fN, meta in files.items():
-
                 try:
                     hist = load_hist(meta, fc_hist)
                 except FileNotFoundError:
@@ -82,71 +91,37 @@ def create_forcing_data(scenarios, use_hfds, use_tas2):
                     coords="minimal",
                 )
 
-                ds = ds.drop_vars(
-                    ("height", "time_bnds", "file_qf", "area"), errors="ignore"
-                )
-
-                ds = mesmer.grid.wrap_to_180(ds)
-
+                # drop unnecessary variables
+                ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
                 # assign member-ID as coordinate
                 ds = ds.assign_coords({"member": meta["member"]})
-
                 members.append(ds)
 
             # create a Dataset that holds each member along the member dimension
             scen_data = xr.concat(members, dim="member")
             # put the scenario dataset into the DataTree
-            dt[scen] = xr.DataTree(scen_data)
-        return dt
+            data[scen] = data[scen].assign({f"{var}": scen_data[var]})
 
-    tas = load_hist_scen_continuous(fc_hist, fc_scens)
-    ref = tas.sel(time=REFERENCE_PERIOD).mean("time")
-    tas_anoms = tas - ref
-    tas_globmean = mesmer.weighted.global_mean(tas_anoms)
+    # data preprocessing
+    # create global mean tas anomlies timeseries
+    data = mesmer.grid.wrap_to_180(data)
+    # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
-    tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_forcing = mesmer.stats.lowess(
-        tas_globmean_ensmean, dim="time", n_steps=30, use_coords=False
+    # calculate anomalies w.r.t. the reference period
+    ref = data.sel(time=REFERENCE_PERIOD).mean("time")
+    anoms = data - ref
+
+    globmean = mesmer.weighted.global_mean(anoms)
+    globmean_ensmean = globmean.mean(dim="member")
+    globmean_smoothed = mesmer.stats.lowess(
+        globmean_ensmean, "time", n_steps=50, use_coords=False
+
     )
+    
+    if use_tas2:
+        globmean_smoothed = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), globmean_smoothed)
 
-    def _get_hfds():
-        fc_hfds = CMIP_FILEFINDER.find_files(
-            variable="hfds",
-            scenario=scenarios,
-            model=esm,
-            resolution="g025",
-            time_res="ann",
-            member=unique_scen_members,
-        )
-
-        fc_hfds_hist = CMIP_FILEFINDER.find_files(
-            variable="hfds",
-            scenario="historical",
-            model=esm,
-            resolution="g025",
-            time_res="ann",
-            member=unique_scen_members,
-        )
-
-        hfds = load_hist_scen_continuous(fc_hfds_hist, fc_hfds)
-        hfds_ref = hfds.sel(time=REFERENCE_PERIOD).mean("time")
-        hfds_anoms = hfds - hfds_ref
-        hfds_globmean = mesmer.weighted.global_mean(hfds_anoms)
-        hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = mesmer.stats.lowess(
-            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
-        )
-        return hfds_globmean_smoothed
-
-    if use_hfds:
-        hfds_globmean_smoothed = _get_hfds()
-
-    else:
-        hfds_globmean_smoothed = None
-
-    tas2 = tas_globmean_forcing**2 if use_tas2 else None
-
-    return tas_globmean_forcing, hfds_globmean_smoothed, tas2
+    return globmean_smoothed
 
 
 @pytest.mark.parametrize(
@@ -268,20 +243,22 @@ def test_make_realisations(
             xr.Dataset({"seed": xr.DataArray(seed_list.pop())})
         )
 
-    tas_forcing, hfds, tas2 = create_forcing_data(scenarios, use_hfds, use_tas2)
+    forcing_data = create_forcing_data(scenarios, use_hfds, use_tas2)
     scen0 = scenarios[0]
-    time = tas_forcing[scen0].time
+    time = forcing_data[scen0].time
 
     buffer_global_variability = 50
     buffer_local_variability = 20
 
     # 1.) superimpose volcanic influence
     volcanic_params = xr.open_dataset(volcanic_file)
-    tas_forcing = mesmer.volc.superimpose_volcanic_influence(
-        tas_forcing,
-        volcanic_params,
-        hist_period=HIST_PERIOD,
-    )
+
+    for scen in scenarios:
+        forcing_data[scen]["tas"] = mesmer.volc.superimpose_volcanic_influence(
+            forcing_data[scen]["tas"],
+            volcanic_params,
+            hist_period=HIST_PERIOD,
+        )
 
     # 2.) compute the global variability
     global_ar_params = xr.open_dataset(global_ar_file)
@@ -294,44 +271,24 @@ def test_make_realisations(
     )
 
     global_variability = map_over_datasets(
-        xr.Dataset.rename, global_variability, {"samples": "tas"}
+        xr.Dataset.rename, global_variability, {"samples": "tas_resids"}
     )
 
     # 3.) compute the local forced response
     lr = mesmer.stats.LinearRegression().from_netcdf(local_forced_file)
 
-    predictors = xr.DataTree()
-    for scen in scenarios:
-        predictors[scen] = xr.DataTree.from_dict(
-            {"tas": tas_forcing[scen], "tas_resids": global_variability[scen]}
-        )
-
-        if tas2 is not None:
-            predictors[scen]["tas2"] = tas2[scen]
-        if hfds is not None:
-            predictors[scen]["hfds"] = hfds[scen]
+    predictors = mesmer.datatree.merge([forcing_data, global_variability])
 
     # uses ``exclude`` to split the linear response
-    local_forced_response = xr.DataTree()
-    local_variability_from_global_var = xr.DataTree()
+    local_forced_response = lr.predict(predictors, exclude={"tas_resids"})
 
-    for scen in predictors.children:
-        local_forced_response[scen] = xr.DataTree(
-            lr.predict(predictors[scen], exclude={"tas_resids"})
-            .rename("tas")
-            .to_dataset()
-        )
-
-        # 4.) compute the local variability part driven by global variabilty
-        exclude = {"tas", "intercept"}
-        if use_tas2:
-            exclude.add("tas2")
-        if use_hfds:
-            exclude.add("hfds")
-
-        local_variability_from_global_var[scen] = xr.DataTree(
-            lr.predict(predictors[scen], exclude=exclude).rename("tas").to_dataset()
-        )
+    # 4.) compute the local variability part driven by global variabilty
+    exclude = {"tas", "intercept"}
+    if use_tas2:
+        exclude.add("tas2")
+    if use_hfds:
+        exclude.add("hfds")
+    local_variability_from_global_var = lr.predict(predictors, exclude=exclude)
 
     # 5.) compute local variability
     local_ar = xr.open_dataset(local_ar_file)
@@ -347,13 +304,17 @@ def test_make_realisations(
         buffer=buffer_local_variability,
     )
 
+    # rename datavar in set to be able to add with linear regression predictions
     local_variability = map_over_datasets(
-        xr.Dataset.rename, local_variability, kwargs={"samples": "tas"}
+        xr.Dataset.rename, local_variability, kwargs={"samples": "prediction"}
     )
 
     local_variability_total = local_variability_from_global_var + local_variability
 
     result = local_forced_response + local_variability_total
+    result = map_over_datasets(
+        xr.Dataset.rename, result, kwargs={"prediction": "tas"}
+    )
 
     # save the emulations
     if update_expected_files:
