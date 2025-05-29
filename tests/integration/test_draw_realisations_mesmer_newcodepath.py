@@ -64,64 +64,61 @@ def create_forcing_data(scenarios, use_hfds, use_tas2):
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         return xr.open_dataset(fN, decode_times=time_coder)
 
-    data = xr.DataTree()
-    for scen in scenarios:
-        # load data for each scenario together with historical data
-        data[scen] = xr.DataTree()
+    def load_hist_scen_continuous(fc_hist, fc_scens):
+        dt = xr.DataTree()
+        for scen in fc_scens.df.scenario.unique():
+            dt[scen] = xr.DataTree()
+            for var in fc_scens.df.variable.unique():
+                files = fc_scens.search(variable=var, scenario=scen)
 
-        for var in variables:
-            files = fc_scens.search(variable=var, scenario=scen)
+                members = []
 
-            # load all members for a scenario
-            members = []
-            for fN, meta in files.items():
-                try:
-                    hist = load_hist(meta, fc_hist)
-                except FileNotFoundError:
-                    continue
+                for fN, meta in files.items():
 
-                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-                proj = xr.open_dataset(fN, decode_times=time_coder)
+                    try:
+                        hist = load_hist(meta, fc_hist)
+                    except FileNotFoundError:
+                        continue
 
-                ds = xr.combine_by_coords(
-                    [hist, proj],
-                    combine_attrs="override",
-                    data_vars="minimal",
-                    compat="override",
-                    coords="minimal",
-                )
+                    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                    proj = xr.open_dataset(fN, decode_times=time_coder)
 
-                # drop unnecessary variables
-                ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
-                # assign member-ID as coordinate
-                ds = ds.assign_coords({"member": meta["member"]})
-                members.append(ds)
+                    ds = xr.combine_by_coords(
+                        [hist, proj],
+                        combine_attrs="override",
+                        data_vars="minimal",
+                        compat="override",
+                        coords="minimal",
+                    )
 
-            # create a Dataset that holds each member along the member dimension
-            scen_data = xr.concat(members, dim="member")
-            # put the scenario dataset into the DataTree
-            data[scen] = data[scen].assign({f"{var}": scen_data[var]})
+                    ds = ds.drop_vars(
+                        ("height", "time_bnds", "file_qf", "area"), errors="ignore"
+                    )
 
-    # data preprocessing
-    # create global mean tas anomlies timeseries
-    data = mesmer.grid.wrap_to_180(data)
-    # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
+                    ds = mesmer.grid.wrap_to_180(ds)
 
-    # calculate anomalies w.r.t. the reference period
+                    # assign member-ID as coordinate
+                    ds = ds.assign_coords({"member": meta["member"]})
+
+                    members.append(ds)
+
+                # create a Dataset that holds each member along the member dimension
+                scen_data = xr.concat(members, dim="member")
+                # put the scenario dataset into the DataTree
+                dt[scen] = dt[scen].assign({f"{var}": scen_data[var]})
+        return dt
+
+    data = load_hist_scen_continuous(fc_hist, fc_scens)
     ref = data.sel(time=REFERENCE_PERIOD).mean("time")
     anoms = data - ref
-
     globmean = mesmer.weighted.global_mean(anoms)
-    globmean_ensmean = globmean.mean(dim="member")
-    globmean_smoothed = mesmer.stats.lowess(
-        globmean_ensmean, "time", n_steps=50, use_coords=False
 
+    globmean_ensmean = globmean.mean(dim="member")
+    globmean_forcing = mesmer.stats.lowess(
+        globmean_ensmean, dim="time", n_steps=30, use_coords=False
     )
     
-    if use_tas2:
-        globmean_smoothed = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), globmean_smoothed)
-
-    return globmean_smoothed
+    return globmean_forcing
 
 
 @pytest.mark.parametrize(
