@@ -17,7 +17,7 @@ import mesmer.mesmer_x
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
             False,
-            #marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp585",
@@ -25,7 +25,7 @@ import mesmer.mesmer_x
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1_2ndfit",
             False,
-            #marks=pytest.mark.slow,
+            # marks=pytest.mark.slow,
         ),
     ],
 )

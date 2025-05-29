@@ -117,7 +117,7 @@ def create_forcing_data(scenarios, use_hfds):
     globmean_forcing = mesmer.stats.lowess(
         globmean_ensmean, dim="time", n_steps=30, use_coords=False
     )
-    
+
     return globmean_forcing
 
 
@@ -256,9 +256,11 @@ def test_make_realisations(
             volcanic_params,
             hist_period=HIST_PERIOD,
         )
-    
+
     if use_tas2:
-        forcing_data = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), forcing_data)
+        forcing_data = map_over_datasets(
+            lambda ds: ds.assign(tas2=ds.tas**2), forcing_data
+        )
 
     # 2.) compute the global variability
     global_ar_params = xr.open_dataset(global_ar_file)
@@ -312,9 +314,7 @@ def test_make_realisations(
     local_variability_total = local_variability_from_global_var + local_variability
 
     result = local_forced_response + local_variability_total
-    result = map_over_datasets(
-        xr.Dataset.rename, result, kwargs={"prediction": "tas"}
-    )
+    result = map_over_datasets(xr.Dataset.rename, result, kwargs={"prediction": "tas"})
 
     # save the emulations
     if update_expected_files:

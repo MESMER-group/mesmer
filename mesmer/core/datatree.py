@@ -323,7 +323,7 @@ def merge(
     combine_attrs : {'no_conflicts', 'identical', 'equals', 'override', 'drop'}, default: 'override'
         String indicating how to combine attributes of the datasets, for details see
         `xarray.merge`.
-    
+
     Returns
     -------
     xr.DataTree

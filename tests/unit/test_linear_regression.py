@@ -102,7 +102,9 @@ def test_lr_predict(as_2D, data_type):
     pred = convert_to({"tas": tas}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="prediction").to_dataset()
+    expected = xr.DataArray(
+        [[5, 8, 11]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
@@ -126,7 +128,9 @@ def test_lr_predict_two_predictors(as_2D, data_type):
     pred = convert_to({"tas": tas, "tas2": tas.rename("tas2")}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name="prediction").to_dataset()
+    expected = xr.DataArray(
+        [[5, 9, 13]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
@@ -150,7 +154,9 @@ def test_lr_predict_two_predictors_diffnames(as_2D, data_type):
     pred = convert_to({"tas": tas, "tas2": tas}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name="prediction").to_dataset()
+    expected = xr.DataArray(
+        [[5, 9, 13]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
@@ -211,13 +217,17 @@ def test_lr_predict_exclude(as_2D, data_type):
     tas = xr.DataArray([0, 1, 2], dims="time", name="tas")
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude="tas2")
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="prediction").to_dataset()
+    expected = xr.DataArray(
+        [[5, 8, 11]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude={"tas2"})
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="prediction").to_dataset()
+    expected = xr.DataArray(
+        [[5, 8, 11]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
@@ -246,7 +256,9 @@ def test_lr_predict_exclude_intercept(as_2D, data_type):
     tas = xr.DataArray([0, 1, 2], dims="time", name="tas")
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude="intercept")
-    expected = xr.DataArray([[0, 3, 6]], dims=("x", "time"), name="prediction").to_dataset()
+    expected = xr.DataArray(
+        [[0, 3, 6]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
@@ -262,12 +274,16 @@ def test_lr_predict_datatree():
     lr = mesmer.stats.LinearRegression()
 
     params = xr.Dataset(
-        data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [3]), "tas2": ("x", [1])}
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
     )
     lr.params = params
 
-    scen1 = xr.Dataset({"tas": trend_data_1D(),
-                        "tas2": trend_data_1D()})
+    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D()})
     scen2 = scen1 * 2
 
     pred = xr.DataTree().from_dict({"scen1": scen1, "scen2": scen2})

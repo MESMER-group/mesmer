@@ -8,10 +8,7 @@ import scipy
 import xarray as xr
 
 from mesmer.core._datatreecompat import map_over_datasets
-from mesmer.core.datatree import (
-    collapse_datatree_into_dataset,
-    _datatree_wrapper
-)
+from mesmer.core.datatree import _datatree_wrapper, collapse_datatree_into_dataset
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
@@ -432,6 +429,7 @@ def draw_auto_regression_uncorrelated(
         realisation_dim=realisation_dim,
     )
 
+
 @_datatree_wrapper
 def _draw_auto_regression_uncorrelated(
     seed: int | xr.DataTree,
@@ -553,6 +551,7 @@ def draw_auto_regression_correlated(
         time_dim=time_dim,
         realisation_dim=realisation_dim,
     )
+
 
 @_datatree_wrapper
 def _draw_auto_regression_correlated(

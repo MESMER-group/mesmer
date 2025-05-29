@@ -467,20 +467,18 @@ def test_merge():
 
     xr.testing.assert_equal(
         result.to_dataset(),
-        xr.merge([dt1.to_dataset(), 
-                  dt2.to_dataset()]),
+        xr.merge([dt1.to_dataset(), dt2.to_dataset()]),
     )
 
     xr.testing.assert_equal(
         result["scen2"].to_dataset(),
-        xr.merge([dt1["scen2"].to_dataset(), 
-                  dt2["scen2"].to_dataset()]),
+        xr.merge([dt1["scen2"].to_dataset(), dt2["scen2"].to_dataset()]),
     )
 
 
 def test_merge_compat():
     # copied and adjusted to DataTree from https://github.com/pydata/xarray/blob/main/xarray/tests/test_merge.py
-    # used as general test that keyword arguments are passed correctly, could be extended, but not putting 
+    # used as general test that keyword arguments are passed correctly, could be extended, but not putting
     # more effort in hopes of a future xarray version that has the same interface for DataTree
 
     dt1 = xr.DataTree(xr.Dataset({"x": 0}))
@@ -496,7 +494,7 @@ def test_merge_compat():
 
     dt2 = xr.DataTree(xr.Dataset({"x": ((), 0, {"foo": "bar"})}))
     with pytest.raises(xr.MergeError):
-       mesmer.datatree.merge([dt1, dt2], compat="identical")
+        mesmer.datatree.merge([dt1, dt2], compat="identical")
 
     with pytest.raises(ValueError, match=r"compat=.* invalid"):
         mesmer.datatree.merge([dt1, dt2], compat="foobar")
