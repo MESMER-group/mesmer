@@ -14,13 +14,7 @@ def convert_to(dct: dict, data_type: str) -> dict | xr.DataTree | xr.Dataset:
     if data_type == "dict":
         return dct
     elif data_type == "DataTree":
-
-        dct = {
-            key: value.to_dataset() if isinstance(value, xr.DataArray) else value
-            for key, value in dct.items()
-        }
-
-        return xr.DataTree.from_dict(dct)
+        return xr.DataTree(xr.Dataset(dct))
     elif data_type == "xr_dataset":
         return xr.Dataset(dct)
     else:
@@ -97,7 +91,7 @@ def test_lr_params():
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict(as_2D, data_type):
     lr = mesmer.stats.LinearRegression()
 
@@ -110,13 +104,13 @@ def test_lr_predict(as_2D, data_type):
     pred = convert_to({"tas": tas}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="tas")
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict_two_predictors(as_2D, data_type):
     lr = mesmer.stats.LinearRegression()
 
@@ -134,13 +128,13 @@ def test_lr_predict_two_predictors(as_2D, data_type):
     pred = convert_to({"tas": tas, "tas2": tas.rename("tas2")}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name="tas")
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict_two_predictors_diffnames(as_2D, data_type):
     lr = mesmer.stats.LinearRegression()
 
@@ -158,12 +152,12 @@ def test_lr_predict_two_predictors_diffnames(as_2D, data_type):
     pred = convert_to({"tas": tas, "tas2": tas}, data_type)
 
     result = lr.predict(pred)
-    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name="tas")
+    expected = xr.DataArray([[5, 9, 13]], dims=("x", "time"), name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
     xr.testing.assert_equal(result, expected)
 
 
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict_missing_superfluous(data_type):
     lr = mesmer.stats.LinearRegression()
 
@@ -202,7 +196,7 @@ def test_lr_predict_missing_superfluous(data_type):
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict_exclude(as_2D, data_type):
     lr = mesmer.stats.LinearRegression()
 
@@ -219,26 +213,26 @@ def test_lr_predict_exclude(as_2D, data_type):
     tas = xr.DataArray([0, 1, 2], dims="time", name="tas")
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude="tas2")
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude={"tas2"})
-    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"))
+    expected = xr.DataArray([[5, 8, 11]], dims=("x", "time"), name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
     result = lr.predict(convert_to({}, data_type), exclude={"tas", "tas2"})
-    expected = xr.DataArray([5], dims="x")
+    expected = xr.DataArray([5], dims="x", name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict_exclude_intercept(as_2D, data_type):
     lr = mesmer.stats.LinearRegression()
 
@@ -254,20 +248,43 @@ def test_lr_predict_exclude_intercept(as_2D, data_type):
     tas = xr.DataArray([0, 1, 2], dims="time", name="tas")
 
     result = lr.predict(convert_to({"tas": tas}, data_type), exclude="intercept")
-    expected = xr.DataArray([[0, 3, 6]], dims=("x", "time"))
+    expected = xr.DataArray([[0, 3, 6]], dims=("x", "time"), name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
     result = lr.predict(convert_to({}, data_type), exclude={"tas", "intercept"})
-    expected = xr.DataArray([0], dims="x")
+    expected = xr.DataArray([0], dims="x", name="prediction").to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(result, expected)
 
 
+def test_lr_predict_datatree():
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={"intercept": ("x", [5]), "fit_intercept": True, "tas": ("x", [3]), "tas2": ("x", [1])}
+    )
+    lr.params = params
+
+    scen1 = xr.Dataset({"tas": trend_data_1D(),
+                        "tas2": trend_data_1D()})
+    scen2 = scen1 * 2
+
+    pred = xr.DataTree().from_dict({"scen1": scen1, "scen2": scen2})
+
+    result = lr.predict(pred)
+
+    expected1 = lr.predict(scen1)
+    expected2 = lr.predict(scen2)
+
+    expected = xr.DataTree.from_dict({"scen1": expected1, "scen2": expected2})
+    xr.testing.assert_equal(result, expected)
+
+
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_LR_residuals(as_2D, data_type):
 
     lr = mesmer.stats.LinearRegression()
@@ -282,7 +299,7 @@ def test_LR_residuals(as_2D, data_type):
     target = target if as_2D else target.squeeze()
 
     result = lr.residuals(convert_to({"tas": tas}, data_type), target)
-    expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"))
+    expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"), name="residuals").to_dataset()
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(expected, result)
@@ -297,8 +314,6 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
     pred1 = trend_data_1D()
 
     tgt = trend_data_2D()
-
-    pred1 = trend_data_1D()
 
     weights = trend_data_1D(intercept=1, slope=0, scale=0)
 
@@ -318,8 +333,8 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
                 weights=weights,
             )
 
-    if not data_type == "xr_dataset":
-        # for xr_dataset, this leads to nans in the predictors -> user responsibility
+    if not data_type in ["xr_dataset", "DataTree"]:
+        # for xr_dataset and DataTree, this leads to nans in the predictors -> user responsibility
         test_unequal_coords(pred0.isel(time=slice(0, 5)), pred1, tgt, weights)
         test_unequal_coords(pred0, pred1.isel(time=slice(0, 5)), tgt, weights)
     test_unequal_coords(pred0, pred1, tgt.isel(time=slice(0, 5)), weights)
@@ -330,12 +345,11 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
         msg = f"Expected {name} to be an xr.DataArray"
         errortype = TypeError
 
-        # errors sooner for datatree predictors
         if preds_wrong:
-            if data_type == "DataTree":
-                msg = f"{name} has no data."
-                errortype = ValueError
-            elif data_type == "xr_dataset":
+            if data_type == "dict":
+                msg = f"Expected {name} to be an xr.DataArray"
+                errortype = TypeError
+            else:
                 msg = f"{name} should be 1D, but is 0D"
                 errortype = ValueError
 
