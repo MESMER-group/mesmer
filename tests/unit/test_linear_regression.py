@@ -10,11 +10,9 @@ import mesmer.stats._linear_regression
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
-def convert_to(dct: dict, data_type: str) -> dict | xr.DataTree | xr.Dataset:
+def convert_to(dct: dict, data_type: str) -> dict | xr.Dataset:
     if data_type == "dict":
         return dct
-    elif data_type == "DataTree":
-        return xr.DataTree(xr.Dataset(dct))
     elif data_type == "xr_dataset":
         return xr.Dataset(dct)
     else:
@@ -299,7 +297,7 @@ def test_LR_residuals(as_2D, data_type):
     target = target if as_2D else target.squeeze()
 
     result = lr.residuals(convert_to({"tas": tas}, data_type), target)
-    expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"), name="residuals").to_dataset()
+    expected = xr.DataArray([[0, 3, -5]], dims=("x", "time"), name="residuals")
     expected = expected if as_2D else expected.squeeze()
 
     xr.testing.assert_equal(expected, result)
@@ -307,7 +305,7 @@ def test_LR_residuals(as_2D, data_type):
 
 # TEST XARRAY WRAPPER & LinearRegression().fit
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_errors(lr_method_or_function, data_type):
 
     pred0 = trend_data_1D()
@@ -320,7 +318,7 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
     # test predictors have to be dict, dataset or DataTree
     with pytest.raises(
         TypeError,
-        match="predictors should be a dict, DataTree or xr.Dataset, got <class 'list'>.",
+        match="predictors should be a dict or xr.Dataset, got <class 'list'>.",
     ):
         lr_method_or_function([pred0, pred1], tgt, dim="time")
 
@@ -333,8 +331,8 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
                 weights=weights,
             )
 
-    if not data_type in ["xr_dataset", "DataTree"]:
-        # for xr_dataset and DataTree, this leads to nans in the predictors -> user responsibility
+    if not data_type == "xr_dataset":
+        # for xr_dataset this leads to nans in the predictors -> user responsibility
         test_unequal_coords(pred0.isel(time=slice(0, 5)), pred1, tgt, weights)
         test_unequal_coords(pred0, pred1.isel(time=slice(0, 5)), tgt, weights)
     test_unequal_coords(pred0, pred1, tgt.isel(time=slice(0, 5)), weights)
@@ -435,7 +433,7 @@ def test_linear_regression_errors(lr_method_or_function, data_type):
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_one_predictor(
     lr_method_or_function, intercept, slope, as_2D, data_type
 ):
@@ -492,7 +490,7 @@ def test_linear_regression_predictor_named_like_dim(
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_predictor_has_non_dim_coors(
     lr_method_or_function, as_2D, data_type
 ):
@@ -520,7 +518,7 @@ def test_linear_regression_predictor_has_non_dim_coors(
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_fit_intercept(lr_method_or_function, as_2D, data_type):
 
     pred0 = trend_data_1D(slope=1, scale=0)
@@ -547,7 +545,7 @@ def test_linear_regression_fit_intercept(lr_method_or_function, as_2D, data_type
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_no_coords(lr_method_or_function, as_2D, data_type):
     slope, intercept = 3.14, 3.14
 
@@ -579,7 +577,7 @@ def test_linear_regression_no_coords(lr_method_or_function, as_2D, data_type):
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_two_predictors(
     lr_method_or_function, intercept, slope, as_2D, data_type
 ):
@@ -614,7 +612,7 @@ def test_linear_regression_two_predictors(
 @pytest.mark.parametrize("intercept", (0, 3.14))
 @pytest.mark.parametrize("slope", (0, 3.14))
 @pytest.mark.parametrize("as_2D", [True, False])
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_two_predictors_diffnames(
     lr_method_or_function, intercept, slope, as_2D, data_type
 ):
@@ -646,28 +644,7 @@ def test_linear_regression_two_predictors_diffnames(
 
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
-@pytest.mark.parametrize("intercept", (0, 3.14))
-@pytest.mark.parametrize("slope", (0, 3.14))
-@pytest.mark.parametrize("as_2D", [True, False])
-def test_linear_regression_datatree_data_in_root(
-    lr_method_or_function, intercept, slope, as_2D
-):
-
-    pred0 = trend_data_1D(slope=1, scale=0).rename("bar")
-    pred1 = trend_data_1D(slope=1, scale=0).rename("foo")
-    ds = xr.Dataset({"pred0": pred0, "pred1": pred1})
-    dt = xr.DataTree(ds, name="root")
-    tgt = trend_data_1D_or_2D(as_2D=as_2D, slope=slope, scale=0, intercept=intercept)
-
-    result = lr_method_or_function(dt, tgt, "time")
-
-    expected = lr_method_or_function(ds, tgt, "time")
-
-    xr.testing.assert_allclose(result, expected)
-
-
-@pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_two_predictors_extra_dim(lr_method_or_function, data_type):
     # add a 0D dimension/ coordinate and ensure it still works
     # NOTE: requires 3 predictors to trigger the error (might be an xarray issue)
@@ -710,7 +687,7 @@ def test_linear_regression_two_predictors_extra_dim(lr_method_or_function, data_
 
 @pytest.mark.parametrize("lr_method_or_function", LR_METHOD_OR_FUNCTION)
 @pytest.mark.parametrize("intercept", (0, 3.14))
-@pytest.mark.parametrize("data_type", ["dict", "DataTree", "xr_dataset"])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_linear_regression_weights(lr_method_or_function, intercept, data_type):
 
     pred0 = trend_data_1D(slope=1, scale=0)
