@@ -265,6 +265,6 @@ def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     contrib_volc = lr.predict(predictors={"aod_obs": aod_obs})
 
     # merge the lowess trend with the volc contribution
-    gt = gt_lowess + contrib_volc.values.squeeze()
+    gt = gt_lowess + contrib_volc.prediction.values.squeeze()
 
     return coef_saod, gt
