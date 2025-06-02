@@ -33,10 +33,10 @@ def _smooth_data(data, length=5):
     obj: numpy array 1D
         Smoothed data
     """
-    tmp = np.convolve(data, np.ones(2 * length + 1) / (2 * length + 1), mode="valid")
+    out = np.convolve(data, np.ones(2 * length + 1) / (2 * length + 1), mode="valid")
     # removing the bias in the mean
-    tmp += np.mean(data[length:-length]) - np.mean(tmp)
-    return tmp
+    out += np.mean(data[length:-length]) - np.mean(out)
+    return out
 
 
 def find_first_guess(
@@ -710,6 +710,7 @@ class FirstGuess:
         )
 
     def _fg_fun_ll_n(self, x):
+        # NOTE: n must be odd: https://github.com/MESMER-group/mesmer/issues/691
         n = 3
         params = self.expression._evaluate_params_fast(x, self.data_pred)
 
