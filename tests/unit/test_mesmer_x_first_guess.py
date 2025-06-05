@@ -319,9 +319,6 @@ def test_fg_hypergeom():
         predictor_names=["tas"],
     )
 
-    print(result)
-    print(result_with_bounds)
-
     np.testing.assert_equal(result, result_with_bounds)
 
 
