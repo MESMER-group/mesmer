@@ -40,20 +40,10 @@ def _load_aod_obs(*, resample):
 
     arr = pd.read_csv(filename, sep=r"\s+", header=2)["global"].to_numpy()
 
-    # TODO: remove rounding and re-generate output files
-    # we originally used the same data from climate explorer (see https://github.com/MESMER-group/mesmer/blob/461a1d89db4ee2e93016c8a38d126d521d460fc9/data/isaod_gl_2022.dat)
-    # climate explorer rounded the data to 3 digits (compared to 4 in the NASA file)
-    # this was done in fortran using a REAL number, written as f6.3 - which leads to
-    # inconsistent rounding ("5" is sometimes rounded up, sometimes down)
-    # do the same to avoid re-generating all files
-    # https://gitlab.com/KNMI-OSS/climexp/climexp_data/-/blob/3c9f735b0e8c7aabf5e4b6c351c4870182833ea7/NASAData/saod2dat.f90#L7
-    # https://gitlab.com/KNMI-OSS/climexp/climexp_data/-/blob/3c9f735b0e8c7aabf5e4b6c351c4870182833ea7/NASAData/saod2dat.f90#L42
-    rounded = np.array([float(f"{v:6.3f}") for v in arr.astype(np.float32)])
-
     time = pd.date_range("1850-01-01", "2012-09-01", freq="MS")
     time_full = pd.date_range("1850-01-01", "2022-12-01", freq="MS")
 
-    aod = xr.DataArray(rounded, coords={"time": time}, name="aod")
+    aod = xr.DataArray(arr, coords={"time": time}, name="aod")
     aod = aod.reindex_like(xr.Dataset(coords={"time": time_full}), fill_value=0.0)
 
     if resample:
