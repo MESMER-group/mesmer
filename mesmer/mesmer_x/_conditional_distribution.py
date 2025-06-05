@@ -27,10 +27,6 @@ class ConditionalDistributionOptions:
 
         Parameters
         ----------
-        expression : py:class:Expression
-            Expression to train. The string provided to the class can be found in
-            'expr_fit.expression'.
-
         options_optim : dict, default: None
             A dictionary with options for the function to optimize:
 
