@@ -1,6 +1,5 @@
 from functools import cache
 
-import numpy as np
 import pandas as pd
 import pooch
 import xarray as xr
