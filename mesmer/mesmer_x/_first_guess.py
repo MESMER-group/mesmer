@@ -400,7 +400,6 @@ class FirstGuess:
         # Step 2: fit coefficients of location (objective: improving the subset of
         # location coefficients)
         if len(fg_ind_loc) > 0:
-            fact_maxfev_iter = len(fg_ind_loc) / self.expression.n_coeffs
 
             localfit_loc = _optimizers._minimize(
                 func=self._fg_fun_loc,
@@ -409,8 +408,8 @@ class FirstGuess:
                 method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
                 options={
-                    "maxfev": self.options.maxfev * fact_maxfev_iter,
-                    "maxiter": self.options.maxiter * fact_maxfev_iter,
+                    "maxfev": self.options.maxfev,
+                    "maxiter": self.options.maxiter,
                     self.options.name_xtol: self.options.xtol_req,
                     self.options.name_ftol: self.options.ftol_req,
                 },
@@ -423,7 +422,6 @@ class FirstGuess:
         # scale might not be used or set in the expression
         if len(ind_scale) > 0:
             x0 = self.fg_coeffs[ind_scale]
-            fact_maxfev_iter = len(ind_scale) / self.expression.n_coeffs
 
             localfit_scale = _optimizers._minimize(
                 func=self._fg_fun_scale,
@@ -432,8 +430,8 @@ class FirstGuess:
                 method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
                 options={
-                    "maxfev": self.options.maxfev * fact_maxfev_iter,
-                    "maxiter": self.options.maxiter * fact_maxfev_iter,
+                    "maxfev": self.options.maxfev,
+                    "maxiter": self.options.maxiter,
                     self.options.name_xtol: self.options.xtol_req,
                     self.options.name_ftol: self.options.ftol_req,
                 },
@@ -447,7 +445,6 @@ class FirstGuess:
 
         # if self.expression.ind_others.any():
         #     fg_ind_others = self.expression.ind_others
-        #     fact_maxfev_iter = len(fg_ind_others) / self.expression.n_coeffs
 
         #     localfit_others = _optimizers._minimize(
         #         func=self._fg_fun_others,
@@ -456,8 +453,8 @@ class FirstGuess:
         #         method_fit=self.options.method_fit,
         #         option_NelderMead="best_run",
         #         options={
-        #             "maxfev": self.options.maxfev * fact_maxfev_iter,
-        #             "maxiter": self.options.maxiter * fact_maxfev_iter,
+        #             "maxfev": self.options.maxfev,
+        #             "maxiter": self.options.maxiter,
         #             self.options.name_xtol: self.options.xtol_req,
         #             self.options.name_ftol: self.options.ftol_req,
         #         },

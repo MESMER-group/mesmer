@@ -74,11 +74,13 @@ class ConditionalDistributionOptions:
             * ftol_req: float, default: 1e-6
                 Accuracy of the fit in objective.
 
-            * maxiter: int, default: 10000
-                Maximum number of iteration of the optimization.
+            * maxiter: int, default: None
+                Maximum number of iteration of the optimization. Uses the default of the
+                choosen minimizer.
 
-            * maxfev: int, default: 10000
+            * maxfev: int, default: None
                 Maximum number of evaluation of the function during the optimization.
+                Uses the default of the choosen minimizer.
 
             * error_failedfit : boolean, default: True.
                 If True, will raise an issue if the fit failed.
@@ -97,15 +99,13 @@ class ConditionalDistributionOptions:
             If `None` this test is skipped.
         """
 
-        n_coeffs = expression.n_coeffs if expression.n_coeffs != 0 else 1
-
         # preparing solver
         default_options_solver = {
             "method_fit": "Powell",
             "xtol_req": 1e-6,
             "ftol_req": 1.0e-6,
-            "maxiter": 1000 * n_coeffs * (np.log(n_coeffs) + 1),
-            "maxfev": 1000 * n_coeffs * (np.log(n_coeffs) + 1),
+            "maxiter": None,
+            "maxfev": None,
             "error_failedfit": False,
             "fg_with_global_opti": False,
         }
