@@ -5,7 +5,7 @@
 
 import numpy as np
 import xarray as xr
-from scipy.optimize import basinhopping, shgo
+from scipy.optimize import basinhopping
 
 import mesmer.mesmer_x._distrib_checks as _distrib_checks
 import mesmer.mesmer_x._optimizers as _optimizers
@@ -277,7 +277,6 @@ class FirstGuess:
                 support of the distribution. Two possibilities tried: based on CDF or based on NLL^n. The idea is
                 to penalize very unlikely values, both works, but NLL^n works as well for
                 extremely unlikely values, that lead to division by 0 with CDF)
-            7. If required (distrib_optimizers.fg_with_global_opti), global fit within boundaries
 
         Risks for the method:
             The only risk that I identify is if the user sets boundaries on coefficients
@@ -511,45 +510,6 @@ class FirstGuess:
             if ~np.any(np.isnan(localfit_opti.x)):
                 fg_coeffs = localfit_opti.x
 
-        # Step 7: if required, global fit within boundaries
-        if self.options.fg_with_global_opti:
-
-            # find boundaries on each coefficient
-            bounds = []
-
-            # TODO: does this assume the coeffs are ordered?
-            for i_c in np.arange(self.expression.n_coeffs):
-                a = self.find_bound(i_c=i_c, x0=fg_coeffs, fact_coeff=-0.05)
-                b = self.find_bound(i_c=i_c, x0=fg_coeffs, fact_coeff=0.05)
-                vals_bounds = (a, b)
-
-                bounds.append([np.min(vals_bounds), np.max(vals_bounds)])
-
-            # global minimization, using the one with the best performances in this
-            # situation. sobol or halton, observed lower performances with
-            # simplicial. n=1000, options={'maxiter':10000, 'maxev':10000})
-            globalfit_all = shgo(
-                func=_optimizers._func_optim,
-                bounds=bounds,
-                args=(
-                    self.data_pred,
-                    self.data_targ,
-                    self.data_weights,
-                    self.expression,
-                    self.options.threshold_min_proba,
-                    self.options.type_fun_optim,
-                    self.options.threshold_stopping_rule,
-                    self.options.exclude_trigger,
-                    self.options.ind_year_thres,
-                ),
-                sampling_method="sobol",
-            )
-            if not globalfit_all.success:
-                raise ValueError(
-                    "Global optimization for first guess failed, please check boundaries_coeff or ",
-                    "disable fg_with_global_opti in options_solver of distrib_optimizers.",
-                )
-            fg_coeffs = globalfit_all.x
         return fg_coeffs
 
     def _fg_fun_deriv01(self, x_loc, pred_high, pred_low, derivative_targ, mean_targ):

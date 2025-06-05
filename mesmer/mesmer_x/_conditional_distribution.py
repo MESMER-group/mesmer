@@ -80,11 +80,6 @@ class ConditionalDistributionOptions:
             * error_failedfit : boolean, default: True.
                 If True, will raise an issue if the fit failed.
 
-            * fg_with_global_opti : boolean, default: False
-                If True, will add a step where the first guess is improved using a
-                global optimization. In theory, better, but in practice, no improvement
-                in performances, but makes the fit much slower (+ ~10s).
-
         threshold_min_proba :  float or None, default: 1e-9
             If numeric imposes a check during the fitting that every sample fulfills
             `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
@@ -102,7 +97,6 @@ class ConditionalDistributionOptions:
             "maxiter": None,
             "maxfev": None,
             "error_failedfit": False,
-            "fg_with_global_opti": False,
         }
 
         options_solver = options_solver or {}
@@ -148,7 +142,6 @@ class ConditionalDistributionOptions:
         self.name_xtol = xtol[self.method_fit]
         self.name_ftol = ftol[self.method_fit]
         self.error_failedfit = options_solver["error_failedfit"]
-        self.fg_with_global_opti = options_solver["fg_with_global_opti"]
 
         # preparing information on function to optimize
         default_options_optim = dict(

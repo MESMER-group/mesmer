@@ -317,11 +317,9 @@ def test_first_guess_beta():
 
     expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
 
-    options_solver = {"fg_with_global_opti": True}
-
     distrib = ConditionalDistribution(
         expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
+        ConditionalDistributionOptions(),
     )
 
     # we need a first guess here because our default first guess is zeros, which leads
@@ -339,7 +337,6 @@ def test_first_guess_beta():
 
     # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
     # it is always (0, 1), thus the optimization with _fg_fun_others does not do anything
-    # NOTE: Step 7 (fg_with_global_opti) leads to a improvement of the first guess at the 6th digit after the comma, i.e. very small
     expected = [a, b]
 
     np.testing.assert_allclose(result, expected, rtol=0.5)
@@ -357,10 +354,9 @@ def test_first_guess_gamma():
     expression = Expression("gamma(loc=0, scale=1, a=c1)", expr_name="exp1")
     weights = get_weights_uniform(targ, "tas", None)
 
-    options_solver = {"fg_with_global_opti": True}
     distrib = ConditionalDistribution(
         expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
+        ConditionalDistributionOptions(),
     )
 
     # we need a first guess different from zero for gamma distribution
@@ -462,45 +458,6 @@ def test_first_guess_with_bounds():
     # ^ still finds a fg because we do not enforce the bounds on the fg
     # however the fg is significantly worse on the param with the wrong bounds
     # in contrast to the above the test below also runs step 6: fit on LL^n -> implications?
-
-    # fails if we enforce the bounds
-    options_solver = {"fg_with_global_opti": True}
-    distrib = ConditionalDistribution(
-        expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
-    )
-
-    with pytest.raises(ValueError, match="Global optimization for first guess failed,"):
-        _find_fg_np(
-            data_pred=None,
-            data_targ=targ,
-            data_weights=weights,
-            first_guess=fg_default(2),
-            conditional_distrib=distrib,
-            predictor_names=None,
-        )
-
-    # when does step 7 actually succeed?
-    # when we do enforce a global optimum but the bounds are good
-    boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds}
-    expression = Expression(
-        expr_str, expr_name="exp1", boundaries_coeffs=boundaries_coeffs
-    )
-    distrib = ConditionalDistribution(
-        expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
-    )
-    result = _find_fg_np(
-        data_pred=None,
-        data_targ=targ,
-        data_weights=weights,
-        first_guess=fg_default(2),
-        conditional_distrib=distrib,
-        predictor_names=None,
-    )
-
-    expected = np.array([loc, scale])
-    np.testing.assert_allclose(result, expected, atol=0.1)
 
 
 # @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/581")

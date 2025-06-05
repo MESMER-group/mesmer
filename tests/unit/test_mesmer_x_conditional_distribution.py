@@ -64,7 +64,6 @@ def test_ConditionalDistribution_init_all_default():
     assert distrib.options.name_ftol == "ftol"
     assert distrib.options.name_xtol == "xtol"
     assert not distrib.options.error_failedfit
-    assert not distrib.options.fg_with_global_opti
     assert distrib.options.type_fun_optim == "nll"
     assert distrib.options.threshold_stopping_rule is None
     assert distrib.options.exclude_trigger is None
@@ -95,7 +94,6 @@ def test_ConditionalDistribution_custom_init():
         "maxiter": 10_000,
         "maxfev": 12_000,
         "error_failedfit": True,
-        "fg_with_global_opti": True,
     }
 
     options = ConditionalDistributionOptions(
@@ -122,7 +120,6 @@ def test_ConditionalDistribution_custom_init():
     assert distrib.options.name_ftol == "fatol"
     assert distrib.options.name_xtol == "xatol"
     assert distrib.options.error_failedfit  # is True
-    assert distrib.options.fg_with_global_opti  # is True
     assert distrib.options.type_fun_optim == "fcnll"
     assert distrib.options.threshold_stopping_rule == 0.1
     assert distrib.options.exclude_trigger  # is True
