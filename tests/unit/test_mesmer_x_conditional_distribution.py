@@ -69,12 +69,8 @@ def test_ConditionalDistribution_init_all_default():
     assert distrib.options.threshold_min_proba == 1e-09
     assert distrib.options.xtol_req == 1e-06
     assert distrib.options.ftol_req == 1e-06
-    assert distrib.options.maxiter == 1000 * distrib.expression.n_coeffs * (
-        np.log(distrib.expression.n_coeffs) + 1
-    )
-    assert distrib.options.maxfev == 1000 * distrib.expression.n_coeffs * (
-        np.log(distrib.expression.n_coeffs) + 1
-    )
+    assert distrib.options.maxiter is None
+    assert distrib.options.maxfev is None
     assert distrib.options.method_fit == "Powell"
     assert distrib.options.name_ftol == "ftol"
     assert distrib.options.name_xtol == "xtol"
