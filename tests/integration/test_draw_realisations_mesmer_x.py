@@ -105,7 +105,7 @@ def test_make_realisations_mesmer_x(
     # back-transform the realizations
     expr_tranf = Expression("norm(loc=0, scale=1)", "standard_normal")
     distrib_transf = ConditionalDistribution(
-        expr_tranf, ConditionalDistributionOptions(expr_tranf)
+        expr_tranf, ConditionalDistributionOptions()
     )
 
     back_pit = ProbabilityIntegralTransform(

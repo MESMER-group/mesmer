@@ -147,9 +147,7 @@ def test_calibrate_mesmer_x(
 
     # declaring analytical form of the conditional distribution
     expression = Expression(expr, expr_name)
-    distrib = ConditionalDistribution(
-        expression, ConditionalDistributionOptions(expression)
-    )
+    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     # preparing first guess
     coeffs_fg = find_first_guess(
@@ -185,7 +183,7 @@ def test_calibrate_mesmer_x(
     target_expr = Expression("norm(loc=0, scale=1)", "standard_normal")
     target_distrib = ConditionalDistribution(
         target_expr,
-        ConditionalDistributionOptions(target_expr),
+        ConditionalDistributionOptions(),
     )
 
     pit = ProbabilityIntegralTransform(distrib, target_distrib)

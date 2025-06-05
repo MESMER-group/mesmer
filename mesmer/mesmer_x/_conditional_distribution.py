@@ -19,7 +19,6 @@ from mesmer.stats import gaspari_cohn
 class ConditionalDistributionOptions:
     def __init__(
         self,
-        expression: Expression,
         threshold_min_proba=1.0e-9,
         options_optim=None,
         options_solver=None,
@@ -652,7 +651,7 @@ class ConditionalDistribution:
             )
 
         expression = Expression(expression_str, expression_name)
-        obj = cls(expression, ConditionalDistributionOptions(expression))
+        obj = cls(expression, ConditionalDistributionOptions())
         obj.coefficients = ds
 
         return obj

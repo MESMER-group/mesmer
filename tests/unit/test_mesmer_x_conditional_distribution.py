@@ -8,35 +8,29 @@ from mesmer.mesmer_x import (
 )
 
 
-def test_CDOptions_errors():
-    expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+def test_ConditionalDistributionOptions_errors():
 
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
         ConditionalDistributionOptions(
-            expression,
             threshold_min_proba=-0.1,
         )
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
         ConditionalDistributionOptions(
-            expression,
             threshold_min_proba=0.6,
         )
 
     with pytest.raises(ValueError, match="`options_solver` must be a dictionary"):
         ConditionalDistributionOptions(
-            expression,
             options_solver="this is not a dictionary",
         )
 
     with pytest.raises(ValueError, match="`options_optim` must be a dictionary"):
         ConditionalDistributionOptions(
-            expression,
             options_optim="this is not a dictionary",
         )
 
     with pytest.raises(ValueError, match="method for this fit not prepared, to avoid"):
         ConditionalDistributionOptions(
-            expression,
             options_solver={"method_fit": "this is not a method"},
         )
 
@@ -44,22 +38,18 @@ def test_CDOptions_errors():
         ValueError, match="`threshold_stopping_rule` and `ind_year_thres` not used"
     ):
         ConditionalDistributionOptions(
-            expression,
             options_optim={"type_fun_optim": "nll", "threshold_stopping_rule": 0.1},
         )
 
     with pytest.raises(ValueError, match="`type_fun_optim='fcnll'` needs both, .*"):
         ConditionalDistributionOptions(
-            expression,
             options_optim={"type_fun_optim": "fcnll", "threshold_stopping_rule": None},
         )
 
 
 def test_ConditionalDistribution_init_all_default():
     expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
-    distrib = ConditionalDistribution(
-        expression, ConditionalDistributionOptions(expression)
-    )
+    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     assert distrib.expression is expression
     assert distrib.expression.boundaries_params == expression.boundaries_params
@@ -110,7 +100,6 @@ def test_ConditionalDistribution_custom_init():
     }
 
     options = ConditionalDistributionOptions(
-        expression,
         threshold_min_proba=threshold_min_proba,
         options_optim=options_optim,
         options_solver=options_solver,
