@@ -442,24 +442,27 @@ class FirstGuess:
 
         # Step 4: fit other coefficients (objective: improving the subset of
         # other coefficients. May use multiple coefficients, eg beta distribution)
-        if self.expression.ind_others.any():
-            fg_ind_others = self.expression.ind_others
-            fact_maxfev_iter = len(fg_ind_others) / self.expression.n_coeffs
+        # TODO: remove or find better loss function, see
+        # - https://github.com/MESMER-group/mesmer/issues/582
 
-            localfit_others = _optimizers._minimize(
-                func=self._fg_fun_others,
-                x0=self.fg_coeffs[fg_ind_others],
-                args=(),
-                method_fit=self.options.method_fit,
-                option_NelderMead="best_run",
-                options={
-                    "maxfev": self.options.maxfev * fact_maxfev_iter,
-                    "maxiter": self.options.maxiter * fact_maxfev_iter,
-                    self.options.name_xtol: self.options.xtol_req,
-                    self.options.name_ftol: self.options.ftol_req,
-                },
-            )
-            self.fg_coeffs[fg_ind_others] = localfit_others.x
+        # if self.expression.ind_others.any():
+        #     fg_ind_others = self.expression.ind_others
+        #     fact_maxfev_iter = len(fg_ind_others) / self.expression.n_coeffs
+
+        #     localfit_others = _optimizers._minimize(
+        #         func=self._fg_fun_others,
+        #         x0=self.fg_coeffs[fg_ind_others],
+        #         args=(),
+        #         method_fit=self.options.method_fit,
+        #         option_NelderMead="best_run",
+        #         options={
+        #             "maxfev": self.options.maxfev * fact_maxfev_iter,
+        #             "maxiter": self.options.maxiter * fact_maxfev_iter,
+        #             self.options.name_xtol: self.options.xtol_req,
+        #             self.options.name_ftol: self.options.ftol_req,
+        #         },
+        #     )
+        #     self.fg_coeffs[fg_ind_others] = localfit_others.x
 
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
