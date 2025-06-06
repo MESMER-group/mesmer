@@ -437,3 +437,37 @@ def test_stack_datatree_keep_other_dims():
         required_dims=("sample", "gridpoint"),
         shape=(9, 4),
     )
+
+
+def test_map_over_dataset():
+    # test empty nodes are skipped
+
+    ds = xr.Dataset(data_vars={"data": ("x", [1, 2])})
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    def rename(ds):
+        return ds.rename(data="variable")
+
+    result = map_over_datasets(rename, dt)
+    expected = xr.DataTree.from_dict({"node": ds.rename(data="variable")})
+    xr.testing.assert_equal(result, expected)
+
+    # test not-first arg is a DataTree
+
+    def rename_second(new_name, ds):
+        return ds.rename(data=new_name)
+
+    result = map_over_datasets(rename_second, "variable", dt)
+    expected = xr.DataTree.from_dict({"node": ds.rename(data="variable")})
+    xr.testing.assert_equal(result, expected)
+
+    # test if there are only coords
+    ds_coords = xr.Dataset(coords={"x": [1, 2]})
+    dt = xr.DataTree.from_dict({"node": ds_coords})
+
+    def rename_coords(ds):
+        return ds.rename(x="y")
+
+    result = map_over_datasets(rename_coords, dt)
+    expected = xr.DataTree.from_dict({"node": ds_coords.rename(x="y")})
+    xr.testing.assert_equal(result, expected)
