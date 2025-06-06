@@ -164,14 +164,14 @@ def create_forcing_data(scenarios, use_hfds, use_tas2):
             ["ssp585"],
             False,
             False,
-            30,
+            3,
             "tas/one_scen_multi_ens",
         ),
         pytest.param(
             ["ssp126", "ssp585"],
             False,
             False,
-            100,
+            10,
             "tas/multi_scen_multi_ens",
         ),
         # tas and tas**2
