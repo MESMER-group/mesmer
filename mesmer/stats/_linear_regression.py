@@ -1,10 +1,10 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.datatree import (
     _extract_single_dataarray_from_dt,
     collapse_datatree_into_dataset,
+    map_over_datasets,
 )
 from mesmer.core.utils import (
     _check_dataarray_form,
