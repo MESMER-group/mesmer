@@ -11,13 +11,14 @@ if Version(xr.__version__) < Version("2025.03"):
 
 
 def _skip_empty_nodes(func):
+
     @functools.wraps(func)
     def _func(*args, **kwargs):
         # extract only the dataset args from args
         ds_args = [arg for arg in args if isinstance(arg, xr.Dataset)]
 
         # if any datasets are empty, return empty
-        if any((not ds.coords and not ds.data_vars and not ds.dims) for ds in ds_args):
+        if any((not ds.coords and not ds.data_vars) for ds in ds_args):
             return xr.Dataset()
 
         # return func with right order of args
