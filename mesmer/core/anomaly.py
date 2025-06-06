@@ -2,7 +2,7 @@ import operator
 
 import xarray as xr
 
-from mesmer.core._datatreecompat import map_over_datasets
+from mesmer.core.datatree import map_over_datasets
 
 
 def calc_anomaly(
