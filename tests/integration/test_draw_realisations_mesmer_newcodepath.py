@@ -5,7 +5,7 @@ import xarray as xr
 from filefisher import FileFinder
 
 import mesmer
-from mesmer.core._datatreecompat import map_over_datasets
+from mesmer.core.datatree import map_over_datasets
 
 
 def create_forcing_data(scenarios, use_hfds):

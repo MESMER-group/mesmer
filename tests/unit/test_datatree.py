@@ -3,8 +3,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core._datatreecompat import map_over_datasets
-from mesmer.core.datatree import _datatree_wrapper
+from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -500,6 +499,8 @@ def test_merge_compat():
         mesmer.datatree.merge([dt1, dt2], compat="foobar")
 
     assert dt1.identical(mesmer.datatree.merge([dt1, dt2], compat="override"))
+
+
 def test_map_over_dataset():
     # test empty nodes are skipped
 
