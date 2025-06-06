@@ -7,9 +7,9 @@ import pandas as pd
 import scipy
 import xarray as xr
 
-from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.datatree import (
     collapse_datatree_into_dataset,
+    map_over_datasets,
 )
 from mesmer.core.utils import (
     LinAlgWarning,

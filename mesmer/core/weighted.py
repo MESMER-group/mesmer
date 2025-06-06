@@ -3,8 +3,7 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core._datatreecompat import map_over_datasets
-from mesmer.core.datatree import _datatree_wrapper
+from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
 
 
 def _weighted_if_dim(obj, weights, dims):
