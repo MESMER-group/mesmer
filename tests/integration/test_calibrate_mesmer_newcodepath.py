@@ -5,8 +5,7 @@ import xarray as xr
 from filefisher import FileFinder
 
 import mesmer
-import mesmer.core.datatree
-from mesmer.core._datatreecompat import map_over_datasets
+from mesmer.core.datatree import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
