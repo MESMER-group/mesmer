@@ -440,6 +440,7 @@ def test_stack_datatree_keep_other_dims():
 
 
 def test_map_over_dataset():
+    # test empty nodes are skipped
 
     ds = xr.Dataset(data_vars={"data": ("x", [1, 2])})
     dt = xr.DataTree.from_dict({"node": ds})
