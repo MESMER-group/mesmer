@@ -183,6 +183,6 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
 
         prediction = lr.predict(predictors=predictors)
 
-        emus_lt[targ] = prediction.prediction.values.T
+        emus_lt[targ] = prediction.values.T
 
     return emus_lt

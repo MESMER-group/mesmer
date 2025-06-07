@@ -5,7 +5,7 @@ import xarray as xr
 from filefisher import FileFinder
 
 import mesmer
-from mesmer.core.datatree import map_over_datasets
+import mesmer.core.datatree
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -88,9 +88,6 @@ def test_calibrate_mesmer(
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    variables = ["tas"]
-    if use_hfds:
-        variables.append("hfds")
 
     # define paths and load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
@@ -109,18 +106,14 @@ def test_calibrate_mesmer(
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
-        variable=variables,
-        scenario=scenarios,
-        model=esm,
-        resolution="g025",
-        time_res="ann",
+        variable="tas", scenario=scenarios, model=esm, resolution="g025", time_res="ann"
     )
 
     # only get the historical members that are also in the future scenarios, but only once
     unique_scen_members = fc_scens.df.member.unique()
 
     fc_hist = CMIP_FILEFINDER.find_files(
-        variable=variables,
+        variable="tas",
         scenario="historical",
         model=esm,
         resolution="g025",
@@ -133,60 +126,94 @@ def test_calibrate_mesmer(
     scenarios_incl_hist = scenarios.copy()
     scenarios_incl_hist.append("historical")
 
-    data = xr.DataTree()
+    # load data for each scenario
+    dt = xr.DataTree()
     for scen in scenarios_incl_hist:
-        # load data for each scenario
-        data[scen] = xr.DataTree()
+        files = fc_all.search(scenario=scen)
 
-        for var in variables:
-            files = fc_all.search(variable=var, scenario=scen)
+        # load all members for a scenario
+        members = []
+        for fN, meta in files.items():
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = xr.open_dataset(fN, decode_times=time_coder)
+            # drop unnecessary variables
+            ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
+            # assign member-ID as coordinate
+            ds = ds.assign_coords({"member": meta["member"]})
+            members.append(ds)
 
-            # load all members for a scenario
+        # create a Dataset that holds each member along the member dimension
+        scen_data = xr.concat(members, dim="member")
+        # put the scenario dataset into the DataTree
+        dt[scen] = xr.DataTree(scen_data)
+
+    # load additional data
+    if use_hfds:
+        fc_hfds = CMIP_FILEFINDER.find_files(
+            variable="hfds",
+            scenario=scenarios_incl_hist,
+            model=esm,
+            resolution="g025",
+            time_res="ann",
+            member=unique_scen_members,
+        )
+
+        dt_hfds = xr.DataTree()
+        for scen in scenarios_incl_hist:
+            files = fc_hfds.search(scenario=scen)
+
             members = []
             for fN, meta in files.items():
                 time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
                 ds = xr.open_dataset(fN, decode_times=time_coder)
-                # drop unnecessary variables
-                ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
-                # assign member-ID as coordinate
+                ds = ds.drop_vars(
+                    ["height", "time_bnds", "file_qf", "area"], errors="ignore"
+                )
                 ds = ds.assign_coords({"member": meta["member"]})
                 members.append(ds)
 
-            # create a Dataset that holds each member along the member dimension
             scen_data = xr.concat(members, dim="member")
-            # put the scenario dataset into the DataTree
-            data[scen] = data[scen].assign({f"{var}": scen_data[var]})
+            dt_hfds[scen] = xr.DataTree(scen_data)
+    else:
+        dt_hfds = None
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    data = mesmer.grid.wrap_to_180(data)
+    dt = mesmer.grid.wrap_to_180(dt)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     # calculate anomalies w.r.t. the reference period
-    anoms = mesmer.anomaly.calc_anomaly(data, REFERENCE_PERIOD)
+    tas_anoms = mesmer.anomaly.calc_anomaly(dt, REFERENCE_PERIOD)
 
-    globmean = mesmer.weighted.global_mean(anoms)
+    tas_globmean = mesmer.weighted.global_mean(tas_anoms)
+
+    # create local gridded tas data
+    def mask_and_stack(ds, threshold_land):
+        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
+        ds = mesmer.mask.mask_antarctica(ds)
+        ds = mesmer.grid.stack_lat_lon(ds)
+        return ds
+
+    tas_stacked = mask_and_stack(tas_anoms, threshold_land=THRESHOLD_LAND)
 
     # train global trend module
-    globmean_ensmean = globmean.mean(dim="member")
-    globmean_smoothed = mesmer.stats.lowess(
-        globmean_ensmean, "time", n_steps=50, use_coords=False
+    tas_globmean_ensmean = tas_globmean.mean(dim="member")
+    tas_globmean_smoothed = mesmer.stats.lowess(
+        tas_globmean_ensmean, "time", n_steps=50, use_coords=False
     )
-    hist_lowess_residuals = globmean["historical"] - globmean_smoothed["historical"]
+    hist_lowess_residuals = (
+        tas_globmean["historical"] - tas_globmean_smoothed["historical"]
+    )
 
     volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
-    globmean_smoothed["historical"]["tas"] = mesmer.volc.superimpose_volcanic_influence(
-        globmean_smoothed["historical"]["tas"],
+    tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
+        tas_globmean_smoothed["historical"],
         volcanic_params,
     )
 
     # train global variability module
-    tas_glob_mean = map_over_datasets(lambda ds: ds[["tas"]], globmean)
-    tas_resid_novolc = tas_glob_mean - globmean_smoothed
-    tas_resid_novolc = map_over_datasets(
-        lambda ds: ds.rename({"tas": "tas_resids"}), tas_resid_novolc
-    )
+    tas_resid_novolc = tas_globmean - tas_globmean_smoothed
 
     ar_order = mesmer.stats.select_ar_order_scen_ens(
         tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"
@@ -195,21 +222,30 @@ def test_calibrate_mesmer(
         tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
 
+    if dt_hfds is not None:
+
+        hfds_anoms = mesmer.anomaly.calc_anomaly(dt_hfds, REFERENCE_PERIOD)
+
+        hfds_globmean = mesmer.weighted.global_mean(hfds_anoms)
+
+        hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
+        hfds_globmean_smoothed = mesmer.stats.lowess(
+            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
+        )
+    else:
+        hfds_globmean_smoothed = None
+
     # train local forced response module
-    # create local gridded data
-    def mask_and_stack(ds, threshold_land):
-        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
-        ds = mesmer.mask.mask_antarctica(ds)
-        ds = mesmer.grid.stack_lat_lon(ds)
-        return ds
-
-    target = map_over_datasets(lambda ds: ds[["tas"]], anoms)
-    target = mask_and_stack(target, threshold_land=THRESHOLD_LAND)
-
-    predictors = mesmer.datatree.merge([globmean_smoothed, tas_resid_novolc])
-
+    # broadcast so all datasets have all the dimensions
+    # gridcell can be excluded because it will be mapped in the Linear Regression
+    target = tas_stacked
+    predictors = xr.DataTree.from_dict(
+        {"tas": tas_globmean_smoothed, "tas_resids": tas_resid_novolc}
+    )
     if use_tas2:
-        predictors = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), predictors)
+        predictors["tas2"] = tas_globmean_smoothed**2
+    if hfds_globmean_smoothed is not None:
+        predictors["hfds"] = hfds_globmean_smoothed
 
     weights = mesmer.weighted.equal_scenario_weights_from_datatree(
         target, ens_dim="member", time_dim="time"
@@ -258,7 +294,7 @@ def test_calibrate_mesmer(
 
     # train covariance
     geodist = mesmer.geospatial.geodist_exact(
-        target["historical"].ds.lon, target["historical"].ds.lat
+        tas_stacked["historical"].ds.lon, tas_stacked["historical"].ds.lat
     )
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII

@@ -168,7 +168,7 @@ def test_extract_single_dataarray_from_dt():
         mesmer.datatree._extract_single_dataarray_from_dt(xr.DataTree())
 
 
-def test_broadcast_and_stack_scenarios():
+def test_stack_linear_regression_datatrees():
     n_ts, n_lat, n_lon = 30, 2, 3
     member_dim = "member"
     time_dim = "time"
@@ -192,16 +192,16 @@ def test_broadcast_and_stack_scenarios():
 
     target = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
-    d1D_1 = xr.Dataset(
+    d1D_1 = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts)})
+    d1D_2 = d1D_1 * 2
+    d1D_3 = d1D_1 * 3
+    d1D_4 = d1D_1 * 4
+    predictors = xr.DataTree.from_dict(
         {
-            "tas": trend_data_1D(n_timesteps=n_ts),
-            "tas2": trend_data_1D(n_timesteps=n_ts) ** 2,
-            "hfds": trend_data_1D(n_timesteps=n_ts) * 0.5,
+            "pred1": xr.DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2}),
+            "pred2": xr.DataTree.from_dict({"scen1": d1D_3, "scen2": d1D_4}),
         }
     )
-    d1D_2 = d1D_1 * 2
-
-    predictors = xr.DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2})
 
     weights = map_over_datasets(xr.ones_like, target.sel(cells=0))
     weights = map_over_datasets(
@@ -222,19 +222,10 @@ def test_broadcast_and_stack_scenarios():
 
     n_samples = n_ts * (2 + 3)  # 2 members for scen1, 3 members for scen2
 
-    _check_dataset_form(
-        predictors_stacked,
-        name="predictors",
-        required_vars={"tas", "tas2", "hfds"},
-    )
-    for var in predictors_stacked.data_vars:
-        da = predictors_stacked[var]
+    for pred in predictors_stacked.children:
+        da = predictors_stacked[pred].to_dataset().tas
         _check_dataarray_form(
-            da,
-            name=da.name,
-            ndim=1,
-            required_dims={"sample"},
-            shape=(n_samples,),
+            da, name="pred1", ndim=1, required_dims={"sample"}, shape=(n_samples,)
         )
 
     _check_dataarray_form(
@@ -248,11 +239,19 @@ def test_broadcast_and_stack_scenarios():
     )
 
     # check if datasets align
-    target_aligned, predictors_aligned = xr.align(
-        target_stacked, predictors_stacked, join="exact"
+    pred1_stacked = predictors_stacked["pred1"].to_dataset()
+    target_aligned, pred1_aligned = xr.align(
+        target_stacked, pred1_stacked, join="exact"
     )
     xr.testing.assert_equal(target_stacked, target_aligned)
-    xr.testing.assert_equal(predictors_stacked, predictors_aligned)
+    xr.testing.assert_equal(pred1_stacked, pred1_aligned)
+
+    pred2_stacked = predictors_stacked["pred2"].to_dataset()
+    target_aligned, pred2_aligned = xr.align(
+        target_stacked, pred2_stacked, join="exact"
+    )
+    xr.testing.assert_equal(target_stacked, target_aligned)
+    xr.testing.assert_equal(pred2_stacked, pred2_aligned)
 
     target_aligned, weights_aligned = xr.align(
         target_stacked, weights_stacked, join="exact"
@@ -274,11 +273,10 @@ def test_broadcast_and_stack_scenarios():
         )
     )
 
-    target_aligned, predictors_aligned = xr.align(
-        target_stacked, predictors_stacked, join="exact"
-    )
+    pred1 = predictors_stacked["pred1"].to_dataset()
+    target_aligned, pred1_aligned = xr.align(target_stacked, pred1, join="exact")
     xr.testing.assert_equal(target_stacked, target_aligned)
-    xr.testing.assert_equal(predictors_stacked, predictors_aligned)
+    xr.testing.assert_equal(pred1, pred1_aligned)
 
 
 def test_datatree_wrapper_dt_kwarg_errors():

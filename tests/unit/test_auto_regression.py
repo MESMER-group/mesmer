@@ -162,7 +162,7 @@ def test_draw_auto_regression_uncorrelated(
         buffer=0,
         time_dim=time_dim,
         realisation_dim=realisation_dim,
-    ).samples
+    )
 
     _check_dataarray_form(
         result,
@@ -316,7 +316,7 @@ def test_draw_auto_regression_correlated(
         buffer=0,
         time_dim=time_dim,
         realisation_dim=realisation_dim,
-    ).samples
+    )
 
     n_gridcells = ar_params_2D.intercept.size
 
@@ -877,7 +877,7 @@ def test_draw_auto_regression_monthly(seed):
     )
 
     _check_dataarray_form(
-        result.samples,
+        result,
         "result",
         ndim=3,
         required_dims={"time", "gridcell", "realisation"},
