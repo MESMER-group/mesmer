@@ -909,7 +909,7 @@ def fit_auto_regression_monthly(
         ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
         the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
+    _check_dataarray_form(monthly_data, "monthly_data", required_dims=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
     ar_params_res = []
     residuals_res = []
