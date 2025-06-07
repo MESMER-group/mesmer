@@ -1,9 +1,11 @@
 import functools
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import ParamSpec, TypeVar, overload
 
 import xarray as xr
 from packaging.version import Version
+from xarray.core import dtypes
+from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -348,12 +350,6 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
         return func(*args, **kwargs)
 
     return _inner
-
-
-from collections.abc import Iterable
-
-from xarray.core import dtypes
-from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
 
 
 def merge(
