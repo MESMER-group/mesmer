@@ -136,7 +136,7 @@ def test_calibrate_mesmer(
     data = xr.DataTree()
     for scen in scenarios_incl_hist:
         # load data for each scenario
-        data[scen] = xr.DataTree()
+        data_scen = []
 
         for var in variables:
             files = fc_all.search(variable=var, scenario=scen)
@@ -147,15 +147,17 @@ def test_calibrate_mesmer(
                 time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
                 ds = xr.open_dataset(fN, decode_times=time_coder)
                 # drop unnecessary variables
-                ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
+                ds = ds.drop_vars(["height", "time_bnds", "file_qf", "area"], errors="ignore")
                 # assign member-ID as coordinate
                 ds = ds.assign_coords({"member": meta["member"]})
                 members.append(ds)
 
             # create a Dataset that holds each member along the member dimension
-            scen_data = xr.concat(members, dim="member")
-            # put the scenario dataset into the DataTree
-            data[scen] = data[scen].assign({f"{var}": scen_data[var]})
+            data_var = xr.concat(members, dim="member")
+            data_scen.append(data_var)
+        
+        data_scen = xr.merge(data_scen)
+        data[scen] = xr.DataTree(data_scen)
 
     # data preprocessing
     # create global mean tas anomlies timeseries
