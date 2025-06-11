@@ -8,7 +8,7 @@ import mesmer
 from mesmer.core.datatree import map_over_datasets
 
 
-def create_forcing_data(scenarios, use_hfds):
+def load_and_prepare_forcing_data(scenarios, use_hfds):
     # define config values
     REFERENCE_PERIOD = slice("1850", "1900")
 
@@ -240,7 +240,7 @@ def test_make_realisations(
             xr.Dataset({"seed": xr.DataArray(seed_list.pop())})
         )
 
-    forcing_data = create_forcing_data(scenarios, use_hfds)
+    forcing_data = load_and_prepare_forcing_data(scenarios, use_hfds)
     scen0 = scenarios[0]
     time = forcing_data[scen0].time
 
@@ -273,7 +273,7 @@ def test_make_realisations(
     )
 
     global_variability = map_over_datasets(
-        xr.Dataset.rename, global_variability, {"samples": "tas_resids"}
+        lambda ds: ds.rename({"samples": "tas_resids"}), global_variability,
     )
 
     # 3.) compute the local forced response
@@ -308,13 +308,14 @@ def test_make_realisations(
 
     # rename datavar in set to be able to add with linear regression predictions
     local_variability = map_over_datasets(
-        xr.Dataset.rename, local_variability, kwargs={"samples": "prediction"}
+        lambda ds: ds.rename({"samples": "prediction"}), local_variability,
     )
 
     local_variability_total = local_variability_from_global_var + local_variability
 
     result = local_forced_response + local_variability_total
-    result = map_over_datasets(xr.Dataset.rename, result, kwargs={"prediction": "tas"})
+    result = map_over_datasets(
+        lambda ds: ds.rename({"prediction": "tas"}), result,)
 
     # save the emulations
     if update_expected_files:
