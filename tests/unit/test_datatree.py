@@ -3,8 +3,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core._datatreecompat import map_over_datasets
-from mesmer.core.datatree import _datatree_wrapper
+from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -437,3 +436,98 @@ def test_stack_datatree_keep_other_dims():
         required_dims=("sample", "gridpoint"),
         shape=(9, 4),
     )
+
+
+def test_merge():
+    ts = 20
+    time = np.arange(ts)
+    data = np.arange(ts)
+    da = xr.DataArray(data, coords={"time": time})
+    ds1 = xr.Dataset(data_vars={"var1": da})
+    ds2 = xr.Dataset(data_vars={"var2": da * 2})
+
+    dt1 = xr.DataTree(ds1)
+    dt2 = xr.DataTree(ds2)
+
+    result = mesmer.datatree.merge([dt1, dt2])
+
+    assert isinstance(result, xr.DataTree)
+
+    expected_ds = xr.merge([ds1, ds2])
+    xr.testing.assert_equal(result.to_dataset(), expected_ds)
+
+    # test with multiple nodes
+    dt1["scen2"] = xr.Dataset(data_vars={"var1": da * 3})
+    dt2["scen2"] = xr.Dataset(data_vars={"var2": da * 4})
+
+    result = mesmer.datatree.merge([dt1, dt2])
+
+    xr.testing.assert_equal(
+        result.to_dataset(),
+        xr.merge([dt1.to_dataset(), dt2.to_dataset()]),
+    )
+
+    xr.testing.assert_equal(
+        result["scen2"].to_dataset(),
+        xr.merge([dt1["scen2"].to_dataset(), dt2["scen2"].to_dataset()]),
+    )
+
+
+def test_merge_compat():
+    # copied and adjusted to DataTree from https://github.com/pydata/xarray/blob/main/xarray/tests/test_merge.py
+    # used as general test that keyword arguments are passed correctly, could be extended, but not putting
+    # more effort in hopes of a future xarray version that has the same interface for DataTree
+
+    dt1 = xr.DataTree(xr.Dataset({"x": 0}))
+    dt2 = xr.DataTree(xr.Dataset({"x": 1}))
+    for compat in ["broadcast_equals", "equals", "identical", "no_conflicts"]:
+        with pytest.raises(xr.MergeError):
+            mesmer.datatree.merge([dt1, dt2], compat=compat)
+
+    dt2 = xr.DataTree(xr.Dataset({"x": [0, 0]}))
+    for compat in ["equals", "identical"]:
+        with pytest.raises(ValueError, match=r"should be coordinates or not"):
+            mesmer.datatree.merge([dt1, dt2], compat=compat)
+
+    dt2 = xr.DataTree(xr.Dataset({"x": ((), 0, {"foo": "bar"})}))
+    with pytest.raises(xr.MergeError):
+        mesmer.datatree.merge([dt1, dt2], compat="identical")
+
+    with pytest.raises(ValueError, match=r"compat=.* invalid"):
+        mesmer.datatree.merge([dt1, dt2], compat="foobar")
+
+    assert dt1.identical(mesmer.datatree.merge([dt1, dt2], compat="override"))
+
+
+def test_map_over_dataset():
+    # test empty nodes are skipped
+
+    ds = xr.Dataset(data_vars={"data": ("x", [1, 2])})
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    def rename(ds):
+        return ds.rename(data="variable")
+
+    result = map_over_datasets(rename, dt)
+    expected = xr.DataTree.from_dict({"node": ds.rename(data="variable")})
+    xr.testing.assert_equal(result, expected)
+
+    # test not-first arg is a DataTree
+
+    def rename_second(new_name, ds):
+        return ds.rename(data=new_name)
+
+    result = map_over_datasets(rename_second, "variable", dt)
+    expected = xr.DataTree.from_dict({"node": ds.rename(data="variable")})
+    xr.testing.assert_equal(result, expected)
+
+    # test if there are only coords
+    ds_coords = xr.Dataset(coords={"x": [1, 2]})
+    dt = xr.DataTree.from_dict({"node": ds_coords})
+
+    def rename_coords(ds):
+        return ds.rename(x="y")
+
+    result = map_over_datasets(rename_coords, dt)
+    expected = xr.DataTree.from_dict({"node": ds_coords.rename(x="y")})
+    xr.testing.assert_equal(result, expected)

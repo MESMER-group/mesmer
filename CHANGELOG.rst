@@ -113,6 +113,7 @@ This was originally done with the prototype `xarray-datatree` package. After the
   `#682 <https://github.com/MESMER-group/mesmer/pull/682>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
+- Add helper function to merge ``DataTree`` objects  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_)
 - PRs related to xarray and xarray-datatree:
 
   - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
