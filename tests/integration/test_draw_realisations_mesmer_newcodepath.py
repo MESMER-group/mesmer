@@ -273,7 +273,8 @@ def test_make_realisations(
     )
 
     global_variability = map_over_datasets(
-        lambda ds: ds.rename({"samples": "tas_resids"}), global_variability,
+        lambda ds: ds.rename({"samples": "tas_resids"}),
+        global_variability,
     )
 
     # 3.) compute the local forced response
@@ -308,14 +309,17 @@ def test_make_realisations(
 
     # rename datavar in set to be able to add with linear regression predictions
     local_variability = map_over_datasets(
-        lambda ds: ds.rename({"samples": "prediction"}), local_variability,
+        lambda ds: ds.rename({"samples": "prediction"}),
+        local_variability,
     )
 
     local_variability_total = local_variability_from_global_var + local_variability
 
     result = local_forced_response + local_variability_total
     result = map_over_datasets(
-        lambda ds: ds.rename({"prediction": "tas"}), result,)
+        lambda ds: ds.rename({"prediction": "tas"}),
+        result,
+    )
 
     # save the emulations
     if update_expected_files:

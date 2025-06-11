@@ -147,7 +147,9 @@ def test_calibrate_mesmer(
                 time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
                 ds = xr.open_dataset(fN, decode_times=time_coder)
                 # drop unnecessary variables
-                ds = ds.drop_vars(["height", "time_bnds", "file_qf", "area"], errors="ignore")
+                ds = ds.drop_vars(
+                    ["height", "time_bnds", "file_qf", "area"], errors="ignore"
+                )
                 # assign member-ID as coordinate
                 ds = ds.assign_coords({"member": meta["member"]})
                 members.append(ds)
@@ -155,7 +157,7 @@ def test_calibrate_mesmer(
             # create a Dataset that holds each member along the member dimension
             data_var = xr.concat(members, dim="member")
             data_scen.append(data_var)
-        
+
         data_scen = xr.merge(data_scen)
         data[scen] = xr.DataTree(data_scen)
 
