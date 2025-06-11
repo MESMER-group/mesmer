@@ -1,11 +1,12 @@
-import functools
+from xarray.core import dtypes
+from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
 from collections.abc import Callable, Iterable
 from typing import ParamSpec, TypeVar, overload
 
+import functools
 import xarray as xr
 from packaging.version import Version
-from xarray.core import dtypes
-from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
+
 
 P = ParamSpec("P")
 T = TypeVar("T")
