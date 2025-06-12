@@ -1,14 +1,24 @@
+from math import inf
 import pytest
 
 from mesmer.mesmer_x import (
     ConditionalDistribution,
     ConditionalDistributionOptions,
     Expression,
+    get_weights_uniform
 )
+
+import numpy as np
+import xarray as xr
+
+# fixture for default distribtion
+@pytest.fixture
+def default_distrib():
+    expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+    return ConditionalDistribution(expression, ConditionalDistributionOptions())
 
 
 def test_ConditionalDistributionOptions_errors():
-
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
         ConditionalDistributionOptions(
             threshold_min_proba=-0.1,
@@ -46,29 +56,26 @@ def test_ConditionalDistributionOptions_errors():
         )
 
 
-def test_ConditionalDistribution_init_all_default():
-    expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
+def test_ConditionalDistribution_init_all_default(default_distrib):
+    assert default_distrib.expression.expression is "norm(loc=c1 * __tas__, scale=c2)"
+    assert default_distrib.expression.boundaries_params == {'scale': [0, inf]}
+    assert default_distrib.expression.boundaries_coeffs == {}
+    assert default_distrib.expression.n_coeffs == 2
 
-    assert distrib.expression is expression
-    assert distrib.expression.boundaries_params == expression.boundaries_params
-    assert distrib.expression.boundaries_coeffs == {}
-    assert distrib.expression.n_coeffs == 2
-
-    assert distrib.options.threshold_min_proba == 1e-09
-    assert distrib.options.xtol_req == 1e-06
-    assert distrib.options.ftol_req == 1e-06
-    assert distrib.options.maxiter is None
-    assert distrib.options.maxfev is None
-    assert distrib.options.method_fit == "Powell"
-    assert distrib.options.name_ftol == "ftol"
-    assert distrib.options.name_xtol == "xtol"
-    assert not distrib.options.error_failedfit
-    assert not distrib.options.fg_with_global_opti
-    assert distrib.options.type_fun_optim == "nll"
-    assert distrib.options.threshold_stopping_rule is None
-    assert distrib.options.exclude_trigger is None
-    assert distrib.options.ind_year_thres is None
+    assert default_distrib.options.threshold_min_proba == 1e-09
+    assert default_distrib.options.xtol_req == 1e-06
+    assert default_distrib.options.ftol_req == 1e-06
+    assert default_distrib.options.maxiter is None
+    assert default_distrib.options.maxfev is None
+    assert default_distrib.options.method_fit == "Powell"
+    assert default_distrib.options.name_ftol == "ftol"
+    assert default_distrib.options.name_xtol == "xtol"
+    assert not default_distrib.options.error_failedfit
+    assert not default_distrib.options.fg_with_global_opti
+    assert default_distrib.options.type_fun_optim == "nll"
+    assert default_distrib.options.threshold_stopping_rule is None
+    assert default_distrib.options.exclude_trigger is None
+    assert default_distrib.options.ind_year_thres is None
 
 
 def test_ConditionalDistribution_custom_init():
@@ -127,3 +134,45 @@ def test_ConditionalDistribution_custom_init():
     assert distrib.options.threshold_stopping_rule == 0.1
     assert distrib.options.exclude_trigger  # is True
     assert distrib.options.ind_year_thres == 10
+
+
+def test_ConditionalDistribution_fit(default_distrib):
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+
+    targ = default_distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    fg = xr.Dataset({"c1": c1, "c2": c2},)
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+
+    default_distrib.fit(
+        predictors=pred,
+        target=targ,
+        first_guess=fg,
+        weights=weights,
+        sample_dim="time"
+    )
+
+    np.testing.assert_allclose(default_distrib.coefficients.c1, c1, atol=1.e-4)
+    np.testing.assert_allclose(default_distrib.coefficients.c2, c2, atol=0.0015)
+
+
+def test_ConditionalDistribution_smooth_fg_error(default_distrib):
+
+    with pytest.raises(ValueError, match="option_smooth_coeffs has been renamed"):
+        default_distrib.fit(
+            predictors="dummy",
+            target="dummy",
+            first_guess="dummy",
+            weights="dummy",
+            sample_dim="dummy",
+            option_smooth_coeffs=True,
+        )
