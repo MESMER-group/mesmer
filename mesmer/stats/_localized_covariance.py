@@ -125,7 +125,7 @@ def find_localized_empirical_covariance(
 
     _check_dataarray_form(data, name="data", ndim=2)
 
-    (sample_dim, ) = data[dim].dims
+    (sample_dim,) = data[dim].dims
 
     # ensure data has the right orientation
     data = data.transpose(sample_dim, ...)
@@ -202,7 +202,7 @@ def find_localized_empirical_covariance_monthly(
     and a leave-one-out cross validation otherwise.
     """
     localized_ecov = []
-    (sample_dim, ) = data[dim].dims
+    (sample_dim,) = data[dim].dims
     data_grouped = data.groupby(f"{dim}.month")
     weights_grouped = weights.groupby(f"{dim}.month")
 
