@@ -1,15 +1,15 @@
 from math import inf
+
+import numpy as np
 import pytest
+import xarray as xr
 
 from mesmer.mesmer_x import (
     ConditionalDistribution,
     ConditionalDistributionOptions,
     Expression,
-    get_weights_uniform
 )
 
-import numpy as np
-import xarray as xr
 
 # fixture for default distribtion
 @pytest.fixture
@@ -57,8 +57,8 @@ def test_ConditionalDistributionOptions_errors():
 
 
 def test_ConditionalDistribution_init_all_default(default_distrib):
-    assert default_distrib.expression.expression is "norm(loc=c1 * __tas__, scale=c2)"
-    assert default_distrib.expression.boundaries_params == {'scale': [0, inf]}
+    assert default_distrib.expression.expression == "norm(loc=c1 * __tas__, scale=c2)"
+    assert default_distrib.expression.boundaries_params == {"scale": [0, inf]}
     assert default_distrib.expression.boundaries_coeffs == {}
     assert default_distrib.expression.n_coeffs == 2
 
@@ -149,19 +149,17 @@ def test_ConditionalDistribution_fit(default_distrib):
 
     pred = {"tas": xr.DataArray(pred, dims=["time"])}
     targ = xr.DataArray(targ, dims=["time"], name="tas")
-    fg = xr.Dataset({"c1": c1, "c2": c2},)
+    fg = xr.Dataset(
+        {"c1": c1, "c2": c2},
+    )
     weights = xr.ones_like(targ)
     weights.name = "weight"
 
     default_distrib.fit(
-        predictors=pred,
-        target=targ,
-        first_guess=fg,
-        weights=weights,
-        sample_dim="time"
+        predictors=pred, target=targ, first_guess=fg, weights=weights, sample_dim="time"
     )
 
-    np.testing.assert_allclose(default_distrib.coefficients.c1, c1, atol=1.e-4)
+    np.testing.assert_allclose(default_distrib.coefficients.c1, c1, atol=1.0e-4)
     np.testing.assert_allclose(default_distrib.coefficients.c2, c2, atol=0.0015)
 
 

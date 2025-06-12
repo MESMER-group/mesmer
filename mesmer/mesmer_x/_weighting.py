@@ -71,7 +71,7 @@ def get_weights_uniform(targ_data, target, dims):
         return xr.Dataset({"weight": ones_array / ones_array.size})
 
     elif isinstance(targ_data, np.ndarray):
-        # create a DataArray of ones with the required shape
+        # create a array of ones with the required shape
         # warning, it assumes that this is performed for a single gridpoint
         ones_array = np.ones(targ_data.shape, dtype=float)
 
