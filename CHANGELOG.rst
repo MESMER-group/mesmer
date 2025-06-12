@@ -100,7 +100,8 @@ This was originally done with the prototype `xarray-datatree` package. After the
 ``DataTree`` to xarray stabilized, mesmer briefly supported both ``DataTree`` versions
 (the one in xarray-datatree and in xarray) before dropping support for `xarray-datatree`.
 
-- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
+- Switch to storing several predictors in one :py:class:`xr.Dataset`` per scenario node in a :py:class:`DataTree` (`#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
+- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_, `#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
 - Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
