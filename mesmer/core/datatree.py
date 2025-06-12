@@ -209,7 +209,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, None]: ...
+) -> tuple[xr.Dataset, xr.Dataset, None]: ...
 @overload
 def broadcast_and_stack_scenarios(
     predictors: xr.DataTree,
@@ -220,7 +220,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset]: ...
+) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset]: ...
 
 
 def broadcast_and_stack_scenarios(
@@ -232,7 +232,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str | None = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset | None]:
+) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset | None]:
     """
     prepare predictors, target, and weights for statistical functions, i.e. converts
     several nD DataTree nodes into a single 2D Dataset with sample and target dimensions,
@@ -240,18 +240,17 @@ def broadcast_and_stack_scenarios(
     dimension is
 
     1. Broadcasts predictors to target
-    2. Stacks the DataTree along the sample dimension
+    2. Stacks the DataTrees along the sample dimension
 
     Parameters
     ----------
     predictors : DataTree
         A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
-        must have subtrees for each predictor, each of which has to have at least one
-        non-empty leaf representing a scenario. The subtrees of different predictors must
-        be isomorphic (i.e. have the save scenarios). The ``xr.Dataset`` must contain
-        ``time_dim`` and only hold one data variable.
+        must have nodes for each scenario, each of which holds a Dataset where the
+        predictor(s) are contained as data variables. The ``xr.Dataset`` must contain
+        ``time_dim`` and at least one data variable.
     target : DataTree
-        A ``DataTree`` holding the targets. Must be isomorphic to the predictor subtrees, i.e.
+        A ``DataTree`` holding the targets. Must be isomorphic to the predictor tree, i.e.
         have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must contain
        ``time_dim``.
     weights : DataTree or None, default: None
@@ -278,14 +277,10 @@ def broadcast_and_stack_scenarios(
     broadcasting of the predictors.
 
     Example for how the predictor ``DataTree`` should look like:
-    ├─ tas
-    │  ├─ hist
-    │  ├─ scen1
-    │  └─ ...
-    ├─ hfds
-    │  ├─ hist
-    │  ├─ scen1
-    │  └─ ...
+    ├─ hist
+    |        datavars: tas, hfds, ...
+    ├─ scen1
+    |        datavars: tas, hfds, ...
     └─ ...
     with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
     """
@@ -302,19 +297,16 @@ def broadcast_and_stack_scenarios(
     }
 
     # prepare predictors
-    predictors_stacked = xr.DataTree()
-    for key, pred in predictors.items():
+    # 1) broadcast to target (because pred is averaged over member)
 
-        # 1) broadcast to target (because pred is averaged over member)
+    # TODO: use DataTree method again, once available
+    # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+    pred_broadcast = map_over_datasets(
+        xr.Dataset.broadcast_like, predictors, target, kwargs={"exclude": exclude_dim}
+    )
 
-        # TODO: use DataTree method again, once available
-        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
-        pred_broadcast = map_over_datasets(
-            xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
-        )
-
-        # 2) stack
-        predictors_stacked[key] = xr.DataTree(_stack_datatree(pred_broadcast, **dims))
+    # 2) stack
+    predictors_stacked = _stack_datatree(pred_broadcast, **dims)
 
     # prepare target
     target_stacked = _stack_datatree(target, **dims)
