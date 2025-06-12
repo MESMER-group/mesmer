@@ -243,7 +243,7 @@ def get_lambdas_from_covariates(
     (sample_dim,) = yearly_pred[time_dim].dims
 
     lambdas = lambdas.stack(__new__=(sample_dim, "month"), create_index=False)
-    lambdas = lambdas.rename({time_dim: "year", "__new__": sample_dim})
+    lambdas = lambdas.rename({time_dim: "year"}).swap_dims({"__new__": sample_dim})
 
     if time_coords is not None:
         lambdas = lambdas.drop_vars(["month", "year"], errors="ignore")
