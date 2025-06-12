@@ -188,7 +188,11 @@ def _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_pred):
 
 
 def get_lambdas_from_covariates(
-    lambda_coeffs: xr.DataArray, yearly_pred: xr.DataArray
+    lambda_coeffs: xr.DataArray,
+    yearly_pred: xr.DataArray,
+    *,
+    time_dim: str = "time",
+    time_coords: None | xr.DataArray = None,
 ) -> xr.DataArray:
     """function that relates fitted coefficients and the yearly predictor
     to the lambdas. We usee a logistic function between 0 and 2 to estimate
@@ -203,11 +207,15 @@ def get_lambdas_from_covariates(
     yearly_pred : ``xr.DataArray``
         yearly values used as predictors for the lambdas, contains dims for time
         and possibly additional dims as for lambda_coeffs.
+    time_dim : str, default: "time"
+        Name of the time dimension.
+    time_coords : None | ``xr.DataArray``, default: None
+        If passed will assign the time coords.
 
     Returns
     -------
     lambdas : ``xr.DataArray``
-        The parameters of the power transformation for each month, and year, and
+        The parameters of the power transformation for each month, year, and
         possibly additional dims.
 
     """
@@ -215,6 +223,9 @@ def get_lambdas_from_covariates(
     _check_dataarray_form(lambda_coeffs, name="lambda_coeffs", required_dims=lc_dims)
     yp_dims = set(lambda_coeffs.dims) - lc_dims
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=yp_dims)
+
+    if time_coords is not None:
+        _check_dataarray_form(time_coords, "time_coords", required_coords=time_dim)
 
     lambdas = xr.apply_ufunc(
         lambda_function,
@@ -227,7 +238,18 @@ def get_lambdas_from_covariates(
         output_dtypes=[float],
     )
 
-    return lambdas.rename("lambdas")
+    lambdas = lambdas.rename("lambdas")
+
+    (sample_dim,) = yearly_pred[time_dim].dims
+
+    lambdas = lambdas.stack(__new__=(sample_dim, "month"), create_index=False)
+    lambdas = lambdas.rename({time_dim: "year", "__new__": sample_dim})
+
+    if time_coords is not None:
+        lambdas = lambdas.drop_vars(["month", "year"], errors="ignore")
+        lambdas = lambdas.assign_coords({time_dim: (sample_dim, time_coords.values)})
+
+    return lambdas
 
 
 def fit_yeo_johnson_transform(
@@ -263,22 +285,26 @@ def fit_yeo_johnson_transform(
     # TODO allow passing func instead of our fixed lambda_function?
 
     _check_dataarray_form(
-        monthly_residuals, name="monthly_residuals", required_dims=time_dim
+        monthly_residuals, name="monthly_residuals", required_coords=time_dim
     )
     monthly_dims = set(monthly_residuals.dims)
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=monthly_dims)
 
+    # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
+    # i.e., time_dim and sample_dim may or may not be the same
+    (sample_dim,) = yearly_pred[time_dim].dims
+
     lambda_coeffs = []
     for month in range(12):
 
-        monthly_data = monthly_residuals.isel({time_dim: slice(month, None, 12)})
+        monthly_data = monthly_residuals.isel({sample_dim: slice(month, None, 12)})
 
         res = xr.apply_ufunc(
             _yeo_johnson_optimize_lambda_np,
             monthly_data,
             yearly_pred,
-            input_core_dims=[[time_dim], [time_dim]],
-            exclude_dims={time_dim},
+            input_core_dims=[[sample_dim], [sample_dim]],
+            exclude_dims={sample_dim},
             output_core_dims=[["coeff"]],
             output_dtypes=[float],
             vectorize=True,
@@ -340,7 +366,7 @@ def yeo_johnson_transform(
     Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_.
     """
     _check_dataarray_form(
-        monthly_residuals, name="monthly_residuals", required_dims=time_dim
+        monthly_residuals, name="monthly_residuals", required_coords=time_dim
     )
     monthly_dims = set(monthly_residuals.dims)
     _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=monthly_dims)
@@ -348,19 +374,24 @@ def yeo_johnson_transform(
         lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
     )
 
-    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
-        {time_dim: "year"}
+    # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
+    # i.e., time_dim and sample_dim may or may not be the same
+    (sample_dim,) = yearly_pred[time_dim].dims
+
+    lambdas = get_lambdas_from_covariates(
+        lambda_coeffs,
+        yearly_pred,
+        time_dim=time_dim,
+        time_coords=monthly_residuals[time_dim],
     )
-    lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     transformed_resids = xr.apply_ufunc(
         _yeo_johnson_transform_np,
         monthly_residuals,
-        lambdas_stacked,
-        input_core_dims=[[time_dim], ["stack"]],
-        output_core_dims=[[time_dim]],
+        lambdas,
+        input_core_dims=[[sample_dim], [sample_dim]],
+        output_core_dims=[[sample_dim]],
         output_dtypes=[float],
-        vectorize=True,
     ).rename("transformed")
 
     return xr.merge([transformed_resids, lambdas])
@@ -412,26 +443,32 @@ def inverse_yeo_johnson_transform(
     Note that :math:`X_{inv}` and :math:`X_{trans}` have the same sign.
     """
     _check_dataarray_form(
-        monthly_residuals, name="monthly_residuals", required_dims=time_dim
+        monthly_residuals, name="monthly_residuals", required_coords=time_dim
     )
-    _check_dataarray_form(yearly_pred, name="yearly_pred", required_dims=time_dim)
+    _check_dataarray_form(yearly_pred, name="yearly_pred", required_coords=time_dim)
     _check_dataarray_form(
         lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
     )
 
-    lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred).rename(
-        {time_dim: "year"}
+    # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
+    # i.e., time_dim and sample_dim may or may not be the same
+    (sample_dim,) = yearly_pred[time_dim].dims
+
+    # lambdas = get_lambdas_from_covariates(lambda_coeffs, yearly_pred)
+    lambdas = get_lambdas_from_covariates(
+        lambda_coeffs,
+        yearly_pred,
+        time_dim=time_dim,
+        time_coords=monthly_residuals[time_dim],
     )
-    lambdas_stacked = lambdas.stack(stack=["year", "month"])
 
     inverted_resids = xr.apply_ufunc(
         _yeo_johnson_inverse_transform_np,
         monthly_residuals,
-        lambdas_stacked,
-        input_core_dims=[[time_dim], ["stack"]],
-        output_core_dims=[[time_dim]],
+        lambdas,
+        input_core_dims=[[sample_dim], [sample_dim]],
+        output_core_dims=[[sample_dim]],
         output_dtypes=[float],
-        vectorize=True,
     ).rename("inverted")
 
     return xr.merge([inverted_resids, lambdas])
