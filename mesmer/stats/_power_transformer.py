@@ -392,6 +392,7 @@ def yeo_johnson_transform(
         input_core_dims=[[sample_dim], [sample_dim]],
         output_core_dims=[[sample_dim]],
         output_dtypes=[float],
+        vectorize=True,
     ).rename("transformed")
 
     return xr.merge([transformed_resids, lambdas])
@@ -469,6 +470,7 @@ def inverse_yeo_johnson_transform(
         input_core_dims=[[sample_dim], [sample_dim]],
         output_core_dims=[[sample_dim]],
         output_dtypes=[float],
+        vectorize=True,
     ).rename("inverted")
 
     return xr.merge([inverted_resids, lambdas])
