@@ -132,7 +132,6 @@ def upsample_yearly_data(
     yearly_data: xr.DataArray | xr.Dataset | xr.DataTree,
     monthly_time: xr.DataArray | xr.Dataset | xr.DataTree,
     time_dim: str = "time",
-    sample_dim: str = "sample",
 ):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
