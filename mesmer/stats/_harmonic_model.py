@@ -110,16 +110,18 @@ def predict_harmonic_model(
         any additional dimensions of `yearly_predictor`.
 
     """
+
     _check_dataarray_form(
         yearly_predictor,
         "yearly_predictor",
-        required_dims=time_dim,
+        required_coords=time_dim,
     )
-    # dims = set(yearly_predictor.dims) - {time_dim}
+    (sample_dim,) = yearly_predictor[time_dim].dims
+    dims = set(yearly_predictor.dims) - {sample_dim}
     _check_dataarray_form(
         coeffs,
         "coeffs",
-        # required_dims=dims | {"coeff"},
+        required_dims=dims | {"coeff"},
     )
 
     upsampled_y = mesmer.core.utils.upsample_yearly_data(
@@ -130,13 +132,13 @@ def predict_harmonic_model(
         _generate_fourier_series_np,
         upsampled_y,
         coeffs,
-        input_core_dims=[[time_dim], ["coeff"]],
-        output_core_dims=[[time_dim]],
+        input_core_dims=[[sample_dim], ["coeff"]],
+        output_core_dims=[[sample_dim]],
         vectorize=True,
         output_dtypes=[float],
     )
 
-    return predictions.transpose(time_dim, ...)
+    return predictions.transpose(sample_dim, ...)
 
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
