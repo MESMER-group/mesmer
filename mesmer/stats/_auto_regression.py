@@ -908,9 +908,8 @@ def fit_auto_regression_monthly(
         )
 
         ar_params_res.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-        resids = resids.assign_coords(
-            {time_dim: (sample_dim, cur_month[time_dim].values)}
-        )
+        time = cur_month[time_dim].values
+        resids = resids.assign_coords({time_dim: (sample_dim, time)})
         residuals_res.append(resids)
 
     month_dim = xr.Variable("month", np.arange(1, 13))
