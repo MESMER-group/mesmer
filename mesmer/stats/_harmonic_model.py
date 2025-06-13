@@ -323,6 +323,9 @@ def fit_harmonic_model(
 
     _check_dataarray_form(monthly_target, "monthly_target", required_coords={time_dim})
 
+    # we need to pass the dim (which may be `time_dim` or `sample_dim`)
+    (sample_dim,) = monthly_target[time_dim].dims
+
     if set(yearly_predictor.dims) != set(monthly_target.dims):
 
         msg = (
@@ -332,7 +335,7 @@ def fit_harmonic_model(
         )
         raise ValueError(msg)
 
-    for dim in set(yearly_predictor.dims) - {time_dim}:
+    for dim in set(yearly_predictor.dims) - {sample_dim}:
 
         if yearly_predictor[dim].size != monthly_target[dim].size:
             msg = (
@@ -342,15 +345,12 @@ def fit_harmonic_model(
             )
             raise ValueError(msg)
 
-    if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
+    if not monthly_target[time_dim].isel({sample_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
-
-    # we need to pass the dim (which may be `time_dim` or `sample_dim`)
-    (sample_dim,) = monthly_target[time_dim].dims
 
     # subtract annual mean to have seasonal anomalies around 0
     seasonal_deviations = monthly_target - yearly_predictor
