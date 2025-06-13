@@ -136,7 +136,7 @@ def predict_harmonic_model(
         output_dtypes=[float],
     )
 
-    return predictions.transpose(time_dim, ...).to_dataset(name="pred")
+    return predictions.transpose(time_dim, ...)
 
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
@@ -332,15 +332,18 @@ def fit_harmonic_model(
         )
         raise ValueError(msg)
 
-    # for dim in set(yearly_predictor.dims) - {time_dim}:
+    for dim in set(yearly_predictor.dims) - {time_dim}:
 
-    #     if yearly_predictor[dim].size != monthly_target[dim].size:
-    #         msg = (
-    #             f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
-    #             f"different size: {yearly_predictor[dim].size} vs. "
-    #             f"{monthly_target[dim].size}"
-    #         )
-    #         raise ValueError(msg)
+        if yearly_predictor[dim].size != monthly_target[dim].size:
+            msg = (
+                f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
+                f"different size: {yearly_predictor[dim].size} vs. "
+                f"{monthly_target[dim].size}"
+            )
+            raise ValueError(msg)
+
+    if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
+        raise ValueError("Monthly target data must start with January.")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
