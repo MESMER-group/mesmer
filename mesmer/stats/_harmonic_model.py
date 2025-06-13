@@ -111,13 +111,12 @@ def predict_harmonic_model(
 
     """
 
-    (sample_dim,) = yearly_predictor[time_dim].dims
-
     _check_dataarray_form(
         yearly_predictor,
         "yearly_predictor",
         required_coords=time_dim,
     )
+    (sample_dim,) = yearly_predictor[time_dim].dims
     dims = set(yearly_predictor.dims) - {sample_dim}
     _check_dataarray_form(
         coeffs,
