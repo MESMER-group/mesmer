@@ -736,7 +736,8 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     np.testing.assert_allclose(np.std(residuals), std, atol=1e-1)
 
 
-def test_fit_auto_regression_monthly() -> None:
+@pytest.mark.parametrize("stack", (False, True))
+def test_fit_auto_regression_monthly(stack) -> None:
     freq = "ME"
     n_years = 20
     n_gridcells = 10
@@ -750,6 +751,9 @@ def test_fit_auto_regression_monthly() -> None:
             "gridcell": np.arange(n_gridcells),
         },
     )
+
+    if stack:
+        data = data.stack(sample=["time"], create_index=False)
 
     result = mesmer.stats.fit_auto_regression_monthly(data)
 

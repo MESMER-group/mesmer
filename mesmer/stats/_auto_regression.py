@@ -877,20 +877,22 @@ def fit_auto_regression_monthly(
         ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
         the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
+    _check_dataarray_form(monthly_data, "monthly_data", required_coords=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
     ar_params_res = []
     residuals_res = []
+
+    (sample_dim,) = monthly_data[time_dim].dims
 
     for month in range(1, 13):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            n_ts = monthly_groups[12].sizes[time_dim]
-            prev_month = monthly_groups[12].isel({time_dim: slice(0, n_ts - 1)})
+            n_ts = monthly_groups[12].sizes[sample_dim]
+            prev_month = monthly_groups[12].isel({sample_dim: slice(0, n_ts - 1)})
 
-            n_ts = monthly_groups[1].sizes[time_dim]
-            cur_month = monthly_groups[1].isel({time_dim: slice(1, n_ts)})
+            n_ts = monthly_groups[1].sizes[sample_dim]
+            cur_month = monthly_groups[1].isel({sample_dim: slice(1, n_ts)})
         else:
             prev_month = monthly_groups[month - 1]
             cur_month = monthly_groups[month]
@@ -899,18 +901,20 @@ def fit_auto_regression_monthly(
             _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
-            input_core_dims=[[time_dim], [time_dim]],
-            output_core_dims=[[], [], [time_dim]],
-            exclude_dims={time_dim},
+            input_core_dims=[[sample_dim], [sample_dim]],
+            output_core_dims=[[], [], [sample_dim]],
+            exclude_dims={sample_dim},
             vectorize=True,
         )
 
         ar_params_res.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-        residuals_res.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
+        time = cur_month[time_dim].values
+        resids = resids.assign_coords({time_dim: (sample_dim, time)})
+        residuals_res.append(resids)
 
     month_dim = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params_res, dim=month_dim)
-    residuals = xr.concat(residuals_res, dim=time_dim).rename("residuals")
+    residuals = xr.concat(residuals_res, dim=sample_dim).rename("residuals")
 
     return xr.merge([ar_params, residuals])
 
