@@ -773,6 +773,13 @@ def test_fit_auto_regression_monthly(stack) -> None:
         shape=(12, n_gridcells),
     )
 
+    sample_dim = "sample" if stack else "time"
+    # check coordinates are the same
+    result_coords = result[sample_dim].coords
+    expected_coords = data[sample_dim].isel({sample_dim: slice(1, None)}).coords
+
+    assert result_coords.equals(expected_coords)
+
     with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
         mesmer.stats.fit_auto_regression_monthly(data.values)  # type: ignore[arg-type]
 
