@@ -12,7 +12,7 @@ from mesmer.core.utils import (
     _minimize_local_discrete,
 )
 
-threadpoolctl.threadpool_limits(limits=1)
+threadpoolctl.threadpool_limits(limits=2)
 
 
 def adjust_covariance_ar1(
