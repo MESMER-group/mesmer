@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import scipy
+import threadpoolctl
 import xarray as xr
 
 from mesmer.core.utils import (
@@ -10,6 +11,8 @@ from mesmer.core.utils import (
     _create_equal_dim_names,
     _minimize_local_discrete,
 )
+
+threadpoolctl.threadpool_limits(limits=1)
 
 
 def adjust_covariance_ar1(
