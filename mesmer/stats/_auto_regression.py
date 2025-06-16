@@ -894,7 +894,7 @@ def fit_auto_regression_monthly(
             # and last December has no following January
             prev_month = monthly_groups[12].isel({sample_dim: slice(None, -1)})
             cur_month = monthly_groups[1].isel({sample_dim: slice(1, None)})
-            i = 11
+            i = 11 # values only start the second year & first ts is removed
         else:
             prev_month = monthly_groups[month - 1]
             cur_month = monthly_groups[month]
