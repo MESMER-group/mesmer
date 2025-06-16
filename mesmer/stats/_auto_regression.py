@@ -1029,7 +1029,7 @@ def _draw_auto_regression_monthly(
     realisation_dim: str = "realisation",
 ) -> xr.Dataset:
 
-    # NOTE: seed must be the first positional argument for map_over_datasets to work
+    # NOTE: seed must be a positional argument for map_over_datasets to work
 
     # check input
     _check_dataset_form(ar_params, "ar_params", required_vars={"intercept", "slope"})
@@ -1044,9 +1044,10 @@ def _draw_auto_regression_monthly(
     _check_dataarray_form(
         ar_params.slope, "slope", ndim=2, required_dims={month_dim, gridcell_dim}
     )
-    _check_dataarray_form(
-        covariance, "covariance", ndim=3, shape=(n_months, size, size)
-    )
+    if covariance is not None:
+        _check_dataarray_form(
+            covariance, "covariance", ndim=3, shape=(n_months, size, size)
+        )
 
     if isinstance(seed, xr.Dataset):
         seed = int(seed.seed.item())
@@ -1090,10 +1091,13 @@ def _draw_ar_corr_monthly_xr_internal(
     # make sure non-dimension coords are properly caught
     gridpoint_coords = dict(slope[gridpoint_dim].coords)
 
+    if covariance is not None:
+        covariance = covariance.values
+
     out = _draw_auto_regression_monthly_np(
         intercept=intercept.values,
         slope=slope.transpose(..., gridpoint_dim).values,
-        covariance=covariance.values,
+        covariance=covariance,
         n_samples=n_realisations,
         n_ts=n_ts,
         seed=seed,
@@ -1141,7 +1145,6 @@ def _draw_auto_regression_monthly_np(
         Predicted time series of the specified AR(1) including spatially correlated innovations.
     """
     intercept = np.asarray(intercept)
-    covariance = np.atleast_3d(covariance)
 
     _, n_gridcells = intercept.shape
 
@@ -1151,6 +1154,7 @@ def _draw_auto_regression_monthly_np(
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
     if covariance is not None:
+        covariance = np.atleast_3d(covariance)
         for month in range(12):
             cov_month = covariance[month, :, :]
             innovations[:, :, month, :] = _draw_innovations_correlated_np(
