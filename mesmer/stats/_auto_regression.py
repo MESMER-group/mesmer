@@ -880,22 +880,25 @@ def fit_auto_regression_monthly(
     _check_dataarray_form(monthly_data, "monthly_data", required_coords=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
     ar_params_res = []
-    residuals_res = []
 
     (sample_dim,) = monthly_data[time_dim].dims
+
+    residuals = xr.full_like(monthly_data, fill_value=np.nan)
+    # we loose one timestep
+    residuals = residuals.isel({sample_dim: slice(1, None)})
+    residuals.name = "residuals"
 
     for month in range(1, 13):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            n_ts = monthly_groups[12].sizes[sample_dim]
-            prev_month = monthly_groups[12].isel({sample_dim: slice(0, n_ts - 1)})
-
-            n_ts = monthly_groups[1].sizes[sample_dim]
-            cur_month = monthly_groups[1].isel({sample_dim: slice(1, n_ts)})
+            prev_month = monthly_groups[12].isel({sample_dim: slice(None, -1)})
+            cur_month = monthly_groups[1].isel({sample_dim: slice(1, None)})
+            i = 11
         else:
             prev_month = monthly_groups[month - 1]
             cur_month = monthly_groups[month]
+            i = month - 2
 
         slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
@@ -907,14 +910,13 @@ def fit_auto_regression_monthly(
             vectorize=True,
         )
 
+        # assign residuals, so the order is kept
+        residuals[{sample_dim: slice(i, None, 12)}] = resids
+
         ar_params_res.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-        time = cur_month[time_dim].values
-        resids = resids.assign_coords({time_dim: (sample_dim, time)})
-        residuals_res.append(resids)
 
     month_dim = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params_res, dim=month_dim)
-    residuals = xr.concat(residuals_res, dim=sample_dim).rename("residuals")
 
     return xr.merge([ar_params, residuals])
 
@@ -940,16 +942,9 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
         The intercept of the AR(1) process.
     """
 
-    def _lin_func(indep_var, slope, intercept):
-        return slope * indep_var + intercept
+    slope, intercept = np.polyfit(data_prev_month, data_month, deg=1)
 
-    slope, intercept = scipy.optimize.curve_fit(
-        _lin_func,
-        data_prev_month,  # independent variable
-        data_month,  # dependent variable
-    )[0]
-
-    residuals = data_month - _lin_func(data_prev_month, slope, intercept)
+    residuals = data_month - (intercept + slope * data_prev_month)
 
     return slope, intercept, residuals
 
