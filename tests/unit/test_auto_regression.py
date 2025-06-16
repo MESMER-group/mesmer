@@ -534,7 +534,7 @@ def test_draw_auto_regression_deterministic_coefs_buffer():
         np.testing.assert_allclose(result, expected[:, i : i + 4])
 
 
-def test_draw_auto_regression_random():
+def test_draw_auto_regression_numeric():
 
     result = _auto_regression._draw_auto_regression_correlated_np(
         intercept=1,
