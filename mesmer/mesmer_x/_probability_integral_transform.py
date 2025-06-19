@@ -6,7 +6,7 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import collapse_datatree_into_dataset
+from mesmer.core.datatree import _datatree_wrapper
 from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
 
 
@@ -59,13 +59,13 @@ class ProbabilityIntegralTransform:
 
         Parameters
         ----------
-        data : Datatree
+        data : xr.DataTree | xr.Dataset
             Data to transform.
         target_name : str
             name of the variable to transform
-        preds_orig : Datatree | None
+        preds_orig : Datatree | xr.Dataset | None
             Covariants for the original distribution. If None, ?.
-        preds_targ : Datatree | None
+        preds_targ : Datatree | xr.Dataset | None
             Covariants of the target distribution. If None, ?.
         threshold_proba : float, default: 1.e-9.
             Threshold for the probability of the sample on the original distribution.
@@ -73,94 +73,28 @@ class ProbabilityIntegralTransform:
             will be set to the threshold. This should avoid very unlikely values
         Returns1
         -------
-        transf_inputs : DataTree
+        transf_inputs : DataTree | xr.Dataset
             Transformed data.
         """
-        if isinstance(data, xr.DataTree):
-            # check on similar format
-            if isinstance(preds_orig, xr.Dataset) or isinstance(preds_targ, xr.Dataset):
-                raise TypeError("predictors must have the same type as data")
 
-            # looping over scenarios of data
-            out = dict()
-            for scen, data_scen in data.items():
-                # preparing data to transform
-                data_scen = data_scen.to_dataset()
-
-                # preparing predictors
-                ds_preds_orig = self._prepare_predictors(preds_orig, scen=scen)
-                ds_preds_targ = self._prepare_predictors(preds_targ, scen=scen)
-
-                # transforming data
-                tmp = self._transform(
-                    data_scen,
-                    target_name,
-                    ds_preds_orig,
-                    ds_preds_targ,
-                    threshold_proba,
-                )
-
-                # creating transf_data as a dataset with tmp as a variable
-                out[scen] = xr.Dataset(
-                    {target_name: (data_scen[target_name].dims, tmp)},
-                    coords=data_scen[target_name].coords,
-                )
-
-            # creating datatree
-            return xr.DataTree.from_dict(out)
-
-        elif isinstance(data, xr.Dataset):
-            # check on similar format
-            if isinstance(preds_orig, xr.DataTree) or isinstance(
-                preds_targ, xr.DataTree
-            ):
-                raise TypeError("predictors must have the same type as data")
-
-            # preparing predictors
-            ds_preds_orig = self._prepare_predictors(preds_orig)
-            ds_preds_targ = self._prepare_predictors(preds_targ)
-
-            # transforming data
-            tmp = self._transform(
-                data, target_name, ds_preds_orig, ds_preds_targ, threshold_proba
+        # transforming data
+        return self._transform(
+            data,
+            target_name,
+            preds_orig,
+            preds_targ,
+            threshold_proba,
             )
 
-            # creating transf_data as a dataset with tmp as a variable
-            transf_data = xr.Dataset(
-                {target_name: (data[target_name].dims, tmp)},
-                coords=data[target_name].coords,
-            )
-            return transf_data
-
-        else:
-            raise TypeError("data must be a xarray Dataset or Datatree")
-
-    def _prepare_predictors(self, preds, scen=None):
-        # preparation of predictors
-        if preds is None:
-            ds_preds = xr.Dataset()
-
-        elif isinstance(preds, xr.DataTree):
-            if scen is not None:
-                # taking only the correct scenario, while keeping the same format
-                preds = xr.DataTree.from_dict({p: preds[p][scen] for p in preds})
-
-            # correcting format: must be dict(str, DataArray or array) for Expression
-            tmp = collapse_datatree_into_dataset(preds, dim="predictor")
-            var_name = [var for var in tmp.variables][0]
-            ds_preds = xr.Dataset()
-            for pp in tmp["predictor"].values:
-                ds_preds[pp] = tmp[var_name].sel(predictor=pp)
-
-        elif isinstance(preds, xr.Dataset):
-            # no need to correct format
-            ds_preds = preds
-
-        return ds_preds
-
+    @_datatree_wrapper
     def _transform(
         self, data, target_name, ds_pred_orig, ds_preds_targ, threshold_proba
     ):
+        if ds_pred_orig is None:
+            ds_pred_orig = xr.Dataset()
+        if ds_preds_targ is None:
+            ds_preds_targ = xr.Dataset()
+        
         # parameters of starting distribution
         params_orig = self.expression_orig.evaluate_params(
             self.coefficients_orig, ds_pred_orig, forced_shape=data[target_name].dims
@@ -179,4 +113,8 @@ class ProbabilityIntegralTransform:
         )
 
         # values corresponding to probabilities of sample on the ending distribution
-        return self.expression_targ.distrib.ppf(cdf_data, **params_targ)
+        trans = self.expression_targ.distrib.ppf(cdf_data, **params_targ)
+        return xr.Dataset(
+            {target_name: (data[target_name].dims, trans)},
+             coords=data[target_name].coords,)
+        
