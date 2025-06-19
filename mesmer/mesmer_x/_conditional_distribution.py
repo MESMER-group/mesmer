@@ -13,6 +13,7 @@ from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.mesmer_x._weighting import weighted_median
+from mesmer.mesmer_x._first_guess import _FirstGuess
 from mesmer.stats import gaspari_cohn
 
 
@@ -282,6 +283,112 @@ class ConditionalDistribution:
         )  # add expression as attribute
 
         self._coefficients = coefficients
+
+
+    def find_first_guess(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        target: xr.DataArray,
+        weights: xr.DataArray,
+        sample_dim: str = "sample",
+        first_guess: xr.Dataset | None = None,
+    ):
+        """
+        Find a first guess for all coefficients of a conditional distribution for each grid point.
+
+        Parameters
+        ----------
+        conditional_distrib : ConditionalDistribution
+            Conditional distribution object to find the first guess for.
+        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor in a leaf. Each predictor must be 1D and contain `sample_dim`. If predictors
+            is a xr.Dataset, it must have each predictor as a DataArray.
+        target : xr.DataArray
+            Target DataArray, contains at least `sample_dim`.
+        weights : xr.DataArray.
+            Individual weights for each sample, must be 1D along `sample_dim`.
+        sample_dim : str
+            Dimension along which to fit the first guess.
+        first_guess : xr.Dataset, default: None
+            If provided, will use these values as first guess for the first guess. If None,
+            will use all zeros. Must contain the first guess for each coefficient in a
+            DataArray with the name of the coefficient.
+
+        Returns
+        -------
+        :obj:`xr.Dataset`
+            Dataset of first guess for each coefficient of the conditional distribution as a
+            data variable with the name of the coefficient.
+        """
+        # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
+
+        # make fg if none
+        if first_guess is None:
+            first_guess = xr.Dataset()
+            fg_dims = set(target.dims) - {sample_dim}
+            fg_size = [target.sizes[dim] for dim in fg_dims]
+            for coef in self.expression.coefficients_list:
+                first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
+
+        # preparing data
+        data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore
+            predictors, target, weights, first_guess
+        )
+
+        # NOTE: extremely important that the order is the right one
+        predictor_names = data_pred.coords["predictor"].values.tolist()
+
+        # search for each gridpoint
+        result = xr.apply_ufunc(
+            self._find_fg_np,
+            data_pred,
+            data_targ,
+            data_weights,
+            first_guess,
+            kwargs={
+                "predictor_names": predictor_names,
+            },
+            input_core_dims=[
+                [sample_dim, "predictor"],
+                [sample_dim],
+                [sample_dim],
+                ["coefficient"],
+            ],
+            output_core_dims=[["coefficient"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+
+        # creating a dataset with the coefficients
+        out = xr.Dataset()
+        for i, coef in enumerate(self.expression.coefficients_list):
+            out[coef] = result.isel(coefficient=i)
+        return out.drop_vars("coefficient")
+    
+
+    def _find_fg_np(
+        self,
+        data_pred,
+        data_targ,
+        data_weights,
+        first_guess,
+        predictor_names,
+    ):
+
+        fg = _FirstGuess(
+            self.expression,
+            self.options,
+            data_pred,
+            predictor_names,
+            data_targ,
+            data_weights,
+            first_guess,
+        )
+
+        return fg._find_fg()
+
 
     def _smoothen_first_guess(
         self, target: xr.DataArray, first_guess: xr.Dataset, r_gasparicohn
