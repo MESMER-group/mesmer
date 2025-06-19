@@ -9,6 +9,7 @@ from mesmer.core.utils import (
     _check_dataarray_form,
     _create_equal_dim_names,
     _minimize_local_discrete,
+    _set_threads_from_options,
 )
 
 
@@ -280,6 +281,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
+@_set_threads_from_options()
 def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
     """k-fold crossvalidation for a single localization radius"""
 

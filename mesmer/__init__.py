@@ -21,6 +21,7 @@ from mesmer.core import (
     volc,
     weighted,
 )
+from mesmer.core.options import get_options, set_options
 
 # "legacy" modules
 __all__ = [
@@ -38,8 +39,10 @@ __all__ += [
     "datatree",
     "example_data",
     "geospatial",
+    "get_options",
     "grid",
     "mask",
+    "set_options",
     "stats",
     "testing",
     "volc",
