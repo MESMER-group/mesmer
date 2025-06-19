@@ -16,6 +16,7 @@ from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
+    _set_threads_from_options,
 )
 
 
@@ -713,6 +714,7 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
+@_set_threads_from_options()
 def _draw_innovations_correlated_np(
     covariance, rng, n_gridcells, n_samples, n_ts, buffer
 ):

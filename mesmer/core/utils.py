@@ -1,10 +1,14 @@
+import os
 import warnings
 from collections.abc import Callable, Iterable
+from contextlib import contextmanager
 from typing import cast
 
 import numpy as np
 import pandas as pd
+import threadpoolctl
 import xarray as xr
+
 
 from mesmer.core.datatree import _datatree_wrapper
 
@@ -313,3 +317,19 @@ def _assert_required_coords(
     if required_coords - set(obj.coords):
         missing_coords = " ,".join(required_coords - set(obj.coords))
         raise ValueError(f"{name} is missing the required coords: {missing_coords}")
+
+
+@contextmanager
+def _set_threads_from_options():
+
+    from mesmer.core.options import OPTIONS
+
+    threads_option = OPTIONS["threads"]
+
+    if threads_option == "default":
+        threads = min(os.cpu_count() // 2, 16)
+    else:
+        threads = threads_option
+
+    with threadpoolctl.threadpool_limits(limits=threads):
+        yield
