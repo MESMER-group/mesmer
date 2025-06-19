@@ -7,84 +7,7 @@ import numpy as np
 import xarray as xr
 from scipy.stats import gaussian_kde
 
-
-def get_weights_uniform(targ_data, target, dims):
-    """
-    Generate uniform weights for the training sample.
-
-    Parameters
-    ----------
-    targ_data : xr.DataTree | xr.Dataset | np.array
-        Target for the training sample. Each branch must be a scenario,
-        with a xarray dataset (time, member, gridpoint).
-
-    target : str
-        Name of the target. Must be the name in the datasets in targ_data.
-
-    dims : list of str
-        Dimensions of the data. Must be the same for all scenarios.
-
-    Returns
-    -------
-    weights : DataTree
-        Weights for the sample, uniform, summing to 1.
-
-    Example
-    -------
-    TODO
-
-    """
-    if isinstance(targ_data, xr.DataTree):
-        # preparing a datatree with ones everywhere
-        factor_rescale = 0
-        out = dict()
-        for scen in targ_data:
-            # identify the extra dimension
-            extra_dims = [
-                dim for dim in targ_data[scen][target].dims if dim not in dims
-            ]
-            locator_extra_dims = {dim: 0 for dim in extra_dims}
-
-            # create a DataArray of ones with the required shape
-            ones_array = xr.ones_like(
-                targ_data[scen][target].loc[locator_extra_dims], dtype=float
-            )
-            out[scen] = xr.DataTree(xr.Dataset({"weight": ones_array}))
-
-            # accumulate the total size for rescaling
-            factor_rescale += ones_array.size
-
-        # rescale
-        return xr.DataTree.from_dict(out) / factor_rescale
-
-    elif isinstance(targ_data, xr.Dataset):
-        # identify the extra dimension
-        extra_dims = [dim for dim in targ_data[target].dims if dim not in dims]
-        locator_extra_dims = {dim: 0 for dim in extra_dims}
-
-        # create a DataArray of ones with the required shape
-        ones_array = xr.ones_like(
-            targ_data[target].loc[locator_extra_dims], dtype=float
-        )
-
-        # rescale
-        return xr.Dataset({"weight": ones_array / ones_array.size})
-
-    elif isinstance(targ_data, np.ndarray):
-        # create a array of ones with the required shape
-        # warning, it assumes that this is performed for a single gridpoint
-        ones_array = np.ones(targ_data.shape, dtype=float)
-
-        # rescale
-        return ones_array / ones_array.size
-
-    else:
-        raise TypeError(
-            "The format for targ_data must be a xr.DataTree, xr.Dataset or a np.array."
-        )
-
-
-def get_weights_density(pred_data, predictor, targ_data, target, dims):
+def get_weights_density(pred_data):
     """
     Generate weights for the sample, based on the inverse of the density of the
     predictors. More precisely, the density of the predictors is represented by a
@@ -100,19 +23,6 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
         Predictors for the training sample. Each branch must be a scenario,
         with a xarray dataset (time, member). Each predictor is a variable.
 
-    predictor : str
-        Name of the predictor. Must be the name in the datasets in pred_data.
-
-    targ_data : DataTree
-        Target for the training sample. Each branch must be a scenario,
-        with a xarray dataset (time, member, gridpoint).
-
-    target : str
-        Name of the target. Must be the name in the datasets in targ_data.
-
-    dims : list of str
-        Dimensions of the data. Must be the same for all scenarios.
-
     Returns
     -------
     weights : DataTree
@@ -125,87 +35,77 @@ def get_weights_density(pred_data, predictor, targ_data, target, dims):
 
     """
 
-    # checking if predictors have been provided
-    if len(pred_data) == 0:
-        # NB: may use no predictors when training stationary distributions for bencharmking.
-        print("no predictors provided, switching to uniform weights")
-        return get_weights_uniform(targ_data, target, dims)
-
-    elif isinstance(targ_data, xr.DataTree):
-        # reshaping data for histogram
-        tmp_pred = {}
-        for var in pred_data:
-            if var not in tmp_pred:
-                tmp_pred[var] = np.array([])
-            for scen in pred_data[var]:
-                tmp_pred[var] = np.concatenate(
-                    [tmp_pred[var], pred_data[var][scen][predictor].values.flatten()]
-                )
-        array_pred = np.array(list(tmp_pred.values()))
-
+    def _weights(data):
         # representation with kernel-density estimate using gaussian kernels
         # NB: more stable than np.histogramdd that implies too many assumptions
-        histo_kde = gaussian_kde(array_pred)
+        histo_kde = gaussian_kde(data)
 
         # calculating density of points over the sample
-        density = histo_kde.pdf(x=array_pred)
-
-        # preparing the datatree
-        weight, counter, factor_rescale = dict(), 0, 0
-        # using former var, ensuring correct order on dimensions
-        dims = pred_data[var][scen][predictor].dims
-        for scen in pred_data[var]:
-            # reshaping the weights for this scenario
-            n_dims = {dim: pred_data[var][scen][dim].size for dim in dims}
-            array_tmp = np.reshape(
-                density[counter : counter + pred_data[var][scen][predictor].size],
-                [n_dims[dim] for dim in dims],
-            )
-            tmp = xr.DataArray(
-                data=array_tmp,
-                dims=dims,
-                coords={dim: pred_data[var][scen][dim] for dim in dims},
-            )
-
-            # inverse of density
-            weight[scen] = xr.Dataset({"weight": 1 / tmp})
-            factor_rescale += weight[scen]["weight"].sum()
-
-            # preparing next scenario
-            counter += pred_data[var][scen][predictor].size
-
-        # preparing the output
-        return xr.DataTree.from_dict(weight) / factor_rescale
-
-    elif isinstance(targ_data, xr.Dataset):
-        # reshaping data for histogram
-        array_pred = pred_data.to_array().values
-
-        # representation with kernel-density estimate using gaussian kernels
-        # NB: more stable than np.histogramdd that implies too many assumptions
-        histo_kde = gaussian_kde(array_pred)
-
-        # calculating density of points over the sample
-        density = histo_kde.pdf(x=array_pred)
-
-        # preparing the output
-        return xr.Dataset({"weight": (1 / density) / np.sum(1 / density)})
-
-    elif isinstance(targ_data, np.ndarray):
-        # representation with kernel-density estimate using gaussian kernels
-        # NB: more stable than np.histogramdd that implies too many assumptions
-        histo_kde = gaussian_kde(pred_data)
-
-        # calculating density of points over the sample
-        density = histo_kde.pdf(x=pred_data)
+        density = histo_kde.pdf(x=data)
 
         # preparing the output
         return (1 / density) / np.sum(1 / density)
+    
+    if isinstance(pred_data, xr.DataTree):
+        n_scens = len(pred_data)
+        scens = list(pred_data.keys())
+        preds = list(pred_data[scens[0]].data_vars)
+        n_preds = len(preds)
+        pred_shape = pred_data[scens[0]][preds[0]].shape
 
-    else:
-        raise TypeError(
-            "The format for targ_data must be a xr.DataTree, xr.Dataset or a np.array."
-        )
+        # reshaping data into array
+        pred_arrays = {}
+        # need predictors of different scnearios together
+        for pred in preds:
+            if pred not in pred_arrays:
+                 pred_arrays[pred] = np.array([])
+            for scen in scens:
+                pred_arrays[pred] = np.concatenate([pred_arrays[pred], pred_data[scen][pred].values.flatten()])
+        
+        array_pred = np.array(list(pred_arrays.values()))
+        weights = _weights(array_pred)
+
+        # get original shape back
+        weights = weights.reshape(n_scens, *pred_shape)
+
+        weights_dt = xr.DataTree()
+        for s, scen in enumerate(scens):
+            weights_dt[scen] = xr.Dataset({
+            "weights": xr.DataArray(
+                weights[s, ...],
+                dims=pred_data[scens[0]][preds[0]].dims,
+                coords=pred_data[scens[0]][preds[0]].coords,
+            )
+        })
+
+        return weights_dt
+
+
+    elif isinstance(pred_data, xr.Dataset):
+        preds = list(pred_data.data_vars)
+        n_preds = len(preds)
+        pred_shape = pred_data[preds[0]].shape
+
+        # reshaping data into array
+        array_pred = pred_data.to_array("predictor").values.reshape(n_preds, -1)
+        weights = _weights(array_pred)
+
+        # get original shape back
+        weights = weights.reshape(*pred_shape)
+        weights_ds = xr.Dataset({
+            "weights": xr.DataArray(
+                weights,
+                dims=pred_data[preds[0]].dims,
+                coords=pred_data[preds[0]].coords,
+            )
+        })
+        return weights_ds
+
+
+    elif isinstance(pred_data, np.ndarray):
+        array_pred = pred_data
+        return _weights(array_pred)
+
 
 
 def weighted_median(data, weights):
