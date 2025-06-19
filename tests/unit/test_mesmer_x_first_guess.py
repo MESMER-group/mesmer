@@ -12,7 +12,9 @@ from mesmer.mesmer_x._first_guess import (
     #_find_fg_np,
     _finite_difference,
 )
-from mesmer.mesmer_x._weighting import get_weights_uniform
+
+def get_weights_uniform(data):
+    return np.ones_like(data)
 
 
 def fg_default(n_coeffs):
@@ -26,7 +28,7 @@ def test_first_guess_standard_normal():
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
 
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
     fg_coeffs = fg_default(2)
 
     result = _FirstGuess(
@@ -53,7 +55,7 @@ def test_first_guess_standard_normal_including_pred():
 
     expression = Expression("norm(loc=c1*__tas__+c2, scale=c3)", expr_name="exp1")
 
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
     fg_coeffs = fg_default(3)
 
     result = _FirstGuess(
@@ -78,7 +80,7 @@ def test_first_guess_provided(first_guess):
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
 
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
     fg_coeffs = fg_default(2)
 
     result = _FirstGuess(
@@ -109,7 +111,7 @@ def test_first_guess_GEV(shape):
 
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
 
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
     fg_coeffs = fg_default(3)
 
     result = _FirstGuess(
@@ -159,7 +161,7 @@ def test_first_guess_GEV_including_pred():
         "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
     )
 
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
     fg_coeffs = fg_default(3)
 
     result = _FirstGuess(
@@ -189,7 +191,7 @@ def test_first_guess_truncnorm():
     targ = sp.stats.truncnorm.rvs(
         loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng
     )
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     # NOTE: this is an interesting case to test because the fact that the distribution is truncated
     # makes the optimization for the scale biased in step 3: here we fit the scale to be close to the
@@ -225,7 +227,7 @@ def test_fg_binom():
     n_trials = 10
     p = 0.5
     targ = sp.stats.binom.rvs(n=n_trials, p=p * pred, random_state=rng, size=n)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
 
@@ -256,7 +258,7 @@ def test_fg_hypergeom():
     targ = sp.stats.hypergeom.rvs(
         M=M, n=n_draws, N=n_success * pred, random_state=rng, size=n
     )
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expr_str = "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)"
     expression = Expression(expr_str, expr_name="exp1")
@@ -310,7 +312,7 @@ def test_first_guess_beta():
     loc = 0
     scale = 1
     targ = sp.stats.beta.rvs(a, b, loc, scale, size=n, random_state=rng)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
 
@@ -348,7 +350,7 @@ def test_first_guess_gamma():
     targ = sp.stats.gamma.rvs(a, loc, scale, size=n, random_state=rng)
 
     expression = Expression("gamma(loc=0, scale=1, a=c1)", expr_name="exp1")
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     options_solver = {"fg_with_global_opti": True}
 
@@ -375,7 +377,7 @@ def test_fg_fun_scale_laplace():
     loc = 2
     scale = 1
     targ = sp.stats.laplace.rvs(loc=loc, scale=scale, size=n, random_state=rng)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("laplace(loc=c1, scale=c2)", expr_name="exp1")
     result = _FirstGuess(
@@ -403,7 +405,7 @@ def test_first_guess_with_bounds():
     scale_bounds = (0.5, 1.5)
 
     targ = rng.normal(loc=loc, scale=scale, size=n)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expr_str = "norm(loc=c1, scale=c2)"
     expression = Expression(
@@ -498,7 +500,7 @@ def test_fg_func_deriv01():
     c1 = 2.0
     c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
 
@@ -560,7 +562,7 @@ def test_fg_fun_loc():
     c1 = 2.0
     c2 = 0.1
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
@@ -594,7 +596,7 @@ def test_fg_fun_scale():
 
     # test normal
     targ = rng.normal(loc=loc, scale=scale, size=n)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
     fg = _FirstGuess(
@@ -612,7 +614,7 @@ def test_fg_fun_scale():
 
     # test GEV
     targ = sp.stats.genextreme.rvs(c=1, loc=loc, scale=scale, size=n, random_state=rng)
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
     fg = _FirstGuess(
@@ -646,7 +648,7 @@ def test_fg_fun_others():
     targ = sp.stats.truncnorm.rvs(
         loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng
     )
-    weights = get_weights_uniform(targ, "tas", None)
+    weights = get_weights_uniform(targ)
 
     expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
 
