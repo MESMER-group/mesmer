@@ -9,10 +9,10 @@ import xarray as xr
 # TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
 from mesmer.core.utils import _check_dataset_form
+from mesmer.core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._utils import _ignore_warnings
-from mesmer.mesmer_x._weighting import weighted_median
 from mesmer.mesmer_x._first_guess import _FirstGuess
 from mesmer.stats import gaspari_cohn
 
@@ -323,7 +323,7 @@ class ConditionalDistribution:
         """
         # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
 
-        # make fg if none
+        # make fg with zeros if none
         if first_guess is None:
             first_guess = xr.Dataset()
             fg_dims = set(target.dims) - {sample_dim}
