@@ -2,24 +2,27 @@ import numpy as np
 import pytest
 
 from mesmer.mesmer_x import (
-    ConditionalDistribution,
     ConditionalDistributionOptions,
     Expression,
 )
-from mesmer.mesmer_x._first_guess import FirstGuess
+from mesmer.mesmer_x._first_guess import _FirstGuess as FirstGuess
 
 
 @pytest.fixture
-def distrib():
-    expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
-    return ConditionalDistribution(expr, ConditionalDistributionOptions())
+def expr():
+    return Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+
+@pytest.fixture
+def options():
+    return ConditionalDistributionOptions()
 
 
-def test_fg_errors(distrib):
+def test_fg_errors(expr, options):
     n = 15  # must be > 10 for smoothing
     with pytest.raises(ValueError, match="nan values in predictors"):
         FirstGuess(
-            distrib,
+            expr,
+            options,
             data_pred=np.ones(n) * np.nan,
             predictor_names=["tas"],
             data_targ=np.ones(n),
@@ -29,7 +32,8 @@ def test_fg_errors(distrib):
 
     with pytest.raises(ValueError, match="infinite values in predictors"):
         FirstGuess(
-            distrib,
+            expr,
+            options,
             data_pred=np.ones(n) * np.inf,
             predictor_names=["tas"],
             data_targ=np.ones(n),
@@ -39,7 +43,8 @@ def test_fg_errors(distrib):
 
     with pytest.raises(ValueError, match="nan values in target"):
         FirstGuess(
-            distrib,
+            expr,
+            options,
             data_pred=np.ones(n),
             predictor_names=["tas"],
             data_targ=np.ones(n) * np.nan,
@@ -49,7 +54,8 @@ def test_fg_errors(distrib):
 
     with pytest.raises(ValueError, match="infinite values in target"):
         FirstGuess(
-            distrib,
+            expr,
+            options,
             data_pred=np.ones(n),
             predictor_names=["tas"],
             data_targ=np.ones(n) * np.inf,
@@ -61,7 +67,8 @@ def test_fg_errors(distrib):
         ValueError, match="The provided first guess does not have the correct shape:"
     ):
         FirstGuess(
-            distrib,
+            expr,
+            options,
             data_pred=np.ones(n),
             predictor_names=["tas"],
             data_targ=np.ones(n),

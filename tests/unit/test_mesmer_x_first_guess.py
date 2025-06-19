@@ -8,8 +8,8 @@ from mesmer.mesmer_x import (
     Expression,
 )
 from mesmer.mesmer_x._first_guess import (
-    FirstGuess,
-    _find_fg_np,
+    _FirstGuess,
+    #_find_fg_np,
     _finite_difference,
 )
 from mesmer.mesmer_x._weighting import get_weights_uniform
@@ -25,19 +25,19 @@ def test_first_guess_standard_normal():
     targ = rng.normal(loc=0, scale=1, size=n)
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     weights = get_weights_uniform(targ, "tas", None)
     fg_coeffs = fg_default(2)
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
 
     np.testing.assert_allclose(result, [0.0, 1.0], atol=0.02)
 
@@ -53,19 +53,18 @@ def test_first_guess_standard_normal_including_pred():
 
     expression = Expression("norm(loc=c1*__tas__+c2, scale=c3)", expr_name="exp1")
 
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-
     weights = get_weights_uniform(targ, "tas", None)
     fg_coeffs = fg_default(3)
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
-        conditional_distrib=distrib,
         predictor_names=["tas"],
-    )
+    )._find_fg()
 
     np.testing.assert_allclose(result, [c1, c2, c3], rtol=0.03)
 
@@ -79,19 +78,18 @@ def test_first_guess_provided(first_guess):
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
 
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-
     weights = get_weights_uniform(targ, "tas", None)
     fg_coeffs = fg_default(2)
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg() 
 
     np.testing.assert_allclose(result, [loc, scale], rtol=0.02)
 
@@ -111,19 +109,18 @@ def test_first_guess_GEV(shape):
 
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
 
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-
     weights = get_weights_uniform(targ, "tas", None)
     fg_coeffs = fg_default(3)
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
 
     expected = [loc, scale, shape]
 
@@ -131,14 +128,15 @@ def test_first_guess_GEV(shape):
     np.testing.assert_allclose(result, expected, rtol=0.4)
 
     # any difference if we provide a close first guess?
-    result2 = _find_fg_np(
+    result2 = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
-        first_guess=[loc, scale, shape],
-        conditional_distrib=distrib,
+        first_guess=fg_coeffs,
         predictor_names=None,
-    )
+    )._find_fg()
 
     # NOTE: leads to the same result as without first guess
     np.testing.assert_allclose(result2, result, rtol=1.0e-3)
@@ -161,19 +159,18 @@ def test_first_guess_GEV_including_pred():
         "genextreme(loc=__tas__**c1, scale=c2, c=c3)", expr_name="exp1"
     )
 
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-
     weights = get_weights_uniform(targ, "tas", None)
     fg_coeffs = fg_default(3)
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_coeffs,
-        conditional_distrib=distrib,
         predictor_names=["tas"],
-    )
+    )._find_fg()
 
     expected = [c1, scale, shape]
 
@@ -201,19 +198,19 @@ def test_first_guess_truncnorm():
     # does a good job in fixing this.
 
     expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     # needs first guess different from 0, 0 for a and b, degenerate otherwise, also degenerate if a == b
     first_guess = [0.0, 1.0, -1, 2.0]
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
 
     expected = [loc, scale, a, b]
 
@@ -231,17 +228,17 @@ def test_fg_binom():
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("binom(n=c1, p=c2*__tas__, loc=0)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     first_guess = [11, 0.4]
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
-        conditional_distrib=distrib,
         predictor_names=["tas"],
-    )
+    )._find_fg()
 
     expected = [n_trials, p]
 
@@ -263,17 +260,17 @@ def test_fg_hypergeom():
 
     expr_str = "hypergeom(M=c1, n=c2, N=c3*__tas__, loc=0)"
     expression = Expression(expr_str, expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     first_guess = [99, 9, 1]
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
-        conditional_distrib=distrib,
         predictor_names=["tas"],
-    )
+    )._find_fg()
 
     expected = [M, n_draws, n_success]
 
@@ -290,16 +287,16 @@ def test_fg_hypergeom():
     expression = Expression(
         expr_str, expr_name="exp1", boundaries_coeffs=boundaries_coeffs
     )
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
-    result_with_bounds = _find_fg_np(
+    result_with_bounds =  _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
-        conditional_distrib=distrib,
         predictor_names=["tas"],
-    )
+    )._find_fg()
 
     np.testing.assert_equal(result, result_with_bounds)
 
@@ -319,23 +316,19 @@ def test_first_guess_beta():
 
     options_solver = {"fg_with_global_opti": True}
 
-    distrib = ConditionalDistribution(
-        expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
-    )
-
     # we need a first guess here because our default first guess is zeros, which leads
     # to a degenerate distribution in the case of a beta distribution
     first_guess = [1.0, 1.0]
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(options_solver=options_solver),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
 
     # NOTE: for the beta distribution the support does not change for loc = 0 and scale = 1
     # it is always (0, 1), thus the optimization with _fg_fun_others does not do anything
@@ -358,21 +351,18 @@ def test_first_guess_gamma():
     weights = get_weights_uniform(targ, "tas", None)
 
     options_solver = {"fg_with_global_opti": True}
-    distrib = ConditionalDistribution(
-        expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
-    )
 
     # we need a first guess different from zero for gamma distribution
     first_guess = [1.0]
-    result = _find_fg_np(
+    result =  _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(options_solver=options_solver),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=first_guess,
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
 
     expected = [a]
 
@@ -388,15 +378,15 @@ def test_fg_fun_scale_laplace():
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("laplace(loc=c1, scale=c2)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
 
     expected = [loc, scale]
 
@@ -422,16 +412,16 @@ def test_first_guess_with_bounds():
         boundaries_coeffs={"c1": loc_bounds, "c2": scale_bounds},
     )
 
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
+
 
     # test result is within bounds
     assert loc_bounds[0] <= result[0] <= loc_bounds[1]
@@ -446,16 +436,17 @@ def test_first_guess_with_bounds():
         expr_name="exp2",
         boundaries_coeffs={"c1": loc_bounds, "c2": scale_bounds_wrong},
     )
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
-    result = _find_fg_np(
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
+
 
     expected = np.array([-0.016552528, 1.520612114])
     np.testing.assert_allclose(result, expected, atol=0.5)
@@ -465,20 +456,17 @@ def test_first_guess_with_bounds():
 
     # fails if we enforce the bounds
     options_solver = {"fg_with_global_opti": True}
-    distrib = ConditionalDistribution(
-        expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
-    )
-
+ 
     with pytest.raises(ValueError, match="Global optimization for first guess failed,"):
-        _find_fg_np(
-            data_pred=None,
-            data_targ=targ,
-            data_weights=weights,
-            first_guess=fg_default(2),
-            conditional_distrib=distrib,
-            predictor_names=None,
-        )
+        _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(options_solver=options_solver),
+        data_pred=None,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
+        predictor_names=None,
+    )._find_fg()
 
     # when does step 7 actually succeed?
     # when we do enforce a global optimum but the bounds are good
@@ -486,18 +474,17 @@ def test_first_guess_with_bounds():
     expression = Expression(
         expr_str, expr_name="exp1", boundaries_coeffs=boundaries_coeffs
     )
-    distrib = ConditionalDistribution(
-        expression,
-        ConditionalDistributionOptions(options_solver=options_solver),
-    )
-    result = _find_fg_np(
+
+    result = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(options_solver=options_solver),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
-        conditional_distrib=distrib,
         predictor_names=None,
-    )
+    )._find_fg()
+
 
     expected = np.array([loc, scale])
     np.testing.assert_allclose(result, expected, atol=0.1)
@@ -514,17 +501,17 @@ def test_fg_func_deriv01():
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
-    fg = FirstGuess(
-        distrib,
+    fg = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
-        predictor_names=["tas"],
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
+        predictor_names=["tas"],
     )
-
+    
     # preparation of derivatives
     m_smooth_targ, s_smooth_targ = np.mean(fg.smooth_targ), np.std(fg.smooth_targ)
     ind_targ_low = np.where(fg.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
@@ -578,13 +565,14 @@ def test_fg_fun_loc():
     expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
-    fg = FirstGuess(
-        distrib,
+    fg = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
         data_pred=pred,
-        predictor_names=["tas"],
         data_targ=targ,
         data_weights=weights,
         first_guess=fg_default(2),
+        predictor_names=["tas"],
     )
 
     # test local minima at true coefficients
@@ -609,9 +597,9 @@ def test_fg_fun_scale():
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-    fg = FirstGuess(
-        distrib,
+    fg = _FirstGuess(
+        expression,
+        ConditionalDistributionOptions(),
         data_pred=None,
         predictor_names=None,
         data_targ=targ,
@@ -627,9 +615,9 @@ def test_fg_fun_scale():
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
-    fg = FirstGuess(
-        distrib,
+    fg = _FirstGuess(
+        expression, 
+        ConditionalDistributionOptions(),
         data_pred=None,
         predictor_names=None,
         data_targ=targ,
@@ -661,10 +649,10 @@ def test_fg_fun_others():
     weights = get_weights_uniform(targ, "tas", None)
 
     expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1")
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
-    fg = FirstGuess(
-        distrib,
+    fg = _FirstGuess(
+        expression, 
+        ConditionalDistributionOptions(),
         data_pred=pred,
         predictor_names=["tas"],
         data_targ=targ,
