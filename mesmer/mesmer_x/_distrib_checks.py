@@ -221,14 +221,13 @@ def _prepare_data(predictors, target, weights, first_guess=None):
 
     Parameters
     ----------
-    predictors : dict of xr.DataArray or xr.Dataset | xr.Dataset | xr.DataTree
+    predictors : dict of xr.DataArray | xr.Dataset
         Predictors for the first guess. Must either be a dictionary of xr.DataArray or
         xr.Dataset, each key/item being a predictor; a xr.Dataset with a coordinate
-        being the list of predictors, and a variable that contains all predictors; or
-        a xr.DataTree with one branch per predictor.
-    target : xr.DataArray
-        Target DataArray.
-    weights : xr.DataArray
+        being the list of predictors, and a variable that contains all predictors.
+    target : xr.DataArray | xr.Dataset
+        Target DataArray or Dataset (with one variable).
+    weights : xr.DataArray | xr.Dataset
         Individual weights for each sample.
     first_guess : xr.Dataset | None default None
         First guess. If provided the function will return a DataArray, with the
@@ -256,22 +255,10 @@ def _prepare_data(predictors, target, weights, first_guess=None):
         predictors_concat = predictors_concat.assign_coords(
             {"predictor": list(predictors.keys())}
         )
-    elif isinstance(predictors, xr.DataTree):
-        # rename all data variables to "pred" to avoid conflicts when concatenating
-        def _rename_vars(ds) -> xr.DataTree:
-            (var,) = ds.data_vars
-            return ds.rename({var: "pred"})
-
-        predictors = map_over_datasets(_rename_vars, predictors)
-
-        predictors_concat_ds = collapse_datatree_into_dataset(
-            predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
-        )
-        predictors_concat = predictors_concat_ds["pred"]
 
     else:
         raise TypeError(
-            "predictors is supposed to be a dict of xr.DataArray, a xr.Dataset or a xr.DataTree"
+            "predictors is supposed to be a dict of xr.DataArray or a xr.Dataset"
         )
 
     # check format of target
