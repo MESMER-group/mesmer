@@ -22,7 +22,6 @@ from mesmer.mesmer_x._probability_integral_transform import (
 )
 from mesmer.mesmer_x._weighting import (
     get_weights_density,
-    get_weights_uniform,
     weighted_median,
 )
 
@@ -48,6 +47,5 @@ __all__ = [
     "ProbabilityIntegralTransform",
     # weighting
     "get_weights_density",
-    "get_weights_uniform",
     "weighted_median",
 ]
