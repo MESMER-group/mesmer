@@ -131,7 +131,7 @@ def collapse_datatree_into_dataset(
     return ds
 
 
-def _stack_datatree(
+def pool_scenarios(
     dt: xr.DataTree,
     *,
     member_dim: str | None = "member",
@@ -139,14 +139,15 @@ def _stack_datatree(
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
 ) -> xr.Dataset:
-    """
-    stack datatree along a new dimension, named sample_dim. Each node needs a time- and
+    """prepare data for statistical functions
+
+    Pool datatree along a new dimension, named sample_dim. Each node needs a time- and
     member-dimension. The scenario dimension will be filled with the names of each node.
 
     Parameters
     ----------
     dt : xr.DataTree
-        DataTree to stack
+        DataTree to pool
     member_dim : str | None, default: "member"
         Name of the member dimension already present on each dataset.
     time_dim : str, default: "time"
@@ -158,8 +159,9 @@ def _stack_datatree(
 
     Returns
     -------
-    stacked : xr.Dataset
-        Dataset stacked along the sample dimension
+    pooled : xr.Dataset
+        Dataset pooled along the sample dimension, done by stacking the scenario nodes,
+        time, and member dimension.
     """
 
     # NOTE: we want time to be the fastest changing variable (i.e. we want to stack one
@@ -200,7 +202,7 @@ def _stack_datatree(
 
 
 @overload
-def broadcast_and_stack_scenarios(
+def broadcast_and_pool_scenarios(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: None = None,
@@ -211,7 +213,7 @@ def broadcast_and_stack_scenarios(
     sample_dim: str = "sample",
 ) -> tuple[xr.Dataset, xr.Dataset, None]: ...
 @overload
-def broadcast_and_stack_scenarios(
+def broadcast_and_pool_scenarios(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: xr.DataTree,
@@ -223,7 +225,7 @@ def broadcast_and_stack_scenarios(
 ) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset]: ...
 
 
-def broadcast_and_stack_scenarios(
+def broadcast_and_pool_scenarios(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: xr.DataTree | None = None,
@@ -233,14 +235,14 @@ def broadcast_and_stack_scenarios(
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
 ) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset | None]:
-    """
-    prepare predictors, target, and weights for statistical functions, i.e. converts
-    several nD DataTree nodes into a single 2D Dataset with sample and target dimensions,
-    where sample consists of the time, member, and scenario dimensions, and the target
-    dimension is
+    """prepare predictors, target, and weights for statistical functions
+
+    Converts several nD DataTree nodes into a single 2D Dataset with sample dimension.
+    The sample dimension consists of the time, member, and scenario dimensions. This is
+    done in two steps:
 
     1. Broadcasts predictors to target
-    2. Stacks the DataTrees along the sample dimension
+    2. Pools the DataTrees along the sample dimension
 
     Parameters
     ----------
@@ -266,10 +268,10 @@ def broadcast_and_stack_scenarios(
 
     Returns
     -------
-    tuple of stacked predictors, target and weights
-        Tuple of the prepared predictors, target and weights, where the predictors and target are
-        stacked along the stacking dimensions and the weights are stacked along the stacking dimensions
-        and the ensemble member dimension.
+    tuple of pooled predictors, target and weights
+        Tuple of the prepared predictors, target and weights. The predictors are broadcast
+        against the target. And then predictors, target, and weights are pooled along
+        the sample dimension, by stacking the scenario nodes and ensemble member dimension.
 
     Notes
     -----
@@ -306,14 +308,14 @@ def broadcast_and_stack_scenarios(
     )
 
     # 2) stack
-    predictors_stacked = _stack_datatree(pred_broadcast, **dims)
+    predictors_stacked = pool_scenarios(pred_broadcast, **dims)
 
     # prepare target
-    target_stacked = _stack_datatree(target, **dims)
+    target_stacked = pool_scenarios(target, **dims)
 
     # prepare weights
     if weights is not None:
-        weights_stacked = _stack_datatree(weights, **dims)
+        weights_stacked = pool_scenarios(weights, **dims)
     else:
         weights_stacked = None
 

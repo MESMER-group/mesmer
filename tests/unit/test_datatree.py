@@ -209,7 +209,7 @@ def test_broadcast_and_stack_scenarios():
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.broadcast_and_stack_scenarios(
+        mesmer.datatree.broadcast_and_pool_scenarios(
             predictors,
             target,
             weights,
@@ -261,13 +261,13 @@ def test_broadcast_and_stack_scenarios():
     xr.testing.assert_equal(weights_stacked, weights_aligned)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.broadcast_and_stack_scenarios(predictors, target, None)
+        mesmer.datatree.broadcast_and_pool_scenarios(predictors, target, None)
     )
     assert weights_stacked is None, "Weights should be None if not provided"
 
     # check if exclude_dim can be empty
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.broadcast_and_stack_scenarios(
+        mesmer.datatree.broadcast_and_pool_scenarios(
             predictors,
             target.sel(cells=0),
             weights,
@@ -336,7 +336,7 @@ def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
 
     dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
 
-    result = mesmer.datatree._stack_datatree(
+    result = mesmer.datatree.pool_scenarios(
         dt,
         member_dim=member_dim,
         time_dim=time_dim,
@@ -375,7 +375,7 @@ def test_stack_datatree_missing_member_dim():
     with pytest.raises(
         ValueError, match=r"`member_dim` \('member'\) not available in node 'scen'"
     ):
-        mesmer.datatree._stack_datatree(dt)
+        mesmer.datatree.pool_scenarios(dt)
 
 
 def test_stack_datatree_no_member_dim():
@@ -387,7 +387,7 @@ def test_stack_datatree_no_member_dim():
 
     dt = xr.DataTree.from_dict({"scen": ds})
 
-    result = mesmer.datatree._stack_datatree(dt, member_dim=None)
+    result = mesmer.datatree.pool_scenarios(dt, member_dim=None)
 
     # =========
     scen = ["scen"] * 2
@@ -428,7 +428,7 @@ def test_stack_datatree_keep_other_dims():
 
     dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
 
-    result = mesmer.datatree._stack_datatree(dt)
+    result = mesmer.datatree.pool_scenarios(dt)
 
     mesmer.core.utils._check_dataset_form(result, "result", required_vars="var")
     mesmer.core.utils._check_dataarray_form(
