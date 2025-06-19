@@ -8,7 +8,6 @@ from mesmer.mesmer_x._distrib_checks import (
     _validate_data,
 )
 from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._first_guess import find_first_guess
 from mesmer.mesmer_x._optimizers import (
     _bic,
     _crps,
@@ -37,8 +36,6 @@ __all__ = [
     "_prepare_data",
     # expression
     "Expression",
-    # first guess
-    "find_first_guess",
     # optimizers
     "_func_optim",
     "_neg_loglike",
