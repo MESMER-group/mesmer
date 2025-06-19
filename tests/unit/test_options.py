@@ -1,10 +1,10 @@
 import os
+
+import pytest
 import threadpoolctl
 
-from mesmer.core.utils import _set_threads_from_options
-import pytest
-
 import mesmer
+from mesmer.core.utils import _set_threads_from_options
 
 
 @pytest.mark.parametrize("invalid_option", [None, "None", "__foo__"])
