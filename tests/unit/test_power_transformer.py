@@ -191,7 +191,7 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     np.testing.assert_allclose(np.array([result]), expected, atol=1e-5)
 
 
-def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
+def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, stack=False):
     """
     Generate a 2D dataset with skewed data in time for each cell.
     The skewness of the data can be random for each cell when skew="random"
@@ -218,18 +218,26 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
         "lat": ("cells", LAT.flatten()),
     }
 
-    return xr.DataArray(ts_array, dims=("cells", "time"), coords=coords, name="data")
+    data = xr.DataArray(ts_array, dims=("cells", "time"), coords=coords, name="data")
+
+    if stack:
+        data = data.stack(sample=["time"], create_index=False)
+
+    return data
 
 
-def test_power_transformer_xr():
+@pytest.mark.parametrize("stack", (False, True))
+def test_power_transformer_xr(stack):
     n_years = 100
     n_lon, n_lat = 2, 3
     n_gridcells = n_lat * n_lon
 
     monthly_residuals = skewed_data_2D(
-        n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon
+        n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon, stack=stack
     )
     yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
+    if stack:
+        yearly_T = yearly_T.stack(sample=["time"], create_index=False)
 
     month = np.arange(1, 13)
     expected_month = xr.DataArray(month, coords={"month": month}, name="month")
@@ -247,6 +255,8 @@ def test_power_transformer_xr():
         yearly_T, transformed.transformed, pt_coefficients
     )
 
+    sample_dim = "sample" if stack else "time"
+
     xr.testing.assert_allclose(
         inverse_transformed.inverted, monthly_residuals, atol=1e-5
     )
@@ -255,25 +265,27 @@ def test_power_transformer_xr():
         transformed.transformed,
         name="transformed",
         ndim=2,
-        required_dims={"cells", "time"},
+        required_dims={"cells", sample_dim},
+        required_coords="time",
         shape=(n_gridcells, n_years * 12),
     )
 
     _check_dataarray_form(
         transformed.lambdas,
         name="lambdas",
-        ndim=3,
-        required_dims={"month", "cells", "year"},
-        shape=(12, n_gridcells, n_years),
+        ndim=2,
+        required_dims={"cells", sample_dim},
+        required_coords="time",
+        shape=(n_gridcells, n_years * 12),
     )
-    assert "month" in transformed.lambdas.coords
-    xr.testing.assert_equal(expected_month, transformed.month)
+    xr.testing.assert_equal(monthly_residuals.time, transformed.time)
 
     _check_dataarray_form(
         inverse_transformed.inverted,
         name="inverted",
         ndim=2,
-        required_dims={"cells", "time"},
+        required_dims={"cells", sample_dim},
+        required_coords="time",
         shape=(n_gridcells, n_years * 12),
     )
     _check_dataarray_form(

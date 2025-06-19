@@ -100,7 +100,7 @@ def test_make_realisations_mesmer_x(
         seed=seed,
         buffer=buffer,
     )
-    transf_emus = xr.Dataset({target_name: transf_emus})
+    transf_emus = transf_emus.rename({"samples": target_name})
 
     # back-transform the realizations
     expr_tranf = Expression("norm(loc=0, scale=1)", "standard_normal")

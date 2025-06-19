@@ -162,7 +162,7 @@ def test_draw_auto_regression_uncorrelated(
         buffer=0,
         time_dim=time_dim,
         realisation_dim=realisation_dim,
-    )
+    ).samples
 
     _check_dataarray_form(
         result,
@@ -316,7 +316,7 @@ def test_draw_auto_regression_correlated(
         buffer=0,
         time_dim=time_dim,
         realisation_dim=realisation_dim,
-    )
+    ).samples
 
     n_gridcells = ar_params_2D.intercept.size
 
@@ -736,7 +736,8 @@ def test_fit_autoregression_monthly_np_with_noise(slope, intercept, std):
     np.testing.assert_allclose(np.std(residuals), std, atol=1e-1)
 
 
-def test_fit_auto_regression_monthly() -> None:
+@pytest.mark.parametrize("stack", (False, True))
+def test_fit_auto_regression_monthly(stack) -> None:
     freq = "ME"
     n_years = 20
     n_gridcells = 10
@@ -750,6 +751,9 @@ def test_fit_auto_regression_monthly() -> None:
             "gridcell": np.arange(n_gridcells),
         },
     )
+
+    if stack:
+        data = data.stack(sample=["time"], create_index=False)
 
     result = mesmer.stats.fit_auto_regression_monthly(data)
 
@@ -768,6 +772,13 @@ def test_fit_auto_regression_monthly() -> None:
         required_dims={"month", "gridcell"},
         shape=(12, n_gridcells),
     )
+
+    sample_dim = "sample" if stack else "time"
+    # check coordinates are the same
+    result_coords = result[sample_dim].coords
+    expected_coords = data[sample_dim].isel({sample_dim: slice(1, None)}).coords
+
+    assert result_coords.equals(expected_coords)
 
     with pytest.raises(TypeError, match="Expected monthly_data to be an xr.DataArray"):
         mesmer.stats.fit_auto_regression_monthly(data.values)  # type: ignore[arg-type]
@@ -877,7 +888,7 @@ def test_draw_auto_regression_monthly(seed):
     )
 
     _check_dataarray_form(
-        result,
+        result.samples,
         "result",
         ndim=3,
         required_dims={"time", "gridcell", "realisation"},
