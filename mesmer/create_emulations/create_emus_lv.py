@@ -205,7 +205,7 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             )
 
             # get back the old order of the emus
-            emus_ar = emus_ar.values.transpose((2, 0, 1))
+            emus_ar = emus_ar.samples.values.transpose((2, 0, 1))
 
             emus_lv[scen][targ] += emus_ar.squeeze()
     return emus_lv
@@ -271,6 +271,6 @@ def create_emus_lv_OLS(params_lv, preds_lv):
             lr.params = params
             prediction = lr.predict(predictors=preds)
 
-            emus_lv[scen][targ] = prediction.values.transpose()
+            emus_lv[scen][targ] = prediction.prediction.values.transpose()
 
     return emus_lv

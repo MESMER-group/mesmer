@@ -29,26 +29,28 @@ Breaking changes
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
   `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,
   `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_,
-  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_, and
-  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_):
+  `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
+  `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
+  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_, and
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,):
 
   ================= ============= =========
   Package           Old           New
   ================= ============= =========
-  **cartopy**       not specified 0.22
-  **dask**          not specified 2024.3
+  **cartopy**       not specified 0.23
+  **dask**          not specified 2024.5
   **filefisher**    not required  1.1
-  **joblib**        not specified 1.3
+  **joblib**        not specified 1.4
   **netcdf4**       not specified 1.6
-  **numpy**         not specified 1.25
+  **numpy**         not specified 1.26
   **packaging**     not specified 24.0
   **pandas**        2.0           2.2
   **pooch**         not specified 1.8
   **properscoring** not specified 0.1
   **pyproj**        not specified 3.6
-  **regionmask**    0.8           0.11
+  **regionmask**    0.8           0.12
   **scikit-learn**  not specified 1.4
-  **scipy**         not specified 1.12
+  **scipy**         not specified 1.13
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
   **xarray**        2023.04       2025.03
@@ -86,6 +88,8 @@ Internal Changes
   By `Mathias Hauser`_.
 - Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
   By `Mathias Hauser`_.
+- Removed the ``regionmaskcompat.py`` module. It is no longer needed after requiring *regionmask* v0.12  (`#683 <https://github.com/MESMER-group/mesmer/pull/683>`_).
+  By `Mathias Hauser`_.
 
 Data structure using DataTree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -95,18 +99,21 @@ This was originally done with the prototype `xarray-datatree` package. After the
 ``DataTree`` to xarray stabilized, mesmer briefly supported both ``DataTree`` versions
 (the one in xarray-datatree and in xarray) before dropping support for `xarray-datatree`.
 
-- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
+- Switch to storing several predictors in one :py:class:`xr.Dataset`` per scenario node in a :py:class:`DataTree` (`#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
+- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_, `#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
 - Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 - Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
 - Add a wrapper to allow :py:class:`DataTree` in many data handling functions (\
   `#632 <https://github.com/MESMER-group/mesmer/issues/632>`_,
-  `#643 <https://github.com/MESMER-group/mesmer/pull/643>`_
-  `#641 <https://github.com/MESMER-group/mesmer/pull/641>`_, , and
-  `#644 <https://github.com/MESMER-group/mesmer/pull/644>`_).
+  `#643 <https://github.com/MESMER-group/mesmer/pull/643>`_,
+  `#641 <https://github.com/MESMER-group/mesmer/pull/641>`_,
+  `#644 <https://github.com/MESMER-group/mesmer/pull/644>`_, and
+  `#682 <https://github.com/MESMER-group/mesmer/pull/682>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
+- Add helper function to merge ``DataTree`` objects  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_)
 - PRs related to xarray and xarray-datatree:
 
   - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
@@ -225,8 +232,9 @@ Harmonic model
 -  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_ and
    `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 -  add helper function to upsample yearly data to monthly resolution (\
-   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
-   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
+   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_, and
+   `#688 <https://github.com/MESMER-group/mesmer/pull/688>`_).
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
   move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
 - fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)

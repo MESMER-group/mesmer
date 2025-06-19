@@ -1,13 +1,74 @@
 import functools
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import ParamSpec, TypeVar, overload
 
 import xarray as xr
-
-from mesmer.core._datatreecompat import map_over_datasets
+from packaging.version import Version
+from xarray.core import dtypes
+from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
 
 P = ParamSpec("P")
 T = TypeVar("T")
+
+
+if Version(xr.__version__) < Version("2025.03"):
+    raise ImportError(
+        f"xarray version {xr.__version__} not supported - please upgrade to v2025.03 ("
+        "or later)"
+    )
+
+
+def _skip_empty_nodes(func):
+
+    @functools.wraps(func)
+    def _func(*args, **kwargs):
+        # extract only the dataset args from args
+        ds_args = [arg for arg in args if isinstance(arg, xr.Dataset)]
+
+        # if any datasets are empty, return empty
+        if any((not ds.coords and not ds.data_vars) for ds in ds_args):
+            return xr.Dataset()
+
+        # return func with right order of args
+        return func(*args, **kwargs)
+
+    return _func
+
+
+def map_over_datasets(func, *args, kwargs=None):
+    """
+    Applies a function to every dataset in one or more DataTree objects with
+    the same structure (ie.., that are isomorphic), returning new trees which
+    store the results.
+
+    adapted version of xr.map_over_datasets which skips empty nodes
+
+    Parameters
+    ----------
+    func : callable
+        Function to apply to datasets with signature:
+
+        `func(*args: Dataset, **kwargs) -> Union[Dataset, tuple[Dataset, ...]]`.
+
+        (i.e. func must accept at least one Dataset and return at least one Dataset.)
+    *args : tuple, optional
+        Positional arguments passed on to `func`. Any DataTree arguments will be
+        converted to Dataset objects via `.dataset`.
+    kwargs : dict, optional
+        Optional keyword arguments passed directly to ``func``.
+
+
+    See Also
+    --------
+    xr.map_over_datasets
+
+    Notes
+    -----
+    For the discussion in xarray see https://github.com/pydata/xarray/issues/9693
+
+    """
+
+    return xr.map_over_datasets(_skip_empty_nodes(func), *args, kwargs=kwargs)
 
 
 def _extract_single_dataarray_from_dt(
@@ -148,7 +209,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, None]: ...
+) -> tuple[xr.Dataset, xr.Dataset, None]: ...
 @overload
 def broadcast_and_stack_scenarios(
     predictors: xr.DataTree,
@@ -159,7 +220,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset]: ...
+) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset]: ...
 
 
 def broadcast_and_stack_scenarios(
@@ -171,7 +232,7 @@ def broadcast_and_stack_scenarios(
     member_dim: str | None = "member",
     scenario_dim: str = "scenario",
     sample_dim: str = "sample",
-) -> tuple[xr.DataTree, xr.Dataset, xr.Dataset | None]:
+) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset | None]:
     """
     prepare predictors, target, and weights for statistical functions, i.e. converts
     several nD DataTree nodes into a single 2D Dataset with sample and target dimensions,
@@ -179,18 +240,17 @@ def broadcast_and_stack_scenarios(
     dimension is
 
     1. Broadcasts predictors to target
-    2. Stacks the DataTree along the sample dimension
+    2. Stacks the DataTrees along the sample dimension
 
     Parameters
     ----------
     predictors : DataTree
         A ``DataTree`` of ``xr.Dataset`` objects used as predictors. The ``DataTree``
-        must have subtrees for each predictor, each of which has to have at least one
-        non-empty leaf representing a scenario. The subtrees of different predictors must
-        be isomorphic (i.e. have the save scenarios). The ``xr.Dataset`` must contain
-        ``time_dim`` and only hold one data variable.
+        must have nodes for each scenario, each of which holds a Dataset where the
+        predictor(s) are contained as data variables. The ``xr.Dataset`` must contain
+        ``time_dim`` and at least one data variable.
     target : DataTree
-        A ``DataTree`` holding the targets. Must be isomorphic to the predictor subtrees, i.e.
+        A ``DataTree`` holding the targets. Must be isomorphic to the predictor tree, i.e.
         have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must contain
        ``time_dim``.
     weights : DataTree or None, default: None
@@ -217,14 +277,10 @@ def broadcast_and_stack_scenarios(
     broadcasting of the predictors.
 
     Example for how the predictor ``DataTree`` should look like:
-    ├─ tas
-    │  ├─ hist
-    │  ├─ scen1
-    │  └─ ...
-    ├─ hfds
-    │  ├─ hist
-    │  ├─ scen1
-    │  └─ ...
+    ├─ hist
+    |        datavars: tas, hfds, ...
+    ├─ scen1
+    |        datavars: tas, hfds, ...
     └─ ...
     with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
     """
@@ -241,19 +297,16 @@ def broadcast_and_stack_scenarios(
     }
 
     # prepare predictors
-    predictors_stacked = xr.DataTree()
-    for key, pred in predictors.items():
+    # 1) broadcast to target (because pred is averaged over member)
 
-        # 1) broadcast to target (because pred is averaged over member)
+    # TODO: use DataTree method again, once available
+    # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
+    pred_broadcast = map_over_datasets(
+        xr.Dataset.broadcast_like, predictors, target, kwargs={"exclude": exclude_dim}
+    )
 
-        # TODO: use DataTree method again, once available
-        # pred_broadcast = pred.broadcast_like(target, exclude=exclude_dim)
-        pred_broadcast = map_over_datasets(
-            xr.Dataset.broadcast_like, pred, target, kwargs={"exclude": exclude_dim}
-        )
-
-        # 2) stack
-        predictors_stacked[key] = xr.DataTree(_stack_datatree(pred_broadcast, **dims))
+    # 2) stack
+    predictors_stacked = _stack_datatree(pred_broadcast, **dims)
 
     # prepare target
     target_stacked = _stack_datatree(target, **dims)
@@ -297,3 +350,46 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
         return func(*args, **kwargs)
 
     return _inner
+
+
+def merge(
+    objects: Iterable[xr.DataTree],
+    compat: CompatOptions = "no_conflicts",
+    join: JoinOptions = "outer",
+    fill_value: object = dtypes.NA,
+    combine_attrs: CombineAttrsOptions = "override",
+):
+    """
+    Merge the datasets of each node of isomorphic DataTree objects together.
+    Wraps `xarray.merge <https://docs.xarray.dev/en/stable/generated/xarray.merge.html>`_.
+
+    Parameters
+    ----------
+    objects : Iterable of DataTree
+        The DataTree objects to merge. All DataTree objects must have the same structure, i.e. be isomorphic.
+    compat : {'no_conflicts', 'identical', 'equals', 'override', 'broadcast_equals'}, default: 'no_conflicts'
+        String indicating how to compare variables of the same name for potential conflicts,
+        for details see `xarray.merge`.
+    join : {'outer', 'inner', 'left', 'right'}, default: 'outer'
+        String indicating how to join the datasets of the DataTree objects, for details see
+        `xarray.merge`.
+    fill_value : object, default: dtypes.NA
+        Value to use for missing data, for details see `xarray.merge`.
+    combine_attrs : {'no_conflicts', 'identical', 'equals', 'override', 'drop'}, default: 'override'
+        String indicating how to combine attributes of the datasets, for details see
+        `xarray.merge`.
+
+    Returns
+    -------
+    xr.DataTree
+        A new DataTree object containing the merged datasets from each node of the input DataTree objects.
+    """
+    kwargs = {
+        "compat": compat,
+        "join": join,
+        "fill_value": fill_value,
+        "combine_attrs": combine_attrs,
+    }
+    return map_over_datasets(
+        lambda *objs, **kwargs: xr.merge(objs, **kwargs), *objects, kwargs=kwargs
+    )

@@ -3,7 +3,10 @@ from collections.abc import Callable, Iterable
 from typing import cast
 
 import numpy as np
+import pandas as pd
 import xarray as xr
+
+from mesmer.core.datatree import _datatree_wrapper
 
 
 class OptimizeWarning(UserWarning):
@@ -124,44 +127,65 @@ def _assert_annual_data(time):
         )
 
 
+@_datatree_wrapper
 def upsample_yearly_data(
-    yearly_data: xr.DataArray, monthly_time: xr.DataArray, time_dim: str = "time"
+    yearly_data: xr.DataArray | xr.Dataset | xr.DataTree,
+    monthly_time: xr.DataArray | xr.Dataset | xr.DataTree,
+    time_dim: str = "time",
 ):
     """Upsample yearly data to monthly resolution by repeating yearly values.
 
     Parameters
     ----------
-    yearly_data : xarray.DataArray
+    yearly_data : xarray.DataArray | xr.Dataset | xr.DataTree
         Yearly values to upsample.
 
-    monthly_time: xarray.DataArray
+    monthly_time : xarray.DataArray | xr.Dataset | xr.DataTree
         Monthly time used to define the time coordinates of the upsampled data.
 
-    time_dim: str, default: 'time'
+    time_dim : str, default: 'time'
         Name of the time dimension.
 
     Returns
     -------
     upsampled_yearly_data: xarray.DataArray
-        Upsampled yearly temperature values containing the yearly values for every month of the corresponding year.
+        Upsampled yearly temperature values containing the yearly values for every month
+        of the corresponding year.
     """
-    _check_dataarray_form(yearly_data, "yearly_data", required_dims=time_dim)
-    _check_dataarray_form(monthly_time, "monthly_time", ndim=1, required_dims=time_dim)
+
+    _assert_required_coords(yearly_data, "yearly_data", required_coords=time_dim)
+    _assert_required_coords(monthly_time, "monthly_time", required_coords=time_dim)
+
+    # read out time coords - this also works if it's already time coords
+    monthly_time = monthly_time[time_dim]
+    _check_dataarray_form(monthly_time, "monthly_time", ndim=1)
 
     if yearly_data[time_dim].size * 12 != monthly_time.size:
         raise ValueError(
             "Length of monthly time not equal to 12 times the length of yearly data."
         )
 
-    # make sure monthly and yearly data both start at the beginning of the period
-    year = yearly_data.resample({time_dim: "YS"}).bfill()
-    month = monthly_time.resample({time_dim: "MS"}).bfill()
+    # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
+    # i.e., time_dim and sample_dim may or may not be the same
+    (sample_dim,) = monthly_time.dims
 
-    # forward fill yearly values to monthly resolution
-    upsampled_yearly_data = year.reindex_like(month, method="ffill")
+    if isinstance(yearly_data.indexes.get(sample_dim), pd.MultiIndex):
+        raise ValueError(
+            f"The dimension of the time coords ({sample_dim}) is a pandas.MultiIndex,"
+            " which is currently not supported. Potentially call"
+            f" `yearly_data.reset_index('{sample_dim}')` first."
+        )
 
-    # make sure the time dimension of the upsampled data is the same as the original monthly time
-    upsampled_yearly_data = year.reindex_like(monthly_time, method="ffill")
+    upsampled_yearly_data = (
+        # repeats the data along new dimension
+        yearly_data.expand_dims({"__new__": 12})
+        # stack to remove new dim; target dim must have new name
+        .stack(__sample__=(sample_dim, "__new__"), create_index=False)
+        # so we need to rename it back
+        .swap_dims(__sample__=sample_dim)
+        # and ensure the time coords the ones from the monthly data
+        .assign_coords({time_dim: (sample_dim, monthly_time.values)})
+    )
 
     return upsampled_yearly_data
 
@@ -223,6 +247,7 @@ def _check_dataarray_form(
     *,
     ndim: tuple[int, ...] | int | None = None,
     required_dims: str | Iterable[str] | None = None,
+    required_coords: str | Iterable[str] | None = None,
     shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
@@ -247,8 +272,6 @@ def _check_dataarray_form(
 
     __tracebackhide__ = True
 
-    required_dims = _to_set(required_dims)
-
     if not isinstance(obj, xr.DataArray):
         raise TypeError(f"Expected {name} to be an xr.DataArray, got {type(obj)}")
 
@@ -258,9 +281,35 @@ def _check_dataarray_form(
         ndim_options = (a and ", ".join(a) + " or " or "") + b
         raise ValueError(f"{name} should be {ndim_options}, but is {obj.ndim}D")
 
+    _assert_required_dims(obj, name=name, required_dims=required_dims)
+
+    _assert_required_coords(obj, name=name, required_coords=required_coords)
+
+    if shape is not None and obj.shape != shape:
+        raise ValueError(f"{name} has wrong shape - expected {shape}, got {obj.shape}")
+
+
+def _assert_required_dims(
+    obj, name: str = "obj", required_dims: str | Iterable[str] | None = None
+):
+
+    __tracebackhide__ = True
+
+    required_dims = _to_set(required_dims)
+
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))
         raise ValueError(f"{name} is missing the required dims: {missing_dims}")
 
-    if shape is not None and obj.shape != shape:
-        raise ValueError(f"{name} has wrong shape - expected {shape}, got {obj.shape}")
+
+def _assert_required_coords(
+    obj, name: str = "obj", required_coords: str | Iterable[str] | None = None
+):
+
+    __tracebackhide__ = True
+
+    required_coords = _to_set(required_coords)
+
+    if required_coords - set(obj.coords):
+        missing_coords = " ,".join(required_coords - set(obj.coords))
+        raise ValueError(f"{name} is missing the required coords: {missing_coords}")

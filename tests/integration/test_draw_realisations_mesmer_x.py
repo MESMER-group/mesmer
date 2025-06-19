@@ -98,7 +98,7 @@ def test_make_realisations_mesmer_x(
         seed=seed,
         buffer=buffer,
     )
-    transf_emus = xr.Dataset({target_name: transf_emus})
+    transf_emus = transf_emus.rename({"samples": target_name})
 
     # back-transform the realizations
     # can only take 2D input aka only one realisation atm

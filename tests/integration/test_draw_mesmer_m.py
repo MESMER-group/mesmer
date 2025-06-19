@@ -16,7 +16,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     esm = "IPSL-CM6A-LR"
     scenario = "ssp585"
 
-    nr_emus = 10
+    nr_emus = 2
     buffer = 20
     seed = 0
 
@@ -94,7 +94,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
         n_realisations=nr_emus,
         seed=seed,
         buffer=buffer,
-    )
+    ).samples
 
     # invert the power transformation
     local_variability_inverted = mesmer.stats.inverse_yeo_johnson_transform(

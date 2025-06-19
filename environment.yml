@@ -7,8 +7,8 @@ channels:
 dependencies:
  - cartopy
  - dask
- - joblib
  - filefisher
+ - joblib
  - matplotlib-base
  - nc-time-axis
  - netcdf4
@@ -18,7 +18,7 @@ dependencies:
  - pooch
  - properscoring
  - pyproj
- - regionmask>=0.11
+ - regionmask>=0.12
  - scikit-learn
  - scipy
  - statsmodels>=0.14
