@@ -48,9 +48,9 @@ class set_options:
 
         * "default": uses ``min(os.cpu_count() // 2, 16)``
 
-        * None: no restrictions
+        * None: uses the currently selected number of threads
 
-        * int: use this
+        * int: sets the maximum number of threads to `threads`
 
     Examples
     --------
