@@ -46,5 +46,8 @@ def test_options_threads() -> None:
     with mesmer.set_options(threads=1):
         assert func() == 1
 
+    # many systems use os.cpu_count(), but windows on GHA does not
+    system_default = threadpoolctl.threadpool_info()[0]["num_threads"]
+
     with mesmer.set_options(threads=None):
-        assert func() == os.cpu_count()
+        assert func() == system_default
