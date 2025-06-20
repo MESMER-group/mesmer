@@ -70,8 +70,7 @@ Power Transformer
    ~stats.YeoJohnsonTransformer.transform
    ~stats.YeoJohnsonTransformer.inverse_transform
 
-   ~stats._power_transformer.YeoJohnsonTransformerLogistic
-   ~stats._power_transformer.YeoJohnsonTransformerLogistic.lambda_function
+   ~stats._power_transformer.logistic_lambda_function
 
 Localized covariance
 --------------------

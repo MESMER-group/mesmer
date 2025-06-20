@@ -115,38 +115,70 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
     return transf
 
 
-class YeoJohnsonTransformer:
-    """Apply a Yeo-Johnson Power Transformer to make data more Gaussian
+def logistic_lambda_function(
+    coeffs: np.ndarray, local_yearly_T: np.ndarray
+) -> np.ndarray:
+    r"""Use logistic function to calculate lambda depending on the local yearly
+    values. The function is defined as
 
-    In contrast to sklearn's PowerTransformer makes the parameter ``lambdas`` dependent
-    on a covariate.
+    .. math::
+
+        \lambda = \frac{2}{\xi_0 + e^{\xi_1 \cdot T_y}}
+
+
+    It ranges between 0 and 2.
 
     Parameters
     ----------
-    name : str
-        Name of the covariate function. See the ``covariate_function`` of the returned
-        object for details. Possible are
+    coeffs : ndarray of shape (2,)
+        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept,
+        the second coefficient (:math:`\xi_1`) controls the slope.
+    local_yearly_T : ndarray of shape (n_years,)
+        Yearly values of one gridcell and month used as predictor
+        for lambda.
 
-        * ``"logistic"``:  logistic function
-
+    Returns
+    -------
+    lambdas : ndarray of float of shape (n_years,)
+        The parameters of the power transformation for each gridcell and month
     """
+    return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
 
-    def __new__(cls, name: Literal["logistic"]):
 
-        # avoid recursion if cls is a subclass
-        if cls is not YeoJohnsonTransformer:
-            return object.__new__(cls)
+class YeoJohnsonTransformer:
+    def __init__(self, name: Literal["logistic"]):
+        """Apply a Yeo-Johnson Power Transformer to make data more Gaussian
+
+        In contrast to sklearn's PowerTransformer makes the parameter ``lambdas``
+        dependent on a covariate.
+
+        Parameters
+        ----------
+        name : str
+            Name of the covariate function. See the ``covariate_function`` of the
+            returned object for details. Possible are
+
+            * ``"logistic"``:  logistic function, see ``logistic_lambda_function`` for
+              details
+        """
 
         if name == "logistic":
-            return YeoJohnsonTransformerLogistic(None)
+            self.lambda_function = logistic_lambda_function
+            self.bounds = np.array([[0, 1e10], [-0.1, 0.1]])
+            self.first_guess = np.array([1.0, 0.0])
+        else:
+            raise NameError(f"No YeoJohnson transformer with the name {name} exists")
 
-        raise NameError(f"No YeoJohnson transformer with the name {name} exists")
+        self.name = name
 
-    def lambda_function(
-        self, coeffs: np.ndarray, local_yearly_T: np.ndarray
-    ) -> np.ndarray:
+    def __repr__(self):
+
+        return f"<YeoJohnsonTransformer with a {self.name} lambda function>"
+
+    @staticmethod
+    def lambda_function(coeffs: np.ndarray, local_yearly_T: np.ndarray) -> np.ndarray:
         r"""function defining the covariate function to calculate lambda depending on
-        the local yearly values. The function is defined in the subclasses.
+        the local yearly values. The actual function depends on the passed name.
 
         Parameters
         ----------
@@ -502,38 +534,3 @@ class YeoJohnsonTransformer:
         ).rename("inverted")
 
         return xr.merge([inverted_resids, lambdas])
-
-
-class YeoJohnsonTransformerLogistic(YeoJohnsonTransformer):
-
-    bounds = np.array([[0, 1e10], [-0.1, 0.1]])
-    first_guess = np.array([1.0, 0.0])
-
-    def lambda_function(
-        self, coeffs: np.ndarray, local_yearly_T: np.ndarray
-    ) -> np.ndarray:
-        r"""Use logistic function to calculate lambda depending on the local yearly
-        values. The function is defined as
-
-        .. math::
-
-            \lambda = \frac{2}{\xi_0 + e^{\xi_1 \cdot T_y}}
-
-
-        It ranges between 0 and 2.
-
-        Parameters
-        ----------
-        coeffs : ndarray of shape (2,)
-            Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept,
-            the second coefficient (:math:`\xi_1`) controls the slope.
-        local_yearly_T : ndarray of shape (n_years,)
-            Yearly values of one gridcell and month used as predictor
-            for lambda.
-
-        Returns
-        -------
-        lambdas : ndarray of float of shape (n_years,)
-            The parameters of the power transformation for each gridcell and month
-        """
-        return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
