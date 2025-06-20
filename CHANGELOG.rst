@@ -14,6 +14,10 @@ New Features
   By `Mathias Hauser`_.
 - Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
   `#649 <https://github.com/MESMER-group/mesmer/pull/649>`_). By `Mathias Hauser`_.
+- Can now pass ``only`` to ``LinearRegression.predict`` to select predictors
+  (`#702 <https://github.com/MESMER-group/mesmer/issues/702>`_, and
+  `#717 <https://github.com/MESMER-group/mesmer/pull/717>`_).
+  By `Mathias Hauser`_.
 - Added :py:class:`set_options` to mesmer which can, currently, be used to control
   the number of used threads for matrix decomposition
   (`#349 <https://github.com/MESMER-group/mesmer/issues/349>`_, and
