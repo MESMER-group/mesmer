@@ -8,7 +8,6 @@ from mesmer.core.utils import _check_dataarray_form
 from mesmer.stats._power_transformer import (
     YeoJohnsonTransformer,
     _yeo_johnson_inverse_transform_np,
-    # _yeo_johnson_optimize_lambda_np,
     _yeo_johnson_transform_np,
 )
 from mesmer.testing import trend_data_2D
