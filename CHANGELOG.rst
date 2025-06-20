@@ -228,7 +228,8 @@ Yeo-Johnson power transformer
    `#475 <https://github.com/MESMER-group/mesmer/pull/475>`_, and
    `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
 - add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_)
-
+- Converted Yeo-Johnson power transformer functions into a class
+  (`#716 <https://github.com/MESMER-group/mesmer/pull/716>`_).
 
 Harmonic model
 ~~~~~~~~~~~~~~
