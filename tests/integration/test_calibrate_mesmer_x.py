@@ -14,9 +14,6 @@ from mesmer.mesmer_x import (
 
 from filefisher import FileFinder
 
-# TODO: extend to more scenarios and members
-# TODO: extend predictors
-
 
 @pytest.mark.parametrize(
     (
@@ -31,7 +28,7 @@ from filefisher import FileFinder
     ),
     [
         pytest.param(
-            ["ssp585"],
+            ["ssp126"],
             "tasmax",
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
@@ -39,10 +36,10 @@ from filefisher import FileFinder
             False,
             False,
             "tasmax/one_scen_one_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
-            ["ssp585"],
+            ["ssp126"],
             "tasmax",
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
@@ -50,7 +47,7 @@ from filefisher import FileFinder
             True,
             False,
             "tasmax/one_scen_one_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             ["ssp126", "ssp585"],
@@ -58,21 +55,21 @@ from filefisher import FileFinder
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr2",
-            True,
+            False,
             False,
             "tasmax/multi_scen_multi_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
         pytest.param(
             ["ssp126", "ssp585"],
             "tasmax",
             ["tas", "hfds"],
-            "norm(loc=c1 + c2 * __tas__, scale=c3)",
+            "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c3)",
             "expr3",
-            True,
+            False,
             False,
             "tasmax/multi_scen_multi_ens",
-            # marks=pytest.mark.slow,
+            marks=pytest.mark.slow,
         ),
     ],
 )
@@ -95,11 +92,6 @@ def test_calibrate_mesmer_x(
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / outname
 
-    PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
-        file_pattern="params_{module}_{esm}_{scen}.nc",
-    )
-
     cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
@@ -113,7 +105,6 @@ def test_calibrate_mesmer_x(
         model=esm,
         resolution="g025",
         time_res="ann",
-        member="r1i1p1f1",
     )
 
     # only get the historical members that are also in the future scenarios, but only once
@@ -185,13 +176,6 @@ def test_calibrate_mesmer_x(
     
     pred_data = load_data(fc_pred)
     targ_data = load_data(fc_targ)
-
-    # align time coordinates (because tasmax is end of the year, tas i mid-year)
-    time_hist = pred_data["historical"].time
-    time_scen = pred_data[scenarios[0]].time
-    targ_data["historical"]["time"] = time_hist
-    for scen in scenarios:
-        targ_data[scen]["time"] = time_scen
 
     # make global mean of pred data
     pred_data = mesmer.weighted.global_mean(pred_data)
@@ -303,12 +287,34 @@ def test_calibrate_mesmer_x(
         )
     )
 
+    # parameter files
+    PARAM_FILEFINDER = FileFinder(
+        path_pattern=TEST_PATH / "test-params/{module}/",
+        file_pattern="params_{module}_{targ_var}_{expr_name}_{esm}_{scen}.nc",
+    )
+
     scen_str = "_".join(scenarios)
-    file_end = f"{targ_var}_{expr_name}_{esm}_{scen_str}"
-    distrib_file = TEST_PATH / "test-params/distrib" / f"params_transform_distrib_{file_end}.nc"
-    local_ar_file = TEST_PATH / "test-params/local_variability" / f"params_local_AR_{file_end}.nc"
-    localized_ecov_file = (
-        TEST_PATH / "test-params/local_variability" / f"params_localized_ecov_{file_end}.nc"
+
+    distrib_file = PARAM_FILEFINDER.create_full_name(
+        module="distrib",
+        targ_var=targ_var,
+        expr_name=expr_name,
+        esm=esm,
+        scen=scen_str,
+    )
+    local_ar_file = PARAM_FILEFINDER.create_full_name(
+        module="local_trends",
+        targ_var=targ_var,
+        expr_name=expr_name,
+        esm=esm,
+        scen=scen_str,
+    )
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(
+        module="local_variability",
+        targ_var=targ_var,
+        expr_name=expr_name,
+        esm=esm,
+        scen=scen_str,
     )
 
     if update_expected_files:
