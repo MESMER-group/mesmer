@@ -365,14 +365,32 @@ def test_get_weights_density_ds():
 
 
 def test_get_weights_density_dt():
+    nts1, nts2 = 10, 12
+    nmem1, nmem2 = 2, 3
+    time_coord1 = np.arange(nts1)
+    time_coord2 = np.arange(nts2)
+    member_coord1 = np.arange(nmem1)
+    member_coord2 = np.arange(nmem2)
+
+    arr1 = xr.DataArray(
+        np.arange(nts1 * nmem1).reshape(nts1, nmem1),
+        dims=("time", "member"),
+        coords={"time": time_coord1, "member": member_coord1},
+    )
+    arr2 = xr.DataArray(
+        np.arange(nts2 * nmem2).reshape(nts2, nmem2),
+        dims=("time", "member"),
+        coords={"time": time_coord2, "member": member_coord2},
+    )
+
     pred_data = xr.DataTree.from_dict({
         "scenario1": xr.Dataset({
-            "predictor1": (("x", "y"), np.arange(12).reshape(3, 4)),
-            "predictor2": (("x", "y"), np.arange(12).reshape(3, 4)),
+            "predictor1": arr1,
+            "predictor2": arr1,
         }),
         "scenario2": xr.Dataset({
-            "predictor1": (("x", "y"), np.arange(12).reshape(3, 4)),
-            "predictor2": (("x", "y"), np.arange(12).reshape(3, 4)),
+            "predictor1": arr2,
+            "predictor2": arr2,
         }),
     })
 
@@ -384,10 +402,10 @@ def test_get_weights_density_dt():
     scen2 = weights["scenario2"].to_dataset()
 
     _check_dataset_form(scen1, "weights", required_vars=["weights"])
-    _check_dataarray_form(scen1.weights, "weights", required_dims = ("x", "y"), shape=(3, 4))
+    _check_dataarray_form(scen1.weights, "weights", required_dims = ("time", "member"), shape=(nts1, nmem1))
     
     _check_dataset_form(scen2, "weights", required_vars=["weights"])
-    _check_dataarray_form(scen2.weights, "weights", required_dims = ("x", "y"), shape=(3, 4))
+    _check_dataarray_form(scen2.weights, "weights", required_dims = ("time", "member"), shape=(nts2, nmem2))
 
 
 def test_weighted_median():

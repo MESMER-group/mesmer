@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
+from mesmer.core.datatree import _datatree_wrapper, collapse_datatree_into_dataset, map_over_datasets
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -272,38 +272,31 @@ def get_weights_density(pred_data):
         return (1 / density) / np.sum(1 / density)
     
     if isinstance(pred_data, xr.DataTree):
-        n_scens = len(pred_data)
         scens = list(pred_data.keys())
         preds = list(pred_data[scens[0]].data_vars)
-        n_preds = len(preds)
-        pred_shape = pred_data[scens[0]][preds[0]].shape
+        pred_dims = tuple(pred_data[scens[0]][preds[0]].dims)
 
         # reshaping data into array
-        pred_arrays = {}
-        # need predictors of different scnearios together
-        for pred in preds:
-            if pred not in pred_arrays:
-                 pred_arrays[pred] = np.array([])
-            for scen in scens:
-                pred_arrays[pred] = np.concatenate([pred_arrays[pred], pred_data[scen][pred].values.flatten()])
-        
-        array_pred = np.array(list(pred_arrays.values()))
+        # need an array where each predictor is a column in a np.array 
+        # and all samples of that predictor is in one line
+        pred_ds = collapse_datatree_into_dataset(pred_data, dim="scen", coords="different", join="outer")
+        pred_stacked = pred_ds.stack(samples=pred_dims+("scen",)).dropna("samples")
+        array_pred = pred_stacked.to_array("predictor").values
         weights = _weights(array_pred)
 
         # get original shape back
-        weights = weights.reshape(n_scens, *pred_shape)
+        weights_stacked = pred_stacked[preds[0]].copy(data=weights)
+        weights_stacked = weights_stacked.drop_attrs()
+        weights_unstacked = weights_stacked.unstack("samples")
+        weights = xr.DataTree()
+        for scen in scens:
+            scen_weights = xr.Dataset({"weights": weights_unstacked.sel(scen=scen)})
+            scen_weights = scen_weights.drop_vars("scen")
+            for dim in pred_dims:
+                scen_weights = scen_weights.dropna(dim, how="all")
+            weights[scen] = xr.DataTree(scen_weights)
 
-        weights_dt = xr.DataTree()
-        for s, scen in enumerate(scens):
-            weights_dt[scen] = xr.Dataset({
-            "weights": xr.DataArray(
-                weights[s, ...],
-                dims=pred_data[scens[0]][preds[0]].dims,
-                coords=pred_data[scens[0]][preds[0]].coords,
-            )
-        })
-
-        return weights_dt
+        return weights
 
 
     elif isinstance(pred_data, xr.Dataset):
