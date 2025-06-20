@@ -286,12 +286,7 @@ def test_make_realisations(
     local_forced_response = lr.predict(predictors, exclude={"tas_resids"})
 
     # 4.) compute the local variability part driven by global variabilty
-    exclude = {"tas", "intercept"}
-    if use_tas2:
-        exclude.add("tas2")
-    if use_hfds:
-        exclude.add("hfds")
-    local_variability_from_global_var = lr.predict(predictors, exclude=exclude)
+    local_variability_from_global_var = lr.predict(predictors, only={"tas_resids"})
 
     # 5.) compute local variability
     local_ar = xr.open_dataset(local_ar_file)
