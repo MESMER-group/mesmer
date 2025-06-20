@@ -10,8 +10,6 @@ from mesmer.mesmer_x import (
     ConditionalDistributionOptions,
     Expression,
     ProbabilityIntegralTransform,
-    find_first_guess,
-    get_weights_density,
 )
 
 # TODO: extend to more scenarios and members
@@ -122,24 +120,20 @@ def test_calibrate_mesmer_x(
         return ds
 
     # mask_and_stack_dt = map_over_subtree(mask_and_stack)
-    target_data = mask_and_stack(target_data, threshold_land=THRESHOLD_LAND)
-    pred_data = xr.DataTree.from_dict({"tas": tas_glob_mean})
+    targ_data = mask_and_stack(target_data, threshold_land=THRESHOLD_LAND)
+    pred_data = tas_glob_mean.copy()
 
     # stack datasets
     # weights
-    weights = get_weights_density(
-        pred_data=pred_data,
-        predictor="tas",
-        targ_data=target_data,
-        target=target_name,
-        dims=("member", "time"),
+    weights = mesmer.core.weighted.get_weights_density(
+        pred_data=pred_data
     )
 
     # stacking
     stacked_pred, stacked_targ, stacked_weights = (
         mesmer.core.datatree.broadcast_and_stack_scenarios(
             predictors=pred_data,
-            target=target_data,
+            target=targ_data,
             weights=weights,
             member_dim=None,
         )
@@ -150,11 +144,10 @@ def test_calibrate_mesmer_x(
     distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
     # preparing first guess
-    coeffs_fg = find_first_guess(
-        distrib,
+    coeffs_fg = distrib.find_first_guess(
         predictors=stacked_pred,
         target=stacked_targ.tasmax,
-        weights=stacked_weights.weight,
+        weights=stacked_weights.weights,
         first_guess=None,
     )
 
@@ -163,7 +156,7 @@ def test_calibrate_mesmer_x(
         predictors=stacked_pred,
         target=stacked_targ.tasmax,
         first_guess=coeffs_fg,
-        weights=stacked_weights.weight,
+        weights=stacked_weights.weights,
     )
     transform_coeffs = distrib.coefficients
 
@@ -173,7 +166,7 @@ def test_calibrate_mesmer_x(
             predictors=stacked_pred,
             target=stacked_targ.tasmax,
             first_guess=transform_coeffs,
-            weights=stacked_weights.weight,
+            weights=stacked_weights.weights,
             smooth_coeffs=True,
             r_gasparicohn=500,
         )
@@ -188,7 +181,7 @@ def test_calibrate_mesmer_x(
 
     pit = ProbabilityIntegralTransform(distrib, target_distrib)
     transf_target = pit.transform(
-        data=target_data,
+        data=targ_data,
         target_name=target_name,
         preds_orig=pred_data,
     )
@@ -204,7 +197,7 @@ def test_calibrate_mesmer_x(
     # estimate covariance matrix
     # prep distance matrix
     geodist = mesmer.core.geospatial.geodist_exact(
-        lon=target_data["historical"].lon, lat=target_data["historical"].lat
+        lon=targ_data["historical"].lon, lat=targ_data["historical"].lat
     )
     # prep localizer
     LOCALISATION_RADII = range(1750, 2001, 250)
@@ -219,7 +212,7 @@ def test_calibrate_mesmer_x(
     # calculation in find_localized_empirical_covariance. Need to solve that.
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
         data=stacked_targ[target_name],
-        weights=stacked_weights.weight,
+        weights=stacked_weights.weights,
         localizer=phi_gc_localizer,
         dim="sample",
         k_folds=30,
