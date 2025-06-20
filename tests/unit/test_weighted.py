@@ -371,18 +371,31 @@ def test_get_weights_density_ds():
 def test_get_weights_density_dt():
     nts1, nts2 = 10, 12
     nmem1, nmem2 = 2, 3
+
+    rng = np.random.default_rng(0)
+
     time_coord1 = np.arange(nts1)
     time_coord2 = np.arange(nts2)
     member_coord1 = np.arange(nmem1)
     member_coord2 = np.arange(nmem2)
 
     arr1 = xr.DataArray(
-        np.arange(nts1 * nmem1).reshape(nts1, nmem1),
+        rng.normal(loc=0, scale=0.1, size=(nts1, nmem1)),
         dims=("time", "member"),
         coords={"time": time_coord1, "member": member_coord1},
     )
     arr2 = xr.DataArray(
-        np.arange(nts2 * nmem2).reshape(nts2, nmem2),
+        rng.normal(loc=0, scale=0.1, size=(nts1, nmem1)),
+        dims=("time", "member"),
+        coords={"time": time_coord1, "member": member_coord1},
+    )
+    arr3 = xr.DataArray(
+        rng.normal(loc=0, scale=0.1, size=(nts2, nmem2)),
+        dims=("time", "member"),
+        coords={"time": time_coord2, "member": member_coord2},
+    )
+    arr4 = xr.DataArray(
+        rng.normal(loc=0, scale=0.1, size=(nts2, nmem2)),
         dims=("time", "member"),
         coords={"time": time_coord2, "member": member_coord2},
     )
@@ -392,13 +405,13 @@ def test_get_weights_density_dt():
             "scenario1": xr.Dataset(
                 {
                     "predictor1": arr1,
-                    "predictor2": arr1,
+                    "predictor2": arr2,
                 }
             ),
             "scenario2": xr.Dataset(
                 {
-                    "predictor1": arr2,
-                    "predictor2": arr2,
+                    "predictor1": arr3,
+                    "predictor2": arr4,
                 }
             ),
         }
