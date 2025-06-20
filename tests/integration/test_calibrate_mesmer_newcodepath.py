@@ -220,7 +220,7 @@ def test_calibrate_mesmer(
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.core.datatree.broadcast_and_stack_scenarios(predictors, target, weights)
+        mesmer.datatree.broadcast_and_pool_scen_ens(predictors, target, weights)
     )
 
     local_forced_response_lr = mesmer.stats.LinearRegression()
