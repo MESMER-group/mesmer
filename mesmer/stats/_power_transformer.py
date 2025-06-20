@@ -168,7 +168,7 @@ class YeoJohnsonTransformer:
             self.bounds = np.array([[0, 1e10], [-0.1, 0.1]])
             self.first_guess = np.array([1.0, 0.0])
         else:
-            raise NameError(f"No YeoJohnson transformer with the name {name} exists")
+            raise ValueError(f"No YeoJohnson transformer with the name '{name}' exists")
 
         self.name = name
 
