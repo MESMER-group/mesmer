@@ -269,7 +269,9 @@ class ConditionalDistribution:
 
         # checking for smoothing of coefficients, eg for 2nd round of fit
         if smooth_coeffs:
-            first_guess = self._smoothen_first_guess(target, first_guess, r_gasparicohn)
+            gridcell_dim = (set(target.dims) - {sample_dim}).pop()
+            coords = target[gridcell_dim].coords
+            first_guess = _smoothen_first_guess(first_guess, gridcell_dim, coords, r_gasparicohn)
 
         # training
         coefficients = self._fit_xr(
@@ -386,51 +388,6 @@ class ConditionalDistribution:
         )
 
         return fg._find_fg()
-
-    def _smoothen_first_guess(
-        self, target: xr.DataArray, first_guess: xr.Dataset, r_gasparicohn
-    ):
-        """
-        smoothen first guess over
-
-        Parameters
-        ----------
-        target : xr.DataArray
-            Target DataArray.
-        first_guess : xr.Dataset
-            First guess for the coefficients.
-        sample_dim : str
-            Dimension along which to fit the distribution.
-
-        Returns
-        -------
-        first_guess : :obj:`xr.Dataset`
-            Smoothed ``first_guess``
-        """
-
-        # calculating distance between points
-        geodist = geodist_exact(target["lon"], target["lat"])
-
-        # deducing correlation matrix
-        corr_gc = gaspari_cohn(geodist / r_gasparicohn)
-
-        # will avoid taking gridpoints with nan
-        gp_nonan = first_guess.notnull().to_array().all(dim=["variable"]).values
-
-        # creating new dataset of coefficients
-        second_guess = xr.full_like(first_guess, fill_value=np.nan)
-
-        # calculating for each coef and each gridpoint the weighted median
-        for coef in self.expression.coefficients_list:
-            for gp in first_guess.gridpoint.values:
-                fg = weighted_median(
-                    data=first_guess[coef].sel(gridpoint=gp_nonan).values,
-                    weights=corr_gc.sel(gridpoint_i=gp, gridpoint_j=gp_nonan).values,
-                )
-                second_guess[coef].loc[dict(gridpoint=gp)] = fg
-
-        # preparing for training
-        return second_guess
 
     def _fit_xr(
         self,
@@ -773,3 +730,54 @@ class ConditionalDistribution:
 
         coefficients = self.coefficients
         coefficients.to_netcdf(filename, **kwargs)
+
+def _smoothen_first_guess(
+        first_guess: xr.Dataset, dim, grid_coords, r_gasparicohn
+    ):
+        """
+        smoothen first guess over
+
+        Parameters
+        ----------
+        first_guess : xr.Dataset
+            First guess for the coefficients.
+        dim : str
+            Dimension along which to smooth the coefficients.
+        grid_coords : dict
+            Coordinates of the grid points, used to compute the distance between points.
+            Must contain the coordinates of the grid points in the form of a dictionary
+            with keys being the coordinate names and values being 1D arrays of coordinates.
+        r_gasparicohn : float
+            Radius used to compute the correlation matrix of the Gaspari-Cohn function.
+
+        Returns
+        -------
+        first_guess : :obj:`xr.Dataset`
+            Smoothed ``first_guess``
+        """        
+        # calculating distance between points
+        geodist = geodist_exact(**grid_coords)
+        # deducing correlation matrix
+        corr_gc = gaspari_cohn(geodist / r_gasparicohn)
+
+        # will avoid taking gridpoints with nan
+        fg_coeffs = first_guess.to_array("coeff")
+
+        second_guess_stacked = xr.apply_ufunc(
+            weighted_median,
+            fg_coeffs,
+            corr_gc,
+            input_core_dims=[[dim], [f"{dim}_i"]],
+            output_core_dims= [[]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+        
+        second_guess = xr.full_like(first_guess, fill_value=np.nan)
+        for coeff in first_guess.data_vars:
+            second_guess[coeff] = second_guess_stacked.sel(coeff=coeff)
+        second_guess = second_guess.rename({f"{dim}_j": dim})
+        second_guess = second_guess.drop_vars("coeff")
+
+        return second_guess
