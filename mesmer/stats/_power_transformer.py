@@ -173,7 +173,7 @@ class YeoJohnsonTransformer:
         self.name = name
 
     def __repr__(self):
-        return f"<YeoJohnsonTransformer with a {self.name} lambda function>"
+        return f"<YeoJohnsonTransformer with a '{self.name}' lambda function>"
 
     def _assert_correct_lambda_function(self, lambda_coeffs):
 
