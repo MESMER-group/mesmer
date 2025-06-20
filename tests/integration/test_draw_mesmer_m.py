@@ -6,6 +6,7 @@ import xarray as xr
 import mesmer
 
 
+@pytest.mark.filterwarnings("ignore:`lambda_coeffs` does not have `lambda_function`")
 def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
 
     # define config values

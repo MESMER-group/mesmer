@@ -230,6 +230,56 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, stack=False):
     return data
 
 
+def test_power_transformer_wrong_lambda_function():
+    n_years = 10
+    n_months = n_years * 12
+    n_lon, n_lat = 1, 1
+
+    monthly_residuals = skewed_data_2D(n_timesteps=n_months, n_lat=n_lat, n_lon=n_lon)
+    yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
+
+    # 0. create instance
+    yj_transformer = YeoJohnsonTransformer("logistic")
+
+    # 1 - fitting
+    lambda_coeffs = yj_transformer.fit(yearly_T, monthly_residuals)
+
+    # warn if the name is not on the attrs
+    lambda_coeffs.attrs = {}
+
+    warning = "`lambda_coeffs` does not have `lambda_function` attrs"
+
+    print(lambda_coeffs)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer._assert_correct_lambda_function(lambda_coeffs)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer.get_lambdas_from_covariates(lambda_coeffs, yearly_T)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer.transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer.inverse_transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+    lambda_coeffs.attrs = {"lambda_function": "not_logistic"}
+
+    err = "Passed `lambda_coeffs` fitted on a not_logistic lambda function"
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer._assert_correct_lambda_function(lambda_coeffs)
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer.get_lambdas_from_covariates(lambda_coeffs, yearly_T)
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer.transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer.inverse_transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+
 @pytest.mark.parametrize("stack", (False, True))
 def test_power_transformer_xr(stack):
     n_years = 100

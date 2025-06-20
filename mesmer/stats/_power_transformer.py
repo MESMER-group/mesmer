@@ -1,3 +1,4 @@
+import warnings
 from typing import Literal
 
 import numpy as np
@@ -172,8 +173,24 @@ class YeoJohnsonTransformer:
         self.name = name
 
     def __repr__(self):
-
         return f"<YeoJohnsonTransformer with a {self.name} lambda function>"
+
+    def _assert_correct_lambda_function(self, lambda_coeffs):
+
+        lambda_function_name = lambda_coeffs.attrs.get("lambda_function", None)
+        if lambda_function_name is None:
+            msg = (
+                "`lambda_coeffs` does not have `lambda_function` attrs. Cannot ensure "
+                f"params were fitted on a '{self.name}' lambda function"
+            )
+            warnings.warn(msg, stacklevel=2)
+
+        if lambda_function_name is not None and lambda_function_name != self.name:
+            msg = (
+                f"Passed `lambda_coeffs` fitted on a '{lambda_function_name}' lambda"
+                f" function, but currently '{self.name}' is selected as lambda function."
+            )
+            raise ValueError(msg)
 
     @staticmethod
     def lambda_function(coeffs: np.ndarray, local_yearly_T: np.ndarray) -> np.ndarray:
@@ -280,6 +297,8 @@ class YeoJohnsonTransformer:
         if time_coords is not None:
             _check_dataarray_form(time_coords, "time_coords", required_coords=time_dim)
 
+        self._assert_correct_lambda_function(lambda_coeffs)
+
         lambdas = xr.apply_ufunc(
             self.lambda_function,
             lambda_coeffs,
@@ -371,7 +390,10 @@ class YeoJohnsonTransformer:
             lambda_coeffs.append(res.rename("lambda_coeffs"))
 
         month_dim = xr.DataArray(np.arange(1, 13), dims="month")
-        return xr.concat(lambda_coeffs, dim=month_dim)
+        res = xr.concat(lambda_coeffs, dim=month_dim)
+        res.attrs = {"lambda_function": self.name}
+
+        return res
 
     def transform(
         self,
@@ -433,6 +455,8 @@ class YeoJohnsonTransformer:
         _check_dataarray_form(
             lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
         )
+
+        self._assert_correct_lambda_function(lambda_coeffs)
 
         # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
         # i.e., time_dim and sample_dim may or may not be the same
@@ -510,6 +534,8 @@ class YeoJohnsonTransformer:
         _check_dataarray_form(
             lambda_coeffs, name="lambda_coeffs", required_dims={"month", "coeff"}
         )
+
+        self._assert_correct_lambda_function(lambda_coeffs)
 
         # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
         # i.e., time_dim and sample_dim may or may not be the same
