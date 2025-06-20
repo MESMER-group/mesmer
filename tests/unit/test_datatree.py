@@ -168,7 +168,7 @@ def test_extract_single_dataarray_from_dt():
         mesmer.datatree._extract_single_dataarray_from_dt(xr.DataTree())
 
 
-def test_broadcast_and_stack_scenarios():
+def test_broadcast_and_pool_scen_ens():
     n_ts, n_lat, n_lon = 30, 2, 3
     member_dim = "member"
     time_dim = "time"
@@ -209,7 +209,7 @@ def test_broadcast_and_stack_scenarios():
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.broadcast_and_pool_scenarios(
+        mesmer.datatree.broadcast_and_pool_scen_ens(
             predictors,
             target,
             weights,
@@ -261,13 +261,13 @@ def test_broadcast_and_stack_scenarios():
     xr.testing.assert_equal(weights_stacked, weights_aligned)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.broadcast_and_pool_scenarios(predictors, target, None)
+        mesmer.datatree.broadcast_and_pool_scen_ens(predictors, target, None)
     )
     assert weights_stacked is None, "Weights should be None if not provided"
 
     # check if exclude_dim can be empty
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.broadcast_and_pool_scenarios(
+        mesmer.datatree.broadcast_and_pool_scen_ens(
             predictors,
             target.sel(cells=0),
             weights,
@@ -316,7 +316,7 @@ def test_datatree_wrapper():
 @pytest.mark.parametrize("time_dim", ("time", "t"))
 @pytest.mark.parametrize("member_dim", ("member", "m"))
 @pytest.mark.parametrize("sample_dim", ("sample", "s"))
-def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
+def test_pool_scen_ens(scenario_dim, time_dim, member_dim, sample_dim):
 
     time = np.arange(3)
     data = np.arange(6).reshape(2, 3).T
@@ -336,7 +336,7 @@ def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
 
     dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
 
-    result = mesmer.datatree.pool_scenarios(
+    result = mesmer.datatree.pool_scen_ens(
         dt,
         member_dim=member_dim,
         time_dim=time_dim,
@@ -364,7 +364,7 @@ def test_stack_datatree(scenario_dim, time_dim, member_dim, sample_dim):
     xr.testing.assert_equal(result, expected)
 
 
-def test_stack_datatree_missing_member_dim():
+def test_pool_scen_ens_missing_member_dim():
 
     time = np.arange(2)
     data = np.arange(2)
@@ -375,10 +375,10 @@ def test_stack_datatree_missing_member_dim():
     with pytest.raises(
         ValueError, match=r"`member_dim` \('member'\) not available in node 'scen'"
     ):
-        mesmer.datatree.pool_scenarios(dt)
+        mesmer.datatree.pool_scen_ens(dt)
 
 
-def test_stack_datatree_no_member_dim():
+def test_pool_scen_ens_no_member_dim():
 
     time = np.arange(2)
     data = np.arange(2)
@@ -387,7 +387,7 @@ def test_stack_datatree_no_member_dim():
 
     dt = xr.DataTree.from_dict({"scen": ds})
 
-    result = mesmer.datatree.pool_scenarios(dt, member_dim=None)
+    result = mesmer.datatree.pool_scen_ens(dt, member_dim=None)
 
     # =========
     scen = ["scen"] * 2
@@ -405,7 +405,7 @@ def test_stack_datatree_no_member_dim():
     xr.testing.assert_equal(result, expected)
 
 
-def test_stack_datatree_keep_other_dims():
+def test_pool_scen_ens_keep_other_dims():
 
     time = np.arange(2)
     data = np.arange(2 * 3 * 4).reshape(2, 3, 4)
@@ -428,7 +428,7 @@ def test_stack_datatree_keep_other_dims():
 
     dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
 
-    result = mesmer.datatree.pool_scenarios(dt)
+    result = mesmer.datatree.pool_scen_ens(dt)
 
     mesmer.core.utils._check_dataset_form(result, "result", required_vars="var")
     mesmer.core.utils._check_dataarray_form(

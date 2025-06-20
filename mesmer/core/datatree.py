@@ -131,7 +131,7 @@ def collapse_datatree_into_dataset(
     return ds
 
 
-def pool_scenarios(
+def pool_scen_ens(
     dt: xr.DataTree,
     *,
     member_dim: str | None = "member",
@@ -202,7 +202,7 @@ def pool_scenarios(
 
 
 @overload
-def broadcast_and_pool_scenarios(
+def broadcast_and_pool_scen_ens(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: None = None,
@@ -213,7 +213,7 @@ def broadcast_and_pool_scenarios(
     sample_dim: str = "sample",
 ) -> tuple[xr.Dataset, xr.Dataset, None]: ...
 @overload
-def broadcast_and_pool_scenarios(
+def broadcast_and_pool_scen_ens(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: xr.DataTree,
@@ -225,7 +225,7 @@ def broadcast_and_pool_scenarios(
 ) -> tuple[xr.Dataset, xr.Dataset, xr.Dataset]: ...
 
 
-def broadcast_and_pool_scenarios(
+def broadcast_and_pool_scen_ens(
     predictors: xr.DataTree,
     target: xr.DataTree,
     weights: xr.DataTree | None = None,
@@ -308,14 +308,14 @@ def broadcast_and_pool_scenarios(
     )
 
     # 2) stack
-    predictors_stacked = pool_scenarios(pred_broadcast, **dims)
+    predictors_stacked = pool_scen_ens(pred_broadcast, **dims)
 
     # prepare target
-    target_stacked = pool_scenarios(target, **dims)
+    target_stacked = pool_scen_ens(target, **dims)
 
     # prepare weights
     if weights is not None:
-        weights_stacked = pool_scenarios(weights, **dims)
+        weights_stacked = pool_scen_ens(weights, **dims)
     else:
         weights_stacked = None
 
