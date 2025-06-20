@@ -1,0 +1,274 @@
+# MESMER, land-climate dynamics group, S.I. Seneviratne
+# Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
+# Licensed under the GNU General Public License v3.0 or later see LICENSE or
+# https://www.gnu.org/licenses/
+
+import numpy as np
+import xarray as xr
+
+from mesmer.mesmer_x._expression import Expression
+
+
+def _coeffs_in_bounds(expression: Expression, values_coeffs):
+
+    # checking set boundaries on coefficients
+    for coeff, (bottom, top) in expression.boundaries_coeffs.items():
+
+        values = values_coeffs[expression.coefficients_list.index(coeff)]
+
+        if np.any(values < bottom) or np.any(top < values):
+            # out of boundaries
+            return False
+
+    return True
+
+
+def _params_in_bounds(expression: Expression, params):
+
+    # checking set boundaries on parameters
+    for param, (bot, top) in expression.boundaries_params.items():
+
+        param_values = params[param]
+
+        # out of boundaries
+        if (
+            # only check values if bot/ top are not -+inf
+            (not np.isinf(bot) and np.min(param_values) < bot)
+            or (not np.isinf(top) and np.max(param_values) > top)
+        ):
+            return False
+
+    return True
+
+
+def _param_in_bounds(expression: Expression, param_values, name):
+    """as params_in_bounds but for a single param (faster)"""
+
+    # short circuit if no boundaries are given (the boundaries are +-inf)
+    if name in expression.boundaries_params:
+        (bot, top) = expression.boundaries_params[name]
+
+        # out of boundaries
+        if (
+            # only check values if bot/ top are not -+inf
+            (not np.isinf(bot) and np.min(param_values) < bot)
+            or (not np.isinf(top) and np.max(param_values) > top)
+        ):
+            return False
+
+    return True
+
+
+def _params_in_distr_support(expression: Expression, params, data):
+    # test of the support of the distribution: is there any data out of the
+    # corresponding support? dont try testing if there are issues on the parameters
+
+    bottom, top = expression.distrib.support(**params)
+
+    # out of support
+    if (
+        np.any(np.isnan(bottom))
+        or np.any(np.isnan(top))
+        or np.any(data < bottom)
+        or np.any(data > top)
+    ):
+        return False
+
+    return True
+
+
+def _test_proba_value(expression: Expression, threshold_min_proba, params, data):
+    """
+    Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
+    Ensures that data lies within a confidence interval of threshold_min_proba for the tested
+    distribution.
+    """
+    # NOTE: DONT write 'x=data', because 'x' may be called differently for some
+    # distribution (eg 'k' for poisson).
+
+    cdf = expression.distrib.cdf(data, **params)
+    return np.all(1 - cdf >= threshold_min_proba) and np.all(cdf >= threshold_min_proba)
+
+
+def _validate_coefficients(
+    expression: Expression, data_pred, data_targ, coefficients, threshold_min_proba
+):
+    """validate coefficients
+
+    Parameters
+    ----------
+    expression: Expression
+        Expression to validate the coefficients for.
+
+
+    data_pred : numpy array 1D
+        Predictors for the training sample.
+
+    data_targ : numpy array 1D
+        Target for the training sample.
+
+    coefficients : numpy array 1D
+        Coefficients to validate.
+
+    threshold_min_proba : float | None
+        Minimal probability of each data sample in the distribution.
+
+
+    Returns
+    -------
+
+    coeffs_in_bounds : bool
+        True if the coefficients are within conditional_distrib.expression.boundaries_coeffs. If
+        False, all other tests will also be set to False and not tested.
+
+    params_in_bounds : bool
+        True if the params are within conditional_distrib.expression.boundaries_params
+
+    params_in_support : boolean
+        True if parameters are within conditional_distrib.expression.boundaries_params and within the support of the distribution.
+        False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
+
+    test_proba : boolean
+        Only tested if conditional_distrib.threshold_min_proba is not None.
+        True if the probability of the target samples for the given coefficients
+        is above conditional_distrib.threshold_min_proba.
+        False if not or if test_coeff or test_param or test_coeff is False.
+
+    params : distrib_cov
+        The evaluated params for the given coefficients.
+
+    """
+
+    coeffs_in_bounds = _coeffs_in_bounds(expression, coefficients)
+
+    # tests on coeffs show already that it won't work: fill in the rest with False
+    if not coeffs_in_bounds:
+        return coeffs_in_bounds, False, False, False, False
+
+    # evaluate the distribution for the predictors and this iteration of coeffs
+    params = expression._evaluate_params_fast(coefficients, data_pred)
+    # test for the validity of the parameters
+    params_in_bounds = _params_in_bounds(expression, params)
+
+    # tests on params show already that it won't work: fill in the rest with False
+    if not params_in_bounds:
+        return coeffs_in_bounds, params_in_bounds, False, False, False
+
+    # test for the support of the distribution
+    params_in_support = _params_in_distr_support(expression, params, data_targ)
+
+    # tests on params show already that it won't work: fill in the rest with False
+    if not params_in_support:
+        return coeffs_in_bounds, params_in_bounds, params_in_support, False, False
+
+    # test for the probability of the values
+    if threshold_min_proba is None:
+        return coeffs_in_bounds, params_in_bounds, params_in_support, True, params
+
+    else:
+        test_proba = _test_proba_value(
+            expression, threshold_min_proba, params, data_targ
+        )
+
+        # return values for each test and the evaluated distribution
+        return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
+
+
+def _validate_data(data_pred, data_targ, data_weights):
+    """
+    check data for nans or infs
+
+    Parameters
+    ----------
+    data_pred
+        Predictors for the training sample.
+
+    data_targ
+        Target for the training sample.
+
+    data_weights
+        Weights for the training sample.
+    """
+
+    def _assert_data_valid(data, name):
+        """check data for nans or infs
+
+        Parameters
+        ----------
+        data : array-like
+            Data to check
+        name : str
+            Name to use in error message
+        """
+        # checking for NaN values
+        if np.isnan(data).any():
+            raise ValueError(f"nan values in {name}")
+
+        # checking for infinite values
+        if np.isinf(data).any():
+            raise ValueError(f"infinite values in {name}")
+
+    if data_pred is not None:
+        _assert_data_valid(data_pred, "predictors")
+    _assert_data_valid(data_targ, "target")
+    _assert_data_valid(data_weights, "weights")
+
+
+def _prepare_data(predictors, target, weights, first_guess=None):
+    """
+    shaping data into DataArrays for first guess, training or evaluation of scores.
+
+    Parameters
+    ----------
+    predictors : dict of xr.DataArray | xr.Dataset
+        Predictors for the first guess. Must either be a dictionary of xr.DataArray or
+        xr.Dataset, each key/item being a predictor; a xr.Dataset with a coordinate
+        being the list of predictors, and a variable that contains all predictors.
+    target : xr.DataArray | xr.Dataset
+        Target DataArray or Dataset (with one variable).
+    weights : xr.DataArray | xr.Dataset
+        Individual weights for each sample.
+    first_guess : xr.Dataset | None default None
+        First guess. If provided the function will return a DataArray, with the
+        predictor variables stacked along a "predictor" dimension.
+
+    Returns
+    -------
+    :data_pred:`xr.DataArray`
+        shaped predictors for training (predictor, sample)
+    :data_targ:`xr.DataArray`
+        shaped sample for training (sample, gridpoint)
+    :data_weights:`xr.DataArray`
+        shaped weights for training (sample)
+    :data_first_guess:`xr.DataArray` | None
+        shaped first guess for training (coefficients, gridpoint)
+    """
+    # check formats
+    if isinstance(predictors, dict | xr.Dataset):
+        predictors_concat = xr.concat(
+            tuple(predictors.values()),
+            dim="predictor",
+            join="exact",
+            coords="minimal",
+        )
+        predictors_concat = predictors_concat.assign_coords(
+            {"predictor": list(predictors.keys())}
+        )
+
+    else:
+        raise TypeError(
+            "predictors is supposed to be a dict of xr.DataArray or a xr.Dataset"
+        )
+
+    # check format of target
+    if not (isinstance(target, xr.Dataset) or isinstance(target, xr.DataArray)):
+        raise TypeError("the target must be a xr.Dataset or xr.DataArray.")
+
+    # check format of weights
+    if not (isinstance(weights, xr.Dataset) or isinstance(weights, xr.DataArray)):
+        raise TypeError("the weights must be a xr.Dataset or xr.DataArray.")
+
+    if isinstance(first_guess, xr.Dataset):
+        first_guess = first_guess.to_dataarray(dim="coefficient")
+
+    return predictors_concat, target, weights, first_guess

@@ -1,99 +1,183 @@
 import pathlib
 
+import numpy as np
 import pytest
 import xarray as xr
+from filefisher import FileFinder
 
-# from datatree import Datatree, map_over_subtree
 import mesmer
-import mesmer.mesmer_x
-
-# TODO: extend to more scenarios and members
-# TODO: extend predictors
+from mesmer.mesmer_x import (
+    ConditionalDistribution,
+    ConditionalDistributionOptions,
+    Expression,
+    ProbabilityIntegralTransform,
+)
 
 
 @pytest.mark.parametrize(
     (
-        "scenario",
-        "target_name",
+        "scenarios",
+        "targ_var",
+        "pred_vars",
         "expr",
         "expr_name",
         "option_2ndfit",
         "update_expected_files",
+        "outname",
     ),
     [
         pytest.param(
-            "ssp585",
+            ["ssp126"],
             "tasmax",
+            ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
             False,
             False,
+            "tasmax/one_scen_one_ens",
             marks=pytest.mark.slow,
         ),
         pytest.param(
-            "ssp585",
+            ["ssp126"],
             "tasmax",
+            ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1_2ndfit",
             True,
             False,
+            "tasmax/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            "tasmax",
+            ["tas"],
+            "norm(loc=c1 + c2 * __tas__, scale=c3)",
+            "expr2",
+            False,
+            False,
+            "tasmax/multi_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            "tasmax",
+            ["tas", "hfds"],
+            "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c3)",
+            "expr3",
+            False,
+            False,
+            "tasmax/multi_scen_multi_ens",
             marks=pytest.mark.slow,
         ),
     ],
 )
 def test_calibrate_mesmer_x(
-    scenario,
-    target_name,
+    scenarios,
+    targ_var,
+    pred_vars,
     expr,
     expr_name,
     option_2ndfit,
     test_data_root_dir,
     update_expected_files,
+    outname,
 ):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
     esm = "IPSL-CM6A-LR"
 
-    # TODO: replace with filefinder later
     # load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = (
-        TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens" / "test-params"
-    )
-    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
+    TEST_PATH = TEST_DATA_PATH / "output" / outname
 
-    # load predictor data
-    path_tas = cmip6_data_path / "tas" / "ann" / "g025"
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
-    fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_ssp585 = path_tas / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
-
-    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-    tas_hist = xr.open_dataset(fN_hist, decode_times=time_coder).drop_vars(
-        ["height", "file_qf", "time_bnds"]
-    )
-    tas_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder).drop_vars(
-        ["height", "file_qf", "time_bnds"]
+    CMIP_FILEFINDER = FileFinder(
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
-    # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
+    fc_scens_pred = CMIP_FILEFINDER.find_files(
+        variable=pred_vars,
+        scenario=scenarios,
+        model=esm,
+        resolution="g025",
+        time_res="ann",
+    )
 
-    # make global mean
-    # global_mean_dt = map_over_subtree(mesmer.weighted.global_mean)
-    tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
-    tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
+    # only get the historical members that are also in the future scenarios, but only once
+    unique_scen_members = fc_scens_pred.df.member.unique()
 
-    # load target data
-    path_target = cmip6_data_path / target_name / "ann" / "g025"
+    fc_hist_pred = CMIP_FILEFINDER.find_files(
+        variable=pred_vars,
+        scenario="historical",
+        model=esm,
+        resolution="g025",
+        time_res="ann",
+        member=unique_scen_members,
+    )
 
-    fN_hist = path_target / f"{target_name}_ann_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_ssp585 = path_target / f"{target_name}_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
+    fc_pred = fc_hist_pred.concat(fc_scens_pred)
 
-    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-    targ_hist = xr.open_dataset(fN_hist, decode_times=time_coder)
-    targ_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder)
+    fc_scens_targ = CMIP_FILEFINDER.find_files(
+        variable=targ_var,
+        scenario=scenarios,
+        model=esm,
+        resolution="g025",
+        time_res="ann",
+        member=unique_scen_members,
+    )
 
-    # target = DataTree({"hist": targ_hist, "ssp585": targ_ssp585})
+    fc_hist_targ = CMIP_FILEFINDER.find_files(
+        variable=targ_var,
+        scenario="historical",
+        model=esm,
+        resolution="g025",
+        time_res="ann",
+        member=unique_scen_members,
+    )
+
+    fc_targ = fc_hist_targ.concat(fc_scens_targ)
+
+    scenarios_incl_hist = scenarios.copy()
+    scenarios_incl_hist.append("historical")
+
+    def load_data(fc):
+        data = xr.DataTree()
+        for scen in scenarios_incl_hist:
+            # load data for each scenario
+            data_scen = []
+
+            for var in fc.df.variable.unique():
+                files = fc.search(variable=var, scenario=scen)
+
+                # load all members for a scenario
+                members = []
+                for fN, meta in files.items():
+                    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                    ds = xr.open_dataset(fN, decode_times=time_coder)
+                    # drop unnecessary variables
+                    ds = ds.drop_vars(
+                        ["height", "time_bnds", "file_qf", "area"], errors="ignore"
+                    )
+                    # assign member-ID as coordinate
+                    ds = ds.assign_coords({"member": meta["member"]})
+                    members.append(ds)
+
+                # create a Dataset that holds each member along the member dimension
+                data_var = xr.concat(members, dim="member")
+                data_scen.append(data_var)
+
+            data_scen = xr.merge(data_scen)
+            data[scen] = xr.DataTree(data_scen)
+        return data
+
+    pred_data = load_data(fc_pred)
+    targ_data = load_data(fc_targ)
+
+    # make global mean of pred data
+    pred_data = mesmer.weighted.global_mean(pred_data)
 
     # stack target data
     def mask_and_stack(ds, threshold_land):
@@ -103,107 +187,140 @@ def test_calibrate_mesmer_x(
         return ds
 
     # mask_and_stack_dt = map_over_subtree(mask_and_stack)
-    targ_stacked_hist = mask_and_stack(targ_hist, threshold_land=THRESHOLD_LAND)
-    targ_stacked_ssp585 = mask_and_stack(targ_ssp585, threshold_land=THRESHOLD_LAND)
+    targ_data = mask_and_stack(targ_data, threshold_land=THRESHOLD_LAND)
 
-    # collect scenarios in a tuple
-    # NOTE: each of the datasets below could have a dimension along member
-    predictor = ((tas_glob_mean_hist, "hist"), (tas_glob_mean_ssp585, "ssp585"))
-    target = ((targ_stacked_hist, "hist"), (targ_stacked_ssp585, "ssp585"))
+    # stack datasets
+    # weights
+    weights = mesmer.core.weighted.get_weights_density(pred_data=pred_data)
 
-    # do the training
-    transform_params, _ = mesmer.mesmer_x.xr_train_distrib(
-        predictors=predictor,
-        target=target,
-        target_name=target_name,
-        expr=expr,
-        expr_name=expr_name,
-        option_2ndfit=option_2ndfit,
-        r_gasparicohn_2ndfit=500,
-        scores_fit=["func_optim", "NLL", "BIC"],
+    # stacking
+    stacked_pred, stacked_targ, stacked_weights = (
+        mesmer.core.datatree.broadcast_and_pool_scen_ens(
+            predictors=pred_data,
+            target=targ_data,
+            weights=weights,
+            member_dim="member",
+        )
     )
 
-    # probability integral transform: projection of the data on a standard normal distribution
-    transf_target = mesmer.mesmer_x.probability_integral_transform(  # noqa: F841
-        data=target,
-        target_name=target_name,
-        expr_start=expr,
-        coeffs_start=transform_params,
-        preds_start=predictor,
-        expr_end="norm(loc=0, scale=1)",
-    )
-    # TODO: add expression as variable here or in function or before saving?
+    # declaring analytical form of the conditional distribution
+    expression = Expression(expr, expr_name)
+    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
 
-    # make transformed target into DataArrays
-    transf_target_xr_hist = xr.DataArray(
-        transf_target[0][0],
-        dims=["time", "gridpoint"],
-        coords={"time": targ_stacked_hist.time},
-    ).assign_coords(targ_stacked_hist.gridpoint.coords)
-    transf_target_xr_ssp585 = xr.DataArray(
-        transf_target[1][0],
-        dims=["time", "gridpoint"],
-        coords={"time": targ_stacked_ssp585.time},
-    ).assign_coords(targ_stacked_hist.gridpoint.coords)
+    # preparing first guess
+    coeffs_fg = distrib.find_first_guess(
+        predictors=stacked_pred,
+        target=stacked_targ.tasmax,
+        weights=stacked_weights.weights,
+        first_guess=None,
+    )
+
+    # training the conditional distribution
+    distrib.fit(
+        predictors=stacked_pred,
+        target=stacked_targ.tasmax,
+        first_guess=coeffs_fg,
+        weights=stacked_weights.weights,
+    )
+    transform_coeffs = distrib.coefficients
+
+    # second round if necessary
+    if option_2ndfit:
+        distrib.fit(
+            predictors=stacked_pred,
+            target=stacked_targ.tasmax,
+            first_guess=transform_coeffs,
+            weights=stacked_weights.weights,
+            smooth_coeffs=True,
+            r_gasparicohn=500,
+        )
+        transform_coeffs = distrib.coefficients
+
+    # probability integral transform on non-stacked data for AR(1) process
+    target_expr = Expression("norm(loc=0, scale=1)", "standard_normal")
+    target_distrib = ConditionalDistribution(
+        target_expr,
+        ConditionalDistributionOptions(),
+    )
+
+    pit = ProbabilityIntegralTransform(distrib, target_distrib)
+    transf_target = pit.transform(
+        data=targ_data,
+        target_name=targ_var,
+        preds_orig=pred_data,
+    )
 
     # training of auto-regression with spatially correlated innovations
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
-        transf_target_xr_hist,
-        transf_target_xr_ssp585,
-        ens_dim=None,
+        transf_target,
+        ens_dim="member",
         dim="time",
         lags=1,
     )
 
     # estimate covariance matrix
     # prep distance matrix
-    geodist = mesmer.geospatial.geodist_exact(
-        targ_stacked_hist.lon, targ_stacked_hist.lat
+    geodist = mesmer.core.geospatial.geodist_exact(
+        lon=targ_data["historical"].lon, lat=targ_data["historical"].lat
     )
     # prep localizer
+    LOCALISATION_RADII = range(1750, 2001, 250)
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-        geodist, range(4000, 6001, 500)
+        geodist=geodist, localisation_radii=LOCALISATION_RADII
     )
 
-    # stack target
-    transf_target_stacked = xr.concat(
-        [transf_target_xr_hist, transf_target_xr_ssp585], dim="scenario"
-    )
-    transf_target_stacked = transf_target_stacked.assign_coords(
-        scenario=["hist", "ssp585"]
-    )
-    transf_target_stacked = transf_target_stacked.stack(
-        {"sample": ["time", "scenario"]}, create_index=False
-    ).dropna("sample")
-
-    # make weights
-    weights = xr.ones_like(transf_target_stacked.isel(gridpoint=0))
-
-    # find covariance
-    dim = "sample"
-    k_folds = 15
-
+    # TODO: should we both for MESMER and for MESMER-X remove the
+    # residuals from the AR(1) process before calculating the covariance?
+    # is that we is happening in 'adjust_covariance_ar1'?
+    # TODO: using here weights from MESMER-X. I noticed that it affects the
+    # calculation in find_localized_empirical_covariance. Need to solve that.
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        transf_target_stacked, weights, phi_gc_localizer, dim, k_folds
+        data=stacked_targ[targ_var],
+        weights=stacked_weights.weights,
+        localizer=phi_gc_localizer,
+        dim="sample",
+        k_folds=30,
     )
 
-    # Adjust regularized covariance matrix
     localized_ecov["localized_covariance_adjusted"] = (
         mesmer.stats.adjust_covariance_ar1(
             localized_ecov.localized_covariance, local_ar_params.coeffs
         )
     )
 
-    file_end = f"{target_name}_{expr_name}_{esm}_{scenario}"
-    distrib_file = TEST_PATH / "distrib" / f"params_transform_distrib_{file_end}.nc"
-    local_ar_file = TEST_PATH / "local_variability" / f"params_local_AR_{file_end}.nc"
-    localized_ecov_file = (
-        TEST_PATH / "local_variability" / f"params_localized_ecov_{file_end}.nc"
+    # parameter files
+    PARAM_FILEFINDER = FileFinder(
+        path_pattern=TEST_PATH / "test-params/{module}/",
+        file_pattern="params_{module}_{targ_var}_{expr_name}_{esm}_{scen}.nc",
+    )
+
+    scen_str = "_".join(scenarios)
+
+    distrib_file = PARAM_FILEFINDER.create_full_name(
+        module="distrib",
+        targ_var=targ_var,
+        expr_name=expr_name,
+        esm=esm,
+        scen=scen_str,
+    )
+    local_ar_file = PARAM_FILEFINDER.create_full_name(
+        module="local_trends",
+        targ_var=targ_var,
+        expr_name=expr_name,
+        esm=esm,
+        scen=scen_str,
+    )
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(
+        module="local_variability",
+        targ_var=targ_var,
+        expr_name=expr_name,
+        esm=esm,
+        scen=scen_str,
     )
 
     if update_expected_files:
         # save the parameters
-        transform_params.to_netcdf(distrib_file)
+        distrib.to_netcdf(distrib_file)
         local_ar_params.to_netcdf(local_ar_file)
         localized_ecov.to_netcdf(localized_ecov_file)
         pytest.skip("Updated param files.")
@@ -211,9 +328,20 @@ def test_calibrate_mesmer_x(
     else:
         # load the parameters
         expected_transform_params = xr.open_dataset(distrib_file)
-        xr.testing.assert_allclose(transform_params, expected_transform_params)
+
+        xr.testing.assert_allclose(
+            transform_coeffs, expected_transform_params, rtol=1.5e-5
+        )
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
+
+        np.testing.assert_allclose(
+            local_ar_params["intercept"].values,
+            expected_local_ar_params["intercept"].values,
+            atol=1e-7,
+            rtol=1e-05,
+        )
+
         xr.testing.assert_allclose(
             local_ar_params["intercept"],
             expected_local_ar_params["intercept"],
