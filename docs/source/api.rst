@@ -5,6 +5,14 @@ API reference
 
 This page provides an auto-generated summary of mesmers' API.
 
+Top-level functions
+===================
+
+.. autosummary::
+   :toctree: generated/
+
+   set_options
+   get_options
 
 Statistical functions
 =====================

@@ -73,6 +73,9 @@ jobs:
         echo ""
         echo "Number of cpus and threads"
         python -c "import psutil; print(f'cpus: {psutil.cpu_count(logical=False)}; threads: {psutil.cpu_count()}')"
+        echo ""
+        echo "threadpool info:"
+        python -c "import numpy; import threadpoolctl; print(threadpoolctl.threadpool_info())"
 
     - name: Install mesmer
       run: |

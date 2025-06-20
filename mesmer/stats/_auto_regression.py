@@ -16,6 +16,7 @@ from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
+    _set_threads_from_options,
 )
 
 
@@ -713,6 +714,7 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
+@_set_threads_from_options()
 def _draw_innovations_correlated_np(
     covariance, rng, n_gridcells, n_samples, n_ts, buffer
 ):
@@ -1150,12 +1152,13 @@ def _draw_auto_regression_monthly_np(
 
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
-    if covariance is not None:
-        for month in range(12):
-            cov_month = covariance[month, :, :]
-            innovations[:, :, month, :] = _draw_innovations_correlated_np(
-                cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
-            )
+
+    for month in range(12):
+        cov_month = covariance[month, :, :]
+        innovations[:, :, month, :] = _draw_innovations_correlated_np(
+            cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
+        )
+
     # reshape innovations into continuous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
