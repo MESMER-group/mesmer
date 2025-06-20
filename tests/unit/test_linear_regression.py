@@ -211,6 +211,22 @@ def test_lr_predict_missing_superfluous(data_type):
     lr.predict(convert_to({"tas": tas, "tas2": tas}, data_type), only="tas")
 
 
+def test_lr_predict_exclude_and_only_errors():
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+        }
+    )
+    lr.params = params
+
+    with pytest.raises(TypeError, match="Cannot set both `exclude` and `only`"):
+        lr.predict({}, exclude="tas", only="tas")
+
+
 @pytest.mark.parametrize("as_2D", [True, False])
 @pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict_exclude(as_2D, data_type):
