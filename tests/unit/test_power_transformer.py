@@ -13,6 +13,31 @@ from mesmer.stats._power_transformer import (
 from mesmer.testing import trend_data_2D
 
 
+def test_yj_transformer_repr():
+
+    yj_transformer = YeoJohnsonTransformer("logistic")
+
+    result = yj_transformer.__repr__()
+    expected = "<YeoJohnsonTransformer with a 'logistic' lambda function>"
+    assert result == expected
+
+
+def test_yj_transformer_wrong_name():
+
+    msg = "No YeoJohnson transformer with the name 'wrong' exists"
+    with pytest.raises(ValueError, match=msg):
+        YeoJohnsonTransformer("wrong")
+
+
+def test_yj_transformer_bounds_first_guess():
+
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    bounds = np.array([[0, 1e10], [-0.1, 0.1]])
+    np.testing.assert_equal(yj_transformer.bounds, bounds)
+    first_guess = np.array([1.0, 0.0])
+    np.testing.assert_equal(yj_transformer.first_guess, first_guess)
+
+
 @pytest.mark.parametrize(
     "coeffs, t, expected",
     [
