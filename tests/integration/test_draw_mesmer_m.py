@@ -97,7 +97,8 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     ).samples
 
     # invert the power transformation
-    local_variability_inverted = mesmer.stats.inverse_yeo_johnson_transform(
+    yj_transformer = mesmer.stats.YeoJohnsonTransformer("logistic")
+    local_variability_inverted = yj_transformer.inverse_transform(
         tas_stacked_y.tas,
         local_variability_transformed,
         pt_params.lambda_coeffs,

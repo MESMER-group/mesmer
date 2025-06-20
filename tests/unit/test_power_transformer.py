@@ -4,11 +4,11 @@ import scipy as sp
 import xarray as xr
 from sklearn.preprocessing import PowerTransformer
 
-import mesmer
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.stats._power_transformer import (
+    YeoJohnsonTransformer,
     _yeo_johnson_inverse_transform_np,
-    _yeo_johnson_optimize_lambda_np,
+    # _yeo_johnson_optimize_lambda_np,
     _yeo_johnson_transform_np,
 )
 from mesmer.testing import trend_data_2D
@@ -30,7 +30,8 @@ from mesmer.testing import trend_data_2D
 )
 def test_lambda_function(coeffs, t, expected):
 
-    result = mesmer.stats.lambda_function(coeffs, t)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    result = yj_transformer.lambda_function(coeffs, t)
     np.testing.assert_allclose(result, expected)
 
 
@@ -42,7 +43,8 @@ def test_yeo_johnson_optimize_lambda_np_normal():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
-    result = _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_T)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    result = yj_transformer._optimize_lambda_np(monthly_residuals, yearly_T)
     # to test viability
     expected = np.array([1, 0])
     np.testing.assert_allclose(result, expected, atol=1e-2)
@@ -71,8 +73,9 @@ def test_yeo_johnson_optimize_lambda_np(skew, bounds):
     yearly_T = np.random.randn(n_years)
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
-    coeffs = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
-    lmbda = mesmer.stats.lambda_function(coeffs, yearly_T)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    coeffs = yj_transformer._optimize_lambda_np(local_monthly_residuals, yearly_T)
+    lmbda = yj_transformer.lambda_function(coeffs, yearly_T)
     transformed = _yeo_johnson_transform_np(local_monthly_residuals, lmbda)
 
     assert (lmbda >= bounds[0]).all() & (lmbda <= bounds[1]).all()
@@ -181,8 +184,9 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     yearly_T = np.ones(n_ts) * yearly_T_value
     local_monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
 
-    ourfit = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
-    result = mesmer.stats.lambda_function(ourfit, yearly_T_value)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    ourfit = yj_transformer._optimize_lambda_np(local_monthly_residuals, yearly_T)
+    result = yj_transformer.lambda_function(ourfit, yearly_T_value)
     sklearnfit = PowerTransformer(method="yeo-johnson", standardize=False).fit(
         local_monthly_residuals.reshape(-1, 1), yearly_T.reshape(-1, 1)
     )
@@ -242,16 +246,15 @@ def test_power_transformer_xr(stack):
     month = np.arange(1, 13)
     expected_month = xr.DataArray(month, coords={"month": month}, name="month")
 
+    # 0. create instance
+    yj_transformer = YeoJohnsonTransformer("logistic")
+
     # 1 - fitting
-    pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
-        yearly_T, monthly_residuals
-    )
+    pt_coefficients = yj_transformer.fit(yearly_T, monthly_residuals)
     # 2 - transformation
-    transformed = mesmer.stats.yeo_johnson_transform(
-        yearly_T, monthly_residuals, pt_coefficients
-    )
+    transformed = yj_transformer.transform(yearly_T, monthly_residuals, pt_coefficients)
     # 3 - back-transformation
-    inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
+    inverse_transformed = yj_transformer.inverse_transform(
         yearly_T, transformed.transformed, pt_coefficients
     )
 
