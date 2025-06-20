@@ -90,7 +90,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     )
 
     # train power transformer
-    yj_transformer = mesmer.stats.YeoJohnsonTransformer()
+    yj_transformer = mesmer.stats.YeoJohnsonTransformer("logistic")
     pt_coefficients = yj_transformer.fit(
         tas_stacked_y.tas,
         harmonic_model_fit.residuals,
