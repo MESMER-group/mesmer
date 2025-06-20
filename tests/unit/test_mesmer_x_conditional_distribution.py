@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.core.utils import _check_dataset_form, _check_dataarray_form
+import mesmer.mesmer_x._conditional_distribution
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.mesmer_x import (
     ConditionalDistribution,
     ConditionalDistributionOptions,
     Expression,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
-import mesmer.mesmer_x._conditional_distribution
 
 
 # fixture for default distribtion
@@ -178,6 +178,7 @@ def test_ConditionalDistribution_smooth_fg_error(default_distrib):
             option_smooth_coeffs=True,
         )
 
+
 def test_ConditionalDistribution_smooth_fg(default_distrib):
     rng = np.random.default_rng(0)
     n = 251
@@ -189,7 +190,7 @@ def test_ConditionalDistribution_smooth_fg(default_distrib):
 
     targ = trend_data_2D(n_timesteps=n, n_lat=n_lat, n_lon=n_lon)
     targ_dat = default_distrib.expression.distrib.rvs(
-        loc=c1 * pred, scale=c2, size=(n_lon*n_lat, n), random_state=rng
+        loc=c1 * pred, scale=c2, size=(n_lon * n_lat, n), random_state=rng
     )
     targ = targ.copy(data=targ_dat)
 
@@ -197,8 +198,11 @@ def test_ConditionalDistribution_smooth_fg(default_distrib):
 
     first_guess = xr.Dataset()
     for coef in default_distrib.expression.coefficients_list:
-        first_guess[coef] = xr.DataArray(np.zeros(n_lon*n_lat), dims="cells",
-                                         coords={"cells": np.arange(n_lon*n_lat)})
+        first_guess[coef] = xr.DataArray(
+            np.zeros(n_lon * n_lat),
+            dims="cells",
+            coords={"cells": np.arange(n_lon * n_lat)},
+        )
 
     weights = xr.ones_like(targ)
     weights.name = "weight"
@@ -216,6 +220,7 @@ def test_ConditionalDistribution_smooth_fg(default_distrib):
 
     _check_dataset_form(result, "coefficients", required_vars=["c1", "c2"])
 
+
 def test_smoothen_first_guess():
     n = 251
     n_lon = 3
@@ -227,21 +232,36 @@ def test_smoothen_first_guess():
     first_guess = xr.Dataset()
     coeff1 = np.array([1.0, 2.0, 30.0, 4.0, 5.0, 6.0])
     coeff2 = np.array([0.1, -0.2, 0.3, 0.4, -0.5, 0.6])
-    first_guess["c1"] = xr.DataArray(coeff1, dims="cells",
-                                     coords={"cells": np.arange(n_lon*n_lat)})
-    first_guess["c2"] = xr.DataArray(coeff2, dims="cells",
-                                     coords={"cells": np.arange(n_lon*n_lat)})
-    
+    first_guess["c1"] = xr.DataArray(
+        coeff1, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
+    )
+    first_guess["c2"] = xr.DataArray(
+        coeff2, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
+    )
+
     smoothed_guess = mesmer.mesmer_x._conditional_distribution._smoothen_first_guess(
-        first_guess, "cells", coords, 500)
-    
+        first_guess, "cells", coords, 500
+    )
+
     coeff1_exp = np.array([4.0, 4.0, 5.0, 4.0, 5.0, 5.0])
     coeff2_exp = np.array([0.1, 0.1, 0.3, 0.1, 0.1, 0.3])
 
     np.testing.assert_equal(smoothed_guess["c1"].data, coeff1_exp)
     np.testing.assert_equal(smoothed_guess["c2"].data, coeff2_exp)
-    _check_dataarray_form(smoothed_guess["c1"], "c1", required_dims=["cells"], required_coords={"cells": np.arange(n_lon*n_lat)}, shape=(n_lon*n_lat,))
-    _check_dataarray_form(smoothed_guess["c2"], "c2", required_dims=["cells"], required_coords={"cells": np.arange(n_lon*n_lat)}, shape=(n_lon*n_lat,))
+    _check_dataarray_form(
+        smoothed_guess["c1"],
+        "c1",
+        required_dims=["cells"],
+        required_coords={"cells": np.arange(n_lon * n_lat)},
+        shape=(n_lon * n_lat,),
+    )
+    _check_dataarray_form(
+        smoothed_guess["c2"],
+        "c2",
+        required_dims=["cells"],
+        required_coords={"cells": np.arange(n_lon * n_lat)},
+        shape=(n_lon * n_lat,),
+    )
 
 
 def test_smoothen_first_guess_nans():
@@ -254,13 +274,21 @@ def test_smoothen_first_guess_nans():
 
     first_guess = xr.Dataset()
     coeff1 = np.array([1.0, 2.0, np.nan, 4.0, 5.0, 6.0])
-    first_guess["c1"] = xr.DataArray(coeff1, dims="cells",
-                                    coords={"cells": np.arange(n_lon*n_lat)})
-    
+    first_guess["c1"] = xr.DataArray(
+        coeff1, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
+    )
+
     smoothed_guess = mesmer.mesmer_x._conditional_distribution._smoothen_first_guess(
-        first_guess, "cells", coords, 100)
-    
+        first_guess, "cells", coords, 100
+    )
+
     coeff1_exp = np.array([1.0, 2.0, 5.0, 4.0, 5.0, 6.0])
 
     np.testing.assert_equal(smoothed_guess["c1"].data, coeff1_exp)
-    _check_dataarray_form(smoothed_guess["c1"], "c1", required_dims=["cells"], required_coords={"cells": np.arange(n_lon*n_lat)}, shape=(n_lon*n_lat,))
+    _check_dataarray_form(
+        smoothed_guess["c1"],
+        "c1",
+        required_dims=["cells"],
+        required_coords={"cells": np.arange(n_lon * n_lat)},
+        shape=(n_lon * n_lat,),
+    )

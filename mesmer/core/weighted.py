@@ -344,7 +344,7 @@ def weighted_median(data, weights):
 
     weights = weights[~np.isnan(data)]
     data = data[~np.isnan(data)]
-    
+
     data, weights = np.asarray(data).squeeze(), np.asarray(weights).squeeze()
     s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
     midpoint = 0.5 * np.sum(s_weights)

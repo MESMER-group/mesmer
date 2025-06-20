@@ -2,6 +2,7 @@ import pathlib
 
 import pytest
 import xarray as xr
+from filefisher import FileFinder
 
 import mesmer
 from mesmer.mesmer_x import (
@@ -10,7 +11,7 @@ from mesmer.mesmer_x import (
     Expression,
     ProbabilityIntegralTransform,
 )
-from filefisher import FileFinder
+
 
 @pytest.mark.parametrize(
     ("scenario", "targ_var", "expr_name", "update_expected_files"),
@@ -94,7 +95,7 @@ def test_make_realisations_mesmer_x(
         esm=esm,
         scen=scenario,
     ).paths.pop()
-    
+
     distrib_orig = ConditionalDistribution.from_netcdf(distrib_file)
 
     local_ar_params = xr.open_dataset(local_ar_file)

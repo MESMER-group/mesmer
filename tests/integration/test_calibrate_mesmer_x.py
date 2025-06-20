@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import pytest
 import xarray as xr
+from filefisher import FileFinder
 
 import mesmer
 from mesmer.mesmer_x import (
@@ -11,8 +12,6 @@ from mesmer.mesmer_x import (
     Expression,
     ProbabilityIntegralTransform,
 )
-
-from filefisher import FileFinder
 
 
 @pytest.mark.parametrize(
@@ -82,7 +81,7 @@ def test_calibrate_mesmer_x(
     option_2ndfit,
     test_data_root_dir,
     update_expected_files,
-    outname
+    outname,
 ):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
@@ -173,7 +172,7 @@ def test_calibrate_mesmer_x(
             data_scen = xr.merge(data_scen)
             data[scen] = xr.DataTree(data_scen)
         return data
-    
+
     pred_data = load_data(fc_pred)
     targ_data = load_data(fc_targ)
 
@@ -195,12 +194,14 @@ def test_calibrate_mesmer_x(
     weights = mesmer.core.weighted.get_weights_density(pred_data=pred_data)
 
     # stacking
-    stacked_pred, stacked_targ, stacked_weights = mesmer.core.datatree.broadcast_and_stack_scenarios(
+    stacked_pred, stacked_targ, stacked_weights = (
+        mesmer.core.datatree.broadcast_and_stack_scenarios(
             predictors=pred_data,
             target=targ_data,
             weights=weights,
             member_dim="member",
         )
+    )
 
     # declaring analytical form of the conditional distribution
     expression = Expression(expr, expr_name)

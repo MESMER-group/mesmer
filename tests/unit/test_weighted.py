@@ -452,16 +452,15 @@ def test_weighted_median():
     np.testing.assert_equal(median, expected_median)
 
     data = np.array([1, 2, 3, 4])
-    weights = np.array([1., 1., 1., 1.])
+    weights = np.array([1.0, 1.0, 1.0, 1.0])
     median = mesmer.weighted.weighted_median(data, weights)
 
     expected_median = 2.5
     np.testing.assert_equal(median, expected_median)
 
-    data = np.array([1., 2., 3., np.nan, 4., 5.])
-    weights = np.array([1., 1., 1., 1., 1., 1.])
+    data = np.array([1.0, 2.0, 3.0, np.nan, 4.0, 5.0])
+    weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
     median = mesmer.weighted.weighted_median(data, weights)
     expected_median = 3.0
     np.testing.assert_equal(median, expected_median)
-
