@@ -4,7 +4,6 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
-import xarray as xr
 from scipy.optimize import basinhopping, shgo
 
 import mesmer.mesmer_x._distrib_checks as _distrib_checks

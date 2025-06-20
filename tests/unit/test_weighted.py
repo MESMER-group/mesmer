@@ -7,8 +7,8 @@ from packaging.version import Version
 
 import mesmer
 from mesmer.core.datatree import map_over_datasets
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import _convert
-from mesmer.core.utils import _check_dataset_form, _check_dataarray_form
 
 
 @overload
@@ -342,7 +342,7 @@ def test_create_equal_scenario_weights_from_datatree_checks():
 
 def test_get_weights_density():
     n = 3
-    
+
     weights = mesmer.weighted.get_weights_density(
         pred_data=np.arange(n),
     )
@@ -351,17 +351,21 @@ def test_get_weights_density():
 
 
 def test_get_weights_density_ds():
-    pred_data = xr.Dataset({
-        "predictor1": (("x", "y"), np.arange(9).reshape(3, 3)),
-        "predictor2": (("x", "y"), np.arange(9).reshape(3, 3)),
-    })
+    pred_data = xr.Dataset(
+        {
+            "predictor1": (("x", "y"), np.arange(9).reshape(3, 3)),
+            "predictor2": (("x", "y"), np.arange(9).reshape(3, 3)),
+        }
+    )
 
     weights = mesmer.weighted.get_weights_density(
         pred_data=pred_data,
     )
 
     _check_dataset_form(weights, "weights", required_vars=["weights"])
-    _check_dataarray_form(weights.weights, "weights", required_dims = ("x", "y"), shape=(3, 3))
+    _check_dataarray_form(
+        weights.weights, "weights", required_dims=("x", "y"), shape=(3, 3)
+    )
 
 
 def test_get_weights_density_dt():
@@ -383,16 +387,22 @@ def test_get_weights_density_dt():
         coords={"time": time_coord2, "member": member_coord2},
     )
 
-    pred_data = xr.DataTree.from_dict({
-        "scenario1": xr.Dataset({
-            "predictor1": arr1,
-            "predictor2": arr1,
-        }),
-        "scenario2": xr.Dataset({
-            "predictor1": arr2,
-            "predictor2": arr2,
-        }),
-    })
+    pred_data = xr.DataTree.from_dict(
+        {
+            "scenario1": xr.Dataset(
+                {
+                    "predictor1": arr1,
+                    "predictor2": arr1,
+                }
+            ),
+            "scenario2": xr.Dataset(
+                {
+                    "predictor1": arr2,
+                    "predictor2": arr2,
+                }
+            ),
+        }
+    )
 
     weights = mesmer.weighted.get_weights_density(
         pred_data=pred_data,
@@ -402,10 +412,14 @@ def test_get_weights_density_dt():
     scen2 = weights["scenario2"].to_dataset()
 
     _check_dataset_form(scen1, "weights", required_vars=["weights"])
-    _check_dataarray_form(scen1.weights, "weights", required_dims = ("time", "member"), shape=(nts1, nmem1))
-    
+    _check_dataarray_form(
+        scen1.weights, "weights", required_dims=("time", "member"), shape=(nts1, nmem1)
+    )
+
     _check_dataset_form(scen2, "weights", required_vars=["weights"])
-    _check_dataarray_form(scen2.weights, "weights", required_dims = ("time", "member"), shape=(nts2, nmem2))
+    _check_dataarray_form(
+        scen2.weights, "weights", required_dims=("time", "member"), shape=(nts2, nmem2)
+    )
 
 
 def test_weighted_median():

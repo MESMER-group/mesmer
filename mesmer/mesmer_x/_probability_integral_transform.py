@@ -84,7 +84,7 @@ class ProbabilityIntegralTransform:
             preds_orig,
             preds_targ,
             threshold_proba,
-            )
+        )
 
     @_datatree_wrapper
     def _transform(
@@ -94,7 +94,7 @@ class ProbabilityIntegralTransform:
             ds_pred_orig = xr.Dataset()
         if ds_preds_targ is None:
             ds_preds_targ = xr.Dataset()
-        
+
         # parameters of starting distribution
         params_orig = self.expression_orig.evaluate_params(
             self.coefficients_orig, ds_pred_orig, forced_shape=data[target_name].dims
@@ -116,5 +116,5 @@ class ProbabilityIntegralTransform:
         trans = self.expression_targ.distrib.ppf(cdf_data, **params_targ)
         return xr.Dataset(
             {target_name: (data[target_name].dims, trans)},
-             coords=data[target_name].coords,)
-        
+            coords=data[target_name].coords,
+        )

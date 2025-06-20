@@ -12,8 +12,8 @@ from mesmer.core.utils import _check_dataset_form
 from mesmer.core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.mesmer_x._first_guess import _FirstGuess
+from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.stats import gaspari_cohn
 
 
@@ -284,7 +284,6 @@ class ConditionalDistribution:
 
         self._coefficients = coefficients
 
-
     def find_first_guess(
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
@@ -366,7 +365,6 @@ class ConditionalDistribution:
         for i, coef in enumerate(self.expression.coefficients_list):
             out[coef] = result.isel(coefficient=i)
         return out.drop_vars("coefficient")
-    
 
     def _find_fg_np(
         self,
@@ -388,7 +386,6 @@ class ConditionalDistribution:
         )
 
         return fg._find_fg()
-
 
     def _smoothen_first_guess(
         self, target: xr.DataArray, first_guess: xr.Dataset, r_gasparicohn

@@ -3,7 +3,11 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper, collapse_datatree_into_dataset, map_over_datasets
+from mesmer.core.datatree import (
+    _datatree_wrapper,
+    collapse_datatree_into_dataset,
+    map_over_datasets,
+)
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -260,7 +264,7 @@ def get_weights_density(pred_data):
 
     def _weights(data):
         from scipy.stats import gaussian_kde
-        
+
         # representation with kernel-density estimate using gaussian kernels
         # NB: more stable than np.histogramdd that implies too many assumptions
         histo_kde = gaussian_kde(data)
@@ -270,17 +274,19 @@ def get_weights_density(pred_data):
 
         # preparing the output
         return (1 / density) / np.sum(1 / density)
-    
+
     if isinstance(pred_data, xr.DataTree):
         scens = list(pred_data.keys())
         preds = list(pred_data[scens[0]].data_vars)
         pred_dims = tuple(pred_data[scens[0]][preds[0]].dims)
 
         # reshaping data into array
-        # need an array where each predictor is a column in a np.array 
+        # need an array where each predictor is a column in a np.array
         # and all samples of that predictor is in one line
-        pred_ds = collapse_datatree_into_dataset(pred_data, dim="scen", coords="different", join="outer")
-        pred_stacked = pred_ds.stack(samples=pred_dims+("scen",)).dropna("samples")
+        pred_ds = collapse_datatree_into_dataset(
+            pred_data, dim="scen", coords="different", join="outer"
+        )
+        pred_stacked = pred_ds.stack(samples=pred_dims + ("scen",)).dropna("samples")
         array_pred = pred_stacked.to_array("predictor").values
         weights = _weights(array_pred)
 
@@ -298,7 +304,6 @@ def get_weights_density(pred_data):
 
         return weights
 
-
     elif isinstance(pred_data, xr.Dataset):
         preds = list(pred_data.data_vars)
         n_preds = len(preds)
@@ -310,20 +315,20 @@ def get_weights_density(pred_data):
 
         # get original shape back
         weights = weights.reshape(*pred_shape)
-        weights_ds = xr.Dataset({
-            "weights": xr.DataArray(
-                weights,
-                dims=pred_data[preds[0]].dims,
-                coords=pred_data[preds[0]].coords,
-            )
-        })
+        weights_ds = xr.Dataset(
+            {
+                "weights": xr.DataArray(
+                    weights,
+                    dims=pred_data[preds[0]].dims,
+                    coords=pred_data[preds[0]].coords,
+                )
+            }
+        )
         return weights_ds
-
 
     elif isinstance(pred_data, np.ndarray):
         array_pred = pred_data
         return _weights(array_pred)
-
 
 
 def weighted_median(data, weights):

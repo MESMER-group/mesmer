@@ -6,7 +6,6 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import collapse_datatree_into_dataset, map_over_datasets
 from mesmer.mesmer_x._expression import Expression
 
 

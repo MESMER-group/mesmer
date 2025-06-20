@@ -12,6 +12,7 @@ from mesmer.mesmer_x._first_guess import _FirstGuess as FirstGuess
 def expr():
     return Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
 
+
 @pytest.fixture
 def options():
     return ConditionalDistributionOptions()

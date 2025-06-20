@@ -125,9 +125,7 @@ def test_calibrate_mesmer_x(
 
     # stack datasets
     # weights
-    weights = mesmer.core.weighted.get_weights_density(
-        pred_data=pred_data
-    )
+    weights = mesmer.core.weighted.get_weights_density(pred_data=pred_data)
 
     # stacking
     stacked_pred, stacked_targ, stacked_weights = (
