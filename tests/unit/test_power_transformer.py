@@ -265,7 +265,7 @@ def test_power_transformer_wrong_lambda_function():
 
     lambda_coeffs.attrs = {"lambda_function": "not_logistic"}
 
-    err = "Passed `lambda_coeffs` fitted on a not_logistic lambda function"
+    err = "Passed `lambda_coeffs` fitted on a 'not_logistic' lambda function"
 
     with pytest.raises(ValueError, match=err):
         yj_transformer._assert_correct_lambda_function(lambda_coeffs)
