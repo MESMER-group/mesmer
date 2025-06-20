@@ -195,7 +195,7 @@ def test_calibrate_mesmer_x(
 
     # stacking
     stacked_pred, stacked_targ, stacked_weights = (
-        mesmer.core.datatree.broadcast_and_stack_scenarios(
+        mesmer.core.datatree.broadcast_and_pool_scen_ens(
             predictors=pred_data,
             target=targ_data,
             weights=weights,
