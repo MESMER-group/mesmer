@@ -144,6 +144,7 @@ class LinearRegression:
 
         return xr.Dataset({"prediction": prediction})
 
+    @_datatree_wrapper
     def residuals(
         self,
         predictors: dict[str, xr.DataArray] | xr.Dataset,
@@ -171,7 +172,7 @@ class LinearRegression:
 
         residuals = target - prediction.prediction
 
-        return residuals.rename("residuals")
+        return residuals
 
     @property
     def params(self):
