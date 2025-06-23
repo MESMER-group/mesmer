@@ -174,44 +174,18 @@ def _validate_coefficients(
         return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
 
 
-def _validate_data(data_pred, data_targ, data_weights):
+def _check_no_nan_no_inf(data, name):
     """
     check data for nans or infs
-
-    Parameters
-    ----------
-    data_pred
-        Predictors for the training sample.
-
-    data_targ
-        Target for the training sample.
-
-    data_weights
-        Weights for the training sample.
     """
 
-    def _assert_data_valid(data, name):
-        """check data for nans or infs
+    # checking for NaN values
+    if np.isnan(data).any():
+        raise ValueError(f"nan values in {name}")
 
-        Parameters
-        ----------
-        data : array-like
-            Data to check
-        name : str
-            Name to use in error message
-        """
-        # checking for NaN values
-        if np.isnan(data).any():
-            raise ValueError(f"nan values in {name}")
-
-        # checking for infinite values
-        if np.isinf(data).any():
-            raise ValueError(f"infinite values in {name}")
-
-    if data_pred is not None:
-        _assert_data_valid(data_pred, "predictors")
-    _assert_data_valid(data_targ, "target")
-    _assert_data_valid(data_weights, "weights")
+    # checking for infinite values
+    if np.isinf(data).any():
+        raise ValueError(f"infinite values in {name}")
 
 
 def _prepare_data(predictors, target, weights, first_guess=None):
