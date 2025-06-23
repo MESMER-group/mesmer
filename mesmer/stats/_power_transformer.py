@@ -156,14 +156,13 @@ def constant_lambda_function(
 
         \lambda = \xi_0
 
-
-    It ranges between 0 and 2.
-
     Parameters
     ----------
     coeffs : ndarray of shape (1,)
         Coefficients for the logistic function. Here :math:`\xi_0` directly corresponds
         to lambda.
+    local_yearly_T : ndarray of shape (n_years,)
+        Unused.
 
     Returns
     -------
