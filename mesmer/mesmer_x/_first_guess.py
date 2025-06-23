@@ -66,10 +66,10 @@ class _FirstGuess:
 
         predictor_names: list of str
             Names of the predictors as named in the `expression`.
-        
+
         data_targ: numpy array 1D of shape (n_samples,)
             Target for the training sample. Must be 1D, i.e. (n_samples,).
-        
+
         data_weights: numpy array 1D of shape (n_samples,)
             Weights for the training sample. Must be 1D, i.e. (n_samples,).
 
@@ -91,7 +91,7 @@ class _FirstGuess:
         self.func_first_guess = func_first_guess
 
         if data_pred is not None:
-            _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data") 
+            _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
         _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
         _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
 
@@ -105,7 +105,6 @@ class _FirstGuess:
             raise ValueError(
                 "If predictor_names is provided, data_pred must be provided as well."
             )
-            
 
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)

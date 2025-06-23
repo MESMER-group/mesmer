@@ -50,13 +50,18 @@ def test_expression_wrong_function():
     ):
         Expression("norm(scale=5, loc=mean())", expr_name="name")
 
+
 def test_expression_wrong_bounds():
     with pytest.raises(
         ValueError, match=r"Provided wrong boundaries on coefficient, `notacoeff`"
     ):
-        Expression("norm(scale=5, loc=2)", expr_name="name", boundaries_coeffs={"notacoeff": [0,1]})
+        Expression(
+            "norm(scale=5, loc=2)",
+            expr_name="name",
+            boundaries_coeffs={"notacoeff": [0, 1]},
+        )
 
-    
+
 def test_expression_warn_scale_bound():
 
     with pytest.warns(
@@ -171,7 +176,10 @@ def test_expression_norm_math():
     bounds = {"scale": [0, inf]}
     assert expr.boundaries_params == bounds
 
-    param_expr = {"loc": "c1+(c2-c1)/(1+math.exp(c3*GMT_t+c4*GMT_tm1-c5))", "scale": "c6"}
+    param_expr = {
+        "loc": "c1+(c2-c1)/(1+math.exp(c3*GMT_t+c4*GMT_tm1-c5))",
+        "scale": "c6",
+    }
     assert expr.parameters_expressions == param_expr
 
     coeffs = ["c1", "c2", "c3", "c4", "c5", "c6"]

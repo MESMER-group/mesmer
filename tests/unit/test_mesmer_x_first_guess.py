@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 import scipy as sp
-from mesmer.mesmer_x._first_guess import _smooth_data
 
 from mesmer.mesmer_x import (
     ConditionalDistributionOptions,
@@ -10,7 +9,9 @@ from mesmer.mesmer_x import (
 from mesmer.mesmer_x._first_guess import (
     _finite_difference,
     _FirstGuess,
+    _smooth_data,
 )
+
 
 @pytest.fixture
 def expr():
@@ -50,7 +51,7 @@ def test_first_guess_init_easy(expr, options):
 
     assert fg.expression == expr
     assert fg.options == options
-    assert fg.func_first_guess == None
+    assert fg.func_first_guess is None
     assert fg.predictor_names == ["tas"]
     np.testing.assert_equal(fg.fg_coeffs, fg_coeffs)
     np.testing.assert_equal(fg.data_pred["tas"], pred)
@@ -58,7 +59,7 @@ def test_first_guess_init_easy(expr, options):
     assert fg.l_smooth == 5
     np.testing.assert_equal(fg.smooth_pred["tas"], _smooth_data(pred, 5))
     np.testing.assert_equal(fg.smooth_targ, _smooth_data(targ, 5))
-    np.testing.assert_equal(fg.smooth_targ_dev_sq, (targ[5 : -5] - fg.smooth_targ) ** 2)
+    np.testing.assert_equal(fg.smooth_targ_dev_sq, (targ[5:-5] - fg.smooth_targ) ** 2)
     np.testing.assert_equal(fg.data_weights, weights)
 
 
@@ -80,8 +81,8 @@ def test_first_guess_init_fg_ceoffs_int(expr, options):
         predictor_names=["tas"],
     )
 
-    assert type(fg.fg_coeffs[0]) == np.float64
-    assert type(fg.fg_coeffs[0]) == np.float64
+    assert type(fg.fg_coeffs[0]) is np.float64
+    assert type(fg.fg_coeffs[0]) is np.float64
 
 
 def test_fg_init_errors_validate_data(expr, options):
@@ -130,12 +131,13 @@ def test_fg_init_errors_validate_data(expr, options):
             first_guess=np.array([1, 2]),
         )
 
+
 def test_fg_init_errors_fg_coeffs(expr, options):
-    n =15
+    n = 15
     with pytest.raises(
         ValueError, match="The provided first guess does not have the correct shape:"
     ):
-       _FirstGuess(
+        _FirstGuess(
             expr,
             options,
             data_pred=np.ones(n),
@@ -145,10 +147,12 @@ def test_fg_init_errors_fg_coeffs(expr, options):
             first_guess=np.array([1, 2, 3]),
         )
 
+
 def test_fg_init_errors_predictor_names(expr, options):
     n = 15
     with pytest.raises(
-        ValueError, match="If data_pred is provided, predictor_names must be provided as well."
+        ValueError,
+        match="If data_pred is provided, predictor_names must be provided as well.",
     ):
         _FirstGuess(
             expr,
@@ -161,7 +165,8 @@ def test_fg_init_errors_predictor_names(expr, options):
         )
 
     with pytest.raises(
-        ValueError, match="If predictor_names is provided, data_pred must be provided as well."
+        ValueError,
+        match="If predictor_names is provided, data_pred must be provided as well.",
     ):
         _FirstGuess(
             expr,
@@ -177,9 +182,7 @@ def test_fg_init_errors_predictor_names(expr, options):
 def test_fg_init_errors_number_of_preds(expr, options):
     n = 15
 
-    with pytest.raises(
-        ValueError, match="data_pred must be 1D or a 2D array"
-    ):
+    with pytest.raises(ValueError, match="data_pred must be 1D or a 2D array"):
         _FirstGuess(
             expr,
             options,
@@ -190,9 +193,7 @@ def test_fg_init_errors_number_of_preds(expr, options):
             first_guess=np.array([1, 2]),
         )
 
-    with pytest.raises(
-        ValueError, match="data_pred must be 1D or a 2D array"
-    ):
+    with pytest.raises(ValueError, match="data_pred must be 1D or a 2D array"):
         _FirstGuess(
             expr,
             options,
@@ -203,9 +204,7 @@ def test_fg_init_errors_number_of_preds(expr, options):
             first_guess=np.array([1, 2]),
         )
 
-    with pytest.raises(
-        ValueError, match="data_pred must be 1D or a 2D array"
-    ):
+    with pytest.raises(ValueError, match="data_pred must be 1D or a 2D array"):
         _FirstGuess(
             expr,
             options,
@@ -215,6 +214,7 @@ def test_fg_init_errors_number_of_preds(expr, options):
             data_weights=np.ones(n) / n,
             first_guess=np.array([1, 2]),
         )
+
 
 def test_first_guess_standard_normal():
     rng = np.random.default_rng(0)
@@ -778,6 +778,7 @@ def test_fg_fun_loc():
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution
 
+
 def test_fg_fun_loc_param_outside_bounds():
     rng = np.random.default_rng(0)
     n = 251
@@ -787,8 +788,11 @@ def test_fg_fun_loc_param_outside_bounds():
     targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
     weights = get_weights_uniform(targ)
 
-    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1",
-                            boundaries_params={"loc": (-1,1)})
+    expression = Expression(
+        "norm(loc=c1*__tas__, scale=c2)",
+        expr_name="exp1",
+        boundaries_params={"loc": (-1, 1)},
+    )
 
     fg = _FirstGuess(
         expression=expression,
@@ -802,6 +806,7 @@ def test_fg_fun_loc_param_outside_bounds():
 
     res = fg._fg_fun_loc(100)
     assert res == np.inf
+
 
 def test_fg_fun_scale():
     rng = np.random.default_rng(0)
@@ -863,8 +868,11 @@ def test_fg_fun_scale_param_outside_bounds():
     targ = rng.normal(loc=loc, scale=scale, size=n)
     weights = get_weights_uniform(targ)
 
-    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1",
-                            boundaries_params={"scale": (0.5, 1.5)})
+    expression = Expression(
+        "norm(loc=c1, scale=c2)",
+        expr_name="exp1",
+        boundaries_params={"scale": (0.5, 1.5)},
+    )
     fg = _FirstGuess(
         expression,
         ConditionalDistributionOptions(),
@@ -877,6 +885,7 @@ def test_fg_fun_scale_param_outside_bounds():
 
     res = fg._fg_fun_scale(100)
     assert res == np.inf
+
 
 # @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/582")
 def test_fg_fun_others():
@@ -925,6 +934,7 @@ def test_fg_fun_others():
 
     assert min_loss >= loss_at_truesolution
 
+
 def test_fg_fun_others_param_outside_bounds():
     rng = np.random.default_rng(0)
     n = 251
@@ -937,8 +947,11 @@ def test_fg_fun_others_param_outside_bounds():
     )
     weights = get_weights_uniform(targ)
 
-    expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1",
-                            boundaries_params={"a": (-2, 2)})
+    expression = Expression(
+        "truncnorm(loc=c1, scale=c2, a=c3, b=c4)",
+        expr_name="exp1",
+        boundaries_params={"a": (-2, 2)},
+    )
     fg = _FirstGuess(
         expression,
         ConditionalDistributionOptions(),

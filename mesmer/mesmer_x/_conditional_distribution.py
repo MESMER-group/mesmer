@@ -618,7 +618,6 @@ class ConditionalDistribution:
         _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
         _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
 
-
         # initialize
         quality_fit = []
 

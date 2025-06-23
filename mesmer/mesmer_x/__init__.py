@@ -3,9 +3,9 @@ from mesmer.mesmer_x._conditional_distribution import (
     ConditionalDistributionOptions,
 )
 from mesmer.mesmer_x._distrib_checks import (
+    _check_no_nan_no_inf,
     _prepare_data,
     _validate_coefficients,
-    _check_no_nan_no_inf,
 )
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._optimizers import (
