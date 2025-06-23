@@ -6,7 +6,6 @@
 import numpy as np
 import xarray as xr
 
-# TODO: to replace with outputs from PR #607
 from mesmer.core.geospatial import geodist_exact
 from mesmer.core.utils import _check_dataset_form
 from mesmer.core.weighted import weighted_median
