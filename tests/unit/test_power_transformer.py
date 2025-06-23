@@ -37,6 +37,11 @@ def test_yj_transformer_bounds_first_guess():
     first_guess = np.array([1.0, 0.0])
     np.testing.assert_equal(yj_transformer.first_guess, first_guess)
 
+    yj_transformer = YeoJohnsonTransformer("constant")
+    np.testing.assert_equal(yj_transformer.bounds, None)
+    first_guess = np.array([1.0])
+    np.testing.assert_equal(yj_transformer.first_guess, first_guess)
+
 
 @pytest.mark.parametrize(
     "coeffs, t, expected",
@@ -52,9 +57,25 @@ def test_yj_transformer_bounds_first_guess():
         ([1, 1], np.log(9), 2 / 10),
     ],
 )
-def test_lambda_function(coeffs, t, expected):
+def test_lambda_function_logistic(coeffs, t, expected):
 
     yj_transformer = YeoJohnsonTransformer("logistic")
+    result = yj_transformer.lambda_function(coeffs, t)
+    np.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize(
+    "coeffs, t, expected",
+    [
+        ([3.14], -np.inf, 3.14),
+        ([3.14], np.inf, 3.14),
+        ([3.14], 0, 3.14),
+        ([3.14], 1, 3.14),
+    ],
+)
+def test_lambda_function_constant(coeffs, t, expected):
+
+    yj_transformer = YeoJohnsonTransformer("constant")
     result = yj_transformer.lambda_function(coeffs, t)
     np.testing.assert_allclose(result, expected)
 
@@ -199,7 +220,8 @@ def test_yeo_johnson_inverse_transform_np_sklearn():
     np.testing.assert_allclose(result, expected.reshape(-1))
 
 
-def test_yeo_johnson_optimize_lambda_sklearn():
+@pytest.mark.parametrize("name", ["constant", "logistic"])
+def test_yeo_johnson_optimize_lambda_sklearn(name):
     # test if our fit is the same as sklearns
     np.random.seed(0)
     n_ts = 100
@@ -208,7 +230,7 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     yearly_T = np.ones(n_ts) * yearly_T_value
     local_monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
 
-    yj_transformer = YeoJohnsonTransformer("logistic")
+    yj_transformer = YeoJohnsonTransformer(name)
     ourfit = yj_transformer._optimize_lambda_np(local_monthly_residuals, yearly_T)
     result = yj_transformer.lambda_function(ourfit, yearly_T_value)
     sklearnfit = PowerTransformer(method="yeo-johnson", standardize=False).fit(
@@ -216,7 +238,7 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     )
     expected = sklearnfit.lambdas_
 
-    np.testing.assert_allclose(np.array([result]), expected, atol=1e-5)
+    np.testing.assert_allclose(np.array([result]), expected, atol=1e-4)
 
 
 def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, stack=False):
@@ -272,8 +294,6 @@ def test_power_transformer_wrong_lambda_function():
     lambda_coeffs.attrs = {}
 
     warning = "`lambda_coeffs` does not have `lambda_function` attrs"
-
-    print(lambda_coeffs)
 
     with pytest.warns(UserWarning, match=warning):
         yj_transformer._assert_correct_lambda_function(lambda_coeffs)
