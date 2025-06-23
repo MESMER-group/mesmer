@@ -110,6 +110,15 @@ def test_weighted_mean_errors_wrong_weights(datatype):
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
         mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
 
+def test_weighted_mean_errors_wrong_weights_name():
+    data = data_lon_lat("Dataset")
+    weights = mesmer.weighted.lat_weights(data, "lat")
+    weights = weights.isel(lat=slice(None, -3))
+    weights = weights.rename({"weights": "wrong_name"})
+
+    with pytest.raises(ValueError, match="weights does not contain a variable named weights"):
+        mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
+
 
 def _test_weighted_mean(datatype, **kwargs):
     # not checking the actual values
