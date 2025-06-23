@@ -589,9 +589,6 @@ class _FirstGuess:
             # this coefficient on scale causes problem
             return np.inf
 
-        if isinstance(scale, np.ndarray):
-            scale = scale[self.l_smooth : -self.l_smooth]
-
         return np.abs(np.mean(self.smooth_targ_dev_sq - scale**2))
 
     def _fg_fun_others(self, x_others, margin=1.0e-3):

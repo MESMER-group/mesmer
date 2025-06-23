@@ -778,6 +778,30 @@ def test_fg_fun_loc():
     assert loss_at_toolow > loss_at_truesolution
     assert loss_at_toohigh > loss_at_truesolution
 
+def test_fg_fun_loc_param_outside_bounds():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+    c1 = 2.0
+    c2 = 0.1
+    targ = rng.normal(loc=c1 * pred, scale=c2, size=n)
+    weights = get_weights_uniform(targ)
+
+    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1",
+                            boundaries_params={"loc": (-1,1)})
+
+    fg = _FirstGuess(
+        expression=expression,
+        options=ConditionalDistributionOptions(),
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_default(2),
+        predictor_names=["tas"],
+    )
+
+    res = fg._fg_fun_loc(100)
+    assert res == np.inf
 
 def test_fg_fun_scale():
     rng = np.random.default_rng(0)
@@ -828,6 +852,32 @@ def test_fg_fun_scale():
     assert loss_at_toohigh > loss_at_truesolution
 
 
+def test_fg_fun_scale_param_outside_bounds():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+    loc = 0.0
+    scale = 1.0
+
+    # test normal
+    targ = rng.normal(loc=loc, scale=scale, size=n)
+    weights = get_weights_uniform(targ)
+
+    expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1",
+                            boundaries_params={"scale": (0.5, 1.5)})
+    fg = _FirstGuess(
+        expression,
+        ConditionalDistributionOptions(),
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=[loc, scale],
+    )
+
+    res = fg._fg_fun_scale(100)
+    assert res == np.inf
+
 # @pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/582")
 def test_fg_fun_others():
     rng = np.random.default_rng(0)
@@ -874,3 +924,30 @@ def test_fg_fun_others():
     )
 
     assert min_loss >= loss_at_truesolution
+
+def test_fg_fun_others_param_outside_bounds():
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.ones(n)
+    loc = 0
+    scale = 1
+    a, b = -1.2, 1.2  # nr of stds from loc at which to truncate
+    targ = sp.stats.truncnorm.rvs(
+        loc=loc, scale=scale, a=a, b=b, size=n, random_state=rng
+    )
+    weights = get_weights_uniform(targ)
+
+    expression = Expression("truncnorm(loc=c1, scale=c2, a=c3, b=c4)", expr_name="exp1",
+                            boundaries_params={"a": (-2, 2)})
+    fg = _FirstGuess(
+        expression,
+        ConditionalDistributionOptions(),
+        data_pred=pred,
+        predictor_names=["tas"],
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=np.array([loc, scale, a, b]),
+    )
+
+    res = fg._fg_fun_others([100, 1])
+    assert res == np.inf
