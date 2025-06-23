@@ -456,7 +456,9 @@ class ConditionalDistribution:
 
     @_ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
-        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
+        _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
+        _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
+        _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
 
         # basic check on first guess
         if fg is not None and len(fg) != len(self.expression.coefficients_list):
@@ -612,7 +614,10 @@ class ConditionalDistribution:
             raise TypeError("data_targ must be a numpy array.")
         if not isinstance(data_weights, np.ndarray):
             raise TypeError("data_weights must be a numpy array.")
-        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
+        _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
+        _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
+        _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
+
 
         # initialize
         quality_fit = []

@@ -86,7 +86,7 @@ def test_first_guess_init_fg_ceoffs_int(expr, options):
 
 def test_fg_init_errors_validate_data(expr, options):
     n = 15  # must be > 10 for smoothing
-    with pytest.raises(ValueError, match="nan values in predictors"):
+    with pytest.raises(ValueError, match="nan values in predictor data"):
         _FirstGuess(
             expr,
             options,
@@ -97,7 +97,7 @@ def test_fg_init_errors_validate_data(expr, options):
             first_guess=np.array([1, 2]),
         )
 
-    with pytest.raises(ValueError, match="infinite values in predictors"):
+    with pytest.raises(ValueError, match="infinite values in predictor data"):
         _FirstGuess(
             expr,
             options,
@@ -108,7 +108,7 @@ def test_fg_init_errors_validate_data(expr, options):
             first_guess=np.array([1, 2]),
         )
 
-    with pytest.raises(ValueError, match="nan values in target"):
+    with pytest.raises(ValueError, match="nan values in target data"):
         _FirstGuess(
             expr,
             options,
@@ -119,7 +119,7 @@ def test_fg_init_errors_validate_data(expr, options):
             first_guess=np.array([1, 2]),
         )
 
-    with pytest.raises(ValueError, match="infinite values in target"):
+    with pytest.raises(ValueError, match="infinite values in target data"):
         _FirstGuess(
             expr,
             options,
