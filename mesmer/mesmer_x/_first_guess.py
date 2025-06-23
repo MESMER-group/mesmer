@@ -60,11 +60,25 @@ class _FirstGuess:
         options: Options
             Options for the fit.
 
+        data_pred: numpy array 1D or 2D of shape (n_samples, n_preds)
+            Predictors for the training sample. If 2D, the first dimension must be the
+            number of predictors, and the second dimension the number of samples, i.e. (n_samples, n_preds).
+
+        predictor_names: list of str
+            Names of the predictors as named in the `expression`.
+        
+        data_targ: numpy array 1D of shape (n_samples,)
+            Target for the training sample. Must be 1D, i.e. (n_samples,).
+        
+        data_weights: numpy array 1D of shape (n_samples,)
+            Weights for the training sample. Must be 1D, i.e. (n_samples,).
+
         first_guess : numpy array, default: None
-            If provided, will use these values as first guess for the first guess.
+            If provided, will use these values as first guess for the first guess, must be one value
+            per coeff in expression.coefficients_list.
 
         func_first_guess : callable, default: None
-            If provided, and that 'first_guess' is not provided, will be called to
+            If provided, and `first_guess` is not provided, will be called to
             provide a first guess for the fit. This is an experimental feature, thus not
             tested.
             !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR
@@ -76,36 +90,34 @@ class _FirstGuess:
         self.expression = expression
         self.func_first_guess = func_first_guess
 
+        if data_pred is not None:
+            _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data") 
+        _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
+        _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
+
         if predictor_names is None:
+            if data_pred is not None:
+                raise ValueError(
+                    "If data_pred is provided, predictor_names must be provided as well."
+                )
             predictor_names = []
+        elif data_pred is None:
+            raise ValueError(
+                "If predictor_names is provided, data_pred must be provided as well."
+            )
+            
 
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)
 
-        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
-
-        # check first guess
-        self.fg_coeffs = np.copy(first_guess)
-        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
-        self.fg_coeffs = self.fg_coeffs.astype(float)
-        # check if the first guess is valid
-        if not len(self.fg_coeffs) == self.expression.n_coeffs:
-            raise ValueError(
-                "The provided first guess does not have the correct shape: "
-                f"expected {self.expression.n_coeffs} (number of coeffs in expression)",
-                f"got {len(self.fg_coeffs)}.",
-            )
-
         # ensuring format of numpy predictors
-        if n_preds:
+        if data_pred is not None:
             if data_pred.ndim == 1:
                 data_pred = data_pred[:, np.newaxis]
-            elif data_pred.ndim == 2:
-                if n_preds == data_pred.shape[0]:
-                    data_pred = data_pred.T
-            else:
+            if data_pred.ndim > 2 or data_pred.shape[1] != n_preds:
                 raise ValueError(
-                    "Numpy predictors should not have a shape greater than 2."
+                    "data_pred must be 1D or a 2D array with shape (n_samples, n_preds), "
+                    f"n_preds from `predictor_names` is {n_preds} but shape of data_pred is {data_pred.shape}."
                 )
 
         # build dictionary
@@ -128,6 +140,18 @@ class _FirstGuess:
         }
 
         self.data_weights = data_weights
+
+        # check first guess
+        self.fg_coeffs = np.copy(first_guess)
+        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
+        self.fg_coeffs = self.fg_coeffs.astype(float)
+        # check if the first guess is valid
+        if not len(self.fg_coeffs) == self.expression.n_coeffs:
+            raise ValueError(
+                "The provided first guess does not have the correct shape: "
+                f"expected {self.expression.n_coeffs} (number of coeffs in expression)",
+                f"got {len(self.fg_coeffs)}.",
+            )
 
     # suppress nan & inf warnings
     @_ignore_warnings

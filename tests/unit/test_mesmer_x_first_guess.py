@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import scipy as sp
+from mesmer.mesmer_x._first_guess import _smooth_data
 
 from mesmer.mesmer_x import (
     ConditionalDistributionOptions,
@@ -11,6 +12,15 @@ from mesmer.mesmer_x._first_guess import (
     _FirstGuess,
 )
 
+@pytest.fixture
+def expr():
+    return Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+
+
+@pytest.fixture
+def options():
+    return ConditionalDistributionOptions()
+
 
 def get_weights_uniform(data):
     return np.ones_like(data)
@@ -19,6 +29,192 @@ def get_weights_uniform(data):
 def fg_default(n_coeffs):
     return np.zeros(n_coeffs)
 
+
+def test_first_guess_init_easy(expr, options):
+    n = 251
+    pred = np.arange(n)
+    targ = np.random.normal(size=n)
+    weights = get_weights_uniform(targ)
+
+    fg_coeffs = fg_default(2)
+
+    fg = _FirstGuess(
+        expression=expr,
+        options=options,
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        predictor_names=["tas"],
+    )
+
+    assert fg.expression == expr
+    assert fg.options == options
+    assert fg.func_first_guess == None
+    assert fg.predictor_names == ["tas"]
+    np.testing.assert_equal(fg.fg_coeffs, fg_coeffs)
+    np.testing.assert_equal(fg.data_pred["tas"], pred)
+    np.testing.assert_equal(fg.data_targ, targ)
+    assert fg.l_smooth == 5
+    np.testing.assert_equal(fg.smooth_pred["tas"], _smooth_data(pred, 5))
+    np.testing.assert_equal(fg.smooth_targ, _smooth_data(targ, 5))
+    np.testing.assert_equal(fg.smooth_targ_dev_sq, (targ[5 : -5] - fg.smooth_targ) ** 2)
+    np.testing.assert_equal(fg.data_weights, weights)
+
+
+def test_first_guess_init_fg_ceoffs_int(expr, options):
+    n = 251
+    pred = np.arange(n).reshape(n, 1)
+    targ = np.random.normal(size=n)
+    weights = get_weights_uniform(targ)
+
+    fg_coeffs = np.array([np.int16(1), np.int16(2)])
+
+    fg = _FirstGuess(
+        expression=expr,
+        options=options,
+        data_pred=pred,
+        data_targ=targ,
+        data_weights=weights,
+        first_guess=fg_coeffs,
+        predictor_names=["tas"],
+    )
+
+    assert type(fg.fg_coeffs[0]) == np.float64
+    assert type(fg.fg_coeffs[0]) == np.float64
+
+
+def test_fg_init_errors_validate_data(expr, options):
+    n = 15  # must be > 10 for smoothing
+    with pytest.raises(ValueError, match="nan values in predictors"):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n) * np.nan,
+            predictor_names=["tas"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+    with pytest.raises(ValueError, match="infinite values in predictors"):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n) * np.inf,
+            predictor_names=["tas"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+    with pytest.raises(ValueError, match="nan values in target"):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n),
+            predictor_names=["tas"],
+            data_targ=np.ones(n) * np.nan,
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+    with pytest.raises(ValueError, match="infinite values in target"):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n),
+            predictor_names=["tas"],
+            data_targ=np.ones(n) * np.inf,
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+def test_fg_init_errors_fg_coeffs(expr, options):
+    n =15
+    with pytest.raises(
+        ValueError, match="The provided first guess does not have the correct shape:"
+    ):
+       _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n),
+            predictor_names=["tas"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2, 3]),
+        )
+
+def test_fg_init_errors_predictor_names(expr, options):
+    n = 15
+    with pytest.raises(
+        ValueError, match="If data_pred is provided, predictor_names must be provided as well."
+    ):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n),
+            predictor_names=None,
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+    with pytest.raises(
+        ValueError, match="If predictor_names is provided, data_pred must be provided as well."
+    ):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=None,
+            predictor_names=["tas"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+
+def test_fg_init_errors_number_of_preds(expr, options):
+    n = 15
+
+    with pytest.raises(
+        ValueError, match="data_pred must be 1D or a 2D array"
+    ):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones((n, 3)),
+            predictor_names=["tas", "tas2"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+    with pytest.raises(
+        ValueError, match="data_pred must be 1D or a 2D array"
+    ):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones((n, 2, 2)),
+            predictor_names=["tas", "tas2"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
+
+    with pytest.raises(
+        ValueError, match="data_pred must be 1D or a 2D array"
+    ):
+        _FirstGuess(
+            expr,
+            options,
+            data_pred=np.ones(n),
+            predictor_names=["tas", "tas2"],
+            data_targ=np.ones(n),
+            data_weights=np.ones(n) / n,
+            first_guess=np.array([1, 2]),
+        )
 
 def test_first_guess_standard_normal():
     rng = np.random.default_rng(0)
