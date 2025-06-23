@@ -357,7 +357,7 @@ class Expression:
 
             if coeff not in self.coefficients_list:
                 raise ValueError(
-                    f"Provided wrong boundaries on coefficient, {coeff}"
+                    f"Provided wrong boundaries on coefficient, `{coeff}`"
                     " does not exist in Expression"
                 )
 
