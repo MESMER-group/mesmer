@@ -56,7 +56,7 @@ class LinearRegression:
     @_datatree_wrapper
     def predict(
         self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.Dataset | xr.DataTree,
         *,
         exclude: str | set[str] | None = None,
         only: str | set[str] | None = None,
@@ -66,7 +66,7 @@ class LinearRegression:
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray | DataTree | xr.Dataset
+        predictors : dict of xr.DataArray | xr.Dataset | xr.DataTree
             Either a dict of ``DataArray`` objects used as predictors with predictor names as keys,
             or a ``xr.Dataset`` where each predictor is a ``DataArray``. Each predictor must be 1D
             and contain ``dim``.
@@ -147,30 +147,52 @@ class LinearRegression:
     @_datatree_wrapper
     def residuals(
         self,
-        predictors: dict[str, xr.DataArray] | xr.Dataset,
-        target: xr.DataArray,
-    ) -> xr.DataArray:
+        predictors: dict[str, xr.DataArray] | xr.Dataset | xr.DataTree,
+        target: xr.DataArray | xr.Dataset | xr.DataTree,
+    ) -> xr.DataArray | xr.Dataset | xr.DataTree:
         """
         Calculate the residuals of the fitted linear model
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray | xr.Dataset
+        predictors : dict of xr.DataArray | xr.Dataset | xr.DataTree
             A dict of DataArray objects used as predictors or a Dataset, having each
             predictor as a DataArray. Each predictor must be 1D and contain `dim`.
-        target : xr.DataArray
-            Target DataArray. Must be 2D and contain `dim`.
+        target : xr.DataArray  | xr.Dataset | xr.DataTree
+            Target to subtract the prediction from. Must be 2D and contain `dim`.
+
 
         Returns
         -------
-        residuals : xr.DataArray
+        residuals : xr.DataArray | xr.Dataset | xr.DataTree
             Returns residuals - the difference between the predicted values and target.
 
         """
 
+        # pass arguments positionally for datatree compatibiliry
+        return self._residuals(predictors, target)
+
+    @_datatree_wrapper
+    def _residuals(self, predictors, target):
+
+        is_dataset = isinstance(target, xr.Dataset)
+        if is_dataset:
+            if len(target.data_vars) != 1:
+                names = "', '".join(sorted(target.data_vars))
+                names = f" ('{names}')" if names else ""
+                msg = (
+                    "Expected 'target' to have exactly one `data_variable`, found "
+                    f"{len(target.data_vars)}{names}"
+                )
+                raise ValueError(msg)
+
+            (name,) = target.data_vars
+            target = target[name]
+
         prediction = self.predict(predictors)
 
         residuals = target - prediction.prediction
+        residuals = residuals.rename("residuals")
 
         return residuals
 

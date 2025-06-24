@@ -357,10 +357,10 @@ def test_lr_predict_datatree():
     )
     lr.params = params
 
-    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D()})
+    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D(seed=1)})
     scen2 = scen1 * 2
 
-    pred = xr.DataTree().from_dict({"scen1": scen1, "scen2": scen2})
+    pred = xr.DataTree.from_dict({"scen1": scen1, "scen2": scen2})
 
     result = lr.predict(pred)
 
@@ -369,6 +369,73 @@ def test_lr_predict_datatree():
 
     expected = xr.DataTree.from_dict({"scen1": expected1, "scen2": expected2})
     xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("as_datatree", (False, True))
+def test_lr_residuals_one_var(as_datatree):
+    pass
+
+    lr = mesmer.stats.LinearRegression()
+
+    # empty ds errors
+    target = xr.Dataset()
+
+    match = "Expected 'target' to have exactly one `data_variable`, found 0"
+    with pytest.raises(ValueError, match=match):
+        lr.residuals({}, target)
+
+    # ds with more than one var errors
+    target = xr.Dataset(data_vars={"a": 1, "b": 2})
+
+    match = (
+        r"Expected 'target' to have exactly one `data_variable`, found 2 \('a', 'b'\)"
+    )
+    with pytest.raises(ValueError, match=match):
+        lr.residuals({}, target)
+
+
+def test_lr_residuals_datatree():
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": 5,
+            "fit_intercept": True,
+            "tas": 3,
+            "tas2": 1,
+        }
+    )
+
+    lr.params = params
+
+    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D(seed=1)})
+    scen2 = scen1 * 2
+
+    pred = xr.DataTree.from_dict({"scen1": scen1, "scen2": scen2})
+
+    predicton1 = lr.predict(scen1)
+    predicton2 = lr.predict(scen2)
+
+    # slope=0 -> only the noise part
+    noise1 = trend_data_1D(slope=0, seed=14)
+    noise2 = trend_data_1D(slope=0, seed=41)
+
+    target = xr.DataTree.from_dict(
+        {"scen1": predicton1 + noise1, "scen2": predicton2 + noise2}
+    )
+
+    result = lr.residuals(pred, target)
+
+    expected = xr.DataTree.from_dict(
+        {
+            "scen1": xr.Dataset({"residuals": noise1}),
+            "scen2": xr.Dataset({"residuals": noise2}),
+        }
+    )
+
+    mesmer.datatree.map_over_datasets(xr.testing.assert_allclose, result, expected)
+
+    # =====================
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
