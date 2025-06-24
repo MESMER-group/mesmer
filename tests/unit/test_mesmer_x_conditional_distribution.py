@@ -166,6 +166,78 @@ def test_ConditionalDistribution_fit(default_distrib):
     np.testing.assert_allclose(default_distrib.coefficients.c2, c2, atol=0.0015)
 
 
+def test_ConditionalDistribution_func_optim_fcnll():
+    expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
+    options = ConditionalDistributionOptions(
+        options_optim={"type_fun_optim": "fcnll", "threshold_stopping_rule": 0.1,
+                       "ind_year_thres": 10, "exclude_trigger": True}
+    )
+    distrib = ConditionalDistribution(expr, options)
+
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+    targ = distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+    first_guess = xr.Dataset(
+        {"c1": c1, "c2": c2},
+    )
+
+    # Fit the distribution
+    distrib.fit(
+        predictors=pred,
+        target=targ,
+        first_guess=first_guess,
+        weights=weights,
+        sample_dim="time",
+    )
+
+    np.testing.assert_allclose(distrib.coefficients.c1, c1, atol=1.0e-4)
+    np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
+
+    # test with exclude_trigger False
+    options = ConditionalDistributionOptions(
+        options_optim={"type_fun_optim": "fcnll", "threshold_stopping_rule": 0.1,
+                       "ind_year_thres": 10, "exclude_trigger": False}
+    )
+    distrib = ConditionalDistribution(expr, options)
+    distrib.fit(
+        predictors=pred,
+        target=targ,
+        first_guess=first_guess,
+        weights=weights,
+        sample_dim="time",
+    )
+
+    np.testing.assert_allclose(distrib.coefficients.c1, c1, atol=1.0e-4)
+    np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
+
+
+    # test with wrong optimization function
+    options = ConditionalDistributionOptions(
+        options_optim={"type_fun_optim": "not an optimization function"}
+    )
+    distrib = ConditionalDistribution(expr, options)
+    with pytest.raises(
+        TypeError, match="Unknown type of optimization function:"
+    ):
+        
+        distrib.fit(
+            predictors=pred,
+            target=targ,
+            first_guess=first_guess,
+            weights=weights,
+            sample_dim="time",
+        )
+
+
 def test_ConditionalDistribution_fit_wrongshapefg(default_distrib):
     rng = np.random.default_rng(0)
     n = 251
