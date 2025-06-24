@@ -56,7 +56,7 @@ class LinearRegression:
     @_datatree_wrapper
     def predict(
         self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.Dataset | xr.DataTree,
         *,
         exclude: str | set[str] | None = None,
         only: str | set[str] | None = None,
@@ -146,9 +146,9 @@ class LinearRegression:
 
     def residuals(
         self,
-        predictors: dict[str, xr.DataArray] | xr.Dataset,
-        target: xr.DataArray,
-    ) -> xr.DataArray:
+        predictors: dict[str, xr.DataArray] | xr.Dataset | xr.DataTree,
+        target: xr.DataArray | xr.Dataset | xr.DataTree,
+    ) -> xr.DataArray | xr.Dataset | xr.DataTree:
         """
         Calculate the residuals of the fitted linear model
 
@@ -163,7 +163,7 @@ class LinearRegression:
 
         Returns
         -------
-        residuals : xr.DataArray
+        residuals : xr.DataArray | xr.Dataset | xr.DataTree
             Returns residuals - the difference between the predicted values and target.
 
         """
