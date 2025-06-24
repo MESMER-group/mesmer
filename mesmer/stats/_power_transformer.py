@@ -146,8 +146,34 @@ def logistic_lambda_function(
     return 2 / (1 + coeffs[0] * np.exp(local_yearly_T * coeffs[1]))
 
 
+def constant_lambda_function(
+    coeffs: np.ndarray, local_yearly_T: np.ndarray
+) -> np.ndarray:
+    r"""Use logistic function to calculate lambda depending on the local yearly
+    values. The function is defined as
+
+    .. math::
+
+        \lambda = \xi_0
+
+    Parameters
+    ----------
+    coeffs : ndarray of shape (1,)
+        Coefficients for the logistic function. Here :math:`\xi_0` directly corresponds
+        to lambda.
+    local_yearly_T : ndarray of shape (n_years,)
+        Unused.
+
+    Returns
+    -------
+    lambdas : ndarray of float of shape (n_years,)
+        The parameters of the power transformation for each gridcell and month
+    """
+    return coeffs[0]
+
+
 class YeoJohnsonTransformer:
-    def __init__(self, name: Literal["logistic"]):
+    def __init__(self, name: Literal["constant", "logistic"]):
         """Apply a Yeo-Johnson Power Transformer to make data more Gaussian
 
         In contrast to sklearn's PowerTransformer makes the parameter ``lambdas``
@@ -167,6 +193,10 @@ class YeoJohnsonTransformer:
             self.lambda_function = logistic_lambda_function
             self.bounds = np.array([[0, 1e10], [-0.1, 0.1]])
             self.first_guess = np.array([1.0, 0.0])
+        elif name == "constant":
+            self.lambda_function = constant_lambda_function
+            self.bounds = None
+            self.first_guess = np.array([1.0])
         else:
             raise ValueError(f"No YeoJohnson transformer with the name '{name}' exists")
 
