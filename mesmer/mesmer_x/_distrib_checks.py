@@ -4,6 +4,7 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
+import xarray as xr
 
 from mesmer.mesmer_x._expression import Expression
 
@@ -99,7 +100,6 @@ def _validate_coefficients(
     expression: Expression
         Expression to validate the coefficients for.
 
-
     data_pred : numpy array 1D
         Predictors for the training sample.
 
@@ -123,52 +123,48 @@ def _validate_coefficients(
     params_in_bounds : bool
         True if the params are within conditional_distrib.expression.boundaries_params
 
-    params_in_support : boolean
+    params_in_support : bool
         True if parameters are within conditional_distrib.expression.boundaries_params and within the support of the distribution.
         False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
 
-    test_proba : boolean
+    test_proba : bool
         Only tested if conditional_distrib.threshold_min_proba is not None.
         True if the probability of the target samples for the given coefficients
         is above conditional_distrib.threshold_min_proba.
         False if not or if test_coeff or test_param or test_coeff is False.
 
-    params : distrib_cov
+    params : bool | np.ndarray
         The evaluated params for the given coefficients.
 
     """
 
     coeffs_in_bounds = _coeffs_in_bounds(expression, coefficients)
-
     # tests on coeffs show already that it won't work: fill in the rest with False
     if not coeffs_in_bounds:
         return coeffs_in_bounds, False, False, False, False
 
     # evaluate the distribution for the predictors and this iteration of coeffs
     params = expression._evaluate_params_fast(coefficients, data_pred)
+    
     # test for the validity of the parameters
     params_in_bounds = _params_in_bounds(expression, params)
-
-    # tests on params show already that it won't work: fill in the rest with False
+    # tests on params show that it won't work: fill in the rest with False
     if not params_in_bounds:
         return coeffs_in_bounds, params_in_bounds, False, False, False
 
     # test for the support of the distribution
     params_in_support = _params_in_distr_support(expression, params, data_targ)
-
-    # tests on params show already that it won't work: fill in the rest with False
+    # tests on params show that it won't work: fill in the rest with False
     if not params_in_support:
         return coeffs_in_bounds, params_in_bounds, params_in_support, False, False
 
     # test for the probability of the values
     if threshold_min_proba is None:
         return coeffs_in_bounds, params_in_bounds, params_in_support, True, params
-
     else:
         test_proba = _test_proba_value(
             expression, threshold_min_proba, params, data_targ
         )
-
         # return values for each test and the evaluated distribution
         return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
 
