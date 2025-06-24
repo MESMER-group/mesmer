@@ -4,7 +4,6 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
-import xarray as xr
 
 from mesmer.mesmer_x._expression import Expression
 
@@ -146,7 +145,7 @@ def _validate_coefficients(
 
     # evaluate the distribution for the predictors and this iteration of coeffs
     params = expression._evaluate_params_fast(coefficients, data_pred)
-    
+
     # test for the validity of the parameters
     params_in_bounds = _params_in_bounds(expression, params)
     # tests on params show that it won't work: fill in the rest with False

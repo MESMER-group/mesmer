@@ -169,8 +169,12 @@ def test_ConditionalDistribution_fit(default_distrib):
 def test_ConditionalDistribution_func_optim_fcnll():
     expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
     options = ConditionalDistributionOptions(
-        options_optim={"type_fun_optim": "fcnll", "threshold_stopping_rule": 0.1,
-                       "ind_year_thres": 10, "exclude_trigger": True}
+        options_optim={
+            "type_fun_optim": "fcnll",
+            "threshold_stopping_rule": 0.1,
+            "ind_year_thres": 10,
+            "exclude_trigger": True,
+        }
     )
     distrib = ConditionalDistribution(expr, options)
 
@@ -204,8 +208,12 @@ def test_ConditionalDistribution_func_optim_fcnll():
 
     # test with exclude_trigger False
     options = ConditionalDistributionOptions(
-        options_optim={"type_fun_optim": "fcnll", "threshold_stopping_rule": 0.1,
-                       "ind_year_thres": 10, "exclude_trigger": False}
+        options_optim={
+            "type_fun_optim": "fcnll",
+            "threshold_stopping_rule": 0.1,
+            "ind_year_thres": 10,
+            "exclude_trigger": False,
+        }
     )
     distrib = ConditionalDistribution(expr, options)
     distrib.fit(
@@ -219,16 +227,13 @@ def test_ConditionalDistribution_func_optim_fcnll():
     np.testing.assert_allclose(distrib.coefficients.c1, c1, atol=1.0e-4)
     np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
 
-
     # test with wrong optimization function
     options = ConditionalDistributionOptions(
         options_optim={"type_fun_optim": "not an optimization function"}
     )
     distrib = ConditionalDistribution(expr, options)
-    with pytest.raises(
-        TypeError, match="Unknown type of optimization function:"
-    ):
-        
+    with pytest.raises(TypeError, match="Unknown type of optimization function:"):
+
         distrib.fit(
             predictors=pred,
             target=targ,

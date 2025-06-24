@@ -25,7 +25,7 @@ def _minimize(
     custom minimize function.
 
     First tries with method_fit.
-    
+
     A second fit is performed either if
     - the first fit failed and option_NelderMead is set to "fail_run"
     - or if option_NelderMead is set to "best_run", regardless if the first fit succeded.
@@ -123,7 +123,7 @@ def _func_optim(
                 pp_arr = params[pp] * np.ones_like(ind_data_ok)
                 params_ok[pp] = pp_arr[ind_data_ok]
                 params_stopped[pp] = pp_arr[ind_data_stopped]
-        
+
         nll = _neg_loglike(
             expression,
             data_targ[ind_data_ok],
@@ -193,14 +193,12 @@ def _stopping_rule(
     return ind_data_ok, ind_data_stopped
 
 
-def _fullcond_thres(
-    expression: Expression, data_targ, params, data_weights
-):
+def _fullcond_thres(expression: Expression, data_targ, params, data_weights):
     # calculating 2nd term for full conditional of the NLL
     # fc1 = distrib.logcdf(conditional_distrib.data_targ)
     fc2 = expression.distrib.sf(data_targ, **params)
 
-    return np.log(np.sum((data_weights * fc2)))
+    return np.log(np.sum(data_weights * fc2))
 
 
 def _bic(expression, data_targ, params, data_weights):
