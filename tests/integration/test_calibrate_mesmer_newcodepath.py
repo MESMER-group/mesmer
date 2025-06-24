@@ -234,24 +234,9 @@ def test_calibrate_mesmer(
 
     # train local variability module
     # train local AR process
-    tas_stacked_residuals = local_forced_response_lr.residuals(
-        predictors=predictors_stacked, target=target_stacked.tas
-    )
+    dt_resids = local_forced_response_lr.residuals(predictors=predictors, target=target)
 
-    tas_un_stacked_residuals = tas_stacked_residuals.set_index(
-        sample=("time", "member", "scenario")
-    ).unstack("sample")
-
-    dt_resids = xr.DataTree()
-    for scenario in tas_un_stacked_residuals.scenario.values:
-        dt_resids[scenario] = xr.DataTree(
-            tas_un_stacked_residuals.sel(scenario=scenario)
-            .dropna("member", how="all")
-            .dropna("time")
-            .drop_vars("scenario")
-            .rename("residuals")
-            .to_dataset()
-        )
+    tas_stacked_residuals = mesmer.datatree.pool_scen_ens(dt_resids).residuals
 
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         dt_resids,
