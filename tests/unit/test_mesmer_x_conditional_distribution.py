@@ -311,7 +311,7 @@ def test_smoothen_first_guess():
         coeff2, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
     )
 
-    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smoothen_first_guess(
+    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
         first_guess, "cells", coords, 500
     )
 
@@ -350,7 +350,7 @@ def test_smoothen_first_guess_nans():
         coeff1, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
     )
 
-    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smoothen_first_guess(
+    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
         first_guess, "cells", coords, 100
     )
 
@@ -426,7 +426,7 @@ def test_ConditionalDistribution_find_first_guess_providedcoeffs(default_distrib
     np.testing.assert_allclose(first_guess.c2, c2, atol=0.0015)
 
 
-def test_ConditionalDistribution_eval_quality_fit(default_distrib):
+def test_ConditionalDistribution_compute_quality_scores(default_distrib):
     rng = np.random.default_rng(0)
     n = 251
     pred = np.linspace(1, n, n)
@@ -447,12 +447,12 @@ def test_ConditionalDistribution_eval_quality_fit(default_distrib):
 
     default_distrib._coefficients = coeffs
 
-    scores = default_distrib.eval_quality_fit(
+    scores = default_distrib.compute_quality_scores(
         predictors=pred,
         target=targ,
         weights=weights,
-        dim="time",
-        scores_fit=["func_optim", "nll", "bic", "crps"],
+        sample_dim="time",
+        scores=["func_optim", "nll", "bic", "crps"],
     )
 
     expected_scores = xr.DataArray(

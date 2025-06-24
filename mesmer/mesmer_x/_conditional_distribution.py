@@ -7,7 +7,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.core.geospatial import geodist_exact
-from mesmer.core.utils import _check_dataset_form
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
@@ -223,7 +223,7 @@ class ConditionalDistribution:
 
     def fit(
         self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.Dataset,
         target: xr.DataArray,
         first_guess: xr.Dataset,
         weights: xr.DataArray,
@@ -236,10 +236,9 @@ class ConditionalDistribution:
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray | DataTree | xr.Dataset
-            A dict of DataArray objects used as predictors or a DataTree, holding each
-            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
-            is a xr.Dataset, it must have each predictor as a DataArray.
+        predictors : dict of xr.DataArray | xr.Dataset
+            A dict of DataArray objects used as predictors or a Dataset, holding each
+            predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
         target : xr.DataArray
             Target DataArray.
         first_guess : xr.Dataset
@@ -266,175 +265,42 @@ class ConditionalDistribution:
         if option_smooth_coeffs is not None:
             raise ValueError("option_smooth_coeffs has been renamed to smooth_coeffs")
 
+        # basic check on first guess
+        n_coeffs_fg = len(first_guess.data_vars)
+        if n_coeffs_fg != self.expression.n_coeffs:
+            raise ValueError(
+                "The provided first guess does not have the correct number of coeffs, "
+                f"Expression suggests a number of {len(self.expression.coefficients_list)} coefficients, "
+                f"but `first_guess` has {n_coeffs_fg} data_variables."
+            )
+
+        first_guess_da = first_guess.to_dataarray(dim="coefficient")
+
+        predictors_da = _concatenate_predictors(predictors)
+        self.predictor_names = predictors_da.coords["predictor"].values.tolist()
+
+        _check_dataarray_form(target, "target", required_dims=[sample_dim])
+        _check_dataarray_form(weights, "weights", required_dims=[sample_dim])
+
+        _distrib_checks._check_no_nan_no_inf(predictors_da, "predictor data")
+        _distrib_checks._check_no_nan_no_inf(target, "target data")
+        _distrib_checks._check_no_nan_no_inf(weights, "weights")
+
         # checking for smoothing of coefficients, eg for 2nd round of fit
         if smooth_coeffs:
             gridcell_dim = (set(target.dims) - {sample_dim}).pop()
             coords = target[gridcell_dim].coords
-            first_guess = _smoothen_first_guess(
+            first_guess = _smooth_first_guess(
                 first_guess, gridcell_dim, coords, r_gasparicohn
             )
 
         # training
-        coefficients = self._fit_xr(
-            predictors, target, first_guess, weights, sample_dim
-        )
-        coefficients = coefficients.assign_attrs(
-            {
-                "expression_name": self.expression.expression_name,
-                "expression": self.expression.expression,
-            }
-        )  # add expression as attribute
-
-        self._coefficients = coefficients
-
-    def find_first_guess(
-        self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
-        target: xr.DataArray,
-        weights: xr.DataArray,
-        sample_dim: str = "sample",
-        first_guess: xr.Dataset | None = None,
-    ):
-        """
-        Find a first guess for all coefficients of a conditional distribution for each grid point.
-
-        Parameters
-        ----------
-        conditional_distrib : ConditionalDistribution
-            Conditional distribution object to find the first guess for.
-        predictors : dict of xr.DataArray | DataTree | xr.Dataset
-            A dict of DataArray objects used as predictors or a DataTree, holding each
-            predictor in a leaf. Each predictor must be 1D and contain `sample_dim`. If predictors
-            is a xr.Dataset, it must have each predictor as a DataArray.
-        target : xr.DataArray
-            Target DataArray, contains at least `sample_dim`.
-        weights : xr.DataArray.
-            Individual weights for each sample, must be 1D along `sample_dim`.
-        sample_dim : str
-            Dimension along which to fit the first guess.
-        first_guess : xr.Dataset, default: None
-            If provided, will use these values as first guess for the first guess. If None,
-            will use all zeros. Must contain the first guess for each coefficient in a
-            DataArray with the name of the coefficient.
-
-        Returns
-        -------
-        :obj:`xr.Dataset`
-            Dataset of first guess for each coefficient of the conditional distribution as a
-            data variable with the name of the coefficient.
-        """
-        # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
-
-        # make fg with zeros if none
-        if first_guess is None:
-            first_guess = xr.Dataset()
-            fg_dims = set(target.dims) - {sample_dim}
-            fg_size = [target.sizes[dim] for dim in fg_dims]
-            for coef in self.expression.coefficients_list:
-                first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
-
-        # preparing data
-        data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore
-            predictors, target, weights, first_guess
-        )
-
-        # NOTE: extremely important that the order is the right one
-        predictor_names = data_pred.coords["predictor"].values.tolist()
-
-        # search for each gridpoint
-        result = xr.apply_ufunc(
-            self._find_fg_np,
-            data_pred,
-            data_targ,
-            data_weights,
-            first_guess,
-            kwargs={
-                "predictor_names": predictor_names,
-            },
-            input_core_dims=[
-                [sample_dim, "predictor"],
-                [sample_dim],
-                [sample_dim],
-                ["coefficient"],
-            ],
-            output_core_dims=[["coefficient"]],
-            vectorize=True,
-            dask="parallelized",
-            output_dtypes=[float],
-        )
-
-        # creating a dataset with the coefficients
-        out = xr.Dataset()
-        for i, coef in enumerate(self.expression.coefficients_list):
-            out[coef] = result.isel(coefficient=i)
-        return out.drop_vars("coefficient")
-
-    def _find_fg_np(
-        self,
-        data_pred,
-        data_targ,
-        data_weights,
-        first_guess,
-        predictor_names,
-    ):
-
-        fg = _FirstGuess(
-            self.expression,
-            self.options,
-            data_pred,
-            predictor_names,
-            data_targ,
-            data_weights,
-            first_guess,
-        )
-
-        return fg._find_fg()
-
-    def _fit_xr(
-        self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
-        target: xr.DataArray,
-        first_guess: xr.Dataset,
-        weights: xr.DataArray,
-        sample_dim: str,
-    ) -> xr.Dataset:
-        """
-        xarray wrapper to fit over all gridpoints.
-
-        Parameters
-        ----------
-        predictors : dict of xr.DataArray | DataTree | xr.Dataset
-            A dict of DataArray objects used as predictors or a DataTree, holding each
-            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
-            is a xr.Dataset, it must have each predictor as a DataArray.
-        target : xr.DataArray
-            Target DataArray.
-        first_guess : xr.Dataset
-            First guess for the coefficients.
-        sample_dim : str
-            Dimension along which to fit the distribution.
-        weights : xr.DataArray.
-            Individual weights for each sample.
-
-        Returns
-        -------
-        :obj:`xr.Dataset`
-            Dataset of result of optimization (gridpoint, coefficient)
-        """
-
-        # shaping inputs
-        data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore
-            predictors, target, weights, first_guess
-        )
-        self.predictor_names = data_pred.coords["predictor"].values
-
-        # search for each gridpoint
         result = xr.apply_ufunc(
             self._fit_np,
-            data_pred,
-            data_targ,
-            first_guess,
-            data_weights,
+            predictors_da,
+            target,
+            first_guess_da,
+            weights,
             input_core_dims=[
                 [sample_dim, "predictor"],
                 [sample_dim],
@@ -446,26 +312,29 @@ class ConditionalDistribution:
             dask="parallelized",
             output_dtypes=[float],
         )
-        # creating a dataset with the coefficients
-        out = xr.Dataset()
-        for i, coef in enumerate(self.expression.coefficients_list):
-            out[coef] = result.isel(coefficient=i)
 
-        return out.drop_vars("coefficient")
+        # creating a dataset with the coefficients
+        coefficients = xr.Dataset()
+        for i, coef in enumerate(self.expression.coefficients_list):
+            coefficients[coef] = result.isel(coefficient=i)
+
+        coefficients = coefficients.drop_vars("coefficient")
+
+        # add expression as attribute
+        coefficients = coefficients.assign_attrs(
+            {
+                "expression_name": self.expression.expression_name,
+                "expression": self.expression.expression,
+            }
+        )
+
+        self._coefficients = coefficients
 
     @_ignore_warnings  # suppress nan & inf warnings
     def _fit_np(self, data_pred, data_targ, fg, data_weights):
-        _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
-        _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
-        _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
-
-        # basic check on first guess
-        if fg is not None and len(fg) != len(self.expression.coefficients_list):
-            raise ValueError(
-                "The provided first guess does not have the correct number of coeffs, "
-                f"Expression suggests a number of {len(self.expression.coefficients_list)} coefficients."
-            )
-
+        """
+        Fit the coefficients of the conditional distribution by minimizing _func_optim.
+        """
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
         # NOTE: extremely important that the order is the right one
@@ -502,116 +371,190 @@ class ConditionalDistribution:
         else:
             return m.x
 
-    def eval_quality_fit(
+    def find_first_guess(
         self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
+        predictors: dict[str, xr.DataArray] | xr.Dataset,
         target: xr.DataArray,
-        dim: str,
         weights: xr.DataArray,
-        scores_fit=["func_optim", "nll", "bic"],
+        sample_dim: str = "sample",
+        first_guess: xr.Dataset | None = None,
     ):
-        """Evaluate the scores for this fit.
+        """
+        Find a first guess for all coefficients of a conditional distribution for each grid point.
 
         Parameters
         ----------
-        predictors : dict of xr.DataArray | DataTree | xr.Dataset
-            A dict of DataArray objects used as predictors or a DataTree, holding each
-            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
-            is a xr.Dataset, it must have each predictor as a DataArray.
+        conditional_distrib : ConditionalDistribution
+            Conditional distribution object to find the first guess for.
+        predictors : dict of xr.DataArray | xr.Dataset
+            A dict of DataArray objects used as predictors or a Dataset, holding each
+            predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
         target : xr.DataArray
-            Target DataArray.
-        coefficients_fit : xr.DataArray
-            Result from the optimization for the coefficients.
-        dim : str
-            Dimension along which to calculate the scores.
+            Target DataArray, contains at least `sample_dim`.
         weights : xr.DataArray.
-            Individual weights for each sample.
-        scores_fit : list of str, default: ['func_optim', 'nll', 'bic']
-            After the fit, several scores can be calculated to assess the performance:
-            - func_optim: function optimized, as described in
-              options_optim['type_fun_optim']: negative log likelihood or full
-              conditional negative log likelihood
-            - nll: Negative Log Likelihood
-            - bic: Bayesian Information Criteria
-            - crps: Continuous Ranked Probability Score (warning, takes a long time to
-              compute)
+            Individual weights for each sample, must be 1D along `sample_dim`.
+        sample_dim : str
+            Dimension along which to fit the first guess.
+        first_guess : xr.Dataset, default: None
+            If provided, will use these values as first guess for the first guess. If None,
+            will use all zeros. Must contain the first guess for each coefficient in a
+            DataArray with the name of the coefficient.
+
+        Returns
+        -------
+        :obj:`xr.Dataset`
+            Dataset of first guess for each coefficient of the conditional distribution as a
+            data variable with the name of the coefficient.
         """
-        self.scores_fit = scores_fit
+        # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
 
-        coefficients_fit = self.coefficients
+        # make fg with zeros if none
+        if first_guess is None:
+            first_guess = xr.Dataset()
+            fg_dims = set(target.dims) - {sample_dim}
+            fg_size = [target.sizes[dim] for dim in fg_dims]
+            for coef in self.expression.coefficients_list:
+                first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
+        first_guess_da = first_guess.to_dataarray(dim="coefficient")
 
-        # training
-        quality_fit = self._eval_quality_fit_xr(
-            predictors, target, coefficients_fit, dim, weights
-        )
-        return quality_fit
+        # preparing data
+        predictors_da = _concatenate_predictors(predictors)
+        predictor_names = predictors_da.coords["predictor"].values.tolist()
 
-    def _eval_quality_fit_xr(
-        self,
-        predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
-        target: xr.DataArray,
-        coefficients_fit: xr.Dataset,
-        dim: str,
-        weights: xr.DataArray,
-    ):
-        """Evaluate the scores for this fit.
+        _check_dataarray_form(target, "target", required_dims=[sample_dim])
+        _check_dataarray_form(weights, "weights", required_dims=[sample_dim])
 
-        Parameters
-        ----------
-        predictors : dict of xr.DataArray | DataTree | xr.Dataset
-            A dict of DataArray objects used as predictors or a DataTree, holding each
-            predictor in a leaf. Each predictor must be 1D and contain `dim`. If predictors
-            is a xr.Dataset, it must have each predictor as a DataArray.
-        target : xr.DataArray
-            Target DataArray.
-        coefficients_fit : xr.DataArray
-            Result from the optimization for the coefficients.
-        dim : str
-            Dimension along which to calculate the scores.
-        weights : xr.DataArray.
-            Individual weights for each sample.
-        scores_fit : list of str, default: ['func_optim', 'nll', 'bic']
-            After the fit, several scores can be calculated to assess the performance:
-            - func_optim: function optimized, as described in
-              options_optim['type_fun_optim']: negative log likelihood or full
-              conditional negative log likelihood
-            - nll: Negative Log Likelihood
-            - bic: Bayesian Information Criteria
-            - crps: Continuous Ranked Probability Score (warning, takes a long time to
-              compute)
-        """
-        # shaping inputs
-        data_pred, data_targ, data_weights, _ = _distrib_checks._prepare_data(
-            predictors, target, weights
-        )
-        self.predictor_names = data_pred.predictor.values
-
-        # shaping coefficients
-        da_coefficients = coefficients_fit.to_dataarray(dim="coefficient")
+        _distrib_checks._check_no_nan_no_inf(predictors_da, "predictor data")
+        _distrib_checks._check_no_nan_no_inf(target, "target data")
+        _distrib_checks._check_no_nan_no_inf(weights, "weights")
 
         # search for each gridpoint
         result = xr.apply_ufunc(
-            self._eval_quality_fit_np,
+            self._find_fg_np,
+            predictors_da,
+            target,
+            weights,
+            first_guess_da,
+            kwargs={
+                "predictor_names": predictor_names,
+            },
+            input_core_dims=[
+                [sample_dim, "predictor"],
+                [sample_dim],
+                [sample_dim],
+                ["coefficient"],
+            ],
+            output_core_dims=[["coefficient"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+
+        # creating a dataset with the coefficients
+        out = xr.Dataset()
+        for i, coef in enumerate(self.expression.coefficients_list):
+            out[coef] = result.isel(coefficient=i)
+        return out.drop_vars("coefficient")
+
+    def _find_fg_np(
+        self,
+        data_pred,
+        data_targ,
+        data_weights,
+        first_guess,
+        predictor_names,
+    ):
+        """
+        Setup instance of _FirstGuess and fit a first guess for the coefficients.
+        """
+
+        fg = _FirstGuess(
+            self.expression,
+            self.options,
             data_pred,
+            predictor_names,
             data_targ,
-            da_coefficients,
             data_weights,
-            input_core_dims=[[dim, "predictor"], [dim], ["coefficient"], [dim]],
+            first_guess,
+        )
+
+        return fg._find_fg()
+
+    def compute_quality_scores(
+        self,
+        predictors: dict[str, xr.DataArray] | xr.Dataset,
+        target: xr.DataArray,
+        sample_dim: str,
+        weights: xr.DataArray,
+        scores=["func_optim", "nll", "bic"],
+    ):
+        """Compute scores for fit coefficients.
+
+        Parameters
+        ----------
+        predictors : dict of xr.DataArray | xr.Dataset
+            A dict of DataArray objects used as predictors or a DataTree, holding each
+            predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
+        target : xr.DataArray
+            Target DataArray.
+        sample_dim : str
+            Dimension along which to calculate the scores.
+        weights : xr.DataArray.
+            Individual weights for each sample.
+        scores : list of str, default: ['func_optim', 'nll', 'bic']
+            After the fit, several scores can be calculated to assess the performance:
+            - func_optim: function optimized, as described in
+              options_optim['type_fun_optim']: negative log likelihood or full
+              conditional negative log likelihood
+            - nll: Negative Log Likelihood
+            - bic: Bayesian Information Criteria
+            - crps: Continuous Ranked Probability Score (warning, takes a long time to
+              compute)
+
+        Returns
+        -------
+        scores: xr.Dataset
+            Dataset containing the scores for each gridpoint.
+        """
+
+        da_coeffs = self.coefficients.to_dataarray(dim="coefficient")
+
+        data_pred = _concatenate_predictors(predictors)
+        self.predictor_names = data_pred.predictor.values.tolist()
+
+        _check_dataarray_form(target, "target", required_dims=[sample_dim])
+        _check_dataarray_form(weights, "weights", required_dims=[sample_dim])
+
+        _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
+        _distrib_checks._check_no_nan_no_inf(target, "target data")
+        _distrib_checks._check_no_nan_no_inf(weights, "weights")
+
+        # compute for each gridpoint
+        result = xr.apply_ufunc(
+            self._compute_quality_scores_np,
+            data_pred,
+            target,
+            da_coeffs,
+            weights,
+            input_core_dims=[
+                [sample_dim, "predictor"],
+                [sample_dim],
+                ["coefficient"],
+                [sample_dim],
+            ],
             output_core_dims=[["score"]],
+            kwargs={"scores": scores},
             vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
             dask="parallelized",
             output_dtypes=[float],
         )
-        result["score"] = self.scores_fit
+        result["score"] = scores
         return xr.Dataset({"scores": result})
 
-    def _eval_quality_fit_np(
-        self, data_pred, data_targ, coefficients_fit, data_weights
+    def _compute_quality_scores_np(
+        self, data_pred, data_targ, coefficients, data_weights, scores
     ):
-        _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
-        _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
-        _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
-
+        """Compute quality scores for the fit coefficients."""
         # initialize
         quality_fit = []
 
@@ -619,11 +562,11 @@ class ConditionalDistribution:
         # TODO: to change with stabilization of data format
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
-        for score in self.scores_fit:
+        for score in scores:
             # basic result: optimized value
             if score == "func_optim":
                 score = _optimizers._func_optim(
-                    coefficients_fit,
+                    coefficients,
                     data_pred,
                     data_targ,
                     data_weights,
@@ -636,7 +579,7 @@ class ConditionalDistribution:
                 )
 
             # calculating parameters for the next ones
-            params = self.expression.evaluate_params(coefficients_fit, data_pred)
+            params = self.expression.evaluate_params(coefficients, data_pred)
 
             # NLL averaged over sample
             if score == "nll":
@@ -657,7 +600,7 @@ class ConditionalDistribution:
                     data_targ,
                     data_pred,
                     data_weights,
-                    coefficients_fit,
+                    coefficients,
                 )
 
             quality_fit.append(score)
@@ -735,9 +678,9 @@ class ConditionalDistribution:
         coefficients.to_netcdf(filename, **kwargs)
 
 
-def _smoothen_first_guess(first_guess: xr.Dataset, dim, grid_coords, r_gasparicohn):
+def _smooth_first_guess(first_guess: xr.Dataset, dim, grid_coords, r_gasparicohn):
     """
-    smoothen first guess over
+    smooth first guess over
 
     Parameters
     ----------
@@ -783,3 +726,30 @@ def _smoothen_first_guess(first_guess: xr.Dataset, dim, grid_coords, r_gasparico
     second_guess = second_guess.drop_vars("coeff")
 
     return second_guess
+
+
+def _concatenate_predictors(
+    predictors: dict[str, xr.DataArray] | xr.Dataset,
+) -> xr.DataArray:
+    """
+    If predictors is a dict, put the concat the values in a xr.DataArray along
+    a "predictor" dimension, with the keys as coordinates. If predictors is a
+    DataArray (with predictors as data variables), stack the data variables
+    along a "predictor" dimension with the names of the variables as coordinates.
+    """
+    if isinstance(predictors, dict | xr.Dataset):
+        predictors_concat = xr.concat(
+            tuple(predictors.values()),
+            dim="predictor",
+            join="exact",
+            coords="minimal",
+        )
+        predictors_concat = predictors_concat.assign_coords(
+            {"predictor": list(predictors.keys())}
+        )
+
+    else:
+        raise TypeError(
+            "predictors is supposed to be a dict of xr.DataArray or a xr.Dataset"
+        )
+    return predictors_concat

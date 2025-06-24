@@ -4,7 +4,6 @@ from mesmer.mesmer_x._conditional_distribution import (
 )
 from mesmer.mesmer_x._distrib_checks import (
     _check_no_nan_no_inf,
-    _prepare_data,
     _validate_coefficients,
 )
 from mesmer.mesmer_x._expression import Expression
@@ -28,7 +27,6 @@ __all__ = [
     # tests
     "_validate_coefficients",
     "_check_no_nan_no_inf",
-    "_prepare_data",
     # expression
     "Expression",
     # optimizers

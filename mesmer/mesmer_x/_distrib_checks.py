@@ -4,7 +4,6 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
-import xarray as xr
 
 from mesmer.mesmer_x._expression import Expression
 
@@ -186,63 +185,3 @@ def _check_no_nan_no_inf(data, name):
     # checking for infinite values
     if np.isinf(data).any():
         raise ValueError(f"infinite values in {name}")
-
-
-def _prepare_data(predictors, target, weights, first_guess=None):
-    """
-    shaping data into DataArrays for first guess, training or evaluation of scores.
-
-    Parameters
-    ----------
-    predictors : dict of xr.DataArray | xr.Dataset
-        Predictors for the first guess. Must either be a dictionary of xr.DataArray or
-        xr.Dataset, each key/item being a predictor; a xr.Dataset with a coordinate
-        being the list of predictors, and a variable that contains all predictors.
-    target : xr.DataArray | xr.Dataset
-        Target DataArray or Dataset (with one variable).
-    weights : xr.DataArray | xr.Dataset
-        Individual weights for each sample.
-    first_guess : xr.Dataset | None default None
-        First guess. If provided the function will return a DataArray, with the
-        predictor variables stacked along a "predictor" dimension.
-
-    Returns
-    -------
-    :data_pred:`xr.DataArray`
-        shaped predictors for training (predictor, sample)
-    :data_targ:`xr.DataArray`
-        shaped sample for training (sample, gridpoint)
-    :data_weights:`xr.DataArray`
-        shaped weights for training (sample)
-    :data_first_guess:`xr.DataArray` | None
-        shaped first guess for training (coefficients, gridpoint)
-    """
-    # check formats
-    if isinstance(predictors, dict | xr.Dataset):
-        predictors_concat = xr.concat(
-            tuple(predictors.values()),
-            dim="predictor",
-            join="exact",
-            coords="minimal",
-        )
-        predictors_concat = predictors_concat.assign_coords(
-            {"predictor": list(predictors.keys())}
-        )
-
-    else:
-        raise TypeError(
-            "predictors is supposed to be a dict of xr.DataArray or a xr.Dataset"
-        )
-
-    # check format of target
-    if not (isinstance(target, xr.Dataset) or isinstance(target, xr.DataArray)):
-        raise TypeError("the target must be a xr.Dataset or xr.DataArray.")
-
-    # check format of weights
-    if not (isinstance(weights, xr.Dataset) or isinstance(weights, xr.DataArray)):
-        raise TypeError("the weights must be a xr.Dataset or xr.DataArray.")
-
-    if isinstance(first_guess, xr.Dataset):
-        first_guess = first_guess.to_dataarray(dim="coefficient")
-
-    return predictors_concat, target, weights, first_guess
