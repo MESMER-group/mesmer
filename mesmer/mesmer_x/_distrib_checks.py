@@ -133,15 +133,16 @@ def _validate_coefficients(
         is above conditional_distrib.threshold_min_proba.
         False if not or if test_coeff or test_param or test_coeff is False.
 
-    params : bool | np.ndarray
-        The evaluated params for the given coefficients.
+    params : dict
+        The evaluated params for the given coefficients, if any of the tests fail, empty dict.
 
     """
+    params = {}
 
     coeffs_in_bounds = _coeffs_in_bounds(expression, coefficients)
     # tests on coeffs show already that it won't work: fill in the rest with False
     if not coeffs_in_bounds:
-        return coeffs_in_bounds, False, False, False, False
+        return coeffs_in_bounds, False, False, False, params
 
     # evaluate the distribution for the predictors and this iteration of coeffs
     params = expression._evaluate_params_fast(coefficients, data_pred)
@@ -150,13 +151,13 @@ def _validate_coefficients(
     params_in_bounds = _params_in_bounds(expression, params)
     # tests on params show that it won't work: fill in the rest with False
     if not params_in_bounds:
-        return coeffs_in_bounds, params_in_bounds, False, False, False
+        return coeffs_in_bounds, params_in_bounds, False, False, params
 
     # test for the support of the distribution
     params_in_support = _params_in_distr_support(expression, params, data_targ)
     # tests on params show that it won't work: fill in the rest with False
     if not params_in_support:
-        return coeffs_in_bounds, params_in_bounds, params_in_support, False, False
+        return coeffs_in_bounds, params_in_bounds, params_in_support, False, params
 
     # test for the probability of the values
     if threshold_min_proba is None:

@@ -36,7 +36,7 @@ def test_validate_coefficients():
     assert params_in_bounds is False
     assert params_in_support is False
     assert test_proba is False
-    assert params is False
+    assert params == {}
     
     # Test with preds that lead to out of bounds params
     pred_out_of_bounds = {"tas": np.arange(n)}
@@ -46,7 +46,8 @@ def test_validate_coefficients():
     assert params_in_bounds is False
     assert params_in_support is False
     assert test_proba is False
-    assert params is False
+    np.testing.assert_equal(params['loc'], np.arange(n)) # type: ignore
+    assert params['scale'] == c2 # type: ignore
 
     # Test with targ that lies outside of distrib support
     targ_out_of_support = rng.uniform(low=-20*c2, high=20*c2, size=n)
@@ -56,7 +57,8 @@ def test_validate_coefficients():
     assert params_in_bounds is True
     assert params_in_support is False
     assert test_proba is False
-    assert params is False
+    np.testing.assert_equal(params['loc'], np.ones(n)) # type: ignore
+    assert params['scale'] == c2 # type: ignore
 
     # Test with target that leads to low probability values
     targ_low_prob = rng.normal(loc=c1, scale=c2*5, size=n)
