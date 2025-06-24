@@ -462,7 +462,8 @@ class ConditionalDistribution:
         # basic check on first guess
         if fg is not None and len(fg) != len(self.expression.coefficients_list):
             raise ValueError(
-                f"The provided first guess does not have the correct shape: {len(self.expression.coefficients_list)}"
+                "The provided first guess does not have the correct number of coeffs, "
+                f"Expression suggests a number of {len(self.expression.coefficients_list)} coefficients."
             )
 
         # correcting format: must be dict(str, DataArray or array) for Expression
@@ -505,7 +506,6 @@ class ConditionalDistribution:
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
-        coefficients_fit: xr.DataArray,
         dim: str,
         weights: xr.DataArray,
         scores_fit=["func_optim", "nll", "bic"],
@@ -538,6 +538,8 @@ class ConditionalDistribution:
         """
         self.scores_fit = scores_fit
 
+        coefficients_fit = self.coefficients
+
         # training
         quality_fit = self._eval_quality_fit_xr(
             predictors, target, coefficients_fit, dim, weights
@@ -548,7 +550,7 @@ class ConditionalDistribution:
         self,
         predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
         target: xr.DataArray,
-        coefficients_fit: xr.DataArray,
+        coefficients_fit: xr.Dataset,
         dim: str,
         weights: xr.DataArray,
     ):
@@ -606,13 +608,6 @@ class ConditionalDistribution:
     def _eval_quality_fit_np(
         self, data_pred, data_targ, coefficients_fit, data_weights
     ):
-        # check data
-        if not isinstance(data_pred, np.ndarray):
-            raise TypeError("data_pred must be a numpy array.")
-        if not isinstance(data_targ, np.ndarray):
-            raise TypeError("data_targ must be a numpy array.")
-        if not isinstance(data_weights, np.ndarray):
-            raise TypeError("data_weights must be a numpy array.")
         _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
         _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
         _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
@@ -628,11 +623,11 @@ class ConditionalDistribution:
             # basic result: optimized value
             if score == "func_optim":
                 score = _optimizers._func_optim(
-                    self.expression,
                     coefficients_fit,
                     data_pred,
                     data_targ,
                     data_weights,
+                    self.expression,
                     self.options.threshold_min_proba,
                     self.options.type_fun_optim,
                     self.options.threshold_stopping_rule,
@@ -651,7 +646,9 @@ class ConditionalDistribution:
 
             # BIC averaged over sample
             if score == "bic":
-                score = _optimizers._bic(self.options, data_targ, params, data_weights)
+                score = _optimizers._bic(
+                    self.expression, data_targ, params, data_weights
+                )
 
             # CRPS
             if score == "crps":
@@ -706,6 +703,7 @@ class ConditionalDistribution:
         ds = xr.open_dataset(filename, **kwargs)
         expression_str = ds.attrs.get("expression", None)
         if expression_str is None:
+            # NOTE: make this a warning?
             raise ValueError(
                 "The netCDF file does not contain the 'expression' attribute."
             )

@@ -166,6 +166,78 @@ def test_ConditionalDistribution_fit(default_distrib):
     np.testing.assert_allclose(default_distrib.coefficients.c2, c2, atol=0.0015)
 
 
+def test_ConditionalDistribution_fit_wrongshapefg(default_distrib):
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+
+    targ = default_distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    fg = xr.Dataset(
+        {"c1": c1, "c2": c2, "wrong_coeff": 1},
+    )
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+
+    with pytest.raises(
+        ValueError,
+        match="The provided first guess does not have the correct number of coeffs",
+    ):
+        default_distrib.fit(
+            predictors=pred,
+            target=targ,
+            first_guess=fg,
+            weights=weights,
+            sample_dim="time",
+        )
+
+
+def test_ConditionalDistribution_fit_failed():
+    # impose impossible bounds
+    expr = Expression(
+        "norm(loc=c1 * __tas__, scale=c2)",
+        expr_name="exp1",
+        boundaries_params={"loc": [0, 0], "scale": [0, 0]},
+        boundaries_coeffs={},
+    )
+    # set error_failedfit to True so error is raised
+    options = ConditionalDistributionOptions(options_solver={"error_failedfit": True})
+    distrib = ConditionalDistribution(expr, options)
+
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+
+    targ = distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    fg = xr.Dataset(
+        {"c1": c1, "c2": c2},
+    )
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+
+    with pytest.raises(ValueError, match="Failed fit."):
+        distrib.fit(
+            predictors=pred,
+            target=targ,
+            first_guess=fg,
+            weights=weights,
+            sample_dim="time",
+        )
+
+
 def test_ConditionalDistribution_smooth_fg_error(default_distrib):
 
     with pytest.raises(ValueError, match="option_smooth_coeffs has been renamed"):
@@ -292,3 +364,114 @@ def test_smoothen_first_guess_nans():
         required_coords={"cells": np.arange(n_lon * n_lat)},
         shape=(n_lon * n_lat,),
     )
+
+
+def test_ConditionalDistribution_find_first_guess(default_distrib):
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+
+    targ = default_distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+
+    first_guess = default_distrib.find_first_guess(
+        predictors=pred,
+        target=targ,
+        weights=weights,
+        sample_dim="time",
+        first_guess=None,
+    )
+
+    np.testing.assert_allclose(first_guess.c1, c1, atol=1.0e-4)
+    np.testing.assert_allclose(first_guess.c2, c2, atol=0.0015)
+
+
+def test_ConditionalDistribution_find_first_guess_providedcoeffs(default_distrib):
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+
+    targ = default_distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+
+    first_guess_coeffs = xr.Dataset(
+        {"c1": c1, "c2": c2},
+    )
+
+    first_guess = default_distrib.find_first_guess(
+        predictors=pred,
+        target=targ,
+        weights=weights,
+        sample_dim="time",
+        first_guess=first_guess_coeffs,
+    )
+
+    np.testing.assert_allclose(first_guess.c1, c1, atol=1.0e-4)
+    np.testing.assert_allclose(first_guess.c2, c2, atol=0.0015)
+
+
+def test_ConditionalDistribution_eval_quality_fit(default_distrib):
+    rng = np.random.default_rng(0)
+    n = 251
+    pred = np.linspace(1, n, n)
+    c1 = 2.0
+    c2 = 0.1
+
+    targ = default_distrib.expression.distrib.rvs(
+        loc=c1 * pred, scale=c2, size=n, random_state=rng
+    )
+
+    pred = {"tas": xr.DataArray(pred, dims=["time"])}
+    targ = xr.DataArray(targ, dims=["time"], name="tas")
+    coeffs = xr.Dataset(
+        {"c1": c1, "c2": c2},
+    )
+    weights = xr.ones_like(targ)
+    weights.name = "weight"
+
+    default_distrib._coefficients = coeffs
+
+    scores = default_distrib.eval_quality_fit(
+        predictors=pred,
+        target=targ,
+        weights=weights,
+        dim="time",
+        scores_fit=["func_optim", "nll", "bic", "crps"],
+    )
+
+    expected_scores = xr.DataArray(
+        np.array([-217.9307, -217.9307, -424.8105, 0.9363]),
+        name="scores",
+        dims=["score"],
+        coords={"score": ["func_optim", "nll", "bic", "crps"]},
+    )
+
+    xr.testing.assert_allclose(scores.scores, expected_scores, rtol=1e-4)
+
+
+def test_ConditionalDistribution_coeffs(default_distrib):
+    with pytest.raises(ValueError, match="'coefficients' not set"):
+        default_distrib.coefficients
+
+    coefficients = xr.Dataset(
+        {"c1": 2.0, "c2": 0.1},
+    )
+    default_distrib.coefficients = coefficients
+
+    xr.testing.assert_equal(default_distrib.coefficients, coefficients)
