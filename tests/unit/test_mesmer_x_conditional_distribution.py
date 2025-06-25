@@ -74,7 +74,6 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
     assert default_distrib.options.name_ftol == "ftol"
     assert default_distrib.options.name_xtol == "xtol"
     assert not default_distrib.options.error_failedfit
-    assert not default_distrib.options.fg_with_global_opti
     assert default_distrib.options.type_fun_optim == "nll"
     assert default_distrib.options.threshold_stopping_rule is None
     assert default_distrib.options.exclude_trigger is None

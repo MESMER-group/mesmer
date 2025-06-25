@@ -511,15 +511,13 @@ def test_first_guess_beta():
 
     expression = Expression("beta(loc=0, scale=1, a=c3, b=c4)", expr_name="exp1")
 
-    options_solver = {"fg_with_global_opti": True}
-
     # we need a first guess here because our default first guess is zeros, which leads
     # to a degenerate distribution in the case of a beta distribution
     first_guess = [1.0, 1.0]
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(options_solver=options_solver),
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -546,13 +544,11 @@ def test_first_guess_gamma():
     expression = Expression("gamma(loc=0, scale=1, a=c1)", expr_name="exp1")
     weights = get_weights_uniform(targ)
 
-    options_solver = {"fg_with_global_opti": True}
-
     # we need a first guess different from zero for gamma distribution
     first_guess = [1.0]
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(options_solver=options_solver),
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -648,20 +644,6 @@ def test_first_guess_with_bounds():
     # however the fg is significantly worse on the param with the wrong bounds
     # in contrast to the above the test below also runs step 6: fit on LL^n -> implications?
 
-    # fails if we enforce the bounds
-    options_solver = {"fg_with_global_opti": True}
-
-    with pytest.raises(ValueError, match="Global optimization for first guess failed,"):
-        _FirstGuess(
-            expression=expression,
-            options=ConditionalDistributionOptions(options_solver=options_solver),
-            data_pred=None,
-            data_targ=targ,
-            data_weights=weights,
-            first_guess=fg_default(2),
-            predictor_names=None,
-        )._find_fg()
-
     # when does step 7 actually succeed?
     # when we do enforce a global optimum but the bounds are good
     boundaries_coeffs = {"c1": loc_bounds, "c2": scale_bounds}
@@ -671,7 +653,7 @@ def test_first_guess_with_bounds():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(options_solver=options_solver),
+        options=ConditionalDistributionOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
