@@ -7,7 +7,7 @@ Auxiliary data for mesmer.
 The stratospheric aerosol optical depth data is sourced from [NASA](https://data.giss.nasa.gov/modelforce/strataer/)
 and licensed as [Creative Commons Zero](https://creativecommons.org/public-domain/cc0/) (see [NASA - Science Data Licenses](https://science.data.nasa.gov/about/license), Point 2)
 
-The dataset is an extenstion of Sato et al. ([1993](https://doi.org/10.1029/93JD02553)), see also references on the NASA web page.
+The dataset is an extension of Sato et al. ([1993](https://doi.org/10.1029/93JD02553)), see also references on the NASA web page.
 
 
 ## CMIP6
@@ -17,7 +17,7 @@ Model Intercomparison Project (CMIP6) (Eyring et al., [2016](https://doi.org/10.
 Historical simulations (1850-2014) are combined with the shared socioeconomic pathways
 (SSPs) projections (O'Neill et al., [2016](https://doi.org/10.5194/gmd-9-3461-2016))
 for the years 2015 to 2100.
-We disribute adapted data from the IPSL-CM6A-LR model (Boucher et al., [2018](https://doi.org/10.22033/ESGF/CMIP6.1534), [2019](https://doi.org/10.22033/ESGF/CMIP6.1532)) under the terms of its license. This data was initially (2018-03-14) published under a [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license, which was later (2022-06-03) relaxed to a [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license (overview of [CMIP6 models'](https://wcrp-cmip.github.io/CMIP6_CVs/docs/CMIP6_source_id_licenses.html) license).
+We distribute adapted data from the IPSL-CM6A-LR model (Boucher et al., [2018](https://doi.org/10.22033/ESGF/CMIP6.1534), [2019](https://doi.org/10.22033/ESGF/CMIP6.1532)) under the terms of its license. This data was initially (2018-03-14) published under a [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license, which was later (2022-06-03) relaxed to a [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license (overview of [CMIP6 models'](https://wcrp-cmip.github.io/CMIP6_CVs/docs/CMIP6_source_id_licenses.html) license).
 The data has undergone two processing steps (1) it was quality controlled, harmonized and regridded to a common 2.5° grid according to the cmip6-next-generation (cmip6_ng) protocol
 (Brunner et al., [2020](https://doi.org/10.5281/zenodo.3734128)), and then (2) regridded to a very coarse resolution of 18° x 9° (i.e. 20 x 20 grid points).
 

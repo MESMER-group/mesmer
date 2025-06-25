@@ -40,7 +40,7 @@ def _load_and_align_strat_aod_obs(
         aod_beg, aod_end = aod.time[0].dt.year.item(), aod.time[-1].dt.year.item()
         if beg < aod_beg or end > aod_end:
             msg = (
-                f"Time period of passed array ({beg}-{end}) exeeds time of stratospheric"
+                f"Time period of passed array ({beg}-{end}) exceeds time of stratospheric"
                 f" aerosol optical depth observations ({aod_beg}-{aod_end}). Do you need"
                 " to pass ``hist_period``?"
             )

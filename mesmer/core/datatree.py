@@ -335,7 +335,7 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
     @functools.wraps(func)
     def _inner(*args: P.args, **kwargs: P.kwargs) -> T:
 
-        # check to ensure there are no DataTree in kwargs. Altough this is not very
+        # check to ensure there are no DataTree in kwargs. Although this is not very
         # efficient, it has bitten me before.
         dt_kwargs = [key for key, val in kwargs.items() if isinstance(val, xr.DataTree)]
         if dt_kwargs:

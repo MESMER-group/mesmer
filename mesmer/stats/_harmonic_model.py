@@ -297,7 +297,7 @@ def fit_harmonic_model(
     ----------
     yearly_predictor : xr.DataArray
         Yearly values used as predictors, containing one value per year. Contains `time_dim`
-        and possibly additional dimenions for example for gridcells or members.
+        and possibly additional dimensions for example for gridcells or members.
     monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
         `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot` `n_years`.

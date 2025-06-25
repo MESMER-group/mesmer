@@ -77,7 +77,7 @@ def test_upsample_yearly_data_no_dimension_coords():
     y = make_dummy_yearly_data(freq="YM")
     m = make_dummy_monthly_data(freq="MS")
 
-    # create stacked data whith time as non-dimension coords
+    # create stacked data with time as non-dimension coords
     ens = xr.Variable("ens", ["a", "b"])
     yearly_data = xr.concat([y, y], dim=ens).stack(sample=("ens", "time"))
     monthly_data = xr.concat([m, m], dim=ens).stack(sample=("ens", "time"))
