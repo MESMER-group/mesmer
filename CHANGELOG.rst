@@ -15,6 +15,15 @@ New Features
   By `Mathias Hauser`_.
 - Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
   `#649 <https://github.com/MESMER-group/mesmer/pull/649>`_). By `Mathias Hauser`_.
+- Can now pass ``only`` to ``LinearRegression.predict`` to select predictors
+  (`#702 <https://github.com/MESMER-group/mesmer/issues/702>`_, and
+  `#717 <https://github.com/MESMER-group/mesmer/pull/717>`_).
+  By `Mathias Hauser`_.
+- Added :py:class:`set_options` to mesmer which can, currently, be used to control
+  the number of used threads for matrix decomposition
+  (`#349 <https://github.com/MESMER-group/mesmer/issues/349>`_, and
+  `#713 <https://github.com/MESMER-group/mesmer/pull/713>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -102,7 +111,9 @@ This was originally done with the prototype `xarray-datatree` package. After the
 
 - Switch to storing several predictors in one :py:class:`xr.Dataset`` per scenario node in a :py:class:`DataTree` (`#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
 - Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_, `#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
-- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
+- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression`
+  (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_, and
+  `#720 <https://github.com/MESMER-group/mesmer/pull/720>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 - Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
@@ -222,7 +233,9 @@ Yeo-Johnson power transformer
    `#475 <https://github.com/MESMER-group/mesmer/pull/475>`_, and
    `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
 - add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_)
-
+- Converted Yeo-Johnson power transformer functions back into a class, which allows to
+  add additional lambda functions (`#716 <https://github.com/MESMER-group/mesmer/pull/716>`_).
+- Added a constant lambda function (`#718 <https://github.com/MESMER-group/mesmer/pull/718>`_).
 
 Harmonic model
 ~~~~~~~~~~~~~~

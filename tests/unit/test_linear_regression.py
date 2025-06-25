@@ -193,10 +193,38 @@ def test_lr_predict_missing_superfluous(data_type):
             exclude="tas2",
         )
 
+    # should not error
+    lr.predict(convert_to({"tas": tas, "tas2": tas}, data_type), exclude="tas2")
+
     with pytest.raises(ValueError, match="Superfluous predictors: 'bar', 'foo'"):
         lr.predict(
             convert_to({"tas": tas, "tas2": tas, "foo": None, "bar": None}, data_type)
         )
+
+    with pytest.raises(ValueError, match="Missing predictors: 'tas'"):
+        lr.predict(convert_to({}, data_type), only="tas")
+
+    with pytest.raises(ValueError, match="Superfluous predictors: 'extra'"):
+        lr.predict(convert_to({"tas": tas, "extra": tas}, data_type), only="tas")
+
+    # this should not error
+    lr.predict(convert_to({"tas": tas, "tas2": tas}, data_type), only="tas")
+
+
+def test_lr_predict_exclude_and_only_errors():
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+        }
+    )
+    lr.params = params
+
+    with pytest.raises(TypeError, match="Cannot set both `exclude` and `only`"):
+        lr.predict({}, exclude="tas", only="tas")
 
 
 @pytest.mark.parametrize("as_2D", [True, False])
@@ -270,6 +298,52 @@ def test_lr_predict_exclude_intercept(as_2D, data_type):
     xr.testing.assert_equal(result, expected)
 
 
+@pytest.mark.parametrize("as_2D", [True, False])
+@pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
+def test_lr_predict_only(as_2D, data_type):
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": ("x", [5]),
+            "fit_intercept": True,
+            "tas": ("x", [3]),
+            "tas2": ("x", [1]),
+        }
+    )
+    lr.params = params if as_2D else params.squeeze()
+
+    tas = xr.DataArray([0, 1, 2], dims="time", name="tas")
+
+    result = lr.predict(convert_to({"tas": tas}, data_type), only="tas")
+    expected = xr.DataArray(
+        [[0, 3, 6]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
+    expected = expected if as_2D else expected.squeeze()
+
+    result = lr.predict(convert_to({"tas": tas}, data_type), only={"tas", "intercept"})
+    expected = xr.DataArray(
+        [[5, 8, 11]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict(convert_to({"tas2": tas}, data_type), only={"tas2"})
+    expected = xr.DataArray(
+        [[0, 1, 2]], dims=("x", "time"), name="prediction"
+    ).to_dataset()
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+    result = lr.predict(convert_to({}, data_type), only={"intercept"})
+    expected = xr.DataArray([5], dims="x", name="prediction").to_dataset()
+    expected = expected if as_2D else expected.squeeze()
+
+    xr.testing.assert_equal(result, expected)
+
+
 def test_lr_predict_datatree():
     lr = mesmer.stats.LinearRegression()
 
@@ -283,10 +357,10 @@ def test_lr_predict_datatree():
     )
     lr.params = params
 
-    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D()})
+    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D(seed=1)})
     scen2 = scen1 * 2
 
-    pred = xr.DataTree().from_dict({"scen1": scen1, "scen2": scen2})
+    pred = xr.DataTree.from_dict({"scen1": scen1, "scen2": scen2})
 
     result = lr.predict(pred)
 
@@ -295,6 +369,73 @@ def test_lr_predict_datatree():
 
     expected = xr.DataTree.from_dict({"scen1": expected1, "scen2": expected2})
     xr.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize("as_datatree", (False, True))
+def test_lr_residuals_one_var(as_datatree):
+    pass
+
+    lr = mesmer.stats.LinearRegression()
+
+    # empty ds errors
+    target = xr.Dataset()
+
+    match = "Expected 'target' to have exactly one `data_variable`, found 0"
+    with pytest.raises(ValueError, match=match):
+        lr.residuals({}, target)
+
+    # ds with more than one var errors
+    target = xr.Dataset(data_vars={"a": 1, "b": 2})
+
+    match = (
+        r"Expected 'target' to have exactly one `data_variable`, found 2 \('a', 'b'\)"
+    )
+    with pytest.raises(ValueError, match=match):
+        lr.residuals({}, target)
+
+
+def test_lr_residuals_datatree():
+    lr = mesmer.stats.LinearRegression()
+
+    params = xr.Dataset(
+        data_vars={
+            "intercept": 5,
+            "fit_intercept": True,
+            "tas": 3,
+            "tas2": 1,
+        }
+    )
+
+    lr.params = params
+
+    scen1 = xr.Dataset({"tas": trend_data_1D(), "tas2": trend_data_1D(seed=1)})
+    scen2 = scen1 * 2
+
+    pred = xr.DataTree.from_dict({"scen1": scen1, "scen2": scen2})
+
+    predicton1 = lr.predict(scen1)
+    predicton2 = lr.predict(scen2)
+
+    # slope=0 -> only the noise part
+    noise1 = trend_data_1D(slope=0, seed=14)
+    noise2 = trend_data_1D(slope=0, seed=41)
+
+    target = xr.DataTree.from_dict(
+        {"scen1": predicton1 + noise1, "scen2": predicton2 + noise2}
+    )
+
+    result = lr.residuals(pred, target)
+
+    expected = xr.DataTree.from_dict(
+        {
+            "scen1": xr.Dataset({"residuals": noise1}),
+            "scen2": xr.Dataset({"residuals": noise2}),
+        }
+    )
+
+    mesmer.datatree.map_over_datasets(xr.testing.assert_allclose, result, expected)
+
+    # =====================
 
 
 @pytest.mark.parametrize("as_2D", [True, False])

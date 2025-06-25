@@ -4,9 +4,7 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
-import xarray as xr
 
-from mesmer.core.datatree import collapse_datatree_into_dataset, map_over_datasets
 from mesmer.mesmer_x._expression import Expression
 
 
@@ -101,7 +99,6 @@ def _validate_coefficients(
     expression: Expression
         Expression to validate the coefficients for.
 
-
     data_pred : numpy array 1D
         Predictors for the training sample.
 
@@ -125,164 +122,62 @@ def _validate_coefficients(
     params_in_bounds : bool
         True if the params are within conditional_distrib.expression.boundaries_params
 
-    params_in_support : boolean
+    params_in_support : bool
         True if parameters are within conditional_distrib.expression.boundaries_params and within the support of the distribution.
         False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
 
-    test_proba : boolean
+    test_proba : bool
         Only tested if conditional_distrib.threshold_min_proba is not None.
         True if the probability of the target samples for the given coefficients
         is above conditional_distrib.threshold_min_proba.
         False if not or if test_coeff or test_param or test_coeff is False.
 
-    params : distrib_cov
-        The evaluated params for the given coefficients.
+    params : dict
+        The evaluated params for the given coefficients, if any of the tests fail, empty dict.
 
     """
+    params = {}
 
     coeffs_in_bounds = _coeffs_in_bounds(expression, coefficients)
-
     # tests on coeffs show already that it won't work: fill in the rest with False
     if not coeffs_in_bounds:
-        return coeffs_in_bounds, False, False, False, False
+        return coeffs_in_bounds, False, False, False, params
 
     # evaluate the distribution for the predictors and this iteration of coeffs
     params = expression._evaluate_params_fast(coefficients, data_pred)
+
     # test for the validity of the parameters
     params_in_bounds = _params_in_bounds(expression, params)
-
-    # tests on params show already that it won't work: fill in the rest with False
+    # tests on params show that it won't work: fill in the rest with False
     if not params_in_bounds:
-        return coeffs_in_bounds, params_in_bounds, False, False, False
+        return coeffs_in_bounds, params_in_bounds, False, False, params
 
     # test for the support of the distribution
     params_in_support = _params_in_distr_support(expression, params, data_targ)
-
-    # tests on params show already that it won't work: fill in the rest with False
+    # tests on params show that it won't work: fill in the rest with False
     if not params_in_support:
-        return coeffs_in_bounds, params_in_bounds, params_in_support, False, False
+        return coeffs_in_bounds, params_in_bounds, params_in_support, False, params
 
     # test for the probability of the values
     if threshold_min_proba is None:
         return coeffs_in_bounds, params_in_bounds, params_in_support, True, params
-
     else:
         test_proba = _test_proba_value(
             expression, threshold_min_proba, params, data_targ
         )
-
         # return values for each test and the evaluated distribution
         return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
 
 
-def _validate_data(data_pred, data_targ, data_weights):
+def _check_no_nan_no_inf(data, name):
     """
     check data for nans or infs
-
-    Parameters
-    ----------
-    data_pred
-        Predictors for the training sample.
-
-    data_targ
-        Target for the training sample.
-
-    data_weights
-        Weights for the training sample.
     """
 
-    def _assert_data_valid(data, name):
-        """check data for nans or infs
+    # checking for NaN values
+    if np.isnan(data).any():
+        raise ValueError(f"nan values in {name}")
 
-        Parameters
-        ----------
-        data : array-like
-            Data to check
-        name : str
-            Name to use in error message
-        """
-        # checking for NaN values
-        if np.isnan(data).any():
-            raise ValueError(f"nan values in {name}")
-
-        # checking for infinite values
-        if np.isinf(data).any():
-            raise ValueError(f"infinite values in {name}")
-
-    if data_pred is not None:
-        _assert_data_valid(data_pred, "predictors")
-    _assert_data_valid(data_targ, "target")
-    _assert_data_valid(data_weights, "weights")
-
-
-def _prepare_data(predictors, target, weights, first_guess=None):
-    """
-    shaping data into DataArrays for first guess, training or evaluation of scores.
-
-    Parameters
-    ----------
-    predictors : dict of xr.DataArray or xr.Dataset | xr.Dataset | xr.DataTree
-        Predictors for the first guess. Must either be a dictionary of xr.DataArray or
-        xr.Dataset, each key/item being a predictor; a xr.Dataset with a coordinate
-        being the list of predictors, and a variable that contains all predictors; or
-        a xr.DataTree with one branch per predictor.
-    target : xr.DataArray
-        Target DataArray.
-    weights : xr.DataArray
-        Individual weights for each sample.
-    first_guess : xr.Dataset | None default None
-        First guess. If provided the function will return a DataArray, with the
-        predictor variables stacked along a "predictor" dimension.
-
-    Returns
-    -------
-    :data_pred:`xr.DataArray`
-        shaped predictors for training (predictor, sample)
-    :data_targ:`xr.DataArray`
-        shaped sample for training (sample, gridpoint)
-    :data_weights:`xr.DataArray`
-        shaped weights for training (sample)
-    :data_first_guess:`xr.DataArray` | None
-        shaped first guess for training (coefficients, gridpoint)
-    """
-    # check formats
-    if isinstance(predictors, dict | xr.Dataset):
-        predictors_concat = xr.concat(
-            tuple(predictors.values()),
-            dim="predictor",
-            join="exact",
-            coords="minimal",
-        )
-        predictors_concat = predictors_concat.assign_coords(
-            {"predictor": list(predictors.keys())}
-        )
-    elif isinstance(predictors, xr.DataTree):
-        # rename all data variables to "pred" to avoid conflicts when concatenating
-        def _rename_vars(ds) -> xr.DataTree:
-            (var,) = ds.data_vars
-            return ds.rename({var: "pred"})
-
-        predictors = map_over_datasets(_rename_vars, predictors)
-
-        predictors_concat_ds = collapse_datatree_into_dataset(
-            predictors, dim="predictor", join="exact", coords="minimal"  # type: ignore[arg-type]
-        )
-        predictors_concat = predictors_concat_ds["pred"]
-
-    else:
-        raise TypeError(
-            "predictors is supposed to be a dict of xr.DataArray, a xr.Dataset or a xr.DataTree"
-        )
-
-    # check format of target
-    if not (isinstance(target, xr.Dataset) or isinstance(target, xr.DataArray)):
-        raise TypeError("the target must be a xr.Dataset or xr.DataArray.")
-
-    # check format of weights
-    if not (isinstance(weights, xr.Dataset) or isinstance(weights, xr.DataArray)):
-        raise TypeError("the weights must be a xr.Dataset or xr.DataArray.")
-
-    if isinstance(first_guess, xr.Dataset):
-        first_guess = first_guess.to_dataarray(dim="coefficient")
-
-    return predictors_concat, target, weights, first_guess
+    # checking for infinite values
+    if np.isinf(data).any():
+        raise ValueError(f"infinite values in {name}")

@@ -3,7 +3,11 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
+from mesmer.core.datatree import (
+    _datatree_wrapper,
+    collapse_datatree_into_dataset,
+    map_over_datasets,
+)
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -228,3 +232,130 @@ def equal_scenario_weights_from_datatree(
     weights = map_over_datasets(_create_weights, dt)
 
     return weights
+
+
+def get_weights_density(pred_data):
+    """
+    Generate weights for the sample, based on the inverse of the density of the
+    predictors. More precisely, the density of the predictors is represented by a
+    multidimensional kernel density estimate using gaussian kernels where each
+    dimension is one of the predictors. Subsequently, the weights are the inverse
+    of this density of the predictors. Consequently, samples in regions of this
+    space with low density will have higher weights, this is, "unusual" samples
+    will have more weight.
+
+    Parameters
+    ----------
+    pred_data : xr.DataTree | xr.Dataset | np.array
+        Predictors for the training sample. Each branch must be a scenario,
+        with a xarray dataset (time, member). Each predictor is a variable.
+
+    Returns
+    -------
+    weights : DataTree
+        Weights for the sample, based on the inverse of the density of the
+        predictors, summing to 1.
+
+    Example
+    -------
+    TODO
+
+    """
+
+    def _weights(data):
+        from scipy.stats import gaussian_kde
+
+        # representation with kernel-density estimate using gaussian kernels
+        # NB: more stable than np.histogramdd that implies too many assumptions
+        histo_kde = gaussian_kde(data)
+
+        # calculating density of points over the sample
+        density = histo_kde.pdf(x=data)
+
+        # preparing the output
+        return (1 / density) / np.sum(1 / density)
+
+    if isinstance(pred_data, xr.DataTree):
+        scens = list(pred_data.keys())
+        preds = list(pred_data[scens[0]].data_vars)
+        pred_dims = tuple(pred_data[scens[0]][preds[0]].dims)
+
+        # reshaping data into array
+        # need an array where each predictor is a column in a np.array
+        # and all samples of that predictor is in one line
+        pred_ds = collapse_datatree_into_dataset(
+            pred_data, dim="scen", coords="different", join="outer"
+        )
+        pred_stacked = pred_ds.stack(samples=pred_dims + ("scen",)).dropna("samples")
+        array_pred = pred_stacked.to_array("predictor").values
+        weights = _weights(array_pred)
+
+        # get original shape back
+        weights_stacked = pred_stacked[preds[0]].copy(data=weights)
+        weights_stacked = weights_stacked.drop_attrs()
+        weights_unstacked = weights_stacked.unstack("samples")
+        weights = xr.DataTree()
+        for scen in scens:
+            scen_weights = xr.Dataset({"weights": weights_unstacked.sel(scen=scen)})
+            scen_weights = scen_weights.drop_vars("scen")
+            for dim in pred_dims:
+                scen_weights = scen_weights.dropna(dim, how="all")
+            weights[scen] = xr.DataTree(scen_weights)
+
+        return weights
+
+    elif isinstance(pred_data, xr.Dataset):
+        preds = list(pred_data.data_vars)
+        n_preds = len(preds)
+        pred_shape = pred_data[preds[0]].shape
+
+        # reshaping data into array
+        array_pred = pred_data.to_array("predictor").values.reshape(n_preds, -1)
+        weights = _weights(array_pred)
+
+        # get original shape back
+        weights = weights.reshape(*pred_shape)
+        weights_ds = xr.Dataset(
+            {
+                "weights": xr.DataArray(
+                    weights,
+                    dims=pred_data[preds[0]].dims,
+                    coords=pred_data[preds[0]].coords,
+                )
+            }
+        )
+        return weights_ds
+
+    elif isinstance(pred_data, np.ndarray):
+        array_pred = pred_data
+        return _weights(array_pred)
+
+
+def weighted_median(data, weights):
+    """
+    Args:
+      data (list or numpy.array): data
+      weights (list or numpy.array): weights
+
+    Source:
+      https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
+      @author Jack Peterson (jack@tinybike.net)
+    """
+
+    weights = weights[~np.isnan(data)]
+    data = data[~np.isnan(data)]
+
+    data, weights = np.asarray(data).squeeze(), np.asarray(weights).squeeze()
+    s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
+    midpoint = 0.5 * np.sum(s_weights)
+
+    if any(weights > midpoint):
+        w_median = (data[weights == np.max(weights)])[0]
+    else:
+        cs_weights = np.cumsum(s_weights)
+        idx = np.where(cs_weights <= midpoint)[0][-1]
+        if any(cs_weights == midpoint):
+            w_median = np.mean(s_data[idx : idx + 2])
+        else:
+            w_median = s_data[idx + 1]
+    return w_median

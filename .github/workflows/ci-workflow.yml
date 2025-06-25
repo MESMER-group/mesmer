@@ -65,6 +65,18 @@ jobs:
         create-args: >-
           python=${{ matrix.python-version }}
 
+    - name: Environment info
+      run: |
+        echo "numpy.show_config()"
+        echo ""
+        python -c "import numpy; numpy.show_config()"
+        echo ""
+        echo "Number of cpus and threads"
+        python -c "import psutil; print(f'cpus: {psutil.cpu_count(logical=False)}; threads: {psutil.cpu_count()}')"
+        echo ""
+        echo "threadpool info:"
+        python -c "import numpy; import threadpoolctl; print(threadpoolctl.threadpool_info())"
+
     - name: Install mesmer
       run: |
         python -m pip install --no-deps -e .

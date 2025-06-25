@@ -9,6 +9,7 @@ from mesmer.core.utils import (
     _check_dataarray_form,
     _create_equal_dim_names,
     _minimize_local_discrete,
+    _set_threads_from_options,
 )
 
 
@@ -125,19 +126,21 @@ def find_localized_empirical_covariance(
 
     _check_dataarray_form(data, name="data", ndim=2)
 
+    (sample_dim,) = data[dim].dims
+
     # ensure data has the right orientation
-    data = data.transpose(dim, ...)
+    data = data.transpose(sample_dim, ...)
     all_dims = data.dims
 
-    (sample_dim,) = set(all_dims) - {dim}
-    out_dims = _create_equal_dim_names(sample_dim, equal_dim_suffixes)
+    (other_dim,) = set(all_dims) - {sample_dim}
+    out_dims = _create_equal_dim_names(other_dim, equal_dim_suffixes)
 
     out = xr.apply_ufunc(
         _find_localized_empirical_covariance_np,
         data,
         weights,
         kwargs={"localizer": localizer, "k_folds": k_folds},
-        input_core_dims=[all_dims, [dim]],
+        input_core_dims=[all_dims, [sample_dim]],
         output_core_dims=([], out_dims, out_dims),
     )
     localization_radius, covariance, localized_covariance = out
@@ -200,6 +203,7 @@ def find_localized_empirical_covariance_monthly(
     and a leave-one-out cross validation otherwise.
     """
     localized_ecov = []
+    (sample_dim,) = data[dim].dims
     data_grouped = data.groupby(f"{dim}.month")
     weights_grouped = weights.groupby(f"{dim}.month")
 
@@ -277,6 +281,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
+@_set_threads_from_options()
 def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
     """k-fold crossvalidation for a single localization radius"""
 

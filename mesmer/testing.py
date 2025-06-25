@@ -77,11 +77,11 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
             assert first_val == second_val, key
 
 
-def trend_data_1D(n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0):
+def trend_data_1D(n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0, seed=0):
 
     time = np.arange(n_timesteps)
 
-    rng = np.random.default_rng(0)
+    rng = np.random.default_rng(seed)
     scatter = rng.normal(scale=scale, size=n_timesteps)
 
     data = intercept + slope * time + scatter

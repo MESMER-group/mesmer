@@ -4,12 +4,10 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
-import xarray as xr
 from scipy.optimize import basinhopping
 
 import mesmer.mesmer_x._distrib_checks as _distrib_checks
 import mesmer.mesmer_x._optimizers as _optimizers
-from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
 from mesmer.mesmer_x._utils import _ignore_warnings
 
 
@@ -39,116 +37,11 @@ def _smooth_data(data, length=5):
     return out
 
 
-def find_first_guess(
-    conditional_distrib: ConditionalDistribution,
-    predictors: dict[str, xr.DataArray] | xr.DataTree | xr.Dataset,
-    target: xr.DataArray,
-    weights: xr.DataArray,
-    sample_dim: str = "sample",
-    first_guess: xr.Dataset | None = None,
-):
-    """
-    Find a first guess for all coefficients of a conditional distribution for each grid point.
-
-    Parameters
-    ----------
-    conditional_distrib : ConditionalDistribution
-        Conditional distribution object to find the first guess for.
-    predictors : dict of xr.DataArray | DataTree | xr.Dataset
-        A dict of DataArray objects used as predictors or a DataTree, holding each
-        predictor in a leaf. Each predictor must be 1D and contain `sample_dim`. If predictors
-        is a xr.Dataset, it must have each predictor as a DataArray.
-    target : xr.DataArray
-        Target DataArray, contains at least `sample_dim`.
-    weights : xr.DataArray.
-        Individual weights for each sample, must be 1D along `sample_dim`.
-    sample_dim : str
-        Dimension along which to fit the first guess.
-    first_guess : xr.Dataset, default: None
-        If provided, will use these values as first guess for the first guess. If None,
-        will use all zeros. Must contain the first guess for each coefficient in a
-        DataArray with the name of the coefficient.
-
-    Returns
-    -------
-    :obj:`xr.Dataset`
-        Dataset of first guess for each coefficient of the conditional distribution as a
-        data variable with the name of the coefficient.
-    """
-    # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
-
-    # make fg if none
-    if first_guess is None:
-        first_guess = xr.Dataset()
-        fg_dims = set(target.dims) - {sample_dim}
-        fg_size = [target.sizes[dim] for dim in fg_dims]
-        for coef in conditional_distrib.expression.coefficients_list:
-            first_guess[coef] = xr.DataArray(np.zeros(fg_size), dims=fg_dims)
-
-    # preparing data
-    data_pred, data_targ, data_weights, first_guess = _distrib_checks._prepare_data(  # type: ignore
-        predictors, target, weights, first_guess
-    )
-
-    # NOTE: extremely important that the order is the right one
-    predictor_names = data_pred.coords["predictor"].values.tolist()
-
-    # search for each gridpoint
-    result = xr.apply_ufunc(
-        _find_fg_np,
-        data_pred,
-        data_targ,
-        data_weights,
-        first_guess,
-        kwargs={
-            "conditional_distrib": conditional_distrib,
-            "predictor_names": predictor_names,
-        },
-        input_core_dims=[
-            [sample_dim, "predictor"],
-            [sample_dim],
-            [sample_dim],
-            ["coefficient"],
-        ],
-        output_core_dims=[["coefficient"]],
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[float],
-    )
-
-    # creating a dataset with the coefficients
-    out = xr.Dataset()
-    for i, coef in enumerate(conditional_distrib.expression.coefficients_list):
-        out[coef] = result.isel(coefficient=i)
-    return out.drop_vars("coefficient")
-
-
-def _find_fg_np(
-    data_pred,
-    data_targ,
-    data_weights,
-    first_guess,
-    conditional_distrib: ConditionalDistribution,
-    predictor_names,
-):
-
-    fg = FirstGuess(
-        conditional_distrib,
-        data_pred,
-        predictor_names,
-        data_targ,
-        data_weights,
-        first_guess,
-    )
-
-    # TODO split up into the several steps
-    return fg._find_fg_allsteps()
-
-
-class FirstGuess:
+class _FirstGuess:
     def __init__(
         self,
-        conditional_distrib: ConditionalDistribution,
+        expression,
+        options,
         data_pred,
         predictor_names,
         data_targ,
@@ -161,15 +54,31 @@ class FirstGuess:
 
         Parameters
         ----------
-        conditional_distrib : ConditionalDistribution
-            Conditional distribution object. Must contain the expression and the
-            options.
+        expression: Expression
+            Expression for the conditional distribution we want to find the first guess of.
+
+        options: Options
+            Options for the fit.
+
+        data_pred: numpy array 1D or 2D of shape (n_samples, n_preds)
+            Predictors for the training sample. If 2D, the first dimension must be the
+            number of predictors, and the second dimension the number of samples, i.e. (n_samples, n_preds).
+
+        predictor_names: list of str
+            Names of the predictors as named in the `expression`.
+
+        data_targ: numpy array 1D of shape (n_samples,)
+            Target for the training sample. Must be 1D, i.e. (n_samples,).
+
+        data_weights: numpy array 1D of shape (n_samples,)
+            Weights for the training sample. Must be 1D, i.e. (n_samples,).
 
         first_guess : numpy array, default: None
-            If provided, will use these values as first guess for the first guess.
+            If provided, will use these values as first guess for the first guess, must be one value
+            per coeff in expression.coefficients_list.
 
         func_first_guess : callable, default: None
-            If provided, and that 'first_guess' is not provided, will be called to
+            If provided, and `first_guess` is not provided, will be called to
             provide a first guess for the fit. This is an experimental feature, thus not
             tested.
             !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR
@@ -177,40 +86,37 @@ class FirstGuess:
 
         """
         # initialization
-        self.options = conditional_distrib.options
-        self.expression = conditional_distrib.expression
+        self.options = options
+        self.expression = expression
         self.func_first_guess = func_first_guess
 
+        if data_pred is not None:
+            _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
+        _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
+        _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
+
         if predictor_names is None:
+            if data_pred is not None:
+                raise ValueError(
+                    "If data_pred is provided, predictor_names must be provided as well."
+                )
             predictor_names = []
+        elif data_pred is None:
+            raise ValueError(
+                "If predictor_names is provided, data_pred must be provided as well."
+            )
 
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)
 
-        _distrib_checks._validate_data(data_pred, data_targ, data_weights)
-
-        # check first guess
-        self.fg_coeffs = np.copy(first_guess)
-        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
-        self.fg_coeffs = self.fg_coeffs.astype(float)
-        # check if the first guess is valid
-        if not len(self.fg_coeffs) == self.expression.n_coeffs:
-            raise ValueError(
-                "The provided first guess does not have the correct shape: "
-                f"expected {self.expression.n_coeffs} (number of coeffs in expression)",
-                f"got {len(self.fg_coeffs)}.",
-            )
-
         # ensuring format of numpy predictors
-        if n_preds:
+        if data_pred is not None:
             if data_pred.ndim == 1:
                 data_pred = data_pred[:, np.newaxis]
-            elif data_pred.ndim == 2:
-                if n_preds == data_pred.shape[0]:
-                    data_pred = data_pred.T
-            else:
+            if data_pred.ndim > 2 or data_pred.shape[1] != n_preds:
                 raise ValueError(
-                    "Numpy predictors should not have a shape greater than 2."
+                    "data_pred must be 1D or a 2D array with shape (n_samples, n_preds), "
+                    f"n_preds from `predictor_names` is {n_preds} but shape of data_pred is {data_pred.shape}."
                 )
 
         # build dictionary
@@ -234,9 +140,21 @@ class FirstGuess:
 
         self.data_weights = data_weights
 
+        # check first guess
+        self.fg_coeffs = np.copy(first_guess)
+        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
+        self.fg_coeffs = self.fg_coeffs.astype(float)
+        # check if the first guess is valid
+        if not len(self.fg_coeffs) == self.expression.n_coeffs:
+            raise ValueError(
+                "The provided first guess does not have the correct shape: "
+                f"expected {self.expression.n_coeffs} (number of coeffs in expression)",
+                f"got {len(self.fg_coeffs)}.",
+            )
+
     # suppress nan & inf warnings
     @_ignore_warnings
-    def _find_fg_allsteps(self):
+    def _find_fg(self):
         """
         compute first guess of the coefficients, to ensure convergence of the incoming
         fit.
@@ -336,6 +254,8 @@ class FirstGuess:
         FLEXIBILITY. In particular, it is mandatory to test it for different
         situations: variables, grid points, distributions & expressions.
         """
+
+        # TODO split up into the several steps
 
         # Step 1: fit coefficients of location (objective: generate an adequate
         # first guess for the coefficients of location. proven to be necessary
@@ -627,9 +547,6 @@ class FirstGuess:
         if not _distrib_checks._param_in_bounds(self.expression, scale, "scale"):
             # this coefficient on scale causes problem
             return np.inf
-
-        if isinstance(scale, np.ndarray):
-            scale = scale[self.l_smooth : -self.l_smooth]
 
         return np.abs(np.mean(self.smooth_targ_dev_sq - scale**2))
 

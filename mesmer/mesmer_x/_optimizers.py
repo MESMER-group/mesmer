@@ -22,6 +22,16 @@ def _minimize(
     option_NelderMead: Literal["dont_run", "fail_run", "best_run"] = "dont_run",
 ):
     """
+    custom minimize function.
+
+    First tries with method_fit.
+
+    A second fit is performed either if
+    - the first fit failed and option_NelderMead is set to "fail_run"
+    - or if option_NelderMead is set to "best_run", regardless if the first fit succeded.
+
+    The result of the second fit is only returned if it is better than the first fit.
+
     options_NelderMead: str
         * dont_run: would minimize only the chosen solver in method_fit
         * fail_run: would minimize using Nelder-Mead only if the chosen solver in
@@ -102,18 +112,29 @@ def _func_optim(
             ind_year_thres,
             exclude_trigger,
         )
+
+        params_ok, params_stopped = {}, {}
+        for pp in params:
+            if params[pp].shape == ind_data_ok.shape:
+                params_ok[pp] = params[pp][ind_data_ok]
+                params_stopped[pp] = params[pp][ind_data_stopped]
+            else:
+                # if the parameter is a scalar, it is the same for all data points
+                pp_arr = params[pp] * np.ones_like(ind_data_ok)
+                params_ok[pp] = pp_arr[ind_data_ok]
+                params_stopped[pp] = pp_arr[ind_data_stopped]
+
         nll = _neg_loglike(
             expression,
             data_targ[ind_data_ok],
-            {pp: params[ind_data_ok] for pp in params},
+            params_ok,
             data_weights[ind_data_ok],
         )
         fc = _fullcond_thres(
             expression,
             data_targ[ind_data_stopped],
-            {pp: params[ind_data_stopped] for pp in params},
+            params_stopped,
             data_weights[ind_data_stopped],
-            ind_data_stopped,
         )
         return nll + fc
     elif type_fun_optim == "nll":
@@ -172,14 +193,12 @@ def _stopping_rule(
     return ind_data_ok, ind_data_stopped
 
 
-def _fullcond_thres(
-    expression: Expression, data_targ, params, data_weights, ind_data_stopped
-):
+def _fullcond_thres(expression: Expression, data_targ, params, data_weights):
     # calculating 2nd term for full conditional of the NLL
     # fc1 = distrib.logcdf(conditional_distrib.data_targ)
     fc2 = expression.distrib.sf(data_targ, **params)
 
-    return np.log(np.sum((data_weights * fc2)[ind_data_stopped]))
+    return np.log(np.sum(data_weights * fc2))
 
 
 def _bic(expression, data_targ, params, data_weights):

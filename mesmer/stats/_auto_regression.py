@@ -16,6 +16,7 @@ from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
+    _set_threads_from_options,
 )
 
 
@@ -713,6 +714,7 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
+@_set_threads_from_options()
 def _draw_innovations_correlated_np(
     covariance, rng, n_gridcells, n_samples, n_ts, buffer
 ):
@@ -877,40 +879,46 @@ def fit_auto_regression_monthly(
         ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
         the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
+    _check_dataarray_form(monthly_data, "monthly_data", required_coords=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
     ar_params_res = []
-    residuals_res = []
+
+    (sample_dim,) = monthly_data[time_dim].dims
+
+    residuals = xr.full_like(monthly_data, fill_value=np.nan)
+    # we loose one timestep
+    residuals = residuals.isel({sample_dim: slice(1, None)})
+    residuals.name = "residuals"
 
     for month in range(1, 13):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            n_ts = monthly_groups[12].sizes[time_dim]
-            prev_month = monthly_groups[12].isel({time_dim: slice(0, n_ts - 1)})
-
-            n_ts = monthly_groups[1].sizes[time_dim]
-            cur_month = monthly_groups[1].isel({time_dim: slice(1, n_ts)})
+            prev_month = monthly_groups[12].isel({sample_dim: slice(None, -1)})
+            cur_month = monthly_groups[1].isel({sample_dim: slice(1, None)})
+            i = 11  # values only start the second year & first ts is removed
         else:
             prev_month = monthly_groups[month - 1]
             cur_month = monthly_groups[month]
+            i = month - 2
 
         slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
-            input_core_dims=[[time_dim], [time_dim]],
-            output_core_dims=[[], [], [time_dim]],
-            exclude_dims={time_dim},
+            input_core_dims=[[sample_dim], [sample_dim]],
+            output_core_dims=[[], [], [sample_dim]],
+            exclude_dims={sample_dim},
             vectorize=True,
         )
 
+        # assign residuals, so the order is kept
+        residuals[{sample_dim: slice(i, None, 12)}] = resids
+
         ar_params_res.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-        residuals_res.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
     month_dim = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params_res, dim=month_dim)
-    residuals = xr.concat(residuals_res, dim=time_dim).rename("residuals")
 
     return xr.merge([ar_params, residuals])
 
@@ -936,16 +944,9 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
         The intercept of the AR(1) process.
     """
 
-    def _lin_func(indep_var, slope, intercept):
-        return slope * indep_var + intercept
+    slope, intercept = np.polyfit(data_prev_month, data_month, deg=1)
 
-    slope, intercept = scipy.optimize.curve_fit(
-        _lin_func,
-        data_prev_month,  # independent variable
-        data_month,  # dependent variable
-    )[0]
-
-    residuals = data_month - _lin_func(data_prev_month, slope, intercept)
+    residuals = data_month - (intercept + slope * data_prev_month)
 
     return slope, intercept, residuals
 
@@ -1151,12 +1152,13 @@ def _draw_auto_regression_monthly_np(
 
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
-    if covariance is not None:
-        for month in range(12):
-            cov_month = covariance[month, :, :]
-            innovations[:, :, month, :] = _draw_innovations_correlated_np(
-                cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
-            )
+
+    for month in range(12):
+        cov_month = covariance[month, :, :]
+        innovations[:, :, month, :] = _draw_innovations_correlated_np(
+            cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
+        )
+
     # reshape innovations into continuous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 

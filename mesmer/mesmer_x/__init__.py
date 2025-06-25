@@ -3,12 +3,10 @@ from mesmer.mesmer_x._conditional_distribution import (
     ConditionalDistributionOptions,
 )
 from mesmer.mesmer_x._distrib_checks import (
-    _prepare_data,
+    _check_no_nan_no_inf,
     _validate_coefficients,
-    _validate_data,
 )
 from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._first_guess import find_first_guess
 from mesmer.mesmer_x._optimizers import (
     _bic,
     _crps,
@@ -21,11 +19,6 @@ from mesmer.mesmer_x._optimizers import (
 from mesmer.mesmer_x._probability_integral_transform import (
     ProbabilityIntegralTransform,
 )
-from mesmer.mesmer_x._weighting import (
-    get_weights_density,
-    get_weights_uniform,
-    weighted_median,
-)
 
 __all__ = [
     # conditional distribution
@@ -33,12 +26,9 @@ __all__ = [
     "ConditionalDistributionOptions",
     # tests
     "_validate_coefficients",
-    "_validate_data",
-    "_prepare_data",
+    "_check_no_nan_no_inf",
     # expression
     "Expression",
-    # first guess
-    "find_first_guess",
     # optimizers
     "_func_optim",
     "_neg_loglike",
@@ -49,8 +39,4 @@ __all__ = [
     "_crps",
     # probability integral transform
     "ProbabilityIntegralTransform",
-    # weighting
-    "get_weights_density",
-    "get_weights_uniform",
-    "weighted_median",
 ]
