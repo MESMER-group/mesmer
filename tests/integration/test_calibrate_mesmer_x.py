@@ -211,16 +211,16 @@ def test_calibrate_mesmer_x(
     coeffs_fg = distrib.find_first_guess(
         predictors=stacked_pred,
         target=stacked_targ.tasmax,
-        weights=stacked_weights.weights,
         first_guess=None,
+        weights=stacked_weights.weights,
     )
 
     # training the conditional distribution
     distrib.fit(
         predictors=stacked_pred,
         target=stacked_targ.tasmax,
-        first_guess=coeffs_fg,
         weights=stacked_weights.weights,
+        first_guess=coeffs_fg,
     )
     transform_coeffs = distrib.coefficients
 
@@ -229,8 +229,8 @@ def test_calibrate_mesmer_x(
         distrib.fit(
             predictors=stacked_pred,
             target=stacked_targ.tasmax,
-            first_guess=transform_coeffs,
             weights=stacked_weights.weights,
+            first_guess=transform_coeffs,
             smooth_coeffs=True,
             r_gasparicohn=500,
         )

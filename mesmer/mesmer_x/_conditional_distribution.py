@@ -225,8 +225,8 @@ class ConditionalDistribution:
         self,
         predictors: dict[str, xr.DataArray] | xr.Dataset,
         target: xr.DataArray,
-        first_guess: xr.Dataset,
         weights: xr.DataArray,
+        first_guess: xr.Dataset,
         sample_dim: str = "sample",
         smooth_coeffs: bool = False,
         r_gasparicohn: float = 500,
@@ -241,11 +241,11 @@ class ConditionalDistribution:
             predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
         target : xr.DataArray
             Target DataArray.
+        weights : xr.DataArray.
+            Individual weights for each sample.
         first_guess : xr.Dataset
             First guess for the coefficients, each coefficient is a data variable in the Dataset
             and has the corresponding name of the coefficient in the expression.
-        weights : xr.DataArray.
-            Individual weights for each sample.
         sample_dim : str
             Dimension along which to fit the distribution.
         option_smooth_coeffs : bool, default: False
@@ -299,13 +299,13 @@ class ConditionalDistribution:
             self._fit_np,
             predictors_da,
             target,
-            first_guess_da,
             weights,
+            first_guess_da,
             input_core_dims=[
                 [sample_dim, "predictor"],
                 [sample_dim],
-                ["coefficient"],
                 [sample_dim],
+                ["coefficient"],
             ],
             output_core_dims=[["coefficient"]],
             vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
@@ -331,7 +331,7 @@ class ConditionalDistribution:
         self._coefficients = coefficients
 
     @_ignore_warnings  # suppress nan & inf warnings
-    def _fit_np(self, data_pred, data_targ, fg, data_weights):
+    def _fit_np(self, data_pred, data_targ, data_weights, fg):
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
         """
@@ -376,8 +376,8 @@ class ConditionalDistribution:
         predictors: dict[str, xr.DataArray] | xr.Dataset,
         target: xr.DataArray,
         weights: xr.DataArray,
-        sample_dim: str = "sample",
         first_guess: xr.Dataset | None = None,
+        sample_dim: str = "sample",
     ):
         """
         Find a first guess for all coefficients of a conditional distribution for each grid point.
@@ -393,12 +393,12 @@ class ConditionalDistribution:
             Target DataArray, contains at least `sample_dim`.
         weights : xr.DataArray.
             Individual weights for each sample, must be 1D along `sample_dim`.
-        sample_dim : str
-            Dimension along which to fit the first guess.
         first_guess : xr.Dataset, default: None
             If provided, will use these values as first guess for the first guess. If None,
             will use all zeros. Must contain the first guess for each coefficient in a
             DataArray with the name of the coefficient.
+        sample_dim : str
+            Dimension along which to fit the first guess.
 
         Returns
         -------
@@ -484,8 +484,8 @@ class ConditionalDistribution:
         self,
         predictors: dict[str, xr.DataArray] | xr.Dataset,
         target: xr.DataArray,
-        sample_dim: str,
         weights: xr.DataArray,
+        sample_dim: str = "sample",
         scores=["func_optim", "nll", "bic"],
     ):
         """Compute scores for fit coefficients.
@@ -532,14 +532,14 @@ class ConditionalDistribution:
         # compute for each gridpoint
         result = xr.apply_ufunc(
             self._compute_quality_scores_np,
+            da_coeffs,
             data_pred,
             target,
-            da_coeffs,
             weights,
             input_core_dims=[
+                ["coefficient"],
                 [sample_dim, "predictor"],
                 [sample_dim],
-                ["coefficient"],
                 [sample_dim],
             ],
             output_core_dims=[["score"]],
@@ -552,7 +552,7 @@ class ConditionalDistribution:
         return xr.Dataset({"scores": result})
 
     def _compute_quality_scores_np(
-        self, data_pred, data_targ, coefficients, data_weights, scores
+        self, coefficients, data_pred, data_targ, data_weights, scores
     ):
         """Compute quality scores for the fit coefficients."""
         # initialize

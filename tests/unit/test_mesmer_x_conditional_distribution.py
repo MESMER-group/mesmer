@@ -159,7 +159,7 @@ def test_ConditionalDistribution_fit(default_distrib):
     weights.name = "weight"
 
     default_distrib.fit(
-        predictors=pred, target=targ, first_guess=fg, weights=weights, sample_dim="time"
+        predictors=pred, target=targ, weights=weights, first_guess=fg, sample_dim="time"
     )
 
     np.testing.assert_allclose(default_distrib.coefficients.c1, c1, atol=1.0e-4)
@@ -198,8 +198,8 @@ def test_ConditionalDistribution_func_optim_fcnll():
     distrib.fit(
         predictors=pred,
         target=targ,
-        first_guess=first_guess,
         weights=weights,
+        first_guess=first_guess,
         sample_dim="time",
     )
 
@@ -237,8 +237,8 @@ def test_ConditionalDistribution_func_optim_fcnll():
         distrib.fit(
             predictors=pred,
             target=targ,
-            first_guess=first_guess,
             weights=weights,
+            first_guess=first_guess,
             sample_dim="time",
         )
 
@@ -269,8 +269,8 @@ def test_ConditionalDistribution_fit_wrongshapefg(default_distrib):
         default_distrib.fit(
             predictors=pred,
             target=targ,
-            first_guess=fg,
             weights=weights,
+            first_guess=fg,
             sample_dim="time",
         )
 
@@ -309,8 +309,8 @@ def test_ConditionalDistribution_fit_failed():
         distrib.fit(
             predictors=pred,
             target=targ,
-            first_guess=fg,
             weights=weights,
+            first_guess=fg,
             sample_dim="time",
         )
 
@@ -321,8 +321,8 @@ def test_ConditionalDistribution_smooth_fg_error(default_distrib):
         default_distrib.fit(
             predictors="dummy",
             target="dummy",
-            first_guess="dummy",
             weights="dummy",
+            first_guess="dummy",
             sample_dim="dummy",
             option_smooth_coeffs=True,
         )
@@ -359,8 +359,8 @@ def test_ConditionalDistribution_smooth_fg(default_distrib):
     default_distrib.fit(
         predictors=pred,
         target=targ,
-        first_guess=first_guess,
         weights=weights,
+        first_guess=first_guess,
         sample_dim="time",
         smooth_coeffs=True,
     )
@@ -370,7 +370,7 @@ def test_ConditionalDistribution_smooth_fg(default_distrib):
     _check_dataset_form(result, "coefficients", required_vars=["c1", "c2"])
 
 
-def test_smoothen_first_guess():
+def test_smooth_first_guess():
     n = 251
     n_lon = 3
     n_lat = 2
@@ -413,7 +413,7 @@ def test_smoothen_first_guess():
     )
 
 
-def test_smoothen_first_guess_nans():
+def test_smooth_first_guess_nans():
     n = 251
     n_lon = 3
     n_lat = 2
@@ -463,8 +463,8 @@ def test_ConditionalDistribution_find_first_guess(default_distrib):
         predictors=pred,
         target=targ,
         weights=weights,
-        sample_dim="time",
         first_guess=None,
+        sample_dim="time",
     )
 
     np.testing.assert_allclose(first_guess.c1, c1, atol=1.0e-4)
@@ -495,8 +495,8 @@ def test_ConditionalDistribution_find_first_guess_providedcoeffs(default_distrib
         predictors=pred,
         target=targ,
         weights=weights,
-        sample_dim="time",
         first_guess=first_guess_coeffs,
+        sample_dim="time",
     )
 
     np.testing.assert_allclose(first_guess.c1, c1, atol=1.0e-4)
