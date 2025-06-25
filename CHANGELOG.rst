@@ -80,6 +80,7 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 - Updated and extended the development Guide (`#511 <https://github.com/MESMER-group/mesmer/pull/511>`_, `#523 <https://github.com/MESMER-group/mesmer/pull/523>`_)
+- Added example notebooks for calibrating on multiple scenarios and ensemble members and emulating multiple scenarios (`#521 <https://github.com/MESMER-group/mesmer/pull/521>`_).
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
