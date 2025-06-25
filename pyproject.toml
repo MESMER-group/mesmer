@@ -63,6 +63,7 @@ viz = [
 ]
 docs = [
     "ipython",
+    "myst_nb",
     "myst-parser",
     "numpydoc",
     "sphinx",
