@@ -47,7 +47,6 @@ class _FirstGuess:
         data_targ,
         data_weights,
         first_guess,
-        func_first_guess=None,
     ):
         """
         First guess for the coefficients of the conditional distribution.
@@ -77,18 +76,10 @@ class _FirstGuess:
             If provided, will use these values as first guess for the first guess, must be one value
             per coeff in expression.coefficients_list.
 
-        func_first_guess : callable, default: None
-            If provided, and `first_guess` is not provided, will be called to
-            provide a first guess for the fit. This is an experimental feature, thus not
-            tested.
-            !! BE AWARE THAT THE ESTIMATION OF A FIRST GUESS BY YOUR MEANS COMES AT YOUR
-            OWN RISKS.
-
         """
         # initialization
         self.options = options
         self.expression = expression
-        self.func_first_guess = func_first_guess
 
         if data_pred is not None:
             _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")

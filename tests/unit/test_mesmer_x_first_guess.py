@@ -51,7 +51,6 @@ def test_first_guess_init_easy(expr, options):
 
     assert fg.expression == expr
     assert fg.options == options
-    assert fg.func_first_guess is None
     assert fg.predictor_names == ["tas"]
     np.testing.assert_equal(fg.fg_coeffs, fg_coeffs)
     np.testing.assert_equal(fg.data_pred["tas"], pred)
