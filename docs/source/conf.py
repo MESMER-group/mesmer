@@ -96,7 +96,7 @@ nb_execution_timeout = 60
 PROLOG = """\
 :::{note}
 This page was generated from an Jupyter notebook that can be accessed from
-[github](https://github.com/MESMER-group/mesmer/tree/main/examples).
+[github](https://github.com/MESMER-group/mesmer/tree/main/tutorials).
 :::
 """
 
