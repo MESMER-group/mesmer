@@ -18,9 +18,9 @@
    :hidden:
    :caption: Tutorials
 
-   examples/tutorial_mesmer_calibrate_multiple_scenarios
-   examples/tutorial_mesmer_emulating_multiple_scenarios
-   examples/example_mesmer_m_scen_ens
+   tutorials/tutorial_mesmer_calibrate_multiple_scenarios
+   tutorials/tutorial_mesmer_emulating_multiple_scenarios
+   tutorials/example_mesmer_m_scen_ens
 
 .. toctree::
    :maxdepth: 2
