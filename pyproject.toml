@@ -62,6 +62,7 @@ viz = [
     "nc-time-axis ",
 ]
 docs = [
+    "mesmer-emulator[viz]",
     "ipython",
     "myst_nb",
     "myst-parser",
