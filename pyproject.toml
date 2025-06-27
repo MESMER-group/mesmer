@@ -127,7 +127,7 @@ exclude = [
   "ci",
   "devel",
   "dist",
-  "examples",
+  "tutorials",
 ]
 files = "mesmer"
 
@@ -168,7 +168,7 @@ extend-ignore-re = [
 ]
 
 [tool.coverage.run]
-omit = ["*/tests/*, */scripts/*, */examples/*, */configs/*, */mesmer/_version.py"]
+omit = ["*/tests/*, */scripts/*, */tutorials/*, */configs/*, */mesmer/_version.py"]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--durations=10"]

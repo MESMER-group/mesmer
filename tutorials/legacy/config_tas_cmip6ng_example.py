@@ -12,7 +12,7 @@ from mesmer.create_emulations import create_seed_dict
 MESMER_ROOT = importlib.resources.files("mesmer").parent
 
 # folder for output of example
-EXAMPLE_OUTPUT_ROOT = os.path.join(MESMER_ROOT, "examples", "legacy", "output")
+EXAMPLE_OUTPUT_ROOT = os.path.join(MESMER_ROOT, "tutorial", "legacy", "output")
 
 # ---------------------------------------------------------------------------------
 
