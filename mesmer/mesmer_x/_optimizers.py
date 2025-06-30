@@ -75,32 +75,37 @@ def _minimize(
 
 
 # OPTIMIZATION FUNCTIONS & SCORES
-def _func_optim(
-    coefficients,
-    data_pred,
-    data_targ,
-    data_weights,
-    expression: Expression,
-    threshold_min_proba,
-    type_fun_optim,
-    threshold_stopping_rule,
-    exclude_trigger,
-    ind_year_thres,
-):
-    # check whether these coefficients respect all conditions: if so, can compute a
-    # value for the optimization
 
-    coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params = (
-        _distrib_checks._validate_coefficients(
-            expression, data_pred, data_targ, coefficients, threshold_min_proba
-        )
-    )
 
-    if not (coeffs_in_bounds and params_in_bounds and params_in_support and test_proba):
-        # something wrong: returns a blocking value
-        return np.inf
+class OptimizerNLL:
+    """use negative log likelihood for optimization"""
 
-    if type_fun_optim == "fcnll":
+    def _loss_function(self, expression, data_targ, params, data_weights):
+        return _neg_loglike(expression, data_targ, params, data_weights)
+
+
+class OptimizerFCNLL:
+    """use full conditional negative log likelihood based on the stopping rule for optimization
+
+    Parameters
+    ----------
+    * threshold_stopping_rule: float > 1
+      Maximum return period, used to define the threshold of the stopping rule.
+
+    * ind_year_thres: np.array
+        Positions in the predictors where the thresholds have to be tested.
+
+    * exclude_trigger: boolean
+        Whether the threshold will be included or not in the stopping rule.
+    """
+
+    def __init__(self, threshold_stopping_rule, ind_year_thres, exclude_trigger):
+
+        self.threshold_stopping_rule = threshold_stopping_rule
+        self.ind_year_thres = ind_year_thres
+        self.exclude_trigger = exclude_trigger
+
+    def _loss_function(self, expression, data_targ, params, data_weights):
         # compute full conditioning
         # will apply the stopping rule: splitting data_fit into two sets of data
         # using the given threshold
@@ -108,21 +113,21 @@ def _func_optim(
             expression,
             data_targ,
             params,
-            threshold_stopping_rule,
-            ind_year_thres,
-            exclude_trigger,
+            self.threshold_stopping_rule,
+            self.ind_year_thres,
+            self.exclude_trigger,
         )
 
         params_ok, params_stopped = {}, {}
-        for pp in params:
-            if params[pp].shape == ind_data_ok.shape:
-                params_ok[pp] = params[pp][ind_data_ok]
-                params_stopped[pp] = params[pp][ind_data_stopped]
+        for param in params:
+            if params[param].shape == ind_data_ok.shape:
+                params_ok[param] = params[param][ind_data_ok]
+                params_stopped[param] = params[param][ind_data_stopped]
             else:
                 # if the parameter is a scalar, it is the same for all data points
-                pp_arr = params[pp] * np.ones_like(ind_data_ok)
-                params_ok[pp] = pp_arr[ind_data_ok]
-                params_stopped[pp] = pp_arr[ind_data_stopped]
+                pp_arr = params[param] * np.ones_like(ind_data_ok)
+                params_ok[param] = pp_arr[ind_data_ok]
+                params_stopped[param] = pp_arr[ind_data_stopped]
 
         nll = _neg_loglike(
             expression,
@@ -137,12 +142,36 @@ def _func_optim(
             data_weights[ind_data_stopped],
         )
         return nll + fc
-    elif type_fun_optim == "nll":
-        # compute negative loglikelihood
-        return _neg_loglike(expression, data_targ, params, data_weights)
 
-    else:
-        raise TypeError(f"Unknown type of optimization function: {type_fun_optim}")
+
+def _optimization_function(
+    optimizer: OptimizerNLL | OptimizerFCNLL,
+    data_pred,
+    data_targ,
+    data_weights,
+    expression: Expression,
+    threshold_min_proba,
+):
+
+    def _inner(coefficients):
+
+        # check whether these coefficients respect all conditions: if so, can compute a
+        # value for the optimization
+        coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params = (
+            _distrib_checks._validate_coefficients(
+                expression, data_pred, data_targ, coefficients, threshold_min_proba
+            )
+        )
+
+        if not (
+            coeffs_in_bounds and params_in_bounds and params_in_support and test_proba
+        ):
+            # something wrong: returns a blocking value
+            return np.inf
+
+        return optimizer._loss_function(expression, data_targ, params, data_weights)
+
+    return _inner
 
 
 def _neg_loglike(expression: Expression, data_targ, params, data_weights):

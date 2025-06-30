@@ -8,12 +8,14 @@ from mesmer.mesmer_x._distrib_checks import (
 )
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._optimizers import (
+    OptimizerFCNLL,
+    OptimizerNLL,
     _bic,
     _crps,
     _fullcond_thres,
-    _func_optim,
     _loglike,
     _neg_loglike,
+    _optimization_function,
     _stopping_rule,
 )
 from mesmer.mesmer_x._probability_integral_transform import (
@@ -30,7 +32,7 @@ __all__ = [
     # expression
     "Expression",
     # optimizers
-    "_func_optim",
+    "_optimization_function",
     "_neg_loglike",
     "_loglike",
     "_stopping_rule",
@@ -39,4 +41,6 @@ __all__ = [
     "_crps",
     # probability integral transform
     "ProbabilityIntegralTransform",
+    "OptimizerFCNLL",
+    "OptimizerNLL",
 ]

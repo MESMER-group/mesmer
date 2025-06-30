@@ -10,6 +10,8 @@ from mesmer.mesmer_x import (
     ConditionalDistribution,
     ConditionalDistributionOptions,
     Expression,
+    OptimizerFCNLL,
+    OptimizerNLL,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -36,27 +38,14 @@ def test_ConditionalDistributionOptions_errors():
             options_solver="this is not a dictionary",
         )
 
-    with pytest.raises(ValueError, match="`options_optim` must be a dictionary"):
-        ConditionalDistributionOptions(
-            options_optim="this is not a dictionary",
-        )
-
     with pytest.raises(ValueError, match="method for this fit not prepared, to avoid"):
         ConditionalDistributionOptions(
             options_solver={"method_fit": "this is not a method"},
         )
 
-    with pytest.raises(
-        ValueError, match="`threshold_stopping_rule` and `ind_year_thres` not used"
-    ):
-        ConditionalDistributionOptions(
-            options_optim={"type_fun_optim": "nll", "threshold_stopping_rule": 0.1},
-        )
-
-    with pytest.raises(ValueError, match="`type_fun_optim='fcnll'` needs both, .*"):
-        ConditionalDistributionOptions(
-            options_optim={"type_fun_optim": "fcnll", "threshold_stopping_rule": None},
-        )
+    msg = "`options_optim` was removed - pass `optimizer` directly to `ConditionalDistribution`"
+    with pytest.raises(ValueError, match=msg):
+        ConditionalDistributionOptions(options_optim={})
 
 
 def test_ConditionalDistribution_init_all_default(default_distrib):
@@ -74,10 +63,7 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
     assert default_distrib.options.name_ftol == "ftol"
     assert default_distrib.options.name_xtol == "xtol"
     assert not default_distrib.options.error_failedfit
-    assert default_distrib.options.type_fun_optim == "nll"
-    assert default_distrib.options.threshold_stopping_rule is None
-    assert default_distrib.options.exclude_trigger is None
-    assert default_distrib.options.ind_year_thres is None
+    assert isinstance(default_distrib.optimizer, OptimizerNLL)
 
 
 def test_ConditionalDistribution_custom_init():
@@ -91,12 +77,6 @@ def test_ConditionalDistribution_custom_init():
     )
 
     threshold_min_proba = 0.1
-    options_optim = {
-        "type_fun_optim": "fcnll",
-        "threshold_stopping_rule": 0.1,
-        "ind_year_thres": 10,
-        "exclude_trigger": True,
-    }
     options_solver = {
         "method_fit": "Nelder-Mead",
         "xtol_req": 0.1,
@@ -105,14 +85,18 @@ def test_ConditionalDistribution_custom_init():
         "maxfev": 12_000,
         "error_failedfit": True,
     }
+    optimizer = OptimizerFCNLL(
+        threshold_stopping_rule=0.1,
+        ind_year_thres=10,
+        exclude_trigger=True,
+    )
 
     options = ConditionalDistributionOptions(
         threshold_min_proba=threshold_min_proba,
-        options_optim=options_optim,
         options_solver=options_solver,
     )
 
-    distrib = ConditionalDistribution(expression, options)
+    distrib = ConditionalDistribution(expression, options, optimizer)
 
     assert distrib.expression.boundaries_params == {
         "loc": [-10, 10],
@@ -130,10 +114,11 @@ def test_ConditionalDistribution_custom_init():
     assert distrib.options.name_ftol == "fatol"
     assert distrib.options.name_xtol == "xatol"
     assert distrib.options.error_failedfit  # is True
-    assert distrib.options.type_fun_optim == "fcnll"
-    assert distrib.options.threshold_stopping_rule == 0.1
-    assert distrib.options.exclude_trigger  # is True
-    assert distrib.options.ind_year_thres == 10
+
+    assert isinstance(distrib.optimizer, OptimizerFCNLL)
+    assert distrib.optimizer.threshold_stopping_rule == 0.1
+    assert distrib.optimizer.exclude_trigger  # is True
+    assert distrib.optimizer.ind_year_thres == 10
 
 
 def test_ConditionalDistribution_fit(default_distrib):
@@ -165,15 +150,14 @@ def test_ConditionalDistribution_fit(default_distrib):
 
 def test_ConditionalDistribution_func_optim_fcnll():
     expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
-    options = ConditionalDistributionOptions(
-        options_optim={
-            "type_fun_optim": "fcnll",
-            "threshold_stopping_rule": 0.1,
-            "ind_year_thres": 10,
-            "exclude_trigger": True,
-        }
+
+    options = ConditionalDistributionOptions()
+    optimizer = OptimizerFCNLL(
+        threshold_stopping_rule=0.1,
+        ind_year_thres=10,
+        exclude_trigger=True,
     )
-    distrib = ConditionalDistribution(expr, options)
+    distrib = ConditionalDistribution(expr, options, optimizer)
 
     rng = np.random.default_rng(0)
     n = 251
@@ -204,15 +188,13 @@ def test_ConditionalDistribution_func_optim_fcnll():
     np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
 
     # test with exclude_trigger False
-    options = ConditionalDistributionOptions(
-        options_optim={
-            "type_fun_optim": "fcnll",
-            "threshold_stopping_rule": 0.1,
-            "ind_year_thres": 10,
-            "exclude_trigger": False,
-        }
+    options = ConditionalDistributionOptions()
+    optimizer = OptimizerFCNLL(
+        threshold_stopping_rule=0.1,
+        ind_year_thres=10,
+        exclude_trigger=False,
     )
-    distrib = ConditionalDistribution(expr, options)
+    distrib = ConditionalDistribution(expr, options, optimizer)
     distrib.fit(
         predictors=pred,
         target=targ,
@@ -223,21 +205,6 @@ def test_ConditionalDistribution_func_optim_fcnll():
 
     np.testing.assert_allclose(distrib.coefficients.c1, c1, atol=1.0e-4)
     np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
-
-    # test with wrong optimization function
-    options = ConditionalDistributionOptions(
-        options_optim={"type_fun_optim": "not an optimization function"}
-    )
-    distrib = ConditionalDistribution(expr, options)
-    with pytest.raises(TypeError, match="Unknown type of optimization function:"):
-
-        distrib.fit(
-            predictors=pred,
-            target=targ,
-            weights=weights,
-            first_guess=first_guess,
-            sample_dim="time",
-        )
 
 
 def test_ConditionalDistribution_fit_wrongshapefg(default_distrib):

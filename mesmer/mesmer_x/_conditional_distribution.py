@@ -12,6 +12,7 @@ from mesmer.core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._first_guess import _FirstGuess
+from mesmer.mesmer_x._optimizers import OptimizerFCNLL, OptimizerNLL
 from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.stats import gaspari_cohn
 
@@ -20,7 +21,7 @@ class ConditionalDistributionOptions:
     def __init__(
         self,
         threshold_min_proba=1.0e-9,
-        options_optim=None,
+        options_optim=None,  # removed
         options_solver=None,
     ):
         """Class to define optimizers used during first guess and training.
@@ -36,21 +37,7 @@ class ConditionalDistributionOptions:
                 stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
                 and `exclude_trigger` only apply to 'fcnll'.
 
-            * threshold_stopping_rule: float > 1, default: None
-                Maximum return period, used to define the threshold of the stopping
-                rule.
-                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
-                together.
 
-            * ind_year_thres: np.array, default: None
-                Positions in the predictors where the thresholds have to be tested.
-                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
-                together.
-
-            * exclude_trigger: boolean, default: None
-                Whether the threshold will be included or not in the stopping rule.
-                threshold_stopping_rule, ind_year_thres and exclude_trigger must be used
-                together.
 
         options_solver : dict, optional
             A dictionary with options for the solvers, used to determine an adequate
@@ -88,6 +75,15 @@ class ConditionalDistributionOptions:
             ensure that all points are feasible with the fitted distribution.
             If `None` this test is skipped.
         """
+
+        if options_optim is not None:
+
+            msg = (
+                "`options_optim` was removed - pass `optimizer` directly to "
+                "`ConditionalDistribution`"
+            )
+
+            raise ValueError(msg)
 
         # preparing solver
         default_options_solver = {
@@ -143,43 +139,6 @@ class ConditionalDistributionOptions:
         self.name_ftol = ftol[self.method_fit]
         self.error_failedfit = options_solver["error_failedfit"]
 
-        # preparing information on function to optimize
-        default_options_optim = dict(
-            type_fun_optim="nll",
-            threshold_stopping_rule=None,
-            exclude_trigger=None,
-            ind_year_thres=None,
-        )
-
-        options_optim = options_optim or {}
-
-        if not isinstance(options_optim, dict):
-            raise ValueError("`options_optim` must be a dictionary")
-
-        options_optim = default_options_optim | options_optim
-
-        # preparing information for the stopping rule
-        self.type_fun_optim = options_optim["type_fun_optim"]
-        self.threshold_stopping_rule = options_optim["threshold_stopping_rule"]
-        self.ind_year_thres = options_optim["ind_year_thres"]
-        self.exclude_trigger = options_optim["exclude_trigger"]
-
-        if self.type_fun_optim == "nll" and (
-            self.threshold_stopping_rule is not None or self.ind_year_thres is not None
-        ):
-            raise ValueError(
-                "`threshold_stopping_rule` and `ind_year_thres` not used for"
-                " `type_fun_optim='nll'`"
-            )
-
-        if self.type_fun_optim == "fcnll" and (
-            self.threshold_stopping_rule is None or self.ind_year_thres is None
-        ):
-            raise ValueError(
-                "`type_fun_optim='fcnll'` needs both, `threshold_stopping_rule`"
-                "  and `ind_year_thres`."
-            )
-
         # initialization and basic checks on threshold_min_proba
         self.threshold_min_proba = threshold_min_proba
         if threshold_min_proba is not None and (
@@ -193,6 +152,7 @@ class ConditionalDistribution:
         self,
         expression: Expression,
         options: ConditionalDistributionOptions,
+        optimizer: OptimizerNLL | OptimizerFCNLL = OptimizerNLL(),
     ):
         """
         A conditional distribution.
@@ -204,10 +164,18 @@ class ConditionalDistribution:
         options : class py:class:ConditionalDistributionOptions
             Class defining the optimizer options used during first guess and training of
             distributions.
+        optimizer : OptimizerNLL | OptimizerFCNLL, default: OptimizerNLL
+            Optimizer to use.
+
+            * OptimizerNLL: negative log likelihood (default)
+            * OptimizerFCNLL: full conditional negative log likelihood based on the
+              stopping rule
+
         """
         # initialization
         self.expression = expression
         self.options = options
+        self.optimizer = optimizer
         self._coefficients = None
 
     def fit(
@@ -329,22 +297,22 @@ class ConditionalDistribution:
         # NOTE: extremely important that the order is the right one
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
+        # initialize optimizer function
+        func = _optimizers._optimization_function(
+            optimizer=self.optimizer,
+            data_pred=data_pred,
+            data_targ=data_targ,
+            data_weights=data_weights,
+            expression=self.expression,
+            threshold_min_proba=self.options.threshold_min_proba,
+        )
+
         # training
         m = _optimizers._minimize(
-            func=_optimizers._func_optim,
+            func=func,
             x0=fg,
             method_fit=self.options.method_fit,
-            args=(
-                data_pred,
-                data_targ,
-                data_weights,
-                self.expression,
-                self.options.threshold_min_proba,
-                self.options.type_fun_optim,
-                self.options.threshold_stopping_rule,
-                self.options.exclude_trigger,
-                self.options.ind_year_thres,
-            ),
+            args=(),
             option_NelderMead="best_run",
             options={
                 "maxfev": self.options.maxfev,
@@ -504,6 +472,10 @@ class ConditionalDistribution:
         -------
         scores: xr.Dataset
             Dataset containing the scores for each gridpoint.
+
+        Notes
+        -----
+        "nll" may or may not be the same as "func_optim"
         """
 
         da_coeffs = self.coefficients.to_dataarray(dim="coefficient")
@@ -554,18 +526,16 @@ class ConditionalDistribution:
         for score in scores:
             # basic result: optimized value
             if score == "func_optim":
-                score = _optimizers._func_optim(
-                    coefficients,
-                    data_pred,
-                    data_targ,
-                    data_weights,
-                    self.expression,
-                    self.options.threshold_min_proba,
-                    self.options.type_fun_optim,
-                    self.options.threshold_stopping_rule,
-                    self.options.ind_year_thres,
-                    self.options.exclude_trigger,
+
+                func = _optimizers._optimization_function(
+                    optimizer=self.optimizer,
+                    data_pred=data_pred,
+                    data_targ=data_targ,
+                    data_weights=data_weights,
+                    expression=self.expression,
+                    threshold_min_proba=self.options.threshold_min_proba,
                 )
+                score = func(coefficients)
 
             # calculating parameters for the next ones
             params = self.expression.evaluate_params(coefficients, data_pred)
