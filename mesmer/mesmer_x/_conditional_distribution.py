@@ -451,12 +451,12 @@ class ConditionalDistribution:
             Individual weights for each sample.
         scores : list of str, default: ['func_optim', 'nll', 'bic']
             After the fit, several scores can be calculated to assess the performance:
-            - func_optim: function optimized, as described in
+            - "func_optim": function optimized, as described in
               options_optim['type_fun_optim']: negative log likelihood or full
               conditional negative log likelihood
-            - nll: Negative Log Likelihood
-            - bic: Bayesian Information Criteria
-            - crps: Continuous Ranked Probability Score (warning, takes a long time to
+            - "nll": Negative Log Likelihood
+            - "bic": Bayesian Information Criteria
+            - "crps": Continuous Ranked Probability Score (warning: takes a long time to
               compute)
 
         Returns
@@ -496,7 +496,7 @@ class ConditionalDistribution:
             ],
             output_core_dims=[["score"]],
             kwargs={"scores": scores},
-            vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
+            vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
         )
@@ -507,54 +507,54 @@ class ConditionalDistribution:
         self, coefficients, data_pred, data_targ, data_weights, scores
     ):
         """Compute quality scores for the fit coefficients."""
-        # initialize
-        quality_fit = []
+
+        quality_scores = []
 
         # correcting format: must be dict(str, DataArray or array) for Expression
         # TODO: to change with stabilization of data format
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
-        for score in scores:
-            # basic result: optimized value
-            if score == "func_optim":
+        # basic result: optimized value
+        if "func_optim" in scores:
 
-                func = _optimizers._optimization_function(
-                    optimizer=self.optimizer,
-                    data_pred=data_pred,
-                    data_targ=data_targ,
-                    data_weights=data_weights,
-                    expression=self.expression,
-                    threshold_min_proba=self.options.threshold_min_proba,
-                )
-                score = func(coefficients)
+            func = _optimizers._optimization_function(
+                optimizer=self.optimizer,
+                data_pred=data_pred,
+                data_targ=data_targ,
+                data_weights=data_weights,
+                expression=self.expression,
+                threshold_min_proba=self.options.threshold_min_proba,
+            )
+            scores = func(coefficients)
+            quality_scores.append(scores)
 
-            # calculating parameters for the next ones
-            params = self.expression.evaluate_params(coefficients, data_pred)
+        # calculating parameters for the next ones
+        params = self.expression.evaluate_params(coefficients, data_pred)
 
-            # NLL averaged over sample
-            if score == "nll":
-                score = _optimizers._neg_loglike(
-                    self.expression, data_targ, params, data_weights
-                )
+        # NLL averaged over sample
+        if "nll" in scores:
+            score = _optimizers._neg_loglike(
+                self.expression, data_targ, params, data_weights
+            )
+            quality_scores.append(score)
 
-            # BIC averaged over sample
-            if score == "bic":
-                score = _optimizers._bic(
-                    self.expression, data_targ, params, data_weights
-                )
+        # BIC averaged over sample
+        if "bic" in scores:
+            scores = _optimizers._bic(self.expression, data_targ, params, data_weights)
+            quality_scores.append(score)
 
-            # CRPS
-            if score == "crps":
-                score = _optimizers._crps(
-                    self.expression,
-                    data_targ,
-                    data_pred,
-                    data_weights,
-                    coefficients,
-                )
+        # CRPS
+        if "crps" in scores:
+            score = _optimizers._crps(
+                self.expression,
+                data_targ,
+                data_pred,
+                data_weights,
+                coefficients,
+            )
 
-            quality_fit.append(score)
-        return np.array(quality_fit)
+            quality_scores.append(score)
+        return np.array(quality_scores)
 
     @property
     def coefficients(self):
