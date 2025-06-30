@@ -276,7 +276,7 @@ def test_expression_covariate_wrong_underscores():
     # - raise?
     # - get "T__C" as covariate?
 
-    with pytest.raises(ValueError, match=""):
+    with pytest.raises(ValueError):
         Expression("norm(loc=c1, scale=c2 * __T__C__)", "name")
 
 
