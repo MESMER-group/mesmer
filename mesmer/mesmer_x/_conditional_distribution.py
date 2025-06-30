@@ -525,8 +525,8 @@ class ConditionalDistribution:
                 expression=self.expression,
                 threshold_min_proba=self.options.threshold_min_proba,
             )
-            scores = func(coefficients)
-            quality_scores.append(scores)
+            score = func(coefficients)
+            quality_scores.append(score)
 
         # calculating parameters for the next ones
         params = self.expression.evaluate_params(coefficients, data_pred)
@@ -540,7 +540,7 @@ class ConditionalDistribution:
 
         # BIC averaged over sample
         if "bic" in scores:
-            scores = _optimizers._bic(self.expression, data_targ, params, data_weights)
+            score = _optimizers._bic(self.expression, data_targ, params, data_weights)
             quality_scores.append(score)
 
         # CRPS
