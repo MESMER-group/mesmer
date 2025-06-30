@@ -135,6 +135,7 @@ class _FirstGuess:
         self.fg_coeffs = np.copy(first_guess)
         # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
         self.fg_coeffs = self.fg_coeffs.astype(float)
+
         # check if the first guess is valid
         if not len(self.fg_coeffs) == self.expression.n_coeffs:
             raise ValueError(
@@ -203,12 +204,13 @@ class _FirstGuess:
                     optimum, good performances, but lacks in reproductibility and
                     stability: not reliable enough here. Ok if runs much longer.
                 - brute, differential_evolution, shgo, dual_annealing, direct: requires
-                    bounds
+                  bounds
                     - brute, dual_annealing, direct: performances too low & too slow
                     - differential_evolution: lacks in reproductibility & stability
                     - shgo: good performances with the right sampling method, relatively
-                    fast, but still adds ~10s. Highly dependent on the bounds, must not
-                    be too large.
+                      fast, but still adds ~10s. Highly dependent on the bounds, must not
+                      be too large.
+
                 The best global optimizer, shgo, would then require bounds that are not
                 too large.
 
