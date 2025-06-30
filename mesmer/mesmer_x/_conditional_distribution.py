@@ -28,16 +28,13 @@ class ConditionalDistributionOptions:
 
         Parameters
         ----------
-        options_optim : dict, default: None
-            A dictionary with options for the function to optimize:
-
-            * type_fun_optim: string, default: "nll"
-                If 'nll', will optimize using the negative log likelihood. If 'fcnll',
-                will use the full conditional negative log likelihood based on the
-                stopping rule. The arguments `threshold_stopping_rule`, `ind_year_thres`
-                and `exclude_trigger` only apply to 'fcnll'.
-
-
+        threshold_min_proba :  float or None, default: 1e-9
+            If numeric imposes a check during the fitting that every sample fulfills
+            `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
+            i.e. each sample lies within some confidence interval of the distribution.
+            Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
+            ensure that all points are feasible with the fitted distribution.
+            If `None` this test is skipped.
 
         options_solver : dict, optional
             A dictionary with options for the solvers, used to determine an adequate
@@ -67,13 +64,7 @@ class ConditionalDistributionOptions:
             * error_failedfit : boolean, default: True.
                 If True, will raise an issue if the fit failed.
 
-        threshold_min_proba :  float or None, default: 1e-9
-            If numeric imposes a check during the fitting that every sample fulfills
-            `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
-            i.e. each sample lies within some confidence interval of the distribution.
-            Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
-            ensure that all points are feasible with the fitted distribution.
-            If `None` this test is skipped.
+
         """
 
         if options_optim is not None:
@@ -227,7 +218,7 @@ class ConditionalDistribution:
         if n_coeffs_fg != self.expression.n_coeffs:
             raise ValueError(
                 "The provided first guess does not have the correct number of coeffs, "
-                f"Expression suggests a number of {len(self.expression.coefficients_list)} coefficients, "
+                f"Expression suggests a number of {self.expression.n_coeffs} coefficients, "
                 f"but `first_guess` has {n_coeffs_fg} data_variables."
             )
 
@@ -265,7 +256,7 @@ class ConditionalDistribution:
                 ["coefficient"],
             ],
             output_core_dims=[["coefficient"]],
-            vectorize=True,  # Enable vectorization for automatic iteration over gridpoints
+            vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
         )
