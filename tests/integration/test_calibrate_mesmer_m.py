@@ -1,5 +1,7 @@
 import pathlib
 
+import filefisher
+import numpy as np
 import pytest
 import xarray as xr
 
@@ -100,131 +102,139 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     )
 
     # fit cyclo-stationary AR(1) process
-    AR1_fit = mesmer.stats.fit_auto_regression_monthly(
+    ar1_fit = mesmer.stats.fit_auto_regression_monthly(
         transformed_hm_resids.transformed, time_dim="time"
     )
 
-    # work out covariance matrix
+    # find localized empirical covariance
     geodist = mesmer.geospatial.geodist_exact(tas_stacked_y.lon, tas_stacked_y.lat)
 
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
     )
 
-    weights = xr.ones_like(AR1_fit.residuals.isel(gridcell=0))
+    weights = xr.ones_like(ar1_fit.residuals.isel(gridcell=0))
     weights.name = "weights"
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
-        AR1_fit.residuals, weights, phi_gc_localizer, "time", 30
+        ar1_fit.residuals, weights, phi_gc_localizer, "time", 30
     )
 
     # we need to get the original time coordinate to be able to validate our results
     m_time = tas_stacked_m.time.rename("monthly_time")
 
+    PARAM_FILEFINDER = filefisher.FileFinder(
+        path_pattern=TEST_PATH / "{module}/",
+        file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
+    )
+
+    scen_str = scenario
+
+    keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
+
+    local_hm_file = PARAM_FILEFINDER.create_full_name(keys, module="harmonic-model")
+    local_pt_file = PARAM_FILEFINDER.create_full_name(keys, module="power-transformer")
+    local_ar_file = PARAM_FILEFINDER.create_full_name(keys, module="local-variability")
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(keys, module="covariance")
+    time_file = PARAM_FILEFINDER.create_full_name(keys, module="monthly-time")
+
     # save params
     if update_expected_files:
         # drop unnecessary variables
         harmonic_model_fit = harmonic_model_fit.drop_vars(["residuals", "time"])
-        AR1_fit = AR1_fit.drop_vars(["residuals", "time"])
+        ar1_fit = ar1_fit.drop_vars(["residuals", "time"])
 
         # save
-        harmonic_model_fit.to_netcdf(
-            TEST_PATH
-            / "harmonic_model"
-            / f"params_harmonic_model_tas_{esm}_{scenario}.nc"
-        )
-        pt_coefficients.to_netcdf(
-            TEST_PATH
-            / "power_transformer"
-            / f"params_power_transformer_tas_{esm}_{scenario}.nc"
-        )
-        AR1_fit.to_netcdf(
-            TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc"
-        )
-        localized_ecov.to_netcdf(
-            TEST_PATH
-            / "local_variability"
-            / f"params_localized_ecov_tas_{esm}_{scenario}.nc"
-        )
-        m_time.to_netcdf(
-            TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc"
-        )
+        harmonic_model_fit.to_netcdf(local_hm_file)
+        pt_coefficients.to_netcdf(local_pt_file)
+        ar1_fit.to_netcdf(local_ar_file)
+        localized_ecov.to_netcdf(localized_ecov_file)
+        m_time.to_netcdf(time_file)
+
         pytest.skip("Updated param files.")
 
     # testing
     else:
-        # load expected values
-        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-        expected_hm_params = xr.open_dataset(
-            TEST_PATH
-            / "harmonic_model"
-            / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
-            decode_times=time_coder,
-        )
-        expected_pt_params = xr.open_dataset(
-            TEST_PATH
-            / "power_transformer"
-            / f"params_power_transformer_tas_{esm}_{scenario}.nc",
-            decode_times=time_coder,
-        )
-        expected_AR1_params = xr.open_dataset(
-            TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
-            decode_times=time_coder,
-        )
-        expected_localized_ecov = xr.open_dataset(
-            TEST_PATH
-            / "local_variability"
-            / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
-            decode_times=time_coder,
-        )
-        expected_m_time = xr.open_dataset(
-            TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
-            decode_times=time_coder,
+        assert_params_allclose(
+            harmonic_model_fit,
+            pt_coefficients,
+            ar1_fit,
+            localized_ecov,
+            m_time,
+            local_hm_file,
+            local_pt_file,
+            local_ar_file,
+            localized_ecov_file,
+            time_file,
         )
 
-        # the following parameters should be exactly the same
-        exact_exp_params = xr.merge(
-            [
-                expected_hm_params.selected_order,
-                expected_localized_ecov.localization_radius,
-                expected_m_time.monthly_time,
-            ]
-        )
-        exact_cal_params = xr.merge(
-            [
-                harmonic_model_fit.selected_order,
-                localized_ecov.localization_radius,
-                m_time,
-            ]
-        )
 
-        xr.testing.assert_equal(exact_exp_params, exact_cal_params)
+def assert_params_allclose(
+    harmonic_model_fit,
+    pt_coefficients,
+    ar1_fit,
+    localized_ecov,
+    m_time,
+    local_hm_file,
+    local_pt_file,
+    local_ar_file,
+    localized_ecov_file,
+    time_file,
+):
+    # test params
 
-        # compare the rest
-        # using numpy because it outputs the differences and how many values are off
-        import numpy as np
+    # load expected values
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    expected_hm_params = xr.open_dataset(local_hm_file, decode_times=time_coder)
+    expected_pt_params = xr.open_dataset(local_pt_file, decode_times=time_coder)
+    expected_AR1_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    expected_localized_ecov = xr.open_dataset(
+        localized_ecov_file, decode_times=time_coder
+    )
+    expected_m_time = xr.open_dataset(time_file, decode_times=time_coder)
 
-        # the tols are set to the best we can do
-        # NOTE: it is always rather few values that are off
-        np.testing.assert_allclose(
-            expected_hm_params.coeffs,
-            harmonic_model_fit.coeffs,
-            atol=2e-5,
-        )
-        np.testing.assert_allclose(
-            expected_pt_params.lambda_coeffs, pt_coefficients, atol=1.0e-4, rtol=1.5e-4
-        )
-        np.testing.assert_allclose(
-            expected_AR1_params.slope,
-            AR1_fit.slope,
-            atol=1e-5,
-        )
-        np.testing.assert_allclose(
-            expected_AR1_params.intercept,
-            AR1_fit.intercept,
-            atol=2e-4,
-        )
-        np.testing.assert_allclose(
-            localized_ecov.localized_covariance,
-            localized_ecov.localized_covariance,
-        )
+    # the following parameters should be exactly the same
+    exact_exp_params = xr.merge(
+        [
+            expected_hm_params.selected_order,
+            expected_localized_ecov.localization_radius,
+            expected_m_time.monthly_time,
+        ]
+    )
+    exact_cal_params = xr.merge(
+        [
+            harmonic_model_fit.selected_order,
+            localized_ecov.localization_radius,
+            m_time,
+        ]
+    )
+
+    xr.testing.assert_equal(exact_exp_params, exact_cal_params)
+
+    # compare the rest
+    # using numpy because it outputs the differences and how many values are off
+
+    # the tols are set to the best we can do
+    # NOTE: it is always rather few values that are off
+    np.testing.assert_allclose(
+        expected_hm_params.coeffs,
+        harmonic_model_fit.coeffs,
+        atol=2e-5,
+    )
+    np.testing.assert_allclose(
+        expected_pt_params.lambda_coeffs, pt_coefficients, atol=1.0e-4, rtol=1.5e-4
+    )
+    np.testing.assert_allclose(
+        expected_AR1_params.slope,
+        ar1_fit.slope,
+        atol=1e-5,
+    )
+    np.testing.assert_allclose(
+        expected_AR1_params.intercept,
+        ar1_fit.intercept,
+        atol=2e-4,
+    )
+    np.testing.assert_allclose(
+        localized_ecov.localized_covariance,
+        localized_ecov.localized_covariance,
+    )
