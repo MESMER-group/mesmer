@@ -23,6 +23,9 @@ New Features
   (`#349 <https://github.com/MESMER-group/mesmer/issues/349>`_, and
   `#713 <https://github.com/MESMER-group/mesmer/pull/713>`_).
   By `Mathias Hauser`_.
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to ``localized_empirical_covariance`` (`#710 <https://github.com/MESMER-group/mesmer/pull/710>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -188,6 +191,8 @@ that this led to some numerical changes compared to the MESMER-M publication
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
 - add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
 - add integration tests for MESMER-M (`#501 <https://github.com/MESMER-group/mesmer/pull/501>`_)
+- enable calibrating MESMER-M on several scenarios and ensemble members (`#678 <https://github.com/MESMER-group/mesmer/issues/678>`_)
+  and add an example (`#572 <https://github.com/MESMER-group/mesmer/pull/572>`_).
 
 Auto-Regression
 ~~~~~~~~~~~~~~~
@@ -203,6 +208,9 @@ Auto-Regression
   Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
 - Implement function to localize the empirical covarince matrix for each month individually to use in drawing
   of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to ``fit_auto_regression_monthly`` (`#706 <https://github.com/MESMER-group/mesmer/pull/706>`_).
+- Ensure residuals are ordered correctly in `fit_auto_regression_monthly` (`#708 <https://github.com/MESMER-group/mesmer/pull/708>`_).
 
 Yeo-Johnson power transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,6 +242,8 @@ Yeo-Johnson power transformer
 - Converted Yeo-Johnson power transformer functions back into a class, which allows to
   add additional lambda functions (`#716 <https://github.com/MESMER-group/mesmer/pull/716>`_).
 - Added a constant lambda function (`#718 <https://github.com/MESMER-group/mesmer/pull/718>`_).
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to power transformer functions (`#703 <https://github.com/MESMER-group/mesmer/pull/703>`_).
 
 Harmonic model
 ~~~~~~~~~~~~~~
@@ -263,6 +273,8 @@ Harmonic model
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
 - add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to harmonic model functions (`#705 <https://github.com/MESMER-group/mesmer/pull/705>`_).
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
