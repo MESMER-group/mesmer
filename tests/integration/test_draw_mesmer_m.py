@@ -1,5 +1,6 @@
 import pathlib
 
+import filefisher
 import pytest
 import xarray as xr
 
@@ -42,34 +43,28 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
         drop_variables=["height", "file_qf"],
     ).load()
 
+    PARAM_FILEFINDER = filefisher.FileFinder(
+        path_pattern=TEST_PATH / "test-params/{module}/",
+        file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
+    )
+
+    scen_str = scenario
+
+    keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
+
+    local_hm_file = PARAM_FILEFINDER.create_full_name(keys, module="harmonic-model")
+    local_pt_file = PARAM_FILEFINDER.create_full_name(keys, module="power-transformer")
+    local_ar_file = PARAM_FILEFINDER.create_full_name(keys, module="local-variability")
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(keys, module="covariance")
+    time_file = PARAM_FILEFINDER.create_full_name(keys, module="monthly-time")
+
     # load parameters
-    PARAMS_PATH = TEST_PATH / "test-params"
-    hm_params = xr.open_dataset(
-        PARAMS_PATH
-        / "harmonic_model"
-        / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
-        decode_times=time_coder,
-    )
-    pt_params = xr.open_dataset(
-        PARAMS_PATH
-        / "power_transformer"
-        / f"params_power_transformer_tas_{esm}_{scenario}.nc",
-        decode_times=time_coder,
-    )
-    AR1_params = xr.open_dataset(
-        PARAMS_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
-        decode_times=time_coder,
-    )
-    localized_ecov = xr.open_dataset(
-        PARAMS_PATH
-        / "local_variability"
-        / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
-        decode_times=time_coder,
-    )
-    m_time = xr.open_dataset(
-        PARAMS_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
-        decode_times=time_coder,
-    )
+
+    hm_params = xr.open_dataset(local_hm_file, decode_times=time_coder)
+    pt_params = xr.open_dataset(local_pt_file, decode_times=time_coder)
+    AR1_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    localized_ecov = xr.open_dataset(localized_ecov_file, decode_times=time_coder)
+    m_time = xr.open_dataset(time_file, decode_times=time_coder)
 
     # preprocess yearly data
     def mask_and_stack(ds, threshold_land):
