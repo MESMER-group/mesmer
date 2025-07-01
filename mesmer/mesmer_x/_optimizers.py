@@ -119,15 +119,16 @@ class OptimizerFCNLL:
         )
 
         params_ok, params_stopped = {}, {}
-        for param in params:
-            if params[param].shape == ind_data_ok.shape:
-                params_ok[param] = params[param][ind_data_ok]
-                params_stopped[param] = params[param][ind_data_stopped]
-            else:
-                # if the parameter is a scalar, it is the same for all data points
-                pp_arr = params[param] * np.ones_like(ind_data_ok)
-                params_ok[param] = pp_arr[ind_data_ok]
-                params_stopped[param] = pp_arr[ind_data_stopped]
+        for key in params:
+
+            param = params[key]
+
+            # if the parameter is a scalar, it is the same for all data points
+            if params[key].shape != ind_data_ok.shape:
+                param = np.full_like(ind_data_ok, fill_value=params[key], dtype=float)
+
+            params_ok[key] = param[ind_data_ok]
+            params_stopped[key] = param[ind_data_stopped]
 
         nll = _neg_loglike(
             expression,

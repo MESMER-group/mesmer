@@ -171,9 +171,7 @@ def test_ConditionalDistribution_func_optim_fcnll():
     targ = xr.DataArray(targ, dims=["time"], name="tas")
     weights = xr.ones_like(targ)
     weights.name = "weight"
-    first_guess = xr.Dataset(
-        {"c1": c1, "c2": c2},
-    )
+    first_guess = xr.Dataset({"c1": c1, "c2": c2})
 
     # Fit the distribution
     distrib.fit(
