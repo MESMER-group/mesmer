@@ -85,7 +85,9 @@ class OptimizerNLL:
 
 
 class OptimizerFCNLL:
-    """use full conditional negative log likelihood based on the stopping rule for optimization
+    """
+    use full conditional negative log likelihood based on the stopping rule for
+    optimization
 
     Parameters
     ----------
@@ -97,6 +99,10 @@ class OptimizerFCNLL:
 
     * exclude_trigger: boolean
         Whether the threshold will be included or not in the stopping rule.
+
+    Notes
+    -----
+    Source: https://doi.org/10.1016/j.wace.2023.100584
     """
 
     def __init__(self, threshold_stopping_rule, ind_year_thres, exclude_trigger):
@@ -204,6 +210,28 @@ def _stopping_rule(
     ind_year_thres,
     exclude_trigger,
 ):
+    """
+    Identifies parts of the sample above the threshold for the stopping rule.
+
+    Parameters
+    ----------
+    data_targ : numpy array 1D
+        Target data to evaluate the stopping rule.
+    params : dict
+        Parameters of the distribution, evaluated for the target data.
+
+    Returns
+    -------
+    ind_data_ok : numpy array 1D boolean
+        Indices of the data that are below the threshold for the stopping rule.
+    ind_data_stopped : numpy array 1D boolean
+        Indices of the data that are above the threshold for the stopping rule.
+
+    Notes
+    -----
+    Source: https://doi.org/10.1016/j.wace.2023.100584
+    """
+
     # evaluating threshold over time
     thres_t = expression.distrib.isf(
         q=1 / threshold_stopping_rule, **params  # type: ignore
@@ -224,6 +252,30 @@ def _stopping_rule(
 
 
 def _fullcond_thres(expression: Expression, data_targ, params, data_weights):
+    """
+    Calculates the full conditional of the negative log likelihood, based on the
+    stopping rule. This is the second term of the full conditional negative log
+    likelihood (FCNLL) used in the optimization.
+
+    Parameters
+    ----------
+    data_targ : numpy array 1D
+        Target data to evaluate the full conditional.
+    params : dict
+        Parameters of the distribution, evaluated for the target data.
+    data_weights : numpy array 1D
+        Weights for the target data.
+
+    Returns
+    -------
+    float
+        The value of the full conditional of the negative log likelihood.
+
+    Notes
+    -----
+    Source: https://doi.org/10.1016/j.wace.2023.100584
+    """
+
     # calculating 2nd term for full conditional of the NLL
     # fc1 = distrib.logcdf(conditional_distrib.data_targ)
     fc2 = expression.distrib.sf(data_targ, **params)
