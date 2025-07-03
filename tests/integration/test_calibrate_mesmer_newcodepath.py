@@ -1,5 +1,3 @@
-import pathlib
-
 import pytest
 import xarray as xr
 from filefisher import FileFinder
@@ -93,11 +91,10 @@ def test_calibrate_mesmer(
         variables.append("hfds")
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / outname
+    test_path = test_data_root_dir / "output" / outname
 
     PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
 

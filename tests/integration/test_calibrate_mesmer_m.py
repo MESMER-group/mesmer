@@ -1,4 +1,3 @@
-import pathlib
 
 import pytest
 import xarray as xr
@@ -51,8 +50,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     scenario = "ssp585"
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon" / "test-params"
+    test_path = test_data_root_dir / "output" / "tas" / "mon" / "test-params"
     cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     # load annual data
@@ -129,25 +127,25 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
 
         # save
         harmonic_model_fit.to_netcdf(
-            TEST_PATH
+            test_path
             / "harmonic_model"
             / f"params_harmonic_model_tas_{esm}_{scenario}.nc"
         )
         pt_coefficients.to_netcdf(
-            TEST_PATH
+            test_path
             / "power_transformer"
             / f"params_power_transformer_tas_{esm}_{scenario}.nc"
         )
         AR1_fit.to_netcdf(
-            TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc"
+            test_path / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc"
         )
         localized_ecov.to_netcdf(
-            TEST_PATH
+            test_path
             / "local_variability"
             / f"params_localized_ecov_tas_{esm}_{scenario}.nc"
         )
         m_time.to_netcdf(
-            TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc"
+            test_path / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc"
         )
         pytest.skip("Updated param files.")
 
@@ -156,29 +154,29 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
         # load expected values
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         expected_hm_params = xr.open_dataset(
-            TEST_PATH
+            test_path
             / "harmonic_model"
             / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
             decode_times=time_coder,
         )
         expected_pt_params = xr.open_dataset(
-            TEST_PATH
+            test_path
             / "power_transformer"
             / f"params_power_transformer_tas_{esm}_{scenario}.nc",
             decode_times=time_coder,
         )
         expected_AR1_params = xr.open_dataset(
-            TEST_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
+            test_path / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
             decode_times=time_coder,
         )
         expected_localized_ecov = xr.open_dataset(
-            TEST_PATH
+            test_path
             / "local_variability"
             / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
             decode_times=time_coder,
         )
         expected_m_time = xr.open_dataset(
-            TEST_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
+            test_path / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
             decode_times=time_coder,
         )
 
