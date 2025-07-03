@@ -1,5 +1,3 @@
-import pathlib
-
 import pytest
 import xarray as xr
 from filefisher import FileFinder
@@ -42,8 +40,7 @@ def test_make_realisations_mesmer_x(
     esm = "IPSL-CM6A-LR"
 
     # load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / targ_var / "one_scen_one_ens"
+    test_path = test_data_root_dir / "output" / targ_var / "one_scen_one_ens"
     cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     # load predictor data
@@ -70,7 +67,7 @@ def test_make_realisations_mesmer_x(
 
     # load the parameters
     PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{targ_var}_{expr_name}_{esm}_{scen}.nc",
     )
 
@@ -129,7 +126,7 @@ def test_make_realisations_mesmer_x(
     )
 
     expected_output_file = (
-        TEST_PATH / f"test_make_realisations_expected_output_{expr_name}.nc"
+        test_path / f"test_make_realisations_expected_output_{expr_name}.nc"
     )
     if update_expected_files:
         # save output

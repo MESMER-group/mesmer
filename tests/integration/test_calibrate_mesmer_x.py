@@ -1,5 +1,3 @@
-import pathlib
-
 import numpy as np
 import pytest
 import xarray as xr
@@ -88,8 +86,7 @@ def test_calibrate_mesmer_x(
     esm = "IPSL-CM6A-LR"
 
     # load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / outname
+    test_path = test_data_root_dir / "output" / outname
 
     cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
@@ -290,7 +287,7 @@ def test_calibrate_mesmer_x(
 
     # parameter files
     PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{targ_var}_{expr_name}_{esm}_{scen}.nc",
     )
 
