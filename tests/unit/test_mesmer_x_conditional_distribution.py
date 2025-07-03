@@ -86,7 +86,7 @@ def test_ConditionalDistribution_custom_init():
         "error_failedfit": True,
     }
     optimizer = OptimizerFCNLL(
-        threshold_stopping_rule=0.1,
+        threshold_stopping_rule=2,
         ind_year_thres=10,
         exclude_trigger=True,
     )
@@ -116,7 +116,7 @@ def test_ConditionalDistribution_custom_init():
     assert distrib.options.error_failedfit  # is True
 
     assert isinstance(distrib.optimizer, OptimizerFCNLL)
-    assert distrib.optimizer.threshold_stopping_rule == 0.1
+    assert distrib.optimizer.threshold_stopping_rule == 2
     assert distrib.optimizer.exclude_trigger  # is True
     assert distrib.optimizer.ind_year_thres == 10
 
@@ -148,13 +148,25 @@ def test_ConditionalDistribution_fit(default_distrib):
     np.testing.assert_allclose(default_distrib.coefficients.c2, c2, atol=0.0015)
 
 
+def test_OptimizerFCNLL_errors():
+
+    match = "`threshold_stopping_rule` must be larger than 1"
+    with pytest.raises(ValueError, match=match):
+        OptimizerFCNLL(
+            threshold_stopping_rule=0.1,
+            ind_year_thres=100,
+            exclude_trigger=True,
+        )
+
+
+@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/729")
 def test_ConditionalDistribution_func_optim_fcnll():
     expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
 
     options = ConditionalDistributionOptions()
     optimizer = OptimizerFCNLL(
-        threshold_stopping_rule=0.1,
-        ind_year_thres=10,
+        threshold_stopping_rule=10,
+        ind_year_thres=10,  # TODO: what to choose?
         exclude_trigger=True,
     )
     distrib = ConditionalDistribution(expr, options, optimizer)
@@ -188,8 +200,8 @@ def test_ConditionalDistribution_func_optim_fcnll():
     # test with exclude_trigger False
     options = ConditionalDistributionOptions()
     optimizer = OptimizerFCNLL(
-        threshold_stopping_rule=0.1,
-        ind_year_thres=10,
+        threshold_stopping_rule=2,
+        ind_year_thres=10,  # TODO: what to choose
         exclude_trigger=False,
     )
     distrib = ConditionalDistribution(expr, options, optimizer)

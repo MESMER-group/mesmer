@@ -107,6 +107,13 @@ class OptimizerFCNLL:
 
     def __init__(self, threshold_stopping_rule, ind_year_thres, exclude_trigger):
 
+        if threshold_stopping_rule < 1:
+            msg = (
+                "`threshold_stopping_rule` must be larger than 1, got"
+                f" '{threshold_stopping_rule}'"
+            )
+            raise ValueError(msg)
+
         self.threshold_stopping_rule = threshold_stopping_rule
         self.ind_year_thres = ind_year_thres
         self.exclude_trigger = exclude_trigger
@@ -141,6 +148,8 @@ class OptimizerFCNLL:
             data_targ[ind_data_ok],
             params_ok,
             data_weights[ind_data_ok],
+            # TODO: do we need different code depending on exclude_trigger?
+            # https://github.com/MESMER-group/mesmer/issues/729
         )
         fc = _fullcond_thres(
             expression,
@@ -280,6 +289,11 @@ def _fullcond_thres(expression: Expression, data_targ, params, data_weights):
     # fc1 = distrib.logcdf(conditional_distrib.data_targ)
     fc2 = expression.distrib.sf(data_targ, **params)
 
+    # TODO: can fc1 be left away?
+    # TODO: it probably should be sum(log()) but the paper code uses log(sum())
+    # https://github.com/MESMER-group/mesmer/issues/729
+
+    # return np.sum(data_weights * np.log(fc2))
     return np.log(np.sum(data_weights * fc2))
 
 
