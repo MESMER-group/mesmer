@@ -12,20 +12,18 @@ from mesmer.mesmer_x import (
 
 
 @pytest.mark.parametrize(
-    ("scenario", "targ_var", "expr_name", "update_expected_files"),
+    ("scenario", "targ_var", "expr_name"),
     [
         pytest.param(
             "ssp126",
             "tasmax",
             "expr1",
-            False,
             marks=pytest.mark.slow,
         ),
         pytest.param(
             "ssp126",
             "tasmax",
             "expr1_2ndfit",
-            False,
             marks=pytest.mark.slow,
         ),
     ],

@@ -20,7 +20,6 @@ from mesmer.mesmer_x import (
         "expr",
         "expr_name",
         "option_2ndfit",
-        "update_expected_files",
         "outname",
     ),
     [
@@ -30,7 +29,6 @@ from mesmer.mesmer_x import (
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
-            False,
             False,
             "tasmax/one_scen_one_ens",
             marks=pytest.mark.slow,
@@ -42,7 +40,6 @@ from mesmer.mesmer_x import (
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1_2ndfit",
             True,
-            False,
             "tasmax/one_scen_one_ens",
             marks=pytest.mark.slow,
         ),
@@ -53,7 +50,6 @@ from mesmer.mesmer_x import (
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr2",
             False,
-            False,
             "tasmax/multi_scen_multi_ens",
             marks=pytest.mark.slow,
         ),
@@ -63,7 +59,6 @@ from mesmer.mesmer_x import (
             ["tas", "hfds"],
             "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c4)",
             "expr3",
-            False,
             False,
             "tasmax/multi_scen_multi_ens",
             marks=pytest.mark.slow,
@@ -78,8 +73,8 @@ def test_calibrate_mesmer_x(
     expr_name,
     option_2ndfit,
     test_data_root_dir,
-    update_expected_files,
     outname,
+    update_expected_files,
 ):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
