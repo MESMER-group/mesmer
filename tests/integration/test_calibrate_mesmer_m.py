@@ -1,5 +1,3 @@
-import pathlib
-
 import filefisher
 import numpy as np
 import pytest
@@ -53,8 +51,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     scenario = "ssp585"
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon" / "test-params"
+    test_path = test_data_root_dir / "output" / "tas" / "mon" / "test-params"
     cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     # load annual data
@@ -124,7 +121,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     m_time = tas_stacked_m.time.rename("monthly_time")
 
     PARAM_FILEFINDER = filefisher.FileFinder(
-        path_pattern=TEST_PATH / "{module}/",
+        path_pattern=test_path / "{module}/",
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
