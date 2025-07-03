@@ -1,4 +1,3 @@
-
 import filefisher
 import numpy as np
 import pytest
