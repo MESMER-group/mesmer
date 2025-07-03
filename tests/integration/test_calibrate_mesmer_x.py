@@ -61,7 +61,7 @@ from mesmer.mesmer_x import (
             ["ssp126", "ssp585"],
             "tasmax",
             ["tas", "hfds"],
-            "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c3)",
+            "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c4)",
             "expr3",
             False,
             False,
