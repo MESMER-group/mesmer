@@ -142,7 +142,10 @@ def test_calibrate_mesmer_x(
 
     def load_data(fc):
         data = xr.DataTree()
-        for scen in scenarios_incl_hist:
+
+        scenarios = fc.df.scenario.unique().tolist()
+
+        for scen in scenarios:
             # load data for each scenario
             data_scen = []
 
