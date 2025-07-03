@@ -4,7 +4,7 @@ Installation
 Required dependencies
 ---------------------
 
-- Python (3.10 or later)
+- Python (3.11 or later)
 - `dask <https://www.dask.org/>`__
 - `filefisher <https://filefisher.readthedocs.io/en/latest/>`__
 - `joblib <https://joblib.readthedocs.io/en/latest/>`__
