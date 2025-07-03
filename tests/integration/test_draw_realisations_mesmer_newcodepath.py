@@ -1,5 +1,3 @@
-import pathlib
-
 import pytest
 import xarray as xr
 from filefisher import FileFinder
@@ -197,11 +195,10 @@ def test_make_realisations(
 ):
     esm = "IPSL-CM6A-LR"
 
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / outname
+    test_path = test_data_root_dir / "output" / outname
 
     PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
     scen_str = "-".join(scenarios)
@@ -222,7 +219,7 @@ def test_make_realisations(
         module="covariance", esm=esm, scen=scen_str
     ).paths.pop()
 
-    expected_output_file = TEST_PATH / f"test_realisations_expected_{scen_str}.nc"
+    expected_output_file = test_path / f"test_realisations_expected_{scen_str}.nc"
 
     HIST_PERIOD = slice("1850", "2014")
 

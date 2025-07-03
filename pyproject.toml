@@ -17,14 +17,13 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "dask[array,distributed] >=2024.5",
     "filefisher >=1.0.1",
@@ -91,7 +90,7 @@ fallback_version = "999"
 [tool.ruff]
 # also check notebooks
 extend-include = ["*.ipynb"]
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 # E402: module level import not at top of file
