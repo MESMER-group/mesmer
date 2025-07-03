@@ -42,7 +42,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     ).load()
 
     PARAM_FILEFINDER = filefisher.FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
