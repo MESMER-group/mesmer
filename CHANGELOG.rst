@@ -33,7 +33,8 @@ Breaking changes
   (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
-- Removed support for python 3.9 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
+- Removed support for python 3.9 and python 3.10
+  (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_, and `#733 <https://github.com/MESMER-group/mesmer/pull/733>`_)
   By `Mathias Hauser`_.
 - Removed the deprecated function :py:func:`mask_percentage` (`#654 <https://github.com/MESMER-group/mesmer/pull/654>`_)
   By `Mathias Hauser`_.
