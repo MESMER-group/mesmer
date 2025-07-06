@@ -687,19 +687,22 @@ def _concatenate_predictors(
     DataArray (with predictors as data variables), stack the data variables
     along a "predictor" dimension with the names of the variables as coordinates.
     """
-    if isinstance(predictors, dict | xr.Dataset):
-        predictors_concat = xr.concat(
-            tuple(predictors.values()),
-            dim="predictor",
-            join="exact",
-            coords="minimal",
-        )
-        predictors_concat = predictors_concat.assign_coords(
-            {"predictor": list(predictors.keys())}
+    if not isinstance(predictors, dict | xr.Dataset):
+        msg = (
+            "predictors is supposed to be a dict of xr.DataArray or a xr.Dataset"
+            f" got '{type(predictors)}'"
         )
 
-    else:
-        raise TypeError(
-            "predictors is supposed to be a dict of xr.DataArray or a xr.Dataset"
-        )
+        raise TypeError(msg)
+
+    predictors_concat = xr.concat(
+        tuple(predictors.values()),
+        dim="predictor",
+        join="exact",
+        coords="minimal",
+    )
+    predictors_concat = predictors_concat.assign_coords(
+        {"predictor": list(predictors.keys())}
+    )
+
     return predictors_concat
