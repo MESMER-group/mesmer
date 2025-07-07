@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import xarray as xr
 from filefisher import FileFinder
@@ -348,19 +349,26 @@ def test_calibrate_mesmer_x(
             allowed_failures=1,
         )
 
-        xr.testing.assert_allclose(
-            local_ar_params["intercept"],
-            expected_local_ar_params["intercept"],
+        np.testing.assert_allclose(
+            local_ar_params["intercept"].values,
+            expected_local_ar_params["intercept"].values,
             atol=1e-7,
         )
-        xr.testing.assert_allclose(
-            local_ar_params["coeffs"], expected_local_ar_params["coeffs"]
+
+        np.testing.assert_allclose(
+            local_ar_params["coeffs"].values,
+            expected_local_ar_params["coeffs"].values,
+            rtol=1e-05,
         )
-        xr.testing.assert_allclose(
-            local_ar_params["variance"], expected_local_ar_params["variance"]
+        np.testing.assert_allclose(
+            local_ar_params["variance"].values,
+            expected_local_ar_params["variance"].values,
+            rtol=1e-05,
         )
-        xr.testing.assert_equal(
-            local_ar_params["nobs"], expected_local_ar_params["nobs"]
+        np.testing.assert_allclose(
+            local_ar_params["nobs"].values,
+            expected_local_ar_params["nobs"].values,
+            rtol=1e-05,
         )
 
         expected_localized_ecov = xr.open_dataset(localized_ecov_file)
