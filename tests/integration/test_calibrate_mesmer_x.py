@@ -78,6 +78,7 @@ def test_calibrate_mesmer_x(
 ):
     # set some configuration parameters
     THRESHOLD_LAND = 1 / 3
+    REFERENCE_PERIOD = slice("1850", "1900")
     esm = "IPSL-CM6A-LR"
 
     # load data
@@ -168,8 +169,11 @@ def test_calibrate_mesmer_x(
             data[scen] = xr.DataTree(data_scen)
         return data
 
-    pred_data = load_data(fc_pred)
-    targ_data = load_data(fc_targ)
+    pred_data_orig = load_data(fc_pred)
+    targ_data_orig = load_data(fc_targ)
+
+    pred_data = mesmer.anomaly.calc_anomaly(pred_data_orig, REFERENCE_PERIOD)
+    targ_data = mesmer.anomaly.calc_anomaly(targ_data_orig, REFERENCE_PERIOD)
 
     # make global mean of pred data
     pred_data = mesmer.weighted.global_mean(pred_data)
