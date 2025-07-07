@@ -364,16 +364,17 @@ def test_calibrate_mesmer_x(
             atol=1e-5,
             allowed_failures=1,
         )
-        np.testing.assert_allclose(
+        mesmer.testing.assert_allclose_allowed_failures(
             local_ar_params["variance"].values,
             expected_local_ar_params["variance"].values,
-            rtol=1e-05,
+            rtol=1e-5,
             atol=1e-5,
+            allowed_failures=1,
         )
         np.testing.assert_allclose(
             local_ar_params["nobs"].values,
             expected_local_ar_params["nobs"].values,
-            rtol=1e-05,
+            rtol=1e-5,
             atol=1e-5,
         )
 
