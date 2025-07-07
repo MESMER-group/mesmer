@@ -371,11 +371,9 @@ def test_calibrate_mesmer_x(
             atol=1e-5,
             allowed_failures=1,
         )
-        np.testing.assert_allclose(
+        np.testing.assert_equal(
             local_ar_params["nobs"].values,
             expected_local_ar_params["nobs"].values,
-            rtol=1e-5,
-            atol=1e-5,
         )
 
         expected_localized_ecov = xr.open_dataset(localized_ecov_file)
