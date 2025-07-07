@@ -3,7 +3,13 @@ import xarray as xr
 
 
 def assert_allclose_allowed_failures(
-    actual, desired, *, rtol=1e-07, atol=0, allowed_failures=0
+    actual,
+    desired,
+    *,
+    rtol=1e-07,
+    atol=0,
+    allowed_failures=0,
+    err_msg="",
 ):
     """check arrays are close but allow a number of failures
 
@@ -38,7 +44,7 @@ def assert_allclose_allowed_failures(
             return isclose
         return True
 
-    np.testing.assert_array_compare(comparison, actual, desired)
+    np.testing.assert_array_compare(comparison, actual, desired, err_msg=err_msg)
 
 
 def assert_dict_allclose(first, second, first_name="left", second_name="right"):
