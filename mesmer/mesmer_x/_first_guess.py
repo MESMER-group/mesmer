@@ -10,6 +10,7 @@ import mesmer.mesmer_x._distrib_checks as _distrib_checks
 import mesmer.mesmer_x._optimizers as _optimizers
 from mesmer.mesmer_x._utils import _ignore_warnings
 
+SEED_BASINHOPPING = 1931102249669598594
 
 def _finite_difference(f_high, f_low, x_high, x_low):
     return (f_high - f_low) / (x_high - x_low)
@@ -303,6 +304,7 @@ class _FirstGuess:
                 niter=10,
                 interval=100,
                 minimizer_kwargs=minimizer_kwargs,
+                rng=np.random.default_rng(SEED_BASINHOPPING),
             )
             # warning, basinhopping tends to introduce non-reproductibility in fits,
             # reduced when using 2nd round of fits
