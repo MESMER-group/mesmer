@@ -335,7 +335,6 @@ def test_calibrate_mesmer_x(
                 atol=1e-5,
                 rtol=1e-5,
                 err_msg=coeff,
-                allowed_failures=1,
             )
 
         xr.testing.assert_allclose(
