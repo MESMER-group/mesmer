@@ -37,7 +37,7 @@ dependencies = [
     "pyproj >=3.6",
     "regionmask >=0.12",
     "scikit-learn >=1.4", # only for the tests
-    "scipy >=1.13, <=1.15.3", # https://github.com/statsmodels/statsmodels/issues/9542
+    "scipy >=1.13",
     "statsmodels >=0.14",
     "xarray >=2025.3", # for xr.DataTree
 ]
