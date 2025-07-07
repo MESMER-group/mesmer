@@ -302,9 +302,9 @@ class _FirstGuess:
             }
 
             if Version(sp.__version__) >= Version("1.15"):
-                kwargs = {"rng": SEED_BASINHOPPING}
+                kwargs = {"rng": np.random.default_rng(SEED_BASINHOPPING)}
             else:
-                kwargs = {"seed": SEED_BASINHOPPING}
+                kwargs = {"seed": np.random.default_rng(SEED_BASINHOPPING)}
 
             # TODO: do we move the basinhopping part to the class optimizers?
             globalfit_d01 = basinhopping(
