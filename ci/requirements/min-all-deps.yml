@@ -11,7 +11,7 @@ dependencies:
  - filefisher=1.1
  - joblib=1.4
  - netcdf4=1.7
- - numpy=2.2 # 1.26
+ - numpy=2.3 # 1.26
  - packaging=24.1
  - pandas=2.2
  - pooch=1.8
@@ -19,7 +19,7 @@ dependencies:
  - pyproj=3.6
  - regionmask=0.12
  - scikit-learn=1.5
- - scipy=1.15
+ - scipy=1.14
  - shapely=2.0
  - statsmodels=0.14
  - xarray=2025.03
