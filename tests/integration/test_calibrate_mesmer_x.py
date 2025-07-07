@@ -386,7 +386,7 @@ def test_calibrate_mesmer_x(
             allowed_failures=1,
         )
 
-        for key in expected_transform_params.data_vars:
+        for key in localized_ecov.data_vars:
             np.testing.assert_allclose(
                 localized_ecov[key].values,
                 expected_localized_ecov[key].values,
