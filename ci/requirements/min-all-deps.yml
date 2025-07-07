@@ -19,7 +19,7 @@ dependencies:
  - pyproj=3.6
  - regionmask=0.12
  - scikit-learn=1.5
- - scipy=1.14
+ - scipy=1.15
  - shapely=2.0
  - statsmodels=0.14
  - xarray=2025.03
