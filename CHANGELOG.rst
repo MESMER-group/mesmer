@@ -44,26 +44,27 @@ Breaking changes
   `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_,
   `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
   `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
-  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_, and
-  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,):
+  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_, and
+  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_):
 
   ================= ============= =========
   Package           Old           New
   ================= ============= =========
   **cartopy**       not specified 0.23
-  **dask**          not specified 2024.5
+  **dask**          not specified 2024.7
   **filefisher**    not required  1.1
   **joblib**        not specified 1.4
-  **netcdf4**       not specified 1.6
+  **netcdf4**       not specified 1.7
   **numpy**         not specified 1.26
-  **packaging**     not specified 24.0
+  **packaging**     not specified 24.1
   **pandas**        2.0           2.2
   **pooch**         not specified 1.8
   **properscoring** not specified 0.1
   **pyproj**        not specified 3.6
   **regionmask**    0.8           0.12
-  **scikit-learn**  not specified 1.4
-  **scipy**         not specified 1.13
+  **scikit-learn**  not specified 1.5
+  **scipy**         not specified 1.14
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
   **xarray**        2023.04       2025.03
