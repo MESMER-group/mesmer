@@ -339,7 +339,10 @@ def test_calibrate_mesmer_x(
             )
 
         xr.testing.assert_allclose(
-            transform_coeffs, expected_transform_params, rtol=1e-5, atol=1e-5,
+            transform_coeffs,
+            expected_transform_params,
+            rtol=1e-5,
+            atol=1e-5,
         )
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
