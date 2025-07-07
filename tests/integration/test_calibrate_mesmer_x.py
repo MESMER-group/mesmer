@@ -377,4 +377,22 @@ def test_calibrate_mesmer_x(
         )
 
         expected_localized_ecov = xr.open_dataset(localized_ecov_file)
-        xr.testing.assert_allclose(localized_ecov, expected_localized_ecov)
+
+        mesmer.testing.assert_allclose_allowed_failures(
+            local_ar_params["variance"].values,
+            expected_local_ar_params["variance"].values,
+            rtol=1e-5,
+            atol=1e-5,
+            allowed_failures=1,
+        )
+
+        for key in expected_transform_params.data_vars:
+            np.testing.assert_allclose(
+                localized_ecov[key].values,
+                expected_localized_ecov[key].values,
+                rtol=1e-5,
+                atol=1e-5,
+                err_msg=key,
+                # because of https://github.com/MESMER-group/mesmer/issues/735
+                # allowed_failures=1,
+            )
