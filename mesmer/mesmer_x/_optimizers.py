@@ -62,8 +62,8 @@ def _minimize(
             options={
                 "maxfev": options["maxfev"],
                 "maxiter": options["maxiter"],
-                "xatol": list(options.values())[2],
-                "fatol": list(options.values())[3],
+                # "xatol": list(options.values())[2],
+                # "fatol": list(options.values())[3],
             },
         )
         if (option_NelderMead == "fail_run") or (

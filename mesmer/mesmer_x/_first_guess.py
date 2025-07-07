@@ -333,8 +333,8 @@ class _FirstGuess:
                 options={
                     "maxfev": self.options.maxfev,
                     "maxiter": self.options.maxiter,
-                    self.options.name_xtol: self.options.xtol_req,
-                    self.options.name_ftol: self.options.ftol_req,
+                    # self.options.name_xtol: self.options.xtol_req,
+                    # self.options.name_ftol: self.options.ftol_req,
                 },
             )
             self.fg_coeffs[fg_ind_loc] = localfit_loc.x
@@ -355,8 +355,8 @@ class _FirstGuess:
                 options={
                     "maxfev": self.options.maxfev,
                     "maxiter": self.options.maxiter,
-                    self.options.name_xtol: self.options.xtol_req,
-                    self.options.name_ftol: self.options.ftol_req,
+                    # self.options.name_xtol: self.options.xtol_req,
+                    # self.options.name_ftol: self.options.ftol_req,
                 },
             )
             self.fg_coeffs[ind_scale] = localfit_scale.x
@@ -427,8 +427,8 @@ class _FirstGuess:
                 options={
                     "maxfev": self.options.maxfev,
                     "maxiter": self.options.maxiter,
-                    self.options.name_xtol: self.options.xtol_req,
-                    self.options.name_ftol: self.options.ftol_req,
+                    # self.options.name_xtol: self.options.xtol_req,
+                    # self.options.name_ftol: self.options.ftol_req,
                 },
             )
             if ~np.any(np.isnan(localfit_opti.x)):
