@@ -80,7 +80,7 @@ class ConditionalDistributionOptions:
         default_options_solver = {
             "method_fit": "Powell",
             "xtol_req": 1e-6,
-            "ftol_req": 1.0e-6,
+            "ftol_req": 1e-6,
             "maxiter": None,
             "maxfev": None,
             "error_failedfit": False,
