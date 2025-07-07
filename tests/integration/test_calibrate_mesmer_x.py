@@ -329,7 +329,7 @@ def test_calibrate_mesmer_x(
         expected_transform_params = xr.open_dataset(distrib_file)
 
         for coeff in expected_transform_params.data_vars:
-            mesmer.testing.assert_allclose_allowed_failures(
+            np.testing.assert_allclose(
                 transform_coeffs[coeff].values,
                 expected_transform_params[coeff].values,
                 atol=1e-5,
