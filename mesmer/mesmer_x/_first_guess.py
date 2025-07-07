@@ -12,6 +12,7 @@ from mesmer.mesmer_x._utils import _ignore_warnings
 
 SEED_BASINHOPPING = 1931102249669598594
 
+
 def _finite_difference(f_high, f_low, x_high, x_low):
     return (f_high - f_low) / (x_high - x_low)
 
