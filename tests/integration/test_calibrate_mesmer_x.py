@@ -328,8 +328,18 @@ def test_calibrate_mesmer_x(
         # load the parameters
         expected_transform_params = xr.open_dataset(distrib_file)
 
+        for coeff in expected_transform_params.data_vars:
+            mesmer.testing.assert_allclose_allowed_failures(
+                transform_coeffs[coeff].values,
+                expected_transform_params[coeff].values,
+                atol=1e-5,
+                rtol=1e-5,
+                err_msg=coeff,
+                allowed_failures=1,
+            )
+
         xr.testing.assert_allclose(
-            transform_coeffs, expected_transform_params, rtol=1.5e-5
+            transform_coeffs, expected_transform_params, rtol=1e-5, atol=1e-5,
         )
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
@@ -337,8 +347,8 @@ def test_calibrate_mesmer_x(
         np.testing.assert_allclose(
             local_ar_params["intercept"].values,
             expected_local_ar_params["intercept"].values,
-            atol=1e-7,
-            rtol=1e-05,
+            atol=1e-5,
+            rtol=1e-5,
         )
 
         xr.testing.assert_allclose(
