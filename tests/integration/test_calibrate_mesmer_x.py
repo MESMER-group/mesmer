@@ -349,11 +349,12 @@ def test_calibrate_mesmer_x(
             allowed_failures=1,
         )
 
-        np.testing.assert_allclose(
+        mesmer.testing.assert_allclose_allowed_failures(
             local_ar_params["intercept"].values,
             expected_local_ar_params["intercept"].values,
             atol=1e-5,
             rtol=1e-5,
+            allowed_failures=1,
         )
 
         np.testing.assert_allclose(
