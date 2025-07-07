@@ -263,7 +263,7 @@ def test_calibrate_mesmer_x(
         lon=targ_data["historical"].lon, lat=targ_data["historical"].lat
     )
     # prep localizer (relatively coarse)
-    LOCALISATION_RADII = range(3000, 11_001, 1000)
+    LOCALISATION_RADII = range(10_000, 16_001, 1000)
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist=geodist, localisation_radii=LOCALISATION_RADII
     )
