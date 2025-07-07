@@ -387,12 +387,11 @@ def test_calibrate_mesmer_x(
         )
 
         for key in localized_ecov.data_vars:
-            np.testing.assert_allclose(
+            mesmer.testing.assert_allclose_allowed_failures(
                 localized_ecov[key].values,
                 expected_localized_ecov[key].values,
                 rtol=1e-5,
                 atol=1e-5,
                 err_msg=key,
-                # because of https://github.com/MESMER-group/mesmer/issues/735
-                # allowed_failures=1,
+                allowed_failures=1,
             )
