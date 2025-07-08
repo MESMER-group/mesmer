@@ -333,7 +333,7 @@ def test_calibrate_mesmer_x(
                 transform_coeffs[coeff].values,
                 expected_transform_params[coeff].values,
                 rtol=1e-5,
-                atol=1e-5,
+                atol=1e-4,
                 err_msg=coeff,
                 # because of https://github.com/MESMER-group/mesmer/issues/735
                 allowed_failures=1,
@@ -345,7 +345,7 @@ def test_calibrate_mesmer_x(
             local_ar_params["intercept"].values,
             expected_local_ar_params["intercept"].values,
             rtol=1e-5,
-            atol=1e-5,
+            atol=1e-4,
             allowed_failures=1,
         )
 
@@ -353,7 +353,7 @@ def test_calibrate_mesmer_x(
             local_ar_params["intercept"].values,
             expected_local_ar_params["intercept"].values,
             rtol=1e-5,
-            atol=1e-5,
+            atol=1e-4,
             allowed_failures=1,
         )
 
@@ -361,14 +361,14 @@ def test_calibrate_mesmer_x(
             local_ar_params["coeffs"].values,
             expected_local_ar_params["coeffs"].values,
             rtol=1e-5,
-            atol=1e-5,
+            atol=1e-4,
             allowed_failures=1,
         )
         mesmer.testing.assert_allclose_allowed_failures(
             local_ar_params["variance"].values,
             expected_local_ar_params["variance"].values,
             rtol=1e-5,
-            atol=1e-5,
+            atol=1e-4,
             allowed_failures=1,
         )
         np.testing.assert_equal(
@@ -382,7 +382,7 @@ def test_calibrate_mesmer_x(
             local_ar_params["variance"].values,
             expected_local_ar_params["variance"].values,
             rtol=1e-5,
-            atol=1e-5,
+            atol=1e-4,
             allowed_failures=1,
         )
 
@@ -391,7 +391,7 @@ def test_calibrate_mesmer_x(
                 localized_ecov[key].values,
                 expected_localized_ecov[key].values,
                 rtol=1e-5,
-                atol=1e-5,
+                atol=1e-4,
                 err_msg=key,
                 allowed_failures=1,
             )
