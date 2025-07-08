@@ -11,7 +11,17 @@ from importlib.metadata import version as _get_version
 
 from mesmer import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
 from mesmer.core import _data as data
-from mesmer.core import datatree, geospatial, grid, mask, volc, weighted
+from mesmer.core import (
+    anomaly,
+    datatree,
+    example_data,
+    geospatial,
+    grid,
+    mask,
+    volc,
+    weighted,
+)
+from mesmer.core.options import get_options, set_options
 
 # "legacy" modules
 __all__ = [
@@ -23,12 +33,16 @@ __all__ = [
 
 # "new" "modules"
 __all__ += [
+    "anomaly",
     "core",
     "data",
     "datatree",
+    "example_data",
     "geospatial",
+    "get_options",
     "grid",
     "mask",
+    "set_options",
     "stats",
     "testing",
     "volc",
@@ -38,7 +52,7 @@ __all__ += [
 
 try:
     __version__ = _get_version("mesmer-emulator")
-except Exception:
+except Exception:  # pragma: no cover
     # Local copy or not installed with setuptools.
     # Disable minimum version checks on downstream libraries.
     __version__ = "999"

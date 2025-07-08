@@ -3,7 +3,6 @@ from functools import cache
 import pandas as pd
 import pooch
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 
@@ -24,32 +23,30 @@ def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
         DataArray of stratospheric aerosol optical depth observations.
     """
 
-    aod = _load_aod_obs(version=version, resample=resample)
+    if version != "2022":
+        raise ValueError("No version other than '2022' is currently available.")
+
+    aod = _load_aod_obs(resample=resample)
 
     return aod.copy()
 
 
 # use an inner function as @cache does not nicely preserve the signature
 @cache
-def _load_aod_obs(*, version, resample):
+def _load_aod_obs(*, resample):
 
-    filename = _fetch_remote_data(f"isaod_gl_{version}.dat")
+    filename = _fetch_remote_data("obs/tau.line_2012.12.txt")
 
-    df = pd.read_csv(
-        filename,
-        sep=r"\s+",
-        skiprows=11,
-        names=("year", "month", "aod"),
-        dtype={"year": str, "month": str},
-    )
+    arr = pd.read_csv(filename, sep=r"\s+", header=2)["global"].to_numpy()
 
-    time = pd.to_datetime(df.year + df.month, format="%Y%m").astype("datetime64[ns]")
+    time = pd.date_range("1850-01-01", "2012-09-01", freq="MS")
+    time_full = pd.date_range("1850-01-01", "2022-12-01", freq="MS")
 
-    aod = xr.DataArray(df.aod.values, coords={"time": time}, name="aod")
+    aod = xr.DataArray(arr, coords={"time": time}, name="aod")
+    aod = aod.reindex_like(xr.Dataset(coords={"time": time_full}), fill_value=0.0)
 
     if resample:
-        freq = "YE" if Version(xr.__version__) >= Version("2024.02") else "A"
-        aod = aod.resample(time=freq).mean()
+        aod = aod.resample(time="YE").mean()
 
     return aod
 
@@ -61,16 +58,16 @@ def _fetch_remote_data(name):
 
     cache_dir = pooch.os_cache("mesmer")
 
-    REMOTE_RESSOURCE = pooch.create(
+    REMOTE_RESOURCE = pooch.create(
         path=cache_dir,
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
         registry={
-            "isaod_gl_2022.dat": "3d26e78bf0ee96a02c99e2a7a448dafda0ac847a5c914a75c7d9745e95fe68ee",
+            "obs/tau.line_2012.12.txt": "9aa43f83bfc8e69b9e4c21c894a7a2e7b5ddf7ec32d2e9b55b12ce5bddc36451",
         },
         version=f"v{mesmer.__version__}",
         version_dev="main",
     )
 
     # the file will be downloaded automatically the first time this is run.
-    return REMOTE_RESSOURCE.fetch(name)
+    return REMOTE_RESOURCE.fetch(name)

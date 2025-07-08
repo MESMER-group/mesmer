@@ -102,6 +102,9 @@ class Expression:
         # correct expressions of parameters
         self._correct_expr_parameters()
 
+        # compile expression for faster eval
+        self._compile_expression()
+
     def _interpret_distrib(self):
         """interpreting the expression"""
 
@@ -296,6 +299,14 @@ class Expression:
                     param
                 ].replace(f"__{i}__", i)
 
+    def _compile_expression(self):
+        """compile expression for faster eval"""
+
+        self._compiled_param_expr = {
+            param: compile(expr, param, "eval")
+            for param, expr in self.parameters_expressions.items()
+        }
+
     def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
         """
         Evaluates the parameters for the provided inputs and coefficients
@@ -365,33 +376,11 @@ class Expression:
 
         # evaluate parameters
         parameters_values = {}
-        for param, expr in self.parameters_expressions.items():
-            # may need to silence warnings here, to avoid spamming
+        for param, expr in self._compiled_param_expr.items():
             parameters_values[param] = eval(expr, None, locals)
 
-        # Correcting shapes 1: scalar parameters must have the shape of the inputs
-        if len(self.inputs_list) > 0:
-
-            for param in self.parameters_list:
-                param_value = parameters_values[param]
-
-                # TODO: use np.ndim(param_value) ==  0? (i.e. isscalar)
-                if isinstance(param_value, int | float) or param_value.ndim == 0:
-                    if isinstance(coefficients_values, xr.Dataset) and (
-                        isinstance(inputs_values, xr.Dataset)
-                    ):
-                        param_value = param_value * xr.ones_like(
-                            inputs_values[self.inputs_list[0]]
-                        )
-                    else:
-                        param_value = param_value * np.ones(
-                            inputs_values[self.inputs_list[0]].shape
-                        )
-
-                parameters_values[param] = param_value
-
-        # Correcting shapes 2: possibly forcing shape
-        if len(self.inputs_list) > 0 and forced_shape is not None:
+        # possibly forcing shape
+        if forced_shape is not None and len(self.inputs_list) > 0:
 
             for param in self.parameters_list:
                 dims_param = [
@@ -523,19 +512,19 @@ def probability_integral_transform(
         print(f"Transforming {target_name}: {scen}", end="\r")
 
         # calculation distributions for this scenario
-        distrib_start = expression_start.evaluate(
+        params_start = expression_start.evaluate_params(
             coeffs_start, preds_start_item, forced_shape=data_item[target_name].dims
         )
 
-        distrib_end = expression_end.evaluate(
+        params_end = expression_end.evaluate_params(
             coeffs_end, preds_end_item, forced_shape=data_item[target_name].dims
         )
 
         # probabilities of the sample on the starting distribution
-        cdf_item = distrib_start.cdf(data_item[target_name])
+        cdf_item = expression_start.distrib.cdf(data_item[target_name], **params_start)
 
         # corresponding values on the ending distribution
-        transf_item = distrib_end.ppf(cdf_item)
+        transf_item = expression_end.distrib.ppf(cdf_item, **params_end)
 
         # archiving
         out.append((transf_item, scen))

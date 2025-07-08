@@ -5,6 +5,14 @@ API reference
 
 This page provides an auto-generated summary of mesmers' API.
 
+Top-level functions
+===================
+
+.. autosummary::
+   :toctree: generated/
+
+   set_options
+   get_options
 
 Statistical functions
 =====================
@@ -28,8 +36,8 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats._select_ar_order_scen_ens
-   ~stats._fit_auto_regression_scen_ens
+   ~stats.select_ar_order_scen_ens
+   ~stats.fit_auto_regression_scen_ens
    ~stats.select_ar_order
    ~stats.fit_auto_regression
    ~stats.fit_auto_regression_monthly
@@ -52,11 +60,17 @@ Power Transformer
 .. autosummary::
    :toctree: generated/
 
-   ~stats.lambda_function
-   ~stats.get_lambdas_from_covariates
-   ~stats.fit_yeo_johnson_transform
-   ~stats.yeo_johnson_transform
-   ~stats.inverse_yeo_johnson_transform
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.YeoJohnsonTransformer
+   ~stats.YeoJohnsonTransformer.lambda_function
+   ~stats.YeoJohnsonTransformer.get_lambdas_from_covariates
+   ~stats.YeoJohnsonTransformer.fit
+   ~stats.YeoJohnsonTransformer.transform
+   ~stats.YeoJohnsonTransformer.inverse_transform
+
+   ~stats._power_transformer.logistic_lambda_function
 
 Localized covariance
 --------------------
@@ -89,6 +103,14 @@ Gaspari-Cohn correlation matrix
 Data handling
 =============
 
+Example and test data
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.example_data.cmip6_ng_path
+
 Grid manipulation
 -----------------
 
@@ -111,7 +133,6 @@ Masking regions
    ~core.mask.mask_ocean_fraction
    ~core.mask.mask_ocean
    ~core.mask.mask_antarctica
-   ~core.regionmaskcompat.mask_3D_frac_approx
 
 Weighted operations: calculate global mean
 ------------------------------------------
@@ -131,6 +152,15 @@ Geospatial
    :toctree: generated/
 
    ~core.geospatial.geodist_exact
+
+
+Anomalies
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~core.anomaly.calc_anomaly
 
 
 Emulator functions

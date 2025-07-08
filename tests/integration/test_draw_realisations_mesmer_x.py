@@ -3,7 +3,7 @@ import pathlib
 import pytest
 import xarray as xr
 
-# from datatree import Datatree, map_over_subtree
+# from mesmer.core._datatreecompat import map_over_datasets
 import mesmer
 import mesmer.mesmer_x
 
@@ -41,24 +41,24 @@ def test_make_realisations_mesmer_x(
     # load data
     TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
     TEST_PATH = TEST_DATA_PATH / "output" / target_name / "one_scen_one_ens"
-    cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     # load predictor data
     path_tas = cmip6_data_path / "tas" / "ann" / "g025"
 
     fN_hist = path_tas / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_ssp585 = path_tas / f"tas_ann_{esm}_ssp585_r1i1p1f1_g025.nc"
-
-    tas_hist = xr.open_dataset(fN_hist, use_cftime=True).drop_vars(
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    tas_hist = xr.open_dataset(fN_hist, decode_times=time_coder).drop_vars(
         ["height", "file_qf", "time_bnds"]
     )
-    tas_ssp585 = xr.open_dataset(fN_ssp585, use_cftime=True).drop_vars(
+    tas_ssp585 = xr.open_dataset(fN_ssp585, decode_times=time_coder).drop_vars(
         ["height", "file_qf", "time_bnds"]
     )
     # tas = DataTree({"hist": tas_hist, "ssp585": tas_ssp585})
 
     # make global mean
-    # global_mean_dt = map_over_subtree(mesmer.weighted.global_mean)
+    # global_mean_dt = map_over_datasets(mesmer.weighted.global_mean)
     tas_glob_mean_hist = mesmer.weighted.global_mean(tas_hist)
     tas_glob_mean_ssp585 = mesmer.weighted.global_mean(tas_ssp585)
 
@@ -98,7 +98,7 @@ def test_make_realisations_mesmer_x(
         seed=seed,
         buffer=buffer,
     )
-    transf_emus = xr.Dataset({target_name: transf_emus})
+    transf_emus = transf_emus.rename({"samples": target_name})
 
     # back-transform the realizations
     # can only take 2D input aka only one realisation atm
@@ -123,7 +123,8 @@ def test_make_realisations_mesmer_x(
         pytest.skip(f"Updated {expected_output_file}")
     else:
         # load the output
-        expected_emus = xr.open_dataarray(expected_output_file, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        expected_emus = xr.open_dataarray(expected_output_file, decode_times=time_coder)
         xr.testing.assert_allclose(emus, expected_emus)
 
         # make sure we can get onto a lat lon grid from what is saved

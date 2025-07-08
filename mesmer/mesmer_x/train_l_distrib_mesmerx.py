@@ -30,12 +30,12 @@ def ignore_warnings(func):
     # TODO: don't suppress all warnings
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def _wrapper(*args, **kwargs):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             return func(*args, **kwargs)
 
-    return wrapper
+    return _wrapper
 
 
 # TODO: enable distrib class and training func for xarray objs
@@ -299,7 +299,7 @@ class distrib_cov:
         func_first_guess=None,
         scores_fit=["func_optim", "NLL", "BIC"],
         options_optim=None,  # TODO: replace by options class?
-        options_solver=None,  # TODO: dito?
+        options_solver=None,  # TODO: ditto?
     ):
         """fit a conditional distribution.
 
@@ -309,7 +309,7 @@ class distrib_cov:
         - (evaluation of weights for the sample)
         - tests on coefficients & parameters of the expression, in & out of sample
         - 1st optimizations for the first guess
-        - 2nd optimization with minimization of the negative log likehood or full
+        - 2nd optimization with minimization of the negative log likelihood or full
           conditioning negative loglikelihood
 
         Once this class has been initialized, the go-to function is fit(). It returns
@@ -664,7 +664,7 @@ class distrib_cov:
             )
 
     # TODO: don't do this in init. Give the user the option to either use this function
-    # or give their own weigths as soon as we switch the xarray wrapper into here and
+    # or give their own weights as soon as we switch the xarray wrapper into here and
     # the user actually initialized this class themselves
     def get_weights(self, n_bins_density=40):
 
@@ -683,7 +683,7 @@ class distrib_cov:
         histogram is then smoothed by a regular grid interpolator to give the density
         of the predictors in this "predictor space". Subsequently, the weights are
         the inverse of this density of the predictors. Consequently, Samples in regions
-        of this space with low densitiy will have higher weights, this is, "unusual" samples
+        of this space with low density will have higher weights, this is, "unusual" samples
         will have more weight.
 
         Parameters
@@ -763,14 +763,13 @@ class distrib_cov:
 
         return True
 
-    def _test_evol_params(self, distrib, data):
+    def _test_evol_params(self, params, data):
 
         # checking set boundaries on parameters
         for param in self.boundaries_params:
             bottom, top = self.boundaries_params[param]
 
-            # TODO: avoid using implementation detail of frozen distr of sp.stats
-            param_values = distrib.kwds[param]
+            param_values = params[param]
 
             # out of boundaries
             # TODO: why >= (and not >) or < (and not <=)?
@@ -780,7 +779,7 @@ class distrib_cov:
         # test of the support of the distribution: is there any data out of the
         # corresponding support? dont try testing if there are issues on the parameters
 
-        bottom, top = distrib.support()
+        bottom, top = self.expr_fit.distrib.support(**params)
 
         # out of support
         if (
@@ -793,7 +792,7 @@ class distrib_cov:
 
         return True
 
-    def _test_proba_value(self, distrib, data):
+    def _test_proba_value(self, params, data):
         """
         Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
         Ensures that data lies within a confidence interval of threshold_min_proba for the tested
@@ -802,7 +801,7 @@ class distrib_cov:
         # NOTE: DONT write 'x=data', because 'x' may be called differently for some
         # distribution (eg 'k' for poisson).
 
-        cdf = distrib.cdf(data)
+        cdf = self.expr_fit.distrib.cdf(data, **params)
         thresh = self.threshold_min_proba
         return np.all(1 - cdf >= thresh) and np.all(cdf >= thresh)
 
@@ -841,35 +840,37 @@ class distrib_cov:
 
         test_coeff = self._test_coeffs_in_bounds(coefficients)
 
-        # tests on coeffs show already that it wont work: fill in the rest with False
+        # tests on coeffs show already that it won't work: fill in the rest with False
         if not test_coeff:
             return test_coeff, False, False, False
 
         # evaluate the distribution for the predictors and this iteration of coeffs
-        distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
+        params = self.expr_fit.evaluate_params(coefficients, self.data_pred)
         # test for the validity of the parameters
-        test_param = self._test_evol_params(distrib, self.data_targ)
+        test_param = self._test_evol_params(params, self.data_targ)
 
         if self.add_test:
-            distrib_add = self.expr_fit.evaluate(coefficients, self.data_preds_addtest)
-            test_param &= self._test_evol_params(distrib_add, self.data_targ_addtest)
+            params_add = self.expr_fit.evaluate_params(
+                coefficients, self.data_preds_addtest
+            )
+            test_param &= self._test_evol_params(params_add, self.data_targ_addtest)
 
-        # tests on params show already that it wont work: fill in the rest with False
+        # tests on params show already that it won't work: fill in the rest with False
         if not test_param:
             return test_coeff, test_param, False, False
 
         # test for the probability of the values
         if self.threshold_min_proba is None:
-            return test_coeff, test_param, True, distrib
+            return test_coeff, test_param, True, params
 
-        test_proba = self._test_proba_value(distrib, self.data_targ)
+        test_proba = self._test_proba_value(params, self.data_targ)
 
         if self.add_test:
-            test_proba &= self._test_proba_value(distrib_add, self.data_targ_addtest)
+            test_proba &= self._test_proba_value(params_add, self.data_targ_addtest)
 
         # return values for each test and the distribution that has already been
         # evaluated
-        return test_coeff, test_param, test_proba, distrib
+        return test_coeff, test_param, test_proba, params
 
     # TODO: factor out into own module?
     # suppress nan & inf warnings
@@ -1125,7 +1126,7 @@ class distrib_cov:
         # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
         if not (test_coeff and test_param and test_proba):
             # Step 6: fit on CDF or LL^n (objective: improving all coefficients, necessary
-            # to have all points within support. NB: NLL doesnt behave well enough here)
+            # to have all points within support. NB: NLL does not behave well enough here)
             # two potential functions:
             if False:
                 # TODO: unreachable - add option or remove?
@@ -1342,8 +1343,8 @@ class distrib_cov:
         x = np.copy(self.fg_coeffs)
         x[self.fg_ind_others] = x_others
 
-        distrib = self.expr_fit.evaluate(x, self.data_pred)
-        bot, top = distrib.support()
+        params = self.expr_fit.evaluate_params(x, self.data_pred)
+        bot, top = self.expr_fit.distrib.support(**params)
 
         # distance between samples and bottom or top bound of support, negative if sample is out of support
         diff_bot = self.data_targ - bot
@@ -1380,14 +1381,14 @@ class distrib_cov:
         #     return worst_diff_bot**2 + worst_diff_top**2 # + margin?
 
     def _fg_fun_NLL_no_tests(self, coefficients):
-        distrib = self.expr_fit.evaluate(coefficients, self.data_pred)
-        self.ind_data_ok = np.arange(self.data_targ.size)
-        return self.neg_loglike(distrib)
+        params = self.expr_fit.evaluate_params(coefficients, self.data_pred)
+        self.ind_data_ok = slice(None, self.data_targ.size)
+        return self.neg_loglike(params)
 
     # TODO: remove?
     def _fg_fun_cdfs(self, x):
-        distrib = self.expr_fit.evaluate(x, self.data_pred)
-        cdf = distrib.cdf(self.data_targ)
+        params = self.expr_fit.evaluate_params(x, self.data_pred)
+        cdf = self.expr_fit.distrib.cdf(self.data_targ, **params)
 
         if self.threshold_min_proba is None:
             thres = 10 * 1.0e-9
@@ -1403,12 +1404,12 @@ class distrib_cov:
         return np.max([term_low, term_high])
 
     def _fg_fun_LL_n(self, x, n=4):
-        distrib = self.expr_fit.evaluate(x, self.data_pred)
+        params = self.expr_fit.evaluate_params(x, self.data_pred)
 
         if self.expr_fit.is_distrib_discrete:
-            LL = np.sum(distrib.logpmf(self.data_targ) ** n)
+            LL = np.sum(self.expr_fit.distrib.logpmf(self.data_targ, **params) ** n)
         else:
-            LL = np.sum(distrib.logpdf(self.data_targ) ** n)
+            LL = np.sum(self.expr_fit.distrib.logpdf(self.data_targ, **params) ** n)
         return LL
 
     def find_bound(self, i_c, x0, fact_coeff):
@@ -1431,7 +1432,7 @@ class distrib_cov:
     def func_optim(self, coefficients):
         # check whether these coefficients respect all conditions: if so, can compute a
         # value for the optimization
-        test_coeff, test_param, test_proba, distrib = self.validate_coefficients(
+        test_coeff, test_param, test_proba, params = self.validate_coefficients(
             coefficients
         )
 
@@ -1441,16 +1442,16 @@ class distrib_cov:
             if self.type_fun_optim == "fcNLL":
                 # will apply the stopping rule: splitting data_fit into two sets of data
                 # using the given threshold
-                self.ind_data_ok, self.ind_data_stopped = self.stopping_rule(distrib)
+                self.ind_data_ok, self.ind_data_stopped = self.stopping_rule(params)
             else:
                 self.ind_data_ok = slice(None)
 
             # compute negative loglikelihood
-            NLL = self.neg_loglike(distrib)
+            NLL = self.neg_loglike(params)
 
             # eventually compute full conditioning
             if self.type_fun_optim == "fcNLL":
-                FC = self.fullcond_thres(distrib)
+                FC = self.fullcond_thres(params)
                 optim = NLL + FC
             else:
                 optim = NLL
@@ -1461,15 +1462,15 @@ class distrib_cov:
             # something wrong: returns a blocking value
             return np.inf
 
-    def neg_loglike(self, distrib):
-        return -self.loglike(distrib)
+    def neg_loglike(self, params):
+        return -self.loglike(params)
 
-    def loglike(self, distrib):
+    def loglike(self, params):
         # compute loglikelihood
         if self.expr_fit.is_distrib_discrete:
-            LL = distrib.logpmf(self.data_targ)
+            LL = self.expr_fit.distrib.logpmf(self.data_targ, **params)
         else:
-            LL = distrib.logpdf(self.data_targ)
+            LL = self.expr_fit.distrib.logpdf(self.data_targ, **params)
 
         # weighted sum of the loglikelihood
         value = np.sum((self.weights_driver * LL)[self.ind_data_ok])
@@ -1496,20 +1497,19 @@ class distrib_cov:
         ind_data_ok = ~ind_data_stopped
         return ind_data_ok, ind_data_stopped
 
-    def fullcond_thres(self, distrib):
+    def fullcond_thres(self, params):
         # calculating 2nd term for full conditional of the NLL
         # fc1 = distrib.logcdf(self.data_targ)
-        fc2 = distrib.sf(self.data_targ)
+        fc2 = self.expr_fit.distrib.sf(self.data_targ, **params)
 
         # return np.sum( (self.weights_driver * fc1)[self.ind_stopped_data] )
         # TODO: not 100% sure here, to double-check
 
         return np.log(np.sum((self.weights_driver * fc2)[self.ind_stopped_data]))
 
-    def bic(self, distrib):
-        return self.n_coeffs * np.log(self.n_sample) / self.n_sample - 2 * self.loglike(
-            distrib
-        )
+    def bic(self, params):
+        loglike = self.loglike(params)
+        return self.n_coeffs * np.log(self.n_sample) / self.n_sample - 2 * loglike
 
     # TODO: remove /self.n_sample? bc weights are already normalized
 
@@ -1568,15 +1568,15 @@ class distrib_cov:
             self.quality_fit["func_optim"] = self.func_optim(self.coefficients_fit)
 
         # distribution obtained
-        distrib = self.expr_fit.evaluate(self.coefficients_fit, self.data_pred)
+        params = self.expr_fit.evaluate_params(self.coefficients_fit, self.data_pred)
 
         # NLL averaged over sample
         if "NLL" in self.scores_fit:
-            self.quality_fit["NLL"] = self.neg_loglike(distrib)
+            self.quality_fit["NLL"] = self.neg_loglike(params)
 
         # BIC averaged over sample
         if "BIC" in self.scores_fit:
-            self.quality_fit["BIC"] = self.bic(distrib)
+            self.quality_fit["BIC"] = self.bic(params)
 
         # CRPS
         if "CRPS" in self.scores_fit:

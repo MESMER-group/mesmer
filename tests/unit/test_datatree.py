@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form
+from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -19,7 +19,7 @@ def test_collapse_datatree_into_dataset():
     dim = xr.Variable("member", np.arange(2))
     leaf2 = xr.concat([ds1, ds2], dim=dim)
 
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
     collapse_dim = "scenario"
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
@@ -32,7 +32,7 @@ def test_collapse_datatree_into_dataset():
 
     # error if data set has no coords along dim (bc then it is not concatenable if lengths differ)
     leaf_missing_coords = leaf1.drop_vars("member")
-    dt = DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
+    dt = xr.DataTree.from_dict({"scen1": leaf_missing_coords, "scen2": leaf2})
     with pytest.raises(
         ValueError, match="cannot reindex or align along dimension 'member'"
     ):
@@ -41,7 +41,7 @@ def test_collapse_datatree_into_dataset():
     # Dimension along which to concatenate already exists
     leaf1_scen = leaf1.assign_coords({"scenario": "scen1"}).expand_dims(collapse_dim)
     leaf2_scen = leaf2.assign_coords({"scenario": "scen2"}).expand_dims(collapse_dim)
-    dt = DataTree.from_dict({"scen1": leaf1_scen, "scen2": leaf2_scen})
+    dt = xr.DataTree.from_dict({"scen1": leaf1_scen, "scen2": leaf2_scen})
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     assert isinstance(res, xr.Dataset)
@@ -50,7 +50,7 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(scen1.drop_vars("scenario"), leaf1)
 
     # only one leaf works
-    dt = DataTree.from_dict({"scen1": leaf1})
+    dt = xr.DataTree.from_dict({"scen1": leaf1})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     assert isinstance(res, xr.Dataset)
@@ -61,7 +61,7 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
 
     # test data in root works
-    dt = DataTree(leaf1, name="scen1")
+    dt = xr.DataTree(leaf1, name="scen1")
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
     assert isinstance(res, xr.Dataset)
@@ -72,10 +72,10 @@ def test_collapse_datatree_into_dataset():
     xr.testing.assert_equal(scen1.drop_vars(collapse_dim), leaf1)
 
     # nested DataTree works
-    dt = DataTree()
-    dt["scen1/sub_scen1"] = DataTree(leaf1)
-    dt["scen1/sub_scen2"] = DataTree(leaf2)
-    dt["scen2"] = DataTree(leaf2)
+    dt = xr.DataTree()
+    dt["scen1/sub_scen1"] = xr.DataTree(leaf1)
+    dt["scen1/sub_scen2"] = xr.DataTree(leaf2)
+    dt["scen2"] = xr.DataTree(leaf2)
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     assert isinstance(res, xr.Dataset)
@@ -89,7 +89,7 @@ def test_collapse_datatree_into_dataset():
     leaf3 = xr.merge(
         [ds1.assign_coords({"member": 1}), ds.assign_coords({"member": 1})]
     ).expand_dims("member")
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     assert isinstance(res, xr.Dataset)
@@ -103,7 +103,7 @@ def test_collapse_datatree_into_dataset():
     ds_with_different_time = ds1.shift(time=1)
 
     badleaf = ds_with_different_time.assign_coords({"member": 0}).expand_dims("member")
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": badleaf})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": badleaf})
 
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
 
@@ -117,13 +117,13 @@ def test_collapse_datatree_into_dataset():
     da2 = mesmer.testing.trend_data_2D(n_timesteps=n_ts, n_lat=n_lat, n_lon=n_lon)
     ds2 = xr.Dataset({"tas": da2})
 
-    dt = DataTree.from_dict({"mem1": ds1, "mem2": ds2})
+    dt = xr.DataTree.from_dict({"mem1": ds1, "mem2": ds2})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim="members")
 
     # empty nodes are removed before concatenating
     # NOTE: implicitly this is already there in the other tests, since the root node is always empty
     # but it is nice to have it explicitly too
-    dt = DataTree.from_dict({"scen1": leaf1, "scen2": DataTree()})
+    dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": xr.DataTree()})
     res = mesmer.datatree.collapse_datatree_into_dataset(dt, dim=collapse_dim)
     expected = leaf1.expand_dims(collapse_dim).assign_coords(
         {collapse_dim: np.array(["scen1"])}
@@ -133,19 +133,19 @@ def test_collapse_datatree_into_dataset():
 
 def test_extract_single_dataarray_from_dt():
     da = trend_data_1D(n_timesteps=30).rename("tas")
-    dt = DataTree.from_dict({"/": xr.Dataset({"tas": da})})
+    dt = xr.DataTree.from_dict({"/": xr.Dataset({"tas": da})})
 
     res = mesmer.datatree._extract_single_dataarray_from_dt(dt)
     xr.testing.assert_equal(res, da)
 
-    dt = DataTree(data=xr.Dataset({"tas": da, "tas2": da}))
+    dt = xr.DataTree(xr.Dataset({"tas": da, "tas2": da}))
     with pytest.raises(
         ValueError,
         match="Node must only contain one data variable, node has tas2 and tas.",
     ):
         mesmer.datatree._extract_single_dataarray_from_dt(dt)
 
-    dt = DataTree.from_dict(
+    dt = xr.DataTree.from_dict(
         {"scen1": xr.Dataset({"tas": da, "tas2": da}), "scen2": xr.Dataset({"tas": da})}
     )
 
@@ -165,15 +165,14 @@ def test_extract_single_dataarray_from_dt():
 
     # passing empty Dataree
     with pytest.raises(ValueError, match="node has no data."):
-        mesmer.datatree._extract_single_dataarray_from_dt(DataTree())
+        mesmer.datatree._extract_single_dataarray_from_dt(xr.DataTree())
 
 
-def test_stack_linear_regression_datatrees():
+def test_broadcast_and_pool_scen_ens():
     n_ts, n_lat, n_lon = 30, 2, 3
     member_dim = "member"
     time_dim = "time"
-    stacking_dims = [time_dim, member_dim]
-    collapse_dim = "scenario"
+    scenario_dim = "scenario"
     stacked_dim = "sample"
 
     d2D_1 = xr.Dataset(
@@ -191,67 +190,69 @@ def test_stack_linear_regression_datatrees():
         {member_dim: np.arange(2)}
     )
 
-    target = DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
+    target = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2})
 
-    d1D_1 = xr.Dataset({"tas": trend_data_1D(n_timesteps=n_ts)})
-    d1D_2 = d1D_1 * 2
-    d1D_3 = d1D_1 * 3
-    d1D_4 = d1D_1 * 4
-    predictors = DataTree.from_dict(
+    d1D_1 = xr.Dataset(
         {
-            "pred1": DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2}),
-            "pred2": DataTree.from_dict({"scen1": d1D_3, "scen2": d1D_4}),
+            "tas": trend_data_1D(n_timesteps=n_ts),
+            "tas2": trend_data_1D(n_timesteps=n_ts) ** 2,
+            "hfds": trend_data_1D(n_timesteps=n_ts) * 0.5,
         }
     )
+    d1D_2 = d1D_1 * 2
 
-    weights = map_over_subtree(xr.ones_like)(target.sel(cells=0))
-    weights = map_over_subtree(
-        lambda ds: ds.rename({var: "weights" for var in ds.data_vars})
-    )(weights)
+    predictors = xr.DataTree.from_dict({"scen1": d1D_1, "scen2": d1D_2})
+
+    weights = map_over_datasets(xr.ones_like, target.sel(cells=0))
+    weights = map_over_datasets(
+        lambda ds: ds.rename({var: "weights" for var in ds.data_vars}), weights
+    )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
+        mesmer.datatree.broadcast_and_pool_scen_ens(
             predictors,
             target,
             weights,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
+            member_dim=member_dim,
+            time_dim=time_dim,
+            scenario_dim=scenario_dim,
+            sample_dim=stacked_dim,
         )
     )
 
     n_samples = n_ts * (2 + 3)  # 2 members for scen1, 3 members for scen2
 
-    for pred in predictors_stacked.children:
-        da = predictors_stacked[pred].to_dataset().tas
+    _check_dataset_form(
+        predictors_stacked,
+        name="predictors",
+        required_vars={"tas", "tas2", "hfds"},
+    )
+    for var in predictors_stacked.data_vars:
+        da = predictors_stacked[var]
         _check_dataarray_form(
-            da, name="pred1", ndim=1, required_dims={"sample"}, shape=(n_samples,)
+            da,
+            name=da.name,
+            ndim=1,
+            required_dims={"sample"},
+            shape=(n_samples,),
         )
 
     _check_dataarray_form(
         target_stacked.tas,
         ndim=2,
         required_dims={"cells", "sample"},
-        shape=(n_lat * n_lon, n_samples),
+        shape=(n_samples, n_lat * n_lon),
     )
     _check_dataarray_form(
         weights_stacked.weights, ndim=1, required_dims={"sample"}, shape=(n_samples,)
     )
 
     # check if datasets align
-    pred1_stacked = predictors_stacked["pred1"].to_dataset()
-    target_aligned, pred1_aligned = xr.align(
-        target_stacked, pred1_stacked, join="exact"
+    target_aligned, predictors_aligned = xr.align(
+        target_stacked, predictors_stacked, join="exact"
     )
     xr.testing.assert_equal(target_stacked, target_aligned)
-    xr.testing.assert_equal(pred1_stacked, pred1_aligned)
-
-    pred2_stacked = predictors_stacked["pred2"].to_dataset()
-    target_aligned, pred2_aligned = xr.align(
-        target_stacked, pred2_stacked, join="exact"
-    )
-    xr.testing.assert_equal(target_stacked, target_aligned)
-    xr.testing.assert_equal(pred2_stacked, pred2_aligned)
+    xr.testing.assert_equal(predictors_stacked, predictors_aligned)
 
     target_aligned, weights_aligned = xr.align(
         target_stacked, weights_stacked, join="exact"
@@ -260,30 +261,275 @@ def test_stack_linear_regression_datatrees():
     xr.testing.assert_equal(weights_stacked, weights_aligned)
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
-            predictors,
-            target,
-            None,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
-        )
+        mesmer.datatree.broadcast_and_pool_scen_ens(predictors, target, None)
     )
     assert weights_stacked is None, "Weights should be None if not provided"
 
     # check if exclude_dim can be empty
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.datatree.stack_datatrees_for_linear_regression(
+        mesmer.datatree.broadcast_and_pool_scen_ens(
             predictors,
             target.sel(cells=0),
             weights,
-            stacking_dims=stacking_dims,
-            collapse_dim=collapse_dim,
-            stacked_dim=stacked_dim,
         )
     )
 
-    pred1 = predictors_stacked["pred1"].to_dataset()
-    target_aligned, pred1_aligned = xr.align(target_stacked, pred1, join="exact")
+    target_aligned, predictors_aligned = xr.align(
+        target_stacked, predictors_stacked, join="exact"
+    )
     xr.testing.assert_equal(target_stacked, target_aligned)
-    xr.testing.assert_equal(pred1, pred1_aligned)
+    xr.testing.assert_equal(predictors_stacked, predictors_aligned)
+
+
+def test_datatree_wrapper_dt_kwarg_errors():
+
+    @_datatree_wrapper
+    def func(arg):
+        return arg
+
+    dt = xr.DataTree()
+
+    with pytest.raises(TypeError, match="Passed a `DataTree` as keyword argument"):
+        func(arg=dt)
+
+
+def test_datatree_wrapper():
+
+    @_datatree_wrapper
+    def func(arg):
+        assert isinstance(arg, xr.Dataset)
+        return arg
+
+    da = xr.DataArray([1, 2, 3], dims="x")
+    ds = xr.Dataset(data_vars={"da": da})
+
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    result_ds = func(ds)
+    assert isinstance(result_ds, xr.Dataset)
+
+    result_dt = func(dt)
+    assert isinstance(result_dt, xr.DataTree)
+
+
+@pytest.mark.parametrize("scenario_dim", ("scenario", "scen"))
+@pytest.mark.parametrize("time_dim", ("time", "t"))
+@pytest.mark.parametrize("member_dim", ("member", "m"))
+@pytest.mark.parametrize("sample_dim", ("sample", "s"))
+def test_pool_scen_ens(scenario_dim, time_dim, member_dim, sample_dim):
+
+    time = np.arange(3)
+    data = np.arange(6).reshape(2, 3).T
+    da1 = xr.DataArray(
+        data,
+        dims=(time_dim, member_dim),
+        coords={time_dim: time, member_dim: ["a1", "a2"]},
+    )
+    ds1 = xr.Dataset(data_vars={"var": da1})
+
+    time = np.arange(2)
+    data = np.arange(2).reshape(2, 1) * 10
+    da2 = xr.DataArray(
+        data, dims=(time_dim, member_dim), coords={time_dim: time, member_dim: ["a3"]}
+    )
+    ds2 = xr.Dataset(data_vars={"var": da2})
+
+    dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
+
+    result = mesmer.datatree.pool_scen_ens(
+        dt,
+        member_dim=member_dim,
+        time_dim=time_dim,
+        scenario_dim=scenario_dim,
+        sample_dim=sample_dim,
+    )
+
+    # =========
+    data = np.concatenate([np.arange(6), np.arange(2) * 10])
+    time = [0, 1, 2, 0, 1, 2, 0, 1]
+    member = ["a1"] * 3 + ["a2"] * 3 + ["a3"] * 2
+    scen = ["scen1"] * 6 + ["scen2"] * 2
+
+    da = xr.DataArray(
+        data,
+        dims=sample_dim,
+        coords={
+            time_dim: (sample_dim, time),
+            member_dim: (sample_dim, member),
+            scenario_dim: (sample_dim, scen),
+        },
+    )
+    expected = xr.Dataset(data_vars={"var": da})
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_pool_scen_ens_missing_member_dim():
+
+    time = np.arange(2)
+    data = np.arange(2)
+    da = xr.DataArray(data, coords={"time": time})
+    ds = xr.Dataset(data_vars={"var": da})
+    dt = xr.DataTree.from_dict({"scen": ds})
+
+    with pytest.raises(
+        ValueError, match=r"`member_dim` \('member'\) not available in node 'scen'"
+    ):
+        mesmer.datatree.pool_scen_ens(dt)
+
+
+def test_pool_scen_ens_no_member_dim():
+
+    time = np.arange(2)
+    data = np.arange(2)
+    da = xr.DataArray(data, coords={"time": time})
+    ds = xr.Dataset(data_vars={"var": da})
+
+    dt = xr.DataTree.from_dict({"scen": ds})
+
+    result = mesmer.datatree.pool_scen_ens(dt, member_dim=None)
+
+    # =========
+    scen = ["scen"] * 2
+
+    da = xr.DataArray(
+        data,
+        dims="sample",
+        coords={
+            "time": ("sample", time),
+            "scenario": ("sample", scen),
+        },
+    )
+    expected = xr.Dataset(data_vars={"var": da})
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_pool_scen_ens_keep_other_dims():
+
+    time = np.arange(2)
+    data = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+
+    da = xr.DataArray(
+        data,
+        dims=("time", "member", "gridpoint"),
+        coords={"time": time, "member": ["a1", "a2", "a3"]},
+    )
+    ds1 = xr.Dataset(data_vars={"var": da})
+
+    time = np.arange(3)
+    data = np.arange(3 * 4).reshape(3, 1, 4)
+    da2 = xr.DataArray(
+        data,
+        dims=("time", "member", "gridpoint"),
+        coords={"time": time, "member": ["a3"]},
+    )
+    ds2 = xr.Dataset(data_vars={"var": da2})
+
+    dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
+
+    result = mesmer.datatree.pool_scen_ens(dt)
+
+    mesmer.core.utils._check_dataset_form(result, "result", required_vars="var")
+    mesmer.core.utils._check_dataarray_form(
+        result["var"],
+        "result.var",
+        ndim=2,
+        required_dims=("sample", "gridpoint"),
+        shape=(9, 4),
+    )
+
+
+def test_merge():
+    ts = 20
+    time = np.arange(ts)
+    data = np.arange(ts)
+    da = xr.DataArray(data, coords={"time": time})
+    ds1 = xr.Dataset(data_vars={"var1": da})
+    ds2 = xr.Dataset(data_vars={"var2": da * 2})
+
+    dt1 = xr.DataTree(ds1)
+    dt2 = xr.DataTree(ds2)
+
+    result = mesmer.datatree.merge([dt1, dt2])
+
+    assert isinstance(result, xr.DataTree)
+
+    expected_ds = xr.merge([ds1, ds2])
+    xr.testing.assert_equal(result.to_dataset(), expected_ds)
+
+    # test with multiple nodes
+    dt1["scen2"] = xr.Dataset(data_vars={"var1": da * 3})
+    dt2["scen2"] = xr.Dataset(data_vars={"var2": da * 4})
+
+    result = mesmer.datatree.merge([dt1, dt2])
+
+    xr.testing.assert_equal(
+        result.to_dataset(),
+        xr.merge([dt1.to_dataset(), dt2.to_dataset()]),
+    )
+
+    xr.testing.assert_equal(
+        result["scen2"].to_dataset(),
+        xr.merge([dt1["scen2"].to_dataset(), dt2["scen2"].to_dataset()]),
+    )
+
+
+def test_merge_compat():
+    # copied and adjusted to DataTree from https://github.com/pydata/xarray/blob/main/xarray/tests/test_merge.py
+    # used as general test that keyword arguments are passed correctly, could be extended, but not putting
+    # more effort in hopes of a future xarray version that has the same interface for DataTree
+
+    dt1 = xr.DataTree(xr.Dataset({"x": 0}))
+    dt2 = xr.DataTree(xr.Dataset({"x": 1}))
+    for compat in ["broadcast_equals", "equals", "identical", "no_conflicts"]:
+        with pytest.raises(xr.MergeError):
+            mesmer.datatree.merge([dt1, dt2], compat=compat)
+
+    dt2 = xr.DataTree(xr.Dataset({"x": [0, 0]}))
+    for compat in ["equals", "identical"]:
+        with pytest.raises(ValueError, match=r"should be coordinates or not"):
+            mesmer.datatree.merge([dt1, dt2], compat=compat)
+
+    dt2 = xr.DataTree(xr.Dataset({"x": ((), 0, {"foo": "bar"})}))
+    with pytest.raises(xr.MergeError):
+        mesmer.datatree.merge([dt1, dt2], compat="identical")
+
+    with pytest.raises(ValueError, match=r"compat=.* invalid"):
+        mesmer.datatree.merge([dt1, dt2], compat="foobar")
+
+    assert dt1.identical(mesmer.datatree.merge([dt1, dt2], compat="override"))
+
+
+def test_map_over_dataset():
+    # test empty nodes are skipped
+
+    ds = xr.Dataset(data_vars={"data": ("x", [1, 2])})
+    dt = xr.DataTree.from_dict({"node": ds})
+
+    def rename(ds):
+        return ds.rename(data="variable")
+
+    result = map_over_datasets(rename, dt)
+    expected = xr.DataTree.from_dict({"node": ds.rename(data="variable")})
+    xr.testing.assert_equal(result, expected)
+
+    # test not-first arg is a DataTree
+
+    def rename_second(new_name, ds):
+        return ds.rename(data=new_name)
+
+    result = map_over_datasets(rename_second, "variable", dt)
+    expected = xr.DataTree.from_dict({"node": ds.rename(data="variable")})
+    xr.testing.assert_equal(result, expected)
+
+    # test if there are only coords
+    ds_coords = xr.Dataset(coords={"x": [1, 2]})
+    dt = xr.DataTree.from_dict({"node": ds_coords})
+
+    def rename_coords(ds):
+        return ds.rename(x="y")
+
+    result = map_over_datasets(rename_coords, dt)
+    expected = xr.DataTree.from_dict({"node": ds_coords.rename(x="y")})
+    xr.testing.assert_equal(result, expected)

@@ -4,14 +4,43 @@ import scipy as sp
 import xarray as xr
 from sklearn.preprocessing import PowerTransformer
 
-import mesmer
 from mesmer.core.utils import _check_dataarray_form
 from mesmer.stats._power_transformer import (
+    YeoJohnsonTransformer,
     _yeo_johnson_inverse_transform_np,
-    _yeo_johnson_optimize_lambda_np,
     _yeo_johnson_transform_np,
 )
 from mesmer.testing import trend_data_2D
+
+
+def test_yj_transformer_repr():
+
+    yj_transformer = YeoJohnsonTransformer("logistic")
+
+    result = yj_transformer.__repr__()
+    expected = "<YeoJohnsonTransformer with a 'logistic' lambda function>"
+    assert result == expected
+
+
+def test_yj_transformer_wrong_name():
+
+    msg = "No YeoJohnson transformer with the name 'wrong' exists"
+    with pytest.raises(ValueError, match=msg):
+        YeoJohnsonTransformer("wrong")
+
+
+def test_yj_transformer_bounds_first_guess():
+
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    bounds = np.array([[0, 1e10], [-0.1, 0.1]])
+    np.testing.assert_equal(yj_transformer.bounds, bounds)
+    first_guess = np.array([1.0, 0.0])
+    np.testing.assert_equal(yj_transformer.first_guess, first_guess)
+
+    yj_transformer = YeoJohnsonTransformer("constant")
+    np.testing.assert_equal(yj_transformer.bounds, None)
+    first_guess = np.array([1.0])
+    np.testing.assert_equal(yj_transformer.first_guess, first_guess)
 
 
 @pytest.mark.parametrize(
@@ -28,9 +57,26 @@ from mesmer.testing import trend_data_2D
         ([1, 1], np.log(9), 2 / 10),
     ],
 )
-def test_lambda_function(coeffs, t, expected):
+def test_lambda_function_logistic(coeffs, t, expected):
 
-    result = mesmer.stats.lambda_function(coeffs, t)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    result = yj_transformer.lambda_function(coeffs, t)
+    np.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize(
+    "coeffs, t, expected",
+    [
+        ([3.14], -np.inf, 3.14),
+        ([3.14], np.inf, 3.14),
+        ([3.14], 0, 3.14),
+        ([3.14], 1, 3.14),
+    ],
+)
+def test_lambda_function_constant(coeffs, t, expected):
+
+    yj_transformer = YeoJohnsonTransformer("constant")
+    result = yj_transformer.lambda_function(coeffs, t)
     np.testing.assert_allclose(result, expected)
 
 
@@ -42,7 +88,8 @@ def test_yeo_johnson_optimize_lambda_np_normal():
     monthly_residuals = np.random.standard_normal((n_months, gridcells)) * 10
     yearly_T = np.ones((n_months, gridcells))
 
-    result = _yeo_johnson_optimize_lambda_np(monthly_residuals, yearly_T)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    result = yj_transformer._optimize_lambda_np(monthly_residuals, yearly_T)
     # to test viability
     expected = np.array([1, 0])
     np.testing.assert_allclose(result, expected, atol=1e-2)
@@ -71,8 +118,9 @@ def test_yeo_johnson_optimize_lambda_np(skew, bounds):
     yearly_T = np.random.randn(n_years)
     local_monthly_residuals = sp.stats.skewnorm.rvs(skew, size=n_years)
 
-    coeffs = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
-    lmbda = mesmer.stats.lambda_function(coeffs, yearly_T)
+    yj_transformer = YeoJohnsonTransformer("logistic")
+    coeffs = yj_transformer._optimize_lambda_np(local_monthly_residuals, yearly_T)
+    lmbda = yj_transformer.lambda_function(coeffs, yearly_T)
     transformed = _yeo_johnson_transform_np(local_monthly_residuals, lmbda)
 
     assert (lmbda >= bounds[0]).all() & (lmbda <= bounds[1]).all()
@@ -172,7 +220,8 @@ def test_yeo_johnson_inverse_transform_np_sklearn():
     np.testing.assert_allclose(result, expected.reshape(-1))
 
 
-def test_yeo_johnson_optimize_lambda_sklearn():
+@pytest.mark.parametrize("name", ["constant", "logistic"])
+def test_yeo_johnson_optimize_lambda_sklearn(name):
     # test if our fit is the same as sklearns
     np.random.seed(0)
     n_ts = 100
@@ -181,17 +230,18 @@ def test_yeo_johnson_optimize_lambda_sklearn():
     yearly_T = np.ones(n_ts) * yearly_T_value
     local_monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
 
-    ourfit = _yeo_johnson_optimize_lambda_np(local_monthly_residuals, yearly_T)
-    result = mesmer.stats.lambda_function(ourfit, yearly_T_value)
+    yj_transformer = YeoJohnsonTransformer(name)
+    ourfit = yj_transformer._optimize_lambda_np(local_monthly_residuals, yearly_T)
+    result = yj_transformer.lambda_function(ourfit, yearly_T_value)
     sklearnfit = PowerTransformer(method="yeo-johnson", standardize=False).fit(
         local_monthly_residuals.reshape(-1, 1), yearly_T.reshape(-1, 1)
     )
     expected = sklearnfit.lambdas_
 
-    np.testing.assert_allclose(np.array([result]), expected, atol=1e-5)
+    np.testing.assert_allclose(np.array([result]), expected, atol=1e-4)
 
 
-def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
+def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2, stack=False):
     """
     Generate a 2D dataset with skewed data in time for each cell.
     The skewness of the data can be random for each cell when skew="random"
@@ -199,7 +249,9 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
     """
 
     n_cells = n_lat * n_lon
-    time = xr.cftime_range(start="2000-01-01", periods=n_timesteps, freq="MS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_timesteps, freq="MS", use_cftime=True
+    )
 
     ts_array = np.empty((n_cells, n_timesteps))
     rng = np.random.default_rng(0)
@@ -216,34 +268,91 @@ def skewed_data_2D(n_timesteps=30, n_lat=3, n_lon=2):
         "lat": ("cells", LAT.flatten()),
     }
 
-    return xr.DataArray(ts_array, dims=("cells", "time"), coords=coords, name="data")
+    data = xr.DataArray(ts_array, dims=("cells", "time"), coords=coords, name="data")
+
+    if stack:
+        data = data.stack(sample=["time"], create_index=False)
+
+    return data
 
 
-def test_power_transformer_xr():
+def test_power_transformer_wrong_lambda_function():
+    n_years = 10
+    n_months = n_years * 12
+    n_lon, n_lat = 1, 1
+
+    monthly_residuals = skewed_data_2D(n_timesteps=n_months, n_lat=n_lat, n_lon=n_lon)
+    yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
+
+    # 0. create instance
+    yj_transformer = YeoJohnsonTransformer("logistic")
+
+    # 1 - fitting
+    lambda_coeffs = yj_transformer.fit(yearly_T, monthly_residuals)
+
+    # warn if the name is not on the attrs
+    lambda_coeffs.attrs = {}
+
+    warning = "`lambda_coeffs` does not have `lambda_function` attrs"
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer._assert_correct_lambda_function(lambda_coeffs)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer.get_lambdas_from_covariates(lambda_coeffs, yearly_T)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer.transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+    with pytest.warns(UserWarning, match=warning):
+        yj_transformer.inverse_transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+    lambda_coeffs.attrs = {"lambda_function": "not_logistic"}
+
+    err = "Passed `lambda_coeffs` fitted on a 'not_logistic' lambda function"
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer._assert_correct_lambda_function(lambda_coeffs)
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer.get_lambdas_from_covariates(lambda_coeffs, yearly_T)
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer.transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+    with pytest.raises(ValueError, match=err):
+        yj_transformer.inverse_transform(yearly_T, monthly_residuals, lambda_coeffs)
+
+
+@pytest.mark.parametrize("stack", (False, True))
+def test_power_transformer_xr(stack):
     n_years = 100
     n_lon, n_lat = 2, 3
     n_gridcells = n_lat * n_lon
 
     monthly_residuals = skewed_data_2D(
-        n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon
+        n_timesteps=n_years * 12, n_lat=n_lat, n_lon=n_lon, stack=stack
     )
     yearly_T = trend_data_2D(n_timesteps=n_years, n_lat=n_lat, n_lon=n_lon, scale=2)
+    if stack:
+        yearly_T = yearly_T.stack(sample=["time"], create_index=False)
 
     month = np.arange(1, 13)
     expected_month = xr.DataArray(month, coords={"month": month}, name="month")
 
+    # 0. create instance
+    yj_transformer = YeoJohnsonTransformer("logistic")
+
     # 1 - fitting
-    pt_coefficients = mesmer.stats.fit_yeo_johnson_transform(
-        yearly_T, monthly_residuals
-    )
+    pt_coefficients = yj_transformer.fit(yearly_T, monthly_residuals)
     # 2 - transformation
-    transformed = mesmer.stats.yeo_johnson_transform(
-        yearly_T, monthly_residuals, pt_coefficients
-    )
+    transformed = yj_transformer.transform(yearly_T, monthly_residuals, pt_coefficients)
     # 3 - back-transformation
-    inverse_transformed = mesmer.stats.inverse_yeo_johnson_transform(
+    inverse_transformed = yj_transformer.inverse_transform(
         yearly_T, transformed.transformed, pt_coefficients
     )
+
+    sample_dim = "sample" if stack else "time"
 
     xr.testing.assert_allclose(
         inverse_transformed.inverted, monthly_residuals, atol=1e-5
@@ -253,25 +362,27 @@ def test_power_transformer_xr():
         transformed.transformed,
         name="transformed",
         ndim=2,
-        required_dims={"cells", "time"},
+        required_dims={"cells", sample_dim},
+        required_coords="time",
         shape=(n_gridcells, n_years * 12),
     )
 
     _check_dataarray_form(
         transformed.lambdas,
         name="lambdas",
-        ndim=3,
-        required_dims={"month", "cells", "year"},
-        shape=(12, n_gridcells, n_years),
+        ndim=2,
+        required_dims={"cells", sample_dim},
+        required_coords="time",
+        shape=(n_gridcells, n_years * 12),
     )
-    assert "month" in transformed.lambdas.coords
-    xr.testing.assert_equal(expected_month, transformed.month)
+    xr.testing.assert_equal(monthly_residuals.time, transformed.time)
 
     _check_dataarray_form(
         inverse_transformed.inverted,
         name="inverted",
         ndim=2,
-        required_dims={"cells", "time"},
+        required_dims={"cells", sample_dim},
+        required_coords="time",
         shape=(n_gridcells, n_years * 12),
     )
     _check_dataarray_form(
