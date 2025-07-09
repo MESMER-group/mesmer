@@ -6,7 +6,6 @@ from filefisher import FileFinder
 import mesmer
 from mesmer.mesmer_x import (
     ConditionalDistribution,
-    ConditionalDistributionOptions,
     Expression,
     ProbabilityIntegralTransform,
 )
@@ -204,7 +203,7 @@ def test_calibrate_mesmer_x(
 
     # declaring analytical form of the conditional distribution
     expression = Expression(expr, expr_name)
-    distrib = ConditionalDistribution(expression, ConditionalDistributionOptions())
+    distrib = ConditionalDistribution(expression)
 
     # preparing first guess
     coeffs_fg = distrib.find_first_guess(
@@ -237,10 +236,7 @@ def test_calibrate_mesmer_x(
 
     # probability integral transform on non-stacked data for AR(1) process
     target_expr = Expression("norm(loc=0, scale=1)", "standard_normal")
-    target_distrib = ConditionalDistribution(
-        target_expr,
-        ConditionalDistributionOptions(),
-    )
+    target_distrib = ConditionalDistribution(target_expr)
 
     pit = ProbabilityIntegralTransform(distrib, target_distrib)
     transf_target = pit.transform(

@@ -10,6 +10,8 @@ from scipy.optimize import basinhopping
 
 import mesmer.mesmer_x._distrib_checks as _distrib_checks
 import mesmer.mesmer_x._optimizers as _optimizers
+from mesmer.mesmer_x._expression import Expression
+from mesmer.mesmer_x._optimizers import MinimizeOptions
 from mesmer.mesmer_x._utils import _ignore_warnings
 
 SEED_BASINHOPPING = 1931102249669598594
@@ -44,36 +46,37 @@ def _smooth_data(data, length=5):
 class _FirstGuess:
     def __init__(
         self,
-        expression,
-        options,
+        expression: Expression,
+        minimize_options: MinimizeOptions,
         data_pred,
         predictor_names,
         data_targ,
         data_weights,
         first_guess,
+        threshold_min_proba=1e-9,
     ):
         """
         First guess for the coefficients of the conditional distribution.
 
         Parameters
         ----------
-        expression: Expression
+        expression : Expression
             Expression for the conditional distribution we want to find the first guess of.
 
-        options: Options
+        minimizer_options : MinimizeOptions
             Options for the fit.
 
-        data_pred: numpy array 1D or 2D of shape (n_samples, n_preds)
+        data_pred : numpy array 1D or 2D of shape (n_samples, n_preds)
             Predictors for the training sample. If 2D, the first dimension must be the
             number of predictors, and the second dimension the number of samples, i.e. (n_samples, n_preds).
 
-        predictor_names: list of str
+        predictor_names : list of str
             Names of the predictors as named in the `expression`.
 
-        data_targ: numpy array 1D of shape (n_samples,)
+        data_targ : numpy array 1D of shape (n_samples,)
             Target for the training sample. Must be 1D, i.e. (n_samples,).
 
-        data_weights: numpy array 1D of shape (n_samples,)
+        data_weights : numpy array 1D of shape (n_samples,)
             Weights for the training sample. Must be 1D, i.e. (n_samples,).
 
         first_guess : numpy array, default: None
@@ -81,9 +84,11 @@ class _FirstGuess:
             per coeff in expression.coefficients_list.
 
         """
+
         # initialization
-        self.options = options
+        self.minimize_options = minimize_options
         self.expression = expression
+        self.threshold_min_proba = threshold_min_proba
 
         if data_pred is not None:
             _distrib_checks._check_no_nan_no_inf(data_pred, "predictor data")
@@ -328,14 +333,8 @@ class _FirstGuess:
                 func=self._fg_fun_loc,
                 x0=self.fg_coeffs[fg_ind_loc],
                 args=(),
-                method_fit=self.options.method_fit,
                 option_NelderMead="best_run",
-                options={
-                    "maxfev": self.options.maxfev,
-                    "maxiter": self.options.maxiter,
-                    # self.options.name_xtol: self.options.xtol_req,
-                    # self.options.name_ftol: self.options.ftol_req,
-                },
+                minimize_options=self.minimize_options,
             )
             self.fg_coeffs[fg_ind_loc] = localfit_loc.x
 
@@ -350,14 +349,8 @@ class _FirstGuess:
                 func=self._fg_fun_scale,
                 x0=x0,
                 args=(),
-                method_fit=self.options.method_fit,
+                minimize_options=self.minimize_options,
                 option_NelderMead="best_run",
-                options={
-                    "maxfev": self.options.maxfev,
-                    "maxiter": self.options.maxiter,
-                    # self.options.name_xtol: self.options.xtol_req,
-                    # self.options.name_ftol: self.options.ftol_req,
-                },
             )
             self.fg_coeffs[ind_scale] = localfit_scale.x
 
@@ -373,14 +366,8 @@ class _FirstGuess:
         #         func=self._fg_fun_others,
         #         x0=self.fg_coeffs[fg_ind_others],
         #         args=(),
-        #         method_fit=self.options.method_fit,
+        #         minimize_options=self.minimize_options,
         #         option_NelderMead="best_run",
-        #         options={
-        #             "maxfev": self.options.maxfev,
-        #             "maxiter": self.options.maxiter,
-        #             self.options.name_xtol: self.options.xtol_req,
-        #             self.options.name_ftol: self.options.ftol_req,
-        #         },
         #     )
         #     self.fg_coeffs[fg_ind_others] = localfit_others.x
 
@@ -390,14 +377,8 @@ class _FirstGuess:
             func=self._fg_fun_nll_no_tests,
             x0=self.fg_coeffs,
             args=(),
-            method_fit=self.options.method_fit,
+            minimize_options=self.minimize_options,
             option_NelderMead="best_run",
-            options={
-                "maxfev": self.options.maxfev,
-                "maxiter": self.options.maxiter,
-                self.options.name_xtol: self.options.xtol_req,
-                self.options.name_ftol: self.options.ftol_req,
-            },
         )
         fg_coeffs = localfit_nll.x
 
@@ -407,7 +388,7 @@ class _FirstGuess:
                 self.data_pred,
                 self.data_targ,
                 fg_coeffs,
-                self.options.threshold_min_proba,
+                self.threshold_min_proba,
             )
         )
 
@@ -422,14 +403,8 @@ class _FirstGuess:
                 func=self._fg_fun_ll_n,
                 x0=fg_coeffs,
                 args=(),
-                method_fit=self.options.method_fit,
+                minimize_options=self.minimize_options,
                 option_NelderMead="best_run",
-                options={
-                    "maxfev": self.options.maxfev,
-                    "maxiter": self.options.maxiter,
-                    # self.options.name_xtol: self.options.xtol_req,
-                    # self.options.name_ftol: self.options.ftol_req,
-                },
             )
             if ~np.any(np.isnan(localfit_opti.x)):
                 fg_coeffs = localfit_opti.x

@@ -8,8 +8,8 @@ import mesmer.mesmer_x._conditional_distribution
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.mesmer_x import (
     ConditionalDistribution,
-    ConditionalDistributionOptions,
     Expression,
+    MinimizeOptions,
     OptimizerFCNLL,
     OptimizerNLL,
 )
@@ -20,32 +20,14 @@ from mesmer.testing import trend_data_1D, trend_data_2D
 @pytest.fixture
 def default_distrib():
     expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
-    return ConditionalDistribution(expression, ConditionalDistributionOptions())
+    return ConditionalDistribution(expression)
 
 
-def test_ConditionalDistributionOptions_errors():
+def test_ConditionalDistribution_errors():
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
-        ConditionalDistributionOptions(
-            threshold_min_proba=-0.1,
-        )
+        ConditionalDistribution(None, threshold_min_proba=-0.1)
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
-        ConditionalDistributionOptions(
-            threshold_min_proba=0.6,
-        )
-
-    with pytest.raises(ValueError, match="`options_solver` must be a dictionary"):
-        ConditionalDistributionOptions(
-            options_solver="this is not a dictionary",
-        )
-
-    with pytest.raises(ValueError, match="method for this fit not prepared, to avoid"):
-        ConditionalDistributionOptions(
-            options_solver={"method_fit": "this is not a method"},
-        )
-
-    msg = "`options_optim` was removed - pass `optimizer` directly to `ConditionalDistribution`"
-    with pytest.raises(ValueError, match=msg):
-        ConditionalDistributionOptions(options_optim={})
+        ConditionalDistribution(None, threshold_min_proba=0.6)
 
 
 def test_ConditionalDistribution_init_all_default(default_distrib):
@@ -54,15 +36,12 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
     assert default_distrib.expression.boundaries_coeffs == {}
     assert default_distrib.expression.n_coeffs == 2
 
-    assert default_distrib.options.threshold_min_proba == 1e-09
-    assert default_distrib.options.xtol_req == 1e-06
-    assert default_distrib.options.ftol_req == 1e-06
-    assert default_distrib.options.maxiter is None
-    assert default_distrib.options.maxfev is None
-    assert default_distrib.options.method_fit == "Powell"
-    assert default_distrib.options.name_ftol == "ftol"
-    assert default_distrib.options.name_xtol == "xtol"
-    assert not default_distrib.options.error_failedfit
+    assert default_distrib.threshold_min_proba == 1e-09
+
+    assert default_distrib.minimize_options.method == "Powell"
+    assert default_distrib.minimize_options.tol is None
+    assert default_distrib.minimize_options.options is None
+
     assert isinstance(default_distrib.optimizer, OptimizerNLL)
 
 
@@ -77,26 +56,23 @@ def test_ConditionalDistribution_custom_init():
     )
 
     threshold_min_proba = 0.1
-    options_solver = {
-        "method_fit": "Nelder-Mead",
-        "xtol_req": 0.1,
-        "ftol_req": 0.01,
-        "maxiter": 10_000,
-        "maxfev": 12_000,
-        "error_failedfit": True,
-    }
+
+    minimize_options = MinimizeOptions(
+        "Nelder-Mead", tol=1e-10, options={"maxiter": 10_000}
+    )
+
     optimizer = OptimizerFCNLL(
         threshold_stopping_rule=2,
         ind_year_thres=10,
         exclude_trigger=True,
     )
 
-    options = ConditionalDistributionOptions(
+    distrib = ConditionalDistribution(
+        expression,
+        minimize_options=minimize_options,
+        optimizer=optimizer,
         threshold_min_proba=threshold_min_proba,
-        options_solver=options_solver,
     )
-
-    distrib = ConditionalDistribution(expression, options, optimizer)
 
     assert distrib.expression.boundaries_params == {
         "loc": [-10, 10],
@@ -105,15 +81,11 @@ def test_ConditionalDistribution_custom_init():
     assert distrib.expression.n_coeffs == 2
     assert distrib.expression.boundaries_coeffs == boundaries_coeffs
 
-    assert distrib.options.threshold_min_proba == threshold_min_proba
-    assert distrib.options.xtol_req == 0.1
-    assert distrib.options.ftol_req == 0.01
-    assert distrib.options.maxiter == 10_000
-    assert distrib.options.maxfev == 12_000
-    assert distrib.options.method_fit == "Nelder-Mead"
-    assert distrib.options.name_ftol == "fatol"
-    assert distrib.options.name_xtol == "xatol"
-    assert distrib.options.error_failedfit  # is True
+    assert distrib.threshold_min_proba == threshold_min_proba
+
+    assert distrib.minimize_options.method == "Nelder-Mead"
+    assert distrib.minimize_options.tol == 1e-10
+    assert distrib.minimize_options.options == {"maxiter": 10_000}
 
     assert isinstance(distrib.optimizer, OptimizerFCNLL)
     assert distrib.optimizer.threshold_stopping_rule == 2
@@ -163,13 +135,12 @@ def test_OptimizerFCNLL_errors():
 def test_ConditionalDistribution_func_optim_fcnll():
     expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
 
-    options = ConditionalDistributionOptions()
     optimizer = OptimizerFCNLL(
         threshold_stopping_rule=10,
         ind_year_thres=10,  # TODO: what to choose?
         exclude_trigger=True,
     )
-    distrib = ConditionalDistribution(expr, options, optimizer)
+    distrib = ConditionalDistribution(expr, optimizer=optimizer)
 
     rng = np.random.default_rng(0)
     n = 251
@@ -198,13 +169,12 @@ def test_ConditionalDistribution_func_optim_fcnll():
     np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
 
     # test with exclude_trigger False
-    options = ConditionalDistributionOptions()
     optimizer = OptimizerFCNLL(
         threshold_stopping_rule=2,
         ind_year_thres=10,  # TODO: what to choose
         exclude_trigger=False,
     )
-    distrib = ConditionalDistribution(expr, options, optimizer)
+    distrib = ConditionalDistribution(expr, optimizer=optimizer)
     distrib.fit(
         predictors=pred,
         target=targ,
@@ -258,8 +228,7 @@ def test_ConditionalDistribution_fit_failed():
         boundaries_coeffs={},
     )
     # set error_failedfit to True so error is raised
-    options = ConditionalDistributionOptions(options_solver={"error_failedfit": True})
-    distrib = ConditionalDistribution(expr, options)
+    distrib = ConditionalDistribution(expr)
 
     rng = np.random.default_rng(0)
     n = 251
@@ -279,7 +248,8 @@ def test_ConditionalDistribution_fit_failed():
     weights = xr.ones_like(targ)
     weights.name = "weight"
 
-    with pytest.raises(ValueError, match="Failed fit."):
+    # raises per default
+    with pytest.raises(ValueError, match="Failed fit"):
         distrib.fit(
             predictors=pred,
             target=targ,
@@ -287,6 +257,21 @@ def test_ConditionalDistribution_fit_failed():
             first_guess=fg,
             sample_dim="time",
         )
+
+    distrib.fit(
+        predictors=pred,
+        target=targ,
+        weights=weights,
+        first_guess=fg,
+        sample_dim="time",
+        on_failed_fit="ignore",
+    )
+
+    result = distrib.coefficients
+    # TODO: set the coeffs to nan?
+    expected = xr.Dataset(data_vars={"c1": 2.0, "c2": 0.1})
+
+    xr.testing.assert_equal(result, expected)
 
 
 def test_ConditionalDistribution_smooth_fg_error(default_distrib):
@@ -337,6 +322,7 @@ def test_ConditionalDistribution_smooth_fg(default_distrib):
         first_guess=first_guess,
         sample_dim="time",
         smooth_coeffs=True,
+        on_failed_fit="ignore",
     )
 
     result = default_distrib.coefficients

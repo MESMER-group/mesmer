@@ -13,18 +13,49 @@ import mesmer.mesmer_x._distrib_checks as _distrib_checks
 from mesmer.mesmer_x._expression import Expression
 
 
+class MinimizeOptions:
+
+    def __init__(
+        self,
+        method: str = "Powell",
+        tol: float | None = None,
+        options: dict | None = None,
+        # on_fail : Literal["error", "warn", "ignore"]="error",
+    ):
+        """options to pass to the minimizer - see scipy.optimize.minimize
+
+        Parameters
+        ----------
+        method : str
+            Type of solver. See scipy.optimize.minimize
+        tol : float | None, default: None
+            Tolerance for termination. When tol is specified, the selected minimization
+            algorithm sets some relevant solver-specific tolerance(s) equal to tol.
+            For detailed control, use solver-specific options.
+        options : dict | None, default None
+            A dictionary of method-specific solver options. See scipy.optimize.minimize
+
+        See also
+        --------
+        scipy.optimize.minimize
+        """
+
+        self.method = method
+        self.tol = tol
+        self.options = options
+
+
 def _minimize(
     func,
     x0,
-    method_fit,
     args,
-    options,
+    minimize_options: MinimizeOptions,
     option_NelderMead: Literal["dont_run", "fail_run", "best_run"] = "dont_run",
 ):
     """
     custom minimize function.
 
-    First tries with method_fit.
+    First tries with the solver specified in minimize_options.
 
     A second fit is performed either if
     - the first fit failed and option_NelderMead is set to "fail_run"
@@ -33,18 +64,18 @@ def _minimize(
     The result of the second fit is only returned if it is better than the first fit.
 
     options_NelderMead: str
-        * dont_run: would minimize only the chosen solver in method_fit
-        * fail_run: would minimize using Nelder-Mead only if the chosen solver in
-            method_fit fails
-        * best_run: will minimize using Nelder-Mead and the chosen solver in
-            method_fit, then select the best results
+        * dont_run: only minimize with the chosen solver
+        * fail_run: only minimize using Nelder-Mead if the chosen solver fails
+        * best_run: minimize using Nelder-Mead and the chosen solver, then select the
+          best results
     """
     fit = minimize(
         func,
         x0=x0,
         args=args,
-        method=method_fit,
-        options=options,
+        method=minimize_options.method,
+        tol=minimize_options.tol,
+        options=minimize_options.options,
     )
 
     # observed that Powell solver is much faster, but less robust. May rarely create
@@ -55,16 +86,7 @@ def _minimize(
         option_NelderMead == "best_run"
     ):
         fit_NM = minimize(
-            func,
-            x0=x0,
-            args=args,
-            method="Nelder-Mead",
-            options={
-                "maxfev": options["maxfev"],
-                "maxiter": options["maxiter"],
-                # "xatol": list(options.values())[2],
-                # "fatol": list(options.values())[3],
-            },
+            func, x0=x0, args=args, method="Nelder-Mead", tol=minimize_options.tol
         )
         if (option_NelderMead == "fail_run") or (
             option_NelderMead == "best_run"

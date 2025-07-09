@@ -5,7 +5,6 @@ from filefisher import FileFinder
 import mesmer
 from mesmer.mesmer_x import (
     ConditionalDistribution,
-    ConditionalDistributionOptions,
     Expression,
     ProbabilityIntegralTransform,
 )
@@ -110,9 +109,7 @@ def test_make_realisations_mesmer_x(
 
     # back-transform the realizations
     expr_tranf = Expression("norm(loc=0, scale=1)", "standard_normal")
-    distrib_transf = ConditionalDistribution(
-        expr_tranf, ConditionalDistributionOptions()
-    )
+    distrib_transf = ConditionalDistribution(expr_tranf)
 
     back_pit = ProbabilityIntegralTransform(
         distrib_orig=distrib_transf,

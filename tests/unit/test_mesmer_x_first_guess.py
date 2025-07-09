@@ -2,10 +2,7 @@ import numpy as np
 import pytest
 import scipy as sp
 
-from mesmer.mesmer_x import (
-    ConditionalDistributionOptions,
-    Expression,
-)
+from mesmer.mesmer_x import Expression, MinimizeOptions
 from mesmer.mesmer_x._first_guess import (
     _finite_difference,
     _FirstGuess,
@@ -18,11 +15,6 @@ def expr():
     return Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
 
 
-@pytest.fixture
-def options():
-    return ConditionalDistributionOptions()
-
-
 def get_weights_uniform(data):
     return np.ones_like(data)
 
@@ -31,7 +23,7 @@ def fg_default(n_coeffs):
     return np.zeros(n_coeffs)
 
 
-def test_first_guess_init_easy(expr, options):
+def test_first_guess_init_easy(expr):
     n = 251
     pred = np.arange(n)
     targ = np.random.normal(size=n)
@@ -41,7 +33,7 @@ def test_first_guess_init_easy(expr, options):
 
     fg = _FirstGuess(
         expression=expr,
-        options=options,
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -50,7 +42,12 @@ def test_first_guess_init_easy(expr, options):
     )
 
     assert fg.expression == expr
-    assert fg.options == options
+
+    assert isinstance(fg.minimize_options, MinimizeOptions)
+    assert fg.minimize_options.method == "Powell"
+    assert fg.minimize_options.tol is None
+    assert fg.minimize_options.options is None
+
     assert fg.predictor_names == ["tas"]
     np.testing.assert_equal(fg.fg_coeffs, fg_coeffs)
     np.testing.assert_equal(fg.data_pred["tas"], pred)
@@ -62,7 +59,7 @@ def test_first_guess_init_easy(expr, options):
     np.testing.assert_equal(fg.data_weights, weights)
 
 
-def test_first_guess_init_fg_ceoffs_int(expr, options):
+def test_first_guess_init_fg_ceoffs_int(expr):
     n = 251
     pred = np.arange(n).reshape(n, 1)
     targ = np.random.normal(size=n)
@@ -72,7 +69,7 @@ def test_first_guess_init_fg_ceoffs_int(expr, options):
 
     fg = _FirstGuess(
         expression=expr,
-        options=options,
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -84,12 +81,12 @@ def test_first_guess_init_fg_ceoffs_int(expr, options):
     assert type(fg.fg_coeffs[0]) is np.float64
 
 
-def test_fg_init_errors_validate_data(expr, options):
+def test_fg_init_errors_validate_data(expr):
     n = 15  # must be > 10 for smoothing
     with pytest.raises(ValueError, match="nan values in predictor data"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n) * np.nan,
             predictor_names=["tas"],
             data_targ=np.ones(n),
@@ -100,7 +97,7 @@ def test_fg_init_errors_validate_data(expr, options):
     with pytest.raises(ValueError, match="infinite values in predictor data"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n) * np.inf,
             predictor_names=["tas"],
             data_targ=np.ones(n),
@@ -111,7 +108,7 @@ def test_fg_init_errors_validate_data(expr, options):
     with pytest.raises(ValueError, match="nan values in target data"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n),
             predictor_names=["tas"],
             data_targ=np.ones(n) * np.nan,
@@ -122,7 +119,7 @@ def test_fg_init_errors_validate_data(expr, options):
     with pytest.raises(ValueError, match="infinite values in target data"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n),
             predictor_names=["tas"],
             data_targ=np.ones(n) * np.inf,
@@ -131,14 +128,14 @@ def test_fg_init_errors_validate_data(expr, options):
         )
 
 
-def test_fg_init_errors_fg_coeffs(expr, options):
+def test_fg_init_errors_fg_coeffs(expr):
     n = 15
     with pytest.raises(
         ValueError, match="The provided first guess does not have the correct shape:"
     ):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n),
             predictor_names=["tas"],
             data_targ=np.ones(n),
@@ -147,7 +144,7 @@ def test_fg_init_errors_fg_coeffs(expr, options):
         )
 
 
-def test_fg_init_errors_predictor_names(expr, options):
+def test_fg_init_errors_predictor_names(expr):
     n = 15
     with pytest.raises(
         ValueError,
@@ -155,7 +152,7 @@ def test_fg_init_errors_predictor_names(expr, options):
     ):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n),
             predictor_names=None,
             data_targ=np.ones(n),
@@ -169,7 +166,7 @@ def test_fg_init_errors_predictor_names(expr, options):
     ):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=None,
             predictor_names=["tas"],
             data_targ=np.ones(n),
@@ -178,13 +175,13 @@ def test_fg_init_errors_predictor_names(expr, options):
         )
 
 
-def test_fg_init_errors_number_of_preds(expr, options):
+def test_fg_init_errors_number_of_preds(expr):
     n = 15
 
     with pytest.raises(ValueError, match="data_pred must be 1D or a 2D array"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones((n, 3)),
             predictor_names=["tas", "tas2"],
             data_targ=np.ones(n),
@@ -195,7 +192,7 @@ def test_fg_init_errors_number_of_preds(expr, options):
     with pytest.raises(ValueError, match="data_pred must be 1D or a 2D array"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones((n, 2, 2)),
             predictor_names=["tas", "tas2"],
             data_targ=np.ones(n),
@@ -206,7 +203,7 @@ def test_fg_init_errors_number_of_preds(expr, options):
     with pytest.raises(ValueError, match="data_pred must be 1D or a 2D array"):
         _FirstGuess(
             expr,
-            options,
+            minimize_options=MinimizeOptions(),
             data_pred=np.ones(n),
             predictor_names=["tas", "tas2"],
             data_targ=np.ones(n),
@@ -227,7 +224,7 @@ def test_first_guess_standard_normal():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -254,7 +251,7 @@ def test_first_guess_standard_normal_including_pred():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -279,7 +276,7 @@ def test_first_guess_provided(first_guess):
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -310,7 +307,7 @@ def test_first_guess_GEV(shape):
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -326,7 +323,7 @@ def test_first_guess_GEV(shape):
     # any difference if we provide a close first guess?
     result2 = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -360,7 +357,7 @@ def test_first_guess_GEV_including_pred():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -400,7 +397,7 @@ def test_first_guess_truncnorm():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -428,7 +425,7 @@ def test_fg_binom():
     first_guess = [11, 0.4]
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -460,7 +457,7 @@ def test_fg_hypergeom():
     first_guess = [99, 9, 1]
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -486,7 +483,7 @@ def test_fg_hypergeom():
 
     result_with_bounds = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -516,7 +513,7 @@ def test_first_guess_beta():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -547,7 +544,7 @@ def test_first_guess_gamma():
     first_guess = [1.0]
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -571,7 +568,7 @@ def test_fg_fun_scale_laplace():
     expression = Expression("laplace(loc=c1, scale=c2)", expr_name="exp1")
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -605,7 +602,7 @@ def test_first_guess_with_bounds():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -629,7 +626,7 @@ def test_first_guess_with_bounds():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -652,7 +649,7 @@ def test_first_guess_with_bounds():
 
     result = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -678,7 +675,7 @@ def test_fg_func_deriv01():
 
     fg = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -740,7 +737,7 @@ def test_fg_fun_loc():
 
     fg = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -776,7 +773,7 @@ def test_fg_fun_loc_param_outside_bounds():
 
     fg = _FirstGuess(
         expression=expression,
-        options=ConditionalDistributionOptions(),
+        minimize_options=MinimizeOptions(),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -801,7 +798,7 @@ def test_fg_fun_scale():
     expression = Expression("norm(loc=c1, scale=c2)", expr_name="exp1")
     fg = _FirstGuess(
         expression,
-        ConditionalDistributionOptions(),
+        MinimizeOptions(),
         data_pred=None,
         predictor_names=None,
         data_targ=targ,
@@ -819,7 +816,7 @@ def test_fg_fun_scale():
     expression = Expression("genextreme(loc=c1, scale=c2, c=c3)", expr_name="exp1")
     fg = _FirstGuess(
         expression,
-        ConditionalDistributionOptions(),
+        MinimizeOptions(),
         data_pred=None,
         predictor_names=None,
         data_targ=targ,
@@ -855,7 +852,7 @@ def test_fg_fun_scale_param_outside_bounds():
     )
     fg = _FirstGuess(
         expression,
-        ConditionalDistributionOptions(),
+        MinimizeOptions(),
         data_pred=pred,
         predictor_names=["tas"],
         data_targ=targ,
@@ -884,7 +881,7 @@ def test_fg_fun_others():
 
     fg = _FirstGuess(
         expression,
-        ConditionalDistributionOptions(),
+        MinimizeOptions(),
         data_pred=pred,
         predictor_names=["tas"],
         data_targ=targ,
@@ -934,7 +931,7 @@ def test_fg_fun_others_param_outside_bounds():
     )
     fg = _FirstGuess(
         expression,
-        ConditionalDistributionOptions(),
+        MinimizeOptions(),
         data_pred=pred,
         predictor_names=["tas"],
         data_targ=targ,

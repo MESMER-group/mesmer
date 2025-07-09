@@ -3,6 +3,8 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 
@@ -12,149 +14,30 @@ from mesmer.core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._first_guess import _FirstGuess
-from mesmer.mesmer_x._optimizers import OptimizerFCNLL, OptimizerNLL
+from mesmer.mesmer_x._optimizers import MinimizeOptions, OptimizerFCNLL, OptimizerNLL
 from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.stats import gaspari_cohn
-
-
-class ConditionalDistributionOptions:
-    def __init__(
-        self,
-        threshold_min_proba=1.0e-9,
-        options_optim=None,  # removed
-        options_solver=None,
-    ):
-        """Class to define optimizers used during first guess and training.
-
-        Parameters
-        ----------
-        threshold_min_proba :  float or None, default: 1e-9
-            If numeric imposes a check during the fitting that every sample fulfills
-            `cdf(sample) >= threshold_min_proba and 1 - cdf(sample) >= threshold_min_proba`,
-            i.e. each sample lies within some confidence interval of the distribution.
-            Note that it follows that threshold_min_proba math::\\in (0,0.5). Important to
-            ensure that all points are feasible with the fitted distribution.
-            If `None` this test is skipped.
-
-        options_solver : dict, optional
-            A dictionary with options for the solvers, used to determine an adequate
-            first guess and for the final optimization.
-
-            * method_fit: string, default: "Powell"
-                Type of algorithm used during the optimization, using the function
-                'minimize'. Prepared options: BFGS, L-BFGS-B, Nelder-Mead, Powell, TNC,
-                trust-constr. The default 'Powell', is HIGHLY RECOMMENDED for its
-                stability & speed.
-
-            * xtol_req: float, default: 1e-3
-                Accuracy of the fit in coefficients. Interpreted differently depending
-                on 'method_fit'.
-
-            * ftol_req: float, default: 1e-6
-                Accuracy of the fit in objective.
-
-            * maxiter: int, default: None
-                Maximum number of iteration of the optimization. Uses the default of the
-                choosen minimizer.
-
-            * maxfev: int, default: None
-                Maximum number of evaluation of the function during the optimization.
-                Uses the default of the choosen minimizer.
-
-            * error_failedfit : boolean, default: True.
-                If True, will raise an issue if the fit failed.
-
-
-        """
-
-        if options_optim is not None:
-
-            msg = (
-                "`options_optim` was removed - pass `optimizer` directly to "
-                "`ConditionalDistribution`"
-            )
-
-            raise ValueError(msg)
-
-        # preparing solver
-        default_options_solver = {
-            "method_fit": "Powell",
-            "xtol_req": 1e-6,
-            "ftol_req": 1e-6,
-            "maxiter": None,
-            "maxfev": None,
-            "error_failedfit": False,
-        }
-
-        options_solver = options_solver or {}
-        if not isinstance(options_solver, dict):
-            raise ValueError("`options_solver` must be a dictionary")
-
-        # TODO: use get? (e.g. self.method_fit = options_solver.get("method_fit", "Powell")
-        options_solver = default_options_solver | options_solver
-
-        self.xtol_req = options_solver["xtol_req"]
-        self.ftol_req = options_solver["ftol_req"]
-        self.maxiter = options_solver["maxiter"]
-        self.maxfev = options_solver["maxfev"]
-        self.method_fit = options_solver["method_fit"]
-
-        if self.method_fit not in (
-            "BFGS",
-            "L-BFGS-B",
-            "Nelder-Mead",
-            "Powell",
-            "TNC",
-            "trust-constr",
-        ):
-            raise ValueError("method for this fit not prepared, to avoid")
-
-        xtol = {
-            "BFGS": "xrtol",
-            "L-BFGS-B": "gtol",
-            "Nelder-Mead": "xatol",
-            "Powell": "xtol",
-            "TNC": "xtol",
-            "trust-constr": "xtol",
-        }
-        ftol = {
-            "BFGS": "gtol",
-            "L-BFGS-B": "ftol",
-            "Nelder-Mead": "fatol",
-            "Powell": "ftol",
-            "TNC": "ftol",
-            "trust-constr": "gtol",
-        }
-
-        self.name_xtol = xtol[self.method_fit]
-        self.name_ftol = ftol[self.method_fit]
-        self.error_failedfit = options_solver["error_failedfit"]
-
-        # initialization and basic checks on threshold_min_proba
-        self.threshold_min_proba = threshold_min_proba
-        if threshold_min_proba is not None and (
-            (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
-        ):
-            raise ValueError("`threshold_min_proba` must be in [0, 0.5]")
 
 
 class ConditionalDistribution:
     def __init__(
         self,
         expression: Expression,
-        options: ConditionalDistributionOptions,
+        *,
+        minimize_options: MinimizeOptions = None,
         optimizer: OptimizerNLL | OptimizerFCNLL = OptimizerNLL(),
+        threshold_min_proba=1.0e-9,
     ):
         """
         A conditional distribution.
 
         Parameters
         ----------
-        Expression : class py:class:Expression
+        Expression : class py:class:`Expression`
             Expression defining the conditional distribution.
-        options : class py:class:ConditionalDistributionOptions
+        minimize_options : class py:class:`MinimizeOptions`, default: MinimizeOptions
             Class defining the optimizer options used during first guess and training of
-            distributions.
+            distributions. Per default uses "Powell" minimizer with default settings.
         optimizer : OptimizerNLL | OptimizerFCNLL, default: OptimizerNLL
             Optimizer to use.
 
@@ -164,10 +47,20 @@ class ConditionalDistribution:
 
         """
         # initialization
+
+        if minimize_options is None:
+            minimize_options = MinimizeOptions(method="Powell")
+
         self.expression = expression
-        self.options = options
+        self.minimize_options = minimize_options
         self.optimizer = optimizer
         self._coefficients = None
+
+        self.threshold_min_proba = threshold_min_proba
+        if threshold_min_proba is not None and (
+            (threshold_min_proba <= 0) or (0.5 <= threshold_min_proba)
+        ):
+            raise ValueError("`threshold_min_proba` must be in [0, 0.5]")
 
     def fit(
         self,
@@ -179,6 +72,7 @@ class ConditionalDistribution:
         smooth_coeffs: bool = False,
         r_gasparicohn: float = 500,
         option_smooth_coeffs: None = None,  # deprecated in favor of smooth_coeffs
+        on_failed_fit: Literal["error", "ignore"] = "error",
     ):
         """fit conditional distribution over all gridpoints.
 
@@ -203,6 +97,8 @@ class ConditionalDistribution:
         r_gasparicohn : float, default: 500
             Radius used to compute the correlation matrix of the Gaspari-Cohn function.
             This is typically used for the 2nd round of the fit.
+        on_failed_fit : "error" | "ignore", default: "error"
+            Behaviour when the fit fails. Careful: currently the
 
         Returns
         -------
@@ -259,6 +155,7 @@ class ConditionalDistribution:
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
+            kwargs={"on_failed_fit": on_failed_fit},
         )
 
         # creating a dataset with the coefficients
@@ -279,7 +176,7 @@ class ConditionalDistribution:
         self._coefficients = coefficients
 
     @_ignore_warnings  # suppress nan & inf warnings
-    def _fit_np(self, data_pred, data_targ, data_weights, fg):
+    def _fit_np(self, data_pred, data_targ, data_weights, fg, on_failed_fit):
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
         """
@@ -295,29 +192,26 @@ class ConditionalDistribution:
             data_targ=data_targ,
             data_weights=data_weights,
             expression=self.expression,
-            threshold_min_proba=self.options.threshold_min_proba,
+            threshold_min_proba=self.threshold_min_proba,
         )
 
         # training
         m = _optimizers._minimize(
             func=func,
             x0=fg,
-            method_fit=self.options.method_fit,
             args=(),
             option_NelderMead="best_run",
-            options={
-                "maxfev": self.options.maxfev,
-                "maxiter": self.options.maxiter,
-                self.options.name_xtol: self.options.xtol_req,
-                self.options.name_ftol: self.options.ftol_req,
-            },
+            minimize_options=self.minimize_options,
         )
 
         # checking if the fit has failed
-        if self.options.error_failedfit and not m.success:
-            raise ValueError("Failed fit.")
-        else:
-            return m.x
+        if not m.success:
+            if on_failed_fit == "error":
+                raise ValueError("Failed fit")
+
+            # NOTE: warnings are hidden by apply_ufunc
+
+        return m.x
 
     def find_first_guess(
         self,
@@ -417,13 +311,14 @@ class ConditionalDistribution:
         """
 
         fg = _FirstGuess(
-            self.expression,
-            self.options,
-            data_pred,
-            predictor_names,
-            data_targ,
-            data_weights,
-            first_guess,
+            expression=self.expression,
+            minimize_options=self.minimize_options,
+            data_pred=data_pred,
+            predictor_names=predictor_names,
+            data_targ=data_targ,
+            data_weights=data_weights,
+            first_guess=first_guess,
+            threshold_min_proba=self.threshold_min_proba,
         )
 
         return fg._find_fg()
@@ -523,7 +418,7 @@ class ConditionalDistribution:
                 data_targ=data_targ,
                 data_weights=data_weights,
                 expression=self.expression,
-                threshold_min_proba=self.options.threshold_min_proba,
+                threshold_min_proba=self.threshold_min_proba,
             )
             score = func(coefficients)
             quality_scores.append(score)
@@ -608,7 +503,7 @@ class ConditionalDistribution:
             )
 
         expression = Expression(expression_str, expression_name)
-        obj = cls(expression, ConditionalDistributionOptions())
+        obj = cls(expression)
         obj.coefficients = ds
 
         return obj
