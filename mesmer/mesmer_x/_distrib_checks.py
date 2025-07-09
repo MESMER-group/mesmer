@@ -161,12 +161,10 @@ def _validate_coefficients(
     # test for the probability of the values
     if threshold_min_proba is None:
         return coeffs_in_bounds, params_in_bounds, params_in_support, True, params
-    else:
-        test_proba = _test_proba_value(
-            expression, threshold_min_proba, params, data_targ
-        )
-        # return values for each test and the evaluated distribution
-        return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
+
+    test_proba = _test_proba_value(expression, threshold_min_proba, params, data_targ)
+    # return values for each test and the evaluated distribution
+    return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
 
 
 def _check_no_nan_no_inf(data, name):
