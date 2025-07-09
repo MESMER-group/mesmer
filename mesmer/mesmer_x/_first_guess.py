@@ -600,25 +600,3 @@ class _FirstGuess:
         else:
             LL = np.sum(self.expression.distrib.logpdf(self.data_targ, **params) ** n)
         return -LL
-
-    def find_bound(self, i_c, x0, fact_coeff):
-        """
-        expand bound until coefficients are valid: starts  with x0
-        and multiplies with fact_coeff until validate_coefficients returns all True.
-        """
-        # could be accelerated using dichotomy, but 100 iterations max are fast enough
-        # not to require to make this part more complex.
-        x, iter, itermax, test = np.copy(x0), 0, 100, True
-        while test and (iter < itermax):
-            test_c, test_p, test_d, test_v, _ = _distrib_checks._validate_coefficients(
-                self.expression,
-                self.data_pred,
-                self.data_targ,
-                x,
-                self.options.threshold_min_proba,
-            )
-            test = test_c and test_p and test_d and test_v
-            x[i_c] += fact_coeff * x[i_c]
-            iter += 1
-        # TODO: returns value after test = False, but should it maybe be the last value before that?
-        return x[i_c]
