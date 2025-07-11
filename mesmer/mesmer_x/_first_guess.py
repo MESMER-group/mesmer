@@ -561,9 +561,11 @@ class _FirstGuess:
 
     def _fg_fun_nll_no_tests(self, coefficients):
         params = self.expression._evaluate_params_fast(coefficients, self.data_pred)
-        return _optimizers._neg_loglike(
+        loss = _optimizers._neg_loglike(
             self.expression, self.data_targ, params, self.data_weights
         )
+        return loss
+
 
     def _fg_fun_ll_n(self, x):
         # NOTE: n must be odd: https://github.com/MESMER-group/mesmer/issues/691
@@ -571,7 +573,11 @@ class _FirstGuess:
         params = self.expression._evaluate_params_fast(x, self.data_pred)
 
         if self.expression.is_distrib_discrete:
-            LL = np.sum(self.expression.distrib.logpmf(self.data_targ, **params) ** n)
+            loss = np.sum(self.expression.distrib.logpmf(self.data_targ, **params) ** n)
         else:
-            LL = np.sum(self.expression.distrib.logpdf(self.data_targ, **params) ** n)
-        return -LL
+            loss = np.sum(self.expression.distrib.logpdf(self.data_targ, **params) ** n)
+
+        if np.isnan(loss):
+            return np.inf
+
+        return -loss
