@@ -53,6 +53,7 @@ class _FirstGuess:
         data_targ,
         data_weights,
         first_guess,
+        second_minimizer: MinimizeOptions | None = None,
         threshold_min_proba=1e-9,
     ):
         """
@@ -87,6 +88,7 @@ class _FirstGuess:
 
         # initialization
         self.minimize_options = minimize_options
+        self.second_minimizer = second_minimizer
         self.expression = expression
         self.threshold_min_proba = threshold_min_proba
 
@@ -334,6 +336,7 @@ class _FirstGuess:
                 x0=self.fg_coeffs[fg_ind_loc],
                 args=(),
                 minimize_options=self.minimize_options,
+                second_minimizer=self.second_minimizer,
             )
             self.fg_coeffs[fg_ind_loc] = localfit_loc.x
 
@@ -349,6 +352,7 @@ class _FirstGuess:
                 x0=x0,
                 args=(),
                 minimize_options=self.minimize_options,
+                second_minimizer=self.second_minimizer,
             )
             self.fg_coeffs[ind_scale] = localfit_scale.x
 
@@ -375,6 +379,7 @@ class _FirstGuess:
             x0=self.fg_coeffs,
             args=(),
             minimize_options=self.minimize_options,
+            second_minimizer=self.second_minimizer,
         )
         fg_coeffs = localfit_nll.x
 
@@ -400,6 +405,7 @@ class _FirstGuess:
                 x0=fg_coeffs,
                 args=(),
                 minimize_options=self.minimize_options,
+                second_minimizer=self.second_minimizer,
             )
             if ~np.any(np.isnan(localfit_opti.x)):
                 fg_coeffs = localfit_opti.x

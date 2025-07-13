@@ -24,7 +24,8 @@ class ConditionalDistribution:
         self,
         expression: Expression,
         *,
-        minimize_options: MinimizeOptions = None,
+        minimize_options: MinimizeOptions | None = None,
+        second_minimizer: MinimizeOptions | None = None,
         optimizer: OptimizerNLL | OptimizerFCNLL = OptimizerNLL(),
         threshold_min_proba=1.0e-9,
     ):
@@ -51,8 +52,13 @@ class ConditionalDistribution:
         if minimize_options is None:
             minimize_options = MinimizeOptions(method="Powell")
 
+        if second_minimizer is not None:
+            if minimize_options.method == second_minimizer.method:
+                raise ValueError("First and second minimizer have the same method")
+
         self.expression = expression
         self.minimize_options = minimize_options
+        self.second_minimizer = second_minimizer
         self.optimizer = optimizer
         self._coefficients = None
 
@@ -201,6 +207,7 @@ class ConditionalDistribution:
             x0=fg,
             args=(),
             minimize_options=self.minimize_options,
+            second_minimizer=self.second_minimizer,
         )
 
         # checking if the fit has failed

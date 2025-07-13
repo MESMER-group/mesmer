@@ -3,7 +3,6 @@
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
 
-from typing import Literal
 
 import numpy as np
 import properscoring
@@ -50,9 +49,9 @@ def _minimize(
     x0,
     args,
     minimize_options: MinimizeOptions,
+    second_minimizer: MinimizeOptions | None = None,
 ):
-    """custom minimize function.
-    """
+    """custom minimize function."""
 
     fit = minimize(
         func,
@@ -67,7 +66,20 @@ def _minimize(
     # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
     # critical steps or when Powell fails.
 
-    # TODO: re-add second optimizer: https://github.com/MESMER-group/mesmer/issues/746
+    if second_minimizer is not None:
+        second_fit = minimize(
+            func,
+            x0=x0,
+            args=args,
+            method=second_minimizer.method,
+            tol=second_minimizer.tol,
+            options=second_minimizer.options,
+        )
+
+        if second_fit.success:
+            # if the first fit failed or the second fit yields the better result
+            if not fit.success or second_fit.fun < fit.fun:
+                return second_fit
 
     return fit
 
