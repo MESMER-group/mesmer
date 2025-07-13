@@ -329,6 +329,7 @@ class ConditionalDistribution:
             data_weights=data_weights,
             first_guess=first_guess,
             threshold_min_proba=self.threshold_min_proba,
+            second_minimizer=self.second_minimizer,
         )
 
         return fg._find_fg()
