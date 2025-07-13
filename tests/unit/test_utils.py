@@ -169,6 +169,26 @@ def test_minimize_local_discrete(values, expected):
     assert result == expected
 
 
+def test_minimize_local_discrete_all_equal():
+
+    def func(i):
+        return [1, 1, 1][i]
+
+    with pytest.warns(UserWarning, match="No local minimum found"):
+        result = mesmer.core.utils._minimize_local_discrete(func, [0, 1, 2])
+    assert result == 2
+
+
+def test_minimize_local_discrete_valid_later():
+
+    def func(i):
+        return [np.inf, 1, 2][i]
+
+    with pytest.warns(UserWarning, match="`fun` returned `inf`"):
+        result = mesmer.core.utils._minimize_local_discrete(func, [0, 1, 2])
+    assert result == 1
+
+
 def test_create_equal_dim_names():
 
     with pytest.raises(ValueError, match="must provide exactly two suffixes"):
@@ -222,7 +242,7 @@ def test_minimize_local_discrete_errors():
     def func_inf(i):
         return float("inf")
 
-    with pytest.raises(ValueError, match=r"First element is `inf`, aborting."):
+    with pytest.raises(ValueError, match=r"`fun` returned `inf` for all positions"):
         mesmer.core.utils._minimize_local_discrete(func_inf, [0])
 
 

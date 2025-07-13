@@ -83,26 +83,25 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
         res = func(element, **kwargs)
 
         if np.isneginf(res):
-            raise ValueError("`fun` returned `-inf`")
+            raise ValueError(f"`fun` returned `-inf` at position '{i}'")
         # skip element if inf is returned - not sure about this?
         elif np.isinf(res):
             warnings.warn("`fun` returned `inf`", OptimizeWarning)
 
-        if res < current_min:
+        if res <= current_min:
             current_min = res
         else:
             # need to return element from the previous iteration
             sel = i - 1
             if sel == 0:
                 warnings.warn("First element is local minimum.", OptimizeWarning)
-            elif sel == -1:
-                raise ValueError("First element is `inf`, aborting.")
 
             return sequence[sel]
 
-        warnings.warn(
-            "No local minimum found, returning the last element", OptimizeWarning
-        )
+    if np.isinf(res):
+        raise ValueError("`fun` returned `inf` for all positions")
+
+    warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
 
     return element
 
