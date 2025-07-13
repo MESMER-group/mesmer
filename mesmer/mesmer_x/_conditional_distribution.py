@@ -36,9 +36,13 @@ class ConditionalDistribution:
         ----------
         Expression : class py:class:`Expression`
             Expression defining the conditional distribution.
-        minimize_options : class py:class:`MinimizeOptions`, default: MinimizeOptions
+        minimize_options : class py:class:`MinimizeOptions` | None, default: MinimizeOptions()
             Class defining the optimizer options used during first guess and training of
             distributions. Per default uses "Powell" minimizer with default settings.
+        second_minimizer : class py:class:`MinimizeOptions` | None, default: None
+            Run a second minimization algorithm for all steps. ``method="Nelder-Mead"``
+            is recommended. It can be beneficial to run more than one minimization
+            to get a more stable estimate.
         optimizer : OptimizerNLL | OptimizerFCNLL, default: OptimizerNLL
             Optimizer to use.
 
