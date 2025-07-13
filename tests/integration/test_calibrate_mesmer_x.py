@@ -9,6 +9,7 @@ from mesmer.mesmer_x import (
     Expression,
     ProbabilityIntegralTransform,
 )
+from mesmer.mesmer_x._optimizers import MinimizeOptions
 
 
 @pytest.mark.parametrize(
@@ -18,6 +19,7 @@ from mesmer.mesmer_x import (
         "pred_vars",
         "expr",
         "expr_name",
+        "minimizer_method",
         "option_2ndfit",
         "outname",
     ),
@@ -28,6 +30,7 @@ from mesmer.mesmer_x import (
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1",
+            None,
             False,
             "tasmax/one_scen_one_ens",
             marks=pytest.mark.slow,
@@ -38,6 +41,7 @@ from mesmer.mesmer_x import (
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr1_2ndfit",
+            None,
             True,
             "tasmax/one_scen_one_ens",
             marks=pytest.mark.slow,
@@ -48,6 +52,7 @@ from mesmer.mesmer_x import (
             ["tas"],
             "norm(loc=c1 + c2 * __tas__, scale=c3)",
             "expr2",
+            None,
             False,
             "tasmax/multi_scen_multi_ens",
             marks=pytest.mark.slow,
@@ -58,6 +63,7 @@ from mesmer.mesmer_x import (
             ["tas", "hfds"],
             "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c4)",
             "expr3",
+            "Nelder-Mead",
             False,
             "tasmax/multi_scen_multi_ens",
             marks=pytest.mark.slow,
@@ -70,6 +76,7 @@ def test_calibrate_mesmer_x(
     pred_vars,
     expr,
     expr_name,
+    minimizer_method,
     option_2ndfit,
     test_data_root_dir,
     outname,
@@ -203,7 +210,12 @@ def test_calibrate_mesmer_x(
 
     # declaring analytical form of the conditional distribution
     expression = Expression(expr, expr_name)
-    distrib = ConditionalDistribution(expression)
+
+    minimize_options = None
+    if minimizer_method is not None:
+        minimize_options = MinimizeOptions(method=minimizer_method)
+
+    distrib = ConditionalDistribution(expression, minimize_options=minimize_options)
 
     # preparing first guess
     coeffs_fg = distrib.find_first_guess(
