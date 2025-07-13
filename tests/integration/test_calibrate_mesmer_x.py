@@ -19,7 +19,7 @@ from mesmer.mesmer_x._optimizers import MinimizeOptions
         "pred_vars",
         "expr",
         "expr_name",
-        "minimizer_method",
+        "second_minimizer",
         "option_2ndfit",
         "outname",
     ),
@@ -76,7 +76,7 @@ def test_calibrate_mesmer_x(
     pred_vars,
     expr,
     expr_name,
-    minimizer_method,
+    second_minimizer,
     option_2ndfit,
     test_data_root_dir,
     outname,
@@ -211,11 +211,13 @@ def test_calibrate_mesmer_x(
     # declaring analytical form of the conditional distribution
     expression = Expression(expr, expr_name)
 
-    minimize_options = None
-    if minimizer_method is not None:
-        minimize_options = MinimizeOptions(method=minimizer_method)
+    second_minimizer_options = None
+    if second_minimizer is not None:
+        second_minimizer_options = MinimizeOptions(method=second_minimizer)
 
-    distrib = ConditionalDistribution(expression, minimize_options=minimize_options)
+    distrib = ConditionalDistribution(
+        expression, second_minimizer=second_minimizer_options
+    )
 
     # preparing first guess
     coeffs_fg = distrib.find_first_guess(
