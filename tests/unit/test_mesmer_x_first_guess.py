@@ -439,6 +439,8 @@ def test_fg_binom():
 
 
 def test_fg_hypergeom():
+    # TODO: remove this test?
+
     rng = np.random.default_rng(0)
     n = 251
     pred = np.full(n, fill_value=2, dtype=int)
@@ -471,10 +473,14 @@ def test_fg_hypergeom():
 
     # test with bounds
     # NOTE: here we add a bound on c2 that is smaller than the negative loglikelihood fit (step 5)
-    # this leads to `test_coeff` being False and another fit with NLL*4 is being done (step 6)
-    # this leads to coverage of _fg_fun_LL_n() also for the discrete case
-    # NOTE: sadly this does not improve the fit
+    # this leads to `test_coeff` being False and another fit with NLL*3 is being done (step 6)
+    # this leads to coverage of _fg_fun_nll_cubed() also for the discrete case
 
+    # NOTE: the bounds are not respected, because _fg_fun_nll_cubed does not enforce
+    # them, see also https://github.com/MESMER-group/mesmer/issues/596
+    # not sure if the result is an improvement over the one without bounds
+
+    expected = [102.,  13.,   3.]
     first_guess = [99, 9, 1]
     boundaries_coeffs = {"c1": (80, 110), "c2": (5, 10), "c3": (1, 3)}
     expression = Expression(
@@ -491,7 +497,7 @@ def test_fg_hypergeom():
         predictor_names=["tas"],
     )._find_fg()
 
-    np.testing.assert_equal(result, result_with_bounds)
+    np.testing.assert_equal(expected, result_with_bounds)
 
 
 def test_first_guess_beta():
