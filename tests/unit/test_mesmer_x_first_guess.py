@@ -480,7 +480,7 @@ def test_fg_hypergeom():
     # them, see also https://github.com/MESMER-group/mesmer/issues/596
     # not sure if the result is an improvement over the one without bounds
 
-    expected = [102.,  13.,   3.]
+    expected = [102.0, 13.0, 3.0]
     first_guess = [99, 9, 1]
     boundaries_coeffs = {"c1": (80, 110), "c2": (5, 10), "c3": (1, 3)}
     expression = Expression(
