@@ -292,7 +292,7 @@ def get_weights_density(pred_data):
 
         # get original shape back
         weights_stacked = pred_stacked[preds[0]].copy(data=weights)
-        weights_stacked = weights_stacked.drop_attrs()
+        weights_stacked = weights_stacked.drop_attrs(deep=False)
         weights_unstacked = weights_stacked.unstack("samples")
         weights = xr.DataTree()
         for scen in scens:
