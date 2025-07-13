@@ -374,7 +374,7 @@ class _FirstGuess:
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
         # necessary to get good estimates for shape parameters, and avoid some local minima)
         localfit_nll = _optimizers._minimize(
-            func=self._fg_fun_nll_no_tests,
+            func=self._fg_fun_nll_no_checks,
             x0=self.fg_coeffs,
             args=(),
             minimize_options=self.minimize_options,
@@ -561,7 +561,7 @@ class _FirstGuess:
         # sum penalties to compute the loss
         return penalty_low.sum() + penalty_high.sum()
 
-    def _fg_fun_nll_no_tests(self, coefficients):
+    def _fg_fun_nll_no_checks(self, coefficients):
         params = self.expression._evaluate_params_fast(coefficients, self.data_pred)
         loss = _optimizers._neg_loglike(
             self.expression, self.data_targ, params, self.data_weights
