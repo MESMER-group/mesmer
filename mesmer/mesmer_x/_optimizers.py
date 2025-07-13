@@ -50,24 +50,8 @@ def _minimize(
     x0,
     args,
     minimize_options: MinimizeOptions,
-    option_NelderMead: Literal["dont_run", "fail_run", "best_run"] = "dont_run",
 ):
-    """
-    custom minimize function.
-
-    First tries with the solver specified in minimize_options.
-
-    A second fit is performed either if
-    - the first fit failed and option_NelderMead is set to "fail_run"
-    - or if option_NelderMead is set to "best_run", regardless if the first fit succeded.
-
-    The result of the second fit is only returned if it is better than the first fit.
-
-    options_NelderMead: str
-        * dont_run: only minimize with the chosen solver
-        * fail_run: only minimize using Nelder-Mead if the chosen solver fails
-        * best_run: minimize using Nelder-Mead and the chosen solver, then select the
-          best results
+    """custom minimize function.
     """
 
     fit = minimize(

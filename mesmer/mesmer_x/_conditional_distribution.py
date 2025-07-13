@@ -200,7 +200,6 @@ class ConditionalDistribution:
             func=func,
             x0=fg,
             args=(),
-            option_NelderMead="best_run",
             minimize_options=self.minimize_options,
         )
 

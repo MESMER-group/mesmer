@@ -333,7 +333,6 @@ class _FirstGuess:
                 func=self._fg_fun_loc,
                 x0=self.fg_coeffs[fg_ind_loc],
                 args=(),
-                option_NelderMead="best_run",
                 minimize_options=self.minimize_options,
             )
             self.fg_coeffs[fg_ind_loc] = localfit_loc.x
@@ -350,7 +349,6 @@ class _FirstGuess:
                 x0=x0,
                 args=(),
                 minimize_options=self.minimize_options,
-                option_NelderMead="best_run",
             )
             self.fg_coeffs[ind_scale] = localfit_scale.x
 
@@ -367,7 +365,6 @@ class _FirstGuess:
         #         x0=self.fg_coeffs[fg_ind_others],
         #         args=(),
         #         minimize_options=self.minimize_options,
-        #         option_NelderMead="best_run",
         #     )
         #     self.fg_coeffs[fg_ind_others] = localfit_others.x
 
@@ -378,7 +375,6 @@ class _FirstGuess:
             x0=self.fg_coeffs,
             args=(),
             minimize_options=self.minimize_options,
-            option_NelderMead="best_run",
         )
         fg_coeffs = localfit_nll.x
 
@@ -404,7 +400,6 @@ class _FirstGuess:
                 x0=fg_coeffs,
                 args=(),
                 minimize_options=self.minimize_options,
-                option_NelderMead="best_run",
             )
             if ~np.any(np.isnan(localfit_opti.x)):
                 fg_coeffs = localfit_opti.x
