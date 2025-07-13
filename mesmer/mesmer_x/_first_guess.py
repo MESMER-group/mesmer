@@ -399,8 +399,6 @@ class _FirstGuess:
             # Step 6: fit on LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL does not behave well enough here)
 
-            print("STEP 6")
-
             localfit_opti = _optimizers._minimize(
                 func=self._fg_fun_nll_cubed,
                 x0=fg_coeffs,
@@ -567,7 +565,6 @@ class _FirstGuess:
             self.expression, self.data_targ, params, self.data_weights
         )
         return loss
-
 
     def _fg_fun_nll_cubed(self, x):
         # NOTE: n must be odd: https://github.com/MESMER-group/mesmer/issues/691
