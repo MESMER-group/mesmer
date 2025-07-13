@@ -69,6 +69,7 @@ def _minimize(
         * best_run: minimize using Nelder-Mead and the chosen solver, then select the
           best results
     """
+
     fit = minimize(
         func,
         x0=x0,
@@ -78,21 +79,12 @@ def _minimize(
         options=minimize_options.options,
     )
 
-    # observed that Powell solver is much faster, but less robust. May rarely create
+    # NOTE: observed that Powell solver is much faster, but less robust. May rarely create
     # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
     # critical steps or when Powell fails.
 
-    if (option_NelderMead == "fail_run" and not fit.success) or (
-        option_NelderMead == "best_run"
-    ):
-        fit_NM = minimize(
-            func, x0=x0, args=args, method="Nelder-Mead", tol=minimize_options.tol
-        )
-        if (option_NelderMead == "fail_run") or (
-            option_NelderMead == "best_run"
-            and (fit_NM.fun < fit.fun or not fit.success)
-        ):
-            fit = fit_NM
+    # TODO: re-add second optimizer: https://github.com/MESMER-group/mesmer/issues/746
+
     return fit
 
 
