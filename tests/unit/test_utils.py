@@ -224,19 +224,34 @@ def test_minimize_local_discrete_warning():
 
     data_dict = {key: value for key, value in enumerate((5, 2, np.inf, 3))}
 
-    with pytest.warns(mesmer.core.utils.OptimizeWarning, match="`fun` returned `inf`"):
+    with pytest.warns(
+        mesmer.core.utils.OptimizeWarning,
+        match=r"`fun` returned `inf` at position\(s\) '2'",
+    ):
         result = mesmer.core.utils._minimize_local_discrete(
             func, data_dict.keys(), data_dict=data_dict
         )
 
     assert result == 1
 
+    data_dict = {key: value for key, value in enumerate((np.inf, np.inf, 1, 2))}
+
+    with pytest.warns(
+        mesmer.core.utils.OptimizeWarning,
+        match=r"`fun` returned `inf` at position\(s\) '0', '1'",
+    ):
+        result = mesmer.core.utils._minimize_local_discrete(
+            func, data_dict.keys(), data_dict=data_dict
+        )
+
+    assert result == 2
+
 
 def test_minimize_local_discrete_errors():
     def func_minf(i):
         return float("-inf")
 
-    with pytest.raises(ValueError, match=r"`fun` returned `\-inf`"):
+    with pytest.raises(ValueError, match=r"`fun` returned `\-inf` at position '0'"):
         mesmer.core.utils._minimize_local_discrete(func_minf, [0])
 
     def func_inf(i):

@@ -77,6 +77,7 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
     # ensure it's a list because we cannot get an item from an iterable
     sequence = list(sequence)
     element = None
+    posinf_positions = list()
 
     for i, element in enumerate(sequence):
 
@@ -86,7 +87,7 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
             raise ValueError(f"`fun` returned `-inf` at position '{i}'")
         # skip element if inf is returned - not sure about this?
         elif np.isinf(res):
-            warnings.warn("`fun` returned `inf`", OptimizeWarning)
+            posinf_positions.append(str(i))
 
         if res <= current_min:
             current_min = res
@@ -95,6 +96,11 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
             sel = i - 1
             if sel == 0:
                 warnings.warn("First element is local minimum.", OptimizeWarning)
+
+            if posinf_positions:
+                positions = "', '".join(posinf_positions)
+                msg = f"`fun` returned `inf` at position(s) '{positions}'"
+                warnings.warn(msg, OptimizeWarning)
 
             return sequence[sel]
 
