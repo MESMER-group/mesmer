@@ -148,7 +148,7 @@ def find_localized_empirical_covariance(
             "k_folds": k_folds,
             "allow_singluar": allow_singluar,
         },
-        input_core_dims=[all_dims, [dim]],
+        input_core_dims=[all_dims, [sample_dim]],
         output_core_dims=([], out_dims, out_dims),
     )
     localization_radius, covariance, localized_covariance = out
