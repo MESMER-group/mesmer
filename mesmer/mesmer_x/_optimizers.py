@@ -76,10 +76,10 @@ def _minimize(
             options=second_minimizer.options,
         )
 
-        if second_fit.success:
-            # if the first fit failed or the second fit yields the better result
-            if not fit.success or second_fit.fun < fit.fun:
-                return second_fit
+        # if second_fit.success:
+        # if the first fit failed or the second fit yields the better result
+        if not fit.success or second_fit.fun < fit.fun:
+            return second_fit
 
     return fit
 
