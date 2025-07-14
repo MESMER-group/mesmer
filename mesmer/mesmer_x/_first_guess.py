@@ -369,6 +369,7 @@ class _FirstGuess:
         #         x0=self.fg_coeffs[fg_ind_others],
         #         args=(),
         #         minimize_options=self.minimize_options,
+        #         second_minimizer=self.second_minimizer,
         #     )
         #     self.fg_coeffs[fg_ind_others] = localfit_others.x
 
