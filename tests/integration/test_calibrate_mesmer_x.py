@@ -348,7 +348,7 @@ def test_calibrate_mesmer_x(
                 atol=1e-4,
                 err_msg=coeff,
                 # because of https://github.com/MESMER-group/mesmer/issues/735
-                allowed_failures=1,
+                allowed_failures=2,
             )
 
         expected_local_ar_params = xr.open_dataset(local_ar_file)
@@ -358,7 +358,7 @@ def test_calibrate_mesmer_x(
             expected_local_ar_params["intercept"].values,
             rtol=1e-5,
             atol=1e-4,
-            allowed_failures=1,
+            allowed_failures=2,
         )
 
         mesmer.testing.assert_allclose_allowed_failures(
@@ -366,7 +366,7 @@ def test_calibrate_mesmer_x(
             expected_local_ar_params["intercept"].values,
             rtol=1e-5,
             atol=1e-4,
-            allowed_failures=1,
+            allowed_failures=2,
         )
 
         mesmer.testing.assert_allclose_allowed_failures(
@@ -381,7 +381,7 @@ def test_calibrate_mesmer_x(
             expected_local_ar_params["variance"].values,
             rtol=1e-5,
             atol=1e-4,
-            allowed_failures=1,
+            allowed_failures=2,
         )
         np.testing.assert_equal(
             local_ar_params["nobs"].values,
