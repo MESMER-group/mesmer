@@ -37,7 +37,8 @@ def test_generate_fourier_series_np():
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
 
-def test_predict_harmonic_model():
+@pytest.mark.parametrize("stack", (True, False))
+def test_predict_harmonic_model(stack):
     n_years = 10
     n_lat, n_lon, n_gridcells = 2, 3, 2 * 3
     time = xr.date_range(
@@ -54,6 +55,11 @@ def test_predict_harmonic_model():
 
     coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
 
+    sample_dim = "sample" if stack else "time"
+    if stack:
+        yearly_predictor = yearly_predictor.stack(sample=["time"], create_index=False)
+        monthly_time = monthly_time.stack(sample=["time"], create_index=False)
+
     result = mesmer.stats.predict_harmonic_model(
         yearly_predictor, coeffs, monthly_time, time_dim="time"
     )
@@ -62,7 +68,8 @@ def test_predict_harmonic_model():
         result,
         "result",
         ndim=2,
-        required_dims={"time", "cells"},
+        required_dims={sample_dim, "cells"},
+        required_coords="time",
         shape=(n_years * 12, n_gridcells),
     )
 
@@ -264,4 +271,32 @@ def test_fit_harmonic_model_time_dim():
     time_dim = "dates"
     monthly_target = monthly_target.rename({"time": time_dim})
     yearly_predictor = yearly_predictor.rename({"time": time_dim})
-    mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target, time_dim=time_dim)
+    res = mesmer.stats.fit_harmonic_model(
+        yearly_predictor, monthly_target, time_dim=time_dim
+    )
+
+    _check_dataarray_form(res.selected_order, required_dims="cells")
+    _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
+    _check_dataarray_form(
+        res.residuals, required_dims={"cells", "dates"}, required_coords="dates"
+    )
+
+
+def test_fit_harmonic_model_non_dim_coords():
+    # test if the time dimension can be a non-dim coords
+    yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
+    monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
+
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="YE")
+    yearly_predictor = yearly_predictor.stack(sample=["time"], create_index=False)
+
+    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
+    monthly_target = monthly_target.stack(sample=["time"], create_index=False)
+
+    res = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+
+    _check_dataarray_form(res.selected_order, required_dims="cells")
+    _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
+    _check_dataarray_form(
+        res.residuals, required_dims={"cells", "sample"}, required_coords="time"
+    )

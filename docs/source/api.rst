@@ -5,6 +5,14 @@ API reference
 
 This page provides an auto-generated summary of mesmers' API.
 
+Top-level functions
+===================
+
+.. autosummary::
+   :toctree: generated/
+
+   set_options
+   get_options
 
 Statistical functions
 =====================
@@ -52,11 +60,17 @@ Power Transformer
 .. autosummary::
    :toctree: generated/
 
-   ~stats.lambda_function
-   ~stats.get_lambdas_from_covariates
-   ~stats.fit_yeo_johnson_transform
-   ~stats.yeo_johnson_transform
-   ~stats.inverse_yeo_johnson_transform
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.YeoJohnsonTransformer
+   ~stats.YeoJohnsonTransformer.lambda_function
+   ~stats.YeoJohnsonTransformer.get_lambdas_from_covariates
+   ~stats.YeoJohnsonTransformer.fit
+   ~stats.YeoJohnsonTransformer.transform
+   ~stats.YeoJohnsonTransformer.inverse_transform
+
+   ~stats._power_transformer.logistic_lambda_function
 
 Localized covariance
 --------------------

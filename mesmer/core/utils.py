@@ -1,8 +1,12 @@
+import os
 import warnings
 from collections.abc import Callable, Iterable
+from contextlib import contextmanager
 from typing import cast
 
 import numpy as np
+import pandas as pd
+import threadpoolctl
 import xarray as xr
 
 from mesmer.core.datatree import _datatree_wrapper
@@ -157,8 +161,9 @@ def upsample_yearly_data(
         Upsampled yearly temperature values containing the yearly values for every month
         of the corresponding year.
     """
-    _assert_required_dims(yearly_data, "yearly_data", required_dims=time_dim)
-    _assert_required_dims(monthly_time, "monthly_time", required_dims=time_dim)
+
+    _assert_required_coords(yearly_data, "yearly_data", required_coords=time_dim)
+    _assert_required_coords(monthly_time, "monthly_time", required_coords=time_dim)
 
     # read out time coords - this also works if it's already time coords
     monthly_time = monthly_time[time_dim]
@@ -169,15 +174,27 @@ def upsample_yearly_data(
             "Length of monthly time not equal to 12 times the length of yearly data."
         )
 
-    # make sure monthly and yearly data both start at the beginning of the period
-    year = yearly_data.resample({time_dim: "YS"}).bfill()
-    month = monthly_time.resample({time_dim: "MS"}).bfill()
+    # we need to pass the dim (`time_dim` may be a no-dim-coordinate)
+    # i.e., time_dim and sample_dim may or may not be the same
+    (sample_dim,) = monthly_time.dims
 
-    # forward fill yearly values to monthly resolution
-    upsampled_yearly_data = year.reindex_like(month, method="ffill")
+    if isinstance(yearly_data.indexes.get(sample_dim), pd.MultiIndex):
+        raise ValueError(
+            f"The dimension of the time coords ({sample_dim}) is a pandas.MultiIndex,"
+            " which is currently not supported. Potentially call"
+            f" `yearly_data.reset_index('{sample_dim}')` first."
+        )
 
-    # make sure the time dimension of the upsampled data is the same as the original monthly time
-    upsampled_yearly_data = year.reindex_like(monthly_time, method="ffill")
+    upsampled_yearly_data = (
+        # repeats the data along new dimension
+        yearly_data.expand_dims({"__new__": 12})
+        # stack to remove new dim; target dim must have new name
+        .stack(__sample__=(sample_dim, "__new__"), create_index=False)
+        # so we need to rename it back
+        .swap_dims(__sample__=sample_dim)
+        # and ensure the time coords the ones from the monthly data
+        .assign_coords({time_dim: (sample_dim, monthly_time.values)})
+    )
 
     return upsampled_yearly_data
 
@@ -239,6 +256,7 @@ def _check_dataarray_form(
     *,
     ndim: tuple[int, ...] | int | None = None,
     required_dims: str | Iterable[str] | None = None,
+    required_coords: str | Iterable[str] | None = None,
     shape: tuple[int, ...] | None = None,
 ):
     """check if a dataset conforms to some conditions
@@ -274,6 +292,8 @@ def _check_dataarray_form(
 
     _assert_required_dims(obj, name=name, required_dims=required_dims)
 
+    _assert_required_coords(obj, name=name, required_coords=required_coords)
+
     if shape is not None and obj.shape != shape:
         raise ValueError(f"{name} has wrong shape - expected {shape}, got {obj.shape}")
 
@@ -289,3 +309,32 @@ def _assert_required_dims(
     if required_dims - set(obj.dims):
         missing_dims = " ,".join(required_dims - set(obj.dims))
         raise ValueError(f"{name} is missing the required dims: {missing_dims}")
+
+
+def _assert_required_coords(
+    obj, name: str = "obj", required_coords: str | Iterable[str] | None = None
+):
+
+    __tracebackhide__ = True
+
+    required_coords = _to_set(required_coords)
+
+    if required_coords - set(obj.coords):
+        missing_coords = " ,".join(required_coords - set(obj.coords))
+        raise ValueError(f"{name} is missing the required coords: {missing_coords}")
+
+
+@contextmanager
+def _set_threads_from_options():
+
+    from mesmer.core.options import OPTIONS
+
+    threads_option = OPTIONS["threads"]
+
+    if threads_option == "default":
+        threads = min(os.cpu_count() // 2, 16)
+    else:
+        threads = threads_option
+
+    with threadpoolctl.threadpool_limits(limits=threads):
+        yield

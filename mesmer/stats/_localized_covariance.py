@@ -9,6 +9,7 @@ from mesmer.core.utils import (
     _check_dataarray_form,
     _create_equal_dim_names,
     _minimize_local_discrete,
+    _set_threads_from_options,
 )
 
 
@@ -129,12 +130,14 @@ def find_localized_empirical_covariance(
 
     _check_dataarray_form(data, name="data", ndim=2)
 
+    (sample_dim,) = data[dim].dims
+
     # ensure data has the right orientation
-    data = data.transpose(dim, ...)
+    data = data.transpose(sample_dim, ...)
     all_dims = data.dims
 
-    (sample_dim,) = set(all_dims) - {dim}
-    out_dims = _create_equal_dim_names(sample_dim, equal_dim_suffixes)
+    (other_dim,) = set(all_dims) - {sample_dim}
+    out_dims = _create_equal_dim_names(other_dim, equal_dim_suffixes)
 
     out = xr.apply_ufunc(
         _find_localized_empirical_covariance_np,
@@ -212,6 +215,7 @@ def find_localized_empirical_covariance_monthly(
     and a leave-one-out cross validation otherwise.
     """
     localized_ecov = []
+    (sample_dim,) = data[dim].dims
     data_grouped = data.groupby(f"{dim}.month")
     weights_grouped = weights.groupby(f"{dim}.month")
 
@@ -306,6 +310,7 @@ class _EcovCrossvalidation:
 
         self.method = method or "cholesky"
 
+    @_set_threads_from_options()
     def crossvalidate(
         self, localization_radius, *, data, weights, localizer, k_folds, allow_singluar
     ):

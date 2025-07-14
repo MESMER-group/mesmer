@@ -17,28 +17,27 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "dask[array,distributed] >=2024.5",
-    "filefisher >=1.0.1",
+    "dask[array,distributed] >=2024.7",
+    "filefisher >=1.1",
     "joblib >=1.4",
-    "netcdf4 >=1.6",
+    "netcdf4 >=1.7",
     "numpy >=1.26",
-    "packaging >=24.0",
+    "packaging >=24.1",
     "pandas >=2.2",
     "pooch >=1.8",
     "properscoring >=0.1",
     "pyproj >=3.6",
     "regionmask >=0.12",
     "scikit-learn >=1.4", # only for the tests
-    "scipy >=1.13",
+    "scipy >=1.14",
     "statsmodels >=0.14",
     "xarray >=2025.3", # for xr.DataTree
 ]
@@ -62,7 +61,9 @@ viz = [
     "nc-time-axis ",
 ]
 docs = [
+    "mesmer-emulator[viz]",
     "ipython",
+    "myst_nb",
     "myst-parser",
     "numpydoc",
     "sphinx",
@@ -89,7 +90,7 @@ fallback_version = "999"
 [tool.ruff]
 # also check notebooks
 extend-include = ["*.ipynb"]
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 # E402: module level import not at top of file
@@ -125,7 +126,7 @@ exclude = [
   "ci",
   "devel",
   "dist",
-  "examples",
+  "tutorials",
 ]
 files = "mesmer"
 
@@ -166,7 +167,7 @@ extend-ignore-re = [
 ]
 
 [tool.coverage.run]
-omit = ["*/tests/*, */scripts/*, */examples/*, */configs/*, */mesmer/_version.py"]
+omit = ["*/tests/*, */scripts/*, */tutorials/*, */configs/*, */mesmer/_version.py"]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--durations=10"]

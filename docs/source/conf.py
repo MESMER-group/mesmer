@@ -56,13 +56,13 @@ version = ".".join(release.split(".")[:2])
 
 # add sphinx extension modules
 extensions = [
-    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
+    "myst_nb",
 ]
 
 autosummary_generate = True
@@ -87,6 +87,38 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns: list[str] = []
+
+
+nb_kernel_rgx_aliases = {".*": "python3"}
+nb_execution_show_tb = True
+nb_execution_timeout = 60
+
+PROLOG = """\
+:::{note}
+This page was generated from an Jupyter notebook that can be accessed from
+[github](https://github.com/MESMER-group/mesmer/tree/main/tutorials).
+:::
+"""
+
+
+myst_substitutions = {"prolog": PROLOG}
+
+myst_enable_extensions = [
+    "amsmath",
+    # "attrs_inline",
+    "colon_fence",
+    # "deflist",
+    "dollarmath",
+    # "fieldlist",
+    # "html_admonition",
+    # "html_image",
+    # "linkify",
+    # "replacements",
+    # "smartquotes",
+    # "strikethrough",
+    "substitution",
+    # "tasklist",
+]
 
 
 # -- Options for HTML output -------------------------------------------------

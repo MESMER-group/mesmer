@@ -110,12 +110,14 @@ def predict_harmonic_model(
         any additional dimensions of `yearly_predictor`.
 
     """
+
     _check_dataarray_form(
         yearly_predictor,
         "yearly_predictor",
-        required_dims=time_dim,
+        required_coords=time_dim,
     )
-    dims = set(yearly_predictor.dims) - {time_dim}
+    (sample_dim,) = yearly_predictor[time_dim].dims
+    dims = set(yearly_predictor.dims) - {sample_dim}
     _check_dataarray_form(
         coeffs,
         "coeffs",
@@ -130,13 +132,13 @@ def predict_harmonic_model(
         _generate_fourier_series_np,
         upsampled_y,
         coeffs,
-        input_core_dims=[[time_dim], ["coeff"]],
-        output_core_dims=[[time_dim]],
+        input_core_dims=[[sample_dim], ["coeff"]],
+        output_core_dims=[[sample_dim]],
         vectorize=True,
         output_dtypes=[float],
     )
 
-    return predictions.transpose(time_dim, ...)
+    return predictions.transpose(sample_dim, ...)
 
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
@@ -295,10 +297,10 @@ def fit_harmonic_model(
     ----------
     yearly_predictor : xr.DataArray
         Yearly values used as predictors, containing one value per year. Contains `time_dim`
-        and possibly additional dimenions for example for gridcells or members.
+        and possibly additional dimensions for example for gridcells or members.
     monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
-        ´yearly_predictor´ (starting with January!). So `n_months` = 12 :math:`\\cdot` `n_years`.
+        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot` `n_years`.
         Must contain `time_dim` and possibly additional dimensions as `yearly_predictor`.
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
@@ -318,10 +320,13 @@ def fit_harmonic_model(
     """
 
     _check_dataarray_form(
-        yearly_predictor, "yearly_predictor", required_dims={time_dim}
+        yearly_predictor, "yearly_predictor", required_coords={time_dim}
     )
 
-    _check_dataarray_form(monthly_target, "monthly_target", required_dims={time_dim})
+    _check_dataarray_form(monthly_target, "monthly_target", required_coords={time_dim})
+
+    # we need to pass the dim (which may be `time_dim` or `sample_dim`)
+    (sample_dim,) = monthly_target[time_dim].dims
 
     if set(yearly_predictor.dims) != set(monthly_target.dims):
 
@@ -332,7 +337,7 @@ def fit_harmonic_model(
         )
         raise ValueError(msg)
 
-    for dim in set(yearly_predictor.dims) - {time_dim}:
+    for dim in set(yearly_predictor.dims) - {sample_dim}:
 
         if yearly_predictor[dim].size != monthly_target[dim].size:
             msg = (
@@ -342,7 +347,7 @@ def fit_harmonic_model(
             )
             raise ValueError(msg)
 
-    if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
+    if not monthly_target[time_dim].isel({sample_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
@@ -356,8 +361,8 @@ def fit_harmonic_model(
         _fit_fourier_order_np,
         yearly_predictor,
         seasonal_deviations,
-        input_core_dims=[[time_dim], [time_dim]],
-        output_core_dims=([], ["coeff"], [time_dim]),
+        input_core_dims=[[sample_dim], [sample_dim]],
+        output_core_dims=([], ["coeff"], [sample_dim]),
         vectorize=True,
         output_dtypes=[int, float, float],
         kwargs={"max_order": max_order},
@@ -370,7 +375,7 @@ def fit_harmonic_model(
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
-        "residuals": resids.transpose(time_dim, ...),
+        "residuals": resids.transpose(sample_dim, ...),
     }
 
     return xr.Dataset(data_vars)

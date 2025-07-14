@@ -7,14 +7,16 @@ import pandas as pd
 import scipy
 import xarray as xr
 
-from mesmer.core._datatreecompat import map_over_datasets
 from mesmer.core.datatree import (
+    _datatree_wrapper,
     collapse_datatree_into_dataset,
+    map_over_datasets,
 )
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
+    _set_threads_from_options,
 )
 
 
@@ -377,11 +379,11 @@ def draw_auto_regression_uncorrelated(
     *,
     time: int | xr.DataArray | pd.Index,
     realisation: int | xr.DataArray | pd.Index,
-    seed: int | xr.Dataset,
+    seed: int | xr.DataTree,
     buffer: int,
     time_dim: str = "time",
     realisation_dim: str = "realisation",
-) -> xr.DataArray:
+) -> xr.Dataset:
     """draw time series of an auto regression process
 
     Parameters
@@ -405,10 +407,9 @@ def draw_auto_regression_uncorrelated(
         Defines the number of uncorrelated samples to draw and possibly its coordinates.
         See ``time`` for details.
 
-    seed : int | xr.Dataset
-        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
-        contains a single variable "seed" with the seed value, used if this function is mapped over
-        a DataTree to draw samples for multiple scenarios.
+    seed : int | xr.DataTree
+        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.DataTree that
+        contains Datasets with a single variable "seed" with the seed value, to draw samples for multiple scenarios.
 
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
@@ -416,40 +417,26 @@ def draw_auto_regression_uncorrelated(
 
     Returns
     -------
-    out : DataArray
+    out : Dataset
         Drawn realizations of the specified autoregressive process. The array has shape
         n_time x n_coeffs x n_realisations.
 
     """
 
-    if isinstance(seed, xr.DataTree):
-        return map_over_datasets(
-            _draw_auto_regression_uncorrelated,
-            seed,
-            ar_params,
-            kwargs={
-                "time": time,
-                "realisation": realisation,
-                "buffer": buffer,
-                "time_dim": time_dim,
-                "realisation_dim": realisation_dim,
-            },
-        )
-
-    else:
-        return _draw_auto_regression_uncorrelated(
-            seed,
-            ar_params,
-            time=time,
-            realisation=realisation,
-            buffer=buffer,
-            time_dim=time_dim,
-            realisation_dim=realisation_dim,
-        )["samples"]
+    return _draw_auto_regression_uncorrelated(
+        seed,
+        ar_params,
+        time=time,
+        realisation=realisation,
+        buffer=buffer,
+        time_dim=time_dim,
+        realisation_dim=realisation_dim,
+    )
 
 
+@_datatree_wrapper
 def _draw_auto_regression_uncorrelated(
-    seed: int | xr.Dataset,
+    seed: int | xr.DataTree,
     ar_params: xr.Dataset,
     *,
     time: int | xr.DataArray | pd.Index,
@@ -457,7 +444,7 @@ def _draw_auto_regression_uncorrelated(
     buffer: int,
     time_dim: str = "time",
     realisation_dim: str = "realisation",
-) -> xr.DataArray:
+) -> xr.Dataset:
 
     # NOTE: we use variance and not std since we use multivariate normal
     # also to draw univariate realizations
@@ -505,11 +492,11 @@ def draw_auto_regression_correlated(
     *,
     time: int | xr.DataArray | pd.Index,
     realisation: int | xr.DataArray | pd.Index,
-    seed: int | xr.Dataset,
+    seed: int | xr.DataTree,
     buffer: int,
     time_dim: str = "time",
     realisation_dim: str = "realisation",
-) -> xr.DataArray:
+) -> xr.Dataset:
     """
     draw time series of an auto regression process with spatially-correlated innovations
 
@@ -536,10 +523,9 @@ def draw_auto_regression_correlated(
         Defines the number of uncorrelated samples to draw and possibly its coordinates.
         See ``time`` for details.
 
-    seed : int | xr.Dataset
-        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
-        contains a single variable "seed" with the seed value, used if this function is mapped over
-        a DataTree to draw samples for multiple scenarios.
+    seed : int | xr.DataTree
+        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.DataTree that
+        contains Datasets with a single variable "seed" with the seed value, used to draw samples for multiple scenarios.
 
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
@@ -547,7 +533,7 @@ def draw_auto_regression_correlated(
 
     Returns
     -------
-    out : DataArray
+    out : Dataset
         Drawn realizations of the specified autoregressive process. The array has shape
         n_time x n_coeffs x n_realisations.
 
@@ -559,38 +545,21 @@ def draw_auto_regression_correlated(
 
     """
 
-    if isinstance(seed, xr.DataTree):
-
-        return map_over_datasets(
-            _draw_auto_regression_correlated,
-            seed,
-            ar_params,
-            covariance,
-            kwargs={
-                "time": time,
-                "realisation": realisation,
-                "buffer": buffer,
-                "time_dim": time_dim,
-                "realisation_dim": realisation_dim,
-            },
-        )
-
-    else:
-
-        return _draw_auto_regression_correlated(
-            seed,
-            ar_params,
-            covariance,
-            time=time,
-            realisation=realisation,
-            buffer=buffer,
-            time_dim=time_dim,
-            realisation_dim=realisation_dim,
-        )["samples"]
+    return _draw_auto_regression_correlated(
+        seed,
+        ar_params,
+        covariance,
+        time=time,
+        realisation=realisation,
+        buffer=buffer,
+        time_dim=time_dim,
+        realisation_dim=realisation_dim,
+    )
 
 
+@_datatree_wrapper
 def _draw_auto_regression_correlated(
-    seed: int | xr.Dataset,
+    seed: int | xr.DataTree,
     ar_params: xr.Dataset,
     covariance: xr.DataArray,
     *,
@@ -599,7 +568,7 @@ def _draw_auto_regression_correlated(
     buffer: int,
     time_dim: str = "time",
     realisation_dim: str = "realisation",
-) -> xr.DataArray:
+) -> xr.Dataset:
 
     # check the input
     _check_dataset_form(ar_params, "ar_params", required_vars={"intercept", "coeffs"})
@@ -745,6 +714,7 @@ def _draw_auto_regression_correlated_np(
     return out[:, buffer:, :]
 
 
+@_set_threads_from_options()
 def _draw_innovations_correlated_np(
     covariance, rng, n_gridcells, n_samples, n_ts, buffer
 ):
@@ -909,40 +879,46 @@ def fit_auto_regression_monthly(
         ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
         the residuals have `time_dim` and the additional dims of the input data as dimensions.
     """
-    _check_dataarray_form(monthly_data, "monthly_data", ndim=2, required_dims=time_dim)
+    _check_dataarray_form(monthly_data, "monthly_data", required_coords=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
     ar_params_res = []
-    residuals_res = []
+
+    (sample_dim,) = monthly_data[time_dim].dims
+
+    residuals = xr.full_like(monthly_data, fill_value=np.nan)
+    # we loose one timestep
+    residuals = residuals.isel({sample_dim: slice(1, None)})
+    residuals.name = "residuals"
 
     for month in range(1, 13):
         if month == 1:
             # first January has no previous December
             # and last December has no following January
-            n_ts = monthly_groups[12].sizes[time_dim]
-            prev_month = monthly_groups[12].isel({time_dim: slice(0, n_ts - 1)})
-
-            n_ts = monthly_groups[1].sizes[time_dim]
-            cur_month = monthly_groups[1].isel({time_dim: slice(1, n_ts)})
+            prev_month = monthly_groups[12].isel({sample_dim: slice(None, -1)})
+            cur_month = monthly_groups[1].isel({sample_dim: slice(1, None)})
+            i = 11  # values only start the second year & first ts is removed
         else:
             prev_month = monthly_groups[month - 1]
             cur_month = monthly_groups[month]
+            i = month - 2
 
         slope, intercept, resids = xr.apply_ufunc(
             _fit_auto_regression_monthly_np,
             cur_month,
             prev_month,
-            input_core_dims=[[time_dim], [time_dim]],
-            output_core_dims=[[], [], [time_dim]],
-            exclude_dims={time_dim},
+            input_core_dims=[[sample_dim], [sample_dim]],
+            output_core_dims=[[], [], [sample_dim]],
+            exclude_dims={sample_dim},
             vectorize=True,
         )
 
+        # assign residuals, so the order is kept
+        residuals[{sample_dim: slice(i, None, 12)}] = resids
+
         ar_params_res.append(xr.Dataset({"slope": slope, "intercept": intercept}))
-        residuals_res.append(resids.assign_coords({time_dim: cur_month[time_dim]}))
 
     month_dim = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params_res, dim=month_dim)
-    residuals = xr.concat(residuals_res, dim=time_dim).rename("residuals")
 
     return xr.merge([ar_params, residuals])
 
@@ -968,16 +944,9 @@ def _fit_auto_regression_monthly_np(data_month, data_prev_month):
         The intercept of the AR(1) process.
     """
 
-    def _lin_func(indep_var, slope, intercept):
-        return slope * indep_var + intercept
+    slope, intercept = np.polyfit(data_prev_month, data_month, deg=1)
 
-    slope, intercept = scipy.optimize.curve_fit(
-        _lin_func,
-        data_prev_month,  # independent variable
-        data_month,  # dependent variable
-    )[0]
-
-    residuals = data_month - _lin_func(data_prev_month, slope, intercept)
+    residuals = data_month - (intercept + slope * data_prev_month)
 
     return slope, intercept, residuals
 
@@ -988,11 +957,11 @@ def draw_auto_regression_monthly(
     *,
     time: xr.DataArray | pd.Index,
     n_realisations: int,
-    seed: int | xr.Dataset,
+    seed: int | xr.DataTree,
     buffer: int,
     time_dim: str = "time",
     realisation_dim: str = "realisation",
-) -> xr.DataArray:
+) -> xr.Dataset:
     """draw time series of a cyclo-stationary auto-regressive process of lag one (AR(1))
     using individual parameters for each month including spatially-correlated innovations.
     For more information on the cyclo-stationary AR(1) process please refer to
@@ -1018,10 +987,9 @@ def draw_auto_regression_monthly(
         that will be the assigned time dimension of the predictions.
     n_realisations : int
         The number of realisations to draw.
-    seed : int | xr.Dataset
-        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.Dataset that
-        contains a single variable "seed" with the seed value, used if this function is mapped over
-        a DataTree to draw samples for multiple scenarios.
+    seed : int | xr.DataTree
+        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.DataTree that
+        contains Datasets with a single variable "seed" with the seed value, used to draw samples for multiple scenarios.
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
@@ -1032,43 +1000,27 @@ def draw_auto_regression_monthly(
 
     Returns
     -------
-    result : xr.DataArray of shape (n_realisations, n_timesteps, n_gridpoints)
+    result : xr.Dataset with samples of shape (n_realisations, n_timesteps, n_gridpoints)
         Predicted time series of the specified AR(1) process including spatially
         correlated innovations. The array has shape n_timesteps x n_gridpoints.
 
     """
 
-    if isinstance(seed, xr.DataTree):
-
-        return map_over_datasets(
-            _draw_auto_regression_monthly,
-            seed,
-            ar_params,
-            covariance,
-            kwargs={
-                "time": time,
-                "n_realisations": n_realisations,
-                "buffer": buffer,
-                "time_dim": time_dim,
-                "realisation_dim": realisation_dim,
-            },
-        )
-
-    else:
-        return _draw_auto_regression_monthly(
-            seed,
-            ar_params,
-            covariance,
-            time=time,
-            n_realisations=n_realisations,
-            buffer=buffer,
-            time_dim=time_dim,
-            realisation_dim=realisation_dim,
-        )["samples"]
+    return _draw_auto_regression_monthly(
+        seed,
+        ar_params,
+        covariance,
+        time=time,
+        n_realisations=n_realisations,
+        buffer=buffer,
+        time_dim=time_dim,
+        realisation_dim=realisation_dim,
+    )
 
 
+@_datatree_wrapper
 def _draw_auto_regression_monthly(
-    seed,
+    seed: int | xr.DataTree,
     ar_params: xr.Dataset,
     covariance: xr.DataArray,
     *,
@@ -1077,7 +1029,7 @@ def _draw_auto_regression_monthly(
     buffer: int,
     time_dim: str = "time",
     realisation_dim: str = "realisation",
-) -> xr.DataArray:
+) -> xr.Dataset:
 
     # NOTE: seed must be the first positional argument for map_over_datasets to work
 
@@ -1200,12 +1152,13 @@ def _draw_auto_regression_monthly_np(
 
     # draw innovations for each month
     innovations = np.zeros([n_samples, n_ts // 12 + buffer, 12, n_gridcells])
-    if covariance is not None:
-        for month in range(12):
-            cov_month = covariance[month, :, :]
-            innovations[:, :, month, :] = _draw_innovations_correlated_np(
-                cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
-            )
+
+    for month in range(12):
+        cov_month = covariance[month, :, :]
+        innovations[:, :, month, :] = _draw_innovations_correlated_np(
+            cov_month, rng, n_gridcells, n_samples, n_ts // 12, buffer
+        )
+
     # reshape innovations into continuous time series
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 

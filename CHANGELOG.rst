@@ -16,6 +16,18 @@ New Features
   By `Mathias Hauser`_.
 - Passing ``hist_period`` to the volcaninc helper functions is no longer needed (\
   `#649 <https://github.com/MESMER-group/mesmer/pull/649>`_). By `Mathias Hauser`_.
+- Can now pass ``only`` to ``LinearRegression.predict`` to select predictors
+  (`#702 <https://github.com/MESMER-group/mesmer/issues/702>`_, and
+  `#717 <https://github.com/MESMER-group/mesmer/pull/717>`_).
+  By `Mathias Hauser`_.
+- Added :py:class:`set_options` to mesmer which can, currently, be used to control
+  the number of used threads for matrix decomposition
+  (`#349 <https://github.com/MESMER-group/mesmer/issues/349>`_, and
+  `#713 <https://github.com/MESMER-group/mesmer/pull/713>`_).
+  By `Mathias Hauser`_.
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to ``localized_empirical_covariance`` (`#710 <https://github.com/MESMER-group/mesmer/pull/710>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -23,7 +35,8 @@ Breaking changes
   (`#495 <https://github.com/MESMER-group/mesmer/pull/495>`_). By `Victoria Bauer`_.
 - Using Cholesky decomposition for finding covariance localization radius and drawing from the multivariate normal distribution (`#408 <https://github.com/MESMER-group/mesmer/pull/408>`_)
   By `Victoria Bauer`_.
-- Removed support for python 3.9 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
+- Removed support for python 3.9 and python 3.10
+  (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_, and `#733 <https://github.com/MESMER-group/mesmer/pull/733>`_)
   By `Mathias Hauser`_.
 - Removed the deprecated function :py:func:`mask_percentage` (`#654 <https://github.com/MESMER-group/mesmer/pull/654>`_)
   By `Mathias Hauser`_.
@@ -33,26 +46,27 @@ Breaking changes
   `#503 <https://github.com/MESMER-group/mesmer/pull/503>`_,
   `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
   `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
-  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_, and
-  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,):
+  `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_, and
+  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_):
 
   ================= ============= =========
   Package           Old           New
   ================= ============= =========
   **cartopy**       not specified 0.23
-  **dask**          not specified 2024.5
+  **dask**          not specified 2024.7
   **filefisher**    not required  1.1
   **joblib**        not specified 1.4
-  **netcdf4**       not specified 1.6
+  **netcdf4**       not specified 1.7
   **numpy**         not specified 1.26
-  **packaging**     not specified 24.0
+  **packaging**     not specified 24.1
   **pandas**        2.0           2.2
   **pooch**         not specified 1.8
   **properscoring** not specified 0.1
   **pyproj**        not specified 3.6
   **regionmask**    0.8           0.12
-  **scikit-learn**  not specified 1.4
-  **scipy**         not specified 1.13
+  **scikit-learn**  not specified 1.5
+  **scipy**         not specified 1.14
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
   **xarray**        2023.04       2025.03
@@ -73,6 +87,7 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 - Updated and extended the development Guide (`#511 <https://github.com/MESMER-group/mesmer/pull/511>`_, `#523 <https://github.com/MESMER-group/mesmer/pull/523>`_)
+- Added example notebooks for calibrating on multiple scenarios and ensemble members and emulating multiple scenarios (`#521 <https://github.com/MESMER-group/mesmer/pull/521>`_).
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
@@ -104,8 +119,11 @@ This was originally done with the prototype `xarray-datatree` package. After the
 ``DataTree`` to xarray stabilized, mesmer briefly supported both ``DataTree`` versions
 (the one in xarray-datatree and in xarray) before dropping support for `xarray-datatree`.
 
-- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_).
-- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression` (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_).
+- Switch to storing several predictors in one :py:class:`xr.Dataset`` per scenario node in a :py:class:`DataTree` (`#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
+- Enable passing a :py:class:`DataTree` to the auto regression functions (`#570 <https://github.com/MESMER-group/mesmer/pull/570>`_, `#677 <https://github.com/MESMER-group/mesmer/pull/677>`_).
+- Enable passing :py:class:`DataTree` and :py:class:`xr.Dataset` to :py:class:`LinearRegression`
+  (`#566 <https://github.com/MESMER-group/mesmer/pull/566>`_, and
+  `#720 <https://github.com/MESMER-group/mesmer/pull/720>`_).
 - Add weighting function for several scenarios (`#567 <https://github.com/MESMER-group/mesmer/pull/567>`_).
 - Add function to compute anomalies over several scenarios stored in a :py:class:`DataTree` (`#625 <https://github.com/MESMER-group/mesmer/pull/625>`_).
 - Add utility functions for :py:class:`DataTree` (`#556 <https://github.com/MESMER-group/mesmer/pull/556>`_).
@@ -117,6 +135,7 @@ This was originally done with the prototype `xarray-datatree` package. After the
   `#682 <https://github.com/MESMER-group/mesmer/pull/682>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
+- Add helper function to merge ``DataTree`` objects  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_)
 - PRs related to xarray and xarray-datatree:
 
   - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
@@ -179,6 +198,8 @@ that this led to some numerical changes compared to the MESMER-M publication
   `#484 <https://github.com/MESMER-group/mesmer/pull/484>`_).
 - add example script for MESMER-M workflow (`#491 <https://github.com/MESMER-group/mesmer/pull/491>`_)
 - add integration tests for MESMER-M (`#501 <https://github.com/MESMER-group/mesmer/pull/501>`_)
+- enable calibrating MESMER-M on several scenarios and ensemble members (`#678 <https://github.com/MESMER-group/mesmer/issues/678>`_)
+  and add an example (`#572 <https://github.com/MESMER-group/mesmer/pull/572>`_).
 
 Auto-Regression
 ~~~~~~~~~~~~~~~
@@ -194,6 +215,9 @@ Auto-Regression
   Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
 - Implement function to localize the empirical covarince matrix for each month individually to use in drawing
   of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to ``fit_auto_regression_monthly`` (`#706 <https://github.com/MESMER-group/mesmer/pull/706>`_).
+- Ensure residuals are ordered correctly in `fit_auto_regression_monthly` (`#708 <https://github.com/MESMER-group/mesmer/pull/708>`_).
 
 Yeo-Johnson power transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,7 +246,11 @@ Yeo-Johnson power transformer
    `#475 <https://github.com/MESMER-group/mesmer/pull/475>`_, and
    `#425 <https://github.com/MESMER-group/mesmer/pull/425>`_)
 - add tests (`#430 <https://github.com/MESMER-group/mesmer/pull/430>`_)
-
+- Converted Yeo-Johnson power transformer functions back into a class, which allows to
+  add additional lambda functions (`#716 <https://github.com/MESMER-group/mesmer/pull/716>`_).
+- Added a constant lambda function (`#718 <https://github.com/MESMER-group/mesmer/pull/718>`_).
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to power transformer functions (`#703 <https://github.com/MESMER-group/mesmer/pull/703>`_).
 
 Harmonic model
 ~~~~~~~~~~~~~~
@@ -235,8 +263,9 @@ Harmonic model
 -  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_ and
    `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 -  add helper function to upsample yearly data to monthly resolution (\
-   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_, and
-   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_)
+   `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
+   `#435 <https://github.com/MESMER-group/mesmer/pull/435>`_, and
+   `#688 <https://github.com/MESMER-group/mesmer/pull/688>`_).
 - de-duplicate the expression of months in their harmonic form (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
   move creation of the month array to the deepest level (`#487 <https://github.com/MESMER-group/mesmer/pull/487>`_).
 - fix indexing of harmonic model coefficients (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_)
@@ -251,6 +280,8 @@ Harmonic model
   `#431 <https://github.com/MESMER-group/mesmer/pull/431>`_, and
   `#458 <https://github.com/MESMER-group/mesmer/pull/458>`_)
 - add function to generate fourier series using xarray (`#478 <https://github.com/MESMER-group/mesmer/pull/478>`_)
+- Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
+  to harmonic model functions (`#705 <https://github.com/MESMER-group/mesmer/pull/705>`_).
 
 By `Victoria Bauer`_ and `Mathias Hauser`_.
 
