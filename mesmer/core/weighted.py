@@ -292,9 +292,6 @@ def get_weights_density(pred_data):
         return weights
 
     if isinstance(pred_data, xr.DataTree):
-        scens = list(pred_data.keys())
-        preds = list(pred_data[scens[0]].data_vars)
-        pred_dims = tuple(pred_data[scens[0]][preds[0]].dims)
 
         # reshaping data into array
         # need an array where each predictor is a column in a np.array
@@ -306,14 +303,21 @@ def get_weights_density(pred_data):
         # unstack
         coord_names = list(weights_stacked["sample"].coords)
         weights_stacked = weights_stacked.set_index({"sample": coord_names})
-        weights_unstacked = weights_stacked.unstack("sample")
 
+        # un-pool stacked weights again
         weights = xr.DataTree()
-        for scen in scens:
-            scen_weights = xr.Dataset({"weights": weights_unstacked.sel(scenario=scen)})
-            scen_weights = scen_weights.drop_vars("scenario")
-            for dim in pred_dims:
-                scen_weights = scen_weights.dropna(dim, how="all")
+        scenarios = list(pred_data.keys())
+        for scen in scenarios:
+
+            sel = weights_stacked.scenario == scen
+
+            scen_weights = weights_stacked.isel(sample=sel)
+
+            scen_weights = scen_weights.unstack("sample")
+
+            scen_weights = xr.Dataset({"weights": scen_weights})
+            scen_weights = scen_weights.squeeze("scenario", drop=True)
+
             weights[scen] = xr.DataTree(scen_weights)
 
         return weights
