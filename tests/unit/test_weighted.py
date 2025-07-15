@@ -362,7 +362,7 @@ def test_get_weights_density():
     np.testing.assert_equal(weights, weights / np.sum(weights))
 
 
-def test_get_weights_density_ds():
+def test_get_weights_density_ds_too_many_dims():
     pred_data = xr.Dataset(
         {
             "predictor1": (("x", "y"), np.arange(9).reshape(3, 3)),
@@ -370,14 +370,22 @@ def test_get_weights_density_ds():
         }
     )
 
-    weights = mesmer.weighted.get_weights_density(
-        pred_data=pred_data,
+    with pytest.raises(ValueError, match="Can only handle 1D predictors"):
+        mesmer.weighted.get_weights_density(pred_data=pred_data)
+
+
+def test_get_weights_density_ds():
+    pred_data = xr.Dataset(
+        {
+            "predictor1": (("x"), np.arange(9)),
+            "predictor2": (("x"), np.arange(9)),
+        }
     )
 
+    weights = mesmer.weighted.get_weights_density(pred_data=pred_data)
+
     _check_dataset_form(weights, "weights", required_vars=["weights"])
-    _check_dataarray_form(
-        weights.weights, "weights", required_dims=("x", "y"), shape=(3, 3)
-    )
+    _check_dataarray_form(weights.weights, "weights", required_dims="x", shape=(9,))
 
 
 def test_get_weights_density_dt():
