@@ -320,7 +320,7 @@ def get_weights_density(pred_data):
 
     elif isinstance(pred_data, xr.Dataset):
 
-        return _weights_ds(pred_data)
+        return _weights_ds(pred_data).to_dataset(name="weights")
 
     elif isinstance(pred_data, np.ndarray):
         array_pred = pred_data
