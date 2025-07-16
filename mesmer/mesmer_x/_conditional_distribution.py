@@ -38,7 +38,7 @@ class ConditionalDistribution:
             Expression defining the conditional distribution.
         minimize_options : class py:class:`MinimizeOptions` | None, default: MinimizeOptions()
             Class defining the optimizer options used during first guess and training of
-            distributions. Per default uses "Powell" minimizer with default settings.
+            distributions. If not passed uses "Powell" minimizer with default settings.
         second_minimizer : class py:class:`MinimizeOptions` | None, default: None
             Run a second minimization algorithm for all steps. ``method="Nelder-Mead"``
             is recommended. It can be beneficial to run more than one minimization
@@ -100,15 +100,16 @@ class ConditionalDistribution:
             and has the corresponding name of the coefficient in the expression.
         sample_dim : str
             Dimension along which to fit the distribution.
-        option_smooth_coeffs : bool, default: False
+        smooth_coeffs : bool, default: False
             If True, smooth the provided coefficients using a weighted median.
             The weights are the correlation matrix of the Gaspari-Cohn function.
             This is typically used for the 2nd round of the fit.
         r_gasparicohn : float, default: 500
             Radius used to compute the correlation matrix of the Gaspari-Cohn function.
-            This is typically used for the 2nd round of the fit.
+            Used if ``smooth_coeffs`` is True.
         on_failed_fit : "error" | "ignore", default: "error"
-            Behaviour when the fit fails. Careful: currently the
+            Behaviour when the fit fails. Careful: currently the using "ignore" returns
+            the first guess.
 
         Returns
         -------
