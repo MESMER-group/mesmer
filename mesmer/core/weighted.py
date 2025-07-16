@@ -5,6 +5,7 @@ import xarray as xr
 
 from mesmer.core.datatree import (
     _datatree_wrapper,
+    _unpool_scen_ens,
     map_over_datasets,
     pool_scen_ens,
 )
@@ -300,27 +301,7 @@ def get_weights_density(pred_data):
 
         weights_stacked = _weights_ds(pred_stacked)
 
-        # unstack
-        coord_names = list(weights_stacked["sample"].coords)
-        weights_stacked = weights_stacked.set_index({"sample": coord_names})
-
-        # un-pool stacked weights again
-        weights = xr.DataTree()
-        scenarios = list(pred_data.keys())
-        for scen in scenarios:
-
-            sel = weights_stacked.scenario == scen
-
-            scen_weights = weights_stacked.isel(sample=sel)
-
-            scen_weights = scen_weights.unstack("sample")
-
-            scen_weights = xr.Dataset({"weights": scen_weights})
-            scen_weights = scen_weights.squeeze("scenario", drop=True)
-
-            weights[scen] = xr.DataTree(scen_weights)
-
-        return weights
+        return _unpool_scen_ens(weights_stacked)
 
     elif isinstance(pred_data, xr.Dataset):
 
