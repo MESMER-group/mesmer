@@ -335,28 +335,46 @@ def test_smooth_first_guess():
         coeff2, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
     )
 
+    first_guess_stacked = first_guess.to_dataarray(dim="coefficient")
+
     smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
-        first_guess, "cells", coords, 500
+        first_guess_stacked, "cells", coords, 500
     )
 
     coeff1_exp = np.array([4.0, 4.0, 5.0, 4.0, 5.0, 5.0])
     coeff2_exp = np.array([0.1, 0.1, 0.3, 0.1, 0.1, 0.3])
 
-    np.testing.assert_equal(smoothed_guess["c1"].data, coeff1_exp)
-    np.testing.assert_equal(smoothed_guess["c2"].data, coeff2_exp)
+    np.testing.assert_equal(smoothed_guess.sel(coefficient="c1").data, coeff1_exp)
+    np.testing.assert_equal(smoothed_guess.sel(coefficient="c2").data, coeff2_exp)
+
     _check_dataarray_form(
-        smoothed_guess["c1"],
-        "c1",
-        required_dims=["cells"],
-        required_coords={"cells": np.arange(n_lon * n_lat)},
-        shape=(n_lon * n_lat,),
+        smoothed_guess,
+        "smoothed_guess",
+        required_dims=["cells", "coefficient"],
+        required_coords={
+            "cells": np.arange(n_lon * n_lat),
+            "coefficient": ["c1", "c2"],
+        },
+        shape=(2, n_lon * n_lat),
     )
+
+    # the same but with non-dimension coords
+
+    lat = lon = np.arange(6)
+    first_guess_stacked = first_guess_stacked.drop_vars("cells")
+    first_guess_stacked = first_guess_stacked.assign_coords(lat=("cells", lat))
+    first_guess_stacked = first_guess_stacked.assign_coords(lon=("cells", lon))
+
+    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
+        first_guess_stacked, "cells", coords, 500
+    )
+
     _check_dataarray_form(
-        smoothed_guess["c2"],
-        "c2",
-        required_dims=["cells"],
-        required_coords={"cells": np.arange(n_lon * n_lat)},
-        shape=(n_lon * n_lat,),
+        smoothed_guess,
+        "smoothed_guess",
+        required_dims=["cells", "coefficient"],
+        required_coords={"lat": lat, "lon": lon, "coefficient": ["c1", "c2"]},
+        shape=(2, n_lon * n_lat),
     )
 
 
@@ -374,19 +392,24 @@ def test_smooth_first_guess_nans():
         coeff1, dims="cells", coords={"cells": np.arange(n_lon * n_lat)}
     )
 
+    first_guess_stacked = first_guess.to_dataarray(dim="coefficient")
+
     smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
-        first_guess, "cells", coords, 100
+        first_guess_stacked, "cells", coords, 100
     )
 
     coeff1_exp = np.array([1.0, 2.0, 5.0, 4.0, 5.0, 6.0])
 
-    np.testing.assert_equal(smoothed_guess["c1"].data, coeff1_exp)
+    np.testing.assert_equal(smoothed_guess.sel(coefficient="c1").data, coeff1_exp)
     _check_dataarray_form(
-        smoothed_guess["c1"],
-        "c1",
-        required_dims=["cells"],
-        required_coords={"cells": np.arange(n_lon * n_lat)},
-        shape=(n_lon * n_lat,),
+        smoothed_guess,
+        "smoothed_guess",
+        required_dims=["cells", "coefficient"],
+        required_coords={"cells": np.arange(n_lon * n_lat), "coefficient": ["c1"]},
+        shape=(
+            1,
+            n_lon * n_lat,
+        ),
     )
 
 

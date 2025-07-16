@@ -532,14 +532,16 @@ class ConditionalDistribution:
         coefficients.to_netcdf(filename, **kwargs)
 
 
-def _smooth_first_guess(first_guess: xr.Dataset, dim, grid_coords, r_gasparicohn):
+def _smooth_first_guess(
+    first_guess_stacked: xr.Dataset, dim, grid_coords, r_gasparicohn
+):
     """
     smooth first guess over
 
     Parameters
     ----------
-    first_guess : xr.Dataset
-        First guess for the coefficients.
+    first_guess : xr.DataArray
+        First guess for the coefficients. Stacked over the coefficients.
     dim : str
         Dimension along which to smooth the coefficients.
     grid_coords : dict
@@ -560,11 +562,9 @@ def _smooth_first_guess(first_guess: xr.Dataset, dim, grid_coords, r_gasparicohn
     corr_gc = gaspari_cohn(geodist / r_gasparicohn)
 
     # will avoid taking gridpoints with nan
-    fg_coeffs = first_guess.to_array("coeff")
-
-    second_guess_stacked = xr.apply_ufunc(
+    second_guess = xr.apply_ufunc(
         weighted_median,
-        fg_coeffs,
+        first_guess_stacked,
         corr_gc,
         input_core_dims=[[dim], [f"{dim}_i"]],
         output_core_dims=[[]],
@@ -573,11 +573,9 @@ def _smooth_first_guess(first_guess: xr.Dataset, dim, grid_coords, r_gasparicohn
         output_dtypes=[float],
     )
 
-    second_guess = xr.full_like(first_guess, fill_value=np.nan)
-    for coeff in first_guess.data_vars:
-        second_guess[coeff] = second_guess_stacked.sel(coeff=coeff)
+    # we loop over dim_j -> have to replace the dim and cooords
     second_guess = second_guess.rename({f"{dim}_j": dim})
-    second_guess = second_guess.drop_vars("coeff")
+    second_guess = second_guess.assign_coords({dim: first_guess_stacked[dim]})
 
     return second_guess
 
