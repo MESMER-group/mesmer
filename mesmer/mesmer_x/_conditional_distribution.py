@@ -142,8 +142,8 @@ class ConditionalDistribution:
         if smooth_coeffs:
             gridcell_dim = (set(target.dims) - {sample_dim}).pop()
             coords = target[gridcell_dim].coords
-            first_guess = _smooth_first_guess(
-                first_guess, gridcell_dim, coords, r_gasparicohn
+            first_guess_da = _smooth_first_guess(
+                first_guess_da, gridcell_dim, coords, r_gasparicohn
             )
 
         # training
