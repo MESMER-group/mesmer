@@ -440,6 +440,96 @@ def test_pool_scen_ens_keep_other_dims():
     )
 
 
+@pytest.mark.parametrize("scenario_dim", ("scenario", "scen"))
+@pytest.mark.parametrize("time_dim", ("time", "t"))
+@pytest.mark.parametrize("member_dim", ("member", "m"))
+@pytest.mark.parametrize("sample_dim", ("sample", "s"))
+def test_unpool_scen_ens(scenario_dim, time_dim, member_dim, sample_dim):
+
+    time = np.arange(3)
+    data = np.arange(6).reshape(2, 3).T
+    da1 = xr.DataArray(
+        data,
+        dims=(time_dim, member_dim),
+        coords={time_dim: time, member_dim: ["a1", "a2"]},
+    )
+    ds1 = xr.Dataset(data_vars={"var": da1})
+
+    time = np.arange(2)
+    data = np.arange(2).reshape(2, 1) * 10
+    da2 = xr.DataArray(
+        data, dims=(time_dim, member_dim), coords={time_dim: time, member_dim: ["a3"]}
+    )
+    ds2 = xr.Dataset(data_vars={"var": da2})
+
+    dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
+
+    pooled = mesmer.datatree.pool_scen_ens(
+        dt,
+        member_dim=member_dim,
+        time_dim=time_dim,
+        scenario_dim=scenario_dim,
+        sample_dim=sample_dim,
+    )
+
+    result = mesmer.datatree._unpool_scen_ens(
+        pooled, scenario_dim=scenario_dim, sample_dim=sample_dim
+    )
+    expected = dt
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_unpool_scen_ens_error():
+
+    obj = xr.DataArray([1, 2, 3])
+    with pytest.raises(
+        ValueError, match="Passed DataArray must have a '.name' attribute"
+    ):
+        mesmer.datatree._unpool_scen_ens(obj)
+
+
+@pytest.mark.parametrize("ascending_scen_order", [True, False])
+def test_unpool_scen_ens_other_dims(ascending_scen_order):
+
+    time = np.arange(2)
+    data = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+    gridpoint = np.arange(10, 41, 10)
+
+    da = xr.DataArray(
+        data,
+        dims=("time", "member", "gridpoint"),
+        coords={"time": time, "member": ["a1", "a2", "a3"], "gridpoint": gridpoint},
+    )
+    ds1 = xr.Dataset(data_vars={"var": da})
+
+    time = np.arange(3)
+    data = np.arange(3 * 4).reshape(3, 1, 4)
+    da2 = xr.DataArray(
+        data,
+        dims=("time", "member", "gridpoint"),
+        coords={"time": time, "member": ["a3"], "gridpoint": gridpoint},
+    )
+    ds2 = xr.Dataset(data_vars={"var": da2})
+
+    if ascending_scen_order:
+        dt = xr.DataTree.from_dict({"scen1": ds1, "scen2": ds2})
+    else:
+        dt = xr.DataTree.from_dict({"scen2": ds1, "scen1": ds2})
+
+    pooled = mesmer.datatree.pool_scen_ens(dt)
+
+    result = mesmer.datatree._unpool_scen_ens(pooled)
+    expected = dt
+
+    xr.testing.assert_equal(result, expected, check_dim_order=False)
+
+    if ascending_scen_order:
+        assert dt.groups == ("/", "/scen1", "/scen2")
+    else:
+        assert dt.groups == ("/", "/scen2", "/scen1")
+
+
 def test_merge():
     ts = 20
     time = np.arange(ts)
