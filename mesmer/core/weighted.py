@@ -300,6 +300,7 @@ def get_weights_density(pred_data):
         pred_stacked = pool_scen_ens(pred_data)
 
         weights_stacked = _weights_ds(pred_stacked)
+        weights_stacked.name = "weights"
 
         return _unpool_scen_ens(weights_stacked)
 
