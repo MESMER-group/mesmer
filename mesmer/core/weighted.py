@@ -333,20 +333,33 @@ def get_weights_density(pred_data):
 
 def weighted_median(data, weights):
     """
-    Args:
-      data (list or numpy.array): data
-      weights (list or numpy.array): weights
+    Parameters
+    ----------
+      data : numpy.array
+        Data to calculate the median from.
+    weights:  numpy.array
+        Weights to apply
 
-    Source:
-      https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
-      @author Jack Peterson (jack@tinybike.net)
+    Returns
+    -------
+    weighted_median
+
+    References
+    ----------
+
+    Adapted form
+
+    https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
+    @author Jack Peterson (jack@tinybike.net)
     """
 
     weights = weights[~np.isnan(data)]
     data = data[~np.isnan(data)]
 
-    data, weights = np.asarray(data).squeeze(), np.asarray(weights).squeeze()
-    s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
+    indexer_array = np.argsort(data)
+    s_data = data[indexer_array]
+    s_weights = weights[indexer_array]
+
     midpoint = 0.5 * np.sum(s_weights)
 
     if any(weights > midpoint):
