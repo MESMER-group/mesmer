@@ -78,10 +78,10 @@ class ConditionalDistribution:
         target: xr.DataArray,
         weights: xr.DataArray,
         first_guess: xr.Dataset,
+        *,
         sample_dim: str = "sample",
         smooth_coeffs: bool = False,
         r_gasparicohn: float = 500,
-        option_smooth_coeffs: None = None,  # deprecated in favor of smooth_coeffs
         on_failed_fit: Literal["error", "ignore"] = "error",
     ):
         """fit conditional distribution over all gridpoints.
@@ -115,9 +115,6 @@ class ConditionalDistribution:
         :obj:`xr.Dataset`
             Fitted coefficients of the conditional distribution (gridpoint, coefficient)
         """
-
-        if option_smooth_coeffs is not None:
-            raise ValueError("option_smooth_coeffs has been renamed to smooth_coeffs")
 
         # basic check on first guess
         n_coeffs_fg = len(first_guess.data_vars)

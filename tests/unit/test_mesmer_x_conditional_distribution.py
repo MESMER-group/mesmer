@@ -274,19 +274,6 @@ def test_ConditionalDistribution_fit_failed():
     xr.testing.assert_equal(result, expected)
 
 
-def test_ConditionalDistribution_smooth_fg_error(default_distrib):
-
-    with pytest.raises(ValueError, match="option_smooth_coeffs has been renamed"):
-        default_distrib.fit(
-            predictors="dummy",
-            target="dummy",
-            weights="dummy",
-            first_guess="dummy",
-            sample_dim="dummy",
-            option_smooth_coeffs=True,
-        )
-
-
 def test_ConditionalDistribution_smooth_fg(default_distrib):
     rng = np.random.default_rng(0)
     n = 251
