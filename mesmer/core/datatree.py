@@ -2,6 +2,7 @@ import functools
 from collections.abc import Callable, Iterable
 from typing import ParamSpec, TypeVar, overload
 
+import pandas as pd
 import xarray as xr
 from packaging.version import Version
 from xarray.core import dtypes
@@ -199,6 +200,45 @@ def pool_scen_ens(
     out = xr.concat(out, dim=sample_dim)
 
     return out.transpose(sample_dim, ...)
+
+
+def _unpool_scen_ens(
+    obj: xr.DataArray | xr.Dataset,
+    *,
+    scenario_dim: str = "scenario",
+    sample_dim: str = "sample",
+) -> xr.Dataset:
+    # un-pool pooled Dataset or DataArray again - private for now
+
+    # NOTE: dim order is not round-tripped
+
+    if isinstance(obj, xr.DataArray):
+        if obj.name is None:
+            raise ValueError("Passed DataArray must have a '.name' attribute")
+
+        obj = obj.to_dataset()
+
+    coord_names = list(obj[sample_dim].coords)
+
+    # we need a MultiIndex to unstack
+    obj = obj.set_index({sample_dim: coord_names})
+
+    scenarios = pd.unique(obj[scenario_dim].values)
+
+    out = xr.DataTree()
+    for scen in scenarios:
+
+        sel = obj[scenario_dim].values == scen
+
+        obj_scen = obj.isel({sample_dim: sel})
+
+        obj_scen = obj_scen.unstack(sample_dim)
+
+        obj_scen = obj_scen.squeeze(scenario_dim, drop=True)
+
+        out[scen] = xr.DataTree(obj_scen)
+
+    return out
 
 
 @overload
