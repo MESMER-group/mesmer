@@ -7,6 +7,7 @@ from packaging.version import Version
 
 import mesmer
 from mesmer.core.datatree import map_over_datasets
+from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import _convert
 
 
@@ -107,6 +108,18 @@ def test_weighted_mean_errors_wrong_weights(datatype):
         mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
 
     with pytest.raises(ValueError, match="`data` and `weights` don't exactly align."):
+        mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
+
+
+def test_weighted_mean_errors_wrong_weights_name():
+    data = data_lon_lat("Dataset")
+    weights = mesmer.weighted.lat_weights(data, "lat")
+    weights = weights.isel(lat=slice(None, -3))
+    weights = weights.rename({"weights": "wrong_name"})
+
+    with pytest.raises(
+        ValueError, match="weights does not contain a variable named weights"
+    ):
         mesmer.weighted.weighted_mean(data, weights, dims=("lat", "lon"))
 
 
@@ -337,3 +350,146 @@ def test_create_equal_scenario_weights_from_datatree_checks():
         ValueError, match="Dataset must only contain one data variable."
     ):
         mesmer.weighted.equal_scenario_weights_from_datatree(dt_multiple_vars)
+
+
+def test_get_weights_density():
+    n = 3
+
+    weights = mesmer.weighted.get_weights_density(
+        pred_data=np.arange(n),
+    )
+
+    np.testing.assert_equal(weights, weights / np.sum(weights))
+
+
+def test_get_weights_density_ds_too_many_dims():
+    pred_data = xr.Dataset(
+        {
+            "predictor1": (("x", "y"), np.arange(9).reshape(3, 3)),
+            "predictor2": (("x", "y"), np.arange(9).reshape(3, 3)),
+        }
+    )
+
+    with pytest.raises(ValueError, match="Can only handle 1D predictors"):
+        mesmer.weighted.get_weights_density(pred_data=pred_data)
+
+
+def test_get_weights_density_ds():
+    pred_data = xr.Dataset(
+        {
+            "predictor1": (("x"), np.arange(9)),
+            "predictor2": (("x"), np.arange(9)),
+        }
+    )
+
+    weights = mesmer.weighted.get_weights_density(pred_data=pred_data)
+
+    _check_dataset_form(weights, "weights", required_vars=["weights"])
+    _check_dataarray_form(weights.weights, "weights", required_dims="x", shape=(9,))
+
+
+def test_get_weights_density_dt():
+    nts1, nts2 = 10, 12
+    nmem1, nmem2 = 2, 3
+
+    rng = np.random.default_rng(0)
+
+    time_coord1 = np.arange(nts1)
+    time_coord2 = np.arange(nts2)
+    member_coord1 = np.arange(nmem1)
+    member_coord2 = np.arange(nmem2)
+
+    arr1 = xr.DataArray(
+        rng.normal(loc=0, scale=0.1, size=(nts1, nmem1)),
+        dims=("time", "member"),
+        coords={"time": time_coord1, "member": member_coord1},
+    )
+    arr2 = xr.DataArray(
+        rng.normal(loc=0, scale=0.1, size=(nts1, nmem1)),
+        dims=("time", "member"),
+        coords={"time": time_coord1, "member": member_coord1},
+    )
+    arr3 = xr.DataArray(
+        rng.normal(loc=0, scale=0.1, size=(nts2, nmem2)),
+        dims=("time", "member"),
+        coords={"time": time_coord2, "member": member_coord2},
+    )
+    arr4 = xr.DataArray(
+        rng.normal(loc=0, scale=0.1, size=(nts2, nmem2)),
+        dims=("time", "member"),
+        coords={"time": time_coord2, "member": member_coord2},
+    )
+
+    pred_data = xr.DataTree.from_dict(
+        {
+            "scenario1": xr.Dataset(
+                {
+                    "predictor1": arr1,
+                    "predictor2": arr2,
+                }
+            ),
+            "scenario2": xr.Dataset(
+                {
+                    "predictor1": arr3,
+                    "predictor2": arr4,
+                }
+            ),
+        }
+    )
+
+    weights = mesmer.weighted.get_weights_density(
+        pred_data=pred_data,
+    )
+
+    scen1 = weights["scenario1"].to_dataset()
+    scen2 = weights["scenario2"].to_dataset()
+
+    _check_dataset_form(scen1, "weights", required_vars=["weights"])
+    _check_dataarray_form(
+        scen1.weights, "weights", required_dims=("time", "member"), shape=(nts1, nmem1)
+    )
+
+    _check_dataset_form(scen2, "weights", required_vars=["weights"])
+    _check_dataarray_form(
+        scen2.weights, "weights", required_dims=("time", "member"), shape=(nts2, nmem2)
+    )
+
+
+def test_weighted_median():
+    data = np.array([1, 2, 3, 4, 5])
+    weights = np.array([0.1, 0.2, 0.3, 0.2, 0.2])
+
+    median = mesmer.weighted.weighted_median(data, weights)
+
+    # The weighted median should be the value that splits the data into two halves
+    expected_median = 3
+    np.testing.assert_equal(median, expected_median)
+
+    weights = np.array([0.1, 0.1, 0.1, 0.1, 1.0])
+    median = mesmer.weighted.weighted_median(data, weights)
+
+    expected_median = 5
+    np.testing.assert_equal(median, expected_median)
+
+    data = np.array([1, 2, 3, 4])
+    weights = np.array([1.0, 1.0, 1.0, 1.0])
+    median = mesmer.weighted.weighted_median(data, weights)
+
+    expected_median = 2.5
+    np.testing.assert_equal(median, expected_median)
+
+    data = np.array([1.0, 2.0, 3.0, np.nan, 4.0, 5.0])
+    weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+
+    median = mesmer.weighted.weighted_median(data, weights)
+    expected_median = 3.0
+    np.testing.assert_equal(median, expected_median)
+
+    # as the first case but un-sorted-data
+    data = np.array([5, 4, 2, 3, 1])
+    weights = np.array([0.2, 0.2, 0.2, 0.3, 0.1])
+
+    median = mesmer.weighted.weighted_median(data, weights)
+
+    expected_median = 3
+    np.testing.assert_equal(median, expected_median)

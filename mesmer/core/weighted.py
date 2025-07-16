@@ -3,7 +3,12 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
+from mesmer.core.datatree import (
+    _datatree_wrapper,
+    _unpool_scen_ens,
+    map_over_datasets,
+    pool_scen_ens,
+)
 
 
 def _weighted_if_dim(obj, weights, dims):
@@ -228,3 +233,124 @@ def equal_scenario_weights_from_datatree(
     weights = map_over_datasets(_create_weights, dt)
 
     return weights
+
+
+def get_weights_density(pred_data):
+    """generate inverse data-density weights
+
+    Generate weights for the each sample, based on the inverse of the density of the
+    predictors. More precisely, the density of the predictors is represented by a
+    multidimensional kernel density estimate using gaussian kernels where each
+    dimension is one of the predictors. Subsequently, the weights are the inverse
+    of this density of the predictors. Consequently, samples in regions of this
+    space with low density will have higher weights, this is, "unusual" samples
+    will have more weight.
+
+    Parameters
+    ----------
+    pred_data : xr.DataTree | xr.Dataset | np.array
+        Predictors for the training sample. Each node must be a scenario,
+        with a xarray dataset (time, member). Each predictor is a variable.
+
+    Returns
+    -------
+    weights : DataTree
+        Weights for the sample, based on the inverse of the density of the
+        predictors, summing to 1.
+
+    """
+
+    def _weights(data):
+        from scipy.stats import gaussian_kde
+
+        # representation with kernel-density estimate using gaussian kernels
+        # NB: more stable than np.histogramdd which has too many assumptions
+        kde_histogram = gaussian_kde(data)
+
+        # calculating density of points over the sample
+        density = kde_histogram.pdf(x=data)
+
+        # preparing the output
+        return (1 / density) / np.sum(1 / density)
+
+    def _weights_ds(ds):
+
+        if len(ds.dims) > 1:
+            msg = f"Can only handle 1D predictors, but pred_data has {len(ds.dims)}D"
+            raise ValueError(msg)
+
+        array_pred = ds.to_array("predictor")
+
+        (non_predictor_dim,) = set(array_pred.dims) - {"predictor"}
+
+        weights = xr.apply_ufunc(
+            _weights,
+            array_pred,
+            input_core_dims=[["predictor", non_predictor_dim]],
+            output_core_dims=[[non_predictor_dim]],
+        )
+
+        return weights
+
+    if isinstance(pred_data, xr.DataTree):
+
+        # reshaping data into array
+        # need an array where each predictor is a column in a np.array
+        # and all samples of that predictor is in one line
+        pred_stacked = pool_scen_ens(pred_data)
+
+        weights_stacked = _weights_ds(pred_stacked)
+        weights_stacked.name = "weights"
+
+        return _unpool_scen_ens(weights_stacked)
+
+    elif isinstance(pred_data, xr.Dataset):
+
+        return _weights_ds(pred_data).to_dataset(name="weights")
+
+    elif isinstance(pred_data, np.ndarray):
+        array_pred = pred_data
+        return _weights(array_pred)
+
+
+def weighted_median(data, weights):
+    """
+    Parameters
+    ----------
+      data : numpy.array
+        Data to calculate the median from.
+    weights:  numpy.array
+        Weights to apply
+
+    Returns
+    -------
+    weighted_median
+
+    References
+    ----------
+
+    Adapted form
+
+    https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
+    @author Jack Peterson (jack@tinybike.net)
+    """
+
+    weights = weights[~np.isnan(data)]
+    data = data[~np.isnan(data)]
+
+    indexer_array = np.argsort(data)
+    s_data = data[indexer_array]
+    s_weights = weights[indexer_array]
+
+    midpoint = 0.5 * np.sum(s_weights)
+
+    if any(weights > midpoint):
+        w_median = (data[weights == np.max(weights)])[0]
+    else:
+        cs_weights = np.cumsum(s_weights)
+        idx = np.where(cs_weights <= midpoint)[0][-1]
+        if any(cs_weights == midpoint):
+            w_median = np.mean(s_data[idx : idx + 2])
+        else:
+            w_median = s_data[idx + 1]
+    return w_median
