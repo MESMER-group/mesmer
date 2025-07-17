@@ -14,6 +14,7 @@ from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._optimizers import MinimizeOptions
 from mesmer.mesmer_x._utils import _ignore_warnings
 
+# random but fixed seed for basinhopping -> to increase reproducibility
 SEED_BASINHOPPING = 1931102249669598594
 
 
@@ -97,16 +98,18 @@ class _FirstGuess:
         _distrib_checks._check_no_nan_no_inf(data_targ, "target data")
         _distrib_checks._check_no_nan_no_inf(data_weights, "weights")
 
-        if predictor_names is None:
-            if data_pred is not None:
-                raise ValueError(
-                    "If data_pred is provided, predictor_names must be provided as well."
-                )
-            predictor_names = []
-        elif data_pred is None:
+        if predictor_names is None and data_pred is not None:
+            raise ValueError(
+                "If data_pred is provided, predictor_names must be provided as well."
+            )
+
+        if predictor_names is not None and data_pred is None:
             raise ValueError(
                 "If predictor_names is provided, data_pred must be provided as well."
             )
+
+        if predictor_names is None:
+            predictor_names = []
 
         self.predictor_names = predictor_names
         n_preds = len(self.predictor_names)
@@ -130,15 +133,7 @@ class _FirstGuess:
         self.data_targ = data_targ
 
         # smooting to help with location & scale
-        self.l_smooth = 5
-        self.smooth_targ = _smooth_data(data_targ, length=self.l_smooth)
-        self.smooth_targ_dev_sq = (
-            data_targ[self.l_smooth : -self.l_smooth] - self.smooth_targ
-        ) ** 2
-        self.smooth_pred = {
-            pp: _smooth_data(self.data_pred[pp], length=self.l_smooth)
-            for pp in self.predictor_names
-        }
+        self._prepare_smooth_data(data_pred, data_targ)
 
         self.data_weights = data_weights
 
@@ -154,6 +149,23 @@ class _FirstGuess:
                 f"expected {self.expression.n_coeffs} (number of coeffs in expression)",
                 f"got {len(self.fg_coeffs)}.",
             )
+
+    def _prepare_smooth_data(self, data_pred, data_targ):
+
+        l_smooth = 5
+
+        # smooting to help with location & scale
+        smooth_targ = _smooth_data(data_targ, length=l_smooth)
+        smooth_targ_dev_sq = (data_targ[l_smooth:-l_smooth] - smooth_targ) ** 2
+        smooth_pred = {
+            key: _smooth_data(data_pred[key], length=l_smooth)
+            for key in self.predictor_names
+        }
+
+        self.l_smooth = l_smooth
+        self.smooth_targ = smooth_targ
+        self.smooth_targ_dev_sq = smooth_targ_dev_sq
+        self.smooth_pred = smooth_pred
 
     # suppress nan & inf warnings
     @_ignore_warnings
@@ -274,24 +286,24 @@ class _FirstGuess:
             # representation of the trends
             m_smooth_targ = np.mean(self.smooth_targ)
             s_smooth_targ = np.std(self.smooth_targ)
-            ind_targ_low = np.where(self.smooth_targ < m_smooth_targ - s_smooth_targ)[0]
-            ind_targ_high = np.where(self.smooth_targ > m_smooth_targ + s_smooth_targ)[
-                0
-            ]
+
+            sel_targ_low = self.smooth_targ < (m_smooth_targ - s_smooth_targ)
+            sel_targ_high = self.smooth_targ > (m_smooth_targ + s_smooth_targ)
+
             mean_high_preds = {
-                pp: np.mean(self.smooth_pred[pp][ind_targ_high], axis=0)
+                pp: np.mean(self.smooth_pred[pp][sel_targ_high], axis=0)
                 for pp in self.predictor_names
             }
             mean_low_preds = {
-                pp: np.mean(self.smooth_pred[pp][ind_targ_low], axis=0)
+                pp: np.mean(self.smooth_pred[pp][sel_targ_low], axis=0)
                 for pp in self.predictor_names
             }
 
             derivative_targ = np.array(
                 [
                     _finite_difference(
-                        np.mean(self.smooth_targ[ind_targ_high]),
-                        np.mean(self.smooth_targ[ind_targ_low]),
+                        np.mean(self.smooth_targ[sel_targ_high]),
+                        np.mean(self.smooth_targ[sel_targ_low]),
                         mean_high_preds[pp],
                         mean_low_preds[pp],
                     )
@@ -400,6 +412,8 @@ class _FirstGuess:
         ):
             # Step 6: fit on LL^n (objective: improving all coefficients, necessary
             # to have all points within support. NB: NLL does not behave well enough here)
+
+            # NOTE: _fg_fun_nll_cubed only helps for threshold_min_proba
 
             localfit_opti = _optimizers._minimize(
                 func=self._fg_fun_nll_cubed,

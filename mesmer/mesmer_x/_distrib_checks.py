@@ -76,7 +76,7 @@ def _params_in_distr_support(expression: Expression, params, data):
     return True
 
 
-def _test_proba_value(expression: Expression, threshold_min_proba, params, data):
+def _targ_gt_min_proba(expression: Expression, threshold_min_proba, params, data_targ):
     """
     Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
     Ensures that data lies within a confidence interval of threshold_min_proba for the tested
@@ -85,7 +85,7 @@ def _test_proba_value(expression: Expression, threshold_min_proba, params, data)
     # NOTE: DONT write 'x=data', because 'x' may be called differently for some
     # distribution (eg 'k' for poisson).
 
-    cdf = expression.distrib.cdf(data, **params)
+    cdf = expression.distrib.cdf(data_targ, **params)
     return np.all(1 - cdf >= threshold_min_proba) and np.all(cdf >= threshold_min_proba)
 
 
@@ -162,7 +162,8 @@ def _validate_coefficients(
     if threshold_min_proba is None:
         return coeffs_in_bounds, params_in_bounds, params_in_support, True, params
 
-    test_proba = _test_proba_value(expression, threshold_min_proba, params, data_targ)
+    test_proba = _targ_gt_min_proba(expression, threshold_min_proba, params, data_targ)
+
     # return values for each test and the evaluated distribution
     return coeffs_in_bounds, params_in_bounds, params_in_support, test_proba, params
 

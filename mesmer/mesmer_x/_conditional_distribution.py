@@ -188,8 +188,8 @@ class ConditionalDistribution:
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
         """
+
         # correcting format: must be dict(str, DataArray or array) for Expression
-        # TODO: to change with stabilization of data format
         # NOTE: extremely important that the order is the right one
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
@@ -227,6 +227,7 @@ class ConditionalDistribution:
         target: xr.DataArray,
         weights: xr.DataArray,
         first_guess: xr.Dataset | None = None,
+        *,
         sample_dim: str = "sample",
     ):
         """
@@ -256,7 +257,6 @@ class ConditionalDistribution:
             Dataset of first guess for each coefficient of the conditional distribution as a
             data variable with the name of the coefficient.
         """
-        # TODO: some smoothing on first guess? cf 2nd fit with MESMER-X given results.
 
         # make fg with zeros if none
         if first_guess is None:
@@ -285,9 +285,6 @@ class ConditionalDistribution:
             target,
             weights,
             first_guess_da,
-            kwargs={
-                "predictor_names": predictor_names,
-            },
             input_core_dims=[
                 [sample_dim, "predictor"],
                 [sample_dim],
@@ -298,6 +295,9 @@ class ConditionalDistribution:
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
+            kwargs={
+                "predictor_names": predictor_names,
+            },
         )
 
         # creating a dataset with the coefficients
@@ -337,6 +337,7 @@ class ConditionalDistribution:
         predictors: dict[str, xr.DataArray] | xr.Dataset,
         target: xr.DataArray,
         weights: xr.DataArray,
+        *,
         sample_dim: str = "sample",
         scores=["func_optim", "nll", "bic"],
     ):
