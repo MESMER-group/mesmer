@@ -44,7 +44,7 @@ def test_first_guess_init_easy(expr):
     assert fg.expression == expr
 
     assert isinstance(fg.minimize_options, MinimizeOptions)
-    assert fg.minimize_options.method == "Powell"
+    assert fg.minimize_options.method == "Nelder-Mead"
     assert fg.minimize_options.tol is None
     assert fg.minimize_options.options is None
 
