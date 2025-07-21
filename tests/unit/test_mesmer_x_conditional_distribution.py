@@ -63,7 +63,6 @@ def test_ConditionalDistribution_custom_init():
         boundaries_coeffs=boundaries_coeffs,
     )
 
-
     MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
 
 
