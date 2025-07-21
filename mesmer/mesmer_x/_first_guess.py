@@ -133,7 +133,7 @@ class _FirstGuess:
         self.data_targ = data_targ
 
         # smooting to help with location & scale
-        self._prepare_smooth_data(data_pred, data_targ)
+        self._prepare_smooth_data(self.data_pred, self.data_targ)
 
         self.data_weights = data_weights
 
