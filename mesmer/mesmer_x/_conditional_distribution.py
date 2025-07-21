@@ -14,7 +14,7 @@ from mesmer.core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._first_guess import _FirstGuess
-from mesmer.mesmer_x._optimizers import MinimizeOptions, OptimizerFCNLL, OptimizerNLL
+from mesmer.mesmer_x._optimizers import MinimizeOptions, OptimizerNLL
 from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.stats import gaspari_cohn
 
@@ -26,7 +26,6 @@ class ConditionalDistribution:
         *,
         minimize_options: MinimizeOptions | None = None,
         second_minimizer: MinimizeOptions | None = None,
-        optimizer: OptimizerNLL | OptimizerFCNLL = OptimizerNLL(),
         threshold_min_proba=1.0e-9,
     ):
         """
@@ -43,12 +42,6 @@ class ConditionalDistribution:
             Run a second minimization algorithm for all steps. ``method="Powell"``
             is recommended. It can be beneficial to run more than one minimization
             to get a more stable estimate.
-        optimizer : OptimizerNLL | OptimizerFCNLL, default: OptimizerNLL
-            Optimizer to use.
-
-            * OptimizerNLL: negative log likelihood (default)
-            * OptimizerFCNLL: full conditional negative log likelihood based on the
-              stopping rule
 
         """
         # initialization
@@ -63,7 +56,9 @@ class ConditionalDistribution:
         self.expression = expression
         self.minimize_options = minimize_options
         self.second_minimizer = second_minimizer
-        self.optimizer = optimizer
+
+        # keep optimizer as attr (https://github.com/MESMER-group/mesmer/issues/729)
+        self._optimizer = OptimizerNLL()
         self._coefficients = None
 
         self.threshold_min_proba = threshold_min_proba
@@ -195,7 +190,7 @@ class ConditionalDistribution:
 
         # initialize optimizer function
         func = _optimizers._optimization_function(
-            optimizer=self.optimizer,
+            optimizer=self._optimizer,
             data_pred=data_pred,
             data_targ=data_targ,
             data_weights=data_weights,
@@ -429,7 +424,7 @@ class ConditionalDistribution:
             if score == "func_optim":
 
                 func = _optimizers._optimization_function(
-                    optimizer=self.optimizer,
+                    optimizer=self._optimizer,
                     data_pred=data_pred,
                     data_targ=data_targ,
                     data_weights=data_weights,
