@@ -401,7 +401,7 @@ class ConditionalDistribution:
                 [sample_dim],
                 [sample_dim],
             ],
-            output_core_dims=(set(), ) * n_scores,
+            output_core_dims=(set(),) * n_scores,
             kwargs={"scores": scores},
             vectorize=True,
             dask="parallelized",
@@ -422,46 +422,49 @@ class ConditionalDistribution:
         # correcting format: must be dict(str, DataArray or array) for Expression
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
-        # basic result: optimized value
-        if "func_optim" in scores:
+        # need to loop to ensure correct order
+        for score in scores:
 
-            func = _optimizers._optimization_function(
-                optimizer=self.optimizer,
-                data_pred=data_pred,
-                data_targ=data_targ,
-                data_weights=data_weights,
-                expression=self.expression,
-                threshold_min_proba=self.threshold_min_proba,
-            )
-            score = func(coefficients)
-            quality_scores.append(score)
+            # basic result: optimized value
+            if score == "func_optim":
 
-        # calculating parameters for the next ones
-        params = self.expression.evaluate_params(coefficients, data_pred)
+                func = _optimizers._optimization_function(
+                    optimizer=self.optimizer,
+                    data_pred=data_pred,
+                    data_targ=data_targ,
+                    data_weights=data_weights,
+                    expression=self.expression,
+                    threshold_min_proba=self.threshold_min_proba,
+                )
+                res = func(coefficients)
+                quality_scores.append(res)
 
-        # NLL averaged over sample
-        if "nll" in scores:
-            score = _optimizers._neg_loglike(
-                self.expression, data_targ, params, data_weights
-            )
-            quality_scores.append(score)
+            # calculating parameters for the next ones
+            params = self.expression.evaluate_params(coefficients, data_pred)
 
-        # BIC averaged over sample
-        if "bic" in scores:
-            score = _optimizers._bic(self.expression, data_targ, params, data_weights)
-            quality_scores.append(score)
+            # NLL averaged over sample
+            if score == "nll":
+                res = _optimizers._neg_loglike(
+                    self.expression, data_targ, params, data_weights
+                )
+                quality_scores.append(res)
 
-        # CRPS
-        if "crps" in scores:
-            score = _optimizers._crps(
-                self.expression,
-                data_targ,
-                data_pred,
-                data_weights,
-                coefficients,
-            )
+            # BIC averaged over sample
+            if score == "bic":
+                res = _optimizers._bic(self.expression, data_targ, params, data_weights)
+                quality_scores.append(res)
 
-            quality_scores.append(score)
+            # CRPS
+            if score == "crps":
+                res = _optimizers._crps(
+                    self.expression,
+                    data_targ,
+                    data_pred,
+                    data_weights,
+                    coefficients,
+                )
+
+                quality_scores.append(res)
 
         return tuple(quality_scores)
 
