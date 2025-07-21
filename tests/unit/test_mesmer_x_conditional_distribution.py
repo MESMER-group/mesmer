@@ -29,6 +29,15 @@ def test_ConditionalDistribution_errors():
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
         ConditionalDistribution(None, threshold_min_proba=0.6)
 
+    minimize_options = MinimizeOptions("Powell")
+
+    with pytest.raises(
+        ValueError, match="First and second minimizer have the same method"
+    ):
+        ConditionalDistribution(
+            None, minimize_options=minimize_options, second_minimizer=minimize_options
+        )
+
 
 def test_ConditionalDistribution_init_all_default(default_distrib):
     assert default_distrib.expression.expression == "norm(loc=c1 * __tas__, scale=c2)"
@@ -187,7 +196,7 @@ def test_ConditionalDistribution_func_optim_fcnll():
     np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
 
 
-def test_ConditionalDistribution_fit_wrongshapefg(default_distrib):
+def test_ConditionalDistribution_fit_wrong_shape_fg(default_distrib):
     rng = np.random.default_rng(0)
     n = 251
     pred = np.linspace(1, n, n)
@@ -214,6 +223,23 @@ def test_ConditionalDistribution_fit_wrongshapefg(default_distrib):
             predictors=pred,
             target=targ,
             weights=weights,
+            first_guess=fg,
+            sample_dim="time",
+        )
+
+
+def test_ConditionalDistribution_fit_predictors_wrong_type(default_distrib):
+
+    fg = xr.Dataset({"c1": 2.0, "c2": 0.1})
+
+    with pytest.raises(
+        TypeError,
+        match="predictors is supposed to be a dict of xr.DataArray or a xr.Dataset",
+    ):
+        default_distrib.fit(
+            predictors=None,
+            target=None,
+            weights=None,
             first_guess=fg,
             sample_dim="time",
         )

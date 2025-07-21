@@ -529,8 +529,7 @@ class ConditionalDistribution:
             Additional keyword arguments passed to ``xr.Dataset.to_netcf``
         """
 
-        coefficients = self.coefficients
-        coefficients.to_netcdf(filename, **kwargs)
+        self.coefficients.to_netcdf(filename, **kwargs)
 
 
 def _smooth_first_guess(
