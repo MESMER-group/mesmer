@@ -397,7 +397,7 @@ def test_first_guess_truncnorm():
 
     result = _FirstGuess(
         expression=expression,
-        minimize_options=MinimizeOptions(),
+        minimize_options=MinimizeOptions("Powell"),
         data_pred=None,
         data_targ=targ,
         data_weights=weights,
@@ -459,7 +459,7 @@ def test_fg_hypergeom():
     first_guess = [99, 9, 1]
     result = _FirstGuess(
         expression=expression,
-        minimize_options=MinimizeOptions(),
+        minimize_options=MinimizeOptions("Powell"),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
@@ -489,7 +489,7 @@ def test_fg_hypergeom():
 
     result_with_bounds = _FirstGuess(
         expression=expression,
-        minimize_options=MinimizeOptions(),
+        minimize_options=MinimizeOptions("Powell"),
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
