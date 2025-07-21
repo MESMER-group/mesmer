@@ -386,6 +386,8 @@ class ConditionalDistribution:
         _distrib_checks._check_no_nan_no_inf(target, "target data")
         _distrib_checks._check_no_nan_no_inf(weights, "weights")
 
+        n_scores = len(scores)
+
         # compute for each gridpoint
         result = xr.apply_ufunc(
             self._compute_quality_scores_np,
@@ -399,14 +401,16 @@ class ConditionalDistribution:
                 [sample_dim],
                 [sample_dim],
             ],
-            output_core_dims=[["score"]],
+            output_core_dims=(set(), ) * n_scores,
             kwargs={"scores": scores},
             vectorize=True,
             dask="parallelized",
-            output_dtypes=[float],
+            output_dtypes=[float] * n_scores,
         )
-        result["score"] = scores
-        return xr.Dataset({"scores": result})
+
+        data_vars = {key: score for key, score in zip(scores, result)}
+
+        return xr.Dataset(data_vars)
 
     def _compute_quality_scores_np(
         self, coefficients, data_pred, data_targ, data_weights, scores
@@ -416,7 +420,6 @@ class ConditionalDistribution:
         quality_scores = []
 
         # correcting format: must be dict(str, DataArray or array) for Expression
-        # TODO: to change with stabilization of data format
         data_pred = {key: data_pred[:, i] for i, key in enumerate(self.predictor_names)}
 
         # basic result: optimized value
@@ -459,7 +462,8 @@ class ConditionalDistribution:
             )
 
             quality_scores.append(score)
-        return np.array(quality_scores)
+
+        return tuple(quality_scores)
 
     @property
     def coefficients(self):

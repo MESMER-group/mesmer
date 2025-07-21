@@ -528,14 +528,15 @@ def test_ConditionalDistribution_compute_quality_scores(default_distrib):
         scores=["func_optim", "nll", "bic", "crps"],
     )
 
-    expected_scores = xr.DataArray(
-        np.array([-217.9307, -217.9307, -424.8105, 0.9363]),
-        name="scores",
-        dims=["score"],
-        coords={"score": ["func_optim", "nll", "bic", "crps"]},
-    )
+    data_vars = {
+        "func_optim": -217.9307,
+        "nll": -217.9307,
+        "bic": -424.8105,
+        "crps": 0.9363,
+    }
+    expected = xr.Dataset(data_vars=data_vars)
 
-    xr.testing.assert_allclose(scores.scores, expected_scores, rtol=1e-4)
+    xr.testing.assert_allclose(scores, expected, rtol=1e-4)
 
     # switching order should still work
     scores = ["crps", "func_optim", "bic", "nll"]
@@ -546,8 +547,8 @@ def test_ConditionalDistribution_compute_quality_scores(default_distrib):
         sample_dim="time",
         scores=scores,
     )
-    expected = expected_scores.sel(score=scores)
-    xr.testing.assert_allclose(result.scores, expected, rtol=1e-4)
+    # expected = expected_scores.sel(score=scores)
+    xr.testing.assert_allclose(result, expected, rtol=1e-4)
 
 
 def test_ConditionalDistribution_coeffs(default_distrib):
