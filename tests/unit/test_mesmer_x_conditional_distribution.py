@@ -537,6 +537,18 @@ def test_ConditionalDistribution_compute_quality_scores(default_distrib):
 
     xr.testing.assert_allclose(scores.scores, expected_scores, rtol=1e-4)
 
+    # switching order should still work
+    scores = ["crps", "func_optim", "bic", "nll"]
+    result = default_distrib.compute_quality_scores(
+        predictors=pred,
+        target=targ,
+        weights=weights,
+        sample_dim="time",
+        scores=scores,
+    )
+    expected = expected_scores.sel(score=scores)
+    xr.testing.assert_allclose(result.scores, expected, rtol=1e-4)
+
 
 def test_ConditionalDistribution_coeffs(default_distrib):
     with pytest.raises(ValueError, match="'coefficients' not set"):
