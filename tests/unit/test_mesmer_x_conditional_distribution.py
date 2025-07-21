@@ -66,9 +66,7 @@ def test_ConditionalDistribution_custom_init():
 
     threshold_min_proba = 0.1
 
-    minimize_options = MinimizeOptions(
-        "Powell", tol=1e-10, options={"maxiter": 10_000}
-    )
+    minimize_options = MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
 
     optimizer = OptimizerFCNLL(
         threshold_stopping_rule=2,
