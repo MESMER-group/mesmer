@@ -410,6 +410,7 @@ def test_first_guess_truncnorm():
     np.testing.assert_allclose(result, expected, rtol=0.3)
 
 
+@pytest.mark.filterwarnings("ignore:You selected a discrete distribution")
 def test_fg_binom():
     rng = np.random.default_rng(0)
     n = 251
@@ -438,6 +439,7 @@ def test_fg_binom():
     np.testing.assert_allclose(result, expected, rtol=0.2)
 
 
+@pytest.mark.filterwarnings("ignore:You selected a discrete distribution")
 def test_fg_hypergeom():
     # TODO: remove this test?
 

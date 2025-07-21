@@ -194,7 +194,8 @@ def test_expression_binom():
 
     expression_str = "binom(loc=c1, n=5, p=7)"
 
-    expr = Expression(expression_str, expr_name="name")
+    with pytest.warns(UserWarning, match="You selected a discrete distribution"):
+        expr = Expression(expression_str, expr_name="name")
 
     assert expr.expression == expression_str
     assert expr.expression_name == "name"

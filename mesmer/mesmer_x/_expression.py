@@ -138,6 +138,14 @@ class Expression:
         self.distrib = getattr(sp.stats, dist)
         self.is_distrib_discrete = dist in _DISCRETE_DISTRIBUTIONS
 
+        if self.is_distrib_discrete:
+            msg = (
+                "You selected a discrete distribution but these are not well tested. "
+                "They have integer parameters, which do not work well with minimization."
+                "Consider approximating it with a normal distribution. "
+            )
+            warnings.warn(msg)
+
     def _find_expr_parameters(self):
 
         # removing spaces that would hinder the identification
