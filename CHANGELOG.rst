@@ -7,6 +7,7 @@ v0.11.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 - Implemented new data structure using ``xr.DataTree``, see `Data structure using DataTree`_.
+- Integrated MESMER-X into the code base, see `Integration of MESMER-X`_.
 - Integrated MESMER-M into the code base, see `Integration of MESMER-M`_.
 - Added number of observations to the output of the AR process (`#395 <https://github.com/MESMER-group/mesmer/pull/395>`_).
   By `Victoria Bauer`_.
@@ -150,6 +151,7 @@ Integration of MESMER-X
 In the release the MESMER-X functionality is integrated into the MESMER Codebase.
 
 - Add MESMER-X functionality to the code base (`#432 <https://github.com/MESMER-group/mesmer/pull/432>`_)
+- Overall restructuring and refactoring of the MESMER-X code base (`#645 <https://github.com/MESMER-group/mesmer/pull/645>`_)
 - Some general refactoring and clean-up (`#437 <https://github.com/MESMER-group/mesmer/pull/437>`_,
   `#465 <https://github.com/MESMER-group/mesmer/pull/465>`_,
   `#466 <https://github.com/MESMER-group/mesmer/pull/466>`_,
@@ -169,7 +171,7 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
 - Enable to pass set values for loc and scale (only integers) and make scale parameter optional (`#597 <https://github.com/MESMER-group/mesmer/pull/597>`_).
 - Enable ``threshold_min_proba`` to be ``None`` in :py:class:`distrib_cov` (`#598 <https://github.com/MESMER-group/mesmer/pull/598>`_).
 - Also use Nelder-Mead fit in :py:meth:`distrib_cov._minimize` for ``option_NelderMead == "best_run"`` when Powell fit was not successful (`#600 <https://github.com/MESMER-group/mesmer/pull/600>`_).
-- Return `logpmf` for discrete distributions in :py:meth:`distrib_cov._fg_fun_LL_n()` (`#602 <https://github.com/MESMER-group/mesmer/pull/602>`_).
+- Return `logpmf` for discrete distributions in :py:meth:`distrib_cov._fg_fun_nll_cubed()` (`#602 <https://github.com/MESMER-group/mesmer/pull/602>`_).
 - Speed-up MESMER-X
 
   - add method to calculate params of a distribution (`#539 <https://github.com/MESMER-group/mesmer/pull/539>`_)
@@ -177,6 +179,7 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   - not broadcasting scalars (`#613 <https://github.com/MESMER-group/mesmer/pull/613>`_)
   - compiling the expression (`#614 <https://github.com/MESMER-group/mesmer/pull/614>`_).
 
+By `Yann Quilcaille`_ with `Victoria Bauer`_ and `Mathias Hauser`_.
 
 Integration of MESMER-M
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -2,12 +2,9 @@
 # Copyright (c) 2021 ETH Zurich, MESMER contributors listed in AUTHORS.
 # Licensed under the GNU General Public License v3.0 or later see LICENSE or
 # https://www.gnu.org/licenses/
-"""
-Refactored code for the training of distributions
-
-"""
 
 import math
+import warnings
 
 import numpy as np
 import scipy as sp
@@ -23,68 +20,87 @@ _DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 class Expression:
 
-    def __init__(self, expr, expr_name):
-        """conditional distribution: definition, interpretation and evaluation
+    def __init__(
+        self,
+        expr: str,
+        expr_name: str,
+        boundaries_params: dict | None = None,
+        boundaries_coeffs: dict | None = None,
+    ):
+        """Symbolic expression of a conditional distribution.
 
-        When initialized, the class identifies the distribution, inputs, parameters and
-        coefficients. Then, the next function would be evaluate(coefficients, inputs,
-        forced_shape) to assess the distribution given the provided values of
-        coefficients & inputs. NB language: the distribution depends on parameters
-        (loc, scale, etc), that are functions of inputs and coefficients.
+        When initialized, the class identifies the distribution, predictors, parameters and
+        coefficients. The expression is then compiled so that it can be evaluated.
 
         Parameters
         ----------
         expr : str
-            string describing the expression that will be used. Existing methods for
-            flexible conditional distributions don't provide the level of flexibility
-            that MESMER-X uses.
-            Requirements to follow to have the expression being understood:
-
-            - distribution: must be the name of a distribution in scipy stats (discrete
-              or continuous): https://docs.scipy.org/doc/scipy/reference/stats.html
-
-            - parameters: all names for the parameters of the distributions must be
-              provided: loc, scale, shape, mu, a, b, c, etc.
-
-            - coefficients: must be named "c#", with # being the number of the
-              coefficient: e.g. c1, c2, c3.
-
-            - inputs: any string that can be written as a variable in python, and
-              surrounded with "__": e.g. __GMT__, __X1__, __gmt_tm1__, but NOT
-              __gmt-1__, __#days__, __GMT, _GMT_ etc.
-
-            - equations: the equations for the evolutions must be written as it would be
-              normally. Names of packages should be included.
-              spaces dont matter in the equations
+            Mathematical expression of the conditional distribution as a string.
 
         expr_name : str
-            Name of the expression.
+            Name for the expression.
+
+        boundaries_params : dict, optional
+            Boundaries for the parameters. The keys are the names of the parameters, and
+            the values are lists of two elements, the lower and upper bounds. The default
+            is None, which will set the boundaries to [-inf, inf] for all parameters
+            found in the expression, except `scale` which must be positive, so the lower boundary
+            will be set to 0. These boundaries will later be enforced when fitting the conditional
+            distribution.
+
+        boundaries_coeffs : dict, optional
+            Boundaries for the coefficients. The keys are the names of the coefficients as
+            they are written in the expression, and the values are lists of two elements,
+            the lower and upper bounds. The default is None. These boundaries will later
+            be enforced when fitting the conditional distribution.
 
         Notes
         -----
-        - Forcing values of certain parameters (eg scale) to be positive: to implement
-          in class 'expression'?
-        - Forcing values of certain parameters (eg mu for poisson) to be integers: to
-          implement in class 'expression'?
-        - Reasons for not using sympy:
-          - sympy.stats does not have all required distributions (e.g. GEV) & all
-            required functions (e.g. log-likelihood)
-            -> so using scipy distributions with parameters as sympy expressions
-          - but these expressions dont deal well with numpy array, or even less with
-            xarray -> could, but tedious.
-          - And the result would be significantly slower than with numpy/xarray based
-            approaches like here.
+        A valid expression of a distribution contains the following elements:
+
+            - a distribution: must be the name of a distribution in `scipy.stats` (discrete
+              or continuous): https://docs.scipy.org/doc/scipy/reference/stats.html
+
+            - the parameters: all names for the parameters of the distributions must be
+              provided (as named in the `scipy.stats` distribution): loc, scale, shape,
+              mu, a, b, c, etc.
+
+            - predictors: predictors that the distribution will be conditional to, must
+              be written like a variable in python and surrounded by "__":
+              e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__, __GMT, _GMT_ etc.
+
+            - coefficients: coefficients of the predictors, must be named "c#", with # being
+              the number of the coefficient: e.g. c1, c2, c3.
+
+            - mathematical terms: mathematical terms for the evolutions are be written as they
+              would be normally in python. Names of packages should be included. Spaces do not
+              matter in the equations
+
+        .. warning::
+            Currently, the expression can only contain integers as numbers, no floats!
+
 
         Examples
         --------
-        - "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)"
-        - "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)"
-        - "exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3)"
+        `expr1 = Expression("genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5", "expr1")`
+        `expr2 = Expression("norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)", "expr2")`
+        `expr3 = Expression("exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3), "expr3")`
         """
+        # TODO: Forcing values of certain parameters (eg mu for poisson) to be integers?
 
         # basic initialization
         self.expression = expr
         self.expression_name = expr_name
+        # NOTE: default for the params cannot be {} because the dict is mutable and
+        # causes leaks in the tests
+
+        if boundaries_params is None:
+            boundaries_params = {}
+        self.boundaries_params = boundaries_params
+
+        if boundaries_coeffs is None:
+            boundaries_coeffs = {}
+        self.boundaries_coeffs = boundaries_coeffs
 
         # identify distribution
         self._interpret_distrib()
@@ -96,11 +112,13 @@ class Expression:
         # identify coefficients
         self._find_coefficients()
 
-        # identify inputs
-        self._find_inputs()
+        # identify predictors
+        self._find_predictors()
 
         # correct expressions of parameters
         self._correct_expr_parameters()
+
+        self._check_boundaries_coeffs()
 
         # compile expression for faster eval
         self._compile_expression()
@@ -119,6 +137,14 @@ class Expression:
 
         self.distrib = getattr(sp.stats, dist)
         self.is_distrib_discrete = dist in _DISCRETE_DISTRIBUTIONS
+
+        if self.is_distrib_discrete:
+            msg = (
+                "You selected a discrete distribution but these are not well tested. "
+                "They have integer parameters, which do not work well with minimization."
+                "Consider approximating it with a normal distribution. "
+            )
+            warnings.warn(msg)
 
     def _find_expr_parameters(self):
 
@@ -173,16 +199,17 @@ class Expression:
         elif self.distrib.name in _CONTINUOUS_DISTRIBUTIONS:
             self.parameters_list += ["loc", "scale"]
 
-        # prepary basic boundaries on parameters: incomplete, did not find a way to
-        # evaluate automatically the limits on shape parameters
+        # prepare boundaries on parameters
+        # default is [-inf, inf] except for scale which must be positive
+        # only set bounds for scale - avoids comparing values to deault of +- inf
+        if "scale" in self.parameters_list and "scale" not in self.boundaries_params:
+            self.boundaries_params["scale"] = [0, np.inf]
 
-        self.boundaries_parameters = {
-            p: [-np.inf, np.inf] for p in self.parameters_list
-        }
-
-        # scale must be positive
-        if "scale" in self.boundaries_parameters:
-            self.boundaries_parameters["scale"][0] = 0
+        if "scale" in self.boundaries_params and self.boundaries_params["scale"][0] < 0:
+            warnings.warn(
+                "Found lower boundary on scale parameter that is negative, setting to 0."
+            )
+            self.boundaries_params["scale"][0] = 0
 
     def _find_coefficients(self):
         """
@@ -218,25 +245,58 @@ class Expression:
                         # not a coefficient, move to the next
                         pass
 
-    def _find_inputs(self):
+        self.n_coeffs = len(self.coefficients_list)
 
-        self.inputs_list = []
+        coefficients_idx = {}
+        for param in self.parameters_list:
+            idx = [
+                self.coefficients_list.index(c) for c in self.coefficients_dict[param]
+            ]
+            coefficients_idx[param] = np.array(idx, dtype=int)
+
+        self.coefficients_idx = coefficients_idx
+
+        # save coefficient indices
+        loc_coeffs = self.coefficients_dict.get("loc", [])
+        self.ind_loc_coeffs = np.array(
+            [self.coefficients_list.index(c) for c in loc_coeffs]
+        )
+
+        scale_coeffs = self.coefficients_dict.get("scale", [])
+        self.ind_scale_coeffs = np.array(
+            [self.coefficients_list.index(c) for c in scale_coeffs]
+        )
+
+        other_params = [p for p in self.parameters_list if p not in ["loc", "scale"]]
+        if other_params:
+            fg_ind_others = []
+            for param in other_params:
+                for c in self.coefficients_dict[param]:
+                    fg_ind_others.append(self.coefficients_list.index(c))
+
+            self.ind_others = np.array(fg_ind_others)
+        else:
+            self.ind_others = np.array([])
+
+    def _find_predictors(self):
+
+        self.predictors_list = []
 
         for param in self.parameters_expressions:
             terms = str.split(self.parameters_expressions[param], "__")
             for i in np.array(terms)[np.arange(1, len(terms), 2)]:
-                if i not in self.inputs_list:
-                    self.inputs_list.append(i)
+                if i not in self.predictors_list:
+                    self.predictors_list.append(i)
 
         # require a specific order for use in correct_expr_parameters
-        self.inputs_list.sort(key=len, reverse=True)
+        self.predictors_list.sort(key=len, reverse=True)
 
     def _correct_expr_parameters(self):
-        # list of inputs and coefficients, sorted by descending length, to be sure that
+        # list of predictors and coefficients, sorted by descending length, to be sure that
         # when removing them, will remove the good ones and not those with their short
         # name contained in the long name of another
 
-        tmp_list = self.inputs_list + self.coefficients_list + ["__"]
+        tmp_list = self.predictors_list + self.coefficients_list + ["__"]
         tmp_list.sort(key=len, reverse=True)
 
         # making sure that the expression will be understood
@@ -245,7 +305,7 @@ class Expression:
             # 1. checking the names of packages
             expr = self.parameters_expressions[param]
 
-            # removing inputs and coefficients
+            # removing predictors and coefficients
             for x in tmp_list:
                 expr = expr.replace(x, "")
 
@@ -293,11 +353,21 @@ class Expression:
                 # TODO: would make sense to invert the logic here - move building 't'
                 # above the validity check
 
-            # replacing names of inputs in expressions
-            for i in self.inputs_list:
+            # replacing names of predictors in expressions
+            for i in self.predictors_list:
                 self.parameters_expressions[param] = self.parameters_expressions[
                     param
                 ].replace(f"__{i}__", i)
+
+    def _check_boundaries_coeffs(self):
+
+        for coeff in self.boundaries_coeffs:
+
+            if coeff not in self.coefficients_list:
+                raise ValueError(
+                    f"Provided wrong boundaries on coefficient, `{coeff}`"
+                    " does not exist in Expression"
+                )
 
     def _compile_expression(self):
         """compile expression for faster eval"""
@@ -307,9 +377,40 @@ class Expression:
             for param, expr in self.parameters_expressions.items()
         }
 
-    def evaluate_params(self, coefficients_values, inputs_values, forced_shape=None):
+    def _evaluate_params_fast(self, coefficients_values, predictors_values):
+        "as evaluate_params but without checks and coefficients_values as np.ndarray"
+
+        coefficients_values = {
+            c: coefficients_values[i] for i, c in enumerate(self.coefficients_list)
+        }
+
+        locals = {**coefficients_values, **predictors_values}
+
+        parameters_values = {}
+        for param, expr in self._compiled_param_expr.items():
+            parameters_values[param] = eval(expr, None, locals)
+
+        return parameters_values
+
+    def _evaluate_one_param_fast(self, coefficients_values, predictors_values, name):
+        "as _evaluate_params_fast but for one param only"
+
+        coefficients_values = {
+            c: coefficients_values[i]
+            for i, c in zip(
+                self.coefficients_idx[name], self.coefficients_dict[name], strict=True
+            )
+        }
+
+        locals = {**coefficients_values, **predictors_values}
+
+        return eval(self._compiled_param_expr[name], None, locals)
+
+    def evaluate_params(
+        self, coefficients_values, predictors_values, forced_shape=None
+    ):
         """
-        Evaluates the parameters for the provided inputs and coefficients
+        Evaluates the parameters for the provided predictors and coefficients
 
         Parameters
         ----------
@@ -318,23 +419,24 @@ class Expression:
             - dict(c_i = values or np.array())
             - xr.Dataset(c_i)
             - list of values
-        inputs_values : dict | xr.Dataset
+        predictors_values : dict | xr.Dataset
             Input arrays or scalars. Can be passed as
-            - dict(inp_i = values or np.array())
-            - xr.Dataset(inp_i)
+            - dict(pred_i = values or np.array())
+            - xr.Dataset(pred_i)
         forced_shape : None | tuple or list of dimensions
-            coefficients_values and inputs_values for transposition of the shape
+            coefficients_values and predictors_values for transposition of the shape.
+            Can include additional axes like 'realization'.
 
         Returns
         -------
         params: dict
             Realized parameters for the given expression, coefficients and covariates;
-            to pass ``self.distrib(**params)`` or it's methods.
+            to pass ``self.distrib(**params)`` or its methods.
 
         Warnings
         --------
-        with xarrays for coefficients_values and inputs_values, the outputs with have
-        for shape first the one of the coefficient, then the one of the inputs
+        with xarrays for coefficients_values and predictors_values, the outputs will have
+        for shape first the one of the coefficient, then the one of the predictors
         --> trying to avoid this issue with 'forced_shape'
         """
 
@@ -347,6 +449,8 @@ class Expression:
 
         # Check 1: are all the coefficients provided?
         if isinstance(coefficients_values, dict | xr.Dataset):
+            # raise TypeError()
+
             # case where provide explicit information on coefficients_values
             for c in self.coefficients_list:
                 if c not in coefficients_values:
@@ -361,28 +465,45 @@ class Expression:
                 c: coefficients_values[i] for i, c in enumerate(self.coefficients_list)
             }
 
-        # Check 2: are all the inputs provided?
-        for i in self.inputs_list:
-            if i not in inputs_values:
-                raise ValueError(f"Missing information for the input: '{i}'")
+        # Check 2: are all the predictors provided?
+        for pred in self.predictors_list:
+            if pred not in predictors_values:
+                raise ValueError(f"Missing information for the predictor: '{pred}'")
 
-        # Check 3: do the inputs have the same shape
-        shapes = {inputs_values[i].shape for i in self.inputs_list}
+        # Check 3: do the predictors have the same shape
+        shapes = {predictors_values[i].shape for i in self.predictors_list}
         if len(shapes) > 1:
-            raise ValueError("shapes of inputs must be equal")
+            raise ValueError("shapes of predictors must be equal")
 
         # gather coefficients and covariates (can't use d1 | d2, does not work for dataset)
-        locals = {**coefficients_values, **inputs_values}
+        locals = {**coefficients_values, **predictors_values}
 
         # evaluate parameters
         parameters_values = {}
         for param, expr in self._compiled_param_expr.items():
             parameters_values[param] = eval(expr, None, locals)
 
-        # possibly forcing shape
-        if forced_shape is not None and len(self.inputs_list) > 0:
+            # if constant parameter but varying predictors, need to broadcast
+            if (
+                isinstance(coefficients_values, xr.Dataset)
+                and len(self.predictors_list) > 0
+                and parameters_values[param].ndim == 1
+            ):
+                parameters_values[param], _ = xr.broadcast(
+                    parameters_values[param], predictors_values
+                )
 
+        # forcing the shape of the parameters if necessary
+        if forced_shape is not None and len(self.predictors_list) > 0:
             for param in self.parameters_list:
+                # Add missing dimensions in forced_shape (e.g., 'realization')
+                for dim in forced_shape:
+                    if dim not in parameters_values[param].dims:
+                        parameters_values[param] = parameters_values[param].expand_dims(
+                            dim=dim, axis=0
+                        )
+
+                # Transpose the parameters to match the forced shape
                 dims_param = [
                     d for d in forced_shape if d in parameters_values[param].dims
                 ]
@@ -392,9 +513,9 @@ class Expression:
 
         return parameters_values
 
-    def evaluate(self, coefficients_values, inputs_values, forced_shape=None):
+    def evaluate(self, coefficients_values, predictors_values, forced_shape=None):
         """
-        Evaluates the distribution with the provided inputs and coefficients
+        Evaluates the distribution with the provided predictors and coefficients
 
         Parameters
         ----------
@@ -403,12 +524,12 @@ class Expression:
             - dict(c_i = values or np.array())
             - xr.Dataset(c_i)
             - list of values
-        inputs_values : dict | xr.Dataset
+        predictors_values : dict | xr.Dataset
             Input arrays or scalars. Can be passed as
-            - dict(inp_i = values or np.array())
-            - xr.Dataset(inp_i)
+            - dict(pred_i = values or np.array())
+            - xr.Dataset(pred_i)
         forced_shape : None | tuple or list of dimensions
-            coefficients_values and inputs_values for transposition of the shape
+            coefficients_values and predictors_values for transposition of the shape
 
         Returns
         -------
@@ -417,179 +538,11 @@ class Expression:
 
         Warnings
         --------
-        with xarrays for coefficients_values and inputs_values, the outputs with have
-        for shape first the one of the coefficient, then the one of the inputs
-        --> trying to avoid this issue with 'forced_shape'
+        with xarrays for coefficients_values and predictors_values, the outputs will have
+        the dimensions of the coefficients first, then the ones of the predictors
         """
 
-        params = self.evaluate_params(coefficients_values, inputs_values, forced_shape)
+        params = self.evaluate_params(
+            coefficients_values, predictors_values, forced_shape
+        )
         return self.distrib(**params)
-
-
-def probability_integral_transform(
-    data,
-    target_name,
-    expr_start,
-    expr_end,
-    coeffs_start=None,
-    preds_start=None,
-    coeffs_end=None,
-    preds_end=None,
-):
-    """
-    Probability integral transform of the data given parameters of a given distribution
-    into their equivalent in a standard normal distribution.
-
-    Parameters
-    ----------
-    data : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint', and one
-        2D variable with both coordinates
-    target_name : str
-        name of the variable to train
-    expr_start : str
-        string describing the starting expression
-    expr_end : str
-        string describing the starting expression
-    preds_start : not sure yet what data format will be used at the end.
-        Covariants of the starting expression. Default: empty Dataset.
-    coeffs_start : xarray dataset
-        Coefficients of the starting expression. Default: empty Dataset.
-    preds_end : not sure yet what data format will be used at the end.
-        Covariants of the ending expression. Default: empty Dataset.
-    coeffs_end : xarray dataset
-        Coefficients of the ending expression. Default: empty Dataset.
-
-    Returns
-    -------
-    transf_inputs : not sure yet what data format will be used at the end.
-        Assumed to be a xarray Dataset with coordinates 'time' and 'gridpoint' and one
-        2D variable with both coordinates
-
-    Notes
-    -----
-    Assumptions:
-    - Context: The transformation may fail if the values are very unlikely, leading to a
-      CDF equal or too close from 0 or 1, which will raise issues.
-    - Current solution: During training, this problem is avoided thanks to the option
-      'threshold_min_proba', meaning that all points in sample would have a minimum
-      probability.
-    - Limit to solution: However, if transforming a sample not used during sample, and
-      in a domain not represented in the training sample, it may cause issues.
-    - Additional fix: If this situation is encountered, I suggest to block the CDF
-      values 'cdf_item' within a domain: values with a probability of 1.e-99 could be
-      forced to 1.e-9. Unless someone has a better idea! :D
-    Disclaimer:
-    - TODO
-    can only take 2D input aka only one realisation for the back-transformation
-
-    """
-    # preparation of distributions
-    expression_start = Expression(expr_start, "start")
-    expression_end = Expression(expr_end, "end")
-
-    if coeffs_start is None:
-        coeffs_start = xr.Dataset()
-    if coeffs_end is None:
-        coeffs_end = xr.Dataset()
-
-    # transformation
-    out = []
-
-    # loop to change with new data structure of MESMER
-    for i, item in enumerate(data):
-        data_item, scen = item
-        if preds_start is None:
-            preds_start_item = xr.Dataset()
-        else:
-            preds_start_item = preds_start[i][0]
-
-        if preds_end is None:
-            preds_end_item = xr.Dataset()
-        else:
-            preds_end_item = preds_end[i][0]
-
-        print(f"Transforming {target_name}: {scen}", end="\r")
-
-        # calculation distributions for this scenario
-        params_start = expression_start.evaluate_params(
-            coeffs_start, preds_start_item, forced_shape=data_item[target_name].dims
-        )
-
-        params_end = expression_end.evaluate_params(
-            coeffs_end, preds_end_item, forced_shape=data_item[target_name].dims
-        )
-
-        # probabilities of the sample on the starting distribution
-        cdf_item = expression_start.distrib.cdf(data_item[target_name], **params_start)
-
-        # corresponding values on the ending distribution
-        transf_item = expression_end.distrib.ppf(cdf_item, **params_end)
-
-        # archiving
-        out.append((transf_item, scen))
-
-    return out
-
-
-def weighted_median(data, weights):
-    """
-    Args:
-      data (list or numpy.array): data
-      weights (list or numpy.array): weights
-
-    Source:
-      https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
-      @author Jack Peterson (jack@tinybike.net)
-    """
-    data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
-    s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
-    midpoint = 0.5 * sum(s_weights)
-
-    if any(weights > midpoint):
-        w_median = (data[weights == np.max(weights)])[0]
-    else:
-        cs_weights = np.cumsum(s_weights)
-        idx = np.where(cs_weights <= midpoint)[0][-1]
-        if cs_weights[idx] == midpoint:
-            w_median = np.mean(s_data[idx : idx + 2])
-        else:
-            w_median = s_data[idx + 1]
-    return w_median
-
-
-def listxrds_to_np(listds, name_var, forcescen, coords=None):
-    """
-    **Temporary** function to prepare the format of inputs for training. This is meant
-    to be used ONLY before the format of MESMERv1 data is confirmed.
-
-    Parameters
-    ----------
-    listds : list of xr Dataset
-        predictors or target.
-    name_var : str
-        name of the variable to select.
-    forcescen : list of str
-        names of the scenarios to select, in this specific order. used to ensure the
-        consistency between predictors & target.
-    coords : dict
-        default None (no selection). Otherwise, will loop over keys & values of
-        dictionary to select in listds.
-    """
-    # looping over scenarios
-    tmp = []
-
-    for scen in forcescen:
-
-        # could be replaced with a while, but still a quick loop
-        for item in listds:
-
-            if item[1] == scen:
-                # for each scenario, creating one unique series: consistency of members &
-                # scenarios have to be ensured while loading data
-                if coords is not None:
-                    tmp.append(item[0][name_var].loc[coords].values.flatten())
-                else:
-                    tmp.append(item[0][name_var].values.flatten())
-
-    return np.hstack(tmp)

@@ -1,5 +1,3 @@
-import pathlib
-
 import filefisher
 import pytest
 import xarray as xr
@@ -23,8 +21,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     seed = 0
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
+    test_path = test_data_root_dir / "output" / "tas" / "mon"
     cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
@@ -44,7 +41,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     ).load()
 
     PARAM_FILEFINDER = filefisher.FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
@@ -105,7 +102,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     result = result.to_dataset(name="tas")
 
     # save
-    test_file = TEST_PATH / "test_mesmer_m_realisations_expected.nc"
+    test_file = test_path / "test_mesmer_m_realisations_expected.nc"
     if update_expected_files:
         result.to_netcdf(test_file)
         pytest.skip("Updated emulations.")
