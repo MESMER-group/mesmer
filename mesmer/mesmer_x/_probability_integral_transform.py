@@ -64,14 +64,17 @@ class ProbabilityIntegralTransform:
         target_name : str
             name of the variable to transform
         preds_orig : Datatree | xr.Dataset | None
-            Covariants for the original distribution. If None, ?.
+            Covariants for the original distribution. Pass None, if `distrib_orig` does
+            not require any.
         preds_targ : Datatree | xr.Dataset | None
-            Covariants of the target distribution. If None, ?.
+            Covariants of the target distribution. Pass None, if `distrib_targ` does
+            not require any.
         threshold_proba : float, default: 1.e-9.
             Threshold for the probability of the sample on the original distribution.
             The probabilities of samples outside this threshold (on both sides of the distribtion)
             will be set to the threshold. This should avoid very unlikely values
-        Returns1
+
+        Returns
         -------
         transf_inputs : DataTree | xr.Dataset
             Transformed data.
