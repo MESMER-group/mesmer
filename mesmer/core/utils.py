@@ -64,7 +64,7 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
 
     Raises
     ------
-    ValueError : if `func` returns negative infinity for any input.
+    ValueError : if `func` returns negative infinity for any input or all elements are `inf`.
 
     Notes
     -----
@@ -76,25 +76,35 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
     # ensure it's a list because we cannot get an item from an iterable
     sequence = list(sequence)
     element = None
+    posinf_positions = list()
 
     for i, element in enumerate(sequence):
 
         res = func(element, **kwargs)
 
         if np.isneginf(res):
-            raise ValueError("`fun` returned `-inf`")
+            raise ValueError(f"`fun` returned `-inf` at position '{i}'")
         # skip element if inf is returned - not sure about this?
         elif np.isinf(res):
-            warnings.warn("`fun` returned `inf`", OptimizeWarning)
+            posinf_positions.append(str(i))
 
-        if res < current_min:
+        if res <= current_min:
             current_min = res
         else:
             # need to return element from the previous iteration
             sel = i - 1
             if sel == 0:
                 warnings.warn("First element is local minimum.", OptimizeWarning)
+
+            if posinf_positions:
+                positions = "', '".join(posinf_positions)
+                msg = f"`fun` returned `inf` at position(s) '{positions}'"
+                warnings.warn(msg, OptimizeWarning)
+
             return sequence[sel]
+
+    if np.isinf(res):
+        raise ValueError("`fun` returned `inf` for all positions")
 
     warnings.warn("No local minimum found, returning the last element", OptimizeWarning)
 
