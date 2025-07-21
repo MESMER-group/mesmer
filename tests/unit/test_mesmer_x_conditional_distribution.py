@@ -47,7 +47,7 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
 
     assert default_distrib.threshold_min_proba == 1e-09
 
-    assert default_distrib.minimize_options.method == "Powell"
+    assert default_distrib.minimize_options.method == "Nelder-Mead"
     assert default_distrib.minimize_options.tol is None
     assert default_distrib.minimize_options.options is None
 
@@ -67,7 +67,7 @@ def test_ConditionalDistribution_custom_init():
     threshold_min_proba = 0.1
 
     minimize_options = MinimizeOptions(
-        "Nelder-Mead", tol=1e-10, options={"maxiter": 10_000}
+        "Powell", tol=1e-10, options={"maxiter": 10_000}
     )
 
     optimizer = OptimizerFCNLL(
@@ -92,7 +92,7 @@ def test_ConditionalDistribution_custom_init():
 
     assert distrib.threshold_min_proba == threshold_min_proba
 
-    assert distrib.minimize_options.method == "Nelder-Mead"
+    assert distrib.minimize_options.method == "Powell"
     assert distrib.minimize_options.tol == 1e-10
     assert distrib.minimize_options.options == {"maxiter": 10_000}
 
