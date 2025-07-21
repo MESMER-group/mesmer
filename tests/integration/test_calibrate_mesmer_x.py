@@ -63,7 +63,7 @@ from mesmer.mesmer_x._optimizers import MinimizeOptions
             ["tas", "hfds"],
             "norm(loc=c1 + c2 * __tas__ + c3 * __hfds__, scale=c4)",
             "expr3",
-            "Nelder-Mead",
+            "Powell",
             False,
             "tasmax/multi_scen_multi_ens",
             marks=pytest.mark.slow,

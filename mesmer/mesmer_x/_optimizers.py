@@ -16,7 +16,7 @@ class MinimizeOptions:
 
     def __init__(
         self,
-        method: str = "Powell",
+        method: str = "Nelder-Mead",
         tol: float | None = None,
         options: dict | None = None,
         # on_fail : Literal["error", "warn", "ignore"]="error",
@@ -25,7 +25,7 @@ class MinimizeOptions:
 
         Parameters
         ----------
-        method : str
+        method : str, default: "Nelder-Mead"
             Type of solver. See scipy.optimize.minimize
         tol : float | None, default: None
             Tolerance for termination. When tol is specified, the selected minimization
