@@ -9,7 +9,7 @@ analyze the results.
 
 from importlib.metadata import version as _get_version
 
-from mesmer import calibrate_mesmer, _core, create_emulations, io, stats, testing, utils
+from mesmer import _core, calibrate_mesmer, create_emulations, io, stats, testing, utils
 from mesmer._core import _data as data
 from mesmer._core import (
     anomaly,
