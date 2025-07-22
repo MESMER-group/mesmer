@@ -10,9 +10,8 @@ from mesmer.mesmer_x import (
     ConditionalDistribution,
     Expression,
     MinimizeOptions,
-    OptimizerFCNLL,
-    OptimizerNLL,
 )
+from mesmer.mesmer_x._conditional_distribution import OptimizerNLL
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -51,53 +50,20 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
     assert default_distrib.minimize_options.tol is None
     assert default_distrib.minimize_options.options is None
 
-    assert isinstance(default_distrib.optimizer, OptimizerNLL)
+    assert isinstance(default_distrib._optimizer, OptimizerNLL)
 
 
 def test_ConditionalDistribution_custom_init():
     boundaries_params = {"loc": [-10, 10], "scale": [0, 1]}
     boundaries_coeffs = {"c1": [0, 5], "c2": [0, 1]}
-    expression = Expression(
+    Expression(
         "norm(loc=c1 * __tas__, scale=c2)",
         expr_name="exp1",
         boundaries_params=boundaries_params,
         boundaries_coeffs=boundaries_coeffs,
     )
 
-    threshold_min_proba = 0.1
-
-    minimize_options = MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
-
-    optimizer = OptimizerFCNLL(
-        threshold_stopping_rule=2,
-        ind_year_thres=10,
-        exclude_trigger=True,
-    )
-
-    distrib = ConditionalDistribution(
-        expression,
-        minimize_options=minimize_options,
-        optimizer=optimizer,
-        threshold_min_proba=threshold_min_proba,
-    )
-
-    assert distrib.expression.boundaries_params == {
-        "loc": [-10, 10],
-        "scale": [0, 1.0],
-    }
-    assert distrib.expression.n_coeffs == 2
-    assert distrib.expression.boundaries_coeffs == boundaries_coeffs
-
-    assert distrib.threshold_min_proba == threshold_min_proba
-
-    assert distrib.minimize_options.method == "Powell"
-    assert distrib.minimize_options.tol == 1e-10
-    assert distrib.minimize_options.options == {"maxiter": 10_000}
-
-    assert isinstance(distrib.optimizer, OptimizerFCNLL)
-    assert distrib.optimizer.threshold_stopping_rule == 2
-    assert distrib.optimizer.exclude_trigger  # is True
-    assert distrib.optimizer.ind_year_thres == 10
+    MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
 
 
 def test_ConditionalDistribution_fit(default_distrib):
@@ -125,73 +91,6 @@ def test_ConditionalDistribution_fit(default_distrib):
 
     np.testing.assert_allclose(default_distrib.coefficients.c1, c1, atol=1.0e-4)
     np.testing.assert_allclose(default_distrib.coefficients.c2, c2, atol=0.0015)
-
-
-def test_OptimizerFCNLL_errors():
-
-    match = "`threshold_stopping_rule` must be larger than 1"
-    with pytest.raises(ValueError, match=match):
-        OptimizerFCNLL(
-            threshold_stopping_rule=0.1,
-            ind_year_thres=100,
-            exclude_trigger=True,
-        )
-
-
-@pytest.mark.xfail(reason="https://github.com/MESMER-group/mesmer/issues/729")
-def test_ConditionalDistribution_func_optim_fcnll():
-    expr = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")
-
-    optimizer = OptimizerFCNLL(
-        threshold_stopping_rule=10,
-        ind_year_thres=10,  # TODO: what to choose?
-        exclude_trigger=True,
-    )
-    distrib = ConditionalDistribution(expr, optimizer=optimizer)
-
-    rng = np.random.default_rng(0)
-    n = 251
-    pred = np.linspace(1, n, n)
-    c1 = 2.0
-    c2 = 0.1
-    targ = distrib.expression.distrib.rvs(
-        loc=c1 * pred, scale=c2, size=n, random_state=rng
-    )
-    pred = {"tas": xr.DataArray(pred, dims=["time"])}
-    targ = xr.DataArray(targ, dims=["time"], name="tas")
-    weights = xr.ones_like(targ)
-    weights.name = "weight"
-    first_guess = xr.Dataset({"c1": c1, "c2": c2})
-
-    # Fit the distribution
-    distrib.fit(
-        predictors=pred,
-        target=targ,
-        weights=weights,
-        first_guess=first_guess,
-        sample_dim="time",
-    )
-
-    np.testing.assert_allclose(distrib.coefficients.c1, c1, atol=1.0e-4)
-    np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
-
-    # test with exclude_trigger False
-    optimizer = OptimizerFCNLL(
-        threshold_stopping_rule=2,
-        ind_year_thres=10,  # TODO: what to choose
-        exclude_trigger=False,
-    )
-    distrib = ConditionalDistribution(expr, optimizer=optimizer)
-    distrib.fit(
-        predictors=pred,
-        target=targ,
-        first_guess=first_guess,
-        weights=weights,
-        sample_dim="time",
-    )
-
-    np.testing.assert_allclose(distrib.coefficients.c1, c1, atol=1.0e-4)
-    np.testing.assert_allclose(distrib.coefficients.c2, c2, atol=0.0015)
 
 
 def test_ConditionalDistribution_fit_wrong_shape_fg(default_distrib):
