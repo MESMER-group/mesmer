@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.core.geospatial import geodist_exact
+from mesmer._core.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn, gaspari_cohn_correlation_matrices
 from mesmer.testing import assert_dict_allclose
 

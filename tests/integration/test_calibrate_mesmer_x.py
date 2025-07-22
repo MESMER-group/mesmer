@@ -196,11 +196,11 @@ def test_calibrate_mesmer_x(
 
     # stack datasets
     # weights
-    weights = mesmer.core.weighted.get_weights_density(pred_data=pred_data)
+    weights = mesmer._core.weighted.get_weights_density(pred_data=pred_data)
 
     # stacking
     stacked_pred, stacked_targ, stacked_weights = (
-        mesmer.core.datatree.broadcast_and_pool_scen_ens(
+        mesmer._core.datatree.broadcast_and_pool_scen_ens(
             predictors=pred_data,
             target=targ_data,
             weights=weights,
@@ -269,7 +269,7 @@ def test_calibrate_mesmer_x(
 
     # estimate covariance matrix
     # prep distance matrix
-    geodist = mesmer.core.geospatial.geodist_exact(
+    geodist = mesmer._core.geospatial.geodist_exact(
         lon=targ_data["historical"].lon, lat=targ_data["historical"].lat
     )
     # prep localizer (relatively coarse)

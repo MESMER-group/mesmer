@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
+from mesmer._core.utils import LinAlgWarning, _check_dataarray_form, _check_dataset_form
 from mesmer.stats import _auto_regression
 from mesmer.testing import trend_data_1D, trend_data_2D, trend_data_3D
 

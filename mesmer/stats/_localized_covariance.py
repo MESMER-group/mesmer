@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 import xarray as xr
 
-from mesmer.core.utils import (
+from mesmer._core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _create_equal_dim_names,

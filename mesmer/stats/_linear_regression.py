@@ -1,8 +1,8 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.utils import (
+from mesmer._core.datatree import _datatree_wrapper
+from mesmer._core.utils import (
     _check_dataarray_form,
     _check_dataset_form,
     _to_set,

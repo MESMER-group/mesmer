@@ -7,7 +7,7 @@ import numpy as np
 import pyproj
 import xarray as xr
 
-from mesmer.core.utils import _create_equal_dim_names
+from mesmer._core.utils import _create_equal_dim_names
 
 
 def geodist_exact(

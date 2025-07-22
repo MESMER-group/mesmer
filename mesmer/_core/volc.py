@@ -2,9 +2,9 @@ import warnings
 
 import xarray as xr
 
-from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
+from mesmer._core._data import load_stratospheric_aerosol_optical_depth_obs
+from mesmer._core.datatree import _datatree_wrapper
+from mesmer._core.utils import _assert_annual_data, _check_dataarray_form
 from mesmer.stats import LinearRegression
 
 

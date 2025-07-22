@@ -4,7 +4,7 @@ import pytest
 import threadpoolctl
 
 import mesmer
-from mesmer.core.utils import _set_threads_from_options
+from mesmer._core.utils import _set_threads_from_options
 
 
 @pytest.mark.parametrize("invalid_option", [None, "None", "__foo__"])
@@ -17,7 +17,7 @@ def test_option_invalid_error(invalid_option) -> None:
 
 def test_options_threads_errors() -> None:
 
-    default = mesmer.core.options.OPTIONS["threads"]
+    default = mesmer._core.options.OPTIONS["threads"]
     assert default == "default"
 
     msg = "'threads' must be 'default', a positive integer or None"

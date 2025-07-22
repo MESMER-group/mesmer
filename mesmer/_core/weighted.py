@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import (
+from mesmer._core.datatree import (
     _datatree_wrapper,
     _unpool_scen_ens,
     map_over_datasets,

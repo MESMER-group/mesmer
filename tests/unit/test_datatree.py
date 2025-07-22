@@ -4,8 +4,8 @@ import xarray as xr
 from packaging.version import Version
 
 import mesmer
-from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.datatree import _datatree_wrapper, map_over_datasets
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -431,8 +431,8 @@ def test_pool_scen_ens_keep_other_dims():
 
     result = mesmer.datatree.pool_scen_ens(dt)
 
-    mesmer.core.utils._check_dataset_form(result, "result", required_vars="var")
-    mesmer.core.utils._check_dataarray_form(
+    mesmer._core.utils._check_dataset_form(result, "result", required_vars="var")
+    mesmer._core.utils._check_dataarray_form(
         result["var"],
         "result.var",
         ndim=2,
