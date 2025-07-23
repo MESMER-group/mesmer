@@ -88,6 +88,19 @@ def test_lr_params():
     xr.testing.assert_equal(ds, lr.params)
 
 
+def test_lr_from_params():
+
+    with pytest.raises(TypeError, match="Expected params to be an xr.Dataset"):
+        mesmer.stats.LinearRegression.from_params(None)
+
+    with pytest.raises(ValueError, match="missing the required data_vars"):
+        mesmer.stats.LinearRegression.from_params(xr.Dataset())
+
+    ds = xr.Dataset(data_vars={"intercept": 5, "fit_intercept": True, "tas": 5})
+    lr = mesmer.stats.LinearRegression.from_params(ds)
+    xr.testing.assert_equal(ds, lr.params)
+
+
 @pytest.mark.parametrize("as_2D", [True, False])
 @pytest.mark.parametrize("data_type", ["dict", "xr_dataset"])
 def test_lr_predict(as_2D, data_type):

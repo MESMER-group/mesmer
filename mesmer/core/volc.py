@@ -161,8 +161,7 @@ def _predict_volcanic_contribution(time, hist_period, params, version="2022"):
     aod = _load_and_align_strat_aod_obs(time, hist_period, version=version)
 
     # set up linear regression model
-    lr = LinearRegression()
-    lr.params = params
+    lr = LinearRegression.from_params(params)
 
     # estimate volcanic contribution
     volcanic_contribution = lr.predict({"aod": aod})

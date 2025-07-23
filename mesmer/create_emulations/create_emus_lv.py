@@ -267,8 +267,7 @@ def create_emus_lv_OLS(params_lv, preds_lv):
 
             params = _gather_lr_params(params_lv, targ, dims="gridpoint")
 
-            lr = LinearRegression()
-            lr.params = params
+            lr = LinearRegression.from_params(params)
             prediction = lr.predict(predictors=preds)
 
             emus_lv[scen][targ] = prediction.prediction.values.transpose()
