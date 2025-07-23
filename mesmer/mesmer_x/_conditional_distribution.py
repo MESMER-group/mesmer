@@ -8,9 +8,9 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer.core.geospatial import geodist_exact
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.core.weighted import weighted_median
+from mesmer._core.geospatial import geodist_exact
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.weighted import weighted_median
 from mesmer.mesmer_x import _distrib_checks, _optimizers
 from mesmer.mesmer_x._expression import Expression
 from mesmer.mesmer_x._first_guess import _FirstGuess

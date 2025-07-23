@@ -5,7 +5,7 @@ import xarray as xr
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 

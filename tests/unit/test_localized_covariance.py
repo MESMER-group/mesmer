@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
+from mesmer._core.utils import LinAlgWarning, _check_dataarray_form
 from mesmer.stats._localized_covariance import (
     _adjust_ecov_ar1_np,
     _ecov_crossvalidation,

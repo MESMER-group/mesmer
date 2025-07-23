@@ -109,7 +109,7 @@ Example and test data
 .. autosummary::
    :toctree: generated/
 
-   ~core.example_data.cmip6_ng_path
+   ~_core.example_data.cmip6_ng_path
 
 Grid manipulation
 -----------------
@@ -117,12 +117,12 @@ Grid manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~core.grid.wrap_to_180
-   ~core.grid.wrap_to_360
-   ~core.grid.stack_lat_lon
-   ~core.grid.unstack_lat_lon_and_align
-   ~core.grid.unstack_lat_lon
-   ~core.grid.align_to_coords
+   ~_core.grid.wrap_to_180
+   ~_core.grid.wrap_to_360
+   ~_core.grid.stack_lat_lon
+   ~_core.grid.unstack_lat_lon_and_align
+   ~_core.grid.unstack_lat_lon
+   ~_core.grid.align_to_coords
 
 Masking regions
 ---------------
@@ -130,9 +130,9 @@ Masking regions
 .. autosummary::
    :toctree: generated/
 
-   ~core.mask.mask_ocean_fraction
-   ~core.mask.mask_ocean
-   ~core.mask.mask_antarctica
+   ~_core.mask.mask_ocean_fraction
+   ~_core.mask.mask_ocean
+   ~_core.mask.mask_antarctica
 
 Weighted operations: calculate global mean
 ------------------------------------------
@@ -140,10 +140,10 @@ Weighted operations: calculate global mean
 .. autosummary::
    :toctree: generated/
 
-   ~core.weighted.global_mean
-   ~core.weighted.lat_weights
-   ~core.weighted.weighted_mean
-   ~core.weighted.equal_scenario_weights_from_datatree
+   ~_core.weighted.global_mean
+   ~_core.weighted.lat_weights
+   ~_core.weighted.weighted_mean
+   ~_core.weighted.equal_scenario_weights_from_datatree
 
 Geospatial
 ----------
@@ -151,7 +151,7 @@ Geospatial
 .. autosummary::
    :toctree: generated/
 
-   ~core.geospatial.geodist_exact
+   ~_core.geospatial.geodist_exact
 
 
 Anomalies
@@ -160,7 +160,7 @@ Anomalies
 .. autosummary::
    :toctree: generated/
 
-   ~core.anomaly.calc_anomaly
+   ~_core.anomaly.calc_anomaly
 
 
 Emulator functions
@@ -172,5 +172,5 @@ Volcanic influence
 .. autosummary::
    :toctree: generated/
 
-   ~core.volc.fit_volcanic_influence
-   ~core.volc.superimpose_volcanic_influence
+   ~_core.volc.fit_volcanic_influence
+   ~_core.volc.superimpose_volcanic_influence

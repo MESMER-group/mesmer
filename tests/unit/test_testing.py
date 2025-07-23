@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 from mesmer.testing import (
     assert_allclose_allowed_failures,
     assert_dict_allclose,

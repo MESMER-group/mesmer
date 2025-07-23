@@ -2,8 +2,8 @@ import numpy as np
 import regionmask
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.types import T_DataArraySetTree
+from mesmer._core.datatree import _datatree_wrapper
+from mesmer._core.types import T_DataArraySetTree
 
 
 def _where_if_coords(obj, cond, coords):
