@@ -385,7 +385,9 @@ def test_check_dataarray_form_required_coords():
     # x & y are dims but not coords
     for required_coords in ("foo", ["foo"], ["foo", "bar"], "x", "y"):
         with pytest.raises(ValueError, match="obj is missing the required coords"):
-            mesmer._core.utils._check_dataarray_form(da, required_coords=required_coords)
+            mesmer._core.utils._check_dataarray_form(
+                da, required_coords=required_coords
+            )
 
     with pytest.raises(ValueError, match="obj is missing the required coords"):
         mesmer._core.utils._check_dataarray_form(da, required_coords="x")
