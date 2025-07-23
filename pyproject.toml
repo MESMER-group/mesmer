@@ -33,7 +33,6 @@ dependencies = [
     "packaging >=24.1",
     "pandas >=2.2",
     "pooch >=1.8",
-    "properscoring >=0.1",
     "pyproj >=3.6",
     "regionmask >=0.12",
     "scikit-learn >=1.4", # only for the tests
@@ -54,7 +53,10 @@ Source = "https://github.com/MESMER-group/mesmer"
 BugReports = "https://github.com/MESMER-group/mesmer/issues"
 
 [project.optional-dependencies]
-complete = ["mesmer-emulator[viz]"]
+complete = [
+  "mesmer-emulator[viz]",
+  "properscoring >=0.1",
+]
 viz = [
     "cartopy >=0.23",
     "matplotlib >=3.8",
