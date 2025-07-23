@@ -95,7 +95,7 @@ def _extract_single_dataarray_from_dt(
 
 
 def collapse_datatree_into_dataset(
-    dt: xr.DataTree, dim: str, **concat_kwargs
+    dt: xr.DataTree, *, dim: str, **concat_kwargs
 ) -> xr.Dataset:
     """
     Take a ``DataTree`` and collapse **all its subtrees** into a single ``xr.Dataset`` along dim.

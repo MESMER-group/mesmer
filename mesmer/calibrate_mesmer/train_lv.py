@@ -313,4 +313,6 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     k_folds = cfg.max_iter_cv
 
-    return find_localized_empirical_covariance(data, weights, localizer, dim, k_folds)
+    return find_localized_empirical_covariance(
+        data, weights, localizer, dim=dim, k_folds=k_folds
+    )

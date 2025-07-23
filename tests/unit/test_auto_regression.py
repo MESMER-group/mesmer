@@ -15,7 +15,7 @@ def test_select_ar_order_1d():
 
     data = trend_data_1D()
 
-    result = mesmer.stats.select_ar_order(data, "time", 4)
+    result = mesmer.stats.select_ar_order(data, "time", maxlag=4)
 
     _check_dataarray_form(result, "selected_ar_order", ndim=0, shape=())
 
@@ -26,7 +26,7 @@ def test_select_ar_order_3d(n_lon, n_lat):
 
     data = trend_data_3D(n_lat=n_lat, n_lon=n_lon)
 
-    result = mesmer.stats.select_ar_order(data, "time", 1)
+    result = mesmer.stats.select_ar_order(data, "time", maxlag=1)
 
     _check_dataarray_form(
         result,
@@ -40,7 +40,7 @@ def test_select_ar_order_3d(n_lon, n_lat):
 def test_select_ar_order_dim():
 
     data = trend_data_3D(n_timesteps=4, n_lon=5)
-    result = mesmer.stats.select_ar_order(data, "lon", 1)
+    result = mesmer.stats.select_ar_order(data, "lon", maxlag=1)
 
     _check_dataarray_form(
         result, "selected_ar_order", ndim=2, required_dims={"time", "lat"}, shape=(4, 3)
@@ -51,7 +51,7 @@ def test_select_ar_order():
 
     data = trend_data_2D()
 
-    result = mesmer.stats.select_ar_order(data, "time", 4)
+    result = mesmer.stats.select_ar_order(data, "time", maxlag=4)
 
     coords = data.drop_vars("time").coords
 

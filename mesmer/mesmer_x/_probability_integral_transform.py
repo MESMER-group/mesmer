@@ -51,6 +51,7 @@ class ProbabilityIntegralTransform:
         target_name,
         preds_orig=None,
         preds_targ=None,
+        *,
         threshold_proba=1.0e-9,
     ):
         """

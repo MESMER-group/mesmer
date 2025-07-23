@@ -1,13 +1,24 @@
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
-from mesmer._core._data import load_stratospheric_aerosol_optical_depth_obs
+import mesmer
+
+
+def test_load_stratospheric_aerosol_optical_depth_obs_wrong_version():
+
+    with pytest.raises(
+        ValueError, match="No version other than '2022' is currently available."
+    ):
+        mesmer.data.load_stratospheric_aerosol_optical_depth_obs(version="2021")
 
 
 def test_load_stratospheric_aerosol_optical_depth_data():
 
-    aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True)
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
 
     time = pd.date_range("1850", "2023", freq="YE")
     time = xr.DataArray(time, dims="time", coords={"time": time})
@@ -20,11 +31,13 @@ def test_load_stratospheric_aerosol_optical_depth_data():
 
 def test_load_stratospheric_aerosol_optical_depth_data_not_changed_inplace():
 
-    aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True)
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
 
     aod.loc[{"time": slice("1900", "2000")}] = 0.25
 
-    aod_orig = load_stratospheric_aerosol_optical_depth_obs(
+    aod_orig = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -34,7 +47,9 @@ def test_load_stratospheric_aerosol_optical_depth_data_not_changed_inplace():
 
 def test_load_stratospheric_aerosol_optical_depth_data_no_resample():
 
-    aod = load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=False)
+    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=False
+    )
 
     time = pd.date_range("1850", "2022-12", freq="MS")
     time = xr.DataArray(time, dims="time", coords={"time": time})

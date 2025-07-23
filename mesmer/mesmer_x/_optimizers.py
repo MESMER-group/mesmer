@@ -5,7 +5,6 @@
 
 
 import numpy as np
-import properscoring
 from scipy.optimize import minimize
 
 import mesmer.mesmer_x._distrib_checks as _distrib_checks
@@ -152,9 +151,18 @@ def _bic(expression, data_targ, params, data_weights):
 
 
 def _crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
+
+    try:
+        import properscoring
+    except ImportError:  # pragma: no cover
+        msg = "Computing the 'crps' metric requires the properscoring package to be installed"
+        raise ImportError(msg)
+
     # properscoring.crps_quadrature cannot be applied on conditional distributions, thu
     # calculating in each point of the sample, then averaging
-    # NOTE: WARNING, TAKES A VERY LONG TIME TO COMPUTE
+    # NOTE: TAKES A VERY LONG TIME TO COMPUTE
+    # TODO: find alternative way to compute this
+
     tmp_cprs = []
     for i in np.arange(len(data_targ)):
         distrib = expression.evaluate(coeffs, {p: data_pred[p][i] for p in data_pred})

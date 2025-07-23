@@ -15,6 +15,13 @@ def test_option_invalid_error(invalid_option) -> None:
         mesmer.set_options(invalid_option=invalid_option)  # type:ignore[call-arg]
 
 
+def test_get_options():
+
+    result = mesmer.get_options()
+    expected = {"threads": "default"}
+    assert result == expected
+
+
 def test_options_threads_errors() -> None:
 
     default = mesmer._core.options.OPTIONS["threads"]

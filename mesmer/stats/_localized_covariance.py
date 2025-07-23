@@ -84,6 +84,7 @@ def find_localized_empirical_covariance(
     weights: xr.DataArray,
     localizer: dict[float | int, xr.DataArray | np.ndarray],
     dim: str,
+    *,
     k_folds: int,
     equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
 ) -> xr.Dataset:
@@ -159,6 +160,7 @@ def find_localized_empirical_covariance_monthly(
     weights: xr.DataArray,
     localizer: dict[float | int, xr.DataArray | np.ndarray],
     dim: str,
+    *,
     k_folds: int,
     equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
 ) -> xr.Dataset:
