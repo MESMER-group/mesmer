@@ -275,7 +275,7 @@ def test_make_realisations(
     )
 
     # 3.) compute the local forced response
-    lr = mesmer.stats.LinearRegression().from_netcdf(local_forced_file)
+    lr = mesmer.stats.LinearRegression.from_netcdf(local_forced_file)
 
     predictors = mesmer.datatree.merge([forcing_data, global_variability])
 
