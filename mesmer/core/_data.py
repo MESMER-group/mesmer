@@ -7,7 +7,7 @@ import xarray as xr
 import mesmer
 
 
-def load_stratospheric_aerosol_optical_depth_obs(version="2022", resample=True):
+def load_stratospheric_aerosol_optical_depth_obs(*, version="2022", resample=True):
     """load stratospheric aerosol optical depth data - a proxy for volcanic activity
 
     Parameters

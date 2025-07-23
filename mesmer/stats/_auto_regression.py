@@ -273,7 +273,11 @@ def _fit_auto_regression_scen_ens_dt(
 
 
 def select_ar_order(
-    data: xr.DataArray, dim: str, maxlag: int, ic: Literal["bic", "aic", "hqic"] = "bic"
+    data: xr.DataArray,
+    dim: str,
+    *,
+    maxlag: int,
+    ic: Literal["bic", "aic", "hqic"] = "bic",
 ) -> xr.DataArray:
     """Select the order of an autoregressive process
 
@@ -743,7 +747,7 @@ def _draw_innovations_correlated_np(
 
 
 def fit_auto_regression(
-    data: xr.DataArray, dim: str, lags: int | Sequence[int]
+    data: xr.DataArray, dim: str, *, lags: int | Sequence[int]
 ) -> xr.Dataset:
     """fit an auto regression
 

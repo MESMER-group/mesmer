@@ -407,7 +407,7 @@ class Expression:
         return eval(self._compiled_param_expr[name], None, locals)
 
     def evaluate_params(
-        self, coefficients_values, predictors_values, forced_shape=None
+        self, coefficients_values, predictors_values, *, forced_shape=None
     ):
         """
         Evaluates the parameters for the provided predictors and coefficients
@@ -543,6 +543,8 @@ class Expression:
         """
 
         params = self.evaluate_params(
-            coefficients_values, predictors_values, forced_shape
+            coefficients_values,
+            predictors_values,
+            forced_shape=forced_shape,
         )
         return self.distrib(**params)
