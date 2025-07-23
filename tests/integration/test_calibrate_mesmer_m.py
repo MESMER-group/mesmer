@@ -114,7 +114,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     weights.name = "weights"
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
-        ar1_fit.residuals, weights, phi_gc_localizer, "time", 30
+        ar1_fit.residuals, weights, phi_gc_localizer, "time", k_folds=30
     )
 
     # we need to get the original time coordinate to be able to validate our results

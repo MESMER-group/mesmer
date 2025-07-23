@@ -254,7 +254,11 @@ def test_calibrate_mesmer(
     k_folds = 30
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        tas_stacked_residuals, weights_stacked.weights, phi_gc_localizer, dim, k_folds
+        tas_stacked_residuals,
+        weights_stacked.weights,
+        phi_gc_localizer,
+        dim=dim,
+        k_folds=k_folds,
     )
 
     localized_ecov["localized_covariance_adjusted"] = (
