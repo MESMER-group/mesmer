@@ -27,6 +27,9 @@ New Features
 - Enable passing data with a dimension without coordinates (i.e. ``sample`` dimension)
   to ``localized_empirical_covariance`` (`#710 <https://github.com/MESMER-group/mesmer/pull/710>`_).
   By `Mathias Hauser`_.
+- Added :py:meth:`LinearRegression.from_params` as a one-step way to initialize a linear regression
+  (`#761 <https://github.com/MESMER-group/mesmer/pull/761>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

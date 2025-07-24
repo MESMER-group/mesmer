@@ -15,6 +15,21 @@ class LinearRegression:
     def __init__(self):
         self._params = None
 
+    @classmethod
+    def from_params(cls, params):
+        """initialize LinearRegression class using parameters
+
+        Parameters
+        ----------
+        params : xr.Dataset
+            Parameters to use for this linear regression.
+        """
+
+        obj = cls()
+        obj.params = params
+
+        return obj
+
     def fit(
         self,
         predictors: dict[str, xr.DataArray] | xr.Dataset,
