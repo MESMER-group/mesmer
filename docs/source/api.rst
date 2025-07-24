@@ -24,6 +24,7 @@ Linear regression
    :toctree: generated/
 
    ~stats.LinearRegression
+   ~stats.LinearRegression.from_params
    ~stats.LinearRegression.fit
    ~stats.LinearRegression.predict
    ~stats.LinearRegression.residuals
