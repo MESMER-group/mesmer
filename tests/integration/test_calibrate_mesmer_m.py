@@ -15,7 +15,7 @@ def find_hist_proj_simulations(
     resolution="g025",
 ):
 
-    cmip6_data_path = mesmer.example_data.cmip6_ng_path(relative=True)
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path(relative=False)
 
     cmip_filefinder = filefisher.FileFinder(
         path_pattern=cmip6_data_path / "{variable}/{time_res}/{resolution}",
