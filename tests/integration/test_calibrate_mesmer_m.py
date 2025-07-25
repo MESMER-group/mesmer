@@ -6,34 +6,75 @@ import xarray as xr
 import mesmer
 
 
-def _load_data(*filenames):
-    # TODO: extract to a 'official' helper function
+def find_hist_proj_simulations(
+    variable,
+    model,
+    scenario,
+    time_res="ann",
+    member="*",
+    resolution="g025",
+):
 
-    # NOTE: open_mfdataset is considerably slower...
-    # ds = xr.open_mfdataset(
-    #     filenames,
-    #     combine="by_coords",
-    #     use_cftime=True,
-    #     combine_attrs="override",
-    #     data_vars="minimal",
-    #     compat="override",
-    #     coords="minimal",
-    #     drop_variables=["height", "file_qf"],
-    # ).load()
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path(relative=True)
 
-    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-    load_opt = {"drop_variables": ["height", "file_qf"], "decode_times": time_coder}
-    datasets = [xr.open_dataset(fN, **load_opt) for fN in filenames]
-
-    ds = xr.combine_by_coords(
-        datasets,
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
+    cmip_filefinder = filefisher.FileFinder(
+        path_pattern=cmip6_data_path / "{variable}/{time_res}/{resolution}",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
-    return ds
+    fc_scens = cmip_filefinder.find_files(
+        variable=variable,
+        scenario=scenario,
+        model=model,
+        resolution=resolution,
+        time_res=time_res,
+        member=member,
+    )
+
+    # get the historical members that are also in the future scenarios, but only once
+    unique_scen_members_y = fc_scens.df.member.unique()
+
+    fc_hist = cmip_filefinder.find_files(
+        variable=variable,
+        scenario="historical",
+        model=model,
+        resolution=resolution,
+        time_res=time_res,
+        member=unique_scen_members_y,
+    )
+
+    fc_all = fc_hist.concat(fc_scens)
+
+    return fc_all
+
+
+def load_data(filecontainer):
+
+    out = xr.DataTree()
+
+    scenarios = filecontainer.df.scenario.unique().tolist()
+
+    # load data for each scenario
+    for scen in scenarios:
+        files = filecontainer.search(scenario=scen)
+
+        # load all members for a scenario
+        members = []
+        for fN, meta in files.items():
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = xr.open_dataset(fN, decode_times=time_coder)
+            # drop unnecessary variables
+            ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
+            # assign member-ID as coordinate
+            ds = ds.assign_coords({"member": meta["member"]})
+            members.append(ds)
+
+        # create a Dataset that holds each member along the member dimension
+        scen_data = xr.concat(members, dim="member")
+        # put the scenario dataset into the DataTree
+        out[scen] = xr.DataTree(scen_data)
+
+    return out
 
 
 @pytest.mark.slow
@@ -49,29 +90,30 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
 
     esm = "IPSL-CM6A-LR"
     scenario = "ssp585"
+    member = "r1i1p1f1"
 
     # define paths and load data
     test_path = test_data_root_dir / "output" / "tas" / "mon" / "test-params"
-    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     # load annual data
-    path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
-    fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
-    tas_y = _load_data(fN_hist_ann, fN_proj_ann)
+    fc_all_y = find_hist_proj_simulations(
+        variable="tas", scenario=scenario, model=esm, time_res="ann", member=member
+    )
+    tas_y_orig = load_data(fc_all_y)
 
     # load monthly data
-    path_tas_mon = cmip6_data_path / "tas" / "mon" / "g025"
-    fN_hist_mon = path_tas_mon / f"tas_mon_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj_mon = path_tas_mon / f"tas_mon_{esm}_{scenario}_r1i1p1f1_g025.nc"
-    tas_m = _load_data(fN_hist_mon, fN_proj_mon)
+    fc_all_m = find_hist_proj_simulations(
+        variable="tas", scenario=scenario, model=esm, time_res="mon", member=member
+    )
+    tas_m_orig = load_data(fc_all_m)
 
     # data preprocessing
-    ref_y = tas_y.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
-    ref_m = tas_m.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
-
-    tas_y = tas_y - ref_y
-    tas_m = tas_m - ref_m
+    tas_anoms_y = mesmer.anomaly.calc_anomaly(
+        tas_y_orig, reference_period=REFERENCE_PERIOD
+    )
+    tas_anoms_m = mesmer.anomaly.calc_anomaly(
+        tas_m_orig, reference_period=REFERENCE_PERIOD
+    )
 
     # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
@@ -80,8 +122,24 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
-    tas_stacked_m = mask_and_stack(tas_m, threshold_land=THRESHOLD_LAND)
+    tas_stacked_y = mask_and_stack(tas_anoms_y, threshold_land=THRESHOLD_LAND)
+    tas_stacked_m = mask_and_stack(tas_anoms_m, threshold_land=THRESHOLD_LAND)
+
+    tas_stacked_y = xr.combine_by_coords(
+        [dt.ds for dt in tas_stacked_y.values()],
+        combine_attrs="override",
+        data_vars="minimal",
+        compat="override",
+        coords="minimal",
+    ).squeeze(drop=True)
+
+    tas_stacked_m = xr.combine_by_coords(
+        [dt.ds for dt in tas_stacked_m.values()],
+        combine_attrs="override",
+        data_vars="minimal",
+        compat="override",
+        coords="minimal",
+    ).squeeze(drop=True)
 
     # fit harmonic model
     harmonic_model_fit = mesmer.stats.fit_harmonic_model(
@@ -100,7 +158,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
 
     # fit cyclo-stationary AR(1) process
     ar1_fit = mesmer.stats.fit_auto_regression_monthly(
-        transformed_hm_resids.transformed, time_dim="time"
+        transformed_hm_resids.transformed
     )
 
     # find localized empirical covariance
