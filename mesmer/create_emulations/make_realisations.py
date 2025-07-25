@@ -5,6 +5,7 @@
 
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.create_emulations.create_emus_gv import create_emus_gv
 from mesmer.create_emulations.create_emus_lt import create_emus_lt
@@ -12,6 +13,10 @@ from mesmer.create_emulations.create_emus_lv import create_emus_lv
 from mesmer.create_emulations.merge_emus import create_emus_l
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_seed_dict(esms, scenarios, scen_seed_offset=0):
     """define seeds for drawing emulations
 
@@ -48,6 +53,10 @@ def create_seed_dict(esms, scenarios, scen_seed_offset=0):
     return seed
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def make_realisations(
     preds_lt,
     params_lt,
@@ -153,6 +162,10 @@ def make_realisations(
     return out
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _convert_raw_mesmer_to_xarray(emulations, land_fractions, time):
     land_fractions_stacked = land_fractions.stack(z=("lat", "lon")).dropna("z")
 

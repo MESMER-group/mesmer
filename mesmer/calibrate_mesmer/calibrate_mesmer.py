@@ -5,6 +5,8 @@ Functions to calibrate all modules of MESMER
 import logging
 import warnings
 
+from deprecated import deprecated
+
 from mesmer.calibrate_mesmer.train_gt import train_gt
 from mesmer.calibrate_mesmer.train_gv import train_gv
 from mesmer.calibrate_mesmer.train_lt import train_lt
@@ -17,6 +19,10 @@ from mesmer.utils import separate_hist_future
 LOGGER = logging.getLogger(__name__)
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This class is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 class _Config:
     """Workaround to mock the ``cfg`` interface used elsewhere"""
 
@@ -103,6 +109,10 @@ class _Config:
         self.dir_mesmer_params = params_output_dir
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _calibrate_and_draw_realisations(*args, **kwargs):
 
     warnings.warn(
@@ -113,6 +123,10 @@ def _calibrate_and_draw_realisations(*args, **kwargs):
     return _calibrate_tas(*args, **kwargs)
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _calibrate_tas(
     *args,
     esms,
