@@ -11,10 +11,9 @@ Required dependencies
 - `netcdf4 <https://unidata.github.io/netcdf4-python/>`__
 - `numpy <https://numpy.org>`__
 - `pandas <https://pandas.pydata.org/>`__
-- `regionmask <https://regionmask.readthedocs.io/en/stable/>`__
 - `pooch <https://www.fatiando.org/pooch/latest/>`__
-- `properscoring <https://pypi.org/project/properscoring/>`__
 - `pyproj <https://pyproj4.github.io/pyproj/stable/>`__
+- `regionmask <https://regionmask.readthedocs.io/en/stable/>`__
 - `scikit-learn <https://scikit-learn.org/stable/>`__
 - `scipy <https://scipy.org/>`__
 - `statsmodels <https://www.statsmodels.org/stable/index.html>`__
@@ -28,6 +27,7 @@ Optional dependencies
 - `cartopy <https://scitools.org.uk/cartopy/docs/latest/>`__
 - `matplotlib <https://matplotlib.org/>`__
 - `nc-time-axis <https://nc-time-axis.readthedocs.io/en/stable/>`__
+- `properscoring <https://pypi.org/project/properscoring/>`__
 
 Instructions
 ------------
