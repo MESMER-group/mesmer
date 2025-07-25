@@ -1,12 +1,12 @@
-import importlib
-
+import filefisher
 import pytest
 import xarray as xr
 
 import mesmer
 
 
-def test_make_emulations_mesmer_m(update_expected_files=False):
+@pytest.mark.filterwarnings("ignore:`lambda_coeffs` does not have `lambda_function`")
+def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
 
     # define config values
     THRESHOLD_LAND = 1 / 3
@@ -16,23 +16,23 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     esm = "IPSL-CM6A-LR"
     scenario = "ssp585"
 
-    nr_emus = 10
+    nr_emus = 2
     buffer = 20
     seed = 0
 
     # define paths and load data
-    TEST_DATA_PATH = importlib.resources.files("mesmer").parent / "tests" / "test-data"
-    TEST_PATH = TEST_DATA_PATH / "output" / "tas" / "mon"
-    cmip6_data_path = TEST_DATA_PATH / "calibrate-coarse-grid" / "cmip6-ng"
+    test_path = test_data_root_dir / "output" / "tas" / "mon"
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
 
     path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
     fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
     fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
 
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
     tas_y = xr.open_mfdataset(
         [fN_hist_ann, fN_proj_ann],
         combine="by_coords",
-        use_cftime=True,
+        decode_times=time_coder,
         combine_attrs="override",
         data_vars="minimal",
         compat="override",
@@ -40,34 +40,28 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
         drop_variables=["height", "file_qf"],
     ).load()
 
+    PARAM_FILEFINDER = filefisher.FileFinder(
+        path_pattern=test_path / "test-params/{module}/",
+        file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
+    )
+
+    scen_str = scenario
+
+    keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
+
+    local_hm_file = PARAM_FILEFINDER.create_full_name(keys, module="harmonic-model")
+    local_pt_file = PARAM_FILEFINDER.create_full_name(keys, module="power-transformer")
+    local_ar_file = PARAM_FILEFINDER.create_full_name(keys, module="local-variability")
+    localized_ecov_file = PARAM_FILEFINDER.create_full_name(keys, module="covariance")
+    time_file = PARAM_FILEFINDER.create_full_name(keys, module="monthly-time")
+
     # load parameters
-    PARAMS_PATH = TEST_PATH / "test-params"
-    hm_params = xr.open_dataset(
-        PARAMS_PATH
-        / "harmonic_model"
-        / f"params_harmonic_model_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
-    )
-    pt_params = xr.open_dataset(
-        PARAMS_PATH
-        / "power_transformer"
-        / f"params_power_transformer_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
-    )
-    AR1_params = xr.open_dataset(
-        PARAMS_PATH / "local_variability" / f"params_AR1_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
-    )
-    localized_ecov = xr.open_dataset(
-        PARAMS_PATH
-        / "local_variability"
-        / f"params_localized_ecov_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
-    )
-    m_time = xr.open_dataset(
-        PARAMS_PATH / "time" / f"params_monthly_time_tas_{esm}_{scenario}.nc",
-        use_cftime=True,
-    )
+
+    hm_params = xr.open_dataset(local_hm_file, decode_times=time_coder)
+    pt_params = xr.open_dataset(local_pt_file, decode_times=time_coder)
+    AR1_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    localized_ecov = xr.open_dataset(localized_ecov_file, decode_times=time_coder)
+    m_time = xr.open_dataset(time_file, decode_times=time_coder)
 
     # preprocess yearly data
     def mask_and_stack(ds, threshold_land):
@@ -93,10 +87,11 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
         n_realisations=nr_emus,
         seed=seed,
         buffer=buffer,
-    )
+    ).samples
 
     # invert the power transformation
-    local_variability_inverted = mesmer.stats.inverse_yeo_johnson_transform(
+    yj_transformer = mesmer.stats.YeoJohnsonTransformer("logistic")
+    local_variability_inverted = yj_transformer.inverse_transform(
         tas_stacked_y.tas,
         local_variability_transformed,
         pt_params.lambda_coeffs,
@@ -107,14 +102,15 @@ def test_make_emulations_mesmer_m(update_expected_files=False):
     result = result.to_dataset(name="tas")
 
     # save
-    test_file = TEST_PATH / "test_mesmer_m_realisations_expected.nc"
+    test_file = test_path / "test_mesmer_m_realisations_expected.nc"
     if update_expected_files:
         result.to_netcdf(test_file)
         pytest.skip("Updated emulations.")
 
     # testing
     else:
-        exp = xr.open_dataset(test_file, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        exp = xr.open_dataset(test_file, decode_times=time_coder)
         xr.testing.assert_allclose(result, exp)
 
         # make sure we can get onto a lat lon grid from what is saved

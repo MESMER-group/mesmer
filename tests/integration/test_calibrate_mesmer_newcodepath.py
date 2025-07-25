@@ -1,12 +1,9 @@
-import pathlib
-
 import pytest
 import xarray as xr
-from datatree import DataTree, map_over_subtree
 from filefisher import FileFinder
 
 import mesmer
-import mesmer.core.datatree
+from mesmer.core.datatree import map_over_datasets
 
 
 @pytest.mark.filterwarnings("ignore:No local minimum found")
@@ -78,48 +75,49 @@ def test_calibrate_mesmer(
     use_hfds,
     outname,
     test_data_root_dir,
-    update_expected_files=False,
-):
+    update_expected_files,
+) -> None:
 
     # define config values
     THRESHOLD_LAND = 1 / 3
 
     REFERENCE_PERIOD = slice("1850", "1900")
 
-    HIST_PERIOD = slice("1850", "2014")
-
     LOCALISATION_RADII = range(1750, 2001, 250)
 
     esm = "IPSL-CM6A-LR"
-    test_cmip_generation = 6
+    variables = ["tas"]
+    if use_hfds:
+        variables.append("hfds")
 
     # define paths and load data
-    TEST_DATA_PATH = pathlib.Path(test_data_root_dir)
-    TEST_PATH = TEST_DATA_PATH / "output" / outname
+    test_path = test_data_root_dir / "output" / outname
 
     PARAM_FILEFINDER = FileFinder(
-        path_pattern=TEST_PATH / "test-params/{module}/",
+        path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
 
-    cmip_data_path = (
-        TEST_DATA_PATH / "calibrate-coarse-grid" / f"cmip{test_cmip_generation}-ng"
-    )
+    cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
     CMIP_FILEFINDER = FileFinder(
-        path_pattern=cmip_data_path / "{variable}/{time_res}/{resolution}",  # type: ignore
+        path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
     fc_scens = CMIP_FILEFINDER.find_files(
-        variable="tas", scenario=scenarios, model=esm, resolution="g025", time_res="ann"
+        variable=variables,
+        scenario=scenarios,
+        model=esm,
+        resolution="g025",
+        time_res="ann",
     )
 
     # only get the historical members that are also in the future scenarios, but only once
     unique_scen_members = fc_scens.df.member.unique()
 
     fc_hist = CMIP_FILEFINDER.find_files(
-        variable="tas",
+        variable=variables,
         scenario="historical",
         model=esm,
         resolution="g025",
@@ -132,98 +130,64 @@ def test_calibrate_mesmer(
     scenarios_incl_hist = scenarios.copy()
     scenarios_incl_hist.append("historical")
 
-    # load data for each scenario
-    dt = DataTree()
+    data = xr.DataTree()
     for scen in scenarios_incl_hist:
-        files = fc_all.search(scenario=scen)
+        # load data for each scenario
+        data_scen = []
 
-        # load all members for a scenario
-        members = []
-        for fN, meta in files.items():
-            ds = xr.open_dataset(fN, use_cftime=True)
-            # drop unnecessary variables
-            ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
-            # assign member-ID as coordinate
-            ds = ds.assign_coords({"member": meta["member"]})
-            members.append(ds)
+        for var in variables:
+            files = fc_all.search(variable=var, scenario=scen)
 
-        # create a Dataset that holds each member along the member dimension
-        scen_data = xr.concat(members, dim="member")
-        # put the scenario dataset into the DataTree
-        dt[scen] = DataTree(scen_data)
-
-    # load additional data
-    if use_hfds:
-        fc_hfds = CMIP_FILEFINDER.find_files(
-            variable="hfds",
-            scenario=scenarios_incl_hist,
-            model=esm,
-            resolution="g025",
-            time_res="ann",
-            member=unique_scen_members,
-        )
-
-        dt_hfds = DataTree()
-        for scen in scenarios_incl_hist:
-            files = fc_hfds.search(scenario=scen)
-
+            # load all members for a scenario
             members = []
             for fN, meta in files.items():
-                ds = xr.open_dataset(fN, use_cftime=True)
+                time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+                ds = xr.open_dataset(fN, decode_times=time_coder)
+                # drop unnecessary variables
                 ds = ds.drop_vars(
                     ["height", "time_bnds", "file_qf", "area"], errors="ignore"
                 )
+                # assign member-ID as coordinate
                 ds = ds.assign_coords({"member": meta["member"]})
                 members.append(ds)
 
-            scen_data = xr.concat(members, dim="member")
-            dt_hfds[scen] = DataTree(scen_data)
-    else:
-        dt_hfds = None
+            # create a Dataset that holds each member along the member dimension
+            data_var = xr.concat(members, dim="member")
+            data_scen.append(data_var)
+
+        data_scen = xr.merge(data_scen)
+        data[scen] = xr.DataTree(data_scen)
 
     # data preprocessing
     # create global mean tas anomlies timeseries
-    dt = map_over_subtree(mesmer.grid.wrap_to_180)(dt)
+    data = mesmer.grid.wrap_to_180(data)
     # convert the 0..360 grid to a -180..180 grid to be consistent with legacy code
 
     # calculate anomalies w.r.t. the reference period
-    ref = dt["historical"].sel(time=REFERENCE_PERIOD).mean("time")
-    tas_anoms = dt - ref.ds
-    tas_globmean = map_over_subtree(mesmer.weighted.global_mean)(tas_anoms)
+    anoms = mesmer.anomaly.calc_anomaly(data, REFERENCE_PERIOD)
 
-    # create local gridded tas data
-    def mask_and_stack(ds, threshold_land):
-        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
-        ds = mesmer.mask.mask_antarctica(ds)
-        ds = mesmer.grid.stack_lat_lon(ds)
-        return ds
-
-    tas_stacked = map_over_subtree(mask_and_stack)(
-        tas_anoms, threshold_land=THRESHOLD_LAND
-    )
+    globmean = mesmer.weighted.global_mean(anoms)
 
     # train global trend module
-    tas_globmean_ensmean = tas_globmean.mean(dim="member")
-    tas_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-        tas_globmean_ensmean, "time", n_steps=50, use_coords=False
+    globmean_ensmean = globmean.mean(dim="member")
+    globmean_smoothed = mesmer.stats.lowess(
+        globmean_ensmean, "time", n_steps=50, use_coords=False
     )
-    hist_lowess_residuals = (
-        tas_globmean["historical"] - tas_globmean_smoothed["historical"]
-    )
+    hist_lowess_residuals = globmean["historical"] - globmean_smoothed["historical"]
 
-    volcanic_params = mesmer.volc.fit_volcanic_influence(
-        hist_lowess_residuals.tas, hist_period=HIST_PERIOD, dim="time"
-    )
+    volcanic_params = mesmer.volc.fit_volcanic_influence(hist_lowess_residuals.tas)
 
-    tas_globmean_smoothed["historical"] = mesmer.volc.superimpose_volcanic_influence(
-        tas_globmean_smoothed["historical"],
+    globmean_smoothed["historical"]["tas"] = mesmer.volc.superimpose_volcanic_influence(
+        globmean_smoothed["historical"]["tas"],
         volcanic_params,
-        hist_period=HIST_PERIOD,
-        dim="time",
     )
 
     # train global variability module
-    tas_resid_novolc = tas_globmean - tas_globmean_smoothed
+    tas_glob_mean = map_over_datasets(lambda ds: ds[["tas"]], globmean)
+    tas_resid_novolc = tas_glob_mean - globmean_smoothed
+    tas_resid_novolc = map_over_datasets(
+        lambda ds: ds.rename({"tas": "tas_resids"}), tas_resid_novolc
+    )
 
     ar_order = mesmer.stats.select_ar_order_scen_ens(
         tas_resid_novolc, dim="time", ens_dim="member", maxlag=12, ic="bic"
@@ -232,37 +196,28 @@ def test_calibrate_mesmer(
         tas_resid_novolc, dim="time", ens_dim="member", lags=ar_order
     )
 
-    if dt_hfds is not None:
-        hfds_ref = dt_hfds["historical"].sel(time=REFERENCE_PERIOD).mean("time")
-        hfds_anoms = dt_hfds - hfds_ref.ds
-        hfds_globmean = map_over_subtree(mesmer.weighted.global_mean)(hfds_anoms)
-        hfds_globmean_ensmean = hfds_globmean.mean(dim="member")
-        hfds_globmean_smoothed = map_over_subtree(mesmer.stats.lowess)(
-            hfds_globmean_ensmean, "time", n_steps=50, use_coords=False
-        )
-    else:
-        hfds_globmean_smoothed = None
-
     # train local forced response module
-    # broadcast so all datasets have all the dimensions
-    # gridcell can be excluded because it will be mapped in the Linear Regression
-    target = tas_stacked
-    predictors = DataTree.from_dict(
-        {"tas": tas_globmean_smoothed, "tas_resids": tas_resid_novolc}
-    )
+    # create local gridded data
+    def mask_and_stack(ds, threshold_land):
+        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
+        ds = mesmer.mask.mask_antarctica(ds)
+        ds = mesmer.grid.stack_lat_lon(ds)
+        return ds
+
+    target = map_over_datasets(lambda ds: ds[["tas"]], anoms)
+    target = mask_and_stack(target, threshold_land=THRESHOLD_LAND)
+
+    predictors = mesmer.datatree.merge([globmean_smoothed, tas_resid_novolc])
+
     if use_tas2:
-        predictors["tas2"] = tas_globmean_smoothed**2
-    if hfds_globmean_smoothed is not None:
-        predictors["hfds"] = hfds_globmean_smoothed
+        predictors = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), predictors)
 
     weights = mesmer.weighted.equal_scenario_weights_from_datatree(
         target, ens_dim="member", time_dim="time"
     )
 
     predictors_stacked, target_stacked, weights_stacked = (
-        mesmer.core.datatree.stack_datatrees_for_linear_regression(
-            predictors, target, weights, stacking_dims=["member", "time"]
-        )
+        mesmer.datatree.broadcast_and_pool_scen_ens(predictors, target, weights)
     )
 
     local_forced_response_lr = mesmer.stats.LinearRegression()
@@ -276,23 +231,9 @@ def test_calibrate_mesmer(
 
     # train local variability module
     # train local AR process
-    tas_stacked_residuals = local_forced_response_lr.residuals(
-        predictors=predictors_stacked, target=target_stacked.tas
-    )
+    dt_resids = local_forced_response_lr.residuals(predictors=predictors, target=target)
 
-    tas_un_stacked_residuals = tas_stacked_residuals.set_index(
-        sample=("time", "member", "scenario")
-    ).unstack("sample")
-
-    dt_resids = DataTree()
-    for scenario in tas_un_stacked_residuals.scenario.values:
-        dt_resids[scenario] = DataTree(
-            tas_un_stacked_residuals.sel(scenario=scenario)
-            .dropna("member", how="all")
-            .dropna("time")
-            .drop_vars("scenario")
-            .rename("residuals")
-        )
+    tas_stacked_residuals = mesmer.datatree.pool_scen_ens(dt_resids).residuals
 
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         dt_resids,
@@ -303,7 +244,7 @@ def test_calibrate_mesmer(
 
     # train covariance
     geodist = mesmer.geospatial.geodist_exact(
-        tas_stacked["historical"].ds.lon, tas_stacked["historical"].ds.lat
+        target["historical"].ds.lon, target["historical"].ds.lat
     )
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist, localisation_radii=LOCALISATION_RADII
@@ -313,7 +254,11 @@ def test_calibrate_mesmer(
     k_folds = 30
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        tas_stacked_residuals, weights_stacked.weights, phi_gc_localizer, dim, k_folds
+        tas_stacked_residuals,
+        weights_stacked.weights,
+        phi_gc_localizer,
+        dim=dim,
+        k_folds=k_folds,
     )
 
     localized_ecov["localized_covariance_adjusted"] = (
@@ -389,14 +334,25 @@ def assert_params_allclose(
     localized_ecov_file,
 ):
     # test params
-    exp_volcanic_params = xr.open_dataset(volcanic_file, use_cftime=True)
-    exp_global_ar_params = xr.open_dataset(global_ar_file, use_cftime=True)
-    exp_local_forced_params = xr.open_dataset(local_forced_file, use_cftime=True)
-    exp_local_ar_params = xr.open_dataset(local_ar_file, use_cftime=True)
-    exp_localized_ecov = xr.open_dataset(localized_ecov_file, use_cftime=True)
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    exp_volcanic_params = xr.open_dataset(volcanic_file, decode_times=time_coder)
+    exp_global_ar_params = xr.open_dataset(global_ar_file, decode_times=time_coder)
+    exp_local_forced_params = xr.open_dataset(
+        local_forced_file, decode_times=time_coder
+    )
+    exp_local_ar_params = xr.open_dataset(local_ar_file, decode_times=time_coder)
+    exp_localized_ecov = xr.open_dataset(localized_ecov_file, decode_times=time_coder)
 
     xr.testing.assert_allclose(volcanic_params, exp_volcanic_params)
     xr.testing.assert_allclose(global_ar_params, exp_global_ar_params)
+
+    # order by sample to avoid re-creating the expected data for now
+    # TODO: replace data instead
+    indexes = {"sample": ("time", "member", "scenario")}
+    local_forced_params = local_forced_params.set_index(indexes)
+    exp_local_forced_params = exp_local_forced_params.set_index(indexes)
+    exp_local_forced_params = exp_local_forced_params.reindex_like(local_forced_params)
+
     xr.testing.assert_allclose(local_forced_params, exp_local_forced_params)
     xr.testing.assert_allclose(local_ar_params, exp_local_ar_params)
     xr.testing.assert_allclose(localized_ecov, exp_localized_ecov)

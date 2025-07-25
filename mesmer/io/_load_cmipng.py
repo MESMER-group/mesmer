@@ -375,7 +375,8 @@ def _load_cmipng_file(run_path, gen, scen):
     if gen == 5:
 
         # use_cftime because of employed calendar,
-        data = xr.open_dataset(run_path, use_cftime=True)
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        data = xr.open_dataset(run_path, decode_times=time_coder)
 
         # rename to time for consistency with cmip6
         data = data.rename({"year": "time"})

@@ -196,6 +196,6 @@ def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     )
 
     # get back the old order of the emus
-    emus_gv = emus_gv.values.transpose()
+    emus_gv = emus_gv.samples.values.transpose()
 
     return emus_gv

@@ -7,12 +7,15 @@ import xarray as xr
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
+    _create_equal_dim_names,
     _minimize_local_discrete,
-    create_equal_dim_names,
+    _set_threads_from_options,
 )
 
 
-def adjust_covariance_ar1(covariance, ar_coefs):
+def adjust_covariance_ar1(
+    covariance: xr.DataArray, ar_coefs: xr.DataArray
+) -> xr.DataArray:
     """
     adjust localized empirical covariance matrix for autoregressive process of order one
 
@@ -77,8 +80,14 @@ def _adjust_ecov_ar1_np(covariance, ar_coefs):
 
 
 def find_localized_empirical_covariance(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
-):
+    data: xr.DataArray,
+    weights: xr.DataArray,
+    localizer: dict[float | int, xr.DataArray | np.ndarray],
+    dim: str,
+    *,
+    k_folds: int,
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
+) -> xr.Dataset:
     """determine localized empirical covariance by cross validation
 
     Parameters
@@ -87,7 +96,7 @@ def find_localized_empirical_covariance(
         2D DataArray with data to calculate the covariance for.
     weights : xr.DataArray
         Weights for the individual samples.
-    localizer : dict of DataArray```
+    localizer : dict of xr.DataArray
         Dictionary containing the localization radii as keys and the localization matrix
         as values. The localization must be 2D and of shape n_gridpoints x n_gridpoints.
         Currently only the Gaspari-Cohn localizer is implemented in MESMER.
@@ -118,19 +127,21 @@ def find_localized_empirical_covariance(
 
     _check_dataarray_form(data, name="data", ndim=2)
 
+    (sample_dim,) = data[dim].dims
+
     # ensure data has the right orientation
-    data = data.transpose(dim, ...)
+    data = data.transpose(sample_dim, ...)
     all_dims = data.dims
 
-    (sample_dim,) = set(all_dims) - {dim}
-    out_dims = create_equal_dim_names(sample_dim, equal_dim_suffixes)
+    (other_dim,) = set(all_dims) - {sample_dim}
+    out_dims = _create_equal_dim_names(other_dim, equal_dim_suffixes)
 
     out = xr.apply_ufunc(
         _find_localized_empirical_covariance_np,
         data,
         weights,
         kwargs={"localizer": localizer, "k_folds": k_folds},
-        input_core_dims=[all_dims, [dim]],
+        input_core_dims=[all_dims, [sample_dim]],
         output_core_dims=([], out_dims, out_dims),
     )
     localization_radius, covariance, localized_covariance = out
@@ -145,8 +156,14 @@ def find_localized_empirical_covariance(
 
 
 def find_localized_empirical_covariance_monthly(
-    data, weights, localizer, dim, k_folds, equal_dim_suffixes=("_i", "_j")
-):
+    data: xr.DataArray,
+    weights: xr.DataArray,
+    localizer: dict[float | int, xr.DataArray | np.ndarray],
+    dim: str,
+    *,
+    k_folds: int,
+    equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
+) -> xr.Dataset:
     """determine localized empirical covariance by cross validation for each month. `data`
     should be the residuals of the cyclo-stationary AR(1) process, see
     :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`. Note that here,
@@ -188,6 +205,7 @@ def find_localized_empirical_covariance_monthly(
     and a leave-one-out cross validation otherwise.
     """
     localized_ecov = []
+    (sample_dim,) = data[dim].dims
     data_grouped = data.groupby(f"{dim}.month")
     weights_grouped = weights.groupby(f"{dim}.month")
 
@@ -202,7 +220,7 @@ def find_localized_empirical_covariance_monthly(
         )
         localized_ecov.append(res)
 
-    month = xr.Variable("month", range(1, 13))
+    month = xr.DataArray(range(1, 13), dims="month")
     return xr.concat(localized_ecov, dim=month)
 
 
@@ -265,6 +283,7 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     return localization_radius, covariance, localized_covariance
 
 
+@_set_threads_from_options()
 def _ecov_crossvalidation(localization_radius, *, data, weights, localizer, k_folds):
     """k-fold crossvalidation for a single localization radius"""
 

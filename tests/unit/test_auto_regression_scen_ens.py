@@ -3,7 +3,6 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 import xarray as xr
-from datatree import DataTree
 from statsmodels.tsa.arima_process import ArmaProcess
 
 import mesmer
@@ -13,8 +12,9 @@ import mesmer.stats._auto_regression
 def generate_ar_samples(ar, std=1, n_timesteps=100, n_ens=4):
 
     np.random.seed(0)
-
-    data = ArmaProcess(ar, 1).generate_sample([n_timesteps, n_ens], scale=std)
+    data = ArmaProcess(ar, 1).generate_sample(
+        [n_timesteps, n_ens], scale=std
+    )  # pyright: ignore[ reportArgumentType ]
 
     ens = np.arange(n_ens)
 
@@ -35,7 +35,7 @@ def _prepare_data(*dataarrays, data_format):
         data = {
             f"scen{i}": xr.Dataset({"tas": da}) for i, da in enumerate(dataarrays, 1)
         }
-        return DataTree.from_dict(data)
+        return xr.DataTree.from_dict(data)
     else:
         raise ValueError(f"Unknown format_type: {data_format}")
 
@@ -182,12 +182,12 @@ def test_fit_auto_regression_scen_ens_no_ens_dim(data_format):
     xr.testing.assert_allclose(result, expected)
 
 
-def test_fit_auto_regression_scen_ens_errors():
+def test_fit_auto_regression_scen_ens_errors() -> None:
     da = generate_ar_samples([1, 0.5, 0.3, 0.4], n_timesteps=100, n_ens=4)
 
     # data tree
     data = {"scen1": xr.Dataset({"tas": da})}
-    dt1 = DataTree.from_dict(data)
+    dt1 = xr.DataTree.from_dict(data)
     dt2 = dt1.copy()
 
     with pytest.raises(ValueError, match="Only one DataTree can be passed."):
@@ -196,7 +196,7 @@ def test_fit_auto_regression_scen_ens_errors():
         )
 
     data = {"scen1": xr.Dataset({"tas": da, "tas2": da})}
-    dt = DataTree.from_dict(data)
+    dt = xr.DataTree.from_dict(data)
 
     with pytest.raises(ValueError, match="Dataset must have only one data variable."):
         mesmer.stats.fit_auto_regression_scen_ens(dt, dim="time", ens_dim="ens", lags=3)
@@ -205,12 +205,12 @@ def test_fit_auto_regression_scen_ens_errors():
     data = {"scen1": da, "scen2": da}
     with pytest.raises(ValueError, match="Only one dictionary can be passed."):
         mesmer.stats.fit_auto_regression_scen_ens(
-            data, data, dim="time", ens_dim="ens", lags=3
+            data, data, dim="time", ens_dim="ens", lags=3  # type: ignore[arg-type]
         )
 
     # wrong datatype
-    data = xr.Dataset({"tas": da})
+    dataset = xr.Dataset({"tas": da})
     with pytest.raises(ValueError, match="Expected either"):
         mesmer.stats.fit_auto_regression_scen_ens(
-            data, dim="time", ens_dim="ens", lags=3
+            dataset, dim="time", ens_dim="ens", lags=3  # type: ignore[arg-type]
         )

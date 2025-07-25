@@ -26,7 +26,7 @@ def _get_cos_sin(order):
 
     factor = 2 * np.pi / 12
     k = np.arange(1.0, order + 1)
-    alpha = np.arange(12 * factor, step=factor).reshape(-1, 1) * k
+    alpha = np.arange(0, 12 * factor, step=factor).reshape(-1, 1) * k
 
     # combine cosine and sine into one array
     cos_sin = np.empty((12, order * 2))
@@ -80,36 +80,50 @@ def _generate_fourier_series_order_np(yearly_predictor, coeffs, order):
     return seasonal_cycle.ravel()
 
 
-def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
+def predict_harmonic_model(
+    yearly_predictor: xr.DataArray,
+    coeffs: xr.DataArray,
+    time: xr.DataArray,
+    time_dim: str = "time",
+) -> xr.DataArray:
     """construct a Fourier Series from yearly predictors with fitted coeffs.
 
     Parameters
     ----------
-    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
-        Predictor containing one value per year.
-    coeffs : xr.DataArray of shape (n_gridcells, n_coeffs)
-        coefficients of Fourier Series for each gridcell. Note that coeffs
-        may contain nans (for higher orders, that have not been fit).
-    time: xr.DataArray of shape (n_years * 12)
+    yearly_predictor : xr.DataArray
+        yearly values used as predictors, must contain `time_dim` but can have
+        additional dimensions for example gridcells or members.
+    coeffs : xr.DataArray
+        coefficients of Fourier Series, must have "coeff" dim and additional dims of
+        `yearly_predictor`. Note that coeffs may contain nans (for higher orders, that have not been fit).
+    time: xr.DataArray
         A ``xr.DataArray`` containing cftime objects which will be used as coordinates
         for the monthly output values
     time_dim: str, default: "time"
-        Name for the time dimension of the output ``xr.DataArray``.
+        Name of the time dimension on `yearly_predictor`. Will also be the name of the time_dim
+        of the output ``xr.DataArray``.
 
     Returns
     -------
-    predictions: xr.DataArray of shape (n_years * 12, n_gridcells)
-        Fourier Series calculated over `yearly_predictor` with `coeffs`.
+    predictions: xr.DataArray
+        Fourier Series calculated over `yearly_predictor` with `coeffs`, has `time_dim` with values of `time` and
+        any additional dimensions of `yearly_predictor`.
 
     """
-    _, n_gridcells = yearly_predictor.shape
+
     _check_dataarray_form(
         yearly_predictor,
         "yearly_predictor",
-        ndim=2,
-        required_dims=time_dim,
-        shape=(time.size // 12, n_gridcells),
+        required_coords=time_dim,
     )
+    (sample_dim,) = yearly_predictor[time_dim].dims
+    dims = set(yearly_predictor.dims) - {sample_dim}
+    _check_dataarray_form(
+        coeffs,
+        "coeffs",
+        required_dims=dims | {"coeff"},
+    )
+
     upsampled_y = mesmer.core.utils.upsample_yearly_data(
         yearly_predictor, time, time_dim
     )
@@ -118,13 +132,13 @@ def predict_harmonic_model(yearly_predictor, coeffs, time, time_dim="time"):
         _generate_fourier_series_np,
         upsampled_y,
         coeffs,
-        input_core_dims=[[time_dim], ["coeff"]],
-        output_core_dims=[[time_dim]],
+        input_core_dims=[[sample_dim], ["coeff"]],
+        output_core_dims=[[sample_dim]],
         vectorize=True,
         output_dtypes=[float],
     )
 
-    return predictions.transpose(time_dim, ...)
+    return predictions.transpose(sample_dim, ...)
 
 
 def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
@@ -163,7 +177,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     """
 
-    def residuals_from_fourier_series(coeffs, yearly_predictor, mon_target, order):
+    def _residuals_from_fourier_series(coeffs, yearly_predictor, mon_target, order):
         return (
             _generate_fourier_series_order_np(yearly_predictor, coeffs, order)
             - mon_target
@@ -173,7 +187,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
 
     # use least_squares to optimize the coefficients
     minimize_result = sp.optimize.least_squares(
-        residuals_from_fourier_series,
+        _residuals_from_fourier_series,
         first_guess,
         args=(yearly_predictor, monthly_target, order),
         loss="linear",
@@ -269,37 +283,71 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
     return selected_order, coeffs, predictions
 
 
-def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="time"):
+def fit_harmonic_model(
+    yearly_predictor: xr.DataArray,
+    monthly_target: xr.DataArray,
+    *,
+    max_order: int = 6,
+    time_dim: str = "time",
+) -> xr.Dataset:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
 
     Parameters
     ----------
-    yearly_predictor : xr.DataArray of shape (n_years, n_gridcells)
-        Yearly values used as predictors, containing one value per year.
-    monthly_target : xr.DataArray of shape (n_months, n_gridcells)
+    yearly_predictor : xr.DataArray
+        Yearly values used as predictors, containing one value per year. Contains `time_dim`
+        and possibly additional dimensions for example for gridcells or members.
+    monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
-        ´yearly_predictor´ (starting with January!). So `n_months` = 12 :math:`\\cdot` `n_years`.
+        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot` `n_years`.
+        Must contain `time_dim` and possibly additional dimensions as `yearly_predictor`.
     max_order : Integer, default 6
         Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
         maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
+    time_dim: str, default: "time"
+        Name of the time dimension on `yearly_predictor` and `monthly_target`.
 
     Returns
     -------
     data_vars : `xr.Dataset`
-        Dataset containing the selected order of Fourier Series (`selected_order`),
-        the estimated coefficients of the Fourier Series (`coeffs`) and the resulting
-        residuals of the model (`residuals`).
+        Dataset containing
+
+        - the selected order of Fourier Series (`selected_order`),
+        - the estimated coefficients of the Fourier Series (`coeffs`), and
+        - the residuals of the model (`residuals`).
 
     """
 
-    if not isinstance(yearly_predictor, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(yearly_predictor)}")
+    _check_dataarray_form(
+        yearly_predictor, "yearly_predictor", required_coords={time_dim}
+    )
 
-    if not isinstance(monthly_target, xr.DataArray):
-        raise TypeError(f"Expected a `xr.DataArray`, got {type(monthly_target)}")
+    _check_dataarray_form(monthly_target, "monthly_target", required_coords={time_dim})
 
-    if not monthly_target[time_dim].isel({time_dim: 0}).dt.month == 1:
+    # we need to pass the dim (which may be `time_dim` or `sample_dim`)
+    (sample_dim,) = monthly_target[time_dim].dims
+
+    if set(yearly_predictor.dims) != set(monthly_target.dims):
+
+        msg = (
+            "DataArray objects have different dimensions:\n"
+            f"- `{yearly_predictor.dims}` in `yearly_predictor`\n"
+            f"- `{monthly_target.dims}` in `monthly_target`"
+        )
+        raise ValueError(msg)
+
+    for dim in set(yearly_predictor.dims) - {sample_dim}:
+
+        if yearly_predictor[dim].size != monthly_target[dim].size:
+            msg = (
+                f"The '{dim}' coords of `yearly_predictor` and `monthly_target` have a "
+                f"different size: {yearly_predictor[dim].size} vs. "
+                f"{monthly_target[dim].size}"
+            )
+            raise ValueError(msg)
+
+    if not monthly_target[time_dim].isel({sample_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
 
     yearly_predictor = mesmer.core.utils.upsample_yearly_data(
@@ -313,8 +361,8 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
         _fit_fourier_order_np,
         yearly_predictor,
         seasonal_deviations,
-        input_core_dims=[[time_dim], [time_dim]],
-        output_core_dims=([], ["coeff"], [time_dim]),
+        input_core_dims=[[sample_dim], [sample_dim]],
+        output_core_dims=([], ["coeff"], [sample_dim]),
         vectorize=True,
         output_dtypes=[int, float, float],
         kwargs={"max_order": max_order},
@@ -327,7 +375,7 @@ def fit_harmonic_model(yearly_predictor, monthly_target, max_order=6, time_dim="
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
-        "residuals": resids.transpose(time_dim, ...),
+        "residuals": resids.transpose(sample_dim, ...),
     }
 
     return xr.Dataset(data_vars)

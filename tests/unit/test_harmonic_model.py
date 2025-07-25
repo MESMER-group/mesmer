@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 from mesmer.core.utils import _check_dataarray_form
@@ -38,19 +37,28 @@ def test_generate_fourier_series_np():
     np.testing.assert_allclose(result, expected, atol=1e-10)
 
 
-def test_predict_harmonic_model():
+@pytest.mark.parametrize("stack", (True, False))
+def test_predict_harmonic_model(stack):
     n_years = 10
     n_lat, n_lon, n_gridcells = 2, 3, 2 * 3
-    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    time = xr.cftime_range(start="2000-01-01", periods=n_years, freq=freq)
+    time = xr.date_range(
+        start="2000-01-01", periods=n_years, freq="YS", use_cftime=True
+    )
     yearly_predictor = xr.DataArray(
         np.zeros((n_years, n_gridcells)), dims=["time", "cells"], coords={"time": time}
     )
 
-    time = xr.cftime_range(start="2000-01-01", periods=n_years * 12, freq="MS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_years * 12, freq="MS", use_cftime=True
+    )
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
 
     coeffs = get_2D_coefficients(order_per_cell=[1, 2, 3], n_lat=n_lat, n_lon=n_lon)
+
+    sample_dim = "sample" if stack else "time"
+    if stack:
+        yearly_predictor = yearly_predictor.stack(sample=["time"], create_index=False)
+        monthly_time = monthly_time.stack(sample=["time"], create_index=False)
 
     result = mesmer.stats.predict_harmonic_model(
         yearly_predictor, coeffs, monthly_time, time_dim="time"
@@ -60,7 +68,8 @@ def test_predict_harmonic_model():
         result,
         "result",
         ndim=2,
-        required_dims=["time", "cells"],
+        required_dims={sample_dim, "cells"},
+        required_coords="time",
         shape=(n_years * 12, n_gridcells),
     )
 
@@ -95,7 +104,7 @@ def test_fit_fourier_order_np(coefficients):
     )
     estimated_coefficients = np.nan_to_num(
         estimated_coefficients,
-        0,
+        nan=0,
     )
 
     np.testing.assert_allclose(original_coefficients, estimated_coefficients, atol=1e-7)
@@ -143,12 +152,13 @@ def test_fit_harmonic_model():
         "time", "cells"
     )
 
-    freq = "AS" if Version(pd.__version__) < Version("2.2") else "YS"
-    yearly_predictor["time"] = xr.cftime_range(
-        start="2000-01-01", periods=n_ts, freq=freq
+    yearly_predictor["time"] = xr.date_range(
+        start="2000-01-01", periods=n_ts, freq="YS", use_cftime=True
     )
 
-    time = xr.cftime_range(start="2000-01-01", periods=n_ts * 12, freq="MS")
+    time = xr.date_range(
+        start="2000-01-01", periods=n_ts * 12, freq="MS", use_cftime=True
+    )
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
 
     monthly_target = predict_harmonic_model(
@@ -195,29 +205,58 @@ def test_fit_harmonic_model():
     result_comp = result.residuals.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(result_comp, expected, atol=1e-6)
 
-    # ensure predictons and residuals are consistent
+    # ensure predictions and residuals are consistent
     expected = noisy_monthly_target - predictions
 
     xr.testing.assert_equal(expected, result.residuals)
 
 
-def test_fit_harmonic_model_checks():
+def test_fit_harmonic_model_checks() -> None:
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)
+        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)
+        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)  # type: ignore[arg-type]
 
-    freq = "YE" if Version(pd.__version__) >= Version("2.2") else "Y"
-    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq=freq)
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="YE")
 
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
-    monthly_target["time"] = pd.date_range("2000-02-01", periods=10 * 12, freq=freq)
+    monthly_target["time"] = pd.date_range("2000-02-01", periods=10 * 12, freq="ME")
     with pytest.raises(ValueError, match="Monthly target data must start with January"):
         mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+
+    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
+
+    with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
+        mesmer.stats.fit_harmonic_model(yearly_predictor.isel(cells=0), monthly_target)
+
+    with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
+        mesmer.stats.fit_harmonic_model(
+            yearly_predictor.rename(cells="gp"), monthly_target
+        )
+
+    with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
+        mesmer.stats.fit_harmonic_model(
+            yearly_predictor, monthly_target.rename(cells="gp")
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 6 vs. 4",
+    ):
+        mesmer.stats.fit_harmonic_model(
+            yearly_predictor, monthly_target.isel(cells=slice(None, 4))
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 5 vs. 6",
+    ):
+        mesmer.stats.fit_harmonic_model(
+            yearly_predictor.isel(cells=slice(None, 5)), monthly_target
+        )
 
 
 def test_fit_harmonic_model_time_dim():
@@ -225,13 +264,39 @@ def test_fit_harmonic_model_time_dim():
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
-    freq = "YE" if Version(pd.__version__) >= Version("2.2") else "Y"
-    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq=freq)
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="YE")
 
-    freq = "ME" if Version(pd.__version__) >= Version("2.2") else "M"
-    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq=freq)
+    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
 
     time_dim = "dates"
     monthly_target = monthly_target.rename({"time": time_dim})
     yearly_predictor = yearly_predictor.rename({"time": time_dim})
-    mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target, time_dim=time_dim)
+    res = mesmer.stats.fit_harmonic_model(
+        yearly_predictor, monthly_target, time_dim=time_dim
+    )
+
+    _check_dataarray_form(res.selected_order, required_dims="cells")
+    _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
+    _check_dataarray_form(
+        res.residuals, required_dims={"cells", "dates"}, required_coords="dates"
+    )
+
+
+def test_fit_harmonic_model_non_dim_coords():
+    # test if the time dimension can be a non-dim coords
+    yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
+    monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
+
+    yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="YE")
+    yearly_predictor = yearly_predictor.stack(sample=["time"], create_index=False)
+
+    monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
+    monthly_target = monthly_target.stack(sample=["time"], create_index=False)
+
+    res = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+
+    _check_dataarray_form(res.selected_order, required_dims="cells")
+    _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
+    _check_dataarray_form(
+        res.residuals, required_dims={"cells", "sample"}, required_coords="time"
+    )
