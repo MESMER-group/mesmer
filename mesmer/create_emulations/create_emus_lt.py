@@ -178,11 +178,10 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
         params = _gather_lr_params(params_lt, targ, dims="cell")
         predictors = _gather_lr_preds(preds_lt, params_lt["preds"], scen, dims="time")
 
-        lr = LinearRegression()
-        lr.params = params
+        lr = LinearRegression.from_params(params)
 
         prediction = lr.predict(predictors=predictors)
 
-        emus_lt[targ] = prediction.values.T
+        emus_lt[targ] = prediction.prediction.values.T
 
     return emus_lt

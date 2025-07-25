@@ -5,14 +5,94 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "mesmer-emulator"
+authors = [{name = "mesmer developers", email = "mesmer@env.ethz.ch"}]
+license = "GPL-3.0-or-later"
+keywords = ['climate atmosphere "Earth System Model Emulator"']
+description = "Modular Earth System Model Emulator with spatially Resolved output"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "dask[array,distributed] >=2024.7",
+    "filefisher >=1.1",
+    "joblib >=1.4",
+    "netcdf4 >=1.7",
+    "numpy >=1.26",
+    "packaging >=24.1",
+    "pandas >=2.2",
+    "pooch >=1.8",
+    "pyproj >=3.6",
+    "regionmask >=0.12",
+    "scikit-learn >=1.4", # only for the tests
+    "scipy >=1.14",
+    "statsmodels >=0.14",
+    "xarray >=2025.3", # for xr.DataTree
+]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.urls]
+Homepage = "https://github.com/MESMER-group/mesmer"
+Documentation = "https://mesmer-emulator.readthedocs.io"
+Source = "https://github.com/MESMER-group/mesmer"
+BugReports = "https://github.com/MESMER-group/mesmer/issues"
+
+[project.optional-dependencies]
+complete = [
+  "mesmer-emulator[viz]",
+  "properscoring >=0.1",
+]
+viz = [
+    "cartopy >=0.23",
+    "matplotlib >=3.8",
+    "nc-time-axis ",
+]
+docs = [
+    "mesmer-emulator[viz]",
+    "ipython",
+    "myst_nb",
+    "myst-parser",
+    "numpydoc",
+    "sphinx",
+    "sphinx-book-theme",
+]
+tests = [
+    "pytest-cov",
+    "pytest-xdist",
+    "pytest",
+]
+dev = [
+    "mesmer-emulator[complete, docs, tests]",
+    "black !=23",
+    "ruff",
+]
+
+[tool.setuptools.packages]
+find = {namespaces = false}  # Disable implicit namespaces
+
+
 [tool.setuptools_scm]
 fallback_version = "999"
-version_scheme = "no-guess-dev"
 
 [tool.ruff]
 # also check notebooks
 extend-include = ["*.ipynb"]
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 # E402: module level import not at top of file
@@ -48,7 +128,7 @@ exclude = [
   "ci",
   "devel",
   "dist",
-  "examples",
+  "tutorials",
 ]
 files = "mesmer"
 
@@ -61,6 +141,7 @@ warn_unused_ignores = true
 ignore_missing_imports = true
 module = [
   "cftime.*",
+  "filefisher.*",
   "joblib.*",
   "pooch.*",
   "properscoring.*",
@@ -70,3 +151,28 @@ module = [
   "sklearn.*",
   "statsmodels.*",
 ]
+
+[tool.typos]
+
+[tool.typos.default]
+
+[tool.typos.default.extend-words]
+
+# abbreviations
+varn = "varn"
+strat = "strat"
+
+[tool.typos.type.jupyter]
+# avoid fixing the id hashes in jupyter notebooks
+extend-ignore-re = [
+    "\"id\": \".*\"",
+]
+
+[tool.coverage.run]
+omit = ["*/tests/*, */scripts/*, */tutorials/*, */configs/*, */mesmer/_version.py"]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-markers", "--durations=10"]
+python_files = "test_*.py"
+testpaths = "tests/"
+filterwarnings = ["ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning"]

@@ -3,7 +3,13 @@ import xarray as xr
 
 
 def assert_allclose_allowed_failures(
-    actual, desired, *, rtol=1e-07, atol=0, allowed_failures=0
+    actual,
+    desired,
+    *,
+    rtol=1e-07,
+    atol=0,
+    allowed_failures=0,
+    err_msg="",
 ):
     """check arrays are close but allow a number of failures
 
@@ -38,7 +44,7 @@ def assert_allclose_allowed_failures(
             return isclose
         return True
 
-    np.testing.assert_array_compare(comparison, actual, desired)
+    np.testing.assert_array_compare(comparison, actual, desired, err_msg=err_msg)
 
 
 def assert_dict_allclose(first, second, first_name="left", second_name="right"):
@@ -77,11 +83,11 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
             assert first_val == second_val, key
 
 
-def trend_data_1D(n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0):
+def trend_data_1D(*, n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0, seed=0):
 
     time = np.arange(n_timesteps)
 
-    rng = np.random.default_rng(0)
+    rng = np.random.default_rng(seed)
     scatter = rng.normal(scale=scale, size=n_timesteps)
 
     data = intercept + slope * time + scatter
@@ -90,8 +96,8 @@ def trend_data_1D(n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0):
 
 
 def trend_data_2D(
-    n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
-):
+    *, n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
+) -> xr.DataArray:
 
     n_cells = n_lat * n_lon
     time = np.arange(n_timesteps)
@@ -112,7 +118,7 @@ def trend_data_2D(
 
 
 def trend_data_3D(
-    n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
+    *, n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
 ):
 
     data = trend_data_2D(
@@ -126,3 +132,17 @@ def trend_data_3D(
 
     # reshape to 3D (time x lat x lon)
     return data.set_index(cells=("lat", "lon")).unstack("cells")
+
+
+def _convert(da: xr.DataArray, datatype):
+
+    if datatype == "DataArray":
+        return da
+
+    if datatype == "Dataset":
+        return da.to_dataset()
+
+    if datatype == "DataTree":
+        return xr.DataTree.from_dict({"node": da.to_dataset()})
+
+    raise ValueError(f"Unknown datatype: {datatype}")
