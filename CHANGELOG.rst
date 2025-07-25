@@ -262,7 +262,7 @@ Harmonic model
    - infer the harmonic model order from the coefficients (`#434 <https://github.com/MESMER-group/mesmer/pull/434>`_)
    - optimization of `_generate_fourier_series_order_np()` (`#516 <https://github.com/MESMER-group/mesmer/pull/516>`_ and `#578 <https://github.com/MESMER-group/mesmer/pull/578>`_)
 -  return residuals instead of the loss for the optimization (`#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
--  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415/>`_ and
+-  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_ and
    `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).
 -  add helper function to upsample yearly data to monthly resolution (\
    `#418 <https://github.com/MESMER-group/mesmer/pull/418>`_,
