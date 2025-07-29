@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from mesmer.mesmer_x._expression import Expression
+from mesmer.distrib._expression import Expression
 
 
 def _coeffs_in_bounds(expression: Expression, values_coeffs):

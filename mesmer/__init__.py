@@ -9,7 +9,16 @@ analyze the results.
 
 from importlib.metadata import version as _get_version
 
-from mesmer import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
+from mesmer import (
+    calibrate_mesmer,
+    core,
+    create_emulations,
+    distrib,
+    io,
+    stats,
+    testing,
+    utils,
+)
 from mesmer.core import _data as data
 from mesmer.core import (
     anomaly,
@@ -37,6 +46,7 @@ __all__ += [
     "core",
     "data",
     "datatree",
+    "distrib",
     "example_data",
     "geospatial",
     "get_options",

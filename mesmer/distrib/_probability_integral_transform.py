@@ -7,7 +7,7 @@ import numpy as np
 import xarray as xr
 
 from mesmer.core.datatree import _datatree_wrapper
-from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
+from mesmer.distrib._conditional_distribution import ConditionalDistribution
 
 
 class ProbabilityIntegralTransform:
