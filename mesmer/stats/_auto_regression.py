@@ -1167,7 +1167,8 @@ def _draw_auto_regression_monthly_np(
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
     # predict auto-regressive process using innovations
-    out = np.zeros([n_samples, n_ts + buffer * 12, n_gridcells])
+    # copy-by-reference: use innovations as out param to save on memory
+    out = innovations
     for t in range(1, n_ts + buffer * 12):
         month = t % 12
         out[:, t, :] = (
