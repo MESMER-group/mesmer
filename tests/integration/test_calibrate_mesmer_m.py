@@ -77,8 +77,38 @@ def load_data(filecontainer):
     return out
 
 
-@pytest.mark.slow
-def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
+@pytest.mark.parametrize(
+    (
+        "scenario",
+        "n_ens",
+        "yj_transformation",
+        "outname",
+    ),
+    [
+        pytest.param(
+            ["ssp585"],
+            "one",
+            "logistic",
+            "tasmax/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            "many",
+            "constant",
+            "tasmax/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+    ],
+)
+def test_calibrate_mesmer_m(
+    scenario,
+    n_ens,
+    yj_transformation,
+    outname,
+    test_data_root_dir,
+    update_expected_files,
+):
     # define config values
     THRESHOLD_LAND = 1 / 3
 
@@ -89,8 +119,8 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     LOCALISATION_RADII = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
 
     esm = "IPSL-CM6A-LR"
-    scenario = "ssp585"
-    member = "r1i1p1f1"
+
+    member = "*" if n_ens == "many" else "r1i1p1f1"
 
     # define paths and load data
     test_path = test_data_root_dir / "output" / "tas" / "mon" / "test-params"
@@ -125,21 +155,31 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     tas_stacked_y = mask_and_stack(tas_anoms_y, threshold_land=THRESHOLD_LAND)
     tas_stacked_m = mask_and_stack(tas_anoms_m, threshold_land=THRESHOLD_LAND)
 
-    tas_stacked_y = xr.combine_by_coords(
-        [dt.ds for dt in tas_stacked_y.values()],
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
-    ).squeeze(drop=True)
+    if n_ens == "one":
+        # NOTE: we load one ensemble member into a DataTree structure and combine
+        # the historical and scenario here - this is overkill but allows using the same
+        # load function for both cases (with this we have one test case with a time
+        # dim and one with a sample dim)
 
-    tas_stacked_m = xr.combine_by_coords(
-        [dt.ds for dt in tas_stacked_m.values()],
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
-    ).squeeze(drop=True)
+        tas_stacked_y = xr.combine_by_coords(
+            [dt.ds for dt in tas_stacked_y.values()],
+            combine_attrs="override",
+            data_vars="minimal",
+            compat="override",
+            coords="minimal",
+        ).squeeze(drop=True)
+
+        tas_stacked_m = xr.combine_by_coords(
+            [dt.ds for dt in tas_stacked_m.values()],
+            combine_attrs="override",
+            data_vars="minimal",
+            compat="override",
+            coords="minimal",
+        ).squeeze(drop=True)
+
+    else:
+        tas_stacked_y = mesmer.datatree.pool_scen_ens(tas_stacked_y)
+        tas_stacked_m = mesmer.datatree.pool_scen_ens(tas_stacked_m)
 
     # fit harmonic model
     harmonic_model_fit = mesmer.stats.fit_harmonic_model(
@@ -147,7 +187,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     )
 
     # train power transformer
-    yj_transformer = mesmer.stats.YeoJohnsonTransformer("logistic")
+    yj_transformer = mesmer.stats.YeoJohnsonTransformer(yj_transformation)
     pt_coefficients = yj_transformer.fit(
         tas_stacked_y.tas,
         harmonic_model_fit.residuals,
@@ -183,7 +223,7 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
-    scen_str = scenario
+    scen_str = "_".join(scenario)
 
     keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
 
