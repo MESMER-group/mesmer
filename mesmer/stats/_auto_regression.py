@@ -7,16 +7,16 @@ import pandas as pd
 import scipy
 import xarray as xr
 
-from mesmer.core.datatree import (
-    _datatree_wrapper,
-    collapse_datatree_into_dataset,
-    map_over_datasets,
-)
 from mesmer.core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
     _set_threads_from_options,
+)
+from mesmer.datatree import (
+    _datatree_wrapper,
+    collapse_datatree_into_dataset,
+    map_over_datasets,
 )
 
 

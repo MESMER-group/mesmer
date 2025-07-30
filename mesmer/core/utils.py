@@ -9,7 +9,7 @@ import pandas as pd
 import threadpoolctl
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
+from mesmer.datatree import _datatree_wrapper
 
 
 class OptimizeWarning(UserWarning):

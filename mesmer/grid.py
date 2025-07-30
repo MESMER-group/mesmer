@@ -1,8 +1,8 @@
 import pandas as pd
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
 from mesmer.core.types import T_DataArraySetTree
+from mesmer.datatree import _datatree_wrapper
 
 
 def _lon_to_180(lon):

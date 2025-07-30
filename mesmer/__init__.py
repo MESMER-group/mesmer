@@ -9,18 +9,24 @@ analyze the results.
 
 from importlib.metadata import version as _get_version
 
-from mesmer import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
-from mesmer.core import _data as data
-from mesmer.core import (
+from mesmer import (
     anomaly,
+    calibrate_mesmer,
+    core,
+    create_emulations,
     datatree,
     example_data,
     geospatial,
     grid,
+    io,
     mask,
+    stats,
+    testing,
+    utils,
     volc,
     weighted,
 )
+from mesmer.core import _data as data
 from mesmer.core.options import get_options, set_options
 
 # "legacy" modules
