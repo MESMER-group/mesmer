@@ -6,8 +6,8 @@
 Functions to train local trends module of MESMER.
 """
 
-
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.calibrate_mesmer.train_utils import (
     get_scenario_weights,
@@ -17,6 +17,10 @@ from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import LinearRegression
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_lt(preds, targs, esm, cfg, save_params=True):
     """
     Derive local trends (i.e., forced response) parameters for given ESM for given set

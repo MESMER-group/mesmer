@@ -11,6 +11,10 @@ import warnings
 from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_strat_aod(time, dir_obs=None):
     """Load observed global stratospheric aerosol optical depth time series.
 

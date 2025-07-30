@@ -6,14 +6,18 @@
 Functions to train global variability module of MESMER.
 """
 
-
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import fit_auto_regression_scen_ens, select_ar_order_scen_ens
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     """
     Derive global variability parameters for a specified method.
@@ -111,6 +115,10 @@ def train_gv(gv, targ, esm, cfg, save_params=True, **kwargs):
     return params_gv
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_gv_AR(params_gv, gv, max_lag, sel_crit):
     """
     Derive AR parameters of global variability under the assumption that gv does not

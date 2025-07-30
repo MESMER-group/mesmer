@@ -5,14 +5,18 @@
 """
 Functions to create global variability emulations with MESMER.
 """
-
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import draw_auto_regression_uncorrelated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     """Create global variablity emulations for specified method.
 
@@ -107,6 +111,10 @@ def create_emus_gv(params_gv, preds_gv, cfg, save_emus=True):
     return emus_gv
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_gv_AR(params_gv, nr_emus_v, nr_ts_emus_v, seed):
     """Draw global variablity emulations from an AR process.
 
