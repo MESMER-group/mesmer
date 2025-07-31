@@ -1,7 +1,7 @@
 import numpy as np
 
-from mesmer.mesmer_x import Expression
-from mesmer.mesmer_x._distrib_checks import _validate_coefficients
+from mesmer.distrib import Expression
+from mesmer.distrib._distrib_checks import _validate_coefficients
 
 
 def test_validate_coefficients():

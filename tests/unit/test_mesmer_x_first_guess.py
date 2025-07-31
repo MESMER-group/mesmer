@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import scipy as sp
 
-from mesmer.mesmer_x import Expression, MinimizeOptions
-from mesmer.mesmer_x._first_guess import (
+from mesmer.distrib import Expression, MinimizeOptions
+from mesmer.distrib._first_guess import (
     _finite_difference,
     _FirstGuess,
     _smooth_data,

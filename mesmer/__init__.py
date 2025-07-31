@@ -43,6 +43,7 @@ __all__ += [
     "core",
     "data",
     "datatree",
+    "distrib",
     "example_data",
     "geospatial",
     "get_options",

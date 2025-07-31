@@ -3,7 +3,7 @@ import xarray as xr
 from filefisher import FileFinder
 
 import mesmer
-from mesmer.mesmer_x import (
+from mesmer.distrib import (
     ConditionalDistribution,
     Expression,
     ProbabilityIntegralTransform,

@@ -8,11 +8,10 @@ import scipy as sp
 from packaging.version import Version
 from scipy.optimize import basinhopping
 
-import mesmer.mesmer_x._distrib_checks as _distrib_checks
-import mesmer.mesmer_x._optimizers as _optimizers
-from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._optimizers import MinimizeOptions
-from mesmer.mesmer_x._utils import _ignore_warnings
+from mesmer.distrib import _distrib_checks, _optimizers
+from mesmer.distrib._expression import Expression
+from mesmer.distrib._optimizers import MinimizeOptions
+from mesmer.distrib._utils import _ignore_warnings
 
 # random but fixed seed for basinhopping -> to increase reproducibility
 SEED_BASINHOPPING = 1931102249669598594

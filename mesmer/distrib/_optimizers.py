@@ -7,8 +7,8 @@
 import numpy as np
 from scipy.optimize import minimize
 
-import mesmer.mesmer_x._distrib_checks as _distrib_checks
-from mesmer.mesmer_x._expression import Expression
+from mesmer.distrib import _distrib_checks
+from mesmer.distrib._expression import Expression
 
 
 class MinimizeOptions:
