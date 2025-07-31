@@ -6,7 +6,7 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
+from mesmer.datatree import _datatree_wrapper
 from mesmer.distrib._conditional_distribution import ConditionalDistribution
 
 

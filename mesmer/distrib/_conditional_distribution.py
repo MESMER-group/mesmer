@@ -8,15 +8,15 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer.core.geospatial import geodist_exact
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.core.weighted import weighted_median
 from mesmer.distrib import _distrib_checks, _optimizers
 from mesmer.distrib._expression import Expression
 from mesmer.distrib._first_guess import _FirstGuess
 from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
 from mesmer.distrib._utils import _ignore_warnings
+from mesmer.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn
+from mesmer.weighted import weighted_median
 
 
 class ConditionalDistribution:

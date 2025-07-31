@@ -4,8 +4,8 @@ import xarray as xr
 from packaging.version import Version
 
 import mesmer
-from mesmer.core.datatree import _datatree_wrapper, map_over_datasets
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.datatree import _datatree_wrapper, map_over_datasets
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 

@@ -6,8 +6,8 @@ import xarray as xr
 from packaging.version import Version
 
 import mesmer
-from mesmer.core.datatree import map_over_datasets
 from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.datatree import map_over_datasets
 from mesmer.testing import _convert
 
 
