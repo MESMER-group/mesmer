@@ -43,6 +43,7 @@ __all__ += [
     "anomaly",
     "data",
     "datatree",
+    "distrib",
     "example_data",
     "geospatial",
     "get_options",

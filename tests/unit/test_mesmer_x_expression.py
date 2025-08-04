@@ -4,7 +4,7 @@ import scipy as sp
 import xarray as xr
 
 import mesmer
-from mesmer.mesmer_x import Expression
+from mesmer.distrib import Expression
 
 inf = float("inf")
 

@@ -9,12 +9,12 @@ import numpy as np
 import xarray as xr
 
 from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.distrib import _distrib_checks, _optimizers
+from mesmer.distrib._expression import Expression
+from mesmer.distrib._first_guess import _FirstGuess
+from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
+from mesmer.distrib._utils import _ignore_warnings
 from mesmer.geospatial import geodist_exact
-from mesmer.mesmer_x import _distrib_checks, _optimizers
-from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._first_guess import _FirstGuess
-from mesmer.mesmer_x._optimizers import MinimizeOptions, OptimizerNLL
-from mesmer.mesmer_x._utils import _ignore_warnings
 from mesmer.stats import gaspari_cohn
 from mesmer.weighted import weighted_median
 
