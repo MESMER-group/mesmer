@@ -39,8 +39,8 @@ __all__ = [
 
 # "new" "modules"
 __all__ += [
-    "anomaly",
     "_core",
+    "anomaly",
     "data",
     "datatree",
     "example_data",
