@@ -331,7 +331,7 @@ def _assert_required_coords(
 @contextmanager
 def _set_threads_from_options():
 
-    from mesmer.core.options import OPTIONS
+    from mesmer._core.options import OPTIONS
 
     threads_option = OPTIONS["threads"]
 

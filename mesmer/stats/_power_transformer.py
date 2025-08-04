@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 from scipy.optimize import minimize
 
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 
 
 def _yeo_johnson_transform_np(data, lambdas):

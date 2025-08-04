@@ -107,7 +107,11 @@ Internal Changes
   By `Mathias Hauser`_.
 - Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
   By `Mathias Hauser`_.
-- Removed the ``regionmaskcompat.py`` module. It is no longer needed after requiring *regionmask* v0.12  (`#683 <https://github.com/MESMER-group/mesmer/pull/683>`_).
+- Removed the ``regionmaskcompat.py`` module. It is no longer needed after requiring *regionmask* v0.12 (`#683 <https://github.com/MESMER-group/mesmer/pull/683>`_).
+  By `Mathias Hauser`_.
+- Moved data modules to mesmer namespace (`#773 <https://github.com/MESMER-group/mesmer/pull/773>`_).
+  By `Mathias Hauser`_.
+- Made the *core* data module explicitly private by renaming it to *_core* (`#774 <https://github.com/MESMER-group/mesmer/pull/774>`_).
   By `Mathias Hauser`_.
 
 Data structure using DataTree
