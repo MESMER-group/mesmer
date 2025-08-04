@@ -89,14 +89,14 @@ def load_data(filecontainer: filefisher.FileContainer):
             ["ssp585"],
             "one",
             "logistic",
-            "tasmax/one_scen_one_ens",
+            "tas/mon/one_scen_one_ens",
             marks=pytest.mark.slow,
         ),
         pytest.param(
             ["ssp126", "ssp585"],
-            "many",
+            "multi",
             "constant",
-            "tasmax/one_scen_one_ens",
+            "tas/mon/multi_scen_multi_ens",
             marks=pytest.mark.slow,
         ),
     ],
@@ -120,10 +120,10 @@ def test_calibrate_mesmer_m(
 
     esm = "IPSL-CM6A-LR"
 
-    member = "*" if n_ens == "many" else "r1i1p1f1"
+    member = "*" if n_ens == "multi" else "r1i1p1f1"
 
     # define paths and load data
-    test_path = test_data_root_dir / "output" / "tas" / "mon" / "test-params"
+    test_path = test_data_root_dir / "output" / outname / "test-params"
 
     # load annual data
     fc_all_y = find_hist_proj_simulations(
@@ -217,7 +217,7 @@ def test_calibrate_mesmer_m(
         weights = mesmer.datatree.pool_scen_ens(weights)
 
         # because ar1_fit.residuals lost the first ts, we have to remove it here as well
-        weights = weights.isel(sample=slice(1, None))
+        weights = weights.isel(sample=slice(1, None)).weights
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
         ar1_fit.residuals, weights, phi_gc_localizer, "time", k_folds=30
