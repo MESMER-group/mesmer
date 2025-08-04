@@ -10,9 +10,9 @@ analyze the results.
 from importlib.metadata import version as _get_version
 
 from mesmer import (
+    _core,
     anomaly,
     calibrate_mesmer,
-    core,
     create_emulations,
     datatree,
     example_data,
@@ -26,8 +26,8 @@ from mesmer import (
     volc,
     weighted,
 )
-from mesmer.core import _data as data
-from mesmer.core.options import get_options, set_options
+from mesmer._core import _data as data
+from mesmer._core.options import get_options, set_options
 
 # "legacy" modules
 __all__ = [
@@ -40,7 +40,7 @@ __all__ = [
 # "new" "modules"
 __all__ += [
     "anomaly",
-    "core",
+    "_core",
     "data",
     "datatree",
     "example_data",
