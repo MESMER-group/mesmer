@@ -15,6 +15,7 @@ from mesmer import (
     calibrate_mesmer,
     create_emulations,
     datatree,
+    distrib,
     example_data,
     geospatial,
     grid,
