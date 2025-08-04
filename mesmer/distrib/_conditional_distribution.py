@@ -8,7 +8,7 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.distrib import _distrib_checks, _optimizers
 from mesmer.distrib._expression import Expression
 from mesmer.distrib._first_guess import _FirstGuess

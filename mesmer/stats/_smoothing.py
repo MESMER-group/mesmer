@@ -3,7 +3,7 @@ from typing import TypeVar
 import numpy as np
 import xarray as xr
 
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 from mesmer.datatree import _datatree_wrapper
 
 T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")

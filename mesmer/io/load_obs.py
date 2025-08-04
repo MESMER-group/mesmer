@@ -8,7 +8,7 @@ Functions to load in observations which are saved locally.
 
 import warnings
 
-from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
+from mesmer._core._data import load_stratospheric_aerosol_optical_depth_obs
 
 
 def load_strat_aod(time, dir_obs=None):

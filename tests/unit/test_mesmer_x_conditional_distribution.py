@@ -5,7 +5,7 @@ import pytest
 import xarray as xr
 
 import mesmer.distrib._conditional_distribution
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
 from mesmer.distrib import (
     ConditionalDistribution,
     Expression,
