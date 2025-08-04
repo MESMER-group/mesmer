@@ -47,7 +47,7 @@ def test_upsample_yearly_data(freq_y, freq_m, calendar):
     yearly_data = make_dummy_yearly_data(freq_y, calendar=calendar)
     monthly_data = make_dummy_monthly_data(freq_m, calendar=calendar)
 
-    upsampled_years = mesmer._core.utils.upsample_yearly_data(
+    upsampled_years = mesmer.resample.upsample_yearly_data(
         yearly_data, monthly_data.time
     )
 
@@ -65,7 +65,7 @@ def test_upsample_yearly_data_dataset():
 
     yearly_data = yearly_data.to_dataset()
 
-    upsampled_years = mesmer._core.utils.upsample_yearly_data(
+    upsampled_years = mesmer.resample.upsample_yearly_data(
         yearly_data, monthly_data.time
     )
     xr.testing.assert_equal(upsampled_years.time, monthly_data.time)
@@ -87,11 +87,11 @@ def test_upsample_yearly_data_no_dimension_coords():
         ValueError,
         match=r"The dimension of the time coords \(sample\) is a pandas.MultiIndex",
     ):
-        mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
+        mesmer.resample.upsample_yearly_data(yearly_data, monthly_data.time)
 
     yearly_data = yearly_data.reset_index("sample")
 
-    upsampled_years = mesmer._core.utils.upsample_yearly_data(
+    upsampled_years = mesmer.resample.upsample_yearly_data(
         yearly_data, monthly_data.time
     )
 
@@ -109,14 +109,14 @@ def test_upsample_yearly_data_datatree():
     # only yearly_data is a DataTree
     yearly_data = xr.DataTree.from_dict({"scen": yearly_data.to_dataset()})
 
-    upsampled_years = mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data)
+    upsampled_years = mesmer.resample.upsample_yearly_data(yearly_data, monthly_data)
     xr.testing.assert_equal(upsampled_years["scen"].time, monthly_data.time)
     assert isinstance(upsampled_years, xr.DataTree)
 
     # yearly_ data and monthly_data is a DataTree
     monthly_data = xr.DataTree.from_dict({"scen": monthly_data.to_dataset()})
 
-    upsampled_years = mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data)
+    upsampled_years = mesmer.resample.upsample_yearly_data(yearly_data, monthly_data)
     xr.testing.assert_equal(upsampled_years["scen"].time, monthly_data["scen"].time)
     assert isinstance(upsampled_years, xr.DataTree)
 
@@ -127,19 +127,19 @@ def test_upsample_yearly_data_wrong_dims():
     monthly_data = make_dummy_monthly_data("MM")
 
     with pytest.raises(ValueError, match="yearly_data is missing the required coords"):
-        mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
+        mesmer.resample.upsample_yearly_data(yearly_data, monthly_data.time)
 
     yearly_data = make_dummy_yearly_data("YS")
     monthly_data = monthly_data.rename({"time": "months"})
     with pytest.raises(ValueError, match="monthly_time is missing the required coords"):
-        mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data.months)
+        mesmer.resample.upsample_yearly_data(yearly_data, monthly_data.months)
 
     monthly_data = make_dummy_monthly_data("MM")
     monthly_data = monthly_data.expand_dims({"extra": 1})
     time = monthly_data["time"].expand_dims({"extra": 1})
     monthly_data = monthly_data.assign_coords(time=time)
     with pytest.raises(ValueError, match="monthly_time should be 1D, but is 2D"):
-        mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data)
+        mesmer.resample.upsample_yearly_data(yearly_data, monthly_data)
 
 
 def test_upsample_yearly_data_wrong_length():
@@ -150,7 +150,7 @@ def test_upsample_yearly_data_wrong_length():
         ValueError,
         match="Length of monthly time not equal to 12 times the length of yearly data.",
     ):
-        mesmer._core.utils.upsample_yearly_data(yearly_data, monthly_data.time)
+        mesmer.resample.upsample_yearly_data(yearly_data, monthly_data.time)
 
 
 @pytest.mark.parametrize(
