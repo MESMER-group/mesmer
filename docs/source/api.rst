@@ -163,6 +163,13 @@ Anomalies
 
    ~anomaly.calc_anomaly
 
+Resampling
+----------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~resample.upsample_yearly_data
 
 Emulator functions
 ==================
