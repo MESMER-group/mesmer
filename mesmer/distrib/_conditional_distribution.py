@@ -351,6 +351,7 @@ class ConditionalDistribution:
             Individual weights for each sample.
         scores : list of str, default: ['func_optim', 'nll', 'bic']
             After the fit, several scores can be calculated to assess the performance:
+
             - "func_optim": function optimized, as described in
               options_optim['type_fun_optim']: negative log likelihood or full
               conditional negative log likelihood
@@ -496,6 +497,7 @@ class ConditionalDistribution:
 
         Parameters
         ----------
+        filename : str
             Name of the netCDF file to open.
         **kwargs : Any
             Additional keyword arguments passed to ``xr.open_dataset``
@@ -528,7 +530,7 @@ class ConditionalDistribution:
         filename : str
             Name of the netCDF file to save.
         **kwargs : Any
-            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+            Additional keyword arguments passed to ``xr.Dataset.to_netcdf``
         """
 
         self.coefficients.to_netcdf(filename, **kwargs)

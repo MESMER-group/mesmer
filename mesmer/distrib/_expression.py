@@ -62,19 +62,20 @@ class Expression:
               or continuous): https://docs.scipy.org/doc/scipy/reference/stats.html
 
             - the parameters: all names for the parameters of the distributions must be
-              provided (as named in the `scipy.stats` distribution): loc, scale, shape,
-              mu, a, b, c, etc.
+              provided (as named in the `scipy.stats` distribution): ``loc``, ``scale``,
+              ``shape``, ``mu``, ``a``, ``b``, ``c``, etc.
 
             - predictors: predictors that the distribution will be conditional to, must
               be written like a variable in python and surrounded by "__":
-              e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__, __GMT, _GMT_ etc.
+              e.g. ``__GMT__``, ``__X1__``, ``__gmt_tm1__``, but NOT ``__gmt-1__``,
+              ``__#days__``, ``__GMT``, ``_GMT_`` etc.
 
             - coefficients: coefficients of the predictors, must be named "c#", with # being
-              the number of the coefficient: e.g. c1, c2, c3.
+              the number of the coefficient: e.g. ``c1``, ``c2``, ``c3`` ().
 
-            - mathematical terms: mathematical terms for the evolutions are be written as they
-              would be normally in python. Names of packages should be included. Spaces do not
-              matter in the equations
+            - mathematical terms: mathematical terms for the evolutions are be written
+              as they would be normally in python. Only functions from numpy (``np.*``)
+              are supported. Spaces do not matter in the equations.
 
         .. warning::
             Currently, the expression can only contain integers as numbers, no floats!
@@ -82,9 +83,9 @@ class Expression:
 
         Examples
         --------
-        `expr1 = Expression("genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5", "expr1")`
-        `expr2 = Expression("norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)", "expr2")`
-        `expr3 = Expression("exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3), "expr3")`
+
+        - ``Expression("genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5", "expr1")``
+        - ``Expression("norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)", "expr2")``
         """
         # TODO: Forcing values of certain parameters (eg mu for poisson) to be integers?
 
@@ -415,14 +416,18 @@ class Expression:
         Parameters
         ----------
         coefficients_values : dict | xr.Dataset(c_i) | list of values
-            Coefficient arrays or scalars. Can have the following form
-            - dict(c_i = values or np.array())
+            Coefficient arrays or scalars. Can have the following form:
+
+            - dict(c_i = values | np.array())
             - xr.Dataset(c_i)
             - list of values
+
         predictors_values : dict | xr.Dataset
             Input arrays or scalars. Can be passed as
+
             - dict(pred_i = values or np.array())
             - xr.Dataset(pred_i)
+
         forced_shape : None | tuple or list of dimensions
             coefficients_values and predictors_values for transposition of the shape.
             Can include additional axes like 'realization'.
