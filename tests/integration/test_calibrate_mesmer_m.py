@@ -7,12 +7,12 @@ import mesmer
 
 
 def find_hist_proj_simulations(
-    variable,
-    model,
-    scenario,
-    time_res="ann",
-    member="*",
-    resolution="g025",
+    variable: str,
+    model: str,
+    scenario: str | list[str],
+    time_res: str = "ann",
+    member: str | list[str] = "*",
+    resolution: str = "g025",
 ):
 
     cmip6_data_path = mesmer.example_data.cmip6_ng_path(relative=False)
@@ -48,7 +48,7 @@ def find_hist_proj_simulations(
     return fc_all
 
 
-def load_data(filecontainer):
+def load_data(filecontainer: filefisher.FileContainer):
 
     out = xr.DataTree()
 
@@ -116,7 +116,7 @@ def test_calibrate_mesmer_m(
 
     # LOCALISATION_RADII = list(range(1250, 6251, 250)) + list(range(6500, 8501, 500))
     # restrict radii for faster tests
-    LOCALISATION_RADII = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
+    localisation_radii = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
 
     esm = "IPSL-CM6A-LR"
 
@@ -192,6 +192,7 @@ def test_calibrate_mesmer_m(
         tas_stacked_y.tas,
         harmonic_model_fit.residuals,
     )
+    # find transformed residuals
     transformed_hm_resids = yj_transformer.transform(
         tas_stacked_y.tas, harmonic_model_fit.residuals, pt_coefficients
     )
@@ -205,18 +206,29 @@ def test_calibrate_mesmer_m(
     geodist = mesmer.geospatial.geodist_exact(tas_stacked_y.lon, tas_stacked_y.lat)
 
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-        geodist, localisation_radii=LOCALISATION_RADII
+        geodist, localisation_radii=localisation_radii
     )
 
-    weights = xr.ones_like(ar1_fit.residuals.isel(gridcell=0))
-    weights.name = "weights"
+    if n_ens == "one":
+        weights = xr.ones_like(ar1_fit.residuals.isel(gridcell=0))
+        weights.name = "weights"
+    else:
+        weights = mesmer.weighted.equal_scenario_weights_from_datatree(tas_anoms_m)
+        weights = mesmer.datatree.pool_scen_ens(weights)
+
+        # because ar1_fit.residuals lost the first ts, we have to remove it here as well
+        weights = weights.isel(sample=slice(1, None))
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
         ar1_fit.residuals, weights, phi_gc_localizer, "time", k_folds=30
     )
 
     # we need to get the original time coordinate to be able to validate our results
-    m_time = tas_stacked_m.time.rename("monthly_time")
+    time_hist = tas_m_orig["historical"].ds[["time"]]
+    time_proj = tas_m_orig[scenario[0]].ds[["time"]]
+
+    m_time = xr.concat([time_hist, time_proj], dim="time")
+    m_time = m_time.time.rename("monthly_time")
 
     PARAM_FILEFINDER = filefisher.FileFinder(
         path_pattern=test_path / "{module}/",
