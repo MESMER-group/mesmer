@@ -230,7 +230,7 @@ def test_calibrate_mesmer_m(
     m_time = xr.concat([time_hist, time_proj], dim="time")
     m_time = m_time.time.rename("monthly_time")
 
-    PARAM_FILEFINDER = filefisher.FileFinder(
+    param_filefinder = filefisher.FileFinder(
         path_pattern=test_path / "{module}/",
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
@@ -239,11 +239,11 @@ def test_calibrate_mesmer_m(
 
     keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
 
-    local_hm_file = PARAM_FILEFINDER.create_full_name(keys, module="harmonic-model")
-    local_pt_file = PARAM_FILEFINDER.create_full_name(keys, module="power-transformer")
-    local_ar_file = PARAM_FILEFINDER.create_full_name(keys, module="local-variability")
-    localized_ecov_file = PARAM_FILEFINDER.create_full_name(keys, module="covariance")
-    time_file = PARAM_FILEFINDER.create_full_name(keys, module="monthly-time")
+    local_hm_file = param_filefinder.create_full_name(keys, module="harmonic-model")
+    local_pt_file = param_filefinder.create_full_name(keys, module="power-transformer")
+    local_ar_file = param_filefinder.create_full_name(keys, module="local-variability")
+    localized_ecov_file = param_filefinder.create_full_name(keys, module="covariance")
+    time_file = param_filefinder.create_full_name(keys, module="monthly-time")
 
     # save params
     if update_expected_files:
