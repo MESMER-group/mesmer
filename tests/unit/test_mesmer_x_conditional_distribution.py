@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 import xarray as xr
 
-import mesmer.mesmer_x._conditional_distribution
+import mesmer.distrib._conditional_distribution
 from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.mesmer_x import (
+from mesmer.distrib import (
     ConditionalDistribution,
     Expression,
     MinimizeOptions,
 )
-from mesmer.mesmer_x._conditional_distribution import OptimizerNLL
+from mesmer.distrib._conditional_distribution import OptimizerNLL
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
@@ -260,7 +260,7 @@ def test_smooth_first_guess():
 
     first_guess_stacked = first_guess.to_dataarray(dim="coefficient")
 
-    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
+    smoothed_guess = mesmer.distrib._conditional_distribution._smooth_first_guess(
         first_guess_stacked, "cells", coords, 500
     )
 
@@ -288,7 +288,7 @@ def test_smooth_first_guess():
     first_guess_stacked = first_guess_stacked.assign_coords(lat=("cells", lat))
     first_guess_stacked = first_guess_stacked.assign_coords(lon=("cells", lon))
 
-    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
+    smoothed_guess = mesmer.distrib._conditional_distribution._smooth_first_guess(
         first_guess_stacked, "cells", coords, 500
     )
 
@@ -317,7 +317,7 @@ def test_smooth_first_guess_nans():
 
     first_guess_stacked = first_guess.to_dataarray(dim="coefficient")
 
-    smoothed_guess = mesmer.mesmer_x._conditional_distribution._smooth_first_guess(
+    smoothed_guess = mesmer.distrib._conditional_distribution._smooth_first_guess(
         first_guess_stacked, "cells", coords, 100
     )
 

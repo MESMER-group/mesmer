@@ -38,12 +38,28 @@ def test_fit_volcanic_influence_errors():
         mesmer.volc.fit_volcanic_influence(data, slice("1850", "2014"), dim="sample")
 
 
+def test_load_stratospheric_aerosol_optical_depth_data_not_changed_inplace():
+
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    aod.loc[{"time": slice("1900", "2000")}] = 0.25
+
+    aod_orig = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
+        version="2022", resample=True
+    )
+
+    assert aod is not aod_orig
+    assert not aod.equals(aod_orig)
+
+
 @pytest.mark.parametrize(
     "hist_period", (None, slice("1850", "2014"), slice("1900", "2000"))
 )
 def test_fit_volcanic_influence_self(hist_period):
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -55,7 +71,7 @@ def test_fit_volcanic_influence_self(hist_period):
 
 def test_fit_volcanic_influence_self_shorter():
     # test it works when passing data shorter than aod obs
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -69,7 +85,7 @@ def test_fit_volcanic_influence_self_shorter():
 
 def test_fit_volcanic_influence_self_longer():
     # test it works when passing data longer than aod obs
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -94,7 +110,7 @@ def test_fit_volcanic_influence_self_longer():
 
 def test_fit_volcanic_warns_positive():
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -109,7 +125,7 @@ def test_fit_volcanic_warns_positive():
 @pytest.mark.filterwarnings("ignore:The slope of")
 def test_fit_volcanic_influence_2D():
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -124,7 +140,7 @@ def test_fit_volcanic_influence_2D():
 @pytest.mark.filterwarnings("ignore:The slope of")
 def test_fit_volcanic_influence_hist_period():
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -149,7 +165,7 @@ def test_fit_volcanic_influence_hist_period():
 @pytest.mark.parametrize("hist_period", (None, slice("1850", "2014")))
 def test_superimpose_volcanic_influence(slope, hist_period):
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -166,7 +182,7 @@ def test_superimpose_volcanic_influence(slope, hist_period):
 
 def test_superimpose_volcanic_influence_loner_errors():
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -195,7 +211,7 @@ def test_superimpose_volcanic_influence_loner_errors():
 
 def test_superimpose_volcanic_influence_hist_period():
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 
@@ -217,7 +233,7 @@ def test_superimpose_volcanic_influence_datatree():
 
     slope = -1.5
 
-    aod = mesmer.data.load_stratospheric_aerosol_optical_depth_obs(
+    aod = mesmer.volc.load_stratospheric_aerosol_optical_depth_obs(
         version="2022", resample=True
     )
 

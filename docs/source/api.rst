@@ -101,6 +101,48 @@ Gaspari-Cohn correlation matrix
    ~stats.gaspari_cohn_correlation_matrices
    ~stats.gaspari_cohn
 
+Conditional distribution
+========================
+
+Define covariance structure of conditional distribution
+-------------------------------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~distrib.Expression
+   ~distrib.Expression.evaluate_params
+
+Fit conditional distribution
+----------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~distrib.ConditionalDistribution
+   ~distrib.ConditionalDistribution.find_first_guess
+   ~distrib.ConditionalDistribution.fit
+   ~distrib.ConditionalDistribution.compute_quality_scores
+   ~distrib.ConditionalDistribution.coefficients
+   ~distrib.ConditionalDistribution.from_netcdf
+   ~distrib.ConditionalDistribution.to_netcdf
+
+.. autosummary::
+   :toctree: generated/
+
+
+   ~distrib.MinimizeOptions
+
+Transform conditional distribution
+----------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~distrib.ProbabilityIntegralTransform
+   ~distrib.ProbabilityIntegralTransform.transform
+
+
 Data handling
 =============
 
@@ -163,6 +205,13 @@ Anomalies
 
    ~anomaly.calc_anomaly
 
+Resampling
+----------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~resample.upsample_yearly_data
 
 Emulator functions
 ==================
