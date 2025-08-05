@@ -182,5 +182,3 @@ filterwarnings = [
   "ignore:Call to deprecated function",
   "ignore:Call to deprecated class",
 ]
-
-
