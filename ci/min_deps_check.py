@@ -21,6 +21,7 @@ CHANNELS = ["conda-forge", "defaults"]
 IGNORE_DEPS = {
     "black",
     "coveralls",
+    "deprecated",
     "flake8",
     "hypothesis",
     "isort",

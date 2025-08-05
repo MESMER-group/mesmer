@@ -26,6 +26,7 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "dask[array,distributed] >=2024.7",
+    "deprecated",
     "filefisher >=1.1",
     "joblib >=1.4",
     "netcdf4 >=1.7",
