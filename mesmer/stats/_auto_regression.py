@@ -7,16 +7,16 @@ import pandas as pd
 import scipy
 import xarray as xr
 
-from mesmer.core.datatree import (
-    _datatree_wrapper,
-    collapse_datatree_into_dataset,
-    map_over_datasets,
-)
-from mesmer.core.utils import (
+from mesmer._core.utils import (
     LinAlgWarning,
     _check_dataarray_form,
     _check_dataset_form,
     _set_threads_from_options,
+)
+from mesmer.datatree import (
+    _datatree_wrapper,
+    collapse_datatree_into_dataset,
+    map_over_datasets,
 )
 
 
@@ -1167,7 +1167,8 @@ def _draw_auto_regression_monthly_np(
     innovations = innovations.reshape(n_samples, n_ts + buffer * 12, n_gridcells)
 
     # predict auto-regressive process using innovations
-    out = np.zeros([n_samples, n_ts + buffer * 12, n_gridcells])
+    # copy-by-reference: use innovations as out param to save on memory
+    out = innovations
     for t in range(1, n_ts + buffer * 12):
         month = t % 12
         out[:, t, :] = (

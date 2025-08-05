@@ -1,10 +1,10 @@
-from mesmer.mesmer_x._conditional_distribution import ConditionalDistribution
-from mesmer.mesmer_x._distrib_checks import (
+from mesmer.distrib._conditional_distribution import ConditionalDistribution
+from mesmer.distrib._distrib_checks import (
     _check_no_nan_no_inf,
     _validate_coefficients,
 )
-from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._optimizers import (
+from mesmer.distrib._expression import Expression
+from mesmer.distrib._optimizers import (
     MinimizeOptions,
     _bic,
     _crps,
@@ -12,7 +12,7 @@ from mesmer.mesmer_x._optimizers import (
     _neg_loglike,
     _optimization_function,
 )
-from mesmer.mesmer_x._probability_integral_transform import (
+from mesmer.distrib._probability_integral_transform import (
     ProbabilityIntegralTransform,
 )
 

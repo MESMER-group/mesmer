@@ -10,7 +10,7 @@ import warnings
 
 from deprecated import deprecated
 
-from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
+from mesmer.volc import load_stratospheric_aerosol_optical_depth_obs
 
 
 @deprecated(

@@ -8,15 +8,15 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer.core.geospatial import geodist_exact
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.core.weighted import weighted_median
-from mesmer.mesmer_x import _distrib_checks, _optimizers
-from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._first_guess import _FirstGuess
-from mesmer.mesmer_x._optimizers import MinimizeOptions, OptimizerNLL
-from mesmer.mesmer_x._utils import _ignore_warnings
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.distrib import _distrib_checks, _optimizers
+from mesmer.distrib._expression import Expression
+from mesmer.distrib._first_guess import _FirstGuess
+from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
+from mesmer.distrib._utils import _ignore_warnings
+from mesmer.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn
+from mesmer.weighted import weighted_median
 
 
 class ConditionalDistribution:
@@ -351,6 +351,7 @@ class ConditionalDistribution:
             Individual weights for each sample.
         scores : list of str, default: ['func_optim', 'nll', 'bic']
             After the fit, several scores can be calculated to assess the performance:
+
             - "func_optim": function optimized, as described in
               options_optim['type_fun_optim']: negative log likelihood or full
               conditional negative log likelihood
@@ -496,6 +497,7 @@ class ConditionalDistribution:
 
         Parameters
         ----------
+        filename : str
             Name of the netCDF file to open.
         **kwargs : Any
             Additional keyword arguments passed to ``xr.open_dataset``
@@ -528,7 +530,7 @@ class ConditionalDistribution:
         filename : str
             Name of the netCDF file to save.
         **kwargs : Any
-            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+            Additional keyword arguments passed to ``xr.Dataset.to_netcdf``
         """
 
         self.coefficients.to_netcdf(filename, **kwargs)

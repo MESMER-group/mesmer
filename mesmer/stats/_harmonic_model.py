@@ -14,7 +14,7 @@ import scipy as sp
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 
 
 @lru_cache
@@ -124,9 +124,7 @@ def predict_harmonic_model(
         required_dims=dims | {"coeff"},
     )
 
-    upsampled_y = mesmer.core.utils.upsample_yearly_data(
-        yearly_predictor, time, time_dim
-    )
+    upsampled_y = mesmer.resample.upsample_yearly_data(yearly_predictor, time, time_dim)
 
     predictions = upsampled_y + xr.apply_ufunc(
         _generate_fourier_series_np,
@@ -350,7 +348,7 @@ def fit_harmonic_model(
     if not monthly_target[time_dim].isel({sample_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
 
-    yearly_predictor = mesmer.core.utils.upsample_yearly_data(
+    yearly_predictor = mesmer.resample.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
 

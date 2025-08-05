@@ -40,8 +40,8 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
         drop_variables=["height", "file_qf"],
     ).load()
 
-    PARAM_FILEFINDER = filefisher.FileFinder(
-        path_pattern=test_path / "test-params/{module}/",
+    param_filefinder = filefisher.FileFinder(
+        path_pattern=test_path / "one_scen_one_ens" / "test-params/{module}/",
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
@@ -49,11 +49,11 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
 
     keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
 
-    local_hm_file = PARAM_FILEFINDER.create_full_name(keys, module="harmonic-model")
-    local_pt_file = PARAM_FILEFINDER.create_full_name(keys, module="power-transformer")
-    local_ar_file = PARAM_FILEFINDER.create_full_name(keys, module="local-variability")
-    localized_ecov_file = PARAM_FILEFINDER.create_full_name(keys, module="covariance")
-    time_file = PARAM_FILEFINDER.create_full_name(keys, module="monthly-time")
+    local_hm_file = param_filefinder.create_full_name(keys, module="harmonic-model")
+    local_pt_file = param_filefinder.create_full_name(keys, module="power-transformer")
+    local_ar_file = param_filefinder.create_full_name(keys, module="local-variability")
+    localized_ecov_file = param_filefinder.create_full_name(keys, module="covariance")
+    time_file = param_filefinder.create_full_name(keys, module="monthly-time")
 
     # load parameters
 
