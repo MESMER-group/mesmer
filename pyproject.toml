@@ -176,4 +176,11 @@ omit = ["*/tests/*, */scripts/*, */tutorials/*, */configs/*, */mesmer/_version.p
 addopts = ["--strict-markers", "--durations=10"]
 python_files = "test_*.py"
 testpaths = "tests/"
-filterwarnings = ["ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning"]
+filterwarnings = [
+  "ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning",
+  # deprecation of legacy code
+  "ignore:Call to deprecated function",
+  "ignore:Call to deprecated class",
+]
+
+
