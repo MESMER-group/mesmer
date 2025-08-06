@@ -1,7 +1,12 @@
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def concatenate_hist_future(data):
     """concatenate historical and future data
 
@@ -51,6 +56,10 @@ def concatenate_hist_future(data):
     return concatenated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _gather_lr_preds(preds_dict, predictor_names, scen, dims):
     """gather predictors for linear regression from legacy data structures
 
@@ -82,6 +91,10 @@ def _gather_lr_preds(preds_dict, predictor_names, scen, dims):
     return predictors
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _gather_lr_params(params_dict, targ, dims):
     """gather parameters for linear regression from legacy data structures
 

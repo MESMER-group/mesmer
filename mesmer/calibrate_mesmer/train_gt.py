@@ -10,6 +10,7 @@ import warnings
 
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.io import load_strat_aod
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
@@ -17,6 +18,10 @@ from mesmer.stats import LinearRegression, lowess
 from mesmer.utils import separate_hist_future
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_gt(data, targ, esm, time, cfg, save_params=True):
     """
     Derive global trend (emissions + volcanoes) parameters from specified ensemble type
@@ -148,6 +153,10 @@ def train_gt(data, targ, esm, time, cfg, save_params=True):
     return params_gt
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_gt_ic_LOWESS(data):
     """
     Derive smooth global trend of variable from single ESM ic ensemble with LOWESS
@@ -185,6 +194,10 @@ def train_gt_ic_LOWESS(data):
     return gt_lowess, frac_lowess_name
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_gt_ic_OLSVOLC(var, gt_lowess, time, cfg=None):
     """
     Derive global trend (emissions + volcanoes) parameters from single ESM ic ensemble
