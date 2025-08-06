@@ -292,9 +292,9 @@ def broadcast_and_pool_scen_ens(
         predictor(s) are contained as data variables. The ``xr.Dataset`` must contain
         ``time_dim`` and at least one data variable.
     target : DataTree
-        A ``DataTree`` holding the targets. Must be isomorphic to the predictor tree, i.e.
-        have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must contain
-       ``time_dim``.
+        A ``DataTree`` holding the targets. Must be isomorphic to the predictor tree,
+        i.e. have the same scenarios. Each leaf must hold a ``xr.Dataset`` which must
+        contain ``time_dim``.
     weights : DataTree or None, default: None
         Individual weights for each sample, must be isomorphic to target.
     time_dim : str, default: "time"
