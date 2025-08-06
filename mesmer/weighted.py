@@ -313,7 +313,7 @@ def get_weights_density(pred_data):
         return _weights(array_pred)
 
 
-def weighted_median(data, weights):
+def _weighted_median(data, weights):
     """
     Parameters
     ----------

@@ -16,7 +16,7 @@ from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
 from mesmer.distrib._utils import _ignore_warnings
 from mesmer.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn
-from mesmer.weighted import weighted_median
+from mesmer.weighted import _weighted_median
 
 
 class ConditionalDistribution:
@@ -567,7 +567,7 @@ def _smooth_first_guess(
 
     # will avoid taking gridpoints with nan
     second_guess = xr.apply_ufunc(
-        weighted_median,
+        _weighted_median,
         first_guess_stacked,
         corr_gc,
         input_core_dims=[[dim], [f"{dim}_i"]],

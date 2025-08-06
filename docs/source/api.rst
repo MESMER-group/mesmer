@@ -52,8 +52,8 @@ Harmonic Model
 .. autosummary::
    :toctree: generated/
 
-   ~stats.predict_harmonic_model
    ~stats.fit_harmonic_model
+   ~stats.predict_harmonic_model
 
 Power Transformer
 -----------------
@@ -71,6 +71,7 @@ Power Transformer
    ~stats.YeoJohnsonTransformer.transform
    ~stats.YeoJohnsonTransformer.inverse_transform
 
+   ~stats._power_transformer.constant_lambda_function
    ~stats._power_transformer.logistic_lambda_function
 
 Localized covariance
@@ -187,6 +188,19 @@ Weighted operations: calculate global mean
    ~weighted.lat_weights
    ~weighted.weighted_mean
    ~weighted.equal_scenario_weights_from_datatree
+   ~weighted.get_weights_density
+
+DataTree heplers
+----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~datatree.pool_scen_ens
+   ~datatree.broadcast_and_pool_scen_ens
+   ~datatree.merge
+   ~datatree.collapse_datatree_into_dataset
+   ~datatree.map_over_datasets
 
 Geospatial
 ----------
@@ -224,3 +238,4 @@ Volcanic influence
 
    ~volc.fit_volcanic_influence
    ~volc.superimpose_volcanic_influence
+   ~volc.load_stratospheric_aerosol_optical_depth_obs
