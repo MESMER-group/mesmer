@@ -42,6 +42,8 @@ Breaking changes
   By `Mathias Hauser`_.
 - Removed the deprecated function :py:func:`mask_percentage` (`#654 <https://github.com/MESMER-group/mesmer/pull/654>`_)
   By `Mathias Hauser`_.
+- Removed `Expression.evaluate` - use `Expression.evaluate_params` instead (`#786 <https://github.com/MESMER-group/mesmer/pull/786>`_)
+  By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
   `#405 <https://github.com/MESMER-group/mesmer/pull/405>`_,

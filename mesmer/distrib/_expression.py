@@ -521,39 +521,3 @@ class Expression:
                 )
 
         return parameters_values
-
-    def evaluate(self, coefficients_values, predictors_values, forced_shape=None):
-        """
-        Evaluates the distribution with the provided predictors and coefficients
-
-        Parameters
-        ----------
-        coefficients_values : dict | xr.Dataset(c_i) | list of values
-            Coefficient arrays or scalars. Can have the following form
-            - dict(c_i = values or np.array())
-            - xr.Dataset(c_i)
-            - list of values
-        predictors_values : dict | xr.Dataset
-            Input arrays or scalars. Can be passed as
-            - dict(pred_i = values or np.array())
-            - xr.Dataset(pred_i)
-        forced_shape : None | tuple or list of dimensions
-            coefficients_values and predictors_values for transposition of the shape
-
-        Returns
-        -------
-        distr: scipy stats frozen distribution
-            Frozen distribution with the realized parameters applied to.
-
-        Warnings
-        --------
-        with xarrays for coefficients_values and predictors_values, the outputs will
-        have the dimensions of the coefficients first, then the ones of the predictors
-        """
-
-        params = self.evaluate_params(
-            coefficients_values,
-            predictors_values,
-            forced_shape=forced_shape,
-        )
-        return self.distrib(**params)
