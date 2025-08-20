@@ -104,7 +104,8 @@ def stack_lat_lon(
     multiindex : bool, default: False
         If the new `stack_dim` should be returned as a MultiIndex.
     dropna : bool, default: True
-        Drops each 'gridcell' if any NA values are present at any point in the timeseries.
+        Drops each 'gridcell' if any NA values are present at any point in the
+        timeseries.
 
     Returns
     -------

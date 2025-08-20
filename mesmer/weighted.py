@@ -153,34 +153,43 @@ def equal_scenario_weights_from_datatree(
     dt: xr.DataTree, ens_dim: str = "member", time_dim: str = "time"
 ) -> xr.DataTree:
     """
-    Create a DataTree isomorphic to ``dt``, holding the weights for each scenario to weight the ensemble members of each
-    scenario such that each scenario contributes equally to some fitting procedure.
-    The weight of each member = 1 / number of members in the scenario, so weights = 1 / ds[ens_dim].size.
+    Create a DataTree isomorphic to ``dt``, holding the weights for each scenario to
+    weight the ensemble members of each scenario such that each scenario contributes
+    equally to some fitting procedure. The weight of each member = 1 / number of members
+    in the scenario, so weights = 1 / ds[ens_dim].size.
 
     Thus, if all scenarios have the same number of members, all weights will be equal.
     If one scenario has more members than the others, its weights will be smaller.
-    Weights are always along the time and ens dim, if there are more dimensions in a dataset, they will be dropped.
+    Weights are always along the time and ens dim, if there are more dimensions in a
+    dataset, they will be dropped.
 
     Parameters:
     -----------
     dt : DataTree
-        DataTree holding the ``xr.Datasets`` for which the weights should be created. Each dataset must have at least
-        ens_dim and time_dim as dimensions, but can have more dimensions.
-    ens_dim : str
-        Name of the dimension along which the weights should be created. Default is "member".
-    time_dim : str
-        Name of the time dimension, will be filled with equal values for each ensemble member. Default is "time".
+        DataTree holding the ``xr.Datasets`` for which the weights should be created.
+        Each dataset must have at least ens_dim and time_dim as dimensions, but can have
+        more dimensions.
+    ens_dim : str, default: "member"
+        Name of the dimension along which the weights should be created.
+    time_dim : str, default: "time"
+        Name of the time dimension, will be filled with equal values for each ensemble
+        member.
 
     Returns:
     --------
     DataTree
-        DataTree holding the weights for each scenario isomorphic to dt, where each dataset has dimensions (time_dim, ens_dim).
+        DataTree holding the weights for each scenario isomorphic to dt, where each
+        dataset has dimensions (time_dim, ens_dim).
 
     Example:
     --------
-    >>> dt = DataTree()
-    >>> dt["ssp119"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.ones((20, 3)), dims=("time", "member"))}))
-    >>> dt["ssp585"] = DataTree(xr.Dataset({"tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member"))}))
+    >>> dt = xr.DataTree()
+    >>> dt["ssp119"] = xr.DataTree(
+    ...     xr.Dataset({"tas": xr.DataArray(np.ones((20, 3)), dims=("time", "member"))})
+    ... )
+    >>> dt["ssp585"] = xr.DataTree(
+    ...     xr.Dataset({"tas": xr.DataArray(np.ones((20, 2)), dims=("time", "member"))})
+    ... )
     >>> weights = equal_scenario_weights_from_datatree(dt)
     >>> weights
     DataTree('None', parent=None)
@@ -304,11 +313,11 @@ def get_weights_density(pred_data):
 
         return _unpool_scen_ens(weights_stacked)
 
-    elif isinstance(pred_data, xr.Dataset):
+    if isinstance(pred_data, xr.Dataset):
 
         return _weights_ds(pred_data).to_dataset(name="weights")
 
-    elif isinstance(pred_data, np.ndarray):
+    if isinstance(pred_data, np.ndarray):
         array_pred = pred_data
         return _weights(array_pred)
 

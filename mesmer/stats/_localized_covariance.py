@@ -47,14 +47,17 @@ def adjust_covariance_ar1(
     - This formula is wrong in [1]_. However, it is correct in the code. See also [2]_
       and [3]_.
 
-    .. [1] Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system model
-       temperatures with MESMER: from global mean temperature trajectories to grid-point-
-       level realizations on land, Earth Syst. Dynam., 11, 139–159,
+    References
+    ----------
+
+    .. [1] Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system
+       model temperatures with MESMER: from global mean temperature trajectories to
+       grid-point-level realizations on land, Earth Syst. Dynam., 11, 139-159,
        https://doi.org/10.5194/esd-11-139-2020, 2020.
 
-    .. [2] Humphrey, V. and Gudmundsson, L.: GRACE-REC: a reconstruction of climate-driven
-       water storage changes over the last century, Earth Syst. Sci. Data, 11, 1153–1170,
-       https://doi.org/10.5194/essd-11-1153-2019, 2019.
+    .. [2] Humphrey, V. and Gudmundsson, L.: GRACE-REC: a reconstruction of climate-
+       driven water storage changes over the last century, Earth Syst. Sci. Data, 11,
+       1153-1170, https://doi.org/10.5194/essd-11-1153-2019, 2019.
 
     .. [3] Cressie, N. and Wikle, C. K.: Statistics for spatio-temporal data, John Wiley
        & Sons, Hoboken, New Jersey, USA, 2011.
@@ -164,16 +167,17 @@ def find_localized_empirical_covariance_monthly(
     k_folds: int,
     equal_dim_suffixes: tuple[str, str] = ("_i", "_j"),
 ) -> xr.Dataset:
-    """determine localized empirical covariance by cross validation for each month. `data`
-    should be the residuals of the cyclo-stationary AR(1) process, see
-    :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`. Note that here,
-    no additional adjustment is necessary.
+    """determine localized empirical covariance by cross validation for each month.
+
+    `data` should be the residuals of the cyclo-stationary AR(1) process, see
+    :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`. Note
+    that here, no additional adjustment is necessary.
 
     Parameters
     ----------
     data : xr.DataArray
-        2D DataArray with monthly data to calculate the covariance for (residuals of the AR(1)
-        process).
+        2D DataArray with monthly data to calculate the covariance for (residuals of the
+        AR(1) process).
     weights : xr.DataArray
         Weights for the individual samples.
     localizer : dict of DataArray
@@ -235,8 +239,9 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
         Weights for the individual samples.
     localizer : dict of array-like
         Dictionary containing the localization radii as keys and the localization matrix
-        as values. The localization must be 2D and of shape nr_gridpoints x nr_gridpoints.
-        Currently only the Gaspari-Cohn localizer is implemented in MESMER.
+        as values. The localization must be 2D and of shape nr_gridpoints x
+        nr_gridpoints. Currently only the Gaspari-Cohn localizer is implemented in
+        MESMER.
     k_folds : int
         Number of folds to use for cross validation.
 

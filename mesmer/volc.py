@@ -61,9 +61,9 @@ def _load_and_align_strat_aod_obs(
         aod_beg, aod_end = aod.time[0].dt.year.item(), aod.time[-1].dt.year.item()
         if beg < aod_beg or end > aod_end:
             msg = (
-                f"Time period of passed array ({beg}-{end}) exceeds time of stratospheric"
-                f" aerosol optical depth observations ({aod_beg}-{aod_end}). Do you need"
-                " to pass ``hist_period``?"
+                f"Time period of passed array ({beg}-{end}) exceeds time of"
+                f" stratospheric aerosol optical depth observations ({aod_beg}-"
+                f"{aod_end}). Do you need to pass ``hist_period``?"
             )
             raise ValueError(msg)
 
@@ -96,7 +96,8 @@ def fit_volcanic_influence(
         influence from.
     hist_period : slice | None
         Slice object indicating the years of the historical period. E.g.
-        ``slice("1850", "2014")``.  If None uses the entire time period of ``tas_residuals``.
+        ``slice("1850", "2014")``.  If None uses the entire time period of
+        ``tas_residuals``.
     dim : str, default: "time"
         Dimension along which to estimate the volcanic influence.
     version : str, default: "2022"
