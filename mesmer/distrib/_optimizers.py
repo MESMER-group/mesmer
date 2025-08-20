@@ -168,11 +168,18 @@ def _crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
 
     tmp_cprs = []
     for i in np.arange(len(data_targ)):
-        distrib = expression.evaluate(coeffs, {p: data_pred[p][i] for p in data_pred})
+
+        # pre-compute params for the cdf function
+        predictor_values = {p: data_pred[p][i] for p in data_pred}
+        params = expression.evaluate_params(coeffs, predictor_values)
+
+        def cdf(x):
+            return expression.distrib.cdf(x, **params)
+
         tmp_cprs.append(
             properscoring.crps_quadrature(
                 x=data_targ[i],
-                cdf_or_dist=distrib,
+                cdf_or_dist=cdf,
                 xmin=-10 * np.abs(data_targ[i]),
                 xmax=10 * np.abs(data_targ[i]),
                 tol=1.0e-4,

@@ -301,74 +301,74 @@ def test_expression_covariate_substring():
     assert expr.coefficients_dict == coeffs_per_param
 
 
-def test_evaluate_missing_coefficient_dict():
+def test_evaluate_params_missing_coefficient_dict():
 
     expr = Expression("norm(loc=c1, scale=c2)", expr_name="name")
 
     with pytest.raises(
         ValueError, match="Missing information for the coefficient: 'c1'"
     ):
-        expr.evaluate({}, {})
+        expr.evaluate_params({}, {})
 
     with pytest.raises(
         ValueError, match="Missing information for the coefficient: 'c2'"
     ):
-        expr.evaluate({"c1": 1}, {})
+        expr.evaluate_params({"c1": 1}, {})
 
 
-def test_evaluate_missing_coefficient_dataset():
+def test_evaluate_params_missing_coefficient_dataset():
 
     expr = Expression("norm(loc=c1, scale=c2)", expr_name="name")
 
     with pytest.raises(
         ValueError, match="Missing information for the coefficient: 'c1'"
     ):
-        expr.evaluate(xr.Dataset(), {})
+        expr.evaluate_params(xr.Dataset(), {})
 
     with pytest.raises(
         ValueError, match="Missing information for the coefficient: 'c2'"
     ):
-        expr.evaluate(xr.Dataset(data_vars={"c1": 1}), {})
+        expr.evaluate_params(xr.Dataset(data_vars={"c1": 1}), {})
 
 
-def test_evaluate_missing_coefficient_list():
+def test_evaluate_params_missing_coefficient_list():
 
     expr = Expression("norm(loc=c1, scale=c2)", expr_name="name")
 
     with pytest.raises(
         ValueError, match="Inconsistent information for the coefficients_values"
     ):
-        expr.evaluate([], {})
+        expr.evaluate_params([], {})
 
     with pytest.raises(
         ValueError, match="Inconsistent information for the coefficients_values"
     ):
-        expr.evaluate([1], {})
+        expr.evaluate_params([1], {})
 
 
-def test_evaluate_missing_covariates_dict():
-
-    expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
-
-    with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
-        expr.evaluate([1, 1], {})
-
-    with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
-        expr.evaluate([1, 1], {"T": 1})
-
-
-def test_evaluate_missing_covariates_ds():
+def test_evaluate_params_missing_covariates_dict():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
 
     with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
-        expr.evaluate([1, 1], xr.Dataset())
+        expr.evaluate_params([1, 1], {})
 
     with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
-        expr.evaluate([1, 1], xr.Dataset(data_vars={"T": 1}))
+        expr.evaluate_params([1, 1], {"T": 1})
 
 
-def test_evaluate_covariates_wrong_shape():
+def test_evaluate_params_missing_covariates_ds():
+
+    expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
+
+    with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
+        expr.evaluate_params([1, 1], xr.Dataset())
+
+    with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
+        expr.evaluate_params([1, 1], xr.Dataset(data_vars={"T": 1}))
+
+
+def test_evaluate_params_covariates_wrong_shape():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
 
@@ -377,10 +377,10 @@ def test_evaluate_covariates_wrong_shape():
     data_vars = {"T": T, "F": F}
 
     with pytest.raises(ValueError, match="shapes of predictors must be equal"):
-        expr.evaluate([1, 1], data_vars)
+        expr.evaluate_params([1, 1], data_vars)
 
     with pytest.raises(ValueError, match="shapes of predictors must be equal"):
-        expr.evaluate([1, 1], xr.Dataset(data_vars=data_vars))
+        expr.evaluate_params([1, 1], xr.Dataset(data_vars=data_vars))
 
 
 def test_evaluate_params_norm():
@@ -445,43 +445,3 @@ def test_evaluate_params_norm_dataset():
 
     # assert frozen params are equal
     mesmer.testing.assert_dict_allclose(params, expected)
-
-
-def test_evaluate_norm():
-
-    expr = Expression("norm(loc=c1 * __T__, scale=c2)", expr_name="name")
-    dist = expr.evaluate([1, 2], {"T": np.array([1, 2])})
-
-    assert isinstance(dist.dist, type(sp.stats.norm))
-
-    expected = {"loc": np.array([1, 2]), "scale": np.array([2.0, 2.0])}
-
-    # assert frozen params are equal
-    mesmer.testing.assert_dict_allclose(dist.kwds, expected)
-
-    # a second set of values
-    dist = expr.evaluate([2, 1], {"T": np.array([2, 5])})
-
-    expected = {"loc": np.array([4, 10]), "scale": np.array([1.0, 1.0])}
-    mesmer.testing.assert_dict_allclose(dist.kwds, expected)
-
-
-def test_evaluate_norm_dataset():
-    # NOTE: not sure if passing DataArray to scipy distribution is a good idea
-
-    expr = Expression("norm(loc=c1 * __T__, scale=c2)", expr_name="name")
-
-    coefficients_values = xr.Dataset(data_vars={"c1": 1, "c2": 2})
-    inputs_values = xr.Dataset(data_vars={"T": ("x", np.array([1, 2]))})
-
-    dist = expr.evaluate(coefficients_values, inputs_values)
-
-    assert isinstance(dist.dist, type(sp.stats.norm))
-
-    loc = xr.DataArray([1, 2], dims="x")
-    scale = xr.DataArray(2)
-
-    expected = {"loc": loc, "scale": scale}
-
-    # assert frozen params are equal
-    mesmer.testing.assert_dict_allclose(dist.kwds, expected)
