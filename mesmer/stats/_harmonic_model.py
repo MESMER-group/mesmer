@@ -294,15 +294,18 @@ def fit_harmonic_model(
     Parameters
     ----------
     yearly_predictor : xr.DataArray
-        Yearly values used as predictors, containing one value per year. Contains `time_dim`
-        and possibly additional dimensions for example for gridcells or members.
+        Yearly values used as predictors, containing one value per year. Contains
+        `time_dim` and possibly additional dimensions for example for gridcells or
+        members.
     monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
-        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot` `n_years`.
-        Must contain `time_dim` and possibly additional dimensions as `yearly_predictor`.
+        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot`
+        `n_years`. Must contain `time_dim` and possibly additional dimensions as
+        `yearly_predictor`.
     max_order : Integer, default 6
-        Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
-        maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
+        Maximum order of Fourier Series to fit for. Default is 6 since highest
+        meaningful maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly
+        data.
     time_dim: str, default: "time"
         Name of the time dimension on `yearly_predictor` and `monthly_target`.
 

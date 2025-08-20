@@ -76,7 +76,8 @@ def _extract_single_dataarray_from_dt(
     dt: xr.DataTree, name: str = "node"
 ) -> xr.DataArray:
     """
-    Extract a single DataArray from a DataTree node, holding a ``Dataset`` with one ``DataArray``.
+    Extract a single DataArray from a DataTree node, holding a ``Dataset`` with one
+    ``DataArray``.
     """
 
     if not dt.has_data:
@@ -98,14 +99,15 @@ def collapse_datatree_into_dataset(
     dt: xr.DataTree, *, dim: str, **concat_kwargs
 ) -> xr.Dataset:
     """
-    Take a ``DataTree`` and collapse **all its subtrees** into a single ``xr.Dataset`` along dim.
-    Shallow wrapper around ``xr.concat``.
+    Take a ``DataTree`` and collapse **all its subtrees** into a single ``xr.Dataset``
+    along dim. Shallow wrapper around ``xr.concat``.
 
     All subtrees are converted to ``xr.Dataset`` objects and concatenated along the
-    specified dimension. The dimension along which the datasets are concatenated will be added as a
-    coordinate to the resulting dataset and the name of each subtree will be used as the coordinate
-    value for this new dimension. Internally, xr.concat is used to concatenate the datasets, so
-    all keyword arguments that can be passed to xr.concat can be passed to this function as well.
+    specified dimension. The dimension along which the datasets are concatenated will be
+    added as a coordinate to the resulting dataset and the name of each subtree will be
+    used as the coordinate value for this new dimension. Internally, xr.concat is used
+    to concatenate the datasets, so all keyword arguments that can be passed to
+    xr.concat can be passed to this function as well.
 
     Parameters
     ----------
@@ -309,22 +311,28 @@ def broadcast_and_pool_scen_ens(
     Returns
     -------
     tuple of pooled predictors, target and weights
-        Tuple of the prepared predictors, target and weights. The predictors are broadcast
-        against the target. And then predictors, target, and weights are pooled along
-        the sample dimension, by stacking the scenario nodes and ensemble member dimension.
+        Tuple of the prepared predictors, target and weights. The predictors are
+        broadcast against the target. And then predictors, target, and weights are
+        pooled along the sample dimension, by stacking the scenario nodes and ensemble
+        member dimension.
 
     Notes
     -----
-    Dimensions which exist along the target but are not in the stacking_dims will be excluded from the
-    broadcasting of the predictors.
+    Dimensions which exist along the target but are not in the stacking_dims will be
+    excluded from the broadcasting of the predictors.
 
     Example for how the predictor ``DataTree`` should look like:
-    ├─ hist
-    |        datavars: tas, hfds, ...
-    ├─ scen1
-    |        datavars: tas, hfds, ...
-    └─ ...
-    with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same dimensions.
+
+    .. code::
+
+       ├─ hist
+       |        data_vars: tas, hfds, ...
+       ├─ scen1
+       |        data_vars: tas, hfds, ...
+       └─ ...
+
+    with 'hist' and 'scen1' being the scenarios, holding each a dataset with the same
+    dimensions.
     """
 
     # exclude target dimensions from broadcasting which are not in the stacking_dims
@@ -402,19 +410,20 @@ def merge(
     combine_attrs: CombineAttrsOptions = "override",
 ):
     """
-    Merge the datasets of each node of isomorphic DataTree objects together.
-    Wraps `xarray.merge <https://docs.xarray.dev/en/stable/generated/xarray.merge.html>`_.
+    Merge the datasets of each node of isomorphic DataTree objects together. Wraps
+    `xarray.merge <https://docs.xarray.dev/en/stable/generated/xarray.merge.html>`_.
 
     Parameters
     ----------
     objects : Iterable of DataTree
-        The DataTree objects to merge. All DataTree objects must have the same structure, i.e. be isomorphic.
+        The DataTree objects to merge. All DataTree objects must have the same
+        structure, i.e. be isomorphic.
     compat : {'no_conflicts', 'identical', 'equals', 'override', 'broadcast_equals'}, default: 'no_conflicts'
-        String indicating how to compare variables of the same name for potential conflicts,
-        for details see `xarray.merge`.
+        String indicating how to compare variables of the same name for potential
+        conflicts, for details see `xarray.merge`.
     join : {'outer', 'inner', 'left', 'right'}, default: 'outer'
-        String indicating how to join the datasets of the DataTree objects, for details see
-        `xarray.merge`.
+        String indicating how to join the datasets of the DataTree objects, for details
+        see `xarray.merge`.
     fill_value : object, default: dtypes.NA
         Value to use for missing data, for details see `xarray.merge`.
     combine_attrs : {'no_conflicts', 'identical', 'equals', 'override', 'drop'}, default: 'override'
@@ -424,7 +433,8 @@ def merge(
     Returns
     -------
     xr.DataTree
-        A new DataTree object containing the merged datasets from each node of the input DataTree objects.
+        A new DataTree object containing the merged datasets from each node of the input
+        DataTree objects.
     """
     kwargs = {
         "compat": compat,

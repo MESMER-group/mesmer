@@ -82,7 +82,8 @@ def select_ar_order_scen_ens(
     Parameters
     ----------
     objs : DataTree, xr.DataArrays or dict of DataArrays
-        A DataTree, ``xr.DataArray``s or dict of ``xr.DataArray`` to estimate the auto regression order over.
+        A DataTree, ``xr.DataArray``s or dict of ``xr.DataArray`` to estimate the auto
+        regression order over.
     dim : str
         Dimension along which to determine the order.
     ens_dim : str
@@ -121,13 +122,15 @@ def _select_ar_order_scen_ens_dt(
     Parameters
     ----------
     dt : a DataTree
-        A DataTree holding one or several ``xr.Dataset`` to estimate the auto regression order over,
-        each representing one scenario, potentially with several ensemble members along `ens_dim`.
-        Each ``xr.DataSet`` should only hold one variable, the one for which to estimate the autoregression.
+        A DataTree holding one or several ``xr.Dataset`` to estimate the auto regression
+        order over, each representing one scenario, potentially with several ensemble
+        members along `ens_dim`. Each ``xr.DataSet`` should only hold one variable, the
+        one for which to estimate the autoregression.
     dim : str
         Dimension along which to determine the order.
     ens_dim : str
-        Dimension name of the ensemble members. Must be the same for all scenarios and have coordinates if not None.
+        Dimension name of the ensemble members. Must be the same for all scenarios and
+        have coordinates if not None.
     maxlag : int
         The maximum lag to consider.
     ic : {'aic', 'hqic', 'bic'}, default 'bic'
@@ -186,13 +189,16 @@ def fit_auto_regression_scen_ens(
     Parameters
     ----------
     obj : DataTree, xr.DataArrays or dict of DataArrays
-        A ``DataTree`` holding one or several ``xr.Dataset``, ``xr.DataArray``s, or dict of ``xr.DataArray``s to estimate the auto regression order over,
-        each representing one scenario, potentially with several ensemble members along `ens_dim`.
-        If a ``DataTree``, each ``xr.Dataset`` should only hold one variable, the one for which to estimate the autoregression.
+        A ``DataTree`` holding one or several ``xr.Dataset``, ``xr.DataArray`` objects,
+        or dict of ``xr.DataArray`` objects to estimate the auto regression order over,
+        each representing one scenario, potentially with several ensemble members along
+        `ens_dim`. If a ``DataTree``, each ``xr.Dataset`` should only hold one variable,
+        the one for which to estimate the autoregression.
     dim : str
         Dimension along which to fit the auto regression (often time).
     ens_dim : str
-        Dimension name of the ensemble members, None if no ensemble is provided.  Must be the same for all scenarios and have coordinates if not None.
+        Dimension name of the ensemble members, None if no ensemble is provided.  Must
+        be the same for all scenarios and have coordinates if not None.
     lags : int
         The number of lags to include in the model.
 
@@ -204,10 +210,11 @@ def fit_auto_regression_scen_ens(
 
     Notes
     -----
-    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
-    members and then over scenarios. This is done to weight scenarios equally, consequently
-    ensemble members are not weighted equally, if the number of members differs between scenarios.
-    If no ensemble members are provided, the mean is calculated over scenarios only.
+    If `ens_dim` is not `None`, calculates the mean auto regression first over all
+    ensemble members and then over scenarios. This is done to weight scenarios equally,
+    consequently ensemble members are not weighted equally, if the number of members
+    differs between scenarios. If no ensemble members are provided, the mean is
+    calculated over scenarios only.
     """
     dt = _scen_ens_inputs_to_dt(objs)
     return _fit_auto_regression_scen_ens_dt(dt, dim, ens_dim, lags)
@@ -223,13 +230,15 @@ def _fit_auto_regression_scen_ens_dt(
     Parameters
     ----------
     dt : a DataTree
-        A ``DataTree`` holding one or several ``xr.Dataset`` to estimate the auto regression order over,
-        each representing one scenario, potentially with several ensemble members along `ens_dim`.
-        Each ``xr.DataSet`` should only hold one variable, the one for which to estimate the autoregression.
+        A ``DataTree`` holding one or several ``xr.Dataset`` to estimate the auto
+        regression order over, each representing one scenario, potentially with several
+        ensemble members along `ens_dim`. Each ``xr.DataSet`` should only hold one
+        variable, the one for which to estimate the autoregression.
     dim : str
         Dimension along which to fit the auto regression (often time).
     ens_dim : str
-        Dimension name of the ensemble members, None if no ensemble is provided.  Must be the same for all scenarios and have coordinates if not None.
+        Dimension name of the ensemble members, None if no ensemble is provided. Must be
+        the same for all scenarios and have coordinates if not None.
     lags : int
         The number of lags to include in the model.
 
@@ -241,10 +250,11 @@ def _fit_auto_regression_scen_ens_dt(
 
     Notes
     -----
-    If `ens_dim` is not `None`, calculates the mean auto regression first over all ensemble
-    members and then over scenarios. This is done to weight scenarios equally, consequently
-    ensemble members are not weighted equally, if the number of members differs between scenarios.
-    If no ensemble members are provided, the mean is calculated over scenarios only.
+    If `ens_dim` is not `None`, calculates the mean auto regression first over all
+    ensemble members and then over scenarios. This is done to weight scenarios equally,
+    consequently ensemble members are not weighted equally, if the number of members
+    differs between scenarios. If no ensemble members are provided, the mean is
+    calculated over scenarios only.
     """
 
     ar_params_scen = map_over_datasets(
@@ -401,7 +411,8 @@ def draw_auto_regression_uncorrelated(
         - variance
 
     time : int | DataArray | Index
-        Defines the number of auto-correlated samples to draw and possibly its coordinates.
+        Defines the number of auto-correlated samples to draw and possibly its
+        coordinates.
 
         - ``int``: defines the number of time steps to draw
         - ``DataArray`` or ``Index``: defines the coordinates and its length the number
@@ -412,8 +423,9 @@ def draw_auto_regression_uncorrelated(
         See ``time`` for details.
 
     seed : int | xr.DataTree
-        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.DataTree that
-        contains Datasets with a single variable "seed" with the seed value, to draw samples for multiple scenarios.
+        Seed used to initialize the pseudo-random number generator. Can be an int or a
+        xr.DataTree that contains Datasets with a single variable "seed" with the seed
+        value, to draw samples for multiple scenarios.
 
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
@@ -462,9 +474,11 @@ def _draw_auto_regression_uncorrelated(
         or ar_params.coeffs.ndim != 1
         or ar_params.variance.ndim != 0
     ):
-        raise ValueError(
-            "``_draw_auto_regression_uncorrelated`` can currently only handle single points"
+        msg = (
+            "``draw_auto_regression_uncorrelated`` can currently only handle single "
+            "points"
         )
+        raise ValueError(msg)
 
     # _draw_ar_corr_xr_internal expects 2D arrays
     ar_params = ar_params.expand_dims("__gridpoint__")
@@ -517,7 +531,8 @@ def draw_auto_regression_correlated(
         The (co-)variance array. Must be symmetric and positive-semidefinite.
 
     time : int | DataArray | Index
-        Defines the number of auto-correlated samples to draw and possibly its coordinates.
+        Defines the number of auto-correlated samples to draw and possibly its
+        coordinates.
 
         - ``int``: defines the number of time steps to draw
         - ``DataArray`` or ``Index``: defines the coordinates and its length the number
@@ -528,8 +543,9 @@ def draw_auto_regression_correlated(
         See ``time`` for details.
 
     seed : int | xr.DataTree
-        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.DataTree that
-        contains Datasets with a single variable "seed" with the seed value, used to draw samples for multiple scenarios.
+        Seed used to initialize the pseudo-random number generator. Can be an int or a
+        xr.DataTree that contains Datasets with a single variable "seed" with the seed
+        value, used to draw samples for multiple scenarios.
 
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
@@ -731,8 +747,12 @@ def _draw_innovations_correlated_np(
         if "Matrix is not positive definite" in str(e):
             w, v = np.linalg.eigh(covariance)
             cov = scipy.stats.Covariance.from_eigendecomposition((w, v))
+            msg = (
+                "Covariance matrix is not positive definite, using eigh instead of "
+                "cholesky."
+            )
             warnings.warn(
-                "Covariance matrix is not positive definite, using eigh instead of cholesky.",
+                msg,
                 LinAlgWarning,
             )
 
@@ -765,7 +785,8 @@ def fit_auto_regression(
     -------
     :obj:`xr.Dataset`
         Dataset containing the estimated parameters of the ``intercept``, the AR
-        ``coeffs``, the ``variance`` of the residuals and the number of observations ``nobs``.
+        ``coeffs``, the ``variance`` of the residuals and the number of observations
+        ``nobs``.
     """
 
     if not isinstance(data, xr.DataArray):
@@ -842,32 +863,13 @@ def fit_auto_regression_monthly(
     This is based on the assumption that e.g. June depends on May differently
     than July on June. The auto regression is fit along `time_dim`.
 
-    A cyclo-stationary AR(1) process is defined as follows:
-
-    .. math::
-
-        \\mathbf{X}_{t, \\tau} = \\alpha_{0, \\tau} + \\alpha_{1, \\tau} \\mathbf{X}_{t, \\tau -1}
-        + \\epsilon_{t, \\tau}
-
-
-    where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal cycle, here the
-    months of a year :math:`(N=12)` and :math:`t` counts the repetitions of this seasonal cycle,
-    here the years. Here :math:`\\epsilon` is a white noise process, i.e. :math:`\\epsilon \\sim N(0, \\sigma^2)`.
-    The covariance matrix of the driving white noise process should be estimated on the residuals of the AR(1)
-    process. The residuals are returned here and should be passed to
-    :func:`find_localized_empirical_covariance_monthly <mesmer.stats.find_localized_empirical_covariance_monthly>`.
-
-    For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1].
-
-    [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research.
-        **Cambridge University Press; 1999,** `DOI:10.1017/CBO9780511612336 <https://doi.org/10.1017/CBO9780511612336>`_.
-
 
     Parameters
     ----------
     monthly_data : ``xr.DataArray``
-        A ``xr.DataArray`` to estimate the auto regression over, must contain `time_dim` and can have more dims,
-        for example a gridcell and/or a member dim. Each month has a value.
+        A ``xr.DataArray`` to estimate the auto regression over, must contain `time_dim`
+        and can have more dims, for example a gridcell and/or a member dim. Each month
+        has a value.
     time_dim : str
         Name of the time dimension (dimension along which to fit the auto regression).
 
@@ -880,8 +882,40 @@ def fit_auto_regression_monthly(
         - the ``slope`` for each month and
         - the ``residuals`` (needed for the estimation of the covariance matrices).
 
-        ``intercept`` and ``slope`` have `"month"` and the additional dims of the input data as dimensions,
-        the residuals have `time_dim` and the additional dims of the input data as dimensions.
+        ``intercept`` and ``slope`` have `"month"` and the additional dims of the input
+        data as dimensions, the residuals have `time_dim` and the additional dims of the
+        input data as dimensions.
+
+    Notes
+    -----
+
+    A cyclo-stationary AR(1) process is defined as follows:
+
+    .. math::
+
+        \\mathbf{X}_{t, \\tau} = \\alpha_{0, \\tau} + \\alpha_{1, \\tau}
+        \\mathbf{X}_{t, \\tau -1} + \\epsilon_{t, \\tau}
+
+
+    where :math:`\\tau \\in \\{1, \\ldots, N\\}` counts the seasons of some seasonal
+    cycle, here the months of a year :math:`(N=12)` and :math:`t` counts the repetitions
+    of this seasonal cycle, here the years. Here :math:`\\epsilon` is a white noise
+    process, i.e. :math:`\\epsilon \\sim N(0, \\sigma^2)`. The covariance matrix of the
+    driving white noise process should be estimated on the residuals of the AR(1)
+    process. The residuals are returned here and should be passed to
+    :func:`find_localized_empirical_covariance_monthly
+    <mesmer.stats.find_localized_empirical_covariance_monthly>`.
+
+    For more information refer to Storch and Zwiers (1999) Chapter 10.3.8 [1]_.
+
+    References
+    ----------
+
+    .. [1] Storch H von, Zwiers FW. Statistical Analysis in Climate Research.
+        **Cambridge University Press; 1999,** `DOI:10.1017/CBO9780511612336
+        <https://doi.org/10.1017/CBO9780511612336>`_.
+
+
     """
     _check_dataarray_form(monthly_data, "monthly_data", required_coords=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
@@ -967,9 +1001,9 @@ def draw_auto_regression_monthly(
     realisation_dim: str = "realisation",
 ) -> xr.Dataset:
     """draw time series of a cyclo-stationary auto-regressive process of lag one (AR(1))
-    using individual parameters for each month including spatially-correlated innovations.
-    For more information on the cyclo-stationary AR(1) process please refer to
-    :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`.
+    using individual parameters for each month including spatially-correlated
+    innovations. For more information on the cyclo-stationary AR(1) process please refer
+    to :func:`fit_auto_regression_monthly <mesmer.stats.fit_auto_regression_monthly>`.
 
     Parameters
     ----------
@@ -992,8 +1026,9 @@ def draw_auto_regression_monthly(
     n_realisations : int
         The number of realisations to draw.
     seed : int | xr.DataTree
-        Seed used to initialize the pseudo-random number generator. Can be an int or a xr.DataTree that
-        contains Datasets with a single variable "seed" with the seed value, used to draw samples for multiple scenarios.
+        Seed used to initialize the pseudo-random number generator. Can be an int or a
+        xr.DataTree that contains Datasets with a single variable "seed" with the seed
+        value, used to draw samples for multiple scenarios.
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
@@ -1004,9 +1039,10 @@ def draw_auto_regression_monthly(
 
     Returns
     -------
-    result : xr.Dataset with samples of shape (n_realisations, n_timesteps, n_gridpoints)
+    result : xr.Dataset
         Predicted time series of the specified AR(1) process including spatially
-        correlated innovations. The array has shape n_timesteps x n_gridpoints.
+        correlated innovations. The array has shape n_realisations x n_timesteps
+        x n_gridpoints.
 
     """
 
@@ -1131,11 +1167,13 @@ def _draw_auto_regression_monthly_np(
     slope : np.array of shape (12, gridpoints)
         The slope of the AR(1) process for each month.
     covariance: np.array of shape (12, n_gridpoints, n_gridpoints)
-        The covariance matrix representing spatial correlation between gridpoints for each month.
+        The covariance matrix representing spatial correlation between gridpoints for
+        each month.
     n_samples : int
         The number of realisations to draw.
     n_ts : int
-        The number of time steps to draw (i.e. the number of months in the whole timeseries).
+        The number of time steps to draw (i.e. the number of months in the whole
+        timeseries).
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result). The number given is used for every month such
@@ -1144,7 +1182,8 @@ def _draw_auto_regression_monthly_np(
     Returns
     -------
     out : np.array of shape (n_samples, n_ts, n_gridpoints)
-        Predicted time series of the specified AR(1) including spatially correlated innovations.
+        Predicted time series of the specified AR(1) including spatially correlated
+        innovations.
     """
     intercept = np.asarray(intercept)
     covariance = np.atleast_3d(covariance)

@@ -66,7 +66,7 @@ def test_expression_warn_scale_bound():
 
     with pytest.warns(
         UserWarning,
-        match=r"Found lower boundary on scale parameter that is negative, setting to 0.",
+        match=r"Found lower boundary on scale parameter that is negative, setting to 0",
     ):
         expr = Expression(
             "norm(scale=5, loc=2)",

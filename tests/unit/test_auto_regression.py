@@ -133,7 +133,7 @@ def test_draw_auto_regression_uncorrelated_2D_errors(ar_params_2D):
 
     with pytest.raises(
         ValueError,
-        match="``_draw_auto_regression_uncorrelated`` can currently only handle single points",
+        match="``draw_auto_regression_uncorrelated`` can currently only handle single points",
     ):
 
         mesmer.stats.draw_auto_regression_uncorrelated(

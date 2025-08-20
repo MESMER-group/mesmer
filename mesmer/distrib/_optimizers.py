@@ -61,9 +61,9 @@ def _minimize(
         options=minimize_options.options,
     )
 
-    # NOTE: observed that Powell solver is much faster, but less robust. May rarely create
-    # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
-    # critical steps or when Powell fails.
+    # NOTE: observed that Powell solver is much faster, but less robust. May rarely
+    # create directly NaN coefficients or wrong local optimum => Nelder-Mead can be used
+    # at critical steps or when Powell fails.
 
     if second_minimizer is not None:
         second_fit = minimize(
@@ -155,10 +155,13 @@ def _crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
     try:
         import properscoring
     except ImportError:  # pragma: no cover
-        msg = "Computing the 'crps' metric requires the properscoring package to be installed"
+        msg = (
+            "Computing the 'crps' metric requires the properscoring package to be"
+            " installed"
+        )
         raise ImportError(msg)
 
-    # properscoring.crps_quadrature cannot be applied on conditional distributions, thu
+    # properscoring.crps_quadrature cannot be applied on conditional distributions, thus
     # calculating in each point of the sample, then averaging
     # NOTE: TAKES A VERY LONG TIME TO COMPUTE
     # TODO: find alternative way to compute this

@@ -61,7 +61,8 @@ def _minimize_local_discrete(func: Callable, sequence: Iterable, **kwargs):
 
     Raises
     ------
-    ValueError : if `func` returns negative infinity for any input or all elements are `inf`.
+    ValueError : if `func` returns negative infinity for any input or all elements are
+                 `inf`.
 
     Notes
     -----

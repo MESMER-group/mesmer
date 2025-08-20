@@ -31,7 +31,7 @@ _VALIDATORS = {
 
 class set_options:
     """
-    Set options for regionmask in a controlled context.
+    Set options for mesmer in a controlled context.
 
     Parameters
     ----------
@@ -81,7 +81,7 @@ class set_options:
 
 def get_options():
     """
-    Get options for regionmask.
+    Get options for mesmer.
 
     See Also
     --------

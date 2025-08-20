@@ -78,9 +78,9 @@ def _params_in_distr_support(expression: Expression, params, data):
 
 def _targ_gt_min_proba(expression: Expression, threshold_min_proba, params, data_targ):
     """
-    Test that all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
-    Ensures that data lies within a confidence interval of threshold_min_proba for the tested
-    distribution.
+    Checks all cdf(data) >= threshold_min_proba and 1 - cdf(data) >= threshold_min_proba
+    Ensures that data lies within a confidence interval of threshold_min_proba for the
+    tested distribution.
     """
     # NOTE: DONT write 'x=data', because 'x' may be called differently for some
     # distribution (eg 'k' for poisson).
@@ -116,15 +116,16 @@ def _validate_coefficients(
     -------
 
     coeffs_in_bounds : bool
-        True if the coefficients are within conditional_distrib.expression.boundaries_coeffs. If
+        True if coefficients are in conditional_distrib.expression.boundaries_coeffs. If
         False, all other tests will also be set to False and not tested.
 
     params_in_bounds : bool
         True if the params are within conditional_distrib.expression.boundaries_params
 
     params_in_support : bool
-        True if parameters are within conditional_distrib.expression.boundaries_params and within the support of the distribution.
-        False if not or if test_coeff is False. If False, test_proba will be set to False and not tested.
+        True if parameters are within conditional_distrib.expression.boundaries_params
+        and within the support of the distribution. False if not or if test_coeff is
+        False. If False, test_proba will be set to False and not tested.
 
     test_proba : bool
         Only tested if conditional_distrib.threshold_min_proba is not None.
@@ -133,7 +134,8 @@ def _validate_coefficients(
         False if not or if test_coeff or test_param or test_coeff is False.
 
     params : dict
-        The evaluated params for the given coefficients, if any of the tests fail, empty dict.
+        The evaluated params for the given coefficients, if any of the tests fail, empty
+        dict.
 
     """
     params = {}
