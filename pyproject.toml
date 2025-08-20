@@ -170,7 +170,17 @@ extend-ignore-re = [
 ]
 
 [tool.coverage.run]
-omit = ["*/tests/*, */scripts/*, */tutorials/*, */configs/*, */mesmer/_version.py"]
+omit = [
+  "*/tests/*",
+  "*/scripts/*",
+  "*/tutorials/*",
+  "*/configs/*",
+  "*/mesmer/_version.py",
+  "*/mesmer/calibrate_mesmer/*",
+  "*/mesmer/create_emulations/*",
+  "*/mesmer/io/*",
+  "*/mesmer/utils/*",
+]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--durations=10"]
