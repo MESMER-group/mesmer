@@ -132,7 +132,7 @@ def _assert_annual_data(time):
             "Annual data is required but data of unknown frequency was passed"
         )
     # pandas v2.2 and xarray v2023.11.0 changed the time freq string for year
-    if not (freq.startswith("A") or freq.startswith("Y")):
+    if not (freq.startswith("A") or freq.startswith("Y") or freq == "365D"):
         raise ValueError(
             f"Annual data is required but data with frequency {freq} was passed"
         )
