@@ -460,9 +460,10 @@ def _get_time(*args, **kwargs):
 @pytest.mark.parametrize(
     "calendar", ["standard", "gregorian", "proleptic_gregorian", "365_day", "julian"]
 )
-def test_assert_annual_data(calendar):
+@pytest.mark.parametrize("freq", ["YS", "YE", "YS-JUL", "YS-NOV", "A", "365D"])
+def test_assert_annual_data(calendar, freq):
 
-    time = _get_time("2000", "2005", freq="YE", calendar=calendar)
+    time = _get_time("2000", "2005", freq=freq, calendar=calendar)
 
     # no error
     mesmer._core.utils._assert_annual_data(time)
