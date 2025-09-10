@@ -12,6 +12,7 @@ policy:
   default: 12
   overrides: {}
   exclude:
+    - deprecated
     - pytest
     - pytest-cov
     - pytest-xdist
