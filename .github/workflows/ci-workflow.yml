@@ -43,7 +43,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set environment variables
       run: |
@@ -106,7 +106,7 @@ jobs:
     name: Minimum Version Policy
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: xarray-contrib/minimum-dependency-versions@b0f2cbe5d7fa26b51a03974a21b90998f1b09b80
         with:
           environment-paths: |

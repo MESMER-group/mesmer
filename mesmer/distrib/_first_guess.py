@@ -8,11 +8,10 @@ import scipy as sp
 from packaging.version import Version
 from scipy.optimize import basinhopping
 
-import mesmer.mesmer_x._distrib_checks as _distrib_checks
-import mesmer.mesmer_x._optimizers as _optimizers
-from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._optimizers import MinimizeOptions
-from mesmer.mesmer_x._utils import _ignore_warnings
+from mesmer.distrib import _distrib_checks, _optimizers
+from mesmer.distrib._expression import Expression
+from mesmer.distrib._optimizers import MinimizeOptions
+from mesmer.distrib._utils import _ignore_warnings
 
 # random but fixed seed for basinhopping -> to increase reproducibility
 SEED_BASINHOPPING = 1931102249669598594
@@ -63,14 +62,15 @@ class _FirstGuess:
         Parameters
         ----------
         expression : Expression
-            Expression for the conditional distribution we want to find the first guess of.
+            Expression of the conditional distribution
 
         minimizer_options : MinimizeOptions
             Options for the fit.
 
         data_pred : numpy array 1D or 2D of shape (n_samples, n_preds)
             Predictors for the training sample. If 2D, the first dimension must be the
-            number of predictors, and the second dimension the number of samples, i.e. (n_samples, n_preds).
+            number of predictors, and the second dimension the number of samples, i.e.
+            (n_samples, n_preds).
 
         predictor_names : list of str
             Names of the predictors as named in the `expression`.
@@ -82,8 +82,8 @@ class _FirstGuess:
             Weights for the training sample. Must be 1D, i.e. (n_samples,).
 
         first_guess : numpy array, default: None
-            If provided, will use these values as first guess for the first guess, must be one value
-            per coeff in expression.coefficients_list.
+            If provided, will use these values as first guess for the first guess, must
+            be one value per coeff in expression.coefficients_list.
 
         """
 
@@ -120,8 +120,9 @@ class _FirstGuess:
                 data_pred = data_pred[:, np.newaxis]
             if data_pred.ndim > 2 or data_pred.shape[1] != n_preds:
                 raise ValueError(
-                    "data_pred must be 1D or a 2D array with shape (n_samples, n_preds), "
-                    f"n_preds from `predictor_names` is {n_preds} but shape of data_pred is {data_pred.shape}."
+                    "data_pred must be 1D or a 2D array with shape (n_samples, n_preds)"
+                    f", n_preds from `predictor_names` is {n_preds} but shape of"
+                    f" data_pred is {data_pred.shape}."
                 )
 
         # build dictionary
@@ -139,7 +140,8 @@ class _FirstGuess:
 
         # check first guess
         self.fg_coeffs = np.copy(first_guess)
-        # make sure all values are floats bc if fg_coeff[ind] = type(int) we can only put ints in it too
+        # ensure all values are floats bc if fg_coeff[ind] == type(int) it converts
+        # float to int
         self.fg_coeffs = self.fg_coeffs.astype(float)
 
         # check if the first guess is valid
@@ -186,30 +188,34 @@ class _FirstGuess:
 
         Method:
             1. Improve very first guess for the location by finding a global fit of the
-                coefficients for the location by fitting for coefficients that give location that
-                is a) close to the mean of the target samples and b) has a similar change with the
-                predictor as the target, i.e. the approximation of the first derivative of the location
-                as function of the predictors is close to the one of the target samples. The first
-                derivative is approximated by computing the quotient of the differences in the mean
-                of high (outside +1 std) samples and low (outside -1 std) samples and their
-                corresponding predictor values.
+               coefficients for the location by fitting for coefficients that give
+               location that is a) close to the mean of the target samples and b) has a
+               similar change with the predictor as the target, i.e. the approximation
+               of the first derivative of the location as function of the predictors is
+               close to the one of the target samples. The first derivative is
+               approximated by computing the quotient of the differences in the mean
+               of high (outside +1 std) samples and low (outside -1 std) samples and
+               their corresponding predictor values.
             2. Fit of the coefficients of the location, assuming that the center of the
-                distribution should be close to its location by minimizing mean squared error
-                between location and target samples.
+               distribution should be close to its location by minimizing mean squared
+               error between location and target samples.
             3. Fit of the coefficients of the scale, assuming that the deviation of the
-                distribution should be close from its scale, by minimizing mean squared error between
-                the scale and the absolute deviations of the target samples from the location.
+               distribution should be close from its scale, by minimizing mean squared
+               error between the scale and the absolute deviations of the target
+               samples from the location.
             4. Fit of remaining coefficients, assuming that the sample must be within
-                the support of the distribution, with some margin. Optimizing for coefficients
-                that yield a support such that all samples are within this support.
+               the support of the distribution, with some margin. Optimizing for
+               coefficients that yield a support such that all samples are within this
+               support.
             5. Improvement of all coefficients: better coefficients on location & scale,
-                and especially estimating those on shape. Optimized using the Negative Log
-                Likelihoog, albeit without the validity of the coefficients.
-            6. If step 5 yields invalid coefficients, fit coefficients on log-likelihood to the power n
-                to ensure that all points are within a likely
-                support of the distribution. Two possibilities tried: based on CDF or based on NLL^n. The idea is
-                to penalize very unlikely values, both works, but NLL^n works as well for
-                extremely unlikely values, that lead to division by 0 with CDF)
+               and especially estimating those on shape. Optimized using the Negative
+               Log Likelihoog, albeit without the validity of the coefficients.
+            6. If step 5 yields invalid coefficients, fit coefficients on log-likelihood
+               to the power n to ensure that all points are within a likely support of
+               the distribution. Two possibilities tried: based on CDF or based on
+               NLL^n. The idea is to give very unlikely values more weight, both works,
+               but NLL^n works as well for extremely unlikely values, that lead to
+               division by 0 with CDF).
 
         Risks for the method:
             The only risk that I identify is if the user sets boundaries on coefficients
@@ -221,18 +227,21 @@ class _FirstGuess:
             robustness, validity & flexibility.
 
             a. In theory, this problem could be solved with a global optimization. Among
-                the global optimizers available in scipy, they come with two types of
-                requirements:
-                - basinhopping: requires a first guess. Tried with first guess close from
-                    optimum, good performances, but lacks in reproductibility and
-                    stability: not reliable enough here. Ok if runs much longer.
-                - brute, differential_evolution, shgo, dual_annealing, direct: requires
-                  bounds
-                    - brute, dual_annealing, direct: performances too low & too slow
-                    - differential_evolution: lacks in reproductibility & stability
-                    - shgo: good performances with the right sampling method, relatively
-                      fast, but still adds ~10s. Highly dependent on the bounds, must not
-                      be too large.
+               the global optimizers available in scipy, they come with two types of
+               requirements:
+
+               - basinhopping: requires a first guess. Tried with first guess close from
+                 optimum, good performances, but lacks in reproductibility and
+                 stability: not reliable enough here. Ok if runs much longer.
+
+               - brute, differential_evolution, shgo, dual_annealing, direct: requires
+                 bounds
+
+                   - brute, dual_annealing, direct: performances too low & too slow
+                   - differential_evolution: lacks in reproductibility & stability
+                   - shgo: good performances with the right sampling method, relatively
+                     fast, but still adds ~10s. Highly dependent on the bounds, must not
+                     be too large.
 
                 The best global optimizer, shgo, would then require bounds that are not
                 too large.
@@ -246,21 +255,23 @@ class _FirstGuess:
                 identified...
                 This is the tricky part, here are the different elements that I used to
                 tackle this problem:
+
                 - all combinations of local & global optimizers of scipy
                 - including or not the tests for validity
                 - assessment of bounds for global optimizers based on ratio of NLL or
-                    domain of data_targ
+                  domain of data_targ
                 - first optimizations based on mean & spread
                 - brute force approach on logspace valid for parameters (not scalable
-                    with # of parameters)
-                c. The only solution that was working is inspired by what the
-                semi-analytical solution used in the original code of MESMER-X. Its
-                principle is to use fits first for location coefficients, then scale,
-                then improve.
-                The steps are described in the section Method, steps 1-5. At step 5 that
-                these coefficients are very close from the global minimum. shgo usually
-                does not bring much at the expense of speed.
-                Thus skipping global minimum unless asked.
+                  with # of parameters)
+
+            c. The only solution that was working is inspired by what the
+               semi-analytical solution used in the original code of MESMER-X. Its
+               principle is to use fits first for location coefficients, then scale,
+               then improve.
+               The steps are described in the section Method, steps 1-5. At step 5 that
+               these coefficients are very close from the global minimum. shgo usually
+               does not bring much at the expense of speed.
+               Thus skipping global minimum unless asked.
 
         Warnings
         --------
@@ -386,7 +397,8 @@ class _FirstGuess:
         #     self.fg_coeffs[fg_ind_others] = localfit_others.x
 
         # Step 5: fit coefficients using NLL (objective: improving all coefficients,
-        # necessary to get good estimates for shape parameters, and avoid some local minima)
+        # necessary to get good estimates for shape parameters, and avoid some local
+        # minima)
         localfit_nll = _optimizers._minimize(
             func=self._fg_fun_nll_no_checks,
             x0=self.fg_coeffs,
@@ -406,12 +418,14 @@ class _FirstGuess:
             )
         )
 
-        # if any of validate_coefficients test fail (e.g. any of the coefficients are out of bounds)
+        # if any of validate_coefficients test fail (e.g. any of the coefficients are
+        # out of bounds)
         if not (
             coeffs_in_bounds and params_in_bounds and params_in_support and test_proba
         ):
             # Step 6: fit on LL^n (objective: improving all coefficients, necessary
-            # to have all points within support. NB: NLL does not behave well enough here)
+            # to have all points within support. NB: NLL does not behave well enough
+            # here)
 
             # NOTE: _fg_fun_nll_cubed only helps for threshold_min_proba
 
@@ -471,7 +485,8 @@ class _FirstGuess:
         )
         diff = derivative_loc - derivative_targ
         return (
-            # change of the location with the predictor should be similar to the change of the target with the predictor
+            # change of the location with the predictor should be similar to the change
+            # of the target with the predictor
             # np.sum((derivative_loc - derivative_targ) ** 2)
             np.dot(diff, diff)
             # location should not be too far from the mean of the samples
@@ -481,8 +496,8 @@ class _FirstGuess:
     def _fg_fun_loc(self, x_loc):
         r"""
         Loss function for the location coefficients. The objective is to get a location
-        such that the center of the distribution is close to the location, thus we fit a mean
-        squared error between the location and the smoothed target samples.
+        such that the center of the distribution is close to the location, thus we fit a
+        mean squared error between the location and the smoothed target samples.
 
         The loss is computed as follows:
 
@@ -514,9 +529,10 @@ class _FirstGuess:
 
     def _fg_fun_scale(self, x_scale):
         r"""
-        Loss function for the scale coefficients. The objective is to get a scale such that
-        the deviation of the distribution is close to the scale, thus we fit a mean squared
-        error between the deviation of the (not smoothed) target samples from the location and the scale.
+        Loss function for the scale coefficients. The objective is to get a scale such
+        that the deviation of the distribution is close to the scale, thus we fit a mean
+        squared error between the deviation of the (not smoothed) target samples from
+        the location and the scale.
 
         The loss is computed as follows:
 
@@ -547,9 +563,10 @@ class _FirstGuess:
 
     def _fg_fun_others(self, x_others, margin=1.0e-3):
         """
-        Loss function for other coefficients than loc and scale. Objective is to tune parameters such
-        that target samples are within a likely range of the distribution. Instead of relying on the
-        support, we use the cumulative distribution function (CDF) to penalize unlikely samples.
+        Loss function for other coefficients than loc and scale. Objective is to tune
+        parameters such that target samples are within a likely range of the
+        distribution. Instead of relying on the support, we use the cumulative
+        distribution function (CDF) to penalize unlikely samples.
         """
         # prepare coefficients
         x = np.copy(self.fg_coeffs)

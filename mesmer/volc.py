@@ -2,10 +2,31 @@ import warnings
 
 import xarray as xr
 
-from mesmer.core._data import load_stratospheric_aerosol_optical_depth_obs
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.utils import _assert_annual_data, _check_dataarray_form
+from mesmer._core._data import _load_aod_obs
+from mesmer._core.utils import _assert_annual_data, _check_dataarray_form
+from mesmer.datatree import _datatree_wrapper
 from mesmer.stats import LinearRegression
+
+
+def load_stratospheric_aerosol_optical_depth_obs(*, version="2022", resample=True):
+    """load stratospheric aerosol optical depth data - a proxy for volcanic activity
+
+    Parameters
+    ----------
+    version : str, default: "2022"
+        Which version of the dataset to load. Currently only "2022" is available.
+    resample : bool, default: True
+        Whether to resample the data to annual resolution.
+
+    Returns
+    -------
+    stratospheric_aerosol_optical_depth_obs : xr.DataArray
+        DataArray of stratospheric aerosol optical depth observations.
+    """
+
+    aod = _load_aod_obs(version=version, resample=resample)
+
+    return aod.copy()
 
 
 def _load_and_align_strat_aod_obs(
@@ -40,9 +61,9 @@ def _load_and_align_strat_aod_obs(
         aod_beg, aod_end = aod.time[0].dt.year.item(), aod.time[-1].dt.year.item()
         if beg < aod_beg or end > aod_end:
             msg = (
-                f"Time period of passed array ({beg}-{end}) exceeds time of stratospheric"
-                f" aerosol optical depth observations ({aod_beg}-{aod_end}). Do you need"
-                " to pass ``hist_period``?"
+                f"Time period of passed array ({beg}-{end}) exceeds time of"
+                f" stratospheric aerosol optical depth observations ({aod_beg}-"
+                f"{aod_end}). Do you need to pass ``hist_period``?"
             )
             raise ValueError(msg)
 
@@ -75,7 +96,8 @@ def fit_volcanic_influence(
         influence from.
     hist_period : slice | None
         Slice object indicating the years of the historical period. E.g.
-        ``slice("1850", "2014")``.  If None uses the entire time period of ``tas_residuals``.
+        ``slice("1850", "2014")``.  If None uses the entire time period of
+        ``tas_residuals``.
     dim : str, default: "time"
         Dimension along which to estimate the volcanic influence.
     version : str, default: "2022"

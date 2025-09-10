@@ -7,10 +7,16 @@ Functions to create global trend emulations with MESMER.
 """
 import warnings
 
+from deprecated import deprecated
+
 from mesmer.create_emulations.utils import concatenate_hist_future
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """see docstring of `gather_gt_data`"""
 
@@ -23,6 +29,10 @@ def create_emus_gt(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     )
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def gather_gt_data(params_gt, preds_gt, cfg, concat_h_f=False, save_emus=True):
     """
     Create global trend (emissions + volcanoes) emulations for specified ensemble type

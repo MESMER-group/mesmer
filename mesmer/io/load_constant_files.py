@@ -14,10 +14,15 @@ import warnings
 import joblib
 import numpy as np
 import regionmask
+from deprecated import deprecated
 
 from mesmer.stats import gaspari_cohn
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     """
     Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation
@@ -79,7 +84,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
       matrix must be positive semidefinite in train_lv())
     """
 
-    from mesmer.core.geospatial import geodist_exact
+    from mesmer.geospatial import geodist_exact
 
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
@@ -131,6 +136,10 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     return phi_gc
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     """Load constant files.
 

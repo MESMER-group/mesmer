@@ -1,12 +1,12 @@
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.utils import (
+from mesmer._core.utils import (
     _check_dataarray_form,
     _check_dataset_form,
     _to_set,
 )
+from mesmer.datatree import _datatree_wrapper
 
 
 class LinearRegression:
@@ -82,17 +82,19 @@ class LinearRegression:
         Parameters
         ----------
         predictors : dict of xr.DataArray | xr.Dataset | xr.DataTree
-            Either a dict of ``DataArray`` objects used as predictors with predictor names as keys,
-            or a ``xr.Dataset`` where each predictor is a ``DataArray``. Each predictor must be 1D
-            and contain ``dim``.
-            One can also make predictions for multiple trajectories/scenarios at once, in this case,
-            pass a ``xr.DataTree`` where each leaf holds a ``Dataset`` with the predictors for a scenario.
+            Either a dict of ``DataArray`` objects used as predictors with predictor
+            names as keys, or a ``xr.Dataset`` where each predictor is a ``DataArray``.
+            Each predictor must be 1D and contain ``dim``.
+            One can also make predictions for multiple trajectories/scenarios at once,
+            in this case, pass a ``xr.DataTree`` where each leaf holds a ``Dataset``
+            with the predictors for a scenario.
         exclude : str or set of str, default: None
             Set of variables to exclude in the prediction. May include ``"intercept"``
             to initialize the prediction with 0. Mutually exclusive with ``only``.
         only :  str or set of str, default: None
             Set of variables to include in the prediction. May include ``"intercept"``
-            otherwise the prediction is initialized with 0. Mutually exclusive with ``exclude``.
+            otherwise the prediction is initialized with 0. Mutually exclusive with
+            ``exclude``.
 
         Returns
         -------

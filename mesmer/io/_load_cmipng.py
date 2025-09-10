@@ -5,19 +5,23 @@
 """
 Functions to load in cmip5 and cmip6 data from the cmip-ng archive at ETHZ.
 """
-
 import glob
 import os
 import warnings
 
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 import mesmer
 from mesmer.io.load_constant_files import load_regs_ls_wgt_lon_lat
 from mesmer.utils import convert_dict_to_arr, extract_land
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
     """Load tas and (potentially) hfds for several ESMs from cmip-ng archive at ETHZ
 
@@ -90,6 +94,10 @@ def load_cmip_data_all_esms(esms, scenarios, threshold_land, use_hfds, cfg):
     return time, lon, lat, ls, tas, gsat, ghfds
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def extract_time_lon_lat_wgt3d(data):
     """
     Extract time, longitude, latitude, and 3d weights from file from ETHZ cmip-ng
@@ -132,6 +140,10 @@ def extract_time_lon_lat_wgt3d(data):
     return time, lon, lat, wgt3d
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     """Find filename in ETHZ cmip-ng archive.
 
@@ -276,6 +288,10 @@ def _find_files_cmipng(gen, esm, var, scenario, dir_cmipng):
     return path_runs_list
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_cmipng(targ, esm, scen, cfg):
     """Load ESM runs from cmip-ng archive at ETHZ.
 
@@ -331,6 +347,10 @@ def load_cmipng(targ, esm, scen, cfg):
     return targ, GTARG, lon, lat, time
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _load_cmipng_file(run_path, gen, scen):
     """Load file in ETHZ cmip-ng archive.
 
@@ -386,6 +406,10 @@ def _load_cmipng_file(run_path, gen, scen):
     return data, run
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_cmipng_hfds(esm, scen, cfg):
     """Load ESM hfds runs from cmip-ng archive at ETHZ.
 
@@ -424,6 +448,10 @@ def load_cmipng_hfds(esm, scen, cfg):
     return _load_cmipng_var(esm, scen, cfg, "hfds")
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_cmipng_tas(esm, scen, cfg):
     """Load ESM tas runs from cmip-ng archive at ETHZ.
 
@@ -462,6 +490,10 @@ def load_cmipng_tas(esm, scen, cfg):
     return _load_cmipng_var(esm, scen, cfg, "tas")
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _load_cmipng_var(esm, scen, cfg, varn):
 
     # specify necessary variables from cfg
@@ -527,6 +559,10 @@ def _load_cmipng_var(esm, scen, cfg, varn):
     return dta, dta_globmean, lon, lat, time
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _preprocess_ssp534over(ds):
     """
     Preprocess datasets to manage to combine historical, ssp585, and ssp534-over into

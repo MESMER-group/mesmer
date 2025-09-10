@@ -7,33 +7,12 @@ import xarray as xr
 import mesmer
 
 
-def load_stratospheric_aerosol_optical_depth_obs(*, version="2022", resample=True):
-    """load stratospheric aerosol optical depth data - a proxy for volcanic activity
-
-    Parameters
-    ----------
-    version : str, default: "2022"
-        Which version of the dataset to load. Currently only "2022" is available.
-    resample : bool, default: True
-        Whether to resample the data to annual resolution.
-
-    Returns
-    -------
-    stratospheric_aerosol_optical_depth_obs : xr.DataArray
-        DataArray of stratospheric aerosol optical depth observations.
-    """
+# use an inner function as @cache does not preserve the signature
+@cache
+def _load_aod_obs(*, version, resample):
 
     if version != "2022":
         raise ValueError("No version other than '2022' is currently available.")
-
-    aod = _load_aod_obs(resample=resample)
-
-    return aod.copy()
-
-
-# use an inner function as @cache does not nicely preserve the signature
-@cache
-def _load_aod_obs(*, resample):
 
     filename = _fetch_remote_data("obs/tau.line_2012.12.txt")
 

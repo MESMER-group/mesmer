@@ -6,38 +6,109 @@ import xarray as xr
 import mesmer
 
 
-def _load_data(*filenames):
-    # TODO: extract to a 'official' helper function
+def find_hist_proj_simulations(
+    variable: str,
+    model: str,
+    scenario: str | list[str],
+    time_res: str = "ann",
+    member: str | list[str] = "*",
+    resolution: str = "g025",
+):
 
-    # NOTE: open_mfdataset is considerably slower...
-    # ds = xr.open_mfdataset(
-    #     filenames,
-    #     combine="by_coords",
-    #     use_cftime=True,
-    #     combine_attrs="override",
-    #     data_vars="minimal",
-    #     compat="override",
-    #     coords="minimal",
-    #     drop_variables=["height", "file_qf"],
-    # ).load()
+    cmip6_data_path = mesmer.example_data.cmip6_ng_path(relative=False)
 
-    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-    load_opt = {"drop_variables": ["height", "file_qf"], "decode_times": time_coder}
-    datasets = [xr.open_dataset(fN, **load_opt) for fN in filenames]
-
-    ds = xr.combine_by_coords(
-        datasets,
-        combine_attrs="override",
-        data_vars="minimal",
-        compat="override",
-        coords="minimal",
+    cmip_filefinder = filefisher.FileFinder(
+        path_pattern=cmip6_data_path / "{variable}/{time_res}/{resolution}",
+        file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
 
-    return ds
+    fc_scens = cmip_filefinder.find_files(
+        variable=variable,
+        scenario=scenario,
+        model=model,
+        resolution=resolution,
+        time_res=time_res,
+        member=member,
+    )
+
+    # get the historical members that are also in the future scenarios, but only once
+    unique_scen_members_y = fc_scens.df.member.unique()
+
+    fc_hist = cmip_filefinder.find_files(
+        variable=variable,
+        scenario="historical",
+        model=model,
+        resolution=resolution,
+        time_res=time_res,
+        member=unique_scen_members_y,
+    )
+
+    fc_all = fc_hist.concat(fc_scens)
+
+    return fc_all
 
 
-@pytest.mark.slow
-def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
+def load_data(filecontainer: filefisher.FileContainer):
+
+    out = xr.DataTree()
+
+    scenarios = filecontainer.df.scenario.unique().tolist()
+
+    # load data for each scenario
+    for scen in scenarios:
+        files = filecontainer.search(scenario=scen)
+
+        # load all members for a scenario
+        members = []
+        for fN, meta in files.items():
+            time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+            ds = xr.open_dataset(fN, decode_times=time_coder)
+            # drop unnecessary variables
+            ds = ds.drop_vars(["height", "time_bnds", "file_qf"], errors="ignore")
+            # assign member-ID as coordinate
+            ds = ds.assign_coords({"member": meta["member"]})
+            members.append(ds)
+
+        # create a Dataset that holds each member along the member dimension
+        scen_data = xr.concat(members, dim="member")
+        # put the scenario dataset into the DataTree
+        out[scen] = xr.DataTree(scen_data)
+
+    return out
+
+
+@pytest.mark.parametrize(
+    (
+        "scenario",
+        "n_ens",
+        "yj_transformation",
+        "outname",
+    ),
+    [
+        pytest.param(
+            ["ssp585"],
+            "one",
+            "logistic",
+            "tas/mon/one_scen_one_ens",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            ["ssp126", "ssp585"],
+            "multi",
+            "constant",
+            "tas/mon/multi_scen_multi_ens",
+            marks=pytest.mark.slow,
+        ),
+    ],
+)
+def test_calibrate_mesmer_m(
+    scenario,
+    n_ens,
+    yj_transformation,
+    outname,
+    test_data_root_dir,
+    update_expected_files,
+):
     # define config values
     THRESHOLD_LAND = 1 / 3
 
@@ -45,33 +116,34 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
 
     # LOCALISATION_RADII = list(range(1250, 6251, 250)) + list(range(6500, 8501, 500))
     # restrict radii for faster tests
-    LOCALISATION_RADII = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
+    localisation_radii = list(range(5750, 6251, 250)) + list(range(6500, 8001, 500))
 
     esm = "IPSL-CM6A-LR"
-    scenario = "ssp585"
+
+    member = "*" if n_ens == "multi" else "r1i1p1f1"
 
     # define paths and load data
-    test_path = test_data_root_dir / "output" / "tas" / "mon" / "test-params"
-    cmip6_data_path = mesmer.example_data.cmip6_ng_path()
+    test_path = test_data_root_dir / "output" / outname / "test-params"
 
     # load annual data
-    path_tas_ann = cmip6_data_path / "tas" / "ann" / "g025"
-    fN_hist_ann = path_tas_ann / f"tas_ann_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj_ann = path_tas_ann / f"tas_ann_{esm}_{scenario}_r1i1p1f1_g025.nc"
-    tas_y = _load_data(fN_hist_ann, fN_proj_ann)
+    fc_all_y = find_hist_proj_simulations(
+        variable="tas", scenario=scenario, model=esm, time_res="ann", member=member
+    )
+    tas_y_orig = load_data(fc_all_y)
 
     # load monthly data
-    path_tas_mon = cmip6_data_path / "tas" / "mon" / "g025"
-    fN_hist_mon = path_tas_mon / f"tas_mon_{esm}_historical_r1i1p1f1_g025.nc"
-    fN_proj_mon = path_tas_mon / f"tas_mon_{esm}_{scenario}_r1i1p1f1_g025.nc"
-    tas_m = _load_data(fN_hist_mon, fN_proj_mon)
+    fc_all_m = find_hist_proj_simulations(
+        variable="tas", scenario=scenario, model=esm, time_res="mon", member=member
+    )
+    tas_m_orig = load_data(fc_all_m)
 
     # data preprocessing
-    ref_y = tas_y.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
-    ref_m = tas_m.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
-
-    tas_y = tas_y - ref_y
-    tas_m = tas_m - ref_m
+    tas_anoms_y = mesmer.anomaly.calc_anomaly(
+        tas_y_orig, reference_period=REFERENCE_PERIOD
+    )
+    tas_anoms_m = mesmer.anomaly.calc_anomaly(
+        tas_m_orig, reference_period=REFERENCE_PERIOD
+    )
 
     # create local gridded tas data
     def mask_and_stack(ds, threshold_land):
@@ -80,8 +152,34 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
         ds = mesmer.grid.stack_lat_lon(ds)
         return ds
 
-    tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
-    tas_stacked_m = mask_and_stack(tas_m, threshold_land=THRESHOLD_LAND)
+    tas_stacked_y = mask_and_stack(tas_anoms_y, threshold_land=THRESHOLD_LAND)
+    tas_stacked_m = mask_and_stack(tas_anoms_m, threshold_land=THRESHOLD_LAND)
+
+    if n_ens == "one":
+        # NOTE: we load one ensemble member into a DataTree structure and combine
+        # the historical and scenario here - this is overkill but allows using the same
+        # load function for both cases (with this we have one test case with a time
+        # dim and one with a sample dim)
+
+        tas_stacked_y = xr.combine_by_coords(
+            [dt.ds for dt in tas_stacked_y.values()],
+            combine_attrs="override",
+            data_vars="minimal",
+            compat="override",
+            coords="minimal",
+        ).squeeze(drop=True)
+
+        tas_stacked_m = xr.combine_by_coords(
+            [dt.ds for dt in tas_stacked_m.values()],
+            combine_attrs="override",
+            data_vars="minimal",
+            compat="override",
+            coords="minimal",
+        ).squeeze(drop=True)
+
+    else:
+        tas_stacked_y = mesmer.datatree.pool_scen_ens(tas_stacked_y)
+        tas_stacked_m = mesmer.datatree.pool_scen_ens(tas_stacked_m)
 
     # fit harmonic model
     harmonic_model_fit = mesmer.stats.fit_harmonic_model(
@@ -89,51 +187,63 @@ def test_calibrate_mesmer_m(test_data_root_dir, update_expected_files):
     )
 
     # train power transformer
-    yj_transformer = mesmer.stats.YeoJohnsonTransformer("logistic")
+    yj_transformer = mesmer.stats.YeoJohnsonTransformer(yj_transformation)
     pt_coefficients = yj_transformer.fit(
         tas_stacked_y.tas,
         harmonic_model_fit.residuals,
     )
+    # find transformed residuals
     transformed_hm_resids = yj_transformer.transform(
         tas_stacked_y.tas, harmonic_model_fit.residuals, pt_coefficients
     )
 
     # fit cyclo-stationary AR(1) process
     ar1_fit = mesmer.stats.fit_auto_regression_monthly(
-        transformed_hm_resids.transformed, time_dim="time"
+        transformed_hm_resids.transformed
     )
 
     # find localized empirical covariance
     geodist = mesmer.geospatial.geodist_exact(tas_stacked_y.lon, tas_stacked_y.lat)
 
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
-        geodist, localisation_radii=LOCALISATION_RADII
+        geodist, localisation_radii=localisation_radii
     )
 
-    weights = xr.ones_like(ar1_fit.residuals.isel(gridcell=0))
-    weights.name = "weights"
+    if n_ens == "one":
+        weights = xr.ones_like(ar1_fit.residuals.isel(gridcell=0))
+        weights.name = "weights"
+    else:
+        weights = mesmer.weighted.equal_scenario_weights_from_datatree(tas_anoms_m)
+        weights = mesmer.datatree.pool_scen_ens(weights)
+
+        # because ar1_fit.residuals lost the first ts, we have to remove it here as well
+        weights = weights.isel(sample=slice(1, None)).weights
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
         ar1_fit.residuals, weights, phi_gc_localizer, "time", k_folds=30
     )
 
     # we need to get the original time coordinate to be able to validate our results
-    m_time = tas_stacked_m.time.rename("monthly_time")
+    time_hist = tas_m_orig["historical"].ds[["time"]]
+    time_proj = tas_m_orig[scenario[0]].ds[["time"]]
 
-    PARAM_FILEFINDER = filefisher.FileFinder(
+    m_time = xr.concat([time_hist, time_proj], dim="time")
+    m_time = m_time.time.rename("monthly_time")
+
+    param_filefinder = filefisher.FileFinder(
         path_pattern=test_path / "{module}/",
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
-    scen_str = scenario
+    scen_str = "_".join(scenario)
 
     keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
 
-    local_hm_file = PARAM_FILEFINDER.create_full_name(keys, module="harmonic-model")
-    local_pt_file = PARAM_FILEFINDER.create_full_name(keys, module="power-transformer")
-    local_ar_file = PARAM_FILEFINDER.create_full_name(keys, module="local-variability")
-    localized_ecov_file = PARAM_FILEFINDER.create_full_name(keys, module="covariance")
-    time_file = PARAM_FILEFINDER.create_full_name(keys, module="monthly-time")
+    local_hm_file = param_filefinder.create_full_name(keys, module="harmonic-model")
+    local_pt_file = param_filefinder.create_full_name(keys, module="power-transformer")
+    local_ar_file = param_filefinder.create_full_name(keys, module="local-variability")
+    localized_ecov_file = param_filefinder.create_full_name(keys, module="covariance")
+    time_file = param_filefinder.create_full_name(keys, module="monthly-time")
 
     # save params
     if update_expected_files:

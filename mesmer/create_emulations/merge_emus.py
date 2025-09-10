@@ -6,12 +6,17 @@
 Functions to merge emulations of different MESMER modules.
 """
 
-
 import warnings
+
+from deprecated import deprecated
 
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     """Merge global trend and global variability emulations of the same scenarios.
 
@@ -112,6 +117,10 @@ def create_emus_g(emus_gt, emus_gv, params_gt, params_gv, cfg, save_emus=True):
     return emus_g
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_l(emus_lt, emus_lv, params_lt, params_lv, cfg, save_emus=True):
     """
     Merge local trends and local variability temperature emulations of the same

@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 from scipy.optimize import minimize
 
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 
 
 def _yeo_johnson_transform_np(data, lambdas):
@@ -28,7 +28,8 @@ def _yeo_johnson_transform_np(data, lambdas):
             :math:`X_{trans} = - log(-X + 1)`
 
     Note that :math:`X` and :math:`X_{trans}`have the same sign.
-    Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_
+    Also see `sklearn's PowerTransformer
+    <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_
     """
 
     return _yeo_johnson_transform_optimized(data)(lambdas)
@@ -132,8 +133,9 @@ def logistic_lambda_function(
     Parameters
     ----------
     coeffs : ndarray of shape (2,)
-        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`) controls the intercept,
-        the second coefficient (:math:`\xi_1`) controls the slope.
+        Coefficients for the logistic function. The first coefficient (:math:`\xi_0`)
+        controls the intercept, the second coefficient (:math:`\xi_1`) controls the
+        slope.
     local_yearly_T : ndarray of shape (n_years,)
         Yearly values of one gridcell and month used as predictor
         for lambda.
@@ -149,8 +151,7 @@ def logistic_lambda_function(
 def constant_lambda_function(
     coeffs: np.ndarray, local_yearly_T: np.ndarray
 ) -> np.ndarray:
-    r"""Use logistic function to calculate lambda depending on the local yearly
-    values. The function is defined as
+    r"""Use a constant for lambda. The function is defined as
 
     .. math::
 
@@ -164,6 +165,10 @@ def constant_lambda_function(
     local_yearly_T : ndarray of shape (n_years,)
         Unused.
 
+    Notes
+    -----
+    ``local_yearly_T`` is passed for consistency.
+
     Returns
     -------
     lambdas : ndarray of float of shape (n_years,)
@@ -176,7 +181,7 @@ class YeoJohnsonTransformer:
     def __init__(self, name: Literal["constant", "logistic"]):
         """Apply a Yeo-Johnson Power Transformer to make data more Gaussian
 
-        In contrast to sklearn's PowerTransformer makes the parameter ``lambdas``
+        In contrast to sklearn's PowerTransformer the parameter ``lambdas`` can be
         dependent on a covariate.
 
         Parameters
@@ -185,8 +190,10 @@ class YeoJohnsonTransformer:
             Name of the covariate function. See the ``covariate_function`` of the
             returned object for details. Possible are
 
-            * ``"logistic"``:  logistic function, see ``logistic_lambda_function`` for
-              details
+            * ``"constant"``:  constant function, see :py:func:`constant_lambda_function()
+              <mesmer.stats._power_transformer.constant_lambda_function>` for details.
+            * ``"logistic"``:  logistic function, see :py:func:`logistic_lambda_function
+              <mesmer.stats._power_transformer.logistic_lambda_function>` for details.
         """
 
         if name == "logistic":
@@ -218,7 +225,7 @@ class YeoJohnsonTransformer:
         if lambda_function_name is not None and lambda_function_name != self.name:
             msg = (
                 f"Passed `lambda_coeffs` fitted on a '{lambda_function_name}' lambda"
-                f" function, but currently '{self.name}' is selected as lambda function."
+                f" function, but currently '{self.name}' is selected as lambda function"
             )
             raise ValueError(msg)
 
@@ -258,8 +265,8 @@ class YeoJohnsonTransformer:
         data_log1p_sum = data_log1p.sum()
 
         def _neg_log_likelihood(coeffs):
-            """Return the negative log likelihood of the observed local monthly residuals
-            as a function of lambda.
+            """Return the negative log likelihood of the observed local monthly
+            residuals as a function of lambda.
             """
             lambdas = self.lambda_function(coeffs, yearly_pred)
 
@@ -294,14 +301,16 @@ class YeoJohnsonTransformer:
         time_coords: None | xr.DataArray = None,
     ) -> xr.DataArray:
         """function that relates fitted coefficients and the yearly predictor
-        to the lambdas. See :meth:`lambda_function <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
+        to the lambdas. See :meth:`lambda_function
+        <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
 
         Parameters
         ----------
         lambda_coeffs : ``xr.DataArray``
             The parameters of the power transformation for each month along "month",
             with coefficients along "coeff" calculated using ``fit_yeo_johnson_transform``.
-            Can have additional dimensions, like for example a gridcell or member dimension.
+            Can have additional dimensions, like for example a gridcell or member
+            dimension.
         yearly_pred : ``xr.DataArray``
             yearly values used as predictors for the lambdas, contains dims for time
             and possibly additional dims as for lambda_coeffs.
@@ -362,24 +371,26 @@ class YeoJohnsonTransformer:
         time_dim: str = "time",
     ) -> xr.DataArray:
         """
-        estimate the optimal coefficients for the parameters :math:`\\lambda` for each gridcell,
-        to normalize monthly residuals conditional on yearly predictor. Here, :math:`\\lambda`
-        depends on the yearly predictor according to :meth:`lambda_function <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
+        estimate the optimal coefficients for the parameters :math:`\\lambda` for each
+        gridcell, to normalize monthly residuals conditional on yearly predictor. Here,
+        :math:`\\lambda` depends on the yearly predictor according to
+        :meth:`lambda_function <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
         The optimal coefficients for the lambda parameters for minimizing skewness are
         estimated on each gridcell independently using maximum likelihood.
 
         Parameters
         ----------
         yearly_pred : ``xr.DataArray``
-            yearly values used as predictors for the lambdas, must contain time_dim but can have
-            additional dimensions for example gridcells or members.
+            yearly values used as predictors for the lambdas, must contain time_dim but
+            can have additional dimensions for example gridcells or members.
         monthly_residuals : ``xr.DataArray``
-            Monthly residuals after removing harmonic model fits, used to fit for the optimal
-            transformation parameters (lambdas). Has time_dim which is of length ``yearly_pred[time_dim].size * 12``
-            and can also contain the same additional dimensions as yearly_pred.
+            Monthly residuals after removing harmonic model fits, used to fit for the
+            optimal transformation parameters (lambdas). Has time_dim which is of length
+            ``yearly_pred[time_dim].size * 12`` and can also contain the same additional
+            dimensions as yearly_pred.
         time_dim : str, default: "time"
-            Name of the time dimension in the input data used to align monthly residuals and
-            yearly predictor data (needs to be the same in both).
+            Name of the time dimension in the input data used to align monthly residuals
+            and yearly predictor data (needs to be the same in both).
 
         Returns
         -------
@@ -434,30 +445,33 @@ class YeoJohnsonTransformer:
     ) -> xr.Dataset:
         """
         transform `monthly_residuals` following Yeo-Johnson transformer
-        with parameters :math:`\\lambda`, fit with :func:`fit_yeo_johnson_transform <mesmer.stats.fit_yeo_johnson_transform>`.
+        with parameters :math:`\\lambda`, fit with :func:`fit_yeo_johnson_transform
+        <mesmer.stats.fit_yeo_johnson_transform>`.
 
         Parameters
         ----------
         yearly_pred : ``xr.DataArray``
-            yearly values used as predictors for the lambdas, must contain time_dim but can have
-            additional dimensions for example gridcells or members.
+            yearly values used as predictors for the lambdas, must contain time_dim but
+            can have additional dimensions for example gridcells or members.
         monthly_residuals : ``xr.DataArray``
             Monthly residuals after removing harmonic model fits, used to fit for the
-            optimal transformation parameters (lambdas). Has time_dim which is of length len(yearly_pred[time_dim]) * 12
-            and can also contain the same additional dimensions as yearly_pred.
+            optimal transformation parameters (lambdas). Has time_dim which is of length
+            len(yearly_pred[time_dim]) * 12 and can also contain the same additional
+            dimensions as yearly_pred.
         lambda_coeffs : ``xr.DataArray``
             DataArray containing the estimated coefficients needed to compute
-            lambda with dimensions "month", "coeff" and additional dims on inputs. Calculated using
-            :meth:`lambda_function <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
+            lambda with dimensions "month", "coeff" and additional dims on inputs.
+            Calculated using :meth:`lambda_function
+            <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
         time_dim : str, default: "time"
-            Name of the time dimension in the input data used to align monthly residuals and
-            yearly predictor data (needs to be the same in both).
+            Name of the time dimension in the input data used to align monthly residuals
+            and yearly predictor data (needs to be the same in both).
 
         Returns
         -------
         :obj:`xr.Dataset`
-            Dataset containing the transformed monthly residuals and the parameters of the
-            power transformation for each gridcell.
+            Dataset containing the transformed monthly residuals and the parameters of
+            the power transformation for each gridcell.
 
         Notes
         -----
@@ -473,7 +487,8 @@ class YeoJohnsonTransformer:
                 :math:`X_{trans} = - log(-X + 1)`
 
         Note that :math:`X` and :math:`X_{trans}` have the same sign.
-        Also see `sklearn's PowerTransformer <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_.
+        Also see `sklearn's PowerTransformer
+        <https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html>`_.
         """
         _check_dataarray_form(
             monthly_residuals, name="monthly_residuals", required_coords=time_dim
@@ -523,18 +538,20 @@ class YeoJohnsonTransformer:
         Parameters
         ----------
         yearly_pred : ``xr.DataArray``
-            yearly values used as predictors for the lambdas, must contain time_dim but can have
-            additional dimensions for example gridcells or members.
+            yearly values used as predictors for the lambdas, must contain time_dim but
+            can have additional dimensions for example gridcells or members.
         monthly_residuals : ``xr.DataArray``
-            The data to be transformed back to the original scale. Has time_dim which is of length ``yearly_pred[time_dim].size * 12``
-            and can also contain the same additional dimensions as yearly_pred.
+            The data to be transformed back to the original scale. Has time_dim which is
+            of length ``yearly_pred[time_dim].size * 12`` and can also contain the same
+            additional dimensions as yearly_pred.
         lambda_coeffs : ``xr.DataArray``
             DataArray containing the estimated coefficients needed to compute
-            lambda with dimensions "month", "coeff" and additional dims on inputs. Calculated using
-            :meth:`lambda_function <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
+            lambda with dimensions "month", "coeff" and additional dims on inputs.
+            Calculated using :meth:`lambda_function
+            <mesmer.stats.YeoJohnsonTransformer.lambda_function>`.
         time_dim : str, default: "time"
-            Name of the time dimension in the input data used to align monthly residuals and
-            yearly predictor data (needs to be the same in both).
+            Name of the time dimension in the input data used to align monthly residuals
+            and yearly predictor data (needs to be the same in both).
 
         Returns
         -------

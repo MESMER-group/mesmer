@@ -6,10 +6,14 @@
 Functions to process data.
 """
 
-
 import numpy as np
+from deprecated import deprecated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def convert_dict_to_arr(var_dict):
     """Convert dictionary to array.
 
@@ -36,6 +40,10 @@ def convert_dict_to_arr(var_dict):
     return var_arr
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def separate_hist_future(var_c, time_c, cfg):
     """Separate historical and future time periods into separate keys in dictionary.
 

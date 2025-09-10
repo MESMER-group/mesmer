@@ -3,8 +3,8 @@ from typing import TypeVar
 import numpy as np
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
+from mesmer.datatree import _datatree_wrapper
 
 T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")
 
@@ -62,7 +62,7 @@ def lowess(
         mesmer.stats.lowess(data, "time", frac=0.3).mean("cells")
     """
 
-    from statsmodels.nonparametric.smoothers_lowess import lowess
+    from statsmodels.nonparametric.smoothers_lowess import lowess as sm_lowess
 
     if not isinstance(dim, str):
         raise ValueError("Can only pass a single dimension.")
@@ -78,7 +78,8 @@ def lowess(
 
         if n_steps > n_coords:
             raise ValueError(
-                f"``n_steps`` ({n_steps}) cannot be be larger than the length of '{dim}' ({n_coords})"
+                f"``n_steps`` ({n_steps}) cannot be be larger than the length of"
+                f" '{dim}' ({n_coords})"
             )
 
         frac = n_steps / n_coords
@@ -119,7 +120,7 @@ def lowess(
             return da
 
         out = xr.apply_ufunc(
-            lowess,
+            sm_lowess,
             da,
             x,
             input_core_dims=[[dim], [dim]],

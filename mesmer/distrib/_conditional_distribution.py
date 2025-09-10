@@ -8,15 +8,15 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer.core.geospatial import geodist_exact
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.core.weighted import weighted_median
-from mesmer.mesmer_x import _distrib_checks, _optimizers
-from mesmer.mesmer_x._expression import Expression
-from mesmer.mesmer_x._first_guess import _FirstGuess
-from mesmer.mesmer_x._optimizers import MinimizeOptions, OptimizerNLL
-from mesmer.mesmer_x._utils import _ignore_warnings
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.distrib import _distrib_checks, _optimizers
+from mesmer.distrib._expression import Expression
+from mesmer.distrib._first_guess import _FirstGuess
+from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
+from mesmer.distrib._utils import _ignore_warnings
+from mesmer.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn
+from mesmer.weighted import _weighted_median
 
 
 class ConditionalDistribution:
@@ -35,9 +35,10 @@ class ConditionalDistribution:
         ----------
         Expression : class py:class:`Expression`
             Expression defining the conditional distribution.
-        minimize_options : class py:class:`MinimizeOptions` | None, default: MinimizeOptions()
+        minimize_options : `py:class:`MinimizeOptions` | None, default: MinimizeOptions()
             Class defining the optimizer options used during first guess and training of
-            distributions. If not passed uses "Nelder-Mead" minimizer with default settings.
+            distributions. If not passed uses "Nelder-Mead" minimizer with default
+            settings.
         second_minimizer : class py:class:`MinimizeOptions` | None, default: None
             Run a second minimization algorithm for all steps. ``method="Powell"``
             is recommended. It can be beneficial to run more than one minimization
@@ -85,14 +86,15 @@ class ConditionalDistribution:
         ----------
         predictors : dict of xr.DataArray | xr.Dataset
             A dict of DataArray objects used as predictors or a Dataset, holding each
-            predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
+            predictor as a data variable. Each predictor must be 1D and contain
+            `sample_dim`.
         target : xr.DataArray
             Target DataArray.
         weights : xr.DataArray.
             Individual weights for each sample.
         first_guess : xr.Dataset
-            First guess for the coefficients, each coefficient is a data variable in the Dataset
-            and has the corresponding name of the coefficient in the expression.
+            First guess for the coefficients, each coefficient is a data variable in the
+            Dataset and has the corresponding name of the coefficient in the expression.
         sample_dim : str
             Dimension along which to fit the distribution.
         smooth_coeffs : bool, default: False
@@ -116,9 +118,9 @@ class ConditionalDistribution:
         n_coeffs_fg = len(first_guess.data_vars)
         if n_coeffs_fg != self.expression.n_coeffs:
             raise ValueError(
-                "The provided first guess does not have the correct number of coeffs, "
-                f"Expression suggests a number of {self.expression.n_coeffs} coefficients, "
-                f"but `first_guess` has {n_coeffs_fg} data_variables."
+                "The provided first guess does not have the correct number of coeffs,"
+                f" Expression suggests a number of {self.expression.n_coeffs}"
+                f" coefficients, but `first_guess` has {n_coeffs_fg} data_variables."
             )
 
         first_guess_da = first_guess.to_dataarray(dim="coefficient")
@@ -226,7 +228,7 @@ class ConditionalDistribution:
         sample_dim: str = "sample",
     ):
         """
-        Find a first guess for all coefficients of a conditional distribution for each grid point.
+        Find a first guess for all coefficients of a conditional distribution
 
         Parameters
         ----------
@@ -234,23 +236,24 @@ class ConditionalDistribution:
             Conditional distribution object to find the first guess for.
         predictors : dict of xr.DataArray | xr.Dataset
             A dict of DataArray objects used as predictors or a Dataset, holding each
-            predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
+            predictor as a data variable. Each predictor must be 1D and contain
+            `sample_dim`.
         target : xr.DataArray
             Target DataArray, contains at least `sample_dim`.
         weights : xr.DataArray.
             Individual weights for each sample, must be 1D along `sample_dim`.
         first_guess : xr.Dataset, default: None
-            If provided, will use these values as first guess for the first guess. If None,
-            will use all zeros. Must contain the first guess for each coefficient in a
-            DataArray with the name of the coefficient.
+            If provided, will use these values as first guess for the first guess. If
+            None, will use all zeros. Must contain the first guess for each coefficient
+            in a DataArray with the name of the coefficient.
         sample_dim : str
             Dimension along which to fit the first guess.
 
         Returns
         -------
         :obj:`xr.Dataset`
-            Dataset of first guess for each coefficient of the conditional distribution as a
-            data variable with the name of the coefficient.
+            Dataset of first guess for each coefficient of the conditional distribution
+            as a data variable with the name of the coefficient.
         """
 
         # make fg with zeros if none
@@ -342,7 +345,8 @@ class ConditionalDistribution:
         ----------
         predictors : dict of xr.DataArray | xr.Dataset
             A dict of DataArray objects used as predictors or a DataTree, holding each
-            predictor as a data variable. Each predictor must be 1D and contain `sample_dim`.
+            predictor as a data variable. Each predictor must be 1D and contain
+            `sample_dim`.
         target : xr.DataArray
             Target DataArray.
         sample_dim : str
@@ -351,6 +355,7 @@ class ConditionalDistribution:
             Individual weights for each sample.
         scores : list of str, default: ['func_optim', 'nll', 'bic']
             After the fit, several scores can be calculated to assess the performance:
+
             - "func_optim": function optimized, as described in
               options_optim['type_fun_optim']: negative log likelihood or full
               conditional negative log likelihood
@@ -496,6 +501,7 @@ class ConditionalDistribution:
 
         Parameters
         ----------
+        filename : str
             Name of the netCDF file to open.
         **kwargs : Any
             Additional keyword arguments passed to ``xr.open_dataset``
@@ -528,7 +534,7 @@ class ConditionalDistribution:
         filename : str
             Name of the netCDF file to save.
         **kwargs : Any
-            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+            Additional keyword arguments passed to ``xr.Dataset.to_netcdf``
         """
 
         self.coefficients.to_netcdf(filename, **kwargs)
@@ -565,7 +571,7 @@ def _smooth_first_guess(
 
     # will avoid taking gridpoints with nan
     second_guess = xr.apply_ufunc(
-        weighted_median,
+        _weighted_median,
         first_guess_stacked,
         corr_gc,
         input_core_dims=[[dim], [f"{dim}_i"]],

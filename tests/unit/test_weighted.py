@@ -6,8 +6,8 @@ import xarray as xr
 from packaging.version import Version
 
 import mesmer
-from mesmer.core.datatree import map_over_datasets
-from mesmer.core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer.datatree import map_over_datasets
 from mesmer.testing import _convert
 
 
@@ -459,21 +459,21 @@ def test_weighted_median():
     data = np.array([1, 2, 3, 4, 5])
     weights = np.array([0.1, 0.2, 0.3, 0.2, 0.2])
 
-    median = mesmer.weighted.weighted_median(data, weights)
+    median = mesmer.weighted._weighted_median(data, weights)
 
     # The weighted median should be the value that splits the data into two halves
     expected_median = 3
     np.testing.assert_equal(median, expected_median)
 
     weights = np.array([0.1, 0.1, 0.1, 0.1, 1.0])
-    median = mesmer.weighted.weighted_median(data, weights)
+    median = mesmer.weighted._weighted_median(data, weights)
 
     expected_median = 5
     np.testing.assert_equal(median, expected_median)
 
     data = np.array([1, 2, 3, 4])
     weights = np.array([1.0, 1.0, 1.0, 1.0])
-    median = mesmer.weighted.weighted_median(data, weights)
+    median = mesmer.weighted._weighted_median(data, weights)
 
     expected_median = 2.5
     np.testing.assert_equal(median, expected_median)
@@ -481,7 +481,7 @@ def test_weighted_median():
     data = np.array([1.0, 2.0, 3.0, np.nan, 4.0, 5.0])
     weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
-    median = mesmer.weighted.weighted_median(data, weights)
+    median = mesmer.weighted._weighted_median(data, weights)
     expected_median = 3.0
     np.testing.assert_equal(median, expected_median)
 
@@ -489,7 +489,7 @@ def test_weighted_median():
     data = np.array([5, 4, 2, 3, 1])
     weights = np.array([0.2, 0.2, 0.2, 0.3, 0.1])
 
-    median = mesmer.weighted.weighted_median(data, weights)
+    median = mesmer.weighted._weighted_median(data, weights)
 
     expected_median = 3
     np.testing.assert_equal(median, expected_median)

@@ -39,7 +39,7 @@ installing mesmer using conda/mamba:
 
     conda install -c conda-forge mesmer
 
-Alternately, mesmer can be installed with pip:
+Alternatively, mesmer can be installed with pip:
 
 .. code-block:: bash
 

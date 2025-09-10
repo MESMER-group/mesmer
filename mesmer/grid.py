@@ -1,8 +1,8 @@
 import pandas as pd
 import xarray as xr
 
-from mesmer.core.datatree import _datatree_wrapper
-from mesmer.core.types import T_DataArraySetTree
+from mesmer._core.types import T_DataArraySetTree
+from mesmer.datatree import _datatree_wrapper
 
 
 def _lon_to_180(lon):
@@ -104,7 +104,8 @@ def stack_lat_lon(
     multiindex : bool, default: False
         If the new `stack_dim` should be returned as a MultiIndex.
     dropna : bool, default: True
-        Drops each 'gridcell' if any NA values are present at any point in the timeseries.
+        Drops each 'gridcell' if any NA values are present at any point in the
+        timeseries.
 
     Returns
     -------

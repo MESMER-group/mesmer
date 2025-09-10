@@ -14,7 +14,7 @@ import scipy as sp
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 
 
 @lru_cache
@@ -124,9 +124,7 @@ def predict_harmonic_model(
         required_dims=dims | {"coeff"},
     )
 
-    upsampled_y = mesmer.core.utils.upsample_yearly_data(
-        yearly_predictor, time, time_dim
-    )
+    upsampled_y = mesmer.resample.upsample_yearly_data(yearly_predictor, time, time_dim)
 
     predictions = upsampled_y + xr.apply_ufunc(
         _generate_fourier_series_np,
@@ -296,15 +294,18 @@ def fit_harmonic_model(
     Parameters
     ----------
     yearly_predictor : xr.DataArray
-        Yearly values used as predictors, containing one value per year. Contains `time_dim`
-        and possibly additional dimensions for example for gridcells or members.
+        Yearly values used as predictors, containing one value per year. Contains
+        `time_dim` and possibly additional dimensions for example for gridcells or
+        members.
     monthly_target : xr.DataArray
         Monthly values to fit to, containing one value per month, for every year in
-        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot` `n_years`.
-        Must contain `time_dim` and possibly additional dimensions as `yearly_predictor`.
+        `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot`
+        `n_years`. Must contain `time_dim` and possibly additional dimensions as
+        `yearly_predictor`.
     max_order : Integer, default 6
-        Maximum order of Fourier Series to fit for. Default is 6 since highest meaningful
-        maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly data.
+        Maximum order of Fourier Series to fit for. Default is 6 since highest
+        meaningful maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly
+        data.
     time_dim: str, default: "time"
         Name of the time dimension on `yearly_predictor` and `monthly_target`.
 
@@ -350,7 +351,7 @@ def fit_harmonic_model(
     if not monthly_target[time_dim].isel({sample_dim: 0}).dt.month == 1:
         raise ValueError("Monthly target data must start with January.")
 
-    yearly_predictor = mesmer.core.utils.upsample_yearly_data(
+    yearly_predictor = mesmer.resample.upsample_yearly_data(
         yearly_predictor, monthly_target[time_dim], time_dim=time_dim
     )
 

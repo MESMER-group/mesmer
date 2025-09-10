@@ -7,8 +7,8 @@
 import numpy as np
 from scipy.optimize import minimize
 
-import mesmer.mesmer_x._distrib_checks as _distrib_checks
-from mesmer.mesmer_x._expression import Expression
+from mesmer.distrib import _distrib_checks
+from mesmer.distrib._expression import Expression
 
 
 class MinimizeOptions:
@@ -61,9 +61,9 @@ def _minimize(
         options=minimize_options.options,
     )
 
-    # NOTE: observed that Powell solver is much faster, but less robust. May rarely create
-    # directly NaN coefficients or wrong local optimum => Nelder-Mead can be used at
-    # critical steps or when Powell fails.
+    # NOTE: observed that Powell solver is much faster, but less robust. May rarely
+    # create directly NaN coefficients or wrong local optimum => Nelder-Mead can be used
+    # at critical steps or when Powell fails.
 
     if second_minimizer is not None:
         second_fit = minimize(
@@ -155,21 +155,31 @@ def _crps(expression: Expression, data_targ, data_pred, data_weights, coeffs):
     try:
         import properscoring
     except ImportError:  # pragma: no cover
-        msg = "Computing the 'crps' metric requires the properscoring package to be installed"
+        msg = (
+            "Computing the 'crps' metric requires the properscoring package to be"
+            " installed"
+        )
         raise ImportError(msg)
 
-    # properscoring.crps_quadrature cannot be applied on conditional distributions, thu
+    # properscoring.crps_quadrature cannot be applied on conditional distributions, thus
     # calculating in each point of the sample, then averaging
     # NOTE: TAKES A VERY LONG TIME TO COMPUTE
     # TODO: find alternative way to compute this
 
     tmp_cprs = []
     for i in np.arange(len(data_targ)):
-        distrib = expression.evaluate(coeffs, {p: data_pred[p][i] for p in data_pred})
+
+        # pre-compute params for the cdf function
+        predictor_values = {p: data_pred[p][i] for p in data_pred}
+        params = expression.evaluate_params(coeffs, predictor_values)
+
+        def cdf(x):
+            return expression.distrib.cdf(x, **params)
+
         tmp_cprs.append(
             properscoring.crps_quadrature(
                 x=data_targ[i],
-                cdf_or_dist=distrib,
+                cdf_or_dist=cdf,
                 xmin=-10 * np.abs(data_targ[i]),
                 xmax=10 * np.abs(data_targ[i]),
                 tol=1.0e-4,

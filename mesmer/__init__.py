@@ -9,19 +9,27 @@ analyze the results.
 
 from importlib.metadata import version as _get_version
 
-from mesmer import calibrate_mesmer, core, create_emulations, io, stats, testing, utils
-from mesmer.core import _data as data
-from mesmer.core import (
+from mesmer import (
+    _core,
     anomaly,
+    calibrate_mesmer,
+    create_emulations,
     datatree,
+    distrib,
     example_data,
     geospatial,
     grid,
+    io,
     mask,
+    resample,
+    stats,
+    testing,
+    utils,
     volc,
     weighted,
 )
-from mesmer.core.options import get_options, set_options
+from mesmer._core import _data as data
+from mesmer._core.options import get_options, set_options
 
 # "legacy" modules
 __all__ = [
@@ -33,15 +41,17 @@ __all__ = [
 
 # "new" "modules"
 __all__ += [
+    "_core",
     "anomaly",
-    "core",
     "data",
     "datatree",
+    "distrib",
     "example_data",
     "geospatial",
     "get_options",
     "grid",
     "mask",
+    "resample",
     "set_options",
     "stats",
     "testing",

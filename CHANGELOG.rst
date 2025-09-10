@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v0.11.0 - unreleased
+v1.0.0 - unreleased
 --------------------
 
 New Features
@@ -41,6 +41,8 @@ Breaking changes
   (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_, and `#733 <https://github.com/MESMER-group/mesmer/pull/733>`_)
   By `Mathias Hauser`_.
 - Removed the deprecated function :py:func:`mask_percentage` (`#654 <https://github.com/MESMER-group/mesmer/pull/654>`_)
+  By `Mathias Hauser`_.
+- Removed `Expression.evaluate` - use `Expression.evaluate_params` instead (`#786 <https://github.com/MESMER-group/mesmer/pull/786>`_)
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#399 <https://github.com/MESMER-group/mesmer/pull/399>`_,
@@ -107,7 +109,11 @@ Internal Changes
   By `Mathias Hauser`_.
 - Made the :py:func:`create_equal_dim_names` private (`#653 <https://github.com/MESMER-group/mesmer/pull/653>`_).
   By `Mathias Hauser`_.
-- Removed the ``regionmaskcompat.py`` module. It is no longer needed after requiring *regionmask* v0.12  (`#683 <https://github.com/MESMER-group/mesmer/pull/683>`_).
+- Removed the ``regionmaskcompat.py`` module. It is no longer needed after requiring *regionmask* v0.12 (`#683 <https://github.com/MESMER-group/mesmer/pull/683>`_).
+  By `Mathias Hauser`_.
+- Moved data modules to mesmer namespace (`#773 <https://github.com/MESMER-group/mesmer/pull/773>`_).
+  By `Mathias Hauser`_.
+- Made the *core* data module explicitly private by renaming it to *_core* (`#774 <https://github.com/MESMER-group/mesmer/pull/774>`_).
   By `Mathias Hauser`_.
 
 Data structure using DataTree
@@ -212,7 +218,7 @@ Auto-Regression
   since cyclo-stationarity is also given if the slopes of a few months are (slightly) larger than one. We
   now return the residuals of the cyclo-stationary AR(1) process to fit the covariance matrix on these residuals.
   As a consequence, adjustment of the covariance matrix with the AR slopes is no longer necessary.
-  After this, no adjustment is necessary anymore. (`#480 <https://github.com/MESMER-group/mesmer/pull/480>`_)
+  (`#480 <https://github.com/MESMER-group/mesmer/pull/480>`_)
   Compare discussion in `#472 <https://github.com/MESMER-group/mesmer/issues/472>`_.
 - Implement function to localize the empirical covarince matrix for each month individually to use in drawing
   of spatially correlated noise in the AR process. (`#479 <https://github.com/MESMER-group/mesmer/pull/479>`_)
@@ -258,8 +264,9 @@ Harmonic model
 
 -  Performance and other optimizations:
 
-   - only fit orders up to local minimum and use coeffs from precious order as first guess (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_)
+   - only fit orders up to local minimum and use coeffs from previous order as first guess (`#443 <https://github.com/MESMER-group/mesmer/pull/443>`_)
    - infer the harmonic model order from the coefficients (`#434 <https://github.com/MESMER-group/mesmer/pull/434>`_)
+   - optimization of `_generate_fourier_series_order_np()` (`#516 <https://github.com/MESMER-group/mesmer/pull/516>`_ and `#578 <https://github.com/MESMER-group/mesmer/pull/578>`_)
 -  return residuals instead of the loss for the optimization (`#460 <https://github.com/MESMER-group/mesmer/pull/460>`_)
 -  remove fitting of linear regression with yearly temperature (`#415 <https://github.com/MESMER-group/mesmer/pull/415>`_ and
    `#488 <https://github.com/MESMER-group/mesmer/pull/488>`_) in line with (`Nath et al. 2022 <https://doi.org/10.5194/esd-13-851-2022>`_).

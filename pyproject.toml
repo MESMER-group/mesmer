@@ -26,6 +26,7 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "dask[array,distributed] >=2024.7",
+    "deprecated",
     "filefisher >=1.1",
     "joblib >=1.4",
     "netcdf4 >=1.7",
@@ -169,10 +170,25 @@ extend-ignore-re = [
 ]
 
 [tool.coverage.run]
-omit = ["*/tests/*, */scripts/*, */tutorials/*, */configs/*, */mesmer/_version.py"]
+omit = [
+  "*/tests/*",
+  "*/scripts/*",
+  "*/tutorials/*",
+  "*/configs/*",
+  "*/mesmer/_version.py",
+  "*/mesmer/calibrate_mesmer/*",
+  "*/mesmer/create_emulations/*",
+  "*/mesmer/io/*",
+  "*/mesmer/utils/*",
+]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--durations=10"]
 python_files = "test_*.py"
 testpaths = "tests/"
-filterwarnings = ["ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning"]
+filterwarnings = [
+  "ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning",
+  # deprecation of legacy code
+  "ignore:Call to deprecated function",
+  "ignore:Call to deprecated class",
+]

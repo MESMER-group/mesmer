@@ -29,8 +29,8 @@ class Expression:
     ):
         """Symbolic expression of a conditional distribution.
 
-        When initialized, the class identifies the distribution, predictors, parameters and
-        coefficients. The expression is then compiled so that it can be evaluated.
+        When initialized, the class identifies the distribution, predictors, parameters
+        and coefficients. The expression is then compiled so that it can be evaluated.
 
         Parameters
         ----------
@@ -42,15 +42,15 @@ class Expression:
 
         boundaries_params : dict, optional
             Boundaries for the parameters. The keys are the names of the parameters, and
-            the values are lists of two elements, the lower and upper bounds. The default
-            is None, which will set the boundaries to [-inf, inf] for all parameters
-            found in the expression, except `scale` which must be positive, so the lower boundary
-            will be set to 0. These boundaries will later be enforced when fitting the conditional
-            distribution.
+            the values are lists of two elements, the lower and upper bounds. The
+            default is None, which will set the boundaries to [-inf, inf] for all
+            parameters found in the expression, except `scale` which must be positive,
+            so the lower boundary will be set to 0. These boundaries will later be
+            enforced when fitting the conditional distribution.
 
         boundaries_coeffs : dict, optional
-            Boundaries for the coefficients. The keys are the names of the coefficients as
-            they are written in the expression, and the values are lists of two elements,
+            Boundaries for the coefficients. The keys are the names of the coefficients
+            as written in the expression, and the values are lists of two elements,
             the lower and upper bounds. The default is None. These boundaries will later
             be enforced when fitting the conditional distribution.
 
@@ -58,23 +58,21 @@ class Expression:
         -----
         A valid expression of a distribution contains the following elements:
 
-            - a distribution: must be the name of a distribution in `scipy.stats` (discrete
-              or continuous): https://docs.scipy.org/doc/scipy/reference/stats.html
-
-            - the parameters: all names for the parameters of the distributions must be
-              provided (as named in the `scipy.stats` distribution): loc, scale, shape,
-              mu, a, b, c, etc.
-
-            - predictors: predictors that the distribution will be conditional to, must
-              be written like a variable in python and surrounded by "__":
-              e.g. __GMT__, __X1__, __gmt_tm1__, but NOT __gmt-1__, __#days__, __GMT, _GMT_ etc.
-
-            - coefficients: coefficients of the predictors, must be named "c#", with # being
-              the number of the coefficient: e.g. c1, c2, c3.
-
-            - mathematical terms: mathematical terms for the evolutions are be written as they
-              would be normally in python. Names of packages should be included. Spaces do not
-              matter in the equations
+        - a distribution: must be the name of a distribution in `scipy.stats
+          <https://docs.scipy.org/doc/scipy/reference/stats.html>`__ (discrete or
+          or continuous)
+        - the parameters: all names for the parameters of the distributions must be
+          provided (as named in the `scipy.stats` distribution): ``loc``, ``scale``,
+          ``shape``, ``mu``, ``a``, ``b``, ``c``, etc.
+        - predictors: predictors that the distribution will be conditional to, must
+          be written like a variable in python and surrounded by ``"__"``:
+          e.g. ``__GMT__``, ``__X1__``, ``__gmt_tm1__``, but NOT ``__gmt-1__``,
+          ``__#days__``, ``__GMT``, ``_GMT_`` etc.
+        - coefficients: coefficients of the predictors, must be named ``"c#"``, with #
+          being the number of the coefficient: e.g. ``c1``, ``c2``, ``c3``.
+        - mathematical terms: mathematical terms for the evolutions are be written
+          as they would be normally in python. Only functions from numpy (``np.*``)
+          are supported. Spaces do not matter in the equations.
 
         .. warning::
             Currently, the expression can only contain integers as numbers, no floats!
@@ -82,9 +80,14 @@ class Expression:
 
         Examples
         --------
-        `expr1 = Expression("genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5", "expr1")`
-        `expr2 = Expression("norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)", "expr2")`
-        `expr3 = Expression("exponpow(loc=c1, scale=c2+np.min([np.max(np.mean([__GMT_tm1__,__GMT_tp1__],axis=0)), math.gamma(__XYZ__)]), b=c3), "expr3")`
+        >>> Expression(
+        ...     "genextreme(loc=c1 + c2 * __pred1__, scale=c3 + c4 * __pred2__**2, c=c5)",
+        ...     "expr1"
+        ... )
+        >>> Expression(
+        ...     "norm(loc=c1 + (c2 - c1) / ( 1 + np.exp(c3 * __GMT_t__ + c4 * __GMT_tm1__ - c5) ), scale=c6)",
+        ...     "expr2"
+        ... )
         """
         # TODO: Forcing values of certain parameters (eg mu for poisson) to be integers?
 
@@ -141,8 +144,8 @@ class Expression:
         if self.is_distrib_discrete:
             msg = (
                 "You selected a discrete distribution but these are not well tested. "
-                "They have integer parameters, which do not work well with minimization."
-                "Consider approximating it with a normal distribution. "
+                "They have integer parameters, which do not work well with"
+                "minimization. Consider approximating it with a normal distribution. "
             )
             warnings.warn(msg)
 
@@ -165,9 +168,9 @@ class Expression:
                 self.parameters_expressions[param] = sub
             else:
                 raise ValueError(
-                    f"The parameter '{param}' is not part of prepared expression in scipy.stats:"
+                    f"The parameter '{param}' is not part of the distribution "
+                    f"'{self.distrib.name}' in scipy.stats, see"
                     " https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats."
-                    f" of the distribution '{self.distrib.name}'"
                 )
 
         # recommend not to try to fill in missing information on parameters with
@@ -206,9 +209,10 @@ class Expression:
             self.boundaries_params["scale"] = [0, np.inf]
 
         if "scale" in self.boundaries_params and self.boundaries_params["scale"][0] < 0:
-            warnings.warn(
-                "Found lower boundary on scale parameter that is negative, setting to 0."
+            msg = (
+                "Found lower boundary on scale parameter that is negative, setting to 0"
             )
+            warnings.warn(msg)
             self.boundaries_params["scale"][0] = 0
 
     def _find_coefficients(self):
@@ -292,9 +296,9 @@ class Expression:
         self.predictors_list.sort(key=len, reverse=True)
 
     def _correct_expr_parameters(self):
-        # list of predictors and coefficients, sorted by descending length, to be sure that
-        # when removing them, will remove the good ones and not those with their short
-        # name contained in the long name of another
+        # list of predictors and coefficients, sorted by descending length, to be sure
+        # that when removing them, will remove the good ones and not those with their
+        # short name contained in the long name of another
 
         tmp_list = self.predictors_list + self.coefficients_list + ["__"]
         tmp_list.sort(key=len, reverse=True)
@@ -415,14 +419,18 @@ class Expression:
         Parameters
         ----------
         coefficients_values : dict | xr.Dataset(c_i) | list of values
-            Coefficient arrays or scalars. Can have the following form
-            - dict(c_i = values or np.array())
+            Coefficient arrays or scalars. Can have the following form:
+
+            - dict(c_i = values | np.array())
             - xr.Dataset(c_i)
             - list of values
+
         predictors_values : dict | xr.Dataset
             Input arrays or scalars. Can be passed as
+
             - dict(pred_i = values or np.array())
             - xr.Dataset(pred_i)
+
         forced_shape : None | tuple or list of dimensions
             coefficients_values and predictors_values for transposition of the shape.
             Can include additional axes like 'realization'.
@@ -431,13 +439,14 @@ class Expression:
         -------
         params: dict
             Realized parameters for the given expression, coefficients and covariates;
-            to pass ``self.distrib(**params)`` or its methods.
+            to pass to the methods of ``Expression(...).distrib``, e.g.
+            ``expression.distrib.ppf(**params)``.
 
         Warnings
         --------
-        with xarrays for coefficients_values and predictors_values, the outputs will have
-        for shape first the one of the coefficient, then the one of the predictors
-        --> trying to avoid this issue with 'forced_shape'
+        with xarray objects for coefficients_values and predictors_values, the outputs
+        will have for shape first the one of the coefficient, then the one of the
+        predictors --> trying to avoid this issue with 'forced_shape'
         """
 
         # TODO:
@@ -475,7 +484,7 @@ class Expression:
         if len(shapes) > 1:
             raise ValueError("shapes of predictors must be equal")
 
-        # gather coefficients and covariates (can't use d1 | d2, does not work for dataset)
+        # gather coefficients and covariates (d1 | d2, does not work for dataset)
         locals = {**coefficients_values, **predictors_values}
 
         # evaluate parameters
@@ -512,39 +521,3 @@ class Expression:
                 )
 
         return parameters_values
-
-    def evaluate(self, coefficients_values, predictors_values, forced_shape=None):
-        """
-        Evaluates the distribution with the provided predictors and coefficients
-
-        Parameters
-        ----------
-        coefficients_values : dict | xr.Dataset(c_i) | list of values
-            Coefficient arrays or scalars. Can have the following form
-            - dict(c_i = values or np.array())
-            - xr.Dataset(c_i)
-            - list of values
-        predictors_values : dict | xr.Dataset
-            Input arrays or scalars. Can be passed as
-            - dict(pred_i = values or np.array())
-            - xr.Dataset(pred_i)
-        forced_shape : None | tuple or list of dimensions
-            coefficients_values and predictors_values for transposition of the shape
-
-        Returns
-        -------
-        distr: scipy stats frozen distribution
-            Frozen distribution with the realized parameters applied to.
-
-        Warnings
-        --------
-        with xarrays for coefficients_values and predictors_values, the outputs will have
-        the dimensions of the coefficients first, then the ones of the predictors
-        """
-
-        params = self.evaluate_params(
-            coefficients_values,
-            predictors_values,
-            forced_shape=forced_shape,
-        )
-        return self.distrib(**params)

@@ -67,6 +67,9 @@ def gaspari_cohn(
 
     - r = d / L, with d = geographical distance in km, L = localisation radius in km
 
+    References
+    ----------
+
     .. [1] Gaspari, G. and Cohn, S.E. (1999), Construction of correlation functions in
        two and three dimensions. Q.J.R. Meteorol. Soc., 125: 723-757.
        https://doi.org/10.1002/qj.49712555417

@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
 from mesmer.stats._harmonic_model import (
     _fit_fourier_order_np,
     _generate_fourier_series_np,
