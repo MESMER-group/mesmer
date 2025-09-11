@@ -11,7 +11,7 @@ policy:
     numpy: 18
   default: 12
   overrides:
-    xarray: 2025.03 # for DataTree functionality
+    xarray: v2025.03 # for DataTree functionality
   exclude:
     - deprecated
     - pytest
