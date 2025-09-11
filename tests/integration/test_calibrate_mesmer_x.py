@@ -259,6 +259,9 @@ def test_calibrate_mesmer_x(
         preds_orig=pred_data,
     )
 
+    #  NOTE: also need the pooled residuals
+    pooled_transf_target = mesmer.datatree.pool_scen_ens(transf_target)
+
     # training of auto-regression with spatially correlated innovations
     local_ar_params = mesmer.stats.fit_auto_regression_scen_ens(
         transf_target,
@@ -272,10 +275,7 @@ def test_calibrate_mesmer_x(
     geodist = mesmer.geospatial.geodist_exact(
         lon=targ_data["historical"].lon, lat=targ_data["historical"].lat
     )
-    # prep localizer (relatively coarse)
-    # NOTE: 16_000 leads to a singular matrix for the third case (expr2) - to
-    # TODO: reconsider using 16000 after https://github.com/MESMER-group/mesmer/pull/493
-    LOCALISATION_RADII = list(range(10_000, 15_001, 1000)) + [15_500]
+    LOCALISATION_RADII = list(range(4_000, 6_501, 500))
     phi_gc_localizer = mesmer.stats.gaspari_cohn_correlation_matrices(
         geodist=geodist, localisation_radii=LOCALISATION_RADII
     )
@@ -286,7 +286,7 @@ def test_calibrate_mesmer_x(
     # TODO: using here weights from MESMER-X. I noticed that it affects the
     # calculation in find_localized_empirical_covariance. Need to solve that.
     localized_ecov = mesmer.stats.find_localized_empirical_covariance(
-        data=stacked_targ[targ_var],
+        data=pooled_transf_target[targ_var],
         weights=stacked_weights.weights,
         localizer=phi_gc_localizer,
         dim="sample",
