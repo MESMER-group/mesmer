@@ -23,10 +23,15 @@ def default_distrib():
 
 
 def test_ConditionalDistribution_errors():
+
+    with pytest.raises(TypeError, match="'expression' must be an `Expression`"):
+        ConditionalDistribution(None)
+
+    expression = Expression("norm(loc=0, scale=1)", expr_name="exp1")
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
-        ConditionalDistribution(None, threshold_min_proba=-0.1)
+        ConditionalDistribution(expression, threshold_min_proba=-0.1)
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
-        ConditionalDistribution(None, threshold_min_proba=0.6)
+        ConditionalDistribution(expression, threshold_min_proba=0.6)
 
     minimize_options = MinimizeOptions("Powell")
 
@@ -34,7 +39,9 @@ def test_ConditionalDistribution_errors():
         ValueError, match="First and second minimizer have the same method"
     ):
         ConditionalDistribution(
-            None, minimize_options=minimize_options, second_minimizer=minimize_options
+            expression,
+            minimize_options=minimize_options,
+            second_minimizer=minimize_options,
         )
 
 
