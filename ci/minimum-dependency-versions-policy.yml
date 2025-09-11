@@ -16,4 +16,7 @@ policy:
     - pytest
     - pytest-cov
     - pytest-xdist
-  ignored_violations: []
+  ignored_violations:
+    - netcdf4  # these miss the X.Y.0 release and where therefore wrong in the old check
+    - regionmask # https://github.com/MESMER-group/mesmer/pull/763#issuecomment-3280741990
+    - xarray  # for DataTree functionality
