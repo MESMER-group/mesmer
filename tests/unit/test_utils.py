@@ -275,13 +275,14 @@ def test_check_dataset_form_required_vars():
 
     ds = xr.Dataset()
 
-    with pytest.raises(ValueError, match="obj is missing the required data_vars"):
+    with pytest.raises(ValueError, match="'obj' is missing the required data_vars"):
         mesmer._core.utils._check_dataset_form(ds, required_vars="missing")
 
-    with pytest.raises(ValueError, match="test is missing the required data_vars"):
+    with pytest.raises(ValueError, match="'test' is missing the required data_vars"):
         mesmer._core.utils._check_dataset_form(ds, "test", required_vars="missing")
 
-    with pytest.raises(ValueError, match="obj is missing the required data_vars: a, b"):
+    msg = "'obj' is missing the required data_vars: 'a', 'b'"
+    with pytest.raises(ValueError, match=msg):
         mesmer._core.utils._check_dataset_form(ds, required_vars={"a", "b"})
 
     # no error

@@ -117,7 +117,7 @@ def test_draw_auto_regression_uncorrelated_wrong_input(ar_params_1D, drop):
     ar_params = ar_params_1D.drop_vars(drop)
 
     with pytest.raises(
-        ValueError, match=f"ar_params is missing the required data_vars: {drop}"
+        ValueError, match=f"'ar_params' is missing the required data_vars: '{drop}'"
     ):
 
         mesmer.stats.draw_auto_regression_uncorrelated(
@@ -285,7 +285,7 @@ def test_draw_auto_regression_correlated_wrong_input(ar_params_2D, covariance, d
     ar_params = ar_params_2D.drop_vars(drop)
 
     with pytest.raises(
-        ValueError, match=f"ar_params is missing the required data_vars: {drop}"
+        ValueError, match=f"'ar_params' is missing the required data_vars: '{drop}'"
     ):
 
         mesmer.stats.draw_auto_regression_correlated(
