@@ -93,7 +93,7 @@ def test_ConditionalDistribution_from_dataset_errors():
     ds = xr.Dataset(attrs=attrs)
 
     with pytest.raises(
-        ValueError, match="coefficients is missing the required data_vars: c2,c1"
+        ValueError, match="'coefficients' is missing the required data_vars: 'c1', 'c2'"
     ):
         ConditionalDistribution.from_dataset(ds)
 

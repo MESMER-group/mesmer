@@ -48,7 +48,7 @@ class ConditionalDistribution:
         # initialization
 
         if not isinstance(expression, Expression):
-            raise TypeError("'expression' must be an `Expression`.")
+            raise TypeError("'expression' must be an `Expression`")
 
         if minimize_options is None:
             minimize_options = MinimizeOptions()
