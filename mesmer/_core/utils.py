@@ -180,7 +180,7 @@ def _check_dataset_form(
 
     missing_vars = required_vars - data_vars
     if missing_vars:
-        missing = ",".join(missing_vars)
+        missing = ", ".join(sorted(missing_vars))
         raise ValueError(f"{name} is missing the required data_vars: {missing}")
 
     n_vars_except = len(data_vars - (required_vars | optional_vars))
