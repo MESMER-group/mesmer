@@ -73,6 +73,49 @@ def test_ConditionalDistribution_custom_init():
     MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
 
 
+def test_ConditionalDistribution_from_dataset_errors():
+
+    ds = xr.Dataset()
+
+    with pytest.raises(ValueError, match="The 'expression' attribute is missing"):
+        ConditionalDistribution.from_dataset(ds)
+
+    ds = xr.Dataset(attrs={"expression": "norm(loc=c1 * __tas__, scale=c2)"})
+
+    with pytest.raises(ValueError, match="The 'expression_name' attribute is missing"):
+        ConditionalDistribution.from_dataset(ds)
+
+    attrs = {
+        "expression": "norm(loc=c1 * __tas__, scale=c2)",
+        "expression_name": "expr",
+    }
+
+    ds = xr.Dataset(attrs=attrs)
+
+    with pytest.raises(
+        ValueError, match="coefficients is missing the required data_vars: c2,c1"
+    ):
+        ConditionalDistribution.from_dataset(ds)
+
+
+def test_ConditionalDistribution_from_dataset():
+
+    attrs = {
+        "expression": "norm(loc=c1 * __tas__, scale=c2)",
+        "expression_name": "expr",
+    }
+
+    data_vars = {"c1": ("gridcell", [0, 1]), "c2": ("gridcell", [2, 3])}
+    ds = xr.Dataset(data_vars=data_vars, attrs=attrs)
+
+    cd = ConditionalDistribution.from_dataset(ds)
+
+    assert cd.expression.expression == attrs["expression"]
+    assert cd.expression.expression_name == attrs["expression_name"]
+
+    xr.testing.assert_equal(cd.coefficients, ds)
+
+
 def test_ConditionalDistribution_fit(default_distrib):
     rng = np.random.default_rng(0)
     n = 251
