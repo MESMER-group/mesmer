@@ -524,7 +524,7 @@ class YeoJohnsonTransformer:
             vectorize=True,
         ).rename("transformed")
 
-        return xr.merge([transformed_resids, lambdas])
+        return xr.merge([transformed_resids, lambdas], compat="override")
 
     def inverse_transform(
         self,
@@ -606,4 +606,4 @@ class YeoJohnsonTransformer:
             vectorize=True,
         ).rename("inverted")
 
-        return xr.merge([inverted_resids, lambdas])
+        return xr.merge([inverted_resids, lambdas], compat="override")
