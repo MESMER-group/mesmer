@@ -400,7 +400,7 @@ def _load_cmipng_file(run_path, gen, scen):
             paths,
             combine="by_coords",
             preprocess=preprocess,
-            data_vars=None,
+            data_vars="all",
             compat="override",
             coords="minimal",
         )
