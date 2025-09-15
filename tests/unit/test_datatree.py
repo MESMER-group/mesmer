@@ -88,7 +88,8 @@ def test_collapse_datatree_into_dataset():
     ds = ds3.rename({"tas": "tas2"})
 
     leaf3 = xr.merge(
-        [ds1.assign_coords({"member": 1}), ds.assign_coords({"member": 1})]
+        [ds1.assign_coords({"member": 1}), ds.assign_coords({"member": 1})],
+        compat="override",
     ).expand_dims("member")
     dt = xr.DataTree.from_dict({"scen1": leaf1, "scen2": leaf2, "scen3": leaf3})
 

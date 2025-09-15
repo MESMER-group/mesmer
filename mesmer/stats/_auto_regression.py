@@ -958,7 +958,7 @@ def fit_auto_regression_monthly(
     month_dim = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params_res, dim=month_dim)
 
-    return xr.merge([ar_params, residuals])
+    return xr.merge([ar_params, residuals], compat="override")
 
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):

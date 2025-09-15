@@ -126,8 +126,10 @@ def collapse_datatree_into_dataset(
     # TODO: could potentially be replaced by DataTree.merge_child_nodes in the future?
     datasets = [subtree.to_dataset() for subtree in dt.subtree if not subtree.is_empty]
 
+    join = concat_kwargs.pop("join", "outer")
+
     # Concatenate datasets along the specified dimension
-    ds = xr.concat(datasets, dim=dim, **concat_kwargs)
+    ds = xr.concat(datasets, dim=dim, join=join, **concat_kwargs)
     dims = [subtree.name for subtree in dt.subtree if not subtree.is_empty]
     ds = ds.assign_coords({dim: dims})
 
