@@ -2,8 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 import mesmer._core.utils
+
+PANDAS_GE_300 = Version(Version(pd.__version__).base_version) >= Version("3.0.0")
 
 
 def make_dummy_yearly_data(freq, calendar="standard"):
@@ -461,10 +464,23 @@ def _get_time(*args, **kwargs):
     return xr.DataArray(time, dims="time")
 
 
+@pytest.mark.filterwarnings("ignore:'A' is deprecated and will be removed")
 @pytest.mark.parametrize(
     "calendar", ["standard", "gregorian", "proleptic_gregorian", "365_day", "julian"]
 )
-@pytest.mark.parametrize("freq", ["YS", "YE", "YS-JUL", "YS-NOV", "A", "365D"])
+@pytest.mark.parametrize(
+    "freq",
+    [
+        "YS",
+        "YE",
+        "YS-JUL",
+        "YS-NOV",
+        pytest.param(
+            "A", marks=pytest.mark.skipif(PANDAS_GE_300, reason="'A' deprecated")
+        ),
+        "365D",
+    ],
+)
 def test_assert_annual_data(calendar, freq):
 
     time = _get_time("2000", "2005", freq=freq, calendar=calendar)
