@@ -49,6 +49,35 @@ def get_weights(n_samples):
     return xr.DataArray(weights, dims="time")
 
 
+def test_find_localized_empirical_covariance_errors():
+
+    n_samples = 20
+    n_gridpoints = 3
+
+    data = get_random_data(n_samples, n_gridpoints)
+    localizer = get_localizer_dict(n_gridpoints, as_dataarray=True)
+    weights = get_weights(n_samples)
+
+    with pytest.raises(
+        ValueError, match="'k_folds' must be an integer larger than 1, got 0.5."
+    ):
+        mesmer.stats.find_localized_empirical_covariance(
+            data, weights, localizer, dim="time", k_folds=0.5
+        )
+
+    with pytest.raises(
+        ValueError, match="'k_folds' must be an integer larger than 1, got -1"
+    ):
+        mesmer.stats.find_localized_empirical_covariance(
+            data, weights, localizer, dim="time", k_folds=-1
+        )
+
+    with pytest.raises(ValueError, match="weights and data have incompatible shape"):
+        mesmer.stats.find_localized_empirical_covariance(
+            data, weights[1:], localizer, dim="time", k_folds=15
+        )
+
+
 @pytest.mark.filterwarnings("ignore:First element is local minimum.")
 def test_find_localized_empirical_covariance():
 
