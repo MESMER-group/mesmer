@@ -4,6 +4,7 @@ import xarray as xr
 
 from mesmer._core.utils import _check_dataarray_form
 from mesmer.testing import (
+    _convert,
     assert_allclose_allowed_failures,
     assert_dict_allclose,
     trend_data_1D,
@@ -288,3 +289,27 @@ def test_trend_data_2D_3D_scale():
 
     assert not np.allclose(result[0, ...], intercept)
     assert not np.allclose(result[1, ...], intercept + slope)
+
+
+def test_convert():
+
+    with pytest.raises(ValueError, match="Unknown datatype: foo"):
+        _convert(None, "foo")
+
+    da = xr.DataArray(
+        [1, 3.14],
+        dims="x",
+        coords={"x": [0, 1], "y": ("x", ["a", "b"])},
+        attrs={"key": "value"},
+        name="data",
+    )
+
+    result = _convert(da, "DataArray")
+    xr.testing.assert_equal(result, da)
+
+    result = _convert(da, "Dataset")
+    xr.testing.assert_equal(result, da.to_dataset())
+
+    result = _convert(da, "DataTree")
+    expected = xr.DataTree.from_dict({"node": da.to_dataset()})
+    xr.testing.assert_equal(result, expected)
