@@ -29,6 +29,12 @@ def test_yj_transformer_wrong_name():
         YeoJohnsonTransformer("wrong")
 
 
+def test_yj_transformer_no_default_lambda_function():
+
+    with pytest.raises(NotImplementedError):
+        YeoJohnsonTransformer.lambda_function(1, 1)
+
+
 def test_yj_transformer_bounds_first_guess():
 
     yj_transformer = YeoJohnsonTransformer("logistic")
