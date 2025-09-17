@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 
@@ -134,7 +136,7 @@ def trend_data_3D(
     return data.set_index(cells=("lat", "lon")).unstack("cells")
 
 
-def _convert(da: xr.DataArray, datatype):
+def _convert(da: xr.DataArray, datatype: Literal["DataArray", "Dataset", "DataTree"]):
 
     if datatype == "DataArray":
         return da
