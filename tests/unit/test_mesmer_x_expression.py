@@ -306,12 +306,12 @@ def test_evaluate_params_missing_coefficient_dict():
     expr = Expression("norm(loc=c1, scale=c2)", expr_name="name")
 
     with pytest.raises(
-        ValueError, match="Missing information for the coefficient: 'c1'"
+        ValueError, match="Missing variable 'c1' on 'coefficients_values'"
     ):
         expr.evaluate_params({}, {})
 
     with pytest.raises(
-        ValueError, match="Missing information for the coefficient: 'c2'"
+        ValueError, match="Missing variable 'c2' on 'coefficients_values'"
     ):
         expr.evaluate_params({"c1": 1}, {})
 
@@ -321,14 +321,20 @@ def test_evaluate_params_missing_coefficient_dataset():
     expr = Expression("norm(loc=c1, scale=c2)", expr_name="name")
 
     with pytest.raises(
-        ValueError, match="Missing information for the coefficient: 'c1'"
+        ValueError, match="Missing variable 'c1' on 'coefficients_values'"
     ):
         expr.evaluate_params(xr.Dataset(), {})
 
     with pytest.raises(
-        ValueError, match="Missing information for the coefficient: 'c2'"
+        ValueError, match="Missing variable 'c2' on 'coefficients_values'"
     ):
         expr.evaluate_params(xr.Dataset(data_vars={"c1": 1}), {})
+
+    with pytest.raises(
+        ValueError, match="Missing variable 'c1' on 'coefficients_values'"
+    ):
+        # must not be coords
+        expr.evaluate_params(xr.Dataset(data_vars={"c1": [1], "c2": [2]}), {})
 
 
 def test_evaluate_params_missing_coefficient_list():
@@ -350,10 +356,10 @@ def test_evaluate_params_missing_covariates_dict():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
 
-    with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
+    with pytest.raises(ValueError, match="Missing variable 'T' on 'predictors_values'"):
         expr.evaluate_params([1, 1], {})
 
-    with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
+    with pytest.raises(ValueError, match="Missing variable 'F' on 'predictors_values'"):
         expr.evaluate_params([1, 1], {"T": 1})
 
 
@@ -361,11 +367,16 @@ def test_evaluate_params_missing_covariates_ds():
 
     expr = Expression("norm(loc=c1 * __T__, scale=c2 * __F__)", expr_name="name")
 
-    with pytest.raises(ValueError, match="Missing information for the predictor: 'T'"):
+    with pytest.raises(ValueError, match="Missing variable 'T' on 'predictors_values'"):
         expr.evaluate_params([1, 1], xr.Dataset())
 
-    with pytest.raises(ValueError, match="Missing information for the predictor: 'F'"):
-        expr.evaluate_params([1, 1], xr.Dataset(data_vars={"T": 1}))
+    with pytest.raises(ValueError, match="Missing variable 'F' on 'predictors_values'"):
+        expr.evaluate_params([1, 1], xr.Dataset(data_vars={"T": ("x", [1])}))
+
+    # NOTE: T and F are coords here (NOT data_vars)
+    ds = xr.Dataset(data_vars={"T": [1], "F": [2]})
+    with pytest.raises(ValueError, match="Missing variable 'T' on 'predictors_values'"):
+        expr.evaluate_params([1, 1], ds)
 
 
 def test_evaluate_params_covariates_wrong_shape():
@@ -380,7 +391,8 @@ def test_evaluate_params_covariates_wrong_shape():
         expr.evaluate_params([1, 1], data_vars)
 
     with pytest.raises(ValueError, match="shapes of predictors must be equal"):
-        expr.evaluate_params([1, 1], xr.Dataset(data_vars=data_vars))
+        ds = xr.Dataset(data_vars={"T": ("x", T), "F": ("y", F)})
+        expr.evaluate_params([1, 1], ds)
 
 
 def test_evaluate_params_norm():
