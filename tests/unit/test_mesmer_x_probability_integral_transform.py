@@ -210,18 +210,18 @@ def test_probabilityintegraltransform_transform_coeffs(loc, scale):
 
 def test_probabilityintegraltransform_transform_coeffs_data():
 
-    expr_norm1 = mesmer.distrib.Expression("norm(loc=c1 * __tas__, scale=1)", "n1")
-    expr_norm2 = mesmer.distrib.Expression("norm(loc=c1 * __tas__, scale=1)", "n2")
+    expr_norm1 = mesmer.distrib.Expression("norm(loc=c1 * __tas__, scale=c2)", "n1")
+    expr_norm2 = mesmer.distrib.Expression("norm(loc=c1 * __tas__, scale=c2)", "n2")
 
     seed = 122485124857
 
     rng = np.random.default_rng(seed)
 
-    coeffs1 = xr.Dataset(data_vars={"c1": 1.5})
-    coeffs2 = xr.Dataset(data_vars={"c1": 3.2})
+    coeffs1 = xr.Dataset(data_vars={"c1": 1.5, "c2": 1})
+    coeffs2 = xr.Dataset(data_vars={"c1": 3.2, "c2": 1})
 
-    tas1 = xr.Dataset(data_vars={"tas": [1, 2]})
-    tas2 = xr.Dataset(data_vars={"tas": [0, 1]})
+    tas1 = xr.Dataset(data_vars={"tas": ("x", [1, 2])})
+    tas2 = xr.Dataset(data_vars={"tas": ("x", [0, 1])})
 
     cond_norm1 = mesmer.distrib.ConditionalDistribution(expr_norm1)
     cond_norm1.coefficients = coeffs1
@@ -229,20 +229,17 @@ def test_probabilityintegraltransform_transform_coeffs_data():
     cond_norm2 = mesmer.distrib.ConditionalDistribution(expr_norm2)
     cond_norm2.coefficients = coeffs2
 
-    print(tas1)
-    print(expr_norm1.coefficients_list)
-    print(expr_norm1.parameters_list)
-    print(expr_norm1.predictors_list)
-
     params1 = expr_norm1.evaluate_params(coeffs1, tas1)
-    data = expr_norm1.distrib.rvs(**params1, shape=100, random_state=rng)
+
+    data = expr_norm1.distrib.rvs(**params1, size=2, random_state=rng)
     da = xr.DataArray(data, dims="x")
     ds = xr.Dataset(data_vars={"foo": da})
 
     # converted to a standard normal by shifting and scaling
     expected = (ds - coeffs1 * tas1) + coeffs2 * tas2
+    expected = (ds["foo"] - coeffs1 * tas1["tas"]) + coeffs2 * tas2["tas"]
 
     pit = mesmer.distrib.ProbabilityIntegralTransform(cond_norm1, cond_norm2)
     result = pit.transform(ds, target_name="foo", preds_orig=tas1, preds_targ=tas2)
 
-    xr.testing.assert_allclose(result, expected)
+    xr.testing.assert_allclose(result["foo"], expected["c1"])
