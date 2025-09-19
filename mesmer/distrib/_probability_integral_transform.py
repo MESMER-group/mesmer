@@ -82,6 +82,9 @@ class ProbabilityIntegralTransform:
             Transformed data.
         """
 
+        if (threshold_proba <= 0.0) or (0.5 <= threshold_proba):
+            raise ValueError("`threshold_proba` must be in [0, 0.5]")
+
         # transforming data
         return self._transform(
             data,
