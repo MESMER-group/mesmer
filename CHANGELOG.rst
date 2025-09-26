@@ -1,8 +1,15 @@
 Changelog
 =========
 
-v1.0.0 - unreleased
---------------------
+v1.0.0rc1 - 26.09.2025
+----------------------
+
+This version is the official release candidate for mesmer v1.0.0. It restructures much of
+the code base to be more modular, flexible and stable. Mesmer now fully relies on xarray
+data structures, including xr.DataTree. As a consequence, mesmer now needs xarray >= 2025.03.
+We integrated MESMER-M, allowing the users to now emulate monthly temperatures, and MESMER-X,
+which enables emulation of any climate variable using conditional distributions. This version
+introduces support of python 3.13 and dropping support of python 3.9 and 3.10.
 
 New Features
 ^^^^^^^^^^^^
