@@ -121,6 +121,7 @@ def trend_data_1D(*, n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0, seed=0
         Standard deviation of the normally distributed noise.
     seed : int, default: 0
         Random seed for reproducibility.
+
     Returns
     -------
     xr.DataArray
