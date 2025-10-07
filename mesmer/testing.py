@@ -50,6 +50,27 @@ def assert_allclose_allowed_failures(
 
 
 def assert_dict_allclose(first, second, first_name="left", second_name="right"):
+    """
+    Recursively check that two dicts have the same keys and values are allclose.
+
+    Parameters
+    ----------
+    first : dict
+        The first dict to compare.
+    second : dict
+        The second dict to compare.
+    first_name : str, default: "left"
+        Name of the first dict for error messages.
+    second_name : str, default: "right"
+        Name of the second dict for error messages.
+
+    Raises
+    ------
+    AssertionError
+        If the dicts do not have the same keys or values are not allclose.
+
+
+    """
 
     if not isinstance(first, dict) or not isinstance(second, dict):
         raise AssertionError(f"must be dicts, got {type(first)} and {type(second)}")
@@ -86,6 +107,27 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
 
 
 def trend_data_1D(*, n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0, seed=0):
+    """
+    Generate timeseries data with linear trend and normally distributed noise.
+    Parameters
+    ----------
+    n_timesteps : int, default: 30
+        Number of time steps.
+    intercept : float, default: 0.0
+        Intercept of the trend.
+    slope : float, default: 1.0
+        Slope of the trend.
+    scale : float, default: 1.0
+        Standard deviation of the normally distributed noise.
+    seed : int, default: 0
+        Random seed for reproducibility.
+
+    Returns
+    -------
+    xr.DataArray
+        1D DataArray with dimensions ("time") with length `n_timesteps` and coordinates
+        "time" with values from 0 to `n_timesteps`, containing the generated trend data.
+    """
 
     time = np.arange(n_timesteps)
 
@@ -100,6 +142,32 @@ def trend_data_1D(*, n_timesteps=30, intercept=0.0, slope=1.0, scale=1.0, seed=0
 def trend_data_2D(
     *, n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
 ) -> xr.DataArray:
+    """
+    Generate timeseries data with linear trend and normally distributed noise for cells.
+
+    Parameters
+    ----------
+    n_timesteps : int, default: 30
+        Number of time steps.
+    n_lat : int, default: 3
+        Number of latitude points.
+    n_lon : int, default: 2
+        Number of longitude points.
+    intercept : float, default: 0.0
+        Intercept of the trend.
+    slope : float, default: 1.0
+        Slope of the trend.
+    scale : float, default: 1.0
+        Standard deviation of the normally distributed noise.
+
+    Returns
+    -------
+    xr.DataArray
+        2D DataArray with dimensions ("cells", "time") where "cells" is a flattened
+        combination of latitude and longitude points, and "time" has length `n_timesteps`.
+        Coordinates include "time", "lat", and "lon". The DataArray contains the generated
+        trend data.
+    """
 
     n_cells = n_lat * n_lon
     time = np.arange(n_timesteps)
@@ -122,6 +190,31 @@ def trend_data_2D(
 def trend_data_3D(
     *, n_timesteps=30, n_lat=3, n_lon=2, intercept=0.0, slope=1.0, scale=1.0
 ):
+    """
+    Generate lat-lon field of timeseries data with a linear trend and normally distributed noise.
+
+    Parameters
+    ----------
+    n_timesteps : int, default: 30
+        Number of time steps.
+    n_lat : int, default: 3
+        Number of latitude points.
+    n_lon : int, default: 2
+        Number of longitude points.
+    intercept : float, default: 0.0
+        Intercept of the trend.
+    slope : float, default: 1.0
+        Slope of the trend.
+    scale : float, default: 1.0
+        Standard deviation of the normally distributed noise.
+
+    Returns
+    -------
+    xr.DataArray
+        3D DataArray with dimensions ("time", "lat", "lon") where "time" has length
+        `n_timesteps`, and "lat" and "lon" have lengths `n_lat` and `n_lon`, respectively.
+        Coordinates include "time", "lat", and "lon". The trend is along the "time" dimension.
+    """
 
     data = trend_data_2D(
         n_timesteps=n_timesteps,
@@ -137,6 +230,7 @@ def trend_data_3D(
 
 
 def _convert(da: xr.DataArray, datatype: Literal["DataArray", "Dataset", "DataTree"]):
+    """Convert DataArray to specified `datatype`."""
 
     if datatype == "DataArray":
         return da
