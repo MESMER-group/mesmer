@@ -12,6 +12,7 @@
 
    installation
    publications
+   parameters
 
 .. toctree::
    :maxdepth: 2
