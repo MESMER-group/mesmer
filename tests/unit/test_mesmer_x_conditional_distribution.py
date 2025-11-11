@@ -73,7 +73,9 @@ def test_ConditionalDistribution_custom_init():
     mo1 = MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
     mo2 = MinimizeOptions("Melder-Nead")
 
-    distrib = ConditionalDistribution(expression, minimize_options=mo1, second_minimizer=mo2)
+    distrib = ConditionalDistribution(
+        expression, minimize_options=mo1, second_minimizer=mo2
+    )
 
     assert distrib.expression is expression
     assert distrib.minimize_options is mo1
