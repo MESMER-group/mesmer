@@ -35,7 +35,7 @@ def test_minimize_options():
     minimize_options = MinimizeOptions(
         method="Powell", tol=1e-4, options={"maxiter": 1250}
     )
-    expected = "MinimizeOptions: 'Powell' solver, tol=1e-4, and additional options"
+    expected = "MinimizeOptions: 'Powell' solver, tol=0.0001, and additional options"
 
     assert minimize_options.method == "Powell"
     assert minimize_options.tol == 1e-4
