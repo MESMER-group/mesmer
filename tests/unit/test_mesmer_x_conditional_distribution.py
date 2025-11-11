@@ -22,6 +22,27 @@ def default_distrib():
     return ConditionalDistribution(expression)
 
 
+def test_minimize_options():
+
+    default_minimize_options = MinimizeOptions()
+    expected = "MinimizeOptions: 'Nelder-Mead' solver and default tolerance"
+
+    assert default_minimize_options.method == "Nelder-Mead"
+    assert default_minimize_options.tol is None
+    assert default_minimize_options.options is None
+    assert default_minimize_options.__repr__() == expected
+
+    minimize_options = MinimizeOptions(
+        method="Powell", tol=1e-4, options={"maxiter": 1250}
+    )
+    expected = "MinimizeOptions: 'Powell' solver, tol=1e-4, and additional options"
+
+    assert minimize_options.method == "Powell"
+    assert minimize_options.tol == 1e-4
+    assert minimize_options.options == {"maxiter": 1250}
+    assert minimize_options.__repr__() == expected
+
+
 def test_ConditionalDistribution_errors():
 
     with pytest.raises(TypeError, match="'expression' must be an `Expression`"):

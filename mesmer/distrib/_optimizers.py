@@ -18,7 +18,6 @@ class MinimizeOptions:
         method: str = "Nelder-Mead",
         tol: float | None = None,
         options: dict | None = None,
-        # on_fail : Literal["error", "warn", "ignore"]="error",
     ):
         """options to pass to the minimizer - see scipy.optimize.minimize
 
@@ -41,6 +40,14 @@ class MinimizeOptions:
         self.method = method
         self.tol = tol
         self.options = options
+
+    def __repr__(self):
+
+        tol = "default tolerance" if self.tol is None else f"tol={self.tol}"
+        if self.options is None:
+            return f"MinimizeOptions: '{self.method}' solver and {tol}"
+
+        return f"MinimizeOptions: '{self.method}' solver, {tol}, and additional options"
 
 
 def _minimize(
