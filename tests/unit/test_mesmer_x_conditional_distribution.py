@@ -63,14 +63,23 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
 def test_ConditionalDistribution_custom_init():
     boundaries_params = {"loc": [-10, 10], "scale": [0, 1]}
     boundaries_coeffs = {"c1": [0, 5], "c2": [0, 1]}
-    Expression(
+    expression = Expression(
         "norm(loc=c1 * __tas__, scale=c2)",
         expr_name="exp1",
         boundaries_params=boundaries_params,
         boundaries_coeffs=boundaries_coeffs,
     )
 
-    MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
+    mo1 = MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
+    mo2 = MinimizeOptions("Melder-Nead")
+
+    distrib = ConditionalDistribution(
+        expression, minimize_options=mo1, second_minimizer=mo2
+    )
+
+    assert distrib.expression is expression
+    assert distrib.minimize_options is mo1
+    assert distrib.second_minimizer is mo2
 
 
 def test_ConditionalDistribution_from_dataset_errors():
