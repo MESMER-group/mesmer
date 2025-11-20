@@ -547,7 +547,7 @@ def test_merge():
     dt1 = xr.DataTree(ds1)
     dt2 = xr.DataTree(ds2)
 
-    result = mesmer.datatree.merge([dt1, dt2])
+    result = xr.merge([dt1, dt2])
 
     assert isinstance(result, xr.DataTree)
 
@@ -558,7 +558,7 @@ def test_merge():
     dt1["scen2"] = xr.Dataset(data_vars={"var1": da * 3})
     dt2["scen2"] = xr.Dataset(data_vars={"var2": da * 4})
 
-    result = mesmer.datatree.merge([dt1, dt2])
+    result = xr.merge([dt1, dt2])
 
     xr.testing.assert_equal(
         result.to_dataset(),
@@ -580,21 +580,21 @@ def test_merge_compat():
     dt2 = xr.DataTree(xr.Dataset({"x": 1}))
     for compat in ["broadcast_equals", "equals", "identical", "no_conflicts"]:
         with pytest.raises(xr.MergeError):
-            mesmer.datatree.merge([dt1, dt2], compat=compat)
+            xr.merge([dt1, dt2], compat=compat)
 
     dt2 = xr.DataTree(xr.Dataset({"x": [0, 0]}))
     for compat in ["equals", "identical"]:
         with pytest.raises(ValueError, match=r"should be coordinates or not"):
-            mesmer.datatree.merge([dt1, dt2], compat=compat)
+            xr.merge([dt1, dt2], compat=compat)
 
     dt2 = xr.DataTree(xr.Dataset({"x": ((), 0, {"foo": "bar"})}))
     with pytest.raises(xr.MergeError):
-        mesmer.datatree.merge([dt1, dt2], compat="identical")
+        xr.merge([dt1, dt2], compat="identical")
 
     with pytest.raises(ValueError, match=r"compat=.* invalid"):
-        mesmer.datatree.merge([dt1, dt2], compat="foobar")
+        xr.merge([dt1, dt2], compat="foobar")
 
-    assert dt1.identical(mesmer.datatree.merge([dt1, dt2], compat="override"))
+    assert dt1.identical(xr.merge([dt1, dt2], compat="override"))
 
 
 def test_map_over_dataset():
