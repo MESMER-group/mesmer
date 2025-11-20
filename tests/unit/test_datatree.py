@@ -551,7 +551,7 @@ def test_merge_replaced():
 
     match = re.escape("use `xr.merge(...)` instead")
     with pytest.raises(NotImplementedError, match=match):
-        xr.merge([dt1, dt2])
+        mesmer.datatree.merge([dt1, dt2])
 
 
 def test_map_over_dataset():
