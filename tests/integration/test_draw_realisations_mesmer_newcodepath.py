@@ -277,7 +277,7 @@ def test_make_realisations(
     # 3.) compute the local forced response
     lr = mesmer.stats.LinearRegression.from_netcdf(local_forced_file)
 
-    predictors = mesmer.datatree.merge([forcing_data, global_variability])
+    predictors = xr.merge([forcing_data, global_variability])
 
     # uses ``exclude`` to split the linear response
     local_forced_response = lr.predict(predictors, exclude={"tas_resids"})

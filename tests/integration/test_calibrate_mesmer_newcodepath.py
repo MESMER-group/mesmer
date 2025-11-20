@@ -207,7 +207,7 @@ def test_calibrate_mesmer(
     target = map_over_datasets(lambda ds: ds[["tas"]], anoms)
     target = mask_and_stack(target, threshold_land=THRESHOLD_LAND)
 
-    predictors = mesmer.datatree.merge([globmean_smoothed, tas_resid_novolc])
+    predictors = xr.merge([globmean_smoothed, tas_resid_novolc])
 
     if use_tas2:
         predictors = map_over_datasets(lambda ds: ds.assign(tas2=ds.tas**2), predictors)

@@ -39,7 +39,7 @@ dependencies = [
     "scikit-learn >=1.4", # only for the tests
     "scipy >=1.14",
     "statsmodels >=0.14",
-    "xarray >=2025.3", # for xr.DataTree
+    "xarray >=2025.11", # for xr.DataTree
 ]
 dynamic = ["version"]
 

@@ -198,7 +198,6 @@ DataTree heplers
 
    ~datatree.pool_scen_ens
    ~datatree.broadcast_and_pool_scen_ens
-   ~datatree.merge
    ~datatree.collapse_datatree_into_dataset
    ~datatree.map_over_datasets
 

@@ -58,8 +58,9 @@ Breaking changes
   `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
   `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
   `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
-  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_, and
-  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_):
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,
+  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_, and
+  `#824 <https://github.com/MESMER-group/mesmer/pull/824>`_):
 
   ================= ============= =========
   Package           Old           New
@@ -80,7 +81,7 @@ Breaking changes
   **scipy**         not specified 1.14
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
-  **xarray**        2023.04       2025.03
+  **xarray**        2023.04       2025.11
   ================= ============= =========
 
 Deprecations
@@ -146,8 +147,9 @@ This was originally done with the prototype `xarray-datatree` package. After the
   `#644 <https://github.com/MESMER-group/mesmer/pull/644>`_, and
   `#682 <https://github.com/MESMER-group/mesmer/pull/682>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
-- Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
-- Add helper function to merge ``DataTree`` objects  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_)
+- Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_).
+- Add helper function to merge ``DataTree`` objects - and replace it again with ``xr.merge`` once this became available in xarray v2025.11\
+  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_, `#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
 - PRs related to xarray and xarray-datatree:
 
   - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
