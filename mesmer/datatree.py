@@ -1,12 +1,10 @@
 import functools
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import ParamSpec, TypeVar, overload
 
 import pandas as pd
 import xarray as xr
 from packaging.version import Version
-from xarray.core import dtypes
-from xarray.core.types import CombineAttrsOptions, CompatOptions, JoinOptions
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -404,46 +402,11 @@ def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
     return _inner
 
 
-def merge(
-    objects: Iterable[xr.DataTree],
-    compat: CompatOptions = "no_conflicts",
-    join: JoinOptions = "outer",
-    fill_value: object = dtypes.NA,
-    combine_attrs: CombineAttrsOptions = "override",
-):
-    """
-    Merge the datasets of each node of isomorphic DataTree objects together. Wraps
-    `xarray.merge <https://docs.xarray.dev/en/stable/generated/xarray.merge.html>`_.
+def merge(*args, **kwargs):
 
-    Parameters
-    ----------
-    objects : Iterable of DataTree
-        The DataTree objects to merge. All DataTree objects must have the same
-        structure, i.e. be isomorphic.
-    compat : {'no_conflicts', 'identical', 'equals', 'override', 'broadcast_equals'}, default: 'no_conflicts'
-        String indicating how to compare variables of the same name for potential
-        conflicts, for details see `xarray.merge`.
-    join : {'outer', 'inner', 'left', 'right'}, default: 'outer'
-        String indicating how to join the datasets of the DataTree objects, for details
-        see `xarray.merge`.
-    fill_value : object, default: dtypes.NA
-        Value to use for missing data, for details see `xarray.merge`.
-    combine_attrs : {'no_conflicts', 'identical', 'equals', 'override', 'drop'}, default: 'override'
-        String indicating how to combine attributes of the datasets, for details see
-        `xarray.merge`.
-
-    Returns
-    -------
-    xr.DataTree
-        A new DataTree object containing the merged datasets from each node of the input
-        DataTree objects.
-    """
-    kwargs = {
-        "compat": compat,
-        "join": join,
-        "fill_value": fill_value,
-        "combine_attrs": combine_attrs,
-    }
-    return map_over_datasets(
-        lambda *objs, **kwargs: xr.merge(objs, **kwargs), *objects, kwargs=kwargs
+    msg = (
+        "use `xr.merge(...)` instead of `mesmer.datatree.merge(...)` (requires xarray "
+        "v2025.11 or leater)"
     )
+
+    raise NotImplementedError(msg)
