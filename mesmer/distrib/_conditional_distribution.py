@@ -187,7 +187,9 @@ class ConditionalDistribution:
         self._coefficients = coefficients
 
     @_ignore_warnings  # suppress nan & inf warnings
-    def _fit_np(self, data_pred, data_targ, data_weights, fg, fg_failsafe, on_failed_fit):
+    def _fit_np(
+        self, data_pred, data_targ, data_weights, fg, fg_failsafe, on_failed_fit
+    ):
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
         """
