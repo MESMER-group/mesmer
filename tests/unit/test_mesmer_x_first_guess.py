@@ -592,14 +592,14 @@ def test_fg_fun_scale_laplace():
 def test_fg_fun_scale_laplace_with_scale_trend():
     rng = np.random.default_rng(0)
     n = 251
-    pred = np.arange(n)
+    # ensure scale is > 0
+    pred = np.arange(n) / n + 0.1
     loc = 2
-    scale = 0.1
+    scale = 0.5
 
-    targ = sp.stats.laplace.rvs(loc=loc, scale=scale * n, size=n, random_state=rng)
+    targ = sp.stats.laplace.rvs(loc=loc, scale=scale * pred, size=n, random_state=rng)
     weights = get_weights_uniform(targ)
 
-    expression = Expression("norm(loc=c1*__tas__, scale=c2)", expr_name="exp1")
     expression = Expression("laplace(loc=c1, scale=c2*__tas__)", expr_name="exp1")
 
     result = _FirstGuess(
@@ -608,7 +608,7 @@ def test_fg_fun_scale_laplace_with_scale_trend():
         data_pred=pred,
         data_targ=targ,
         data_weights=weights,
-        first_guess=fg_default(2),
+        first_guess=[1, 1],
         predictor_names=["tas"],
     )._find_fg()
 
