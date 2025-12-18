@@ -197,6 +197,8 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   - not broadcasting scalars (`#613 <https://github.com/MESMER-group/mesmer/pull/613>`_)
   - compiling the expression (`#614 <https://github.com/MESMER-group/mesmer/pull/614>`_).
 
+- Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_)
+
 By `Yann Quilcaille`_ with `Victoria Bauer`_ and `Mathias Hauser`_.
 
 Integration of MESMER-M

@@ -553,7 +553,7 @@ class _FirstGuess:
         """
         x = np.copy(self.fg_coeffs)
         x[self.expression.ind_scale_coeffs] = x_scale
-        scale = self.expression._evaluate_one_param_fast(x, self.data_pred, "scale")
+        scale = self.expression._evaluate_one_param_fast(x, self.smooth_pred, "scale")
 
         if not _distrib_checks._param_in_bounds(self.expression, scale, "scale"):
             # this coefficient on scale causes problem
