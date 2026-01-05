@@ -1,5 +1,8 @@
 MESMER: spatially resolved Earth System Model emulations
 --------------------------------------------------------
+
+update to test rebase
+
 **MESMER** is a **M**\ odular **E**\ arth **S**\ ystem **M**\ odel **E**\ mulator with
 spatially **R**\ esolved output, which stochastically creates Earth System
 Model-specific spatio-temporally correlated climate variable field realizations at a
