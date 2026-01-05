@@ -1,0 +1,21 @@
+channels:
+  - conda-forge
+  - nodefaults
+platforms:
+  - noarch
+  - linux-64
+policy:
+  # policy in months - xarray's values
+  packages:
+    python: 30
+    numpy: 18
+  default: 12
+  overrides: {}
+  exclude:
+    - deprecated
+    - pytest
+    - pytest-cov
+    - pytest-xdist
+  ignored_violations:
+    - netcdf4 # misses the X.Y.0 release and where therefore wrong in the old check; https://github.com/MESMER-group/mesmer/pull/763#issuecomment-3280741990
+    - xarray # for DataTree functionality
