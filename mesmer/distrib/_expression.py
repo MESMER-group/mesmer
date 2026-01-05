@@ -18,6 +18,22 @@ _ALL_DISTRIBUTIONS = _DISCRETE_DISTRIBUTIONS + _CONTINUOUS_DISTRIBUTIONS
 _DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 
+def _assert_data_vars_or_dict(data, required_keys, name):
+
+    if isinstance(data, xr.Dataset):
+        # the required must be a data_var (not a coord)
+        provided_keys = set(data.data_vars)
+    elif isinstance(data, dict):
+        provided_keys = set(data)
+    else:
+        msg = f"`{name}` must be a Dataset or dict, got '{type(data)}`"
+        raise TypeError(msg)
+
+    for key in required_keys:
+        if key not in provided_keys:
+            raise ValueError(f"Missing variable '{key}' on '{name}'")
+
+
 class Expression:
 
     def __init__(
@@ -457,14 +473,7 @@ class Expression:
         # - convert dataset to numpy arrays?
 
         # Check 1: are all the coefficients provided?
-        if isinstance(coefficients_values, dict | xr.Dataset):
-            # raise TypeError()
-
-            # case where provide explicit information on coefficients_values
-            for c in self.coefficients_list:
-                if c not in coefficients_values:
-                    raise ValueError(f"Missing information for the coefficient: '{c}'")
-        else:
+        if not isinstance(coefficients_values, dict | xr.Dataset):
             # case where a vector is provided, used for the optimization performed
             # during the training
             if len(coefficients_values) != len(self.coefficients_list):
@@ -473,11 +482,15 @@ class Expression:
             coefficients_values = {
                 c: coefficients_values[i] for i, c in enumerate(self.coefficients_list)
             }
+        else:
+            _assert_data_vars_or_dict(
+                coefficients_values, self.coefficients_list, "coefficients_values"
+            )
 
         # Check 2: are all the predictors provided?
-        for pred in self.predictors_list:
-            if pred not in predictors_values:
-                raise ValueError(f"Missing information for the predictor: '{pred}'")
+        _assert_data_vars_or_dict(
+            predictors_values, self.predictors_list, "predictors_values"
+        )
 
         # Check 3: do the predictors have the same shape
         shapes = {predictors_values[i].shape for i in self.predictors_list}

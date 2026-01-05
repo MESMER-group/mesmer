@@ -446,7 +446,7 @@ def test_lr_residuals_datatree():
         }
     )
 
-    mesmer.datatree.map_over_datasets(xr.testing.assert_allclose, result, expected)
+    xr.testing.assert_allclose(result, expected)
 
     # =====================
 

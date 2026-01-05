@@ -7,7 +7,6 @@ from packaging.version import Version
 
 import mesmer
 from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
-from mesmer.datatree import map_over_datasets
 from mesmer.testing import _convert
 
 
@@ -185,10 +184,7 @@ def test_weighted_no_scalar_expand(datatype):
 
     expected = data.mean("lon")
 
-    if datatype == "DataTree":
-        map_over_datasets(xr.testing.assert_allclose, result, expected)
-    else:
-        xr.testing.assert_allclose(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize("x_dim", ("x", "lon"))
@@ -217,10 +213,7 @@ def test_global_mean_dataarray_weights_passed(datatype):
 
     expected = data.mean(("lat", "lon"))
 
-    if datatype == "DataTree":
-        map_over_datasets(xr.testing.assert_allclose, result, expected)
-    else:
-        xr.testing.assert_allclose(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
 def test_global_mean_weights_passed(datatype):
@@ -236,10 +229,7 @@ def test_global_mean_weights_passed(datatype):
 
     expected = data.mean(("lat", "lon"))
 
-    if datatype == "DataTree":
-        map_over_datasets(xr.testing.assert_allclose, result, expected)
-    else:
-        xr.testing.assert_allclose(result, expected)
+    xr.testing.assert_allclose(result, expected)
 
 
 def test_equal_scenario_weights_from_datatree():

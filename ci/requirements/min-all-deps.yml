@@ -23,7 +23,7 @@ dependencies:
  - scipy=1.14
  - shapely=2.0
  - statsmodels=0.14
- - xarray=2025.03
+ - xarray=2025.11
 # for testing
  - pytest
  - pytest-cov

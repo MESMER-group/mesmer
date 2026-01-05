@@ -24,7 +24,7 @@ class ConditionalDistribution:
         self,
         expression: Expression,
         *,
-        minimize_options: MinimizeOptions | None = None,
+        minimize_options: MinimizeOptions = MinimizeOptions(),
         second_minimizer: MinimizeOptions | None = None,
         threshold_min_proba=1.0e-9,
     ):
@@ -35,7 +35,7 @@ class ConditionalDistribution:
         ----------
         Expression : class py:class:`Expression`
             Expression defining the conditional distribution.
-        minimize_options : `py:class:`MinimizeOptions` | None, default: MinimizeOptions()
+        minimize_options : `py:class:`MinimizeOptions`, default: MinimizeOptions()
             Class defining the optimizer options used during first guess and training of
             distributions. If not passed uses "Nelder-Mead" minimizer with default
             settings.
@@ -47,8 +47,8 @@ class ConditionalDistribution:
         """
         # initialization
 
-        if minimize_options is None:
-            minimize_options = MinimizeOptions()
+        if not isinstance(expression, Expression):
+            raise TypeError("'expression' must be an `Expression`")
 
         if second_minimizer is not None:
             if minimize_options.method == second_minimizer.method:
@@ -497,7 +497,7 @@ class ConditionalDistribution:
 
     @classmethod
     def from_netcdf(cls, filename: str, **kwargs):
-        """read coefficients from a netCDF file with default options
+        """read coefficients from a netCDF file with default solver options
 
         Parameters
         ----------
@@ -507,18 +507,26 @@ class ConditionalDistribution:
             Additional keyword arguments passed to ``xr.open_dataset``
         """
         ds = xr.open_dataset(filename, **kwargs)
+
+        return cls.from_dataset(ds)
+
+    @classmethod
+    def from_dataset(cls, ds):
+        """set coefficients from a dataset with default solver options
+
+        Parameters
+        ----------
+        ds : Dataset
+            Dataset which was previously fit using this class.
+        """
+
         expression_str = ds.attrs.get("expression", None)
         if expression_str is None:
-            # NOTE: make this a warning?
-            raise ValueError(
-                "The netCDF file does not contain the 'expression' attribute."
-            )
+            raise ValueError("The 'expression' attribute is missing")
 
         expression_name = ds.attrs.get("expression_name", None)
         if expression_name is None:
-            raise ValueError(
-                "The netCDF file does not contain the 'expression_name' attribute."
-            )
+            raise ValueError("The 'expression_name' attribute is missing")
 
         expression = Expression(expression_str, expression_name)
         obj = cls(expression)

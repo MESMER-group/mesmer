@@ -396,7 +396,14 @@ def _load_cmipng_file(run_path, gen, scen):
             paths.append(run_path_ssp_585)
             preprocess = _preprocess_ssp534over
 
-        data = xr.open_mfdataset(paths, combine="by_coords", preprocess=preprocess)
+        data = xr.open_mfdataset(
+            paths,
+            combine="by_coords",
+            preprocess=preprocess,
+            data_vars="all",
+            compat="override",
+            coords="minimal",
+        )
 
         run = data.attrs["realization_index"]
 

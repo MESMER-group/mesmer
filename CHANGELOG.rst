@@ -1,8 +1,15 @@
 Changelog
 =========
 
-v1.0.0 - unreleased
---------------------
+v1.0.0rc1 - 26.09.2025
+----------------------
+
+This version is the official release candidate for mesmer v1.0.0. It restructures much of
+the code base to be more modular, flexible and stable. Mesmer now fully relies on xarray
+data structures, including xr.DataTree. As a consequence, mesmer now needs xarray >= 2025.03.
+We integrated MESMER-M, allowing the users to now emulate monthly temperatures, and MESMER-X,
+which enables emulation of any climate variable using conditional distributions. This version
+introduces support of python 3.13 and dropping support of python 3.9 and 3.10.
 
 New Features
 ^^^^^^^^^^^^
@@ -51,8 +58,9 @@ Breaking changes
   `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
   `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
   `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
-  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_, and
-  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_):
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,
+  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_, and
+  `#824 <https://github.com/MESMER-group/mesmer/pull/824>`_):
 
   ================= ============= =========
   Package           Old           New
@@ -73,7 +81,7 @@ Breaking changes
   **scipy**         not specified 1.14
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
-  **xarray**        2023.04       2025.03
+  **xarray**        2023.04       2025.11
   ================= ============= =========
 
 Deprecations
@@ -139,8 +147,9 @@ This was originally done with the prototype `xarray-datatree` package. After the
   `#644 <https://github.com/MESMER-group/mesmer/pull/644>`_, and
   `#682 <https://github.com/MESMER-group/mesmer/pull/682>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
-- Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_)
-- Add helper function to merge ``DataTree`` objects  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_)
+- Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_).
+- Add helper function to merge ``DataTree`` objects - and replace it again with ``xr.merge`` once this became available in xarray v2025.11\
+  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_, `#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
 - PRs related to xarray and xarray-datatree:
 
   - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
@@ -187,6 +196,8 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   - avoiding frozen distributions (`#532 <https://github.com/MESMER-group/mesmer/issues/532>`_)
   - not broadcasting scalars (`#613 <https://github.com/MESMER-group/mesmer/pull/613>`_)
   - compiling the expression (`#614 <https://github.com/MESMER-group/mesmer/pull/614>`_).
+
+- Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_)
 
 By `Yann Quilcaille`_ with `Victoria Bauer`_ and `Mathias Hauser`_.
 

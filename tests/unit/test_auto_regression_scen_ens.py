@@ -152,7 +152,7 @@ def test_fit_auto_regression_scen_ens_multi_scen(data_format):
         lags=3,
     )
 
-    da = xr.concat([da1, da2], dim="scen")
+    da = xr.concat([da1, da2], dim="scen", join="outer")
     da = da.stack(scen_ens=("scen", "ens")).dropna("scen_ens")
     expected = mesmer.stats.fit_auto_regression(da, dim="time", lags=3)
     expected = expected.unstack("scen_ens")

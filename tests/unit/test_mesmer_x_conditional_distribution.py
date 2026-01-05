@@ -22,11 +22,37 @@ def default_distrib():
     return ConditionalDistribution(expression)
 
 
+def test_minimize_options():
+
+    default_minimize_options = MinimizeOptions()
+    expected = "MinimizeOptions: 'Nelder-Mead' solver and default tolerance"
+
+    assert default_minimize_options.method == "Nelder-Mead"
+    assert default_minimize_options.tol is None
+    assert default_minimize_options.options is None
+    assert default_minimize_options.__repr__() == expected
+
+    minimize_options = MinimizeOptions(
+        method="Powell", tol=1e-4, options={"maxiter": 1250}
+    )
+    expected = "MinimizeOptions: 'Powell' solver, tol=0.0001, and additional options"
+
+    assert minimize_options.method == "Powell"
+    assert minimize_options.tol == 1e-4
+    assert minimize_options.options == {"maxiter": 1250}
+    assert minimize_options.__repr__() == expected
+
+
 def test_ConditionalDistribution_errors():
+
+    with pytest.raises(TypeError, match="'expression' must be an `Expression`"):
+        ConditionalDistribution(None)
+
+    expression = Expression("norm(loc=0, scale=1)", expr_name="exp1")
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
-        ConditionalDistribution(None, threshold_min_proba=-0.1)
+        ConditionalDistribution(expression, threshold_min_proba=-0.1)
     with pytest.raises(ValueError, match="`threshold_min_proba` must be in"):
-        ConditionalDistribution(None, threshold_min_proba=0.6)
+        ConditionalDistribution(expression, threshold_min_proba=0.6)
 
     minimize_options = MinimizeOptions("Powell")
 
@@ -34,7 +60,9 @@ def test_ConditionalDistribution_errors():
         ValueError, match="First and second minimizer have the same method"
     ):
         ConditionalDistribution(
-            None, minimize_options=minimize_options, second_minimizer=minimize_options
+            expression,
+            minimize_options=minimize_options,
+            second_minimizer=minimize_options,
         )
 
 
@@ -56,14 +84,66 @@ def test_ConditionalDistribution_init_all_default(default_distrib):
 def test_ConditionalDistribution_custom_init():
     boundaries_params = {"loc": [-10, 10], "scale": [0, 1]}
     boundaries_coeffs = {"c1": [0, 5], "c2": [0, 1]}
-    Expression(
+    expression = Expression(
         "norm(loc=c1 * __tas__, scale=c2)",
         expr_name="exp1",
         boundaries_params=boundaries_params,
         boundaries_coeffs=boundaries_coeffs,
     )
 
-    MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
+    mo1 = MinimizeOptions("Powell", tol=1e-10, options={"maxiter": 10_000})
+    mo2 = MinimizeOptions("Melder-Nead")
+
+    distrib = ConditionalDistribution(
+        expression, minimize_options=mo1, second_minimizer=mo2
+    )
+
+    assert distrib.expression is expression
+    assert distrib.minimize_options is mo1
+    assert distrib.second_minimizer is mo2
+
+
+def test_ConditionalDistribution_from_dataset_errors():
+
+    ds = xr.Dataset()
+
+    with pytest.raises(ValueError, match="The 'expression' attribute is missing"):
+        ConditionalDistribution.from_dataset(ds)
+
+    ds = xr.Dataset(attrs={"expression": "norm(loc=c1 * __tas__, scale=c2)"})
+
+    with pytest.raises(ValueError, match="The 'expression_name' attribute is missing"):
+        ConditionalDistribution.from_dataset(ds)
+
+    attrs = {
+        "expression": "norm(loc=c1 * __tas__, scale=c2)",
+        "expression_name": "expr",
+    }
+
+    ds = xr.Dataset(attrs=attrs)
+
+    with pytest.raises(
+        ValueError, match="'coefficients' is missing the required data_vars: 'c1', 'c2'"
+    ):
+        ConditionalDistribution.from_dataset(ds)
+
+
+def test_ConditionalDistribution_from_dataset():
+
+    attrs = {
+        "expression": "norm(loc=c1 * __tas__, scale=c2)",
+        "expression_name": "expr",
+    }
+
+    data_vars = {"c1": ("gridcell", [0, 1]), "c2": ("gridcell", [2, 3])}
+    ds = xr.Dataset(data_vars=data_vars, attrs=attrs)
+
+    cd = ConditionalDistribution.from_dataset(ds)
+
+    assert cd.expression.expression == attrs["expression"]
+    assert cd.expression.expression_name == attrs["expression_name"]
+
+    xr.testing.assert_equal(cd.coefficients, ds)
 
 
 def test_ConditionalDistribution_fit(default_distrib):

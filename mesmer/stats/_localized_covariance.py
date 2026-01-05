@@ -139,6 +139,12 @@ def find_localized_empirical_covariance(
     (other_dim,) = set(all_dims) - {sample_dim}
     out_dims = _create_equal_dim_names(other_dim, equal_dim_suffixes)
 
+    if not isinstance(k_folds, int) or k_folds <= 1:
+        raise ValueError(f"'k_folds' must be an integer larger than 1, got {k_folds}.")
+
+    if data[dim].size != weights.size:
+        raise ValueError("weights and data have incompatible shape")
+
     out = xr.apply_ufunc(
         _find_localized_empirical_covariance_np,
         data,
@@ -259,12 +265,6 @@ def _find_localized_empirical_covariance_np(data, weights, localizer, k_folds):
     Runs a k-fold cross validation if ``k_folds`` is smaller than the number of samples
     and a leave-one-out cross validation otherwise.
     """
-
-    if not isinstance(k_folds, int) or k_folds <= 1:
-        raise ValueError(f"'k_folds' must be an integer larger than 1, got {k_folds}.")
-
-    if data.shape[0] != weights.size:
-        raise ValueError("weights and data have incompatible shape")
 
     localization_radii = sorted(localizer.keys())
 
