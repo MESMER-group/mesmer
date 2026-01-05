@@ -10,13 +10,12 @@ policy:
     python: 30
     numpy: 18
   default: 12
-  overrides:
-    xarray: v2025.03 # for DataTree functionality
+  overrides: {}
   exclude:
     - deprecated
     - pytest
     - pytest-cov
     - pytest-xdist
   ignored_violations:
-    - netcdf4 # these miss the X.Y.0 release and where therefore wrong in the old check
-    - regionmask # https://github.com/MESMER-group/mesmer/pull/763#issuecomment-3280741990
+    - netcdf4 # misses the X.Y.0 release and where therefore wrong in the old check; https://github.com/MESMER-group/mesmer/pull/763#issuecomment-3280741990
+    - xarray # for DataTree functionality
