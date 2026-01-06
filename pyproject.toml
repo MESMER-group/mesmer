@@ -29,7 +29,7 @@ dependencies = [
     "deprecated",
     "filefisher >=1.1",
     "joblib >=1.4",
-    "netcdf4 >=1.7, != 1.7.4", # https://github.com/Unidata/netcdf4-python/issues/1461
+    "netcdf4 >=1.7",
     "numpy >=1.26",
     "packaging >=24.1",
     "pandas >=2.2",
