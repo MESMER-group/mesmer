@@ -139,9 +139,13 @@ class ConditionalDistribution:
         if smooth_coeffs:
             gridcell_dim = (set(target.dims) - {sample_dim}).pop()
             coords = target[gridcell_dim].coords
+            # preserve non-smoothed first guess in case it causes the fit to fails
+            first_guess_failsafe = first_guess_da.copy()
             first_guess_da = _smooth_first_guess(
                 first_guess_da, gridcell_dim, coords, r_gasparicohn
             )
+        else:
+            first_guess_failsafe = first_guess_da
 
         # training
         result = xr.apply_ufunc(
@@ -150,10 +154,12 @@ class ConditionalDistribution:
             target,
             weights,
             first_guess_da,
+            first_guess_failsafe,
             input_core_dims=[
                 [sample_dim, "predictor"],
                 [sample_dim],
                 [sample_dim],
+                ["coefficient"],
                 ["coefficient"],
             ],
             output_core_dims=[["coefficient"]],
@@ -181,7 +187,9 @@ class ConditionalDistribution:
         self._coefficients = coefficients
 
     @_ignore_warnings  # suppress nan & inf warnings
-    def _fit_np(self, data_pred, data_targ, data_weights, fg, on_failed_fit):
+    def _fit_np(
+        self, data_pred, data_targ, data_weights, fg, fg_initial, on_failed_fit
+    ):
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
         """
@@ -216,7 +224,11 @@ class ConditionalDistribution:
 
             # NOTE: warnings are hidden by apply_ufunc
 
-        return m.x
+        # returning best value between failsafe of the first guess and the result fitted here
+        if func(m.x) < func(fg_initial):
+            return m.x
+        else:
+            return fg_initial
 
     def find_first_guess(
         self,
