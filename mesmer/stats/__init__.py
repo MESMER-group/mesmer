@@ -28,7 +28,11 @@ from mesmer.stats._principal_component_decomposition import (
     inverse_transform_principal_components,
     transform_principal_components,
 )
+from mesmer.stats._regularized_glm import GammaGLMXarray
 from mesmer.stats._smoothing import lowess
+from mesmer.stats._xarray_kde import GroupedKDEXarray
+from mesmer.stats._xarray_pipelines import XarrayPipeline
+from mesmer.stats._xarray_transformers import SklearnXarrayTransformer
 
 __all__ = [
     # auto regression
@@ -60,4 +64,11 @@ __all__ = [
     "fit_yeo_johnson_transform",
     "yeo_johnson_transform",
     "inverse_yeo_johnson_transform",
+    "GammaGLMXarray",
+    "GroupedKDEXarray",
+    "XarrayPipeline",
+    "SklearnXarrayTransformer",
+    "fit_principal_components",
+    "inverse_transform_principal_components",
+    "transform_principal_components",
 ]

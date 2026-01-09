@@ -19,7 +19,7 @@ def fit_principal_components(X: xr.DataArray, n_components=None):
         DataArray to decompose. Must be 2D. PCA is tranformed over the second dimension.
     """
 
-    if n_components == None:
+    if n_components is None:
         n_components = X.values.shape[1]
 
     params = _fit_principal_component_decomposition_xr(X=X, n_components=n_components)
