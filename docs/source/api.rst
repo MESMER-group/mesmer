@@ -5,6 +5,14 @@ API reference
 
 This page provides an auto-generated summary of mesmers' API.
 
+Top-level functions
+===================
+
+.. autosummary::
+   :toctree: generated/
+
+   set_options
+   get_options
 
 Statistical functions
 =====================
@@ -16,6 +24,7 @@ Linear regression
    :toctree: generated/
 
    ~stats.LinearRegression
+   ~stats.LinearRegression.from_params
    ~stats.LinearRegression.fit
    ~stats.LinearRegression.predict
    ~stats.LinearRegression.residuals
@@ -28,8 +37,8 @@ Auto regression
 .. autosummary::
    :toctree: generated/
 
-   ~stats._select_ar_order_scen_ens
-   ~stats._fit_auto_regression_scen_ens
+   ~stats.select_ar_order_scen_ens
+   ~stats.fit_auto_regression_scen_ens
    ~stats.select_ar_order
    ~stats.fit_auto_regression
    ~stats.fit_auto_regression_monthly
@@ -43,8 +52,8 @@ Harmonic Model
 .. autosummary::
    :toctree: generated/
 
-   ~stats.predict_harmonic_model
    ~stats.fit_harmonic_model
+   ~stats.predict_harmonic_model
 
 Power Transformer
 -----------------
@@ -52,11 +61,18 @@ Power Transformer
 .. autosummary::
    :toctree: generated/
 
-   ~stats.lambda_function
-   ~stats.get_lambdas_from_covariates
-   ~stats.fit_yeo_johnson_transform
-   ~stats.yeo_johnson_transform
-   ~stats.inverse_yeo_johnson_transform
+.. autosummary::
+   :toctree: generated/
+
+   ~stats.YeoJohnsonTransformer
+   ~stats.YeoJohnsonTransformer.lambda_function
+   ~stats.YeoJohnsonTransformer.get_lambdas_from_covariates
+   ~stats.YeoJohnsonTransformer.fit
+   ~stats.YeoJohnsonTransformer.transform
+   ~stats.YeoJohnsonTransformer.inverse_transform
+
+   ~stats._power_transformer.constant_lambda_function
+   ~stats._power_transformer.logistic_lambda_function
 
 Localized covariance
 --------------------
@@ -86,8 +102,58 @@ Gaspari-Cohn correlation matrix
    ~stats.gaspari_cohn_correlation_matrices
    ~stats.gaspari_cohn
 
+Conditional distribution
+========================
+
+Define covariance structure of conditional distribution
+-------------------------------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~distrib.Expression
+   ~distrib.Expression.evaluate_params
+
+Fit conditional distribution
+----------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~distrib.ConditionalDistribution
+   ~distrib.ConditionalDistribution.find_first_guess
+   ~distrib.ConditionalDistribution.fit
+   ~distrib.ConditionalDistribution.compute_quality_scores
+   ~distrib.ConditionalDistribution.coefficients
+   ~distrib.ConditionalDistribution.from_netcdf
+   ~distrib.ConditionalDistribution.to_netcdf
+
+.. autosummary::
+   :toctree: generated/
+
+
+   ~distrib.MinimizeOptions
+
+Transform conditional distribution
+----------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~distrib.ProbabilityIntegralTransform
+   ~distrib.ProbabilityIntegralTransform.transform
+
+
 Data handling
 =============
+
+Example and test data
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~example_data.cmip6_ng_path
 
 Grid manipulation
 -----------------
@@ -95,12 +161,12 @@ Grid manipulation
 .. autosummary::
    :toctree: generated/
 
-   ~core.grid.wrap_to_180
-   ~core.grid.wrap_to_360
-   ~core.grid.stack_lat_lon
-   ~core.grid.unstack_lat_lon_and_align
-   ~core.grid.unstack_lat_lon
-   ~core.grid.align_to_coords
+   ~grid.wrap_to_180
+   ~grid.wrap_to_360
+   ~grid.stack_lat_lon
+   ~grid.unstack_lat_lon_and_align
+   ~grid.unstack_lat_lon
+   ~grid.align_to_coords
 
 Masking regions
 ---------------
@@ -108,10 +174,9 @@ Masking regions
 .. autosummary::
    :toctree: generated/
 
-   ~core.mask.mask_ocean_fraction
-   ~core.mask.mask_ocean
-   ~core.mask.mask_antarctica
-   ~core.regionmaskcompat.mask_3D_frac_approx
+   ~mask.mask_ocean_fraction
+   ~mask.mask_ocean
+   ~mask.mask_antarctica
 
 Weighted operations: calculate global mean
 ------------------------------------------
@@ -119,10 +184,22 @@ Weighted operations: calculate global mean
 .. autosummary::
    :toctree: generated/
 
-   ~core.weighted.global_mean
-   ~core.weighted.lat_weights
-   ~core.weighted.weighted_mean
-   ~core.weighted.equal_scenario_weights_from_datatree
+   ~weighted.global_mean
+   ~weighted.lat_weights
+   ~weighted.weighted_mean
+   ~weighted.equal_scenario_weights_from_datatree
+   ~weighted.get_weights_density
+
+DataTree heplers
+----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~datatree.pool_scen_ens
+   ~datatree.broadcast_and_pool_scen_ens
+   ~datatree.collapse_datatree_into_dataset
+   ~datatree.map_over_datasets
 
 Geospatial
 ----------
@@ -130,8 +207,24 @@ Geospatial
 .. autosummary::
    :toctree: generated/
 
-   ~core.geospatial.geodist_exact
+   ~geospatial.geodist_exact
 
+
+Anomalies
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~anomaly.calc_anomaly
+
+Resampling
+----------
+
+.. autosummary::
+   :toctree: generated/
+
+   ~resample.upsample_yearly_data
 
 Emulator functions
 ==================
@@ -142,5 +235,6 @@ Volcanic influence
 .. autosummary::
    :toctree: generated/
 
-   ~core.volc.fit_volcanic_influence
-   ~core.volc.superimpose_volcanic_influence
+   ~volc.fit_volcanic_influence
+   ~volc.superimpose_volcanic_influence
+   ~volc.load_stratospheric_aerosol_optical_depth_obs

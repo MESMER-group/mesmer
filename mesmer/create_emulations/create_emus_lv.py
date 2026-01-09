@@ -6,15 +6,19 @@
 Functions to create local variability emulations with MESMER.
 """
 
-
 import numpy as np
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.create_emulations.utils import _gather_lr_params, _gather_lr_preds
 from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import LinearRegression, draw_auto_regression_correlated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     """Create local variablity emulations.
 
@@ -110,6 +114,10 @@ def create_emus_lv(params_lv, preds_lv, cfg, save_emus=True, submethod=""):
     return emus_lv
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
     """
     Create local variablity emulations with AR(1) process with spatially-correlated
@@ -205,12 +213,16 @@ def create_emus_lv_AR1_sci(emus_lv, params_lv, preds_lv, cfg):
             )
 
             # get back the old order of the emus
-            emus_ar = emus_ar.values.transpose((2, 0, 1))
+            emus_ar = emus_ar.samples.values.transpose((2, 0, 1))
 
             emus_lv[scen][targ] += emus_ar.squeeze()
     return emus_lv
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_lv_OLS(params_lv, preds_lv):
     """Create local variablity emulations with OLS.
 
@@ -267,10 +279,9 @@ def create_emus_lv_OLS(params_lv, preds_lv):
 
             params = _gather_lr_params(params_lv, targ, dims="gridpoint")
 
-            lr = LinearRegression()
-            lr.params = params
+            lr = LinearRegression.from_params(params)
             prediction = lr.predict(predictors=preds)
 
-            emus_lv[scen][targ] = prediction.values.transpose()
+            emus_lv[scen][targ] = prediction.prediction.values.transpose()
 
     return emus_lv

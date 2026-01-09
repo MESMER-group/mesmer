@@ -1,21 +1,34 @@
+from typing import TypeVar
+
 import numpy as np
 import xarray as xr
 
-from mesmer.core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form
+from mesmer.datatree import _datatree_wrapper
+
+T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")
 
 
+@_datatree_wrapper
 def lowess(
-    data, dim, *, combine_dim=None, n_steps=None, frac=None, use_coords=True, it=0
-):
+    data: T_Xarray,
+    dim: str,
+    *,
+    combine_dim: str | None = None,
+    n_steps: int | None = None,
+    frac: float | None = None,
+    use_coords: bool = True,
+    it: int = 0,
+) -> T_Xarray:
     """LOWESS (Locally Weighted Scatterplot Smoothing) for xarray objects
 
     Parameters
     ----------
-    data : xr.DataArray | xr.Dataset
+    data : xr.DataArray | xr.Dataset | xr.DataTree
         Data to smooth (y-values).
     dim : str
         Dimension along which to smooth (x-dimension)
-    combine_dim : str, default: None
+    combine_dim : str | None, default: None
         Dimension along which to pool the data. This will stack the data and estimate
         the smoothing on the stacked data.
     n_steps : int
@@ -33,8 +46,8 @@ def lowess(
 
     Returns
     -------
-    out : xr.DataArray | xr.Dataset
-        LOWESS smoothed array
+    out : xr.DataArray | xr.Dataset | xr.DataTree
+        LOWESS smoothed array. Same type as `data`.
 
     See Also
     --------
@@ -49,7 +62,7 @@ def lowess(
         mesmer.stats.lowess(data, "time", frac=0.3).mean("cells")
     """
 
-    from statsmodels.nonparametric.smoothers_lowess import lowess
+    from statsmodels.nonparametric.smoothers_lowess import lowess as sm_lowess
 
     if not isinstance(dim, str):
         raise ValueError("Can only pass a single dimension.")
@@ -65,7 +78,8 @@ def lowess(
 
         if n_steps > n_coords:
             raise ValueError(
-                f"``n_steps`` ({n_steps}) cannot be be larger than the length of '{dim}' ({n_coords})"
+                f"``n_steps`` ({n_steps}) cannot be be larger than the length of"
+                f" '{dim}' ({n_coords})"
             )
 
         frac = n_steps / n_coords
@@ -106,7 +120,7 @@ def lowess(
             return da
 
         out = xr.apply_ufunc(
-            lowess,
+            sm_lowess,
             da,
             x,
             input_core_dims=[[dim], [dim]],

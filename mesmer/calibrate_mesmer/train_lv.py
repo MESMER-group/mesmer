@@ -5,8 +5,8 @@
 """
 Functions to train local variability module of MESMER.
 """
-
 import xarray as xr
+from deprecated import deprecated
 
 from mesmer.calibrate_mesmer.train_utils import (
     get_scenario_weights,
@@ -20,6 +20,10 @@ from mesmer.stats import (
 )
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     """Derive local variability (i.e., natural variabiliy) parameters.
 
@@ -159,6 +163,10 @@ def train_lv(preds, targs, esm, cfg, save_params=True, aux={}, params_lv={}):
     return params_lv
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     """Derive parameters for AR(1) process with spatially-correlated innovations.
 
@@ -261,6 +269,10 @@ def train_lv_AR1_sci(params_lv, targs, y, wgt_scen_eq, aux, cfg):
     return params_lv
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
     """
     Find suitable localization radius for empirical covariance matrix and derive
@@ -313,4 +325,6 @@ def train_lv_find_localized_ecov(y, wgt_scen_eq, aux, cfg):
 
     k_folds = cfg.max_iter_cv
 
-    return find_localized_empirical_covariance(data, weights, localizer, dim, k_folds)
+    return find_localized_empirical_covariance(
+        data, weights, localizer, dim=dim, k_folds=k_folds
+    )

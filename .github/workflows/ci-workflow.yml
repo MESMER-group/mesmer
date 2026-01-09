@@ -18,15 +18,18 @@ jobs:
   test:
     name: py${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
+    if: |
+      github.repository == 'MESMER-group/mesmer'
+      && (github.event_name == 'push' || github.event_name == 'pull_request')
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.10", "3.11", "3.13"]
+        python-version: ["3.11", "3.13"]
         env: [""]
         include:
           - env: "min-all-deps"
-            python-version: "3.10"
+            python-version: "3.11"
             os: "ubuntu-latest"
           - env: ""
             python-version: "3.13"
@@ -40,7 +43,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set environment variables
       run: |
@@ -62,12 +65,21 @@ jobs:
         create-args: >-
           python=${{ matrix.python-version }}
 
+    - name: Environment info
+      run: |
+        echo "numpy.show_config()"
+        echo ""
+        python -c "import numpy; numpy.show_config()"
+        echo ""
+        echo "Number of cpus and threads"
+        python -c "import psutil; print(f'cpus: {psutil.cpu_count(logical=False)}; threads: {psutil.cpu_count()}')"
+        echo ""
+        echo "threadpool info:"
+        python -c "import numpy; import threadpoolctl; print(threadpoolctl.threadpool_info())"
+
     - name: Install mesmer
       run: |
         python -m pip install --no-deps -e .
-
-    - name: Test installation
-      run: python scripts/test_install.py
 
     - name: Run tests
       run: python -u -m pytest
@@ -93,26 +105,18 @@ jobs:
   min-version-policy:
     name: Minimum Version Policy
     runs-on: "ubuntu-latest"
-    defaults:
-      run:
-        shell: bash -l {0}
+
+    env:
+      COLUMNS: 120
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          fetch-depth: 0 # Fetch all history for all branches and tags.
-
-      - name: Create conda environment
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          environment-name: min-version-policy
-          micromamba-version: 'latest'
-          create-args: >-
-            python=3.10
-            pyyaml
-            conda
-            python-dateutil
-          channels: conda-forge
-
-      - name: minimum versions policy
+          python-version: '3.13'
+          cache: 'pip' # caching pip dependencies
+      - name: install deps
+        run: pip install git+https://github.com/xarray-contrib/minimum-dependency-versions
+      - name: validate minimum versions
         run: |
-          python ci/min_deps_check.py ci/requirements/min-all-deps.yml
+          minimum-versions validate --policy ci/minimum-dependency-versions-policy.yml ci/requirements/min-all-deps.yml

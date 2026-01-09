@@ -5,10 +5,14 @@
 """
 Functions to aid the training of MESMER.
 """
-
 import numpy as np
+from deprecated import deprecated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def get_scenario_weights(target):
     """
     derive scenario weights such that each has equal weight, i.e., 1 / number of samples
@@ -41,6 +45,10 @@ def get_scenario_weights(target):
     return np.concatenate(weights)
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _stack_target(target):
     """stack target for all scenarios"""
 
@@ -55,6 +63,10 @@ def _stack_target(target):
     return np.concatenate(out)
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def _stack_predictor(predictor, target):
     """stack predictor for all scenarios"""
 
@@ -76,6 +88,10 @@ def _stack_predictor(predictor, target):
     return np.concatenate(out)
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def stack_predictors_and_targets(preds, targs):
     """
     Create single array of predictors, and single array of targets

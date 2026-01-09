@@ -12,6 +12,17 @@
 
    installation
    publications
+   parameters
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Tutorials
+
+   tutorials/tutorial_mesmer_calibrate_multiple_scenarios
+   tutorials/tutorial_mesmer_emulating_multiple_scenarios
+   tutorials/tutorial_mesmer_m_scen_ens
+   tutorials/tutorial_mesmer_x
 
 .. toctree::
    :maxdepth: 2
@@ -31,6 +42,9 @@
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Versions
+   :caption: Additional info
 
    changelog
+   authors
+   license
+   data_provenance

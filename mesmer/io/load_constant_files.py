@@ -14,11 +14,15 @@ import warnings
 import joblib
 import numpy as np
 import regionmask
+from deprecated import deprecated
 
-from mesmer.core.regionmaskcompat import _mask_3D_frac_approx
 from mesmer.stats import gaspari_cohn
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     """
     Loads or creates (if not available yet) distance matrix and Gaspari-Cohn correlation
@@ -80,7 +84,7 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
       matrix must be positive semidefinite in train_lv())
     """
 
-    from mesmer.core.geospatial import geodist_exact
+    from mesmer.geospatial import geodist_exact
 
     dir_aux = cfg.dir_aux
     threshold_land = cfg.threshold_land
@@ -132,6 +136,10 @@ def load_phi_gc(lon, lat, ls, cfg, L_start=1500, L_end=10000, L_interval=250):
     return phi_gc
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
     """Load constant files.
 
@@ -183,7 +191,7 @@ def load_regs_ls_wgt_lon_lat(reg_type=None, lon=None, lat=None):
 
     # gives fraction of land -> in extract_land() script decide above which land
     # fraction threshold to consider a grid point as a land grid point
-    ls["grid_raw"] = _mask_3D_frac_approx(land_110, lon["c"], lat["c"]).values.squeeze()
+    ls["grid_raw"] = land_110.mask_3D_frac_approx(lon["c"], lat["c"]).values.squeeze()
 
     # remove Antarctica
     idx_ANT = lat["c"] < -60
