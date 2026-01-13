@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 
 import mesmer
-from mesmer.core.utils import LinAlgWarning, _check_dataarray_form
+from mesmer._core.utils import LinAlgWarning, _check_dataarray_form
 from mesmer.stats._localized_covariance import (
     _adjust_ecov_ar1_np,
     _ecov_crossvalidation,
@@ -26,7 +26,7 @@ def get_random_data(n_samples, n_gridpoints):
     np.random.seed(0)
     data = np.random.rand(n_samples, n_gridpoints)
 
-    return xr.DataArray(data, dims=("samples", "cell"))
+    return xr.DataArray(data, dims=("time", "cell"))
 
 
 def get_localizer_dict(n_gridpoints, as_dataarray):
@@ -46,7 +46,36 @@ def get_localizer_dict(n_gridpoints, as_dataarray):
 def get_weights(n_samples):
 
     weights = np.full(n_samples, 1)
-    return xr.DataArray(weights, dims="samples")
+    return xr.DataArray(weights, dims="time")
+
+
+def test_find_localized_empirical_covariance_errors():
+
+    n_samples = 20
+    n_gridpoints = 3
+
+    data = get_random_data(n_samples, n_gridpoints)
+    localizer = get_localizer_dict(n_gridpoints, as_dataarray=True)
+    weights = get_weights(n_samples)
+
+    with pytest.raises(
+        ValueError, match="'k_folds' must be an integer larger than 1, got 0.5."
+    ):
+        mesmer.stats.find_localized_empirical_covariance(
+            data, weights, localizer, dim="time", k_folds=0.5
+        )
+
+    with pytest.raises(
+        ValueError, match="'k_folds' must be an integer larger than 1, got -1"
+    ):
+        mesmer.stats.find_localized_empirical_covariance(
+            data, weights, localizer, dim="time", k_folds=-1
+        )
+
+    with pytest.raises(ValueError, match="weights and data have incompatible shape"):
+        mesmer.stats.find_localized_empirical_covariance(
+            data, weights[1:], localizer, dim="time", k_folds=15
+        )
 
 
 @pytest.mark.filterwarnings("ignore:First element is local minimum.")
@@ -66,7 +95,7 @@ def test_find_localized_empirical_covariance():
     }
 
     result = mesmer.stats.find_localized_empirical_covariance(
-        data, weights, localizer, dim="samples", k_folds=2
+        data, weights, localizer, dim="time", k_folds=2
     )
 
     assert result.localization_radius == 0
@@ -75,7 +104,7 @@ def test_find_localized_empirical_covariance():
 
     # ensure it works if data is transposed
     result = mesmer.stats.find_localized_empirical_covariance(
-        data.T, weights, localizer, dim="samples", k_folds=3
+        data.T, weights, localizer, dim="time", k_folds=3
     )
 
     assert result.localization_radius == 1
@@ -89,7 +118,7 @@ def test_find_localized_empirical_covariance():
         data,
         weights,
         localizer,
-        dim="samples",
+        dim="time",
         k_folds=3,
         equal_dim_suffixes=(":j", ":i"),
     )
@@ -104,19 +133,20 @@ def test_find_localized_empirical_covariance():
 
 
 @pytest.mark.filterwarnings("ignore:First element is local minimum.")
-def test_find_localized_empirical_covariance_monthly():
+@pytest.mark.parametrize("stack", (False, True))
+def test_find_localized_empirical_covariance_monthly(stack):
 
     n_samples = 20 * 12
     n_gridpoints = 60
     time = pd.date_range("2000-01-01", periods=n_samples, freq="MS")
 
     data = get_random_data(n_samples, n_gridpoints)
-    data = data.assign_coords({"samples": time})
+    data = data.assign_coords({"time": time})
 
     localizer = get_localizer_dict(n_gridpoints, as_dataarray=True)
 
     weights = get_weights(n_samples)
-    weights = weights.assign_coords({"samples": time})
+    weights = weights.assign_coords({"time": time})
 
     required_form = {
         "ndim": 3,
@@ -124,8 +154,12 @@ def test_find_localized_empirical_covariance_monthly():
         "shape": (12, n_gridpoints, n_gridpoints),
     }
 
+    if stack:
+        data = data.stack(sample=["time"], create_index=False)
+        weights = weights.stack(sample=["time"], create_index=False)
+
     result = mesmer.stats.find_localized_empirical_covariance_monthly(
-        data, weights, localizer, dim="samples", k_folds=2
+        data, weights, localizer, dim="time", k_folds=2
     )
 
     np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
@@ -136,7 +170,7 @@ def test_find_localized_empirical_covariance_monthly():
 
     # ensure it works if data is transposed
     result = mesmer.stats.find_localized_empirical_covariance_monthly(
-        data.T, weights, localizer, dim="samples", k_folds=3
+        data.T, weights, localizer, dim="time", k_folds=3
     )
 
     np.testing.assert_equal(result.localization_radius.values, np.zeros(12))
@@ -150,7 +184,7 @@ def test_find_localized_empirical_covariance_monthly():
         data,
         weights,
         localizer,
-        dim="samples",
+        dim="time",
         k_folds=3,
         equal_dim_suffixes=(":j", ":i"),
     )

@@ -16,13 +16,7 @@ from mesmer.stats._localized_covariance import (
     find_localized_empirical_covariance,
     find_localized_empirical_covariance_monthly,
 )
-from mesmer.stats._power_transformer import (
-    fit_yeo_johnson_transform,
-    get_lambdas_from_covariates,
-    inverse_yeo_johnson_transform,
-    lambda_function,
-    yeo_johnson_transform,
-)
+from mesmer.stats._power_transformer import YeoJohnsonTransformer
 from mesmer.stats._smoothing import lowess
 
 __all__ = [
@@ -50,9 +44,5 @@ __all__ = [
     "fit_harmonic_model",
     "predict_harmonic_model",
     # power transformer
-    "lambda_function",
-    "get_lambdas_from_covariates",
-    "fit_yeo_johnson_transform",
-    "yeo_johnson_transform",
-    "inverse_yeo_johnson_transform",
+    "YeoJohnsonTransformer",
 ]

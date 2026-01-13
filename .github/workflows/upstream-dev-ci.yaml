@@ -22,10 +22,10 @@ jobs:
     name: upstream-dev
     runs-on: ubuntu-latest
     if: |
-        always()
-        && (
-            github.event_name == 'schedule'
-            || contains( github.event.pull_request.labels.*.name, 'run-upstream')
+      github.repository == 'MESMER-group/mesmer'
+      && (
+          github.event_name == 'schedule'
+          || contains( github.event.pull_request.labels.*.name, 'run-upstream')
         )
     defaults:
       run:
@@ -35,7 +35,7 @@ jobs:
       matrix:
         python-version: ["3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Set up conda environment

@@ -54,3 +54,13 @@ not, see https://www.gnu.org/licenses/.
 
 The full list of code contributors can be found in AUTHORS or on
 `github.com/contributors <https://github.com/MESMER-group/mesmer/graphs/contributors>`_
+
+Mesmer bundles data for analysis, tutorials, and testing:
+
+- CMIP6 data from IPSL-CM6A-LR model, available under a `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`__ license.
+  Used in tutorial notebooks and tests.
+
+- Stratospheric aerosol optical depth data sourced licensed as `Creative Commons Zero <https://creativecommons.org/public-domain/cc0/>`__.
+  Used to estimate the volcanic influence.
+
+For details see `data README <data/README.md>`_.

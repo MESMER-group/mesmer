@@ -7,8 +7,13 @@ import os
 
 import joblib
 import xarray as xr
+from deprecated import deprecated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def save_mesmer_bundle(
     bundle_file,
     params_lt,

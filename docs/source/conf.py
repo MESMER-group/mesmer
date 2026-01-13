@@ -10,7 +10,7 @@ import datetime
 import os
 import subprocess
 import sys
-from importlib.metadata import version
+from importlib.metadata import version as _get_version
 
 import mesmer
 
@@ -47,7 +47,7 @@ authors = "Authors, see AUTHORS"
 author = authors
 
 # The full version, including alpha/beta/rc tags
-release = version("mesmer-emulator")
+release = _get_version("mesmer-emulator")
 # The short X.Y version
 version = ".".join(release.split(".")[:2])
 
@@ -62,6 +62,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
+    "myst_nb",
 ]
 
 autosummary_generate = True
@@ -85,7 +86,39 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns: list[str] = []
+
+
+nb_kernel_rgx_aliases = {".*": "python3"}
+nb_execution_show_tb = True
+nb_execution_timeout = 60
+
+PROLOG = """\
+:::{note}
+This page was generated from an Jupyter notebook that can be accessed from
+[github](https://github.com/MESMER-group/mesmer/tree/main/tutorials).
+:::
+"""
+
+
+myst_substitutions = {"prolog": PROLOG}
+
+myst_enable_extensions = [
+    "amsmath",
+    # "attrs_inline",
+    "colon_fence",
+    # "deflist",
+    "dollarmath",
+    # "fieldlist",
+    # "html_admonition",
+    # "html_image",
+    # "linkify",
+    # "replacements",
+    # "smartquotes",
+    # "strikethrough",
+    "substitution",
+    # "tasklist",
+]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -102,3 +135,6 @@ html_theme = "sphinx_book_theme"
 # html_static_path = []
 
 pygments_style = "sphinx"
+
+
+linkcheck_allowed_redirects = {r"https://doi.org/.*": ".*"}

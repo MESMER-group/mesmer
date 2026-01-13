@@ -6,13 +6,17 @@
 Functions to extract regions or time period of interest.
 """
 
-
 import copy as copy
 import warnings
 
 import numpy as np
+from deprecated import deprecated
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def extract_land(var, reg_dict=None, wgt=None, ls=None, threshold_land=0.25):
     """
     Extract all land grid points and area weights in regions and in land-sea mask for

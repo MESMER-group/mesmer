@@ -6,6 +6,7 @@
 Functions to create local trends emulations with MESMER.
 """
 
+from deprecated import deprecated
 
 from mesmer.create_emulations.utils import (
     _gather_lr_params,
@@ -16,6 +17,10 @@ from mesmer.io.save_mesmer_bundle import save_mesmer_data
 from mesmer.stats import LinearRegression
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     """
     Create local trends (i.e., forced response) emulations for given parameter set and
@@ -130,6 +135,10 @@ def create_emus_lt(params_lt, preds_lt, cfg, concat_h_f=False, save_emus=True):
     return emus_lt
 
 
+@deprecated(
+    version="1.0.0",
+    reason="This function is deprecated and will be removed in a future release. Please refer to the documentation for more information.",
+)
 def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
     """Create local trends with OLS with grid-point-specific predictors
 
@@ -178,11 +187,10 @@ def create_emus_OLS_each_gp_sep(params_lt, preds_lt, scen):
         params = _gather_lr_params(params_lt, targ, dims="cell")
         predictors = _gather_lr_preds(preds_lt, params_lt["preds"], scen, dims="time")
 
-        lr = LinearRegression()
-        lr.params = params
+        lr = LinearRegression.from_params(params)
 
         prediction = lr.predict(predictors=predictors)
 
-        emus_lt[targ] = prediction.values.T
+        emus_lt[targ] = prediction.prediction.values.T
 
     return emus_lt
