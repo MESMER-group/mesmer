@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -5,6 +7,7 @@ import xarray as xr
 from packaging.version import Version
 
 import mesmer._core.utils
+from unit import assert_no_warnings
 
 PANDAS_GE_300 = Version(Version(pd.__version__).base_version) >= Version("3.0.0")
 
@@ -509,3 +512,30 @@ def test_assert_annual_data_unknown_freq():
 
     with pytest.raises(ValueError, match="Annual data is required but data of unknown"):
         mesmer._core.utils._assert_annual_data(time)
+
+
+def test_ignore_warnings():
+
+    @mesmer._core.utils._ignore_warnings()
+    def func0():
+        warnings.warn("foo")
+        warnings.warn("bar")
+
+    with assert_no_warnings():
+        func0()
+
+    @mesmer._core.utils._ignore_warnings(["foo", "bar"])
+    def func1():
+        warnings.warn("foo")
+        warnings.warn("bar")
+
+    with assert_no_warnings():
+        func1()
+
+    @mesmer._core.utils._ignore_warnings(["foo"])
+    def func2():
+        warnings.warn("foo")
+        warnings.warn("bar")
+
+    with pytest.warns(match="bar"):
+        func2()

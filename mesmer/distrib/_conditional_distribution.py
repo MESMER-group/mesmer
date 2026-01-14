@@ -8,12 +8,15 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.utils import (
+    _check_dataarray_form,
+    _check_dataset_form,
+    _ignore_warnings,
+)
 from mesmer.distrib import _distrib_checks, _optimizers
 from mesmer.distrib._expression import Expression
 from mesmer.distrib._first_guess import _FirstGuess
 from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
-from mesmer.distrib._utils import _ignore_warnings
 from mesmer.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn
 from mesmer.weighted import _weighted_median
@@ -180,7 +183,8 @@ class ConditionalDistribution:
 
         self._coefficients = coefficients
 
-    @_ignore_warnings  # suppress nan & inf warnings
+    # suppress nan & inf warnings; TODO: don't suppress all warnings
+    @_ignore_warnings()
     def _fit_np(self, data_pred, data_targ, data_weights, fg, on_failed_fit):
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
