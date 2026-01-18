@@ -140,12 +140,12 @@ class ConditionalDistribution:
             gridcell_dim = (set(target.dims) - {sample_dim}).pop()
             coords = target[gridcell_dim].coords
             # preserve non-smoothed first guess in case it causes the fit to fails
-            first_guess_failsafe = first_guess_da.copy()
+            first_guess_initial = first_guess_da.copy()
             first_guess_da = _smooth_first_guess(
                 first_guess_da, gridcell_dim, coords, r_gasparicohn
             )
         else:
-            first_guess_failsafe = first_guess_da
+            first_guess_initial = first_guess_da
 
         # training
         result = xr.apply_ufunc(
@@ -154,7 +154,7 @@ class ConditionalDistribution:
             target,
             weights,
             first_guess_da,
-            first_guess_failsafe,
+            first_guess_initial,
             input_core_dims=[
                 [sample_dim, "predictor"],
                 [sample_dim],
