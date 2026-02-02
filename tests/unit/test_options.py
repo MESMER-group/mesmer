@@ -12,7 +12,7 @@ def test_option_invalid_error(invalid_option) -> None:
 
     with pytest.raises(ValueError, match="not in the set of valid options"):
 
-        mesmer.set_options(invalid_option=invalid_option)  # type:ignore[call-arg]
+        mesmer.set_options(invalid_option=invalid_option)  # type: ignore[call-arg]
 
 
 def test_get_options():
@@ -36,7 +36,7 @@ def test_options_threads_errors() -> None:
         mesmer.set_options(threads=-3)
 
     with pytest.raises(ValueError, match=msg):
-        mesmer.set_options(threads=3.5)  # type:ignore[arg-type]
+        mesmer.set_options(threads=3.5)  # type: ignore[arg-type]
 
 
 def test_options_threads() -> None:

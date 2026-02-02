@@ -5,6 +5,7 @@
 """
 Functions to create global trend emulations with MESMER.
 """
+
 import warnings
 
 from deprecated import deprecated

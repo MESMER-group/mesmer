@@ -5,6 +5,7 @@
 """
 Functions to aid the training of MESMER.
 """
+
 import numpy as np
 from deprecated import deprecated
 

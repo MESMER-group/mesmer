@@ -5,6 +5,7 @@
 """
 Functions to train local variability module of MESMER.
 """
+
 import xarray as xr
 from deprecated import deprecated
 
