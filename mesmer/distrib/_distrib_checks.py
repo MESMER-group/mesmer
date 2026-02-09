@@ -45,7 +45,7 @@ def _param_in_bounds(expression: Expression, param_values, name):
 
     # short circuit if no boundaries are given (the boundaries are +-inf)
     if name in expression.boundaries_params:
-        (bot, top) = expression.boundaries_params[name]
+        bot, top = expression.boundaries_params[name]
 
         # out of boundaries
         if (
