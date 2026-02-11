@@ -49,7 +49,7 @@ class GammaGLMXarray:
         y_max = y.max()
 
         family = sm.families.Gamma
-        link = sm.families.links.Log
+        link = sm.families.links.Log()
 
         glm = sm.GLM(y, X, family=family(link=link))
 
