@@ -101,19 +101,19 @@ class GroupedKDEXarray:
         """
         samples = []
 
-        for g, kde in self.kdes.items():
+        for kde in self.kdes.values():
             Xs = kde.sample(n_samples, random_state=random_state)
 
-            samples.append(
-                xr.DataArray(
-                    Xs,
-                    dims=["sample", self.feature_dim],
-                    coords={
-                        "sample": np.arange(n_samples),
-                        self.feature_dim: self.feature_coords,
-                    },
-                )
+            da = xr.DataArray(
+                Xs,
+                dims=["sample", self.feature_dim],
+                coords={
+                    "sample": np.arange(n_samples),
+                    self.feature_dim: self.feature_coords,
+                },
             )
+
+            samples.append(da          )
 
         return xr.concat(samples, dim=self.group_dim).assign_coords(
             {self.group_dim: list(self.kdes.keys())}

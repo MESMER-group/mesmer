@@ -31,15 +31,15 @@ class XarrayPipeline:
         self, da: xr.DataArray, feature_override: str | None = None
     ) -> np.ndarray:
         """Convert DataArray to (samples, features) for sklearn."""
+
         if feature_override is not None:
             feature_dim = feature_override
             # DON'T overwrite self.feature_coords here, it's for training features
         else:
             if self.feature_dim in da.dims:
                 feature_dim = self.feature_dim
-                self.feature_coords = da.coords[
-                    self.feature_dim
-                ]  # only during normal transform
+                # only during normal transform
+                self.feature_coords = da.coords[self.feature_dim]
             elif "component" in da.dims:
                 feature_dim = "component"
                 # do NOT overwrite self.feature_coords
