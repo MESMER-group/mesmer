@@ -7,7 +7,6 @@
 Functions to train monthly trend module of MESMER-M
 """
 
-
 import numpy as np
 import xarray as xr
 from sklearn.base import clone
@@ -75,13 +74,12 @@ class GroupedKDEXarray:
 
             logp = self.kdes[g].score_samples(X)
 
-            scores.append(
-                xr.DataArray(
-                    logp,
-                    dims=[self.sample_dim],
-                    coords={self.sample_dim: da_g[self.sample_dim]},
-                )
+            da = xr.DataArray(
+                logp,
+                dims=[self.sample_dim],
+                coords={self.sample_dim: da_g[self.sample_dim]},
             )
+            scores.append(da)
 
         return xr.concat(scores, dim=self.group_dim).assign_coords(
             {self.group_dim: da[self.group_dim]}
@@ -113,7 +111,7 @@ class GroupedKDEXarray:
                 },
             )
 
-            samples.append(da          )
+            samples.append(da)
 
         return xr.concat(samples, dim=self.group_dim).assign_coords(
             {self.group_dim: list(self.kdes.keys())}
