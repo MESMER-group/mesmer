@@ -7,7 +7,6 @@
 Functions to train monthly trend module of MESMER-M
 """
 
-
 import numpy as np
 import statsmodels.api as sm
 import xarray as xr
@@ -94,13 +93,16 @@ class GammaGLMXarray:
 
         n_years = tas.sizes["year"]
         n_closest = closest_locations.sizes["closest_gridcells"]
-        n_cov = 1 + 2 * n_closest
+        # intercept + two predictors (tas & tas**2) x n_closest
+        n_params = 1 + 2 * n_closest
+
+        ones = np.ones(n_years)
 
         def _compute(i_grid, mon):
             nbrs = closest_locations.sel(gridcell=i_grid).values
 
             X = np.c_[
-                np.ones(n_years),
+                ones,
                 tas.sel(gridcell=nbrs, month=mon).T.values,
                 tas_sq.sel(gridcell=nbrs, month=mon).T.values,
             ]
@@ -114,7 +116,7 @@ class GammaGLMXarray:
 
         params = (
             np.stack(results)
-            .reshape(len(months), len(gridcells), n_cov)
+            .reshape(len(months), len(gridcells), n_params)
             .transpose(1, 0, 2)
         )
 
