@@ -4,181 +4,272 @@
 # https://www.gnu.org/licenses/
 
 """
-Functions to train monthly trend module of MESMER-M
+Functions to train monthly trend module of MESMER-M-TP
 """
 
 import numpy as np
-import statsmodels.api as sm
 import xarray as xr
+from sklearn.linear_model import GammaRegressor, Ridge
+from sklearn.model_selection import KFold
+from sklearn.base import clone
+from sklearn.metrics import mean_squared_error
+# import importlib
+# import itertools
 from joblib import Parallel, delayed
-
 from mesmer._core.utils import _ignore_warnings
 
-
-# haven't properly commented this yet - WIP
-class GammaGLMXarray:
-
-    def __init__(self, alphas, l1_wt=0.0001, n_jobs=-1):
-        """
-        Gamma GLM (log link), fitted independently for each (gridcell, month).
-
-        alpha : list of scalar or array_like
-            The penalty weight.  If a scalar, the same penalty weight
-            applies to all variables in the model.  If a vector, it
-            must have the same length as `params`, and contains a
-            penalty weight for each coefficient.
-        L1_wt  : float
-            Must be in [0, 1].  The L1 penalty has weight L1_wt and the
-            L2 penalty has weight 1 - L1_wt.
-        """
-
-        self.alphas = alphas
-        self.l1_wt = l1_wt
+class FeaturewiseRuleGLM:
+    """
+    Feature-wise GLM with dynamic design rule for X per feature.
+    Supports multiple feature dimensions or none.
+    """
+    def __init__(self, design_rule, alpha_grid, sample_dim, feature_dims=None,
+                 cv=5, distribution="gamma", n_jobs=-1):
+        self.design_rule = design_rule
+        self.alpha_grid = alpha_grid
+        self.sample_dim = sample_dim
+        self.feature_dims = feature_dims or []  # list of dims, can be empty
+        self.cv = cv
+        self.distribution = distribution
         self.n_jobs = n_jobs
-        self.params_ = None
+        self.models_ = {}  # dict: feature_index_tuple -> fitted model
 
-    @_ignore_warnings(
-        [
-            "Elastic net fitting did not converge",
-            "divide by zero encountered",
-            "invalid value encountered",
-        ]
-    )
-    def _fit_single(self, X, y):
-        y_max = y.max()
+    def _flatten_feature_coords(self, y):
+        """Return list of feature coordinate tuples and y flattened along features"""
+        if not self.feature_dims:
+            return [()], y  # scalar feature
+        # Flatten feature dims
+        stacked = y.stack(_feature=self.feature_dims)
+        return list(stacked._feature.values), stacked
 
-        family = sm.families.Gamma
-        link = sm.families.links.Log()
+    def _make_model(self, alpha):
+        if self.distribution == "gamma":
+            return GammaRegressor(alpha=alpha, max_iter=1000, tol=1e-6, fit_intercept = True)
+        elif self.distribution == "lognormal":
+            return Ridge(alpha=alpha, fit_intercept = True)
+        else:
+            raise ValueError("distribution must be 'gamma' or 'lognormal'")
 
-        glm = sm.GLM(y, X, family=family(link=link))
+    def fit(self, y, **data):
+        feature_index_list, y_flat = self._flatten_feature_coords(y)
+        n_samples = y_flat[self.sample_dim].size
 
-        last_res = None
+        def _fit_one(f_idx):
+            y_np = y_flat.sel(_feature=f_idx).transpose(self.sample_dim).values
+            X_np, _ = self.design_rule(f_idx, **data)  # (n_samples, n_covariates)
+            if X_np.shape[0] != n_samples:
+                raise ValueError(f"Design matrix for feature {f_idx} has wrong number of samples")
 
-        for alpha in self.alphas:
-            try:
-                res = glm.fit_regularized(
-                    alpha=alpha,
-                    L1_wt=self.l1_wt,
-                    refit=False,
-                )
-                last_res = res
-            except Exception:
-                continue
+            kf = KFold(n_splits=self.cv, shuffle=True, random_state=42)
+            best_score = np.inf
+            best_model = None
 
-            resid = res.fittedvalues - y
-            if np.all(resid <= 0.4 * y_max):
-                return res.params
+            for alpha in self.alpha_grid:
+                model = self._make_model(alpha)
+                scores = []
+                converged = False
 
-        # safe fallback
-        if last_res is None:
-            return np.full(X.shape[1], np.nan)
+                for train_idx, val_idx in kf.split(X_np):
+                    Xtr, Xval = X_np[train_idx], X_np[val_idx]
+                    ytr, yval = y_np[train_idx], y_np[val_idx]
 
-        return last_res.params
+                    if self.distribution == "lognormal":
+                        if np.any(ytr <= 0):
+                            continue
+                        ytr = np.log(ytr)
 
-    def fit(self, tas, tas_sq, pr, closest_locations):
-        """
-        Estimate regression coefficients.
+                    try:
+                        model.fit(Xtr, ytr)
+                        converged = True
+                    except Exception:
+                        continue
 
-        Parameters
-        ----------
-        tas, tas_sq, pr:
-            DataArrays with dims (gridcell, year, month)
+                    ypred = model.predict(Xval)
+                    if self.distribution == "lognormal":
+                        ypred = np.exp(ypred)
+                    scores.append(mean_squared_error(yval, ypred))
 
-        closest_locations:
-            DataArray with dims (gridcell, closest_gridcells)
-        """
+                if converged and scores:
+                    score = np.mean(scores)
+                    if score < best_score:
+                        best_score = score
+                        best_model = clone(model)
 
-        gridcells = tas.gridcell.values
-        months = tas.month.values
+            if best_model is None:
+                raise RuntimeError(f"No converged model for feature {f_idx}")
 
-        n_years = tas.sizes["year"]
-        n_closest = closest_locations.sizes["closest_gridcells"]
-        # intercept + two predictors (tas & tas**2) x n_closest
-        n_params = 1 + 2 * n_closest
+            # Refit full data
+            y_full = y_np if self.distribution == "gamma" else np.log(y_np)
+            best_model.fit(X_np, y_full)
+            return f_idx, best_model
 
-        ones = np.ones(n_years)
-
-        def _compute(i_grid, mon):
-            nbrs = closest_locations.sel(gridcell=i_grid).values
-
-            X = np.c_[
-                ones,
-                tas.sel(gridcell=nbrs, month=mon).T.values,
-                tas_sq.sel(gridcell=nbrs, month=mon).T.values,
-            ]
-
-            y = pr.sel(gridcell=i_grid, month=mon).values
-            return self._fit_single(X, y)
-
-        results = Parallel(n_jobs=self.n_jobs, backend="loky")(
-            delayed(_compute)(i_grid, mon) for mon in months for i_grid in gridcells
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_one)(f_idx) for f_idx in feature_index_list
         )
 
-        params = (
-            np.stack(results)
-            .reshape(len(months), len(gridcells), n_params)
-            .transpose(1, 0, 2)
-        )
-
-        covariates = (
-            ["intercept"]
-            + [f"tas_{i}" for i in range(n_closest)]
-            + [f"tas_sq_{i}" for i in range(n_closest)]
-        )
-
-        self.params_ = xr.DataArray(
-            params,
-            dims=("gridcell", "month", "covariate"),
-            coords={
-                "gridcell": tas.gridcell,
-                "month": tas.month,
-                "covariate": covariates,
-            },
-            name="params",
-        )
+        for f_idx, model in results:
+            self.models_[f_idx] = model
 
         return self
 
-    def predict(self, tas, tas_sq, closest_locations):
-        """
-        Compute μ = exp(Xβ)
-        """
+    def predict(self, **data):
+        feature_index_list = list(self.models_.keys())
+        preds = []
 
-        if self.params_ is None:
-            raise RuntimeError("Model must be fitted first.")
+        sample_coords = None  # optional, preserve coordinates
 
-        gridcells = tas.gridcell.values
-        months = tas.month.values
-        n_years = tas.sizes["year"]
+        for f_idx in feature_index_list:
+            X_np, sample_coords = self.design_rule(f_idx, **data)
+            ypred = self.models_[f_idx].predict(X_np)
+            if self.distribution == "lognormal":
+                ypred = np.exp(ypred)
+            preds.append(ypred)
 
-        mu = np.empty((len(gridcells), n_years, len(months)))
+        mu = np.stack(preds, axis=1)  # (n_samples, n_flat_features)
 
-        for ig, i_grid in enumerate(gridcells):
-            nbrs = closest_locations.sel(gridcell=i_grid).values
+        if not self.feature_dims:
+            return xr.DataArray(mu[:, 0],
+                                dims=(self.sample_dim,),
+                                coords={self.sample_dim: sample_coords})
 
-            for im, mon in enumerate(months):
-                beta = self.params_.sel(gridcell=i_grid, month=mon).values
+        # build unique coordinates per feature dim
+        coords_dict = {self.sample_dim: sample_coords}
+        for i, dim in enumerate(self.feature_dims):
+            coords_dict[dim] = sorted(set(idx[i] for idx in feature_index_list))
 
-                X = np.c_[
-                    np.ones(n_years),
-                    tas.sel(gridcell=nbrs, month=mon).T.values,
-                    tas_sq.sel(gridcell=nbrs, month=mon).T.values,
-                ]
+        # reshape to (n_samples, *feature_dims)
+        shape = [mu.shape[0]] + [len(coords_dict[d]) for d in self.feature_dims]
+        mu = mu.reshape(shape)
 
-                mu[ig, :, im] = np.exp(X @ beta)
+        return xr.DataArray(mu, dims=[self.sample_dim] + self.feature_dims, coords=coords_dict)
 
-        return xr.DataArray(
-            mu,
-            dims=("gridcell", "year", "month"),
-            coords={
-                "gridcell": tas.gridcell,
-                "year": tas.year,
-                "month": tas.month,
-                "lat": tas.lat,
-                "lon": tas.lon,
-            },
-            name="mu",
+    def to_dataset(self) -> xr.Dataset:
+        if not self.models_:
+            raise RuntimeError("Model is not fitted.")
+
+        feature_keys = list(self.models_.keys())
+
+        # Scalar feature case
+        if not self.feature_dims:
+            model = next(iter(self.models_.values()))
+            ds = xr.Dataset(
+                data_vars={
+                    "coef_": (["covariate"], model.coef_),
+                    "intercept_": model.intercept_,
+                },
+                coords={"covariate": np.arange(len(model.coef_))},
+            )
+
+        else:
+            # Determine coordinate values per feature dim
+            coords_per_dim = {
+                dim: sorted(set(key[i] for key in feature_keys))
+                for i, dim in enumerate(self.feature_dims)
+            }
+
+            # Determine sizes
+            shape = [len(coords_per_dim[d]) for d in self.feature_dims]
+            n_covariates = len(next(iter(self.models_.values())).coef_)
+
+            coef_array = np.zeros(shape + [n_covariates])
+            intercept_array = np.zeros(shape)
+
+            # Fill arrays
+            for key, model in self.models_.items():
+                idx = tuple(
+                    coords_per_dim[dim].index(key[i])
+                    for i, dim in enumerate(self.feature_dims)
+                )
+                coef_array[idx] = model.coef_
+                intercept_array[idx] = model.intercept_
+
+            ds = xr.Dataset(
+                data_vars={
+                    "coef_": (
+                        self.feature_dims + ["covariate"],
+                        coef_array,
+                    ),
+                    "intercept_": (
+                        self.feature_dims,
+                        intercept_array,
+                    ),
+                },
+                coords={
+                    **coords_per_dim,
+                    "covariate": np.arange(n_covariates),
+                },
+            )
+
+        ds.attrs.update(
+            {
+                "sample_dim": self.sample_dim,
+                "feature_dims": list(self.feature_dims),
+                "distribution": self.distribution,
+            }
         )
 
-    def residuals(self, pr, mu):
-        return (np.log(pr / mu)).rename("residuals")
+        return ds
+
+    @classmethod
+    def from_dataset(cls, ds: xr.Dataset, design_rule):
+        obj = cls(
+            design_rule=design_rule,
+            alpha_grid=[0.0],  # dummy; not used after fitting
+            sample_dim=ds.attrs["sample_dim"],
+            feature_dims=ds.attrs["feature_dims"],
+            distribution=ds.attrs["distribution"],
+        )
+
+        obj.models_ = {}
+
+        def _initialize_model_with_state(coef_vals, intercept_val):
+            model = obj._make_model(alpha=0.0)
+
+            n_cov = coef_vals.shape[-1]
+
+            # --- IMPORTANT: dummy fit to create sklearn internals ---
+            X_dummy = np.zeros((1, n_cov))
+            y_dummy = np.ones(1)
+
+            model.fit(X_dummy, y_dummy)
+
+            # overwrite learned parameters
+            model.coef_ = coef_vals.copy()
+            model.intercept_ = float(intercept_val)
+
+            # ensure feature count consistency
+            model.n_features_in_ = n_cov
+
+            return model
+
+        # ---- Scalar feature case ----
+        if not obj.feature_dims:
+            coef_vals = ds["coef_"].values
+            intercept_val = ds["intercept_"].values
+            obj.models_[()] = _initialize_model_with_state(
+                coef_vals, intercept_val
+            )
+            return obj
+
+        # ---- Multi-feature case ----
+        dim_sizes = [ds.sizes[d] for d in obj.feature_dims]
+
+        for idx in np.ndindex(*dim_sizes):
+            key = tuple(
+                ds.coords[dim].values[i]
+                for dim, i in zip(obj.feature_dims, idx)
+            )
+
+            coef_vals = ds["coef_"].isel(
+                dict(zip(obj.feature_dims, idx))
+            ).values
+
+            intercept_val = ds["intercept_"].isel(
+                dict(zip(obj.feature_dims, idx))
+            ).values
+
+            obj.models_[key] = _initialize_model_with_state(
+                coef_vals, intercept_val
+            )
+
+        return obj
