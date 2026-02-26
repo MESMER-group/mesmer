@@ -9,22 +9,32 @@ Functions to train monthly trend module of MESMER-M-TP
 
 import numpy as np
 import xarray as xr
-from sklearn.linear_model import GammaRegressor, Ridge
-from sklearn.model_selection import KFold
-from sklearn.base import clone
-from sklearn.metrics import mean_squared_error
+
 # import importlib
 # import itertools
 from joblib import Parallel, delayed
-from mesmer._core.utils import _ignore_warnings
+from sklearn.base import clone
+from sklearn.linear_model import GammaRegressor, Ridge
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import KFold
+
 
 class FeaturewiseRuleGLM:
     """
     Feature-wise GLM with dynamic design rule for X per feature.
     Supports multiple feature dimensions or none.
     """
-    def __init__(self, design_rule, alpha_grid, sample_dim, feature_dims=None,
-                 cv=5, distribution="gamma", n_jobs=-1):
+
+    def __init__(
+        self,
+        design_rule,
+        alpha_grid,
+        sample_dim,
+        feature_dims=None,
+        cv=5,
+        distribution="gamma",
+        n_jobs=-1,
+    ):
         self.design_rule = design_rule
         self.alpha_grid = alpha_grid
         self.sample_dim = sample_dim
@@ -44,9 +54,11 @@ class FeaturewiseRuleGLM:
 
     def _make_model(self, alpha):
         if self.distribution == "gamma":
-            return GammaRegressor(alpha=alpha, max_iter=1000, tol=1e-6, fit_intercept = True)
+            return GammaRegressor(
+                alpha=alpha, max_iter=1000, tol=1e-6, fit_intercept=True
+            )
         elif self.distribution == "lognormal":
-            return Ridge(alpha=alpha, fit_intercept = True)
+            return Ridge(alpha=alpha, fit_intercept=True)
         else:
             raise ValueError("distribution must be 'gamma' or 'lognormal'")
 
@@ -58,7 +70,9 @@ class FeaturewiseRuleGLM:
             y_np = y_flat.sel(_feature=f_idx).transpose(self.sample_dim).values
             X_np, _ = self.design_rule(f_idx, **data)  # (n_samples, n_covariates)
             if X_np.shape[0] != n_samples:
-                raise ValueError(f"Design matrix for feature {f_idx} has wrong number of samples")
+                raise ValueError(
+                    f"Design matrix for feature {f_idx} has wrong number of samples"
+                )
 
             kf = KFold(n_splits=self.cv, shuffle=True, random_state=42)
             best_score = np.inf
@@ -128,9 +142,11 @@ class FeaturewiseRuleGLM:
         mu = np.stack(preds, axis=1)  # (n_samples, n_flat_features)
 
         if not self.feature_dims:
-            return xr.DataArray(mu[:, 0],
-                                dims=(self.sample_dim,),
-                                coords={self.sample_dim: sample_coords})
+            return xr.DataArray(
+                mu[:, 0],
+                dims=(self.sample_dim,),
+                coords={self.sample_dim: sample_coords},
+            )
 
         # build unique coordinates per feature dim
         coords_dict = {self.sample_dim: sample_coords}
@@ -141,7 +157,9 @@ class FeaturewiseRuleGLM:
         shape = [mu.shape[0]] + [len(coords_dict[d]) for d in self.feature_dims]
         mu = mu.reshape(shape)
 
-        return xr.DataArray(mu, dims=[self.sample_dim] + self.feature_dims, coords=coords_dict)
+        return xr.DataArray(
+            mu, dims=[self.sample_dim] + self.feature_dims, coords=coords_dict
+        )
 
     def to_dataset(self) -> xr.Dataset:
         if not self.models_:
@@ -246,9 +264,7 @@ class FeaturewiseRuleGLM:
         if not obj.feature_dims:
             coef_vals = ds["coef_"].values
             intercept_val = ds["intercept_"].values
-            obj.models_[()] = _initialize_model_with_state(
-                coef_vals, intercept_val
-            )
+            obj.models_[()] = _initialize_model_with_state(coef_vals, intercept_val)
             return obj
 
         # ---- Multi-feature case ----
@@ -256,20 +272,15 @@ class FeaturewiseRuleGLM:
 
         for idx in np.ndindex(*dim_sizes):
             key = tuple(
-                ds.coords[dim].values[i]
-                for dim, i in zip(obj.feature_dims, idx)
+                ds.coords[dim].values[i] for dim, i in zip(obj.feature_dims, idx)
             )
 
-            coef_vals = ds["coef_"].isel(
-                dict(zip(obj.feature_dims, idx))
-            ).values
+            coef_vals = ds["coef_"].isel(dict(zip(obj.feature_dims, idx))).values
 
-            intercept_val = ds["intercept_"].isel(
-                dict(zip(obj.feature_dims, idx))
-            ).values
-
-            obj.models_[key] = _initialize_model_with_state(
-                coef_vals, intercept_val
+            intercept_val = (
+                ds["intercept_"].isel(dict(zip(obj.feature_dims, idx))).values
             )
+
+            obj.models_[key] = _initialize_model_with_state(coef_vals, intercept_val)
 
         return obj

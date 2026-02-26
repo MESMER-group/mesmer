@@ -3,9 +3,9 @@ import numpy as np
 import pytest
 import xarray as xr
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
 
 from mesmer.stats._xarray_transformers import SklearnXarrayTransformer
+
 
 # you used data from mesmer.testing for testing the power transformer,
 # but none of the test data there is suitable for these tests.
@@ -32,6 +32,7 @@ def xr_data():
         },
         name="tas",
     )
+
 
 # group_dims can be none, single, or multiple dimensions, the code should
 # handle either case correctly.
@@ -155,15 +156,13 @@ def test_feature_coord_mismatch_raises(xr_data):
         StandardScaler(),
         sample_dim="year",
         feature_dim="gridcell",
-        group_dims = ['extra', 'month']
+        group_dims=["extra", "month"],
     )
 
     tr.fit(xr_data)
 
     bad = xr_data.assign_coords(
-        gridcell=np.arange(
-            100, 100 + xr_data.sizes["gridcell"]
-        )
+        gridcell=np.arange(100, 100 + xr_data.sizes["gridcell"])
     )
 
     with pytest.raises(ValueError, match="Feature coordinates differ"):

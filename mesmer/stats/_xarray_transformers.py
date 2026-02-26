@@ -7,14 +7,14 @@
 Functions to train monthly trend module of MESMER-M-TP
 """
 
-from collections.abc import Sequence
-import itertools
 import importlib
+import itertools
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.base import clone
+from sklearn.base import BaseEstimator, TransformerMixin, clone
+
 
 class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
     """
@@ -37,6 +37,7 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
         If None, the DataArray should be 2-D and the transformer is applied to the entire
         DataArray.
     """
+
     def __init__(
         self,
         transformer,
@@ -50,11 +51,16 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
         self.group_dims = tuple(group_dims) if group_dims is not None else None
 
         if not hasattr(transformer, "fit"):
-            raise TypeError('not implemented for the selected transformer')
+            raise TypeError("not implemented for the selected transformer")
 
         if self.group_dims:
-            if self.sample_dim in self.group_dims or self.feature_dim in self.group_dims:
-                raise ValueError("sample_dim and feature_dim cannot be included in group_dims")
+            if (
+                self.sample_dim in self.group_dims
+                or self.feature_dim in self.group_dims
+            ):
+                raise ValueError(
+                    "sample_dim and feature_dim cannot be included in group_dims"
+                )
 
         # set during fit
         self._transformers = None
@@ -194,7 +200,9 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
                 raise AttributeError(f"Transformer has no attribute '{param_name}'")
             values = getattr(transformer, param_name)
             if values.ndim != 1:
-                raise ValueError(f"Parameter '{param_name}' is not 1D and cannot be mapped to feature_dim.")
+                raise ValueError(
+                    f"Parameter '{param_name}' is not 1D and cannot be mapped to feature_dim."
+                )
 
             da_out = xr.DataArray(
                 values,
@@ -226,13 +234,15 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
 
         ds = xr.Dataset(data_vars)
 
-        ds.attrs.update({
-            "transformer_class": type(self.transformer).__name__,
-            "transformer_module": type(self.transformer).__module__,
-            "sample_dim": self.sample_dim,
-            "feature_dim": self.feature_dim,
-            "group_dims": self.group_dims,
-        })
+        ds.attrs.update(
+            {
+                "transformer_class": type(self.transformer).__name__,
+                "transformer_module": type(self.transformer).__module__,
+                "sample_dim": self.sample_dim,
+                "feature_dim": self.feature_dim,
+                "group_dims": self.group_dims,
+            }
+        )
 
         # in case there is only one group dim,
         # it needs to be in the right format to ensure
