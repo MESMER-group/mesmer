@@ -13,7 +13,6 @@ import xarray as xr
 # import importlib
 # import itertools
 from joblib import Parallel, delayed
-from sklearn.base import clone
 from sklearn.linear_model import GammaRegressor, Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
