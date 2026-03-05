@@ -76,7 +76,7 @@ class FeaturewiseRuleGLM:
 
             kf = KFold(n_splits=self.cv, shuffle=True, random_state=42)
             best_score = np.inf
-            best_model = None
+            best_alpha = None
 
             for alpha in self.alpha_grid:
                 model = self._make_model(alpha)
@@ -84,7 +84,7 @@ class FeaturewiseRuleGLM:
                 converged = False
 
                 for train_idx, val_idx in kf.split(X_np):
-                    Xtr, Xval = X_np[train_idx], X_np[val_idx]
+                    Xtr, Xval = X_np[train_idx, :], X_np[val_idx, :]
                     ytr, yval = y_np[train_idx], y_np[val_idx]
 
                     if self.distribution == "lognormal":
@@ -107,12 +107,14 @@ class FeaturewiseRuleGLM:
                     score = np.mean(scores)
                     if score < best_score:
                         best_score = score
-                        best_model = clone(model)
+                        best_alpha = alpha
 
-            if best_model is None:
+            if best_alpha is None:
                 raise RuntimeError(f"No converged model for feature {f_idx}")
 
             # Refit full data
+            best_model = self._make_model(best_alpha)
+
             y_full = y_np if self.distribution == "gamma" else np.log(y_np)
             best_model.fit(X_np, y_full)
             return f_idx, best_model
