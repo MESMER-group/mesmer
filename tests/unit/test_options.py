@@ -60,7 +60,7 @@ def test_options_threads() -> None:
     with mesmer.set_options(threads=None):
         assert func() == system_default
 
-    threads = max(expected_default - 1 , 1)
+    threads = max(expected_default - 1, 1)
     with threadpoolctl.threadpool_limits(limits=threads):
         with mesmer.set_options(threads=None):
             assert func() == threads
@@ -69,4 +69,3 @@ def test_options_threads() -> None:
     # not something we can reliably detect
     with threadpoolctl.threadpool_limits(limits=os.cpu_count()):
         assert func() == expected_default
-
