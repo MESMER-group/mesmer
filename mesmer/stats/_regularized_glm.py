@@ -242,7 +242,7 @@ class FeaturewiseRuleGLM:
         obj.models_ = {}
 
         def _initialize_model_with_state(coef_vals, intercept_val):
-            model = obj._make_model(alpha=0.0)
+            model = obj._make_model(alpha=0.0)  # dummy alpha; TODO: save used alpha?
 
             n_cov = coef_vals.shape[-1]
 
