@@ -56,5 +56,16 @@ def test_options_threads() -> None:
     # many systems use os.cpu_count(), but windows on GHA does not
     system_default = threadpoolctl.threadpool_info()[0]["num_threads"]
 
+    # `threads=None` does not change the set number
     with mesmer.set_options(threads=None):
         assert func() == system_default
+
+    threads = max(expected_default - 1, 1)
+    with threadpoolctl.threadpool_limits(limits=threads):
+        with mesmer.set_options(threads=None):
+            assert func() == threads
+
+    # the limit is not applied within a decorated function - this is not desirable but
+    # not something we can reliably detect
+    with threadpoolctl.threadpool_limits(limits=os.cpu_count()):
+        assert func() == expected_default
