@@ -29,8 +29,12 @@ Deprecations
 Bug fixes
 ^^^^^^^^^
 
-- MESMER-X: Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_).
-  By `Mathias Hauser`_.
+- MESMER-X
+
+  - Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_).
+    By `Mathias Hauser`_.
+  - Avoid that :py:meth:`ConditionalDistribution.fit` results in a worse fit that the first guess (`#832 <https://github.com/MESMER-group/mesmer/pull/832>`_).
+    By `Yann Quilcaille`_.
 
 Documentation
 ^^^^^^^^^^^^^
