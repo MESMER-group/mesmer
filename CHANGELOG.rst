@@ -39,12 +39,16 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+- Document more functions and add documentation page on pre-calibrated parameters
+  (`#813 <https://github.com/MESMER-group/mesmer/pull/813>`_, and `#814 <https://github.com/MESMER-group/mesmer/pull/814>`_).
+  By `Victoria Bauer`_.
+
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
 - Refactor :py:func:`_ignore_warnings` (`#839 <https://github.com/MESMER-group/mesmer/pull/839>`_).
   By `Mathias Hauser`_.
-- Use `minimum-dependency-versions <https://github.com/xarray-contrib/minimum-dependency-versions>` to check supported
+- Use `minimum-dependency-versions <https://github.com/xarray-contrib/minimum-dependency-versions>`__ to check supported
   dependency versions (`#763 <https://github.com/MESMER-group/mesmer/pull/763>`_).
 
 v1.0.0rc1 - 26.09.2025
