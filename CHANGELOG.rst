@@ -14,13 +14,22 @@ Breaking changes
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
-  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_):
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
+  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
 
-  ================= ============= =========
-  Package           Old           New
-  ================= ============= =========
-  **xarray**        2023.04       2025.11
-  ================= ============= =========
+  ================= ========= ==========
+  Package           Old       New
+  ================= ========= ==========
+  **cartopy**           0.23       0.24
+  **dask**           2024.7     2025.2
+  **numpy**             1.26       2.1
+  **packaging**        24.1       24.2
+  **pyproj**            3.6        3.7
+  **regionmask**        0.12       0.13
+  **scikit-learn**      1.5        1.6
+  **scipy**             1.14       1.15
+  **xarray**         2025.03    2025.11
+  ================= ========= ==========
 
 Deprecations
 ^^^^^^^^^^^^

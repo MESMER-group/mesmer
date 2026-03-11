@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 
@@ -82,9 +81,7 @@ def _test_mask(func, datatype, threshold=None, **kwargs):
         # ensure scalar is not broadcast
         assert result.scalar.ndim == 0
 
-        # NOTE: DataTree attrs fixed in https://github.com/pydata/xarray/pull/10219
-        if datatype != "DataTree" or Version(xr.__version__) > Version("2025.3.1"):
-            assert result.attrs == {"key": "ds_attrs"}
+        assert result.attrs == {"key": "ds_attrs"}
 
         result_da = result.data
     else:
