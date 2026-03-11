@@ -6,21 +6,21 @@ channels:
 
 dependencies:
  - python=3.11
- - cartopy=0.23
- - dask=2024.7
+ - cartopy=0.24
+ - dask=2025.2
  - deprecated
  - filefisher=1.1
  - joblib=1.4
  - netcdf4=1.7
- - numpy=1.26
- - packaging=24.1
+ - numpy=2.1
+ - packaging=24.2
  - pandas=2.2
  - pooch=1.8
  - properscoring=0.1
- - pyproj=3.6
- - regionmask=0.12
- - scikit-learn=1.5
- - scipy=1.14
+ - pyproj=3.7
+ - regionmask=0.13
+ - scikit-learn=1.6
+ - scipy=1.15
  - shapely=2.0
  - statsmodels=0.14
  - xarray=2025.11
