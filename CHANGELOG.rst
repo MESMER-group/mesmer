@@ -42,6 +42,8 @@ Documentation
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
+- Refactor :py:func:`_ignore_warnings` (`#839 <https://github.com/MESMER-group/mesmer/pull/839>`_).
+  By `Mathias Hauser`_.
 
 v1.0.0rc1 - 26.09.2025
 ----------------------
