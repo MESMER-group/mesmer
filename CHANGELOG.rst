@@ -1,6 +1,65 @@
 Changelog
 =========
 
+v1.0.0 - unreleased
+-------------------
+
+New Features
+^^^^^^^^^^^^
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+- Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
+  By `Mathias Hauser`_.
+- The supported versions of some dependencies were changed
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
+  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
+
+  ================= ========= ==========
+  Package           Old       New
+  ================= ========= ==========
+  **cartopy**           0.23       0.24
+  **dask**           2024.7     2025.2
+  **numpy**             1.26       2.1
+  **packaging**        24.1       24.2
+  **pyproj**            3.6        3.7
+  **regionmask**        0.12       0.13
+  **scikit-learn**      1.5        1.6
+  **scipy**             1.14       1.15
+  **xarray**         2025.03    2025.11
+  ================= ========= ==========
+
+Deprecations
+^^^^^^^^^^^^
+
+
+Bug fixes
+^^^^^^^^^
+
+- MESMER-X
+
+  - Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_).
+    By `Mathias Hauser`_.
+  - Avoid that :py:meth:`ConditionalDistribution.fit` results in a worse fit that the first guess (`#832 <https://github.com/MESMER-group/mesmer/pull/832>`_).
+    By `Yann Quilcaille`_.
+
+Documentation
+^^^^^^^^^^^^^
+
+- Document more functions and add documentation page on pre-calibrated parameters
+  (`#813 <https://github.com/MESMER-group/mesmer/pull/813>`_, and `#814 <https://github.com/MESMER-group/mesmer/pull/814>`_).
+  By `Victoria Bauer`_.
+
+Internal Changes
+^^^^^^^^^^^^^^^^
+
+- Refactor :py:func:`_ignore_warnings` (`#839 <https://github.com/MESMER-group/mesmer/pull/839>`_).
+  By `Mathias Hauser`_.
+- Use `minimum-dependency-versions <https://github.com/xarray-contrib/minimum-dependency-versions>`__ to check supported
+  dependency versions (`#763 <https://github.com/MESMER-group/mesmer/pull/763>`_).
+
 v1.0.0rc1 - 26.09.2025
 ----------------------
 
@@ -58,9 +117,8 @@ Breaking changes
   `#621 <https://github.com/MESMER-group/mesmer/pull/621>`_,
   `#627 <https://github.com/MESMER-group/mesmer/pull/627>`_,
   `#683 <https://github.com/MESMER-group/mesmer/pull/683>`_,
-  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_,
-  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_, and
-  `#824 <https://github.com/MESMER-group/mesmer/pull/824>`_):
+  `#686 <https://github.com/MESMER-group/mesmer/pull/686>`_, and
+  `#740 <https://github.com/MESMER-group/mesmer/pull/740>`_):
 
   ================= ============= =========
   Package           Old           New
@@ -81,7 +139,7 @@ Breaking changes
   **scipy**         not specified 1.14
   **shapely**       not specified 2.0
   **statsmodels**   not specified 0.14
-  **xarray**        2023.04       2025.11
+  **xarray**        2023.04       2025.03
   ================= ============= =========
 
 Deprecations
@@ -148,8 +206,7 @@ This was originally done with the prototype `xarray-datatree` package. After the
   `#682 <https://github.com/MESMER-group/mesmer/pull/682>`_).
 - Add calibration integration tests for multiple scenarios and change parameter files to netcdfs with new naming structure (`#537 <https://github.com/MESMER-group/mesmer/pull/537>`_)
 - Add new integration tests for drawing realisations (`#599 <https://github.com/MESMER-group/mesmer/pull/599>`_).
-- Add helper function to merge ``DataTree`` objects - and replace it again with ``xr.merge`` once this became available in xarray v2025.11\
-  (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_, `#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
+- Add helper function to merge ``DataTree`` objects (`#701 <https://github.com/MESMER-group/mesmer/pull/701>`_).
 - PRs related to xarray and xarray-datatree:
 
   - Add `xarray-datatree` as dependency (`#554 <https://github.com/MESMER-group/mesmer/pull/554>`_)
@@ -196,8 +253,6 @@ In the release the MESMER-X functionality is integrated into the MESMER Codebase
   - avoiding frozen distributions (`#532 <https://github.com/MESMER-group/mesmer/issues/532>`_)
   - not broadcasting scalars (`#613 <https://github.com/MESMER-group/mesmer/pull/613>`_)
   - compiling the expression (`#614 <https://github.com/MESMER-group/mesmer/pull/614>`_).
-
-- Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_)
 
 By `Yann Quilcaille`_ with `Victoria Bauer`_ and `Mathias Hauser`_.
 
