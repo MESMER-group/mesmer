@@ -6,12 +6,13 @@ import pooch
 import mesmer
 
 
-def _get_remote_resource():
+def _get_remote_resource(cache_dir=None):
 
-    CACHE_DIR = pooch.os_cache("mesmer")
+    if cache_dir is None:
+        cache_dir = pooch.os_cache("mesmer")
 
     remote_resource = pooch.create(
-        path=CACHE_DIR,
+        path=cache_dir,
         # The remote data is on Github
         base_url="https://github.com/MESMER-group/mesmer/raw/{version}/data/",
         registry=_REGISTRY,
@@ -31,7 +32,7 @@ def cmip6_ng_path(*, relative=False):
         raise ModuleNotFoundError("mesmer must be installed")
 
     if not path.exists():
-        download_cmip6_ng_data()
+        _download_cmip6_ng_data()
 
         remote_resource = _get_remote_resource()
 
@@ -67,12 +68,12 @@ _REGISTRY = {
 }
 
 
-def download_cmip6_ng_data():
+def _download_cmip6_ng_data(cache_dir=None):
     """
     uses pooch to cache files
     """
 
-    remote_resource = _get_remote_resource()
+    remote_resource = _get_remote_resource(cache_dir=cache_dir)
 
     for name in _REGISTRY:
         # the file will be downloaded automatically the first time this is run.
