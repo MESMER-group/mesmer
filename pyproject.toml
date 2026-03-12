@@ -25,19 +25,19 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "dask[array,distributed] >=2024.7",
+    "dask[array,distributed] >=2025.2",
     "deprecated",
     "filefisher >=1.1",
     "joblib >=1.4",
     "netcdf4 >=1.7",
-    "numpy >=1.26",
-    "packaging >=24.1",
+    "numpy >=2.1",
+    "packaging >=24.2",
     "pandas >=2.2",
     "pooch >=1.8",
-    "pyproj >=3.6",
-    "regionmask >=0.12",
-    "scikit-learn >=1.4", # only for the tests
-    "scipy >=1.14",
+    "pyproj >=3.7",
+    "regionmask >=0.13",
+    "scikit-learn >=1.6", # only for the tests
+    "scipy >=1.15",
     "statsmodels >=0.14",
     "xarray >=2025.11", # for xr.DataTree
 ]
@@ -59,7 +59,7 @@ complete = [
   "properscoring >=0.1",
 ]
 viz = [
-    "cartopy >=0.23",
+    "cartopy >=0.24",
     "matplotlib >=3.8",
     "nc-time-axis ",
 ]
