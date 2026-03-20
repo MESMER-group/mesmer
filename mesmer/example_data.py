@@ -69,8 +69,7 @@ _REGISTRY = {
 
 
 def _download_cmip6_ng_data(cache_dir=None):
-    """downloads the cmip6_ng example data using pooch to cache the files
-    """
+    """downloads the cmip6_ng example data using pooch to cache the files"""
 
     remote_resource = _get_remote_resource(cache_dir=cache_dir)
 
