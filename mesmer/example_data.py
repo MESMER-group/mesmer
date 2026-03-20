@@ -1,4 +1,4 @@
-import importlib
+import importlib.resources
 import pathlib
 
 import pooch
@@ -23,8 +23,8 @@ def _get_remote_resource(cache_dir=None):
     return remote_resource
 
 
-def cmip6_ng_path(*, relative=False):
-    """path of the cmip6_ng example data"""
+def cmip6_ng_path(*, relative=False) -> pathlib.Path:
+    """path of the cmip6_ng example data - downloads the data if necessary"""
 
     try:
         path = importlib.resources.files("mesmer").parent / "data" / "cmip6-ng"
@@ -69,8 +69,7 @@ _REGISTRY = {
 
 
 def _download_cmip6_ng_data(cache_dir=None):
-    """
-    uses pooch to cache files
+    """downloads the cmip6_ng example data using pooch to cache the files
     """
 
     remote_resource = _get_remote_resource(cache_dir=cache_dir)
