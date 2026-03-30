@@ -55,7 +55,7 @@ jobs:
         fi
 
     - name: Create conda environment
-      uses: mamba-org/setup-micromamba@v2
+      uses: mamba-org/setup-micromamba@v3
       with:
         environment-name: mesmer-tests
         cache-downloads: true
