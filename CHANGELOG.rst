@@ -7,6 +7,9 @@ v1.0.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
+- Automatically download tutorial data if necessary (`#846 <https://github.com/MESMER-group/mesmer/pull/846>`_).
+  By `Mathias Hauser`_.
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
