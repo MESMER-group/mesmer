@@ -17,7 +17,7 @@ def make_dummy_yearly_data(freq, calendar="standard"):
     # NOTE: "YM" is a made-up "Year-Middle" freq string
     if freq == "YM":
         time = xr.date_range(start="2000", periods=5, freq="YS-JUL", calendar=calendar)
-        time = time + pd.Timedelta("14d")
+        time = time + pd.Timedelta("14D")
     else:
         time = xr.date_range(start="2000", periods=5, freq=freq, calendar=calendar)
 
@@ -35,7 +35,7 @@ def make_dummy_monthly_data(freq, calendar="standard"):
     # NOTE: "MM" is a made-up "Month-Middle" freq string
     if freq == "MM":
         time = xr.date_range(start=start, periods=periods, freq="MS", calendar=calendar)
-        time = time + pd.Timedelta("14d")
+        time = time + pd.Timedelta("14D")
     else:
         time = xr.date_range(start=start, periods=periods, freq=freq, calendar=calendar)
 
