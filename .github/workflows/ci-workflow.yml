@@ -25,17 +25,17 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.11", "3.13"]
+        python-version: ["3.11", "3.14"]
         env: [""]
         include:
           - env: "min-all-deps"
             python-version: "3.11"
             os: "ubuntu-latest"
           - env: ""
-            python-version: "3.13"
+            python-version: "3.14"
             os: "macos-latest"
           - env: ""
-            python-version: "3.13"
+            python-version: "3.14"
             os: "windows-latest"
     defaults:
       run:
@@ -113,10 +113,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.14'
           cache: 'pip' # caching pip dependencies
       - name: install deps
-        run: pip install git+https://github.com/xarray-contrib/minimum-dependency-versions
+        run: python -, pip install git+https://github.com/xarray-contrib/minimum-dependency-versions
       - name: validate minimum versions
         run: |
           minimum-versions validate --policy ci/minimum-dependency-versions-policy.yml ci/requirements/min-all-deps.yml
