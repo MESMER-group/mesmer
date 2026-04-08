@@ -9,6 +9,8 @@ New Features
 
 - Automatically download tutorial data if necessary (`#846 <https://github.com/MESMER-group/mesmer/pull/846>`_).
   By `Mathias Hauser`_.
+- Add python 3.14 to list of supported versions (`#855 <https://github.com/MESMER-group/mesmer/pull/855>`_).
+  By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
