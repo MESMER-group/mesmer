@@ -9,6 +9,8 @@ New Features
 
 - Automatically download tutorial data if necessary (`#846 <https://github.com/MESMER-group/mesmer/pull/846>`_).
   By `Mathias Hauser`_.
+- Added a function to find the n closest neighbors based on spherical distance (`#857 <https://github.com/MESMER-group/mesmer/pull/857>`_).
+  By `Sarah Schöngart`_.
 - Add python 3.14 to list of supported versions (`#855 <https://github.com/MESMER-group/mesmer/pull/855>`_).
   By `Mathias Hauser`_.
 
@@ -713,6 +715,7 @@ v0.8.0 - 2021-07-13
 
 .. _`Jonas Schwaab`: https://github.com/jschwaab
 .. _`Mathias Hauser`: https://github.com/mathause
+.. _`Sarah Schöngart`: https://github.com/sarasita
+.. _`Victoria Bauer`: https://github.com/veni-vidi-vici-dormivi
 .. _`Yann Quilcaille`: https://github.com/yquilcaille
 .. _`Zeb Nicholls`: https://github.com/znicholls
-.. _`Victoria Bauer`: https://github.com/veni-vidi-vici-dormivi
