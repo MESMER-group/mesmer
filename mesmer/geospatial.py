@@ -8,7 +8,6 @@ import pyproj
 import xarray as xr
 from sklearn.metrics.pairwise import haversine_distances
 
-
 from mesmer._core.utils import _create_equal_dim_names
 
 
