@@ -204,6 +204,7 @@ def test_closest_neighbors_errors():
     ),
 )
 def test_closest_neighbors_trivial(lon, lat):
+    # gridpoints in a line
 
     lon = np.array(lon)
     lat = np.array(lat)
@@ -230,6 +231,7 @@ def test_closest_neighbors_trivial(lon, lat):
 
 
 def test_closest_neighbors():
+    # gridpoints at higher latitude are closer
 
     lon = np.array([0, 5, 0, 5])
     lat = np.array([40, 40, 45, 45])
