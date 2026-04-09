@@ -5,11 +5,17 @@ build:
     post_checkout:
       # unshallow so the version works
       - git fetch --unshallow
+    pre_create_environment:
+        - asdf plugin add uv
+        - asdf install uv latest
+        - asdf global uv latest
+    create_environment:
+        - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     pre_install:
         # see https://github.com/readthedocs/readthedocs.org/issues/8201
       - git update-index --assume-unchanged docs/source/conf.py
-      # editable install mesmer with docs extras
-      - python -m pip install -e .[docs]
+    install:
+        - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --extras docs
   tools:
     python: "3.14"
 sphinx:
