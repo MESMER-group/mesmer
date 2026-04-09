@@ -69,6 +69,8 @@ Internal Changes
   By `Mathias Hauser`_.
 - Use python 3.14 and ubuntu 24.04 on readthedocs (`#860 <https://github.com/MESMER-group/mesmer/pull/860>`_).
   By `Mathias Hauser`_.
+- Install dependencies on readthedocs with uv to speed up the docs build  (`#861 <https://github.com/MESMER-group/mesmer/pull/861>`_).
+  By `Mathias Hauser`_.
 
 v1.0.0rc1 - 26.09.2025
 ----------------------
