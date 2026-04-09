@@ -62,8 +62,15 @@ Internal Changes
 
 - Refactor :py:func:`_ignore_warnings` (`#839 <https://github.com/MESMER-group/mesmer/pull/839>`_).
   By `Mathias Hauser`_.
+- Fix upcoming failure in a :py:class:`PowerTransformer` test case due to a change in scikit-learn (`#858 <https://github.com/MESMER-group/mesmer/pull/858>`_).
+  By `Mathias Hauser`_.
 - Use `minimum-dependency-versions <https://github.com/xarray-contrib/minimum-dependency-versions>`__ to check supported
   dependency versions (`#763 <https://github.com/MESMER-group/mesmer/pull/763>`_).
+  By `Mathias Hauser`_.
+- Use python 3.14 and ubuntu 24.04 on readthedocs (`#860 <https://github.com/MESMER-group/mesmer/pull/860>`_).
+  By `Mathias Hauser`_.
+- Install dependencies on readthedocs with uv to speed up the docs build  (`#861 <https://github.com/MESMER-group/mesmer/pull/861>`_).
+  By `Mathias Hauser`_.
 
 v1.0.0rc1 - 26.09.2025
 ----------------------
