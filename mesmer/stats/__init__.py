@@ -17,11 +17,6 @@ from mesmer.stats._localized_covariance import (
     find_localized_empirical_covariance_monthly,
 )
 from mesmer.stats._power_transformer import YeoJohnsonTransformer
-from mesmer.stats._principal_component_decomposition import (
-    fit_principal_components,
-    inverse_transform_principal_components,
-    transform_principal_components,
-)
 from mesmer.stats._regularized_glm import FeaturewiseRuleGLM
 from mesmer.stats._smoothing import lowess
 from mesmer.stats._xarray_kde import GroupedKDEXarray
@@ -58,7 +53,4 @@ __all__ = [
     "GroupedKDEXarray",
     "XarrayPipeline",
     "SklearnXarrayTransformer",
-    "fit_principal_components",
-    "inverse_transform_principal_components",
-    "transform_principal_components",
 ]
