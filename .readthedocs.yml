@@ -1,6 +1,6 @@
 version: 2
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   jobs:
     post_checkout:
       # unshallow so the version works
@@ -11,7 +11,7 @@ build:
       # editable install mesmer with docs extras
       - python -m pip install -e .[docs]
   tools:
-    python: "3.12"
+    python: "3.14"
 sphinx:
   configuration: docs/source/conf.py
   fail_on_warning: true
