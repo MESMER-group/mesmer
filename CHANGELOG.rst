@@ -62,6 +62,8 @@ Internal Changes
 
 - Refactor :py:func:`_ignore_warnings` (`#839 <https://github.com/MESMER-group/mesmer/pull/839>`_).
   By `Mathias Hauser`_.
+- Fix upcoming failure in a :py:class:`PowerTransformer` test case due to a change in scikit-learn (`#858 <https://github.com/MESMER-group/mesmer/pull/858>`_).
+  By `Mathias Hauser`_.
 - Use `minimum-dependency-versions <https://github.com/xarray-contrib/minimum-dependency-versions>`__ to check supported
   dependency versions (`#763 <https://github.com/MESMER-group/mesmer/pull/763>`_).
 
