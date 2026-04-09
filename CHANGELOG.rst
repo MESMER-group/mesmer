@@ -64,6 +64,9 @@ Internal Changes
   By `Mathias Hauser`_.
 - Use `minimum-dependency-versions <https://github.com/xarray-contrib/minimum-dependency-versions>`__ to check supported
   dependency versions (`#763 <https://github.com/MESMER-group/mesmer/pull/763>`_).
+  By `Mathias Hauser`_.
+- Use python 3.14 and ubuntu 24.04 on readthedocs (`#860 <https://github.com/MESMER-group/mesmer/pull/860>`_).
+  By `Mathias Hauser`_.
 
 v1.0.0rc1 - 26.09.2025
 ----------------------
