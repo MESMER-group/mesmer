@@ -6,16 +6,16 @@ build:
       # unshallow so the version works
       - git fetch --unshallow
     pre_create_environment:
-        - asdf plugin add uv
-        - asdf install uv latest
-        - asdf global uv latest
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
     create_environment:
-        - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
+      - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     pre_install:
-        # see https://github.com/readthedocs/readthedocs.org/issues/8201
+      # see https://github.com/readthedocs/readthedocs.org/issues/8201
       - git update-index --assume-unchanged docs/source/conf.py
     install:
-        - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --extras docs
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --extras docs
   tools:
     python: "3.14"
 sphinx:
