@@ -16,7 +16,7 @@ build:
       - git update-index --assume-unchanged docs/source/conf.py
     install:
       # TODO: enable --frozen if defining a uv.lock file
-      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --extra docs
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --group docs
   tools:
     python: "3.14"
 sphinx:

@@ -64,6 +64,8 @@ viz = [
     "matplotlib >=3.8",
     "nc-time-axis ",
 ]
+
+[dependency-groups]
 docs = [
     "mesmer-emulator[viz]",
     "ipython",
@@ -79,7 +81,9 @@ tests = [
     "pytest",
 ]
 dev = [
-    "mesmer-emulator[complete, docs, tests]",
+    "mesmer-emulator[complete]",
+    {include-group = "docs"},
+    {include-group = "tests"},
     "black !=23",
     "ruff",
 ]
