@@ -18,6 +18,8 @@ Breaking changes
 - Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
   By `Mathias Hauser`_.
+- Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
+  By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
   `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
