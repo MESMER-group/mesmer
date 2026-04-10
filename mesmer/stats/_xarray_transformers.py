@@ -9,16 +9,15 @@ Functions to train monthly trend module of MESMER-M-TP
 
 import importlib
 import itertools
+import json
 from collections.abc import Sequence
 
 import numpy as np
+import sklearn
 import xarray as xr
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-
-
-import sklearn
 from sklearn.preprocessing import PowerTransformer, StandardScaler
-import json
+
 
 class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
     """
@@ -200,7 +199,7 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
         for key, transformer in self._transformers.items():
             # handle internal scaler if param_name starts with "_scaler"
             if param_name.startswith("_scaler") and hasattr(transformer, "_scaler"):
-                values = getattr(transformer._scaler, param_name[len("_scaler_"):])
+                values = getattr(transformer._scaler, param_name[len("_scaler_") :])
             else:
                 values = getattr(transformer, param_name)
 
@@ -245,14 +244,18 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
                     data_vars[f"_scaler_{attr}"] = da
 
         ds = xr.Dataset(data_vars)
-        ds.attrs.update({
-            "transformer_class": type(self.transformer).__name__,
-            "transformer_module": type(self.transformer).__module__,
-            "transformer_kwargs": json.dumps(self.transformer.get_params()),
-            "sample_dim": self.sample_dim,
-            "feature_dim": self.feature_dim,
-            "group_dims": list(self.group_dims) if self.group_dims is not None else None,
-        })
+        ds.attrs.update(
+            {
+                "transformer_class": type(self.transformer).__name__,
+                "transformer_module": type(self.transformer).__module__,
+                "transformer_kwargs": json.dumps(self.transformer.get_params()),
+                "sample_dim": self.sample_dim,
+                "feature_dim": self.feature_dim,
+                "group_dims": (
+                    list(self.group_dims) if self.group_dims is not None else None
+                ),
+            }
+        )
         return ds
 
     @classmethod
@@ -272,14 +275,18 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
         else:
             group_dims = tuple(group_dims)
 
-        obj = cls(transformer=transformer_cls(**kwargs),
-                  sample_dim=ds.attrs["sample_dim"],
-                  feature_dim=ds.attrs["feature_dim"],
-                  group_dims=group_dims)
+        obj = cls(
+            transformer=transformer_cls(**kwargs),
+            sample_dim=ds.attrs["sample_dim"],
+            feature_dim=ds.attrs["feature_dim"],
+            group_dims=group_dims,
+        )
 
         obj._transformers = {}
-        keys = [None] if obj.group_dims is None else list(
-            itertools.product(*[ds.coords[d].values for d in obj.group_dims])
+        keys = (
+            [None]
+            if obj.group_dims is None
+            else list(itertools.product(*[ds.coords[d].values for d in obj.group_dims]))
         )
 
         for key in keys:
@@ -294,9 +301,12 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
 
                 # handle internal scaler attributes
                 if var.startswith("_scaler_"):
-                    if not hasattr(transformer, "_scaler") or transformer._scaler is None:
+                    if (
+                        not hasattr(transformer, "_scaler")
+                        or transformer._scaler is None
+                    ):
                         transformer._scaler = StandardScaler()
-                    setattr(transformer._scaler, var[len("_scaler_"):], values.values)
+                    setattr(transformer._scaler, var[len("_scaler_") :], values.values)
                 else:
                     setattr(transformer, var, values.values)
 
@@ -314,4 +324,3 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
 
         obj._feature_coords = ds[obj.feature_dim]
         return obj
-
