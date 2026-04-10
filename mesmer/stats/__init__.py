@@ -20,9 +20,9 @@ from mesmer.stats._power_transformer import YeoJohnsonTransformer
 from mesmer.stats._regularized_glm import FeaturewiseRuleGLM
 from mesmer.stats._smoothing import lowess
 from mesmer.stats._xarray_kde import GroupedKDEXarray
+from mesmer.stats._xarray_pca import SklearnXarrayPCA
 from mesmer.stats._xarray_pipelines import XarrayPipeline
 from mesmer.stats._xarray_transformers import SklearnXarrayTransformer
-from mesmer.stats._xarray_pca import SklearnXarrayPCA
 
 __all__ = [
     # auto regression

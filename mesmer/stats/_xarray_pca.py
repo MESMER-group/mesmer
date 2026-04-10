@@ -1,6 +1,6 @@
-from collections.abc import Sequence
-import itertools
 import importlib
+import itertools
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -41,7 +41,10 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
         self.group_dims = tuple(group_dims) if group_dims is not None else None
 
         if self.group_dims:
-            if self.sample_dim in self.group_dims or self.feature_dim in self.group_dims:
+            if (
+                self.sample_dim in self.group_dims
+                or self.feature_dim in self.group_dims
+            ):
                 raise ValueError("sample_dim and feature_dim cannot be in group_dims")
 
         self._pcas = None
@@ -277,14 +280,16 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
 
         ds = xr.Dataset(data_vars)
 
-        ds.attrs.update({
-            "pca_class": type(self.pca).__name__,
-            "pca_module": type(self.pca).__module__,
-            "sample_dim": self.sample_dim,
-            "feature_dim": self.feature_dim,
-            "component_dim": self.component_dim,
-            "group_dims": list(self.group_dims) if self.group_dims else None,
-        })
+        ds.attrs.update(
+            {
+                "pca_class": type(self.pca).__name__,
+                "pca_module": type(self.pca).__module__,
+                "sample_dim": self.sample_dim,
+                "feature_dim": self.feature_dim,
+                "component_dim": self.component_dim,
+                "group_dims": list(self.group_dims) if self.group_dims else None,
+            }
+        )
 
         return ds
 
@@ -298,7 +303,7 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
         if group_dims is None:
             group_dims = None
         elif isinstance(group_dims, str):
-            group_dims = (group_dims,)   # critical fix
+            group_dims = (group_dims,)  # critical fix
         else:
             group_dims = tuple(group_dims)
 
@@ -338,7 +343,11 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
                 elif var == "mean_":
                     values = values.transpose(obj.feature_dim)
 
-                elif var in ("explained_variance_", "explained_variance_ratio_", "singular_values_"):
+                elif var in (
+                    "explained_variance_",
+                    "explained_variance_ratio_",
+                    "singular_values_",
+                ):
                     values = values.transpose(obj.component_dim)
                 # now safe
                 setattr(pca, var, values.values)
