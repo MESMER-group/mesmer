@@ -22,6 +22,7 @@ from mesmer.stats._smoothing import lowess
 from mesmer.stats._xarray_kde import GroupedKDEXarray
 from mesmer.stats._xarray_pipelines import XarrayPipeline
 from mesmer.stats._xarray_transformers import SklearnXarrayTransformer
+from mesmer.stats._xarray_pca import SklearnXarrayPCA
 
 __all__ = [
     # auto regression
@@ -53,4 +54,5 @@ __all__ = [
     "GroupedKDEXarray",
     "XarrayPipeline",
     "SklearnXarrayTransformer",
+    "SklearnXarrayPCA",
 ]
