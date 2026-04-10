@@ -11,11 +11,16 @@ from sklearn.decomposition import PCA
 class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
     """
     Apply PCA to an xarray.DataArray with optional grouping.
+    Note: n_components can in theory be a fractional (As per sklearn)
+          however, the group-based implementation doesn't support
+          this yet as it would require filling 'missing' components
+          with NaN's
 
     Parameters
-    ----------
+    ---------
+
     pca : sklearn.decomposition.PCA
-        PCA instance (can use n_components as int or float).
+        PCA instance (can use n_components only as int).
     sample_dim : str
         Sample dimension.
     feature_dim : str
@@ -167,12 +172,12 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
     # combine helper (handles variable n_components)
     # -------------------------
     def _combine_groups(self, out_list):
-        # if component_dim is not present, just combine directly
+        # if component_dim is not present, combine directly
         if self.component_dim not in out_list[0].dims:
             out = xr.combine_by_coords(out_list)
             return out.transpose(*out.dims)
 
-        # otherwise: existing logic
+        # otherwise:
         max_comp = max(arr.sizes[self.component_dim] for arr in out_list)
 
         aligned = []
@@ -201,7 +206,7 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
 
             values = getattr(pca, param_name)
 
-            # --- explicit handling of PCA attributes ---
+            # handling of PCA attributes
             if param_name == "components_":
                 dims = (self.component_dim, self.feature_dim)
                 coords = {
@@ -270,7 +275,6 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
 
             data_vars[attr] = self.get_params_as_xarray(attr)
 
-        # optional → best effort
         for attr in optional_attrs:
             if hasattr(example, attr):
                 try:
@@ -336,7 +340,7 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
                     if sel:
                         values = values.sel(sel)
 
-                # --- enforce correct dimension order ---
+                # enforce correct dimension order
                 if var == "components_":
                     values = values.transpose(obj.component_dim, obj.feature_dim)
 
@@ -349,10 +353,9 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
                     "singular_values_",
                 ):
                     values = values.transpose(obj.component_dim)
-                # now safe
                 setattr(pca, var, values.values)
 
-            # critical reconstruction
+            # reconstruction
             if hasattr(pca, "components_"):
                 pca.n_components_ = pca.components_.shape[0]
                 pca.n_features_in_ = pca.components_.shape[1]
@@ -363,7 +366,6 @@ class SklearnXarrayPCA(BaseEstimator, TransformerMixin):
 
             obj._pcas[key] = pca
 
-        # FIX HERE
         obj._feature_coords = ds.coords[obj.feature_dim]
 
         return obj
