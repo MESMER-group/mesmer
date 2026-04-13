@@ -9,11 +9,14 @@ Functions to train monthly trend module of MESMER-M-TP
 
 import importlib
 import itertools
+import json
 from collections.abc import Sequence
 
 import numpy as np
+import sklearn
 import xarray as xr
 from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.preprocessing import PowerTransformer, StandardScaler
 
 
 class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
@@ -189,16 +192,17 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
         return self.transform(da)
 
     def get_params_as_xarray(self, param_name: str) -> xr.DataArray:
-        """
-        Return a fitted transformer parameter as an xarray.DataArray.
-        """
+        """Return fitted transformer parameter as xarray.DataArray."""
         self._check_fitted()
         out_list = []
 
         for key, transformer in self._transformers.items():
-            if not hasattr(transformer, param_name):
-                raise AttributeError(f"Transformer has no attribute '{param_name}'")
-            values = getattr(transformer, param_name)
+            # handle internal scaler if param_name starts with "_scaler"
+            if param_name.startswith("_scaler") and hasattr(transformer, "_scaler"):
+                values = getattr(transformer._scaler, param_name[len("_scaler_") :])
+            else:
+                values = getattr(transformer, param_name)
+
             if values.ndim != 1:
                 raise ValueError(
                     f"Parameter '{param_name}' is not 1D and cannot be mapped to feature_dim."
@@ -219,50 +223,50 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
         return xr.combine_by_coords(out_list) if len(out_list) > 1 else out_list[0]
 
     def to_dataset(self) -> xr.Dataset:
-        "Storing xarray transformer as a dataset"
+        """Store transformer as Dataset (all fitted attributes)."""
         self._check_fitted()
-
         data_vars = {}
 
+        # store all fitted parameters ending with "_"
         for param in dir(next(iter(self._transformers.values()))):
             if param.endswith("_"):
                 try:
                     da = self.get_params_as_xarray(param)
                     data_vars[param] = da
                 except Exception:
-                    pass  # skip non-1D params
+                    pass
+
+        # for PowerTransformer, also store _scaler attributes
+        for key, transformer in self._transformers.items():
+            if isinstance(transformer, PowerTransformer) and transformer.standardize:
+                for attr in ["mean_", "scale_"]:
+                    da = self.get_params_as_xarray(f"_scaler_{attr}")
+                    data_vars[f"_scaler_{attr}"] = da
 
         ds = xr.Dataset(data_vars)
-
         ds.attrs.update(
             {
                 "transformer_class": type(self.transformer).__name__,
                 "transformer_module": type(self.transformer).__module__,
+                "transformer_kwargs": json.dumps(self.transformer.get_params()),
                 "sample_dim": self.sample_dim,
                 "feature_dim": self.feature_dim,
-                "group_dims": self.group_dims,
+                "group_dims": (
+                    list(self.group_dims) if self.group_dims is not None else None
+                ),
             }
         )
-
-        # in case there is only one group dim,
-        # it needs to be in the right format to ensure
-        # iteration works
-        ds.attrs["group_dims"] = (
-            list(self.group_dims) if self.group_dims is not None else None
-        )
-
         return ds
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset):
-        "Initalizing xarray transformer from a stored dataset"
+        """Restore transformer from Dataset."""
         module = importlib.import_module(ds.attrs["transformer_module"])
         transformer_cls = getattr(module, ds.attrs["transformer_class"])
 
-        # this is needed to format group_dims correctly
-        # ensuring there can be none, one or multiple
-        # group_dims unfortunately created a bit of
-        # overhead
+        kwargs_str = ds.attrs.get("transformer_kwargs", "{}")
+        kwargs = json.loads(kwargs_str)
+
         group_dims = ds.attrs.get("group_dims")
         if group_dims is None:
             group_dims = None
@@ -272,34 +276,51 @@ class SklearnXarrayTransformer(BaseEstimator, TransformerMixin):
             group_dims = tuple(group_dims)
 
         obj = cls(
-            transformer=transformer_cls(),
+            transformer=transformer_cls(**kwargs),
             sample_dim=ds.attrs["sample_dim"],
             feature_dim=ds.attrs["feature_dim"],
             group_dims=group_dims,
         )
 
         obj._transformers = {}
-
-        # reconstruct transformers per group
-        if obj.group_dims is None:
-            keys = [None]
-        else:
-            group_coords = [ds.coords[d].values for d in obj.group_dims]
-            keys = list(itertools.product(*group_coords))
+        keys = (
+            [None]
+            if obj.group_dims is None
+            else list(itertools.product(*[ds.coords[d].values for d in obj.group_dims]))
+        )
 
         for key in keys:
-            transformer = transformer_cls()
+            transformer = transformer_cls(**kwargs)
 
+            # set all fitted attributes
             for var in ds.data_vars:
                 values = ds[var]
                 if key is not None:
                     sel_dict = dict(zip(obj.group_dims, key))
                     values = values.sel(sel_dict)
 
-                setattr(transformer, var, values.values)
+                # handle internal scaler attributes
+                if var.startswith("_scaler_"):
+                    if (
+                        not hasattr(transformer, "_scaler")
+                        or transformer._scaler is None
+                    ):
+                        transformer._scaler = StandardScaler()
+                    setattr(transformer._scaler, var[len("_scaler_") :], values.values)
+                else:
+                    setattr(transformer, var, values.values)
+
+            # PowerTransformer-specific fixes
+            if isinstance(transformer, PowerTransformer):
+                transformer.n_features_in_ = transformer.lambdas_.shape[0]
+                transformer._sklearn_version = sklearn.__version__
+                if transformer.standardize and not hasattr(transformer, "_scaler"):
+                    transformer._scaler = StandardScaler()
+                    transformer._scaler.mean_ = ds["_scaler_mean_"].values
+                    transformer._scaler.scale_ = ds["_scaler_scale_"].values
+                    transformer._scaler.n_features_in_ = transformer.n_features_in_
 
             obj._transformers[key] = transformer
 
         obj._feature_coords = ds[obj.feature_dim]
-
         return obj
