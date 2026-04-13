@@ -11,6 +11,8 @@ New Features
   By `Mathias Hauser`_.
 - Add python 3.14 to list of supported versions (`#855 <https://github.com/MESMER-group/mesmer/pull/855>`_).
   By `Mathias Hauser`_.
+- Warn when a combination of ``lambda`` values and data leads to an invalid inverse Yeo-Johnson transformation
+  (`#859 <https://github.com/MESMER-group/mesmer/pull/859>`_). By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
