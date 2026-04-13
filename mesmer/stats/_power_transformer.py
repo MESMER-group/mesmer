@@ -105,6 +105,7 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
     sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
     sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
+    # see https://github.com/MESMER-group/mesmer/issues/859
     with warnings.catch_warnings(record=True) as captured_warnings:
         # assign values for the four cases
         transf[sel_a] = np.expm1(data[sel_a])
