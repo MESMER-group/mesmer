@@ -9,14 +9,20 @@ New Features
 
 - Automatically download tutorial data if necessary (`#846 <https://github.com/MESMER-group/mesmer/pull/846>`_).
   By `Mathias Hauser`_.
+- Added a function to find the n closest neighbors based on spherical distance (`#857 <https://github.com/MESMER-group/mesmer/pull/857>`_).
+  By `Sarah Schöngart`_.
 - Add python 3.14 to list of supported versions (`#855 <https://github.com/MESMER-group/mesmer/pull/855>`_).
   By `Mathias Hauser`_.
+- Warn when a combination of ``lambda`` values and data leads to an invalid inverse Yeo-Johnson transformation
+  (`#859 <https://github.com/MESMER-group/mesmer/pull/859>`_). By `Mathias Hauser`_.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
 - Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
+  By `Mathias Hauser`_.
+- Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
@@ -720,6 +726,7 @@ v0.8.0 - 2021-07-13
 
 .. _`Jonas Schwaab`: https://github.com/jschwaab
 .. _`Mathias Hauser`: https://github.com/mathause
+.. _`Sarah Schöngart`: https://github.com/sarasita
+.. _`Victoria Bauer`: https://github.com/veni-vidi-vici-dormivi
 .. _`Yann Quilcaille`: https://github.com/yquilcaille
 .. _`Zeb Nicholls`: https://github.com/znicholls
-.. _`Victoria Bauer`: https://github.com/veni-vidi-vici-dormivi

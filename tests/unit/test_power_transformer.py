@@ -208,6 +208,14 @@ def test_transform_roundtrip_special_cases(value, lmbda, lambda_delta):
     np.testing.assert_allclose(result, x)
 
 
+@pytest.mark.parametrize("value, lmbda", ((-2.0, 3.0), (-1.0, 3.0), (1.0, -3.0)))
+def test_yeo_johnson_inverse_transform_np(value, lmbda):
+
+    msg = "The Yeo-Johnson inverse transformation yielded nan values"
+    with pytest.warns(match=msg):
+        _yeo_johnson_inverse_transform_np(np.array([value]), lambdas=np.array([lmbda]))
+
+
 @pytest.mark.parametrize("lmbda", (-2, -1, 0, 1, 2))
 def test_yeo_johnson_inverse_transform_np_sklearn(lmbda):
     # test if our inverse power transform is the same as sklearn's for constant lambda

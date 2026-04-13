@@ -6,6 +6,7 @@
 import numpy as np
 import pyproj
 import xarray as xr
+from sklearn.metrics.pairwise import haversine_distances
 
 from mesmer._core.utils import _create_equal_dim_names
 
@@ -92,3 +93,58 @@ def _geodist_exact(lon, lat):
     geodist += np.transpose(geodist)
 
     return geodist
+
+
+def closest_neighbors(lon: xr.DataArray, lat: xr.DataArray, n_closest: int):
+    """n closest neighbors based on spherical distance
+
+    Given an array of (lat, lon) coordinates, this function computes the pairwise
+    distance between all coordinate locations in the array and then returns an array
+    of indices that gives the indices of the n_closest locations
+
+    Parameters
+    ----------
+    coordinate_path: str or Path
+        String or pahtlib.Path object pointing to an .npy file that contains an array of shape (n_locations, 2)
+        tghat contains (lat, lon) coordinates for all n_locations
+    n_closest: int
+        number of closest locations to compute
+
+    Returns
+    -------
+    closest_neighbors : xr.DataArray
+        Contains the indices of the n_closest coordinates for each location. That is,
+        for the location with index i, i.e. coords[i], the coordinates of the n_closest
+        locations are given by coords[selected_loc_[i]]
+
+    """
+
+    if lon.dims != lat.dims:
+        raise ValueError(
+            f"lon and lat have different dims: {lon.dims} vs. {lat.dims}. Expected "
+            "equally named dimensions from a stacked array"
+        )
+
+    if lon.ndim != 1:
+        raise ValueError("Expected 1D data - i.e. stacked longitude and latitude")
+
+    coords = np.column_stack([lat.values, lon.values])
+    coords = np.deg2rad(coords)
+
+    # multiply by 6371000 / 1000 to convert to km
+    dist = haversine_distances(coords, coords)
+    selected_loc = np.argsort(dist, axis=1)[:, :n_closest]
+
+    (dim,) = lon.dims
+
+    closest_neighbors = xr.DataArray(
+        selected_loc,
+        dims=(dim, "closest_gridcells"),
+        coords={
+            lon.name: lon,
+            lat.name: lat,
+            "closest_gridcells": np.arange(n_closest),
+        },
+    )
+
+    return closest_neighbors

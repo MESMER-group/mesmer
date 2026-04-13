@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from mesmer.geospatial import geodist_exact
+from mesmer.geospatial import closest_neighbors, geodist_exact
 from mesmer.stats import gaspari_cohn, gaspari_cohn_correlation_matrices
 from mesmer.testing import assert_dict_allclose
 
@@ -171,3 +171,87 @@ def test_gaspari_cohn_correlation_matrices(localisation_radii, as_dataarray):
     expected = {lr: gaspari_cohn(geodist / lr) for lr in localisation_radii}
 
     assert_dict_allclose(expected, result)
+
+
+def test_closest_neighbors_errors():
+
+    lon = np.array([-180, 0, 3])
+    lat = np.array([0, 0, 5])
+
+    lon = xr.DataArray(lon, dims="gp", coords={"lon": ("gp", lon)})
+    lat = xr.DataArray(lat, dims="gridpoint", coords={"lat": ("gridpoint", lat)})
+
+    with pytest.raises(ValueError, match="lon and lat have different dims"):
+        closest_neighbors(lon, lat, 3)
+
+    lon = np.arange(0, 31, 5)
+    lat = np.arange(-45, 46, 30)
+    lat, lon = np.meshgrid(lat, lon)
+
+    lon = xr.DataArray(lon, dims=("lat", "lon"))
+    lat = xr.DataArray(lat, dims=("lat", "lon"))
+
+    with pytest.raises(ValueError, match="Expected 1D data"):
+        closest_neighbors(lon, lat, 3)
+
+
+@pytest.mark.parametrize(
+    "lon, lat",
+    (
+        ([0, 0, 0], [0, 1.1, 2]),
+        ([0, 1.1, 2], [0, 0, 0]),
+        ([0, 1.1, 2], [0, 1.1, 2]),
+    ),
+)
+def test_closest_neighbors_trivial(lon, lat):
+    # gridpoints in a line
+
+    lon = np.array(lon)
+    lat = np.array(lat)
+
+    lon = xr.DataArray(
+        lon, dims="gridpoint", coords={"lon": ("gridpoint", lon)}, name="lon"
+    )
+    lat = xr.DataArray(
+        lat, dims="gridpoint", coords={"lat": ("gridpoint", lat)}, name="lat"
+    )
+
+    n = 3
+    result = closest_neighbors(lon, lat, n)
+
+    expected = np.array([[0, 1, 2], [1, 2, 0], [2, 1, 0]])
+
+    expected = xr.DataArray(
+        expected,
+        dims=("gridpoint", "closest_gridcells"),
+        coords={"lon": lon, "lat": lat, "closest_gridcells": np.arange(n)},
+    )
+
+    xr.testing.assert_equal(result, expected)
+
+
+def test_closest_neighbors():
+    # gridpoints at higher latitude are closer
+
+    lon = np.array([0, 5, 0, 5])
+    lat = np.array([40, 40, 45, 45])
+
+    lon = xr.DataArray(
+        lon, dims="gridpoint", coords={"lon": ("gridpoint", lon)}, name="lon"
+    )
+    lat = xr.DataArray(
+        lat, dims="gridpoint", coords={"lat": ("gridpoint", lat)}, name="lat"
+    )
+
+    n = 4
+    result = closest_neighbors(lon, lat, n)
+
+    expected = np.array([[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]])
+
+    expected = xr.DataArray(
+        expected,
+        dims=("gridpoint", "closest_gridcells"),
+        coords={"lon": lon, "lat": lat, "closest_gridcells": np.arange(n)},
+    )
+
+    xr.testing.assert_equal(result, expected)
