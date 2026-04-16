@@ -20,24 +20,25 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "dask[array,distributed] >=2024.7",
+    "dask[array,distributed] >=2025.2",
     "deprecated",
     "filefisher >=1.1",
     "joblib >=1.4",
-    "netcdf4 >=1.7, != 1.7.4", # https://github.com/Unidata/netcdf4-python/issues/1461
-    "numpy >=1.26",
-    "packaging >=24.1",
+    "netcdf4 >=1.7",
+    "numpy >=2.1",
+    "packaging >=24.2",
     "pandas >=2.2",
     "pooch >=1.8",
-    "pyproj >=3.6",
-    "regionmask >=0.12",
-    "scikit-learn >=1.4", # only for the tests
-    "scipy >=1.14",
+    "pyproj >=3.7",
+    "regionmask >=0.13",
+    "scikit-learn >=1.6",
+    "scipy >=1.15",
     "statsmodels >=0.14",
     "xarray >=2025.11", # for xr.DataTree
 ]
@@ -59,10 +60,12 @@ complete = [
   "properscoring >=0.1",
 ]
 viz = [
-    "cartopy >=0.23",
+    "cartopy >=0.24",
     "matplotlib >=3.8",
     "nc-time-axis ",
 ]
+
+[dependency-groups]
 docs = [
     "mesmer-emulator[viz]",
     "ipython",
@@ -78,7 +81,9 @@ tests = [
     "pytest",
 ]
 dev = [
-    "mesmer-emulator[complete, docs, tests]",
+    "mesmer-emulator[complete]",
+    {include-group = "docs"},
+    {include-group = "tests"},
     "black !=23",
     "ruff",
 ]

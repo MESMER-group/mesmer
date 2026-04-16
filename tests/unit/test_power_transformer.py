@@ -208,18 +208,29 @@ def test_transform_roundtrip_special_cases(value, lmbda, lambda_delta):
     np.testing.assert_allclose(result, x)
 
 
-def test_yeo_johnson_inverse_transform_np_sklearn():
+@pytest.mark.parametrize("value, lmbda", ((-2.0, 3.0), (-1.0, 3.0), (1.0, -3.0)))
+def test_yeo_johnson_inverse_transform_np(value, lmbda):
+
+    msg = "The Yeo-Johnson inverse transformation yielded nan values"
+    with pytest.warns(match=msg):
+        _yeo_johnson_inverse_transform_np(np.array([value]), lambdas=np.array([lmbda]))
+
+
+@pytest.mark.parametrize("lmbda", (-2, -1, 0, 1, 2))
+def test_yeo_johnson_inverse_transform_np_sklearn(lmbda):
     # test if our inverse power transform is the same as sklearn's for constant lambda
     np.random.seed(0)
     n_ts = 20
 
-    lambdas = np.tile([2.0], (n_ts))
+    lambdas = np.full(n_ts, fill_value=lmbda)
 
-    monthly_residuals = sp.stats.skewnorm.rvs(2, size=n_ts)
+    monthly_residuals = sp.stats.skewnorm.rvs(lmbda, size=n_ts)
     result = _yeo_johnson_inverse_transform_np(monthly_residuals, lambdas)
 
     pt_sklearn = PowerTransformer(method="yeo-johnson", standardize=False)
-    pt_sklearn.lambdas_ = np.array([2.0])
+    # manually set the pt params
+    pt_sklearn.lambdas_ = np.array([lmbda])
+    pt_sklearn.n_features_in_ = 1
     expected = pt_sklearn.inverse_transform(monthly_residuals.reshape(-1, 1))
 
     # only approximately the same due to #494

@@ -10,9 +10,9 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-if Version(xr.__version__) < Version("2025.03"):
+if Version(xr.__version__) < Version("2025.11"):
     raise ImportError(
-        f"xarray version {xr.__version__} not supported - please upgrade to v2025.03 ("
+        f"xarray version {xr.__version__} not supported - please upgrade to v2025.11 ("
         "or later)"
     )
 

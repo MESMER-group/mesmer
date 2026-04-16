@@ -33,13 +33,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.14"]
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Set up conda environment
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: environment.yml
           environment-name: mesmer-tests

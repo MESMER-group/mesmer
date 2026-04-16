@@ -1,3 +1,4 @@
+import functools
 import os
 import warnings
 from collections.abc import Callable, Iterable
@@ -277,3 +278,23 @@ def _set_threads_from_options():
 
     with threadpoolctl.threadpool_limits(limits=threads):
         yield
+
+
+def _ignore_warnings(messages: list[str] | None = None):
+
+    if messages is None:
+        messages = [""]
+
+    def decorator(func):
+
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            with warnings.catch_warnings():
+
+                for message in messages:
+                    warnings.filterwarnings("ignore", message=message)
+                return func(*args, **kwargs)
+
+        return _wrapper
+
+    return decorator

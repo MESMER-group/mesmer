@@ -101,18 +101,34 @@ def _yeo_johnson_inverse_transform_np(data, lambdas):
     # get positions of four cases:
     sel_a = (data >= 0) & (np.abs(lambdas) < eps)
     sel_b = (data >= 0) & (np.abs(lambdas) >= eps)
+
     sel_c = (data < 0) & (np.abs(lambdas - 2) > eps)
     sel_d = (data < 0) & (np.abs(lambdas - 2) <= eps)
 
-    # assign values for the four cases
-    transf[sel_a] = np.expm1(data[sel_a])
+    # see https://github.com/MESMER-group/mesmer/issues/859
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        # assign values for the four cases
+        transf[sel_a] = np.expm1(data[sel_a])
 
-    lmbds = lambdas[sel_b]
-    transf[sel_b] = np.expm1(np.log1p(data[sel_b] * lmbds) / lmbds)
+        lmbds = lambdas[sel_b]
+        transf[sel_b] = np.expm1(np.log1p(data[sel_b] * lmbds) / lmbds)
 
-    lmbds = 2 - lambdas[sel_c]
-    transf[sel_c] = -np.expm1(np.log1p(-lmbds * data[sel_c]) / lmbds)
-    transf[sel_d] = -np.expm1(-data[sel_d])
+        lmbds = 2 - lambdas[sel_c]
+        transf[sel_c] = -np.expm1(np.log1p(-lmbds * data[sel_c]) / lmbds)
+        transf[sel_d] = -np.expm1(-data[sel_d])
+
+    if any(
+        "divide by zero encountered in log1p" in str(w.message)
+        for w in captured_warnings
+    ) or any(
+        "invalid value encountered in log1p" in str(w.message)
+        for w in captured_warnings
+    ):
+        warnings.warn(
+            "The Yeo-Johnson inverse transformation yielded nan values."
+            " This may be caused by lambdas outside 0...2 and or small/ large original data."
+            " See https://github.com/MESMER-group/mesmer/issues/859#issuecomment-4236290052"
+        )
 
     return transf
 

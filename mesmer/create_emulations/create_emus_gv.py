@@ -5,6 +5,7 @@
 """
 Functions to create global variability emulations with MESMER.
 """
+
 import numpy as np
 import xarray as xr
 from deprecated import deprecated
