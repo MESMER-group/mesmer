@@ -9,6 +9,8 @@ New Features
 
 - Automatically download tutorial data if necessary (`#846 <https://github.com/MESMER-group/mesmer/pull/846>`_).
   By `Mathias Hauser`_.
+- Add monthly example precipitation data (`#838 <https://github.com/MESMER-group/mesmer/pull/838>`_).
+  By `Sarah Schöngart`_.
 - Added a function to find the n closest neighbors based on spherical distance (`#857 <https://github.com/MESMER-group/mesmer/pull/857>`_).
   By `Sarah Schöngart`_.
 - Add python 3.14 to list of supported versions (`#855 <https://github.com/MESMER-group/mesmer/pull/855>`_).
