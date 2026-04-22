@@ -2,15 +2,15 @@ Pre-calibrated Parameters
 =========================
 
 We provide pre-calibrated parameters for several variables:
-- annual mean air temperature (tas)
-- monthly mean air temperature (tas)
-- annual maximum of daily maximum air temperature (txx)
-- annual average of soil moisture (mrso)
-- annual minimum of the monthly average soil moisture (mrso_minmon)
-- annual maximum of the Fire Weather Index (fwixx)
-- seasonal average of the Fire Weather Index (fwisa)
-- annual number of days with extreme fire weather (fwixd)
-- length of the fire season (fwils)
+* annual mean air temperature (tas)
+* monthly mean air temperature (tas)
+* annual maximum of daily maximum air temperature (txx)
+* annual average of soil moisture (mrso)
+* annual minimum of the monthly average soil moisture (mrso_minmon)
+* annual maximum of the Fire Weather Index (fwixx)
+* seasonal average of the Fire Weather Index (fwisa)
+* annual number of days with extreme fire weather (fwixd)
+* length of the fire season (fwils)
 
 The parameters can be downloaded from the ETH Research Collection https://doi.org/10.3929/ethz-c-000798034 (Quillcaille et al., `2026 <https://doi.org/10.3929/ethz-c-000798034>`__) and used under its License.
 
