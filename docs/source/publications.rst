@@ -23,4 +23,3 @@ MESMER-X
 MESMER-MTP
 ----------
 - Schöngart, S., Gudmundsson, L., Hauser, M., Pfleiderer, P., Lejeune, Q., Nath, S., Seneviratne, S.I., & Schleussner, C. F. (2024). **Introducing the MESMER-M-TPv0. 1.0 module: spatially explicit Earth system model emulation for monthly precipitation and temperature.** Geoscientific Model Development, 17(22), 8283-8320. https://doi.org/10.5194/gmd-17-8283-2024
-
