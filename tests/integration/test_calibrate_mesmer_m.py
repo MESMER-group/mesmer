@@ -235,7 +235,7 @@ def test_calibrate_mesmer_m(
         file_pattern="params_{module}_{variable}_{esm}_{scen}.nc",
     )
 
-    scen_str = "_".join(scenario)
+    scen_str = "-".join(scenario)
 
     keys = {"esm": esm, "scen": scen_str, "variable": "tas"}
 
