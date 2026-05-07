@@ -210,7 +210,7 @@ def test_calibrate_mesmer_m(
     )
 
     if n_ens == "one":
-        weights = xr.ones_like(ar1_residuals.residuals.isel(gridcell=0))
+        weights = xr.ones_like(ar1_residuals.isel(gridcell=0))
         weights.name = "weights"
     else:
         weights = mesmer.weighted.equal_scenario_weights_from_datatree(tas_anoms_m)
@@ -220,7 +220,7 @@ def test_calibrate_mesmer_m(
         weights = weights.isel(sample=slice(1, None)).weights
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
-        ar1_residuals.residuals, weights, phi_gc_localizer, "time", k_folds=30
+        ar1_residuals, weights, phi_gc_localizer, "time", k_folds=30
     )
 
     # we need to get the original time coordinate to be able to validate our results
