@@ -21,7 +21,8 @@
 
    tutorials/tutorial_mesmer_calibrate_multiple_scenarios
    tutorials/tutorial_mesmer_emulating_multiple_scenarios
-   tutorials/tutorial_mesmer_m_scen_ens
+   tutorials/tutorial_mesmer_m_calibrate_multiple_scenarios
+   tutorials/tutorial_mesmer_m_emulate_multiple_scenarios
    tutorials/tutorial_mesmer_x
 
 .. toctree::
