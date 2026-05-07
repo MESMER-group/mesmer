@@ -857,7 +857,7 @@ def _fit_auto_regression_np(data: np.ndarray, lags: int | Sequence[int]):
 
 def fit_auto_regression_monthly(
     monthly_data: xr.DataArray, time_dim: str = "time"
-) -> xr.Dataset:
+) -> tuple[xr.Dataset, xr.DataArray]:
     """fit a cyclo-stationary auto-regressive process of lag one (AR(1)) on monthly
     data. The parameters are estimated for each month and gridpoint separately.
     This is based on the assumption that e.g. June depends on May differently
@@ -919,7 +919,7 @@ def fit_auto_regression_monthly(
     """
     _check_dataarray_form(monthly_data, "monthly_data", required_coords=time_dim)
     monthly_groups = monthly_data.groupby(f"{time_dim}.month")
-    ar_params_res = []
+    ar_params_res: list[xr.Dataset] = []
 
     (sample_dim,) = monthly_data[time_dim].dims
 
@@ -958,7 +958,7 @@ def fit_auto_regression_monthly(
     month_dim = xr.Variable("month", np.arange(1, 13))
     ar_params = xr.concat(ar_params_res, dim=month_dim)
 
-    return xr.merge([ar_params, residuals], compat="override")
+    return ar_params, residuals
 
 
 def _fit_auto_regression_monthly_np(data_month, data_prev_month):

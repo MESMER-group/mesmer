@@ -198,7 +198,7 @@ def test_calibrate_mesmer_m(
     )
 
     # fit cyclo-stationary AR(1) process
-    ar1_fit = mesmer.stats.fit_auto_regression_monthly(
+    ar1_fit, ar1_residuals = mesmer.stats.fit_auto_regression_monthly(
         transformed_hm_resids.transformed
     )
 
@@ -210,17 +210,17 @@ def test_calibrate_mesmer_m(
     )
 
     if n_ens == "one":
-        weights = xr.ones_like(ar1_fit.residuals.isel(gridcell=0))
+        weights = xr.ones_like(ar1_residuals.residuals.isel(gridcell=0))
         weights.name = "weights"
     else:
         weights = mesmer.weighted.equal_scenario_weights_from_datatree(tas_anoms_m)
         weights = mesmer.datatree.pool_scen_ens(weights)
 
-        # because ar1_fit.residuals lost the first ts, we have to remove it here as well
+        # because ar1_residuals lost the first ts, we have to remove it here as well
         weights = weights.isel(sample=slice(1, None)).weights
 
     localized_ecov = mesmer.stats.find_localized_empirical_covariance_monthly(
-        ar1_fit.residuals, weights, phi_gc_localizer, "time", k_folds=30
+        ar1_residuals.residuals, weights, phi_gc_localizer, "time", k_folds=30
     )
 
     # we need to get the original time coordinate to be able to validate our results
@@ -249,7 +249,6 @@ def test_calibrate_mesmer_m(
     if update_expected_files:
         # drop unnecessary variables
         harmonic_model_fit = harmonic_model_fit.drop_vars(["residuals", "time"])
-        ar1_fit = ar1_fit.drop_vars(["residuals", "time"])
 
         # save
         harmonic_model_fit.to_netcdf(local_hm_file)
