@@ -59,6 +59,8 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+- Improve the MESMER-M tutorial and split it into two parts (`#878 <https://github.com/MESMER-group/mesmer/pull/878>`_).
+  By `Sarah Schöngart`_.
 - Document more functions and add documentation page on pre-calibrated parameters
   (`#813 <https://github.com/MESMER-group/mesmer/pull/813>`_, and `#814 <https://github.com/MESMER-group/mesmer/pull/814>`_).
   By `Victoria Bauer`_.
