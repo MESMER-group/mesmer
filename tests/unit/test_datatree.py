@@ -3,7 +3,6 @@ import re
 import numpy as np
 import pytest
 import xarray as xr
-from packaging.version import Version
 
 import mesmer
 from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
@@ -493,10 +492,6 @@ def test_unpool_scen_ens_error():
         mesmer.datatree._unpool_scen_ens(obj)
 
 
-@pytest.mark.skipif(
-    Version(xr.__version__) < Version("2025.07"),
-    reason="pydata/xarray#10440 and pydata/xarray#10442 ",
-)
 @pytest.mark.parametrize("ascending_scen_order", [True, False])
 def test_unpool_scen_ens_other_dims(ascending_scen_order):
 

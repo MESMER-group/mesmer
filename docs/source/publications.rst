@@ -19,3 +19,7 @@ MESMER-X
 --------
 - Quilcaille, Y., Gudmundsson, L., Beusch, L., Hauser, M., & Seneviratne, S. I. (2022). **Showcasing MESMER-X: Spatially Resolved Emulation of Annual Maximum Temperatures of Earth System Models.** Geophysical Research Letters, 49(17), e2022GL099012. https://doi.org/10.1029/2022GL099012
 - Quilcaille, Y., Gudmundsson, L., & Seneviratne, S. I. (2023). **Extending MESMER-X: a spatially resolved Earth system model emulator for fire weather and soil moisture.** Earth System Dynamics, 14(6), 1333–1362. https://doi.org/10.5194/ESD-14-1333-2023
+
+MESMER-MTP
+----------
+- Schöngart, S., Gudmundsson, L., Hauser, M., Pfleiderer, P., Lejeune, Q., Nath, S., Seneviratne, S.I., & Schleussner, C. F. (2024). **Introducing the MESMER-M-TPv0.1.0 module: spatially explicit Earth system model emulation for monthly precipitation and temperature.** Geoscientific Model Development, 17(22), 8283-8320. https://doi.org/10.5194/gmd-17-8283-2024

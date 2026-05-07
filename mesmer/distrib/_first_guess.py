@@ -8,10 +8,10 @@ import scipy as sp
 from packaging.version import Version
 from scipy.optimize import basinhopping
 
+from mesmer._core.utils import _ignore_warnings
 from mesmer.distrib import _distrib_checks, _optimizers
 from mesmer.distrib._expression import Expression
 from mesmer.distrib._optimizers import MinimizeOptions
-from mesmer.distrib._utils import _ignore_warnings
 
 # random but fixed seed for basinhopping -> to increase reproducibility
 SEED_BASINHOPPING = 1931102249669598594
@@ -169,8 +169,8 @@ class _FirstGuess:
         self.smooth_targ_dev_sq = smooth_targ_dev_sq
         self.smooth_pred = smooth_pred
 
-    # suppress nan & inf warnings
-    @_ignore_warnings
+    # suppress nan & inf warnings; TODO: don't suppress all warnings
+    @_ignore_warnings()
     def _find_fg(self):
         """
         compute first guess of the coefficients, to ensure convergence of the incoming

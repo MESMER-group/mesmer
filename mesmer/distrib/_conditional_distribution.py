@@ -8,12 +8,15 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
+from mesmer._core.utils import (
+    _check_dataarray_form,
+    _check_dataset_form,
+    _ignore_warnings,
+)
 from mesmer.distrib import _distrib_checks, _optimizers
 from mesmer.distrib._expression import Expression
 from mesmer.distrib._first_guess import _FirstGuess
 from mesmer.distrib._optimizers import MinimizeOptions, OptimizerNLL
-from mesmer.distrib._utils import _ignore_warnings
 from mesmer.geospatial import geodist_exact
 from mesmer.stats import gaspari_cohn
 from mesmer.weighted import _weighted_median
@@ -139,9 +142,13 @@ class ConditionalDistribution:
         if smooth_coeffs:
             gridcell_dim = (set(target.dims) - {sample_dim}).pop()
             coords = target[gridcell_dim].coords
+            # preserve non-smoothed first guess in case it causes the fit to fails
+            first_guess_initial = first_guess_da.copy()
             first_guess_da = _smooth_first_guess(
                 first_guess_da, gridcell_dim, coords, r_gasparicohn
             )
+        else:
+            first_guess_initial = first_guess_da
 
         # training
         result = xr.apply_ufunc(
@@ -150,10 +157,12 @@ class ConditionalDistribution:
             target,
             weights,
             first_guess_da,
+            first_guess_initial,
             input_core_dims=[
                 [sample_dim, "predictor"],
                 [sample_dim],
                 [sample_dim],
+                ["coefficient"],
                 ["coefficient"],
             ],
             output_core_dims=[["coefficient"]],
@@ -180,8 +189,11 @@ class ConditionalDistribution:
 
         self._coefficients = coefficients
 
-    @_ignore_warnings  # suppress nan & inf warnings
-    def _fit_np(self, data_pred, data_targ, data_weights, fg, on_failed_fit):
+    # suppress nan & inf warnings; TODO: don't suppress all warnings
+    @_ignore_warnings()
+    def _fit_np(
+        self, data_pred, data_targ, data_weights, fg, fg_initial, on_failed_fit
+    ):
         """
         Fit the coefficients of the conditional distribution by minimizing _func_optim.
         """
@@ -216,7 +228,11 @@ class ConditionalDistribution:
 
             # NOTE: warnings are hidden by apply_ufunc
 
-        return m.x
+        # returning best value between failsafe of the first guess and the result fitted here
+        if func(m.x) < func(fg_initial):
+            return m.x
+        else:
+            return fg_initial
 
     def find_first_guess(
         self,

@@ -1128,7 +1128,7 @@ def _draw_ar_corr_monthly_xr_internal(
     )
 
     # the dimension name of the gridpoints
-    (_, gridpoint_dim) = intercept.dims
+    _, gridpoint_dim = intercept.dims
     # make sure non-dimension coords are properly caught
     gridpoint_coords = dict(slope[gridpoint_dim].coords)
 
