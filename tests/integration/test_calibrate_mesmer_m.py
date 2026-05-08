@@ -247,7 +247,6 @@ def test_calibrate_mesmer_m(
 
     # save params
     if update_expected_files:
-        # drop unnecessary variables
         ar1_fit = ar1_fit.drop_vars(["residuals", "time"])
 
         # save
