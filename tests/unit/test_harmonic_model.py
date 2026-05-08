@@ -166,10 +166,12 @@ def test_fit_harmonic_model():
     )
 
     # test if the model can recover the monthly target from perfect fourier series
-    result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
-    np.testing.assert_equal(result.selected_order.values, orders)
+    result_fit, result_residuals = mesmer.stats.fit_harmonic_model(
+        yearly_predictor, monthly_target
+    )
+    np.testing.assert_equal(result_fit.selected_order.values, orders)
     xr.testing.assert_allclose(
-        result.residuals, xr.zeros_like(monthly_target), atol=1e-6
+        result_residuals, xr.zeros_like(monthly_target), atol=1e-6
     )
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
@@ -178,9 +180,11 @@ def test_fit_harmonic_model():
         loc=0, scale=0.1, size=monthly_target.shape
     )
 
-    result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
+    result_fit, result_residuals = mesmer.stats.fit_harmonic_model(
+        yearly_predictor, noisy_monthly_target
+    )
     predictions = mesmer.stats.predict_harmonic_model(
-        yearly_predictor, result.coeffs, time=monthly_time
+        yearly_predictor, result_fit.coeffs, time=monthly_time
     )
     xr.testing.assert_allclose(predictions, monthly_target, atol=0.1)
 
@@ -202,13 +206,13 @@ def test_fit_harmonic_model():
         ]
     )
 
-    result_comp = result.residuals.isel(cells=0, time=slice(0, 12)).values
+    result_comp = result_residuals.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(result_comp, expected, atol=1e-6)
 
     # ensure predictions and residuals are consistent
     expected = noisy_monthly_target - predictions
 
-    xr.testing.assert_equal(expected, result.residuals)
+    xr.testing.assert_equal(expected, result_residuals)
 
 
 def test_fit_harmonic_model_checks() -> None:
@@ -271,14 +275,14 @@ def test_fit_harmonic_model_time_dim():
     time_dim = "dates"
     monthly_target = monthly_target.rename({"time": time_dim})
     yearly_predictor = yearly_predictor.rename({"time": time_dim})
-    res = mesmer.stats.fit_harmonic_model(
+    res, res_resids = mesmer.stats.fit_harmonic_model(
         yearly_predictor, monthly_target, time_dim=time_dim
     )
 
     _check_dataarray_form(res.selected_order, required_dims="cells")
     _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
     _check_dataarray_form(
-        res.residuals, required_dims={"cells", "dates"}, required_coords="dates"
+        res_resids, required_dims={"cells", "dates"}, required_coords="dates"
     )
 
 
@@ -293,10 +297,10 @@ def test_fit_harmonic_model_non_dim_coords():
     monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
     monthly_target = monthly_target.stack(sample=["time"], create_index=False)
 
-    res = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+    res, res_resids = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
 
     _check_dataarray_form(res.selected_order, required_dims="cells")
     _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
     _check_dataarray_form(
-        res.residuals, required_dims={"cells", "sample"}, required_coords="time"
+        res_resids, required_dims={"cells", "sample"}, required_coords="time"
     )

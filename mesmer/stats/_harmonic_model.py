@@ -287,7 +287,7 @@ def fit_harmonic_model(
     *,
     max_order: int = 6,
     time_dim: str = "time",
-) -> xr.Dataset:
+) -> tuple[xr.Dataset, xr.DataArray]:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
 
@@ -376,7 +376,6 @@ def fit_harmonic_model(
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
-        "residuals": resids.transpose(sample_dim, ...),
     }
 
-    return xr.Dataset(data_vars)
+    return xr.Dataset(data_vars), resids.transpose(sample_dim, ...)
