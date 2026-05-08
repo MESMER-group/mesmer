@@ -311,13 +311,16 @@ def fit_harmonic_model(
 
     Returns
     -------
-    data_vars : `xr.Dataset`
+    fit : `xr.Dataset`
         Dataset containing
 
         - the selected order of Fourier Series (`selected_order`),
-        - the estimated coefficients of the Fourier Series (`coeffs`), and
-        - the residuals of the model (`residuals`).
+        - the estimated coefficients of the Fourier Series (`coeffs`)
 
+    residuals : `xr.DataArray`
+        DataArray containing
+
+        - the residuals of the model (`residuals`)
     """
 
     _check_dataarray_form(
