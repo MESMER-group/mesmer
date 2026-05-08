@@ -19,6 +19,10 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+- :py:func:`fit_harmonic_model` and :py:func:`fit_auto_regression_monthly` not return the residuals as
+  separate :py:class:`xr.DataArray` instead of merging it into the :py:class:`xr.Dataset` containing the
+  fitted parameters   (`#880 <https://github.com/MESMER-group/mesmer/pull/880>`_, and `#881 <https://github.com/MESMER-group/mesmer/pull/881>`_).
+  By `Mathias Hauser`_.
 - Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
   By `Mathias Hauser`_.
