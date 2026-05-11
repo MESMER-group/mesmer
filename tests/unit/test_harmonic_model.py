@@ -246,9 +246,7 @@ def test_fit_harmonic_model_checks() -> None:
         ValueError,
         match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 6 vs. 4",
     ):
-        harmonic_model.fit(
-            yearly_predictor, monthly_target.isel(cells=slice(None, 4))
-        )
+        harmonic_model.fit(yearly_predictor, monthly_target.isel(cells=slice(None, 4)))
 
     with pytest.raises(
         ValueError,
