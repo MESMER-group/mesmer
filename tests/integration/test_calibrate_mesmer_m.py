@@ -182,7 +182,9 @@ def test_calibrate_mesmer_m(
         tas_stacked_m = mesmer.datatree.pool_scen_ens(tas_stacked_m)
 
     # fit harmonic model
-    harmonic_model_fit = mesmer.stats.fit_harmonic_model(
+    harmonic_model = mesmer.stats.HarmonicModel()
+    harmonic_model.fit(tas_stacked_y.tas, tas_stacked_m.tas)
+    harmonic_model_residuals = harmonic_model.residuals(
         tas_stacked_y.tas, tas_stacked_m.tas
     )
 
@@ -190,11 +192,11 @@ def test_calibrate_mesmer_m(
     yj_transformer = mesmer.stats.YeoJohnsonTransformer(yj_transformation)
     pt_coefficients = yj_transformer.fit(
         tas_stacked_y.tas,
-        harmonic_model_fit.residuals,
+        harmonic_model_residuals,
     )
     # find transformed residuals
     transformed_hm_resids = yj_transformer.transform(
-        tas_stacked_y.tas, harmonic_model_fit.residuals, pt_coefficients
+        tas_stacked_y.tas, harmonic_model_residuals, pt_coefficients
     )
 
     # fit cyclo-stationary AR(1) process
@@ -248,11 +250,10 @@ def test_calibrate_mesmer_m(
     # save params
     if update_expected_files:
         # drop unnecessary variables
-        harmonic_model_fit = harmonic_model_fit.drop_vars(["residuals", "time"])
         ar1_fit = ar1_fit.drop_vars(["residuals", "time"])
 
         # save
-        harmonic_model_fit.to_netcdf(local_hm_file)
+        harmonic_model.params.to_netcdf(local_hm_file)
         pt_coefficients.to_netcdf(local_pt_file)
         ar1_fit.to_netcdf(local_ar_file)
         localized_ecov.to_netcdf(localized_ecov_file)
@@ -263,7 +264,7 @@ def test_calibrate_mesmer_m(
     # testing
     else:
         assert_params_allclose(
-            harmonic_model_fit,
+            harmonic_model.params,
             pt_coefficients,
             ar1_fit,
             localized_ecov,

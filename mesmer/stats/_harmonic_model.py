@@ -14,7 +14,7 @@ import scipy as sp
 import xarray as xr
 
 import mesmer
-from mesmer._core.utils import _check_dataarray_form
+from mesmer._core.utils import _check_dataarray_form, _check_dataset_form
 
 
 @lru_cache
@@ -80,7 +80,7 @@ def _generate_fourier_series_order_np(yearly_predictor, coeffs, order):
     return seasonal_cycle.ravel()
 
 
-def predict_harmonic_model(
+def _predict_harmonic_model(
     yearly_predictor: xr.DataArray,
     coeffs: xr.DataArray,
     time: xr.DataArray,
@@ -281,13 +281,13 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
     return selected_order, coeffs, predictions
 
 
-def fit_harmonic_model(
+def _fit_harmonic_model(
     yearly_predictor: xr.DataArray,
     monthly_target: xr.DataArray,
     *,
     max_order: int = 6,
     time_dim: str = "time",
-) -> xr.Dataset:
+) -> tuple[xr.Dataset, xr.DataArray]:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
 
@@ -311,13 +311,16 @@ def fit_harmonic_model(
 
     Returns
     -------
-    data_vars : `xr.Dataset`
+    fit : `xr.Dataset`
         Dataset containing
 
         - the selected order of Fourier Series (`selected_order`),
-        - the estimated coefficients of the Fourier Series (`coeffs`), and
-        - the residuals of the model (`residuals`).
+        - the estimated coefficients of the Fourier Series (`coeffs`)
 
+    residuals : `xr.DataArray`
+        DataArray containing
+
+        - the residuals of the model (`residuals`)
     """
 
     _check_dataarray_form(
@@ -376,7 +379,215 @@ def fit_harmonic_model(
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
-        "residuals": resids.transpose(sample_dim, ...),
     }
 
-    return xr.Dataset(data_vars)
+    return xr.Dataset(data_vars), resids.transpose(sample_dim, ...)
+
+
+class HarmonicModel:
+
+    def __init__(self):
+
+        self._params = None
+
+    @classmethod
+    def from_params(cls, params):
+        """initialize HarmonicModel class using parameters
+
+        Parameters
+        ----------
+        params : xr.Dataset
+            Parameters to use for this harmonic model.
+        """
+
+        obj = cls()
+        obj.params = params
+
+        return obj
+
+    def fit(
+        self,
+        yearly_predictor: xr.DataArray,
+        monthly_target: xr.DataArray,
+        *,
+        max_order: int = 6,
+        time_dim: str = "time",
+    ):
+        """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
+        select the order and least squares to fit the coefficients for each order.
+
+        Parameters
+        ----------
+        yearly_predictor : xr.DataArray
+            Yearly values used as predictors, containing one value per year. Contains
+            `time_dim` and possibly additional dimensions for example for gridcells or
+            members.
+        monthly_target : xr.DataArray
+            Monthly values to fit to, containing one value per month, for every year in
+            `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot`
+            `n_years`. Must contain `time_dim` and possibly additional dimensions as
+            `yearly_predictor`.
+        max_order : Integer, default 6
+            Maximum order of Fourier Series to fit for. Default is 6 since highest
+            meaningful maximum order is sample_frequency/2, i.e. 12/2 to fit for monthly
+            data.
+        time_dim: str, default: "time"
+            Name of the time dimension on `yearly_predictor` and `monthly_target`.
+
+        Returns
+        -------
+        residuals : `xr.DataArray`
+            DataArray containing
+
+            - the residuals of the model (`residuals`)
+        """
+
+        params, residuals = _fit_harmonic_model(
+            yearly_predictor,
+            monthly_target,
+            max_order=max_order,
+            time_dim=time_dim,
+        )
+
+        self._params = params
+
+        self._residuals = residuals
+
+    def predict(
+        self,
+        yearly_predictor: xr.DataArray,
+        time: xr.DataArray,
+        time_dim: str = "time",
+    ) -> xr.DataArray:
+        """construct a Fourier Series from yearly predictors with fitted coeffs.
+
+        Parameters
+        ----------
+        yearly_predictor : xr.DataArray
+            yearly values used as predictors, must contain `time_dim` but can have
+            additional dimensions for example gridcells or members.
+        time: xr.DataArray
+            A ``xr.DataArray`` containing cftime objects which will be used as
+            coordinates for the monthly output values
+        time_dim: str, default: "time"
+            Name of the time dimension on `yearly_predictor`. Will also be the name of
+            the time_dim of the output ``xr.DataArray``.
+
+        Returns
+        -------
+        predictions: xr.DataArray
+            Fourier Series calculated over `yearly_predictor` with `coeffs`, has
+            `time_dim` with values of `time` and any additional dimensions of
+            `yearly_predictor`.
+        """
+
+        return _predict_harmonic_model(
+            yearly_predictor=yearly_predictor,
+            coeffs=self.params.coeffs,
+            time=time,
+            time_dim=time_dim,
+        )
+
+    def residuals(
+        self,
+        yearly_predictor: xr.DataArray,
+        monthly_target: xr.DataArray,
+        *,
+        time_dim: str = "time",
+    ):
+        """Calculate the residuals of the fitted harmonic model
+
+        Parameters
+        ----------
+        yearly_predictor : xr.DataArray
+            yearly values used as predictors, must contain `time_dim` but can have
+            additional dimensions for example gridcells or members.
+        monthly_target : xr.DataArray
+            Monthly values to fit to, containing one value per month, for every year in
+            `yearly_predictor` (starting with January). So `n_months` = 12 :math:`\\cdot`
+            `n_years`. Must contain `time_dim` and possibly additional dimensions as
+            `yearly_predictor`.
+        time_dim: str, default: "time"
+            Name of the time dimension on `yearly_predictor`. Will also be the name of
+            the time_dim of the output ``xr.DataArray``.
+
+        Returns
+        -------
+        residuals : `xr.DataArray`
+            DataArray containing
+
+            - the residuals of the model (`residuals`)
+        """
+
+        pred = self.predict(
+            yearly_predictor=yearly_predictor,
+            time=monthly_target[time_dim],
+            time_dim=time_dim,
+        )
+
+        return monthly_target - pred
+
+    @property
+    def params(self) -> xr.Dataset:
+        """The parameters of this estimator.
+
+        Returns
+        -------
+        fit : `xr.Dataset`
+            Dataset containing
+
+            - the selected order of Fourier Series (`selected_order`),
+            - the estimated coefficients of the Fourier Series (`coeffs`)
+        """
+
+        if self._params is None:
+            raise ValueError(
+                "'params' not set - call `fit` or initialize via"
+                f"`{self.__class__.__name__}.from_params`."
+            )
+
+        return self._params
+
+    @params.setter
+    def params(self, params):
+        """The parameters of this estimator."""
+
+        _check_dataset_form(
+            params,
+            "params",
+            required_vars={"coeffs"},
+        )
+
+        self._params = params
+
+    # @classmethod
+    # def from_netcdf(cls, filename: str, **kwargs):
+    #     """read params from a netCDF file
+
+    #     Parameters
+    #     ----------
+    #     filename : str
+    #         Name of the netCDF file to open.
+    #     **kwargs : Any
+    #         Additional keyword arguments passed to ``xr.open_dataset``
+    #     """
+    #     ds = xr.open_dataset(filename, **kwargs)
+
+    #     obj = cls()
+    #     obj.params = ds
+
+    #     return obj
+
+    # def to_netcdf(self, filename: str, **kwargs):
+    #     """save params to a netCDF file
+
+    #     Parameters
+    #     ----------
+    #     filename : str
+    #         Name of the netCDF file to save.
+    #     **kwargs : Any
+    #         Additional keyword arguments passed to ``xr.Dataset.to_netcdf``
+    #     """
+
+    #     params = self.params
+    #     params.to_netcdf(filename, **kwargs)
