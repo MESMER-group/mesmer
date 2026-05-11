@@ -242,6 +242,9 @@ def test_fit_harmonic_model_checks() -> None:
     with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
         harmonic_model.fit(yearly_predictor, monthly_target.rename(cells="gp"))
 
+    with pytest.raises(ValueError, match="'params' not set"):
+        harmonic_model.params
+
     with pytest.raises(
         ValueError,
         match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 6 vs. 4",
