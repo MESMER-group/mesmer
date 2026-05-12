@@ -244,7 +244,6 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
         Fitted coefficients for the selected order of Fourier Series.
     predictions : array-like of size (n_years*12,)
         Predicted monthly values from final model.
-
     """
 
     current_min_score = float("inf")
@@ -285,7 +284,7 @@ def _fit_harmonic_model(
     *,
     max_order: int = 6,
     time_dim: str = "time",
-) -> tuple[xr.Dataset, xr.DataArray]:
+) -> xr.Dataset:
     """fit harmonic model i.e. a Fourier Series to every gridcell using BIC score to
     select the order and least squares to fit the coefficients for each order.
 
@@ -314,11 +313,6 @@ def _fit_harmonic_model(
 
         - the selected order of Fourier Series (`selected_order`),
         - the estimated coefficients of the Fourier Series (`coeffs`)
-
-    residuals : `xr.DataArray`
-        DataArray containing
-
-        - the residuals of the model (`residuals`)
     """
 
     _check_dataarray_form(
@@ -372,14 +366,12 @@ def _fit_harmonic_model(
 
     coeffs = coeffs.assign_coords({"coeff": np.arange(coeffs.sizes["coeff"])})
 
-    resids = monthly_target - (yearly_predictor + preds)
-
     data_vars = {
         "selected_order": selected_order,
         "coeffs": coeffs,
     }
 
-    return xr.Dataset(data_vars), resids.transpose(sample_dim, ...)
+    return xr.Dataset(data_vars)
 
 
 class HarmonicModel:
@@ -431,16 +423,9 @@ class HarmonicModel:
             data.
         time_dim: str, default: "time"
             Name of the time dimension on `yearly_predictor` and `monthly_target`.
-
-        Returns
-        -------
-        residuals : `xr.DataArray`
-            DataArray containing
-
-            - the residuals of the model (`residuals`)
         """
 
-        params, residuals = _fit_harmonic_model(
+        params = _fit_harmonic_model(
             yearly_predictor,
             monthly_target,
             max_order=max_order,
@@ -448,8 +433,6 @@ class HarmonicModel:
         )
 
         self._params = params
-
-        self._residuals = residuals
 
     def predict(
         self,
@@ -492,7 +475,7 @@ class HarmonicModel:
         monthly_target: xr.DataArray,
         *,
         time_dim: str = "time",
-    ):
+    ) -> xr.DataArray:
         """Calculate the residuals of the fitted harmonic model
 
         Parameters
@@ -512,9 +495,7 @@ class HarmonicModel:
         Returns
         -------
         residuals : `xr.DataArray`
-            DataArray containing
-
-            - the residuals of the model (`residuals`)
+            DataArray containing the residuals of the model (`residuals`)
         """
 
         pred = self.predict(
