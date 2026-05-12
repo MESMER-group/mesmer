@@ -24,7 +24,7 @@ Breaking changes
   By `Mathias Hauser`_.
 - Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
   By `Mathias Hauser`_.
-- Removed support for python 3.11 (`#513 <https://github.com/MESMER-group/mesmer/pull/513>`_)
+- Removed support for python 3.11 (`#886 <https://github.com/MESMER-group/mesmer/pull/886>`_)
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
