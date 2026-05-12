@@ -143,7 +143,6 @@ def logistic_lambda_function(
 
         \lambda = \frac{2}{\xi_0 + e^{\xi_1 \cdot T_y}}
 
-
     It ranges between 0 and 2.
 
     Parameters

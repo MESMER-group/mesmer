@@ -36,7 +36,7 @@ class ConditionalDistribution:
 
         Parameters
         ----------
-        Expression : class py:class:`Expression`
+        expression : class py:class:`Expression`
             Expression defining the conditional distribution.
         minimize_options : `py:class:`MinimizeOptions`, default: MinimizeOptions()
             Class defining the optimizer options used during first guess and training of
@@ -46,7 +46,8 @@ class ConditionalDistribution:
             Run a second minimization algorithm for all steps. ``method="Powell"``
             is recommended. It can be beneficial to run more than one minimization
             to get a more stable estimate.
-
+        threshold_min_proba : float
+            Minimal probability of each data sample in the distribution.
         """
         # initialization
 
@@ -248,8 +249,6 @@ class ConditionalDistribution:
 
         Parameters
         ----------
-        conditional_distrib : ConditionalDistribution
-            Conditional distribution object to find the first guess for.
         predictors : dict of xr.DataArray | xr.Dataset
             A dict of DataArray objects used as predictors or a Dataset, holding each
             predictor as a data variable. Each predictor must be 1D and contain
@@ -363,12 +362,16 @@ class ConditionalDistribution:
             A dict of DataArray objects used as predictors or a DataTree, holding each
             predictor as a data variable. Each predictor must be 1D and contain
             `sample_dim`.
+
         target : xr.DataArray
             Target DataArray.
+
         sample_dim : str
             Dimension along which to calculate the scores.
+
         weights : xr.DataArray.
             Individual weights for each sample.
+
         scores : list of str, default: ['func_optim', 'nll', 'bic']
             After the fit, several scores can be calculated to assess the performance:
 
@@ -572,7 +575,7 @@ def _smooth_first_guess(
 
     Parameters
     ----------
-    first_guess : xr.DataArray
+    first_guess_stacked : xr.DataArray
         First guess for the coefficients. Stacked over the coefficients.
     dim : str
         Dimension along which to smooth the coefficients.

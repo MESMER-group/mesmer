@@ -27,7 +27,7 @@ def _smooth_data(data, length=5):
     ----------
     data : numpy array 1D
         Data to smooth
-    length: integer, default: 5
+    length : integer, default: 5
         The length of the half-window for the convolution.
 
     Returns
@@ -61,27 +61,25 @@ class _FirstGuess:
         ----------
         expression : Expression
             Expression of the conditional distribution
-
-        minimizer_options : MinimizeOptions
+        minimize_options : MinimizeOptions
             Options for the fit.
-
         data_pred : numpy array 1D or 2D of shape (n_samples, n_preds)
             Predictors for the training sample. If 2D, the first dimension must be the
             number of predictors, and the second dimension the number of samples, i.e.
             (n_samples, n_preds).
-
         predictor_names : list of str
             Names of the predictors as named in the `expression`.
-
         data_targ : numpy array 1D of shape (n_samples,)
             Target for the training sample. Must be 1D, i.e. (n_samples,).
-
         data_weights : numpy array 1D of shape (n_samples,)
             Weights for the training sample. Must be 1D, i.e. (n_samples,).
-
         first_guess : numpy array, default: None
             If provided, will use these values as first guess for the first guess, must
             be one value per coeff in expression.coefficients_list.
+        second_minimizer : MinimizeOptions | None, default: None
+            In case a second minimization should be run for the first guess.
+        threshold_min_proba : float
+            Minimal probability of each data sample in the distribution.
 
         """
 
@@ -535,7 +533,7 @@ class _FirstGuess:
 
         Parameters
         ----------
-        x_sca : numpy array
+        x_scale : numpy array
             Coefficients for the scale
 
         Returns

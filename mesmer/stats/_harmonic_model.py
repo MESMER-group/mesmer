@@ -47,8 +47,6 @@ def _generate_fourier_series_np(yearly_predictor, coeffs):
         yearly predictor values.
     coeffs : array-like of shape (4*order)
         coefficients of Fourier Series.
-    months : array-like of shape (n_years*12,)
-        month values (1-12).
 
     Returns
     -------
@@ -96,10 +94,10 @@ def _predict_harmonic_model(
     coeffs : xr.DataArray
         coefficients of Fourier Series, must have "coeff" dim and additional dims of
         `yearly_predictor`. Note that coeffs may contain nans (for higher orders, that have not been fit).
-    time: xr.DataArray
+    time : xr.DataArray
         A ``xr.DataArray`` containing cftime objects which will be used as coordinates
         for the monthly output values
-    time_dim: str, default: "time"
+    time_dim : str, default: "time"
         Name of the time dimension on `yearly_predictor`. Will also be the name of the time_dim
         of the output ``xr.DataArray``.
 
@@ -466,10 +464,10 @@ class HarmonicModel:
         yearly_predictor : xr.DataArray
             yearly values used as predictors, must contain `time_dim` but can have
             additional dimensions for example gridcells or members.
-        time: xr.DataArray
+        time : xr.DataArray
             A ``xr.DataArray`` containing cftime objects which will be used as
             coordinates for the monthly output values
-        time_dim: str, default: "time"
+        time_dim : str, default: "time"
             Name of the time dimension on `yearly_predictor`. Will also be the name of
             the time_dim of the output ``xr.DataArray``.
 

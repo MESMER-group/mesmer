@@ -27,6 +27,8 @@ def assert_allclose_allowed_failures(
         Absolute tolerance.
     allowed_failures : int, default: 0
         Number of points that may violate the tolerance criteria
+    err_msg : str, default: ""
+        Error message to append to the comparison.
 
     Notes
     -----
@@ -68,7 +70,6 @@ def assert_dict_allclose(first, second, first_name="left", second_name="right"):
     ------
     AssertionError
         If the dicts do not have the same keys or values are not allclose.
-
 
     """
 

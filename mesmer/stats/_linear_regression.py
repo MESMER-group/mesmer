@@ -91,7 +91,7 @@ class LinearRegression:
         exclude : str or set of str, default: None
             Set of variables to exclude in the prediction. May include ``"intercept"``
             to initialize the prediction with 0. Mutually exclusive with ``only``.
-        only :  str or set of str, default: None
+        only : str or set of str, default: None
             Set of variables to include in the prediction. May include ``"intercept"``
             otherwise the prediction is initialized with 0. Mutually exclusive with
             ``exclude``.
@@ -176,7 +176,6 @@ class LinearRegression:
             predictor as a DataArray. Each predictor must be 1D and contain `dim`.
         target : xr.DataArray  | xr.Dataset | xr.DataTree
             Target to subtract the prediction from. Must be 2D and contain `dim`.
-
 
         Returns
         -------
