@@ -15,7 +15,7 @@ from mesmer.distrib._conditional_distribution import OptimizerNLL
 from mesmer.testing import trend_data_1D, trend_data_2D
 
 
-# fixture for default distribtion
+# fixture for default distribution
 @pytest.fixture
 def default_distrib():
     expression = Expression("norm(loc=c1 * __tas__, scale=c2)", expr_name="exp1")

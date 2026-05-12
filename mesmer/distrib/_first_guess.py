@@ -131,7 +131,7 @@ class _FirstGuess:
 
         self.data_targ = data_targ
 
-        # smooting to help with location & scale
+        # smoothing to help with location & scale
         self._prepare_smooth_data(self.data_pred, self.data_targ)
 
         self.data_weights = data_weights
@@ -154,7 +154,7 @@ class _FirstGuess:
 
         l_smooth = 5
 
-        # smooting to help with location & scale
+        # smoothing to help with location & scale
         smooth_targ = _smooth_data(data_targ, length=l_smooth)
         smooth_targ_dev_sq = (data_targ[l_smooth:-l_smooth] - smooth_targ) ** 2
         smooth_pred = {
