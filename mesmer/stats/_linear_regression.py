@@ -267,7 +267,7 @@ class LinearRegression:
         filename : str
             Name of the netCDF file to save.
         **kwargs : Any
-            Additional keyword arguments passed to ``xr.Dataset.to_netcf``
+            Additional keyword arguments passed to ``xr.Dataset.to_netcdf``
         """
 
         params = self.params

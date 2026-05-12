@@ -52,8 +52,12 @@ Harmonic Model
 .. autosummary::
    :toctree: generated/
 
-   ~stats.fit_harmonic_model
-   ~stats.predict_harmonic_model
+   ~stats.HarmonicModel
+   ~stats.HarmonicModel.from_params
+   ~stats.HarmonicModel.fit
+   ~stats.HarmonicModel.predict
+   ~stats.HarmonicModel.residuals
+   ~stats.HarmonicModel.params
 
 Power Transformer
 -----------------
