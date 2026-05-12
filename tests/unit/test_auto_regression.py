@@ -753,29 +753,37 @@ def test_fit_auto_regression_monthly(stack) -> None:
     )
 
     if stack:
-        data = data.stack(sample=["time"], create_index=False)
+        data = data.stack(sample=["time"], create_index=False).T
 
-    result = mesmer.stats.fit_auto_regression_monthly(data)
+    result_fit, result_residuals = mesmer.stats.fit_auto_regression_monthly(data)
 
-    _check_dataset_form(result, "result", required_vars={"slope", "intercept"})
+    _check_dataset_form(result_fit, "result", required_vars={"slope", "intercept"})
     _check_dataarray_form(
-        result.slope,
+        result_fit.slope,
         "slope",
         ndim=2,
         required_dims={"month", "gridcell"},
         shape=(12, n_gridcells),
     )
     _check_dataarray_form(
-        result.intercept,
+        result_fit.intercept,
         "intercept",
         ndim=2,
         required_dims={"month", "gridcell"},
         shape=(12, n_gridcells),
     )
 
+    _check_dataarray_form(
+        result_residuals,
+        "residuals",
+        required_dims=data.dims,
+        required_coords=set(data.coords.keys()),
+        shape=(n_years * 12 - 1, n_gridcells),
+    )
+
     sample_dim = "sample" if stack else "time"
     # check coordinates are the same
-    result_coords = result[sample_dim].coords
+    result_coords = result_residuals[sample_dim].coords
     expected_coords = data[sample_dim].isel({sample_dim: slice(1, None)}).coords
 
     assert result_coords.equals(expected_coords)
