@@ -75,8 +75,9 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
 
     # generate monthly data with harmonic model
-    monthly_harmonic_emu = mesmer.stats.predict_harmonic_model(
-        tas_stacked_y.tas, hm_params.coeffs, m_time.monthly_time
+    harmonic_model = mesmer.stats.HarmonicModel.from_params(hm_params)
+    monthly_harmonic_emu = harmonic_model.predict(
+        tas_stacked_y.tas, m_time.monthly_time
     )
 
     # generate variability around 0 with AR(1) model
