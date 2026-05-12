@@ -4,8 +4,6 @@
 # https://www.gnu.org/licenses/
 
 import numpy as np
-import scipy as sp
-from packaging.version import Version
 from scipy.optimize import basinhopping
 
 from mesmer._core.utils import _ignore_warnings
@@ -331,11 +329,6 @@ class _FirstGuess:
                 )
             }
 
-            if Version(sp.__version__) >= Version("1.15"):
-                kwargs = {"rng": np.random.default_rng(SEED_BASINHOPPING)}
-            else:
-                kwargs = {"seed": np.random.default_rng(SEED_BASINHOPPING)}
-
             # TODO: do we move the basinhopping part to the class optimizers?
             globalfit_d01 = basinhopping(
                 func=self._fg_fun_deriv01,
@@ -343,7 +336,7 @@ class _FirstGuess:
                 niter=10,
                 interval=100,
                 minimizer_kwargs=minimizer_kwargs,
-                **kwargs,
+                rng=np.random.default_rng(SEED_BASINHOPPING),
             )
             # warning, basinhopping tends to introduce non-reproductibility in fits,
             # reduced when using 2nd round of fits

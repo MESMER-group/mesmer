@@ -25,13 +25,13 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "dask[array,distributed] >=2025.2",
+    "dask[array,distributed] >=2025.4",
     "deprecated",
     "filefisher >=1.1",
-    "joblib >=1.4",
+    "joblib >=1.5",
     "netcdf4 >=1.7",
     "numpy >=2.1",
-    "packaging >=24.2",
+    "packaging >=25.0",
     "pandas >=2.2",
     "pooch >=1.8",
     "pyproj >=3.7",
