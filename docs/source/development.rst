@@ -68,7 +68,6 @@ Follow the steps below (if any of these tools are unfamiliar, please see the res
       .. code-block:: shell
 
          conda install ipykernel matplotlib
-         python -m pip install git+https://github.com/mathause/filefinder/
 
    d. Install mesmer itself and packages needed for development (pytest, sphinx, etc.) ``python -m pip install -e .``.
       The flag ``-e`` installs MESMER in development (**e**\ ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
@@ -108,7 +107,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 5. **Create a Pull Request**: Open a pull request on the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ on GitHub by clicking on "Compare and pull request" either on the PR page of MESMER itself or in your own fork (a message should appear on the top of the page after you pushed). You will be prompted to give your PR a name and a short description, explaining what you did. There is also a small check list for you to fill out, asking if your PR solves any known issues from the `MESMER Issue Tracker`_, if you added test and documentation to your PR and added an entry to the `CHANGELOG`_.
 6. **Review Process**: Each pull request needs approval from a core contributor. You can mark your PR as a draft if you are not ready for the review yet and actively request a review in the side bar of your PR when you are ready. Before you request a review please make sure your changes pass all tests and pre-commit checks (you will see a green check mark under your PR if they do). If you need help with this (or anything else), don't hesitate to reach out to the team by writing a comment and tagging either `Mathias Hauser`_ or `Victoria Bauer`_. Please also be available for comments and discussion about your contribution to ensure your changes can be implemented.
 
-   ​Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on ``sync`` in your fork. Afterwards, go to your local main branch and do:
+   Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on ``sync`` in your fork. Afterwards, go to your local main branch and do:
 
    .. code-block:: shell
 
@@ -179,7 +178,7 @@ To help us focus on what the code does, not how it looks, we use a couple of aut
 - `ruff check <https://docs.astral.sh/ruff/>`_ to check and fix small code errors.
 - `black <https://black.readthedocs.io/en/stable/>`_ to auto-format the code.
 
-These tools automatically format the code for us and tell us where the errors are. To use them, after setting up the development environment (see `Development setup`_), run ``ruff check . --fix ; black .;``. If you run these commands after committing all your work, i.e., your working directory is 'clean'. This ensures that you don't format code without being able to undo it, just in case something goes wrong.
+These tools automatically format the code for us and tell us where the errors are. To use them, after setting up the development environment (see `Development setup`_), run ``ruff check --fix .; black .;``. If you run these commands after committing all your work, i.e., your working directory is 'clean'. This ensures that you don't format code without being able to undo it, just in case something goes wrong.
 
 Documenting
 -----------
