@@ -166,6 +166,7 @@ module = [
 # abbreviations
 varn = "varn"
 strat = "strat"
+Nead = "Nead"
 
 [tool.typos.type.jupyter]
 # avoid fixing the id hashes in jupyter notebooks

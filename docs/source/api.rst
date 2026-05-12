@@ -194,7 +194,7 @@ Weighted operations: calculate global mean
    ~weighted.equal_scenario_weights_from_datatree
    ~weighted.get_weights_density
 
-DataTree heplers
+DataTree helpers
 ----------------
 
 .. autosummary::
