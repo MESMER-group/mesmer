@@ -89,9 +89,10 @@ def test_fit_fourier_order_np(coefficients):
     yearly_predictor = np.repeat(yearly_predictor, 12)
     monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients)
 
-    selected_order, estimated_coefficients, predictions = _fit_fourier_order_np(
+    selected_order, estimated_coefficients = _fit_fourier_order_np(
         yearly_predictor, monthly_target, max_order=max_order
     )
+    predictions = _generate_fourier_series_np(yearly_predictor, estimated_coefficients)
 
     np.testing.assert_equal(selected_order, int(len(coefficients) / 4))
 

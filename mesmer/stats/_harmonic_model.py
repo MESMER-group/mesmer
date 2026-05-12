@@ -168,8 +168,8 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     coeffs : array-like of shape (4*order)
         Fitted coefficients of Fourier series.
 
-    preds : array-like of shape (n_years*12,)
-        Predicted monthly values.
+    mse : Float
+        Mean-squared error.
 
     """
 
@@ -242,8 +242,6 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
         Selected order of Fourier Series.
     coeffs : array-like of size (4 * max_order,)
         Fitted coefficients for the selected order of Fourier Series.
-    predictions : array-like of size (n_years*12,)
-        Predicted monthly values from final model.
     """
 
     current_min_score = float("inf")
@@ -267,15 +265,11 @@ def _fit_fourier_order_np(yearly_predictor, monthly_target, max_order):
         else:
             break
 
-    predictions = _generate_fourier_series_np(
-        yearly_predictor=yearly_predictor, coeffs=last_coeffs
-    )
-
     # need the coeff array to be the same size for all orders
     coeffs = np.full(max_order * 4, fill_value=np.nan)
     coeffs[: selected_order * 4] = last_coeffs
 
-    return selected_order, coeffs, predictions
+    return selected_order, coeffs
 
 
 def _fit_harmonic_model(
@@ -353,14 +347,14 @@ def _fit_harmonic_model(
     # subtract annual mean to have seasonal anomalies around 0
     seasonal_deviations = monthly_target - yearly_predictor
 
-    selected_order, coeffs, preds = xr.apply_ufunc(
+    selected_order, coeffs = xr.apply_ufunc(
         _fit_fourier_order_np,
         yearly_predictor,
         seasonal_deviations,
         input_core_dims=[[sample_dim], [sample_dim]],
-        output_core_dims=([], ["coeff"], [sample_dim]),
+        output_core_dims=([], ["coeff"]),
         vectorize=True,
-        output_dtypes=[int, float, float],
+        output_dtypes=[int, float],
         kwargs={"max_order": max_order},
     )
 
@@ -375,6 +369,7 @@ def _fit_harmonic_model(
 
 
 class HarmonicModel:
+    """HarmonicModel class to fit a Fourier Series to monthly data using yearly predictors."""
 
     def __init__(self):
 
