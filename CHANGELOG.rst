@@ -25,8 +25,9 @@ Breaking changes
 - Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
-  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
-  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_,
+  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_, and
+  `#887 <https://github.com/MESMER-group/mesmer/pull/887>`_):
 
   ================= ========= ==========
   Package           Old       New
