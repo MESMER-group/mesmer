@@ -96,43 +96,33 @@ def _validate_coefficients(
 
     Parameters
     ----------
-    expression: Expression
+    expression : Expression
         Expression to validate the coefficients for.
-
     data_pred : numpy array 1D
         Predictors for the training sample.
-
     data_targ : numpy array 1D
         Target for the training sample.
-
     coefficients : numpy array 1D
         Coefficients to validate.
-
     threshold_min_proba : float | None
         Minimal probability of each data sample in the distribution.
 
-
     Returns
     -------
-
     coeffs_in_bounds : bool
         True if coefficients are in conditional_distrib.expression.boundaries_coeffs. If
         False, all other tests will also be set to False and not tested.
-
     params_in_bounds : bool
         True if the params are within conditional_distrib.expression.boundaries_params
-
     params_in_support : bool
         True if parameters are within conditional_distrib.expression.boundaries_params
         and within the support of the distribution. False if not or if test_coeff is
         False. If False, test_proba will be set to False and not tested.
-
     test_proba : bool
         Only tested if conditional_distrib.threshold_min_proba is not None.
         True if the probability of the target samples for the given coefficients
         is above conditional_distrib.threshold_min_proba.
         False if not or if test_coeff or test_param or test_coeff is False.
-
     params : dict
         The evaluated params for the given coefficients, if any of the tests fail, empty
         dict.

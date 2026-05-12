@@ -22,9 +22,9 @@ class ProbabilityIntegralTransform:
 
         Parameters
         ----------
-        distrib_orig: ConditionalDistribution
+        distrib_orig : ConditionalDistribution
             original distribution
-        distrib_targ: ConditionalDistribution
+        distrib_targ : ConditionalDistribution
             target distribution, the distribution to which the data
             should be transformed
         """
@@ -73,7 +73,7 @@ class ProbabilityIntegralTransform:
         threshold_proba : float, default: 1.e-9.
             Threshold for the probability of the sample on the original distribution.
             The probabilities of samples outside this threshold (on both sides of the
-            distribtion) will be set to the threshold. This should avoid very unlikely
+            distribution) will be set to the threshold. This should avoid very unlikely
             values
 
         Returns

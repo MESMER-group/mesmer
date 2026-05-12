@@ -10,7 +10,7 @@ T_Xarray = TypeVar("T_Xarray", "xr.DataArray", "xr.Dataset")
 
 
 @_datatree_wrapper
-def lowess(
+def lowess[T_Xarray: ("xr.DataArray", "xr.Dataset")](
     data: T_Xarray,
     dim: str,
     *,

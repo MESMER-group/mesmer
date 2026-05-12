@@ -50,12 +50,13 @@ def map_over_datasets(func, *args, kwargs=None):
         `func(*args: Dataset, **kwargs) -> Union[Dataset, tuple[Dataset, ...]]`.
 
         (i.e. func must accept at least one Dataset and return at least one Dataset.)
+
     *args : tuple, optional
         Positional arguments passed on to `func`. Any DataTree arguments will be
         converted to Dataset objects via `.dataset`.
+
     kwargs : dict, optional
         Optional keyword arguments passed directly to ``func``.
-
 
     See Also
     --------
@@ -370,7 +371,7 @@ def broadcast_and_pool_scen_ens(
     return predictors_stacked, target_stacked, weights_stacked
 
 
-def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
+def _datatree_wrapper[**P, T](func: Callable[P, T]) -> Callable[P, T]:
     """wrapper to extend functions so DataTree can be passed
 
     NOTE: DataTree arguments __must__ be passed as args (positional) and not as

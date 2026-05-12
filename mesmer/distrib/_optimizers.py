@@ -32,7 +32,7 @@ class MinimizeOptions:
         options : dict | None, default None
             A dictionary of method-specific solver options. See scipy.optimize.minimize
 
-        See also
+        See Also
         --------
         scipy.optimize.minimize
         """

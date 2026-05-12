@@ -26,22 +26,31 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+- Add a :py:class:`HarmonicModel` class instead of the two functions :py:func:`fit_harmonic_model` and
+  :py:func:`predict_harmonic_model` (`#882 <https://github.com/MESMER-group/mesmer/pull/882>`_).
+  By `Mathias Hauser`_.
+- :py:func:`fit_auto_regression_monthly` now returns the parameters and residuals separately
+  (`#880 <https://github.com/MESMER-group/mesmer/pull/880>`_).
+  By `Mathias Hauser`_.
 - Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
   By `Mathias Hauser`_.
 - Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
   By `Mathias Hauser`_.
+- Removed support for python 3.11 (`#886 <https://github.com/MESMER-group/mesmer/pull/886>`_)
+  By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
-  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
-  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_,
+  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_, and
+  `#887 <https://github.com/MESMER-group/mesmer/pull/887>`_):
 
   ================= ========= ==========
   Package           Old       New
   ================= ========= ==========
   **cartopy**           0.23       0.24
-  **dask**           2024.7     2025.2
+  **dask**           2024.7     2025.4
   **numpy**             1.26       2.1
-  **packaging**        24.1       24.2
+  **packaging**        24.1       25.0
   **pyproj**            3.6        3.7
   **regionmask**        0.12       0.13
   **scikit-learn**      1.5        1.6
@@ -51,6 +60,9 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
+
+- The MESMER tutorial wrongly used ``localized_covariance`` instead of ``localized_covariance_adjusted``
+  (`#883 <https://github.com/MESMER-group/mesmer/issues/883>`_). By `Mathias Hauser`_.
 
 - MESMER-X
 
@@ -64,6 +76,8 @@ Documentation
 
 - Improve the MESMER-M tutorial and split it into two parts (`#878 <https://github.com/MESMER-group/mesmer/pull/878>`_).
   By `Sarah Schöngart`_.
+- Align naming of the saved parameters in the MESMER-X tutorial (`#885 <https://github.com/MESMER-group/mesmer/issues/885>`_).
+  By `Mathias Hauser`_.
 - Document more functions and add documentation page on pre-calibrated parameters
   (`#813 <https://github.com/MESMER-group/mesmer/pull/813>`_, and `#814 <https://github.com/MESMER-group/mesmer/pull/814>`_).
   By `Victoria Bauer`_.
