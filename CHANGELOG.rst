@@ -78,6 +78,8 @@ Documentation
   By `Sarah Schöngart`_.
 - Align naming of the saved parameters in the MESMER-X tutorial (`#885 <https://github.com/MESMER-group/mesmer/issues/885>`_).
   By `Mathias Hauser`_.
+- Update the *Contributing to MESMER* documentation (`#892 <https://github.com/MESMER-group/mesmer/issues/892>`_).
+  By `Mathias Hauser`_.
 - Document more functions and add documentation page on pre-calibrated parameters
   (`#813 <https://github.com/MESMER-group/mesmer/pull/813>`_, and `#814 <https://github.com/MESMER-group/mesmer/pull/814>`_).
   By `Victoria Bauer`_.
