@@ -25,16 +25,17 @@ Breaking changes
 - Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
   By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
-  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
-  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_,
+  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_, and
+  `#887 <https://github.com/MESMER-group/mesmer/pull/887>`_):
 
   ================= ========= ==========
   Package           Old       New
   ================= ========= ==========
   **cartopy**           0.23       0.24
-  **dask**           2024.7     2025.2
+  **dask**           2024.7     2025.4
   **numpy**             1.26       2.1
-  **packaging**        24.1       24.2
+  **packaging**        24.1       25.0
   **pyproj**            3.6        3.7
   **regionmask**        0.12       0.13
   **scikit-learn**      1.5        1.6
