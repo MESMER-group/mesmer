@@ -370,7 +370,7 @@ def broadcast_and_pool_scen_ens(
     return predictors_stacked, target_stacked, weights_stacked
 
 
-def _datatree_wrapper(func: Callable[P, T]) -> Callable[P, T]:
+def _datatree_wrapper[**P, T](func: Callable[P, T]) -> Callable[P, T]:
     """wrapper to extend functions so DataTree can be passed
 
     NOTE: DataTree arguments __must__ be passed as args (positional) and not as

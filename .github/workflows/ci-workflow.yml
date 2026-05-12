@@ -25,11 +25,11 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.11", "3.14"]
+        python-version: ["3.12", "3.14"]
         env: [""]
         include:
           - env: "min-all-deps"
-            python-version: "3.11"
+            python-version: "3.12"
             os: "ubuntu-latest"
           - env: ""
             python-version: "3.14"
