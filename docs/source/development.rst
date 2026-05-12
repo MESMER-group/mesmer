@@ -2,8 +2,6 @@
 
 Contributing to MESMER
 ======================
-.. contents::
-   :local:
 
 Overview
 --------
@@ -57,11 +55,25 @@ Follow the steps below (if any of these tools are unfamiliar, please see the res
 1. Install conda (we recommend using the `conda-forge installer <https://conda-forge.org/download/>`_)
 2. Create the environment:
 
-   a. Change your current directory to MESMER's root directory (i.e., the one that contains ``README.rst``), ``cd mesmer``.
+   a. Change your current directory to MESMER's root directory (i.e., the one that contains ``README.rst``):
 
-   b. Create a conda environment to use with MESMER and install all the dependencies: ``conda env create -n mesmer_dev -f environment.yml``.
+      .. code-block:: shell
 
-   c. Activate your conda environment: ``conda activate mesmer_dev``. This is important for the next step, otherwise the packages will be installed in your base environment. Make sure the command line now says: ``(mesmer_dev) username@host:~/mesmer>``.
+         cd mesmer
+
+   b. Create a conda environment to use with MESMER and install all the dependencies:
+
+      .. code-block:: shell
+
+         conda env create -n mesmer_dev -f environment.yml
+
+   c. Activate your conda environment:
+
+      .. code-block:: shell
+
+         conda activate mesmer_dev
+
+      This is important for the next step, otherwise the packages will be installed in your base environment. Make sure the command line now says: ``(mesmer_dev) username@host:~/mesmer>``.
 
    d. (optional) Install additional dependencies which are not strictly necessary but useful for MESMER:
 
@@ -69,7 +81,12 @@ Follow the steps below (if any of these tools are unfamiliar, please see the res
 
          conda install ipykernel matplotlib
 
-   d. Install mesmer itself and packages needed for development (pytest, sphinx, etc.) ``python -m pip install -e .``.
+   d. Install mesmer itself and packages needed for development (pytest, sphinx, etc.)
+
+      .. code-block:: shell
+
+         python -m pip install -e .
+
       The flag ``-e`` installs MESMER in development (**e**\ ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
 
 3. Make sure that MESMER was correctly installed by running the test suite ``pytest . --all`` in the mesmer folder.
@@ -185,7 +202,13 @@ Documenting
 We strongly encourage you to document your code. By this we mean maintaining a transparent workflow via git and github and commenting your code lines but above all we want to encourage documenting your new functions via a docstring, explaining what the function does and how it can be used. This makes it easier for others to understand what you have done and how to use it.
 
 We use Sphinx_ to generate our documentation. To get started with Sphinx, we began with `this example <https://pythonhosted.org/an_example_pypi_project/sphinx.html>`_ and then used `Sphinx's getting started guide <https://www.sphinx-doc.org/en/master/usage/quickstart.html>`_.
-After setting up the development environment (see `Development setup`_) and adding your documentation, building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
+After setting up the development environment (see `Development setup`_) you need to install additional packages to build the documentation:
+
+.. code-block:: shell
+
+   python -m pip install -e . --group docs
+
+Building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
 
 Please update the documentation to reflect any changes or additions to the code. Follow the structure and style of the existing documentation, and lastly, update the `CHANGELOG` with your changes.
 
