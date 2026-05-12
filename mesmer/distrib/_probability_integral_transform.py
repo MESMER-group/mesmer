@@ -22,9 +22,9 @@ class ProbabilityIntegralTransform:
 
         Parameters
         ----------
-        distrib_orig: ConditionalDistribution
+        distrib_orig : ConditionalDistribution
             original distribution
-        distrib_targ: ConditionalDistribution
+        distrib_targ : ConditionalDistribution
             target distribution, the distribution to which the data
             should be transformed
         """

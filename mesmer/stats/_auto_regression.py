@@ -81,7 +81,7 @@ def select_ar_order_scen_ens(
 
     Parameters
     ----------
-    objs : DataTree, xr.DataArrays or dict of DataArrays
+    *objs : DataTree, xr.DataArrays or dict of DataArrays
         A DataTree, ``xr.DataArray``s or dict of ``xr.DataArray`` to estimate the auto
         regression order over.
     dim : str
@@ -188,7 +188,7 @@ def fit_auto_regression_scen_ens(
 
     Parameters
     ----------
-    obj : DataTree, xr.DataArrays or dict of DataArrays
+    *objs : DataTree, xr.DataArrays or dict of DataArrays
         A ``DataTree`` holding one or several ``xr.Dataset``, ``xr.DataArray`` objects,
         or dict of ``xr.DataArray`` objects to estimate the auto regression order over,
         each representing one scenario, potentially with several ensemble members along
@@ -431,6 +431,12 @@ def draw_auto_regression_uncorrelated(
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
 
+    time_dim : str, default: "time"
+        Name of the time dimension.
+
+    realisation_dim : str, default: "realisation"
+        Name of the realisation dimension.
+
     Returns
     -------
     out : Dataset
@@ -550,6 +556,12 @@ def draw_auto_regression_correlated(
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
+
+    time_dim : str, default: "time"
+        Name of the time dimension.
+
+    realisation_dim : str, default: "realisation"
+        Name of the realisation dimension.
 
     Returns
     -------
@@ -836,7 +848,7 @@ def _fit_auto_regression_np(data: np.ndarray, lags: int | Sequence[int]):
     coeffs : :obj:`np.array`
         Coefficients if the AR model. Will have as many entries as ``lags``.
     variance : :obj:`np.array`
-       Variance of the residuals.
+        Variance of the residuals.
     nobs: :obj:`np.array``
         Number of observations.
     """
@@ -1021,25 +1033,32 @@ def draw_auto_regression_monthly(
         - slope
 
         both of shape (12, n_gridpoints).
+
     covariance : xr.DataArray of shape (12, n_gridpoints, n_gridpoints)
         The covariance matrix representing the spatially correlated driving
         white noise process for each month. Must be symmetric and at least
         positive-semidefinite.
         Used to draw spatially-correlated innovations using a multivariate normal.
+
     time : xr.DataArray | pd.Index
         The time coordinates that determines the length of the predicted timeseries and
         that will be the assigned time dimension of the predictions.
+
     n_realisations : int
         The number of realisations to draw.
+
     seed : int | xr.DataTree
         Seed used to initialize the pseudo-random number generator. Can be an int or a
         xr.DataTree that contains Datasets with a single variable "seed" with the seed
         value, used to draw samples for multiple scenarios.
+
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result).
+
     time_dim : str, default "time"
         Name of the time dimension for the output data.
+
     realisation_dim : str, default "realisation"
         Name of the realisation dimension for the output data.
 
@@ -1172,7 +1191,7 @@ def _draw_auto_regression_monthly_np(
         The intercept of the AR(1) process for each month.
     slope : np.array of shape (12, gridpoints)
         The slope of the AR(1) process for each month.
-    covariance: np.array of shape (12, n_gridpoints, n_gridpoints)
+    covariance : np.array of shape (12, n_gridpoints, n_gridpoints)
         The covariance matrix representing spatial correlation between gridpoints for
         each month.
     n_samples : int
@@ -1180,6 +1199,8 @@ def _draw_auto_regression_monthly_np(
     n_ts : int
         The number of time steps to draw (i.e. the number of months in the whole
         timeseries).
+    seed : int
+        Seed used to initialize the pseudo-random number generator.
     buffer : int
         Buffer to initialize the autoregressive process (ensures that start at 0 does
         not influence overall result). The number given is used for every month such

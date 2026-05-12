@@ -104,10 +104,11 @@ def closest_neighbors(lon: xr.DataArray, lat: xr.DataArray, n_closest: int):
 
     Parameters
     ----------
-    coordinate_path: str or Path
-        String or pahtlib.Path object pointing to an .npy file that contains an array of shape (n_locations, 2)
-        tghat contains (lat, lon) coordinates for all n_locations
-    n_closest: int
+    lon : xr.DataArray
+        1D array of longitudes
+    lat : xr.DataArray
+        1D array of latitudes
+    n_closest : int
         number of closest locations to compute
 
     Returns

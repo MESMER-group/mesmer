@@ -131,8 +131,7 @@ def global_mean(data, weights=None, x_dim="lon", y_dim="lat"):
     obj : xr.DataTree |  xr.Dataset | xr.DataArray
         Array converted to an unstructured grid.
 
-
-    See also
+    See Also
     --------
     lat_weights
     """
@@ -163,8 +162,8 @@ def equal_scenario_weights_from_datatree(
     Weights are always along the time and ens dim, if there are more dimensions in a
     dataset, they will be dropped.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     dt : DataTree
         DataTree holding the ``xr.Datasets`` for which the weights should be created.
         Each dataset must have at least ens_dim and time_dim as dimensions, but can have
@@ -175,13 +174,13 @@ def equal_scenario_weights_from_datatree(
         Name of the time dimension, will be filled with equal values for each ensemble
         member.
 
-    Returns:
-    --------
+    Returns
+    -------
     DataTree
         DataTree holding the weights for each scenario isomorphic to dt, where each
         dataset has dimensions (time_dim, ens_dim).
 
-    Example:
+    Examples
     --------
     >>> dt = xr.DataTree()
     >>> dt["ssp119"] = xr.DataTree(
@@ -326,9 +325,9 @@ def _weighted_median(data, weights):
     """
     Parameters
     ----------
-      data : numpy.array
+    data : numpy.array
         Data to calculate the median from.
-    weights:  numpy.array
+    weights : numpy.array
         Weights to apply
 
     Returns
@@ -337,7 +336,6 @@ def _weighted_median(data, weights):
 
     References
     ----------
-
     Adapted form
 
     https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
