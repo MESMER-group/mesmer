@@ -19,6 +19,12 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+- Add a :py:class:`HarmonicModel` class instead of the two functions :py:func:`fit_harmonic_model` and
+  :py:func:`predict_harmonic_model` (`#882 <https://github.com/MESMER-group/mesmer/pull/882>`_).
+  By `Mathias Hauser`_.
+- :py:func:`fit_auto_regression_monthly` now returns the parameters and residuals separately
+  (`#880 <https://github.com/MESMER-group/mesmer/pull/880>`_).
+  By `Mathias Hauser`_.
 - Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
   By `Mathias Hauser`_.
