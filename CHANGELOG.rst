@@ -49,6 +49,9 @@ Deprecations
 Bug fixes
 ^^^^^^^^^
 
+- The MESMER tutorial wrongly used ``localized_covariance`` instead of ``localized_covariance_adjusted``
+  (`#883 <https://github.com/MESMER-group/mesmer/issues/883>`_). By `Mathias Hauser`_.
+
 - MESMER-X
 
   - Fix first guess when scale depends on predictors (`#828 <https://github.com/MESMER-group/mesmer/issues/828>`_).
