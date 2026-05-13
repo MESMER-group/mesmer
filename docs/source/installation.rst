@@ -4,7 +4,7 @@ Installation
 Required dependencies
 ---------------------
 
-- Python (3.11 or later)
+- Python (3.12 or later)
 - `dask <https://www.dask.org/>`__
 - `filefisher <https://filefisher.readthedocs.io/en/latest/>`__
 - `joblib <https://joblib.readthedocs.io/en/latest/>`__
@@ -18,8 +18,6 @@ Required dependencies
 - `scipy <https://scipy.org/>`__
 - `statsmodels <https://www.statsmodels.org/stable/index.html>`__
 - `xarray <https://docs.xarray.dev/en/stable/>`__
-
-Please note that we only support datatree version 0.0.13 and will switch to the xarray internal datatree module in the future.
 
 Optional dependencies
 ---------------------

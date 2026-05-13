@@ -208,7 +208,7 @@ After setting up the development environment (see `Development setup`_) you need
 
    python -m pip install -e . --group docs
 
-Building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
+Building the docs is done by running ``make html`` (note, run ``make -B html`` to force the docs to rebuild and ignore make when it says '... index.html is up to date') in the docs directory. This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
 
 Please update the documentation to reflect any changes or additions to the code. Follow the structure and style of the existing documentation, and lastly, update the `CHANGELOG` with your changes.
 
