@@ -168,7 +168,7 @@ def _fit_fourier_coeffs_np(yearly_predictor, monthly_target, first_guess):
     coeffs : array-like of shape (4*order)
         Fitted coefficients of Fourier series.
 
-    mse : Float
+    mse : float
         Mean-squared error.
 
     """
