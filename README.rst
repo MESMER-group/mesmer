@@ -27,7 +27,7 @@ Citing MESMER
 Scientific publications using MESMER Software should cite the following publication:
 
   Bauer, V. M., Hauser, M., Quilcaille, Y., Schöngart, S., Gudmundsson, L., and Seneviratne, S. I.:
-  MESMER v1.0.0: Consolidating the Modular Earth System Model Emulator into a Sustainable Research 
+  MESMER v1.0.0: Consolidating the Modular Earth System Model Emulator into a Sustainable Research
   Software Package, Geosci. Model Dev., tba, tba, 2026.
 
 Depending on which application of MESMER you use (MESMER, MESMER-M, MESMER-X, etc.) please
