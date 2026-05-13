@@ -14,7 +14,7 @@ changes etc.); and (iii) emission uncertainty, i.e., uncertainty in the emission
 humans decide to follow. An interface between MESMER and global mean temperature
 emulators can be found at https://github.com/MESMER-group/mesmer-openscmrunner.
 
-At the moment, we provide infrastrucutre to emulate annual and monthly near-surface air
+MESMER provides infrastructure to emulate annual and monthly near-surface air
 temperature (MESMER and MESMER-M) as well as various climate extreme indicators (MESMER-X).
 
 MESMER is under active development both scientifically and technically. Future work will
