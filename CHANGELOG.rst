@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v1.0.0 - 12.05.2026
+v1.0.0 - 13.05.2026
 -------------------
 
 This version is the official release for mesmer v1.0.0. It restructures much of
