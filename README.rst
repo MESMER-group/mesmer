@@ -29,7 +29,7 @@ Scientific publications using MESMER Software should cite the following publicat
   placeholder for MESMER publication, to be added once published.
 
 Depending on which application of MESMER you use (MESMER, MESMER-M, MESMER-X, etc.) please
-also cite the relevant publications found in our publication list on 
+also cite the relevant publications found in our publication list on
 `readthedocs <https://mesmer-emulator.readthedocs.io/en/latest/publications.html>`_.
 
 License
