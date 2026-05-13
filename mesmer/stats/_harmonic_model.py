@@ -369,9 +369,8 @@ def _fit_harmonic_model(
 
 
 class HarmonicModel:
-    """HarmonicModel class to fit a Fourier Series to monthly data using yearly predictors."""
-
     def __init__(self):
+        """HarmonicModel class to fit a Fourier Series to monthly data using yearly predictors."""
 
         self._params = None
 
