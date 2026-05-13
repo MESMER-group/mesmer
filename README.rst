@@ -14,6 +14,9 @@ changes etc.); and (iii) emission uncertainty, i.e., uncertainty in the emission
 humans decide to follow. An interface between MESMER and global mean temperature
 emulators can be found at https://github.com/MESMER-group/mesmer-openscmrunner.
 
+MESMER provides infrastructure to emulate annual and monthly near-surface air
+temperature (MESMER and MESMER-M) as well as various climate extreme indicators (MESMER-X).
+
 MESMER is under active development both scientifically and technically. Future work will
 increase its user friendliness and extend its emulation capabilities to include
 additional emulation methods and target climate variables.
@@ -21,20 +24,15 @@ additional emulation methods and target climate variables.
 Citing MESMER
 -------------
 
-Scientific publications using MESMER should cite the following publication:
+Scientific publications using MESMER Software should cite the following publication:
 
-  Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system model
-  temperatures with MESMER: from global mean temperature trajectories to grid-point-level
-  realizations on land, Earth Syst. Dynam., 11, 139–159,
-  https://doi.org/10.5194/esd-11-139-2020, 2020.
+  Bauer, V. M., Hauser, M., Quilcaille, Y., Schöngart, S., Gudmundsson, L., and Seneviratne, S. I.:
+  MESMER v1.0.0: Consolidating the Modular Earth System Model Emulator into a Sustainable Research
+  Software Package, Geosci. Model Dev., tba, tba, 2026.
 
-If MESMER is used to emulate multiple emission pathways and/or in combination with a
-global mean emulator, the following publication should additionally be cited:
-
-  Beusch, L., Nicholls, Z., Gudmundsson, L., Hauser, M., Meinshausen, M., and Seneviratne,
-  S. I.: From emission scenarios to spatially resolved projections with a chain of
-  computationally efficient emulators: coupling of MAGICC (v7.5.1) and MESMER (v0.8.3),
-  Geosci. Model Dev., 15, 2085–2103, https://doi.org/10.5194/gmd-15-2085-2022, 2022.
+Depending on which application of MESMER you use (MESMER, MESMER-M, MESMER-X, etc.) please
+also cite the relevant publications found in our
+`publication list <https://mesmer-emulator.readthedocs.io/en/latest/publications.html>`_.
 
 License
 -------

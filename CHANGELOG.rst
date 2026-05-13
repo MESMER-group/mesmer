@@ -27,8 +27,8 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 
 - Add a :py:class:`HarmonicModel` class instead of the two functions :py:func:`fit_harmonic_model` and
-  :py:func:`predict_harmonic_model` (`#882 <https://github.com/MESMER-group/mesmer/pull/882>`_).
-  By `Mathias Hauser`_.
+  :py:func:`predict_harmonic_model` (`#882 <https://github.com/MESMER-group/mesmer/pull/882>`_ and `#893 <https://github.com/MESMER-group/mesmer/pull/893>`_).
+  By `Mathias Hauser`_ and `Victoria Bauer`_.
 - :py:func:`fit_auto_regression_monthly` now returns the parameters and residuals separately
   (`#880 <https://github.com/MESMER-group/mesmer/pull/880>`_).
   By `Mathias Hauser`_.

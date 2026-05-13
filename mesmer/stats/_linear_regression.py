@@ -10,9 +10,8 @@ from mesmer.datatree import _datatree_wrapper
 
 
 class LinearRegression:
-    """Ordinary least squares Linear Regression for xr.DataArray objects."""
-
     def __init__(self):
+        """Ordinary least squares Linear Regression for xarray objects."""
         self._params = None
 
     @classmethod
