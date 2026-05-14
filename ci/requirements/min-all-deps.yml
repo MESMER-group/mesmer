@@ -8,7 +8,6 @@ dependencies:
  - python=3.12
  - cartopy=0.24
  - dask=2025.4
- - deprecated
  - filefisher=1.1
  - joblib=1.5
  - netcdf4=1.7

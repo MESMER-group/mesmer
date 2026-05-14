@@ -7,7 +7,6 @@ channels:
 dependencies:
  - cartopy
  - dask
- - deprecated
  - filefisher
  - joblib
  - matplotlib-base
