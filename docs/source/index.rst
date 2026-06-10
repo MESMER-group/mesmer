@@ -38,7 +38,6 @@
    :caption: API Reference
 
    api
-   api_legacy
 
 .. toctree::
    :maxdepth: 2

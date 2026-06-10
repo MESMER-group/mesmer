@@ -26,7 +26,6 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = [
     "dask[array,distributed] >=2025.4",
-    "deprecated",
     "filefisher >=1.1",
     "joblib >=1.5",
     "netcdf4 >=1.7",
@@ -193,7 +192,4 @@ python_files = "test_*.py"
 testpaths = "tests/"
 filterwarnings = [
   "ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning",
-  # deprecation of legacy code
-  "ignore:Call to deprecated function",
-  "ignore:Call to deprecated class",
 ]

@@ -10,6 +10,9 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+- Removed the legacy mesmer code  (`#899 <https://github.com/MESMER-group/mesmer/pull/899>`_).
+  By `Mathias Hauser`_.
+
 Deprecations
 ^^^^^^^^^^^^
 
@@ -206,6 +209,8 @@ Breaking changes
 Deprecations
 ^^^^^^^^^^^^
 
+- Deprecated the legacy mesmer code  (`#766 <https://github.com/MESMER-group/mesmer/pull/766>`_).
+  By `Victoria Bauer`_.
 - Deprecated ``mask_3D_frac_approx`` as the functionality is now offered in regionmask
   v0.12.0 (`#451 <https://github.com/MESMER-group/mesmer/pull/451>`_).
 
