@@ -12,35 +12,22 @@ from importlib.metadata import version as _get_version
 from mesmer import (
     _core,
     anomaly,
-    calibrate_mesmer,
-    create_emulations,
     datatree,
     distrib,
     example_data,
     geospatial,
     grid,
-    io,
     mask,
     resample,
     stats,
     testing,
-    utils,
     volc,
     weighted,
 )
 from mesmer._core import _data as data
 from mesmer._core.options import get_options, set_options
 
-# "legacy" modules
 __all__ = [
-    "calibrate_mesmer",
-    "create_emulations",
-    "io",
-    "utils",
-]
-
-# "new" "modules"
-__all__ += [
     "_core",
     "anomaly",
     "data",

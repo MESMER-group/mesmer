@@ -8,7 +8,6 @@ from mesmer._core.utils import _check_dataarray_form
 from mesmer.stats._harmonic_model import (
     _fit_fourier_order_np,
     _generate_fourier_series_np,
-    predict_harmonic_model,
 )
 from mesmer.testing import trend_data_1D, trend_data_2D
 
@@ -60,9 +59,8 @@ def test_predict_harmonic_model(stack):
         yearly_predictor = yearly_predictor.stack(sample=["time"], create_index=False)
         monthly_time = monthly_time.stack(sample=["time"], create_index=False)
 
-    result = mesmer.stats.predict_harmonic_model(
-        yearly_predictor, coeffs, monthly_time, time_dim="time"
-    )
+    harmonic_model = mesmer.stats.HarmonicModel.from_params(coeffs)
+    result = harmonic_model.predict(yearly_predictor, monthly_time, time_dim="time")
 
     _check_dataarray_form(
         result,
@@ -91,9 +89,10 @@ def test_fit_fourier_order_np(coefficients):
     yearly_predictor = np.repeat(yearly_predictor, 12)
     monthly_target = _generate_fourier_series_np(yearly_predictor, coefficients)
 
-    selected_order, estimated_coefficients, predictions = _fit_fourier_order_np(
+    selected_order, estimated_coefficients = _fit_fourier_order_np(
         yearly_predictor, monthly_target, max_order=max_order
     )
+    predictions = _generate_fourier_series_np(yearly_predictor, estimated_coefficients)
 
     np.testing.assert_equal(selected_order, int(len(coefficients) / 4))
 
@@ -139,7 +138,8 @@ def get_2D_coefficients(order_per_cell, n_lat=3, n_lon=2):
         "lat": ("cells", LAT.flatten()),
     }
 
-    return xr.DataArray(coeffs, dims=("cells", "coeff"), coords=coords)
+    coeffs = xr.DataArray(coeffs, dims=("cells", "coeff"), coords=coords)
+    return xr.Dataset({"coeffs": coeffs})
 
 
 def test_fit_harmonic_model():
@@ -161,16 +161,17 @@ def test_fit_harmonic_model():
     )
     monthly_time = xr.DataArray(time, dims=["time"], coords={"time": time})
 
-    monthly_target = predict_harmonic_model(
-        yearly_predictor, coefficients, time=monthly_time
-    )
+    harmonic_model = mesmer.stats.HarmonicModel.from_params(coefficients)
+    monthly_target = harmonic_model.predict(yearly_predictor, time=monthly_time)
 
     # test if the model can recover the monthly target from perfect fourier series
-    result = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+    harmonic_model = mesmer.stats.HarmonicModel()
+    harmonic_model.fit(yearly_predictor, monthly_target)
+    result = harmonic_model.params
     np.testing.assert_equal(result.selected_order.values, orders)
-    xr.testing.assert_allclose(
-        result.residuals, xr.zeros_like(monthly_target), atol=1e-6
-    )
+
+    result = harmonic_model.residuals(yearly_predictor, monthly_target)
+    xr.testing.assert_allclose(result, xr.zeros_like(monthly_target), atol=1e-6)
 
     # test if the model can recover the underlying cycle with noise on top of monthly target
     rng = np.random.default_rng(0)
@@ -178,10 +179,12 @@ def test_fit_harmonic_model():
         loc=0, scale=0.1, size=monthly_target.shape
     )
 
-    result = mesmer.stats.fit_harmonic_model(yearly_predictor, noisy_monthly_target)
-    predictions = mesmer.stats.predict_harmonic_model(
-        yearly_predictor, result.coeffs, time=monthly_time
-    )
+    harmonic_model = mesmer.stats.HarmonicModel()
+    harmonic_model.fit(yearly_predictor, noisy_monthly_target)
+
+    residuals = harmonic_model.residuals(yearly_predictor, noisy_monthly_target)
+
+    predictions = harmonic_model.predict(yearly_predictor, time=monthly_time)
     xr.testing.assert_allclose(predictions, monthly_target, atol=0.1)
 
     # compare numerically one cell of one year
@@ -202,61 +205,58 @@ def test_fit_harmonic_model():
         ]
     )
 
-    result_comp = result.residuals.isel(cells=0, time=slice(0, 12)).values
+    result_comp = residuals.isel(cells=0, time=slice(0, 12)).values
     np.testing.assert_allclose(result_comp, expected, atol=1e-6)
 
     # ensure predictions and residuals are consistent
     expected = noisy_monthly_target - predictions
 
-    xr.testing.assert_equal(expected, result.residuals)
+    xr.testing.assert_equal(expected, residuals)
 
 
 def test_fit_harmonic_model_checks() -> None:
     yearly_predictor = trend_data_2D(n_timesteps=10, n_lat=3, n_lon=2)
     monthly_target = trend_data_2D(n_timesteps=10 * 12, n_lat=3, n_lon=2)
 
-    with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor.values, monthly_target)  # type: ignore[arg-type]
+    harmonic_model = mesmer.stats.HarmonicModel()
 
     with pytest.raises(TypeError):
-        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target.values)  # type: ignore[arg-type]
+        harmonic_model.fit(yearly_predictor.values, monthly_target)  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError):
+        harmonic_model.fit(yearly_predictor, monthly_target.values)  # type: ignore[arg-type]
 
     yearly_predictor["time"] = pd.date_range("2000-01-01", periods=10, freq="YE")
 
     monthly_target["time"] = pd.date_range("2000-02-01", periods=10 * 12, freq="ME")
     with pytest.raises(ValueError, match="Monthly target data must start with January"):
-        mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+        harmonic_model.fit(yearly_predictor, monthly_target)
 
     monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
 
     with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
-        mesmer.stats.fit_harmonic_model(yearly_predictor.isel(cells=0), monthly_target)
+        harmonic_model.fit(yearly_predictor.isel(cells=0), monthly_target)
 
     with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
-        mesmer.stats.fit_harmonic_model(
-            yearly_predictor.rename(cells="gp"), monthly_target
-        )
+        harmonic_model.fit(yearly_predictor.rename(cells="gp"), monthly_target)
 
     with pytest.raises(ValueError, match="DataArray objects have different dimensions"):
-        mesmer.stats.fit_harmonic_model(
-            yearly_predictor, monthly_target.rename(cells="gp")
-        )
+        harmonic_model.fit(yearly_predictor, monthly_target.rename(cells="gp"))
+
+    with pytest.raises(ValueError, match="'params' not set"):
+        harmonic_model.params
 
     with pytest.raises(
         ValueError,
         match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 6 vs. 4",
     ):
-        mesmer.stats.fit_harmonic_model(
-            yearly_predictor, monthly_target.isel(cells=slice(None, 4))
-        )
+        harmonic_model.fit(yearly_predictor, monthly_target.isel(cells=slice(None, 4)))
 
     with pytest.raises(
         ValueError,
         match=r"The 'cells' coords of `yearly_predictor` and `monthly_target` have a different size: 5 vs. 6",
     ):
-        mesmer.stats.fit_harmonic_model(
-            yearly_predictor.isel(cells=slice(None, 5)), monthly_target
-        )
+        harmonic_model.fit(yearly_predictor.isel(cells=slice(None, 5)), monthly_target)
 
 
 def test_fit_harmonic_model_time_dim():
@@ -271,14 +271,19 @@ def test_fit_harmonic_model_time_dim():
     time_dim = "dates"
     monthly_target = monthly_target.rename({"time": time_dim})
     yearly_predictor = yearly_predictor.rename({"time": time_dim})
-    res = mesmer.stats.fit_harmonic_model(
-        yearly_predictor, monthly_target, time_dim=time_dim
-    )
+    harmonic_model = mesmer.stats.HarmonicModel()
+    harmonic_model.fit(yearly_predictor, monthly_target, time_dim=time_dim)
+    res = harmonic_model.params
 
     _check_dataarray_form(res.selected_order, required_dims="cells")
     _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
+
+    residuals = harmonic_model.residuals(
+        yearly_predictor, monthly_target, time_dim=time_dim
+    )
+
     _check_dataarray_form(
-        res.residuals, required_dims={"cells", "dates"}, required_coords="dates"
+        residuals, required_dims={"cells", "dates"}, required_coords="dates"
     )
 
 
@@ -293,10 +298,15 @@ def test_fit_harmonic_model_non_dim_coords():
     monthly_target["time"] = pd.date_range("2000-01-01", periods=10 * 12, freq="ME")
     monthly_target = monthly_target.stack(sample=["time"], create_index=False)
 
-    res = mesmer.stats.fit_harmonic_model(yearly_predictor, monthly_target)
+    harmonic_model = mesmer.stats.HarmonicModel()
+    harmonic_model.fit(yearly_predictor, monthly_target)
+    res = harmonic_model.params
 
     _check_dataarray_form(res.selected_order, required_dims="cells")
     _check_dataarray_form(res.coeffs, required_dims={"cells", "coeff"})
+
+    residuals = harmonic_model.residuals(yearly_predictor, monthly_target)
+
     _check_dataarray_form(
-        res.residuals, required_dims={"cells", "sample"}, required_coords="time"
+        residuals, required_dims={"cells", "sample"}, required_coords="time"
     )

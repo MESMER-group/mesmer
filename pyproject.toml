@@ -17,22 +17,20 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "dask[array,distributed] >=2025.2",
-    "deprecated",
+    "dask[array,distributed] >=2025.4",
     "filefisher >=1.1",
-    "joblib >=1.4",
+    "joblib >=1.5",
     "netcdf4 >=1.7",
     "numpy >=2.1",
-    "packaging >=24.2",
+    "packaging >=25.0",
     "pandas >=2.2",
     "pooch >=1.8",
     "pyproj >=3.7",
@@ -98,7 +96,7 @@ fallback_version = "999"
 [tool.ruff]
 # also check notebooks
 extend-include = ["*.ipynb"]
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 # E402: module level import not at top of file
@@ -167,6 +165,7 @@ module = [
 # abbreviations
 varn = "varn"
 strat = "strat"
+Nead = "Nead"
 
 [tool.typos.type.jupyter]
 # avoid fixing the id hashes in jupyter notebooks
@@ -193,7 +192,4 @@ python_files = "test_*.py"
 testpaths = "tests/"
 filterwarnings = [
   "ignore:numpy.ndarray size changed, may indicate binary incompatibility:RuntimeWarning",
-  # deprecation of legacy code
-  "ignore:Call to deprecated function",
-  "ignore:Call to deprecated class",
 ]

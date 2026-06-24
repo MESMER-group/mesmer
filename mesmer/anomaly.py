@@ -27,7 +27,6 @@ def calc_anomaly(
     ref_scenario : str, default: "historical"
         Name of the node containing the reference scenario.
 
-
     Returns
     -------
     anomalies: DataTree

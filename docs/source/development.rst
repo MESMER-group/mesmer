@@ -2,8 +2,6 @@
 
 Contributing to MESMER
 ======================
-.. contents::
-   :local:
 
 Overview
 --------
@@ -57,20 +55,38 @@ Follow the steps below (if any of these tools are unfamiliar, please see the res
 1. Install conda (we recommend using the `conda-forge installer <https://conda-forge.org/download/>`_)
 2. Create the environment:
 
-   a. Change your current directory to MESMER's root directory (i.e., the one that contains ``README.rst``), ``cd mesmer``.
+   a. Change your current directory to MESMER's root directory (i.e., the one that contains ``README.rst``):
 
-   b. Create a conda environment to use with MESMER and install all the dependencies: ``conda env create -n mesmer_dev -f environment.yml``.
+      .. code-block:: shell
 
-   c. Activate your conda environment: ``conda activate mesmer_dev``. This is important for the next step, otherwise the packages will be installed in your base environment. Make sure the command line now says: ``(mesmer_dev) username@host:~/mesmer>``.
+         cd mesmer
+
+   b. Create a conda environment to use with MESMER and install all the dependencies:
+
+      .. code-block:: shell
+
+         conda env create -n mesmer_dev -f environment.yml
+
+   c. Activate your conda environment:
+
+      .. code-block:: shell
+
+         conda activate mesmer_dev
+
+      This is important for the next step, otherwise the packages will be installed in your base environment. Make sure the command line now says: ``(mesmer_dev) username@host:~/mesmer>``.
 
    d. (optional) Install additional dependencies which are not strictly necessary but useful for MESMER:
 
       .. code-block:: shell
 
          conda install ipykernel matplotlib
-         python -m pip install git+https://github.com/mathause/filefinder/
 
-   d. Install mesmer itself and packages needed for development (pytest, sphinx, etc.) ``python -m pip install -e .``.
+   d. Install mesmer itself and packages needed for development (pytest, sphinx, etc.)
+
+      .. code-block:: shell
+
+         python -m pip install -e .
+
       The flag ``-e`` installs MESMER in development (**e**\ ditable) mode, which means that changes to the code are immediately reflected in the environment and you don't need to reload your environment to use/test your changes.
 
 3. Make sure that MESMER was correctly installed by running the test suite ``pytest . --all`` in the mesmer folder.
@@ -108,7 +124,7 @@ If you want to contribute new features, fixes, or other changes to the MESMER co
 5. **Create a Pull Request**: Open a pull request on the `MESMER repository <https://github.com/MESMER-group/mesmer>`_ on GitHub by clicking on "Compare and pull request" either on the PR page of MESMER itself or in your own fork (a message should appear on the top of the page after you pushed). You will be prompted to give your PR a name and a short description, explaining what you did. There is also a small check list for you to fill out, asking if your PR solves any known issues from the `MESMER Issue Tracker`_, if you added test and documentation to your PR and added an entry to the `CHANGELOG`_.
 6. **Review Process**: Each pull request needs approval from a core contributor. You can mark your PR as a draft if you are not ready for the review yet and actively request a review in the side bar of your PR when you are ready. Before you request a review please make sure your changes pass all tests and pre-commit checks (you will see a green check mark under your PR if they do). If you need help with this (or anything else), don't hesitate to reach out to the team by writing a comment and tagging either `Mathias Hauser`_ or `Victoria Bauer`_. Please also be available for comments and discussion about your contribution to ensure your changes can be implemented.
 
-   ​Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on ``sync`` in your fork. Afterwards, go to your local main branch and do:
+   Potentially, some things change in the main repository while your PR is reviewed/you are working on it. Please regularly update your main remotely and locally. Remotely, you can do this by clicking on ``sync`` in your fork. Afterwards, go to your local main branch and do:
 
    .. code-block:: shell
 
@@ -179,14 +195,20 @@ To help us focus on what the code does, not how it looks, we use a couple of aut
 - `ruff check <https://docs.astral.sh/ruff/>`_ to check and fix small code errors.
 - `black <https://black.readthedocs.io/en/stable/>`_ to auto-format the code.
 
-These tools automatically format the code for us and tell us where the errors are. To use them, after setting up the development environment (see `Development setup`_), run ``ruff check . --fix ; black .;``. If you run these commands after committing all your work, i.e., your working directory is 'clean'. This ensures that you don't format code without being able to undo it, just in case something goes wrong.
+These tools automatically format the code for us and tell us where the errors are. To use them, after setting up the development environment (see `Development setup`_), run ``ruff check --fix .; black .;``. If you run these commands after committing all your work, i.e., your working directory is 'clean'. This ensures that you don't format code without being able to undo it, just in case something goes wrong.
 
 Documenting
 -----------
-We strongly encourage you to document your code. By this we mean mainting a transparent workflow via git and github and commenting your code lines but above all we want to encourage documenting your new functions via a docstring, explaining what the function does and how it can be used. This makes it easier for others to understand what you have done and how to use it.
+We strongly encourage you to document your code. By this we mean maintaining a transparent workflow via git and github and commenting your code lines but above all we want to encourage documenting your new functions via a docstring, explaining what the function does and how it can be used. This makes it easier for others to understand what you have done and how to use it.
 
 We use Sphinx_ to generate our documentation. To get started with Sphinx, we began with `this example <https://pythonhosted.org/an_example_pypi_project/sphinx.html>`_ and then used `Sphinx's getting started guide <https://www.sphinx-doc.org/en/master/usage/quickstart.html>`_.
-After setting up the development environment (see `Development setup`_) and adding your documentation, building the docs is done by running ``make docs`` (note, run ``make -B docs`` to force the docs to rebuild and ignore make when it says '... index.html is up to date'). This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
+After setting up the development environment (see `Development setup`_) you need to install additional packages to build the documentation:
+
+.. code-block:: shell
+
+   python -m pip install -e . --group docs
+
+Building the docs is done by running ``make html`` (note, run ``make -B html`` to force the docs to rebuild and ignore make when it says '... index.html is up to date') in the docs directory. This will build the docs for you. You can preview them by opening ``docs/build/html/index.html`` in a browser.
 
 Please update the documentation to reflect any changes or additions to the code. Follow the structure and style of the existing documentation, and lastly, update the `CHANGELOG` with your changes.
 

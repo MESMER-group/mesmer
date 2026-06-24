@@ -38,7 +38,7 @@ def _load_and_align_strat_aod_obs(
 
     Parameters
     ----------
-    time: xr.DataArray
+    time : xr.DataArray
         DataArray containing the time coords to align the aerosol optical depth
         observations to.
     hist_period : slice | None

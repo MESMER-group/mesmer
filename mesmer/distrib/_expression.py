@@ -52,10 +52,8 @@ class Expression:
         ----------
         expr : str
             Mathematical expression of the conditional distribution as a string.
-
         expr_name : str
             Name for the expression.
-
         boundaries_params : dict, optional
             Boundaries for the parameters. The keys are the names of the parameters, and
             the values are lists of two elements, the lower and upper bounds. The
@@ -63,7 +61,6 @@ class Expression:
             parameters found in the expression, except `scale` which must be positive,
             so the lower boundary will be set to 0. These boundaries will later be
             enforced when fitting the conditional distribution.
-
         boundaries_coeffs : dict, optional
             Boundaries for the coefficients. The keys are the names of the coefficients
             as written in the expression, and the values are lists of two elements,
@@ -92,7 +89,6 @@ class Expression:
 
         .. warning::
             Currently, the expression can only contain integers as numbers, no floats!
-
 
         Examples
         --------
@@ -220,7 +216,7 @@ class Expression:
 
         # prepare boundaries on parameters
         # default is [-inf, inf] except for scale which must be positive
-        # only set bounds for scale - avoids comparing values to deault of +- inf
+        # only set bounds for scale - avoids comparing values to default of +- inf
         if "scale" in self.parameters_list and "scale" not in self.boundaries_params:
             self.boundaries_params["scale"] = [0, np.inf]
 

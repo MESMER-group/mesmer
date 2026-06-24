@@ -1,8 +1,40 @@
 Changelog
 =========
 
-v1.0.0 - unreleased
+v1.1.0 - unreleased
+--------------------
+
+New Features
+^^^^^^^^^^^^
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+- Removed the legacy mesmer code  (`#899 <https://github.com/MESMER-group/mesmer/pull/899>`_).
+  By `Mathias Hauser`_.
+
+Deprecations
+^^^^^^^^^^^^
+
+Bug fixes
+^^^^^^^^^
+
+Documentation
+^^^^^^^^^^^^^
+
+Internal Changes
+^^^^^^^^^^^^^^^^
+
+
+v1.0.0 - 13.05.2026
 -------------------
+
+This version is the official release for mesmer v1.0.0. It restructures much of
+the code base to be more modular, flexible and stable. Mesmer now fully relies on xarray
+data structures, including xr.DataTree. We integrated MESMER-M, allowing the users to emulate
+monthly temperatures, and MESMER-X, which enables emulation of any climate variable using
+conditional distributions. Version 1.0.0 adds additional improvements and bug fixes beyond
+the release candidate.
 
 New Features
 ^^^^^^^^^^^^
@@ -19,22 +51,31 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+- Add a :py:class:`HarmonicModel` class instead of the two functions :py:func:`fit_harmonic_model` and
+  :py:func:`predict_harmonic_model` (`#882 <https://github.com/MESMER-group/mesmer/pull/882>`_ and `#893 <https://github.com/MESMER-group/mesmer/pull/893>`_).
+  By `Mathias Hauser`_ and `Victoria Bauer`_.
+- :py:func:`fit_auto_regression_monthly` now returns the parameters and residuals separately
+  (`#880 <https://github.com/MESMER-group/mesmer/pull/880>`_).
+  By `Mathias Hauser`_.
 - Remove helper function to merge ``DataTree`` objects, as this is now possible with :py:func:`xr.merge` in xarray v2025.11
   (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_).
   By `Mathias Hauser`_.
 - Use ``dependency-groups`` instead of ``extras`` for the development dependencies (`#862 <https://github.com/MESMER-group/mesmer/pull/862>`_).
   By `Mathias Hauser`_.
+- Removed support for python 3.11 (`#886 <https://github.com/MESMER-group/mesmer/pull/886>`_)
+  By `Mathias Hauser`_.
 - The supported versions of some dependencies were changed
-  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_, and
-  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_):
+  (`#824 <https://github.com/MESMER-group/mesmer/pull/824>`_,
+  `#848 <https://github.com/MESMER-group/mesmer/pull/848>`_, and
+  `#887 <https://github.com/MESMER-group/mesmer/pull/887>`_):
 
   ================= ========= ==========
   Package           Old       New
   ================= ========= ==========
   **cartopy**           0.23       0.24
-  **dask**           2024.7     2025.2
+  **dask**           2024.7     2025.4
   **numpy**             1.26       2.1
-  **packaging**        24.1       24.2
+  **packaging**        24.1       25.0
   **pyproj**            3.6        3.7
   **regionmask**        0.12       0.13
   **scikit-learn**      1.5        1.6
@@ -42,12 +83,11 @@ Breaking changes
   **xarray**         2025.03    2025.11
   ================= ========= ==========
 
-Deprecations
-^^^^^^^^^^^^
-
-
 Bug fixes
 ^^^^^^^^^
+
+- The MESMER tutorial wrongly used ``localized_covariance`` instead of ``localized_covariance_adjusted``
+  (`#883 <https://github.com/MESMER-group/mesmer/issues/883>`_). By `Mathias Hauser`_.
 
 - MESMER-X
 
@@ -59,6 +99,12 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+- Improve the MESMER-M tutorial and split it into two parts (`#878 <https://github.com/MESMER-group/mesmer/pull/878>`_).
+  By `Sarah Schöngart`_.
+- Align naming of the saved parameters in the MESMER-X tutorial (`#885 <https://github.com/MESMER-group/mesmer/issues/885>`_).
+  By `Mathias Hauser`_.
+- Update the *Contributing to MESMER* documentation (`#892 <https://github.com/MESMER-group/mesmer/issues/892>`_).
+  By `Mathias Hauser`_.
 - Document more functions and add documentation page on pre-calibrated parameters
   (`#813 <https://github.com/MESMER-group/mesmer/pull/813>`_, and `#814 <https://github.com/MESMER-group/mesmer/pull/814>`_).
   By `Victoria Bauer`_.
@@ -163,6 +209,8 @@ Breaking changes
 Deprecations
 ^^^^^^^^^^^^
 
+- Deprecated the legacy mesmer code  (`#766 <https://github.com/MESMER-group/mesmer/pull/766>`_).
+  By `Victoria Bauer`_.
 - Deprecated ``mask_3D_frac_approx`` as the functionality is now offered in regionmask
   v0.12.0 (`#451 <https://github.com/MESMER-group/mesmer/pull/451>`_).
 

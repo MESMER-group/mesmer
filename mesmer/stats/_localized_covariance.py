@@ -49,7 +49,6 @@ def adjust_covariance_ar1(
 
     References
     ----------
-
     .. [1] Beusch, L., Gudmundsson, L., and Seneviratne, S. I.: Emulating Earth system
        model temperatures with MESMER: from global mean temperature trajectories to
        grid-point-level realizations on land, Earth Syst. Dynam., 11, 139-159,

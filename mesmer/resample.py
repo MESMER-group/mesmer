@@ -17,10 +17,8 @@ def upsample_yearly_data(
     ----------
     yearly_data : xarray.DataArray | xr.Dataset | xr.DataTree
         Yearly values to upsample.
-
     monthly_time : xarray.DataArray | xr.Dataset | xr.DataTree
         Monthly time used to define the time coordinates of the upsampled data.
-
     time_dim : str, default: 'time'
         Name of the time dimension.
 

@@ -52,8 +52,12 @@ Harmonic Model
 .. autosummary::
    :toctree: generated/
 
-   ~stats.fit_harmonic_model
-   ~stats.predict_harmonic_model
+   ~stats.HarmonicModel
+   ~stats.HarmonicModel.from_params
+   ~stats.HarmonicModel.fit
+   ~stats.HarmonicModel.predict
+   ~stats.HarmonicModel.residuals
+   ~stats.HarmonicModel.params
 
 Power Transformer
 -----------------
@@ -190,7 +194,7 @@ Weighted operations: calculate global mean
    ~weighted.equal_scenario_weights_from_datatree
    ~weighted.get_weights_density
 
-DataTree heplers
+DataTree helpers
 ----------------
 
 .. autosummary::
