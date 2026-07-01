@@ -3,12 +3,14 @@
 # forcibly remove packages to avoid artifacts
 conda uninstall -y --force \
   dask \
+  geopandas \
   nc-time-axis \
   numpy \
   packaging \
   pandas \
   pooch \
   properscoring \
+  pyproj \
   regionmask \
   scikit-learn \
   scipy \
