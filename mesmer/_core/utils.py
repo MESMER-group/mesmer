@@ -127,6 +127,7 @@ def _assert_annual_data(time):
     """assert time coords has annual frequency"""
 
     import pandas as pd
+
     print()
 
     try:
@@ -136,7 +137,6 @@ def _assert_annual_data(time):
         print("option does not exist")
 
     print()
-
 
     freq = xr.infer_freq(time)
 
