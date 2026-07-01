@@ -128,6 +128,7 @@ def _assert_annual_data(time):
 
     import pandas as pd
     print()
+
     try:
         infer_freq_returns_offset = pd.get_option("future.infer_freq_returns_offset")
         print(f"{infer_freq_returns_offset=}")
