@@ -150,8 +150,6 @@ def test_fit_volcanic_influence_hist_period():
     result = mesmer.volc.fit_volcanic_influence(-aod, slice("1850", "2014"))
     expected = _get_volcanic_params(-0.52858)
 
-    print(result.aod.values)
-
     xr.testing.assert_allclose(result, expected)
 
     # unless we also adjust the hist period
