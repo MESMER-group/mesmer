@@ -68,8 +68,6 @@ def _test_mask(func, datatype, threshold=None, **kwargs):
 
     data = data_lon_lat(datatype, **kwargs)
 
-    print(data)
-
     kwargs = kwargs if threshold is None else {"threshold": threshold, **kwargs}
     result = func(data, **kwargs)
 
