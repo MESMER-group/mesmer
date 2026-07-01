@@ -127,10 +127,15 @@ def _assert_annual_data(time):
     """assert time coords has annual frequency"""
 
     import pandas as pd
+    print()
     try:
-        print(pd.get_option("future.infer_freq_returns_offset"))
+        infer_freq_returns_offset = pd.get_option("future.infer_freq_returns_offset")
+        print(f"{infer_freq_returns_offset=}")
     except pd.errors.OptionError:
         print("option does not exist")
+
+    print()
+
 
     freq = xr.infer_freq(time)
 
