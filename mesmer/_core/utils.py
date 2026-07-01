@@ -18,6 +18,26 @@ class LinAlgWarning(UserWarning):
     pass
 
 
+def _ignore_warnings(messages: list[str] | None = None):
+
+    if messages is None:
+        messages = [""]
+
+    def decorator(func):
+
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            with warnings.catch_warnings():
+
+                for message in messages:
+                    warnings.filterwarnings("ignore", message=message)
+                return func(*args, **kwargs)
+
+        return _wrapper
+
+    return decorator
+
+
 def _create_equal_dim_names(dim: str, suffixes: tuple[str, str]) -> tuple[str, str]:
     """appends suffixes to a dimension name
 
@@ -123,6 +143,7 @@ def _to_set(arg) -> set:
     return arg
 
 
+@_ignore_warnings(["A future version of pandas will return a BaseOffset"])
 def _assert_annual_data(time):
     """assert time coords has annual frequency"""
 
@@ -132,6 +153,11 @@ def _assert_annual_data(time):
         raise ValueError(
             "Annual data is required but data of unknown frequency was passed"
         )
+
+    if not isinstance(freq, str):
+        # pandas 3.1(?) will return a BaseOffset object
+        freq = freq.freqstr
+
     # pandas v2.2 and xarray v2023.11.0 changed the time freq string for year
     if not (freq.startswith("A") or freq.startswith("Y") or freq == "365D"):
         raise ValueError(
@@ -278,23 +304,3 @@ def _set_threads_from_options():
 
     with threadpoolctl.threadpool_limits(limits=threads):
         yield
-
-
-def _ignore_warnings(messages: list[str] | None = None):
-
-    if messages is None:
-        messages = [""]
-
-    def decorator(func):
-
-        @functools.wraps(func)
-        def _wrapper(*args, **kwargs):
-            with warnings.catch_warnings():
-
-                for message in messages:
-                    warnings.filterwarnings("ignore", message=message)
-                return func(*args, **kwargs)
-
-        return _wrapper
-
-    return decorator
