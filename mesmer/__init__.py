@@ -7,6 +7,21 @@ The mesmer package provides tools to train the MESMER emulator, create emulation
 analyze the results.
 """
 
+import pandas as pd
+
+print()
+print("init")
+print(pd.get_option("future.infer_freq_returns_offset"))
+print()
+
+def set():
+    raise ValueError("set_option")
+
+
+pd.set_option = set
+
+
+
 from importlib.metadata import version as _get_version
 
 from mesmer import (
