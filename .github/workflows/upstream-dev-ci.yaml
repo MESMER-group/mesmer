@@ -52,6 +52,9 @@ jobs:
       - name: Install mesmer
         run: |
           python -m pip install --no-deps -e .
+      - name: Print state before info
+        run: |
+          python -c 'import pandas as pd; print(pd.get_option("future.infer_freq_returns_offset"))'
       - name: Environment info
         run: |
           micromamba info
@@ -60,9 +63,15 @@ jobs:
           echo "numpy.show_config()"
           echo ""
           python -c "import numpy; numpy.show_config()"
+      - name: Print state before mesmer
+        run: |
+          python -c 'import pandas as pd; print(pd.get_option("future.infer_freq_returns_offset"))'
       - name: Import mesmer
         run: |
           python -c 'import mesmer'
+      - name: Print state after mesmer
+        run: |
+          python -c 'import pandas as pd; print(pd.get_option("future.infer_freq_returns_offset"))'
       - name: Run Tests
         if: success()
         id: status
