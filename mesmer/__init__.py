@@ -14,12 +14,12 @@ print("init")
 print(pd.get_option("future.infer_freq_returns_offset"))
 print()
 
+
 def set():
     raise ValueError("set_option")
 
 
 pd.set_option = set
-
 
 
 from importlib.metadata import version as _get_version
