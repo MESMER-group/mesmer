@@ -534,7 +534,8 @@ def draw_auto_regression_correlated(
         - coeffs
 
     covariance : DataArray
-        The (co-)variance array. Must be symmetric and positive-semidefinite.
+        The (co-)variance array. Must be symmetric and positive-semidefinite and
+        named ``"localized_covariance_adjusted"``.
 
     time : int | DataArray | Index
         Defines the number of auto-correlated samples to draw and possibly its
