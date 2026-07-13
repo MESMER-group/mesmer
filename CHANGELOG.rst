@@ -22,6 +22,9 @@ Bug fixes
 Documentation
 ^^^^^^^^^^^^^
 
+- Improve the MESMER-X tutorial and split it into two parts (`#913 <https://github.com/MESMER-group/mesmer/pull/913>`_).
+  By `Mathias Hauser`_.
+
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
