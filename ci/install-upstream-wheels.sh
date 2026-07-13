@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+set -e
+set -u
+set -o pipefail
+
 # forcibly remove packages to avoid artifacts
 conda uninstall -y --force \
   dask \
