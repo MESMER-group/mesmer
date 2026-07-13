@@ -577,6 +577,16 @@ def draw_auto_regression_correlated(
 
     """
 
+    if covariance.name != "localized_covariance_adjusted":
+        raise ValueError(
+            "Expected the covariance to be named `localized_covariance_adjusted` but got"
+            f" '{covariance.name=}'. In case only `localized_covariance` is available"
+            " it can be converted like so:\n"
+            "    localized_covariance_adjusted = mesmer.stats.adjust_covariance_ar1(\n"
+            "        localized_ecov.localized_covariance, local_ar.coeffs\n"
+            "    )\n"
+        )
+
     return _draw_auto_regression_correlated(
         seed,
         ar_params,
