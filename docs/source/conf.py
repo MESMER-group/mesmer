@@ -60,10 +60,16 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    "sphinxext.rediraffe",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "myst_nb",
 ]
+
+
+rediraffe_redirects = {
+    "tutorials/tutorial_mesmer_x.rst": "tutorials/tutorial_mesmer_x_calibrate.rst",
+}
 
 autosummary_generate = True
 

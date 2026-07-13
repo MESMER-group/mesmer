@@ -23,7 +23,8 @@
    tutorials/tutorial_mesmer_emulating_multiple_scenarios
    tutorials/tutorial_mesmer_m_calibrate_multiple_scenarios
    tutorials/tutorial_mesmer_m_emulate_multiple_scenarios
-   tutorials/tutorial_mesmer_x
+   tutorials/tutorial_mesmer_x_calibrate
+   tutorials/tutorial_mesmer_x_emulate
 
 .. toctree::
    :maxdepth: 2
