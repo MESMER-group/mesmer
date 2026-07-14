@@ -399,7 +399,7 @@ def test_adjust_covariance_ar1(random_data_5x3, shape, dims):
     cov = xr.DataArray(cov, dims=("cell_i", "cell_j"))
 
     result = mesmer.stats.adjust_covariance_ar1(cov, ar_coefs)
-
+    assert result.name == "localized_covariance_adjusted"
     expected = np.array(
         [
             [0.005061, -0.00323, -0.010508],
