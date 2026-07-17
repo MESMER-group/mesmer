@@ -69,7 +69,7 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     tas_y = tas_y - ref
 
     # mask ocean, Antarctica and stack the gridpoints
-    tas_stacked_y = mesmer.mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
+    tas_stacked_y = mesmer.mask_and_stack(tas_y, threshold=THRESHOLD_LAND)
 
     # generate monthly data with harmonic model
     harmonic_model = mesmer.stats.HarmonicModel.from_params(hm_params)

@@ -201,7 +201,7 @@ def test_calibrate_mesmer(
     target = map_over_datasets(lambda ds: ds[["tas"]], anoms)
 
     # mask ocean, Antarctica and stack the gridpoints
-    target = mesmer.mask_and_stack(target, threshold_land=THRESHOLD_LAND)
+    target = mesmer.mask_and_stack(target, threshold=THRESHOLD_LAND)
 
     predictors = xr.merge([globmean_smoothed, tas_resid_novolc])
 
