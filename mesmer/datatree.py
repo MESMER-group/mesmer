@@ -407,7 +407,7 @@ def merge(*args, **kwargs):
 
     msg = (
         "use `xr.merge(...)` instead of `mesmer.datatree.merge(...)` (requires xarray "
-        "v2025.11 or leater)"
+        "v2025.11 or later)"
     )
 
     raise NotImplementedError(msg)
