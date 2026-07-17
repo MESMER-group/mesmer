@@ -10,7 +10,10 @@ New Features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
-- Removed the legacy mesmer code  (`#899 <https://github.com/MESMER-group/mesmer/pull/899>`_).
+- The ``covariance`` passed to ``draw_auto_regression_correlated`` must now be named `localized_covariance_adjusted`
+  to avoid passing the non-adjusted covariance (`#912 <https://github.com/MESMER-group/mesmer/pull/912>`_).
+  By `Mathias Hauser`_.
+- Removed the legacy mesmer code (`#899 <https://github.com/MESMER-group/mesmer/pull/899>`_).
   By `Mathias Hauser`_.
 
 Deprecations

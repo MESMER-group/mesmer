@@ -534,7 +534,8 @@ def draw_auto_regression_correlated(
         - coeffs
 
     covariance : DataArray
-        The (co-)variance array. Must be symmetric and positive-semidefinite.
+        The (co-)variance array. Must be symmetric and positive-semidefinite and
+        named ``"localized_covariance_adjusted"``.
 
     time : int | DataArray | Index
         Defines the number of auto-correlated samples to draw and possibly its
@@ -576,6 +577,16 @@ def draw_auto_regression_correlated(
     equal).
 
     """
+
+    if covariance.name != "localized_covariance_adjusted":
+        raise ValueError(
+            "Expected the covariance to be named `localized_covariance_adjusted` but got"
+            f" '{covariance.name=}'. In case only `localized_covariance` is available"
+            " it can be converted like so:\n"
+            "    localized_covariance_adjusted = mesmer.stats.adjust_covariance_ar1(\n"
+            "        localized_ecov.localized_covariance, local_ar.coeffs\n"
+            "    )\n"
+        )
 
     return _draw_auto_regression_correlated(
         seed,

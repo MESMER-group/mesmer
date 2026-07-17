@@ -63,9 +63,9 @@ def adjust_covariance_ar1(
     """
 
     # pass ar_coefs.data - so it will 'just work'
-    covariance_adjusted = _adjust_ecov_ar1_np(covariance, ar_coefs.data)
-    covariance_adjusted.name = "localized_covariance_adjusted"
-    return covariance_adjusted
+    covariance = _adjust_ecov_ar1_np(covariance, ar_coefs.data)
+    covariance.name = "localized_covariance_adjusted"
+    return covariance
 
 
 def _adjust_ecov_ar1_np(covariance, ar_coefs):
