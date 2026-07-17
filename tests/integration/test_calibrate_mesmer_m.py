@@ -145,15 +145,9 @@ def test_calibrate_mesmer_m(
         tas_m_orig, reference_period=REFERENCE_PERIOD
     )
 
-    # create local gridded tas data
-    def mask_and_stack(ds, threshold_land):
-        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
-        ds = mesmer.mask.mask_antarctica(ds)
-        ds = mesmer.grid.stack_lat_lon(ds)
-        return ds
-
-    tas_stacked_y = mask_and_stack(tas_anoms_y, threshold_land=THRESHOLD_LAND)
-    tas_stacked_m = mask_and_stack(tas_anoms_m, threshold_land=THRESHOLD_LAND)
+    # mask ocean, Antarctica and stack the gridpoints
+    tas_stacked_y = mesmer.mask_and_stack(tas_anoms_y, threshold_land=THRESHOLD_LAND)
+    tas_stacked_m = mesmer.mask_and_stack(tas_anoms_m, threshold_land=THRESHOLD_LAND)
 
     if n_ens == "one":
         # NOTE: we load one ensemble member into a DataTree structure and combine

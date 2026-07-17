@@ -197,15 +197,11 @@ def test_calibrate_mesmer(
     )
 
     # train local forced response module
-    # create local gridded data
-    def mask_and_stack(ds, threshold_land):
-        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
-        ds = mesmer.mask.mask_antarctica(ds)
-        ds = mesmer.grid.stack_lat_lon(ds)
-        return ds
 
     target = map_over_datasets(lambda ds: ds[["tas"]], anoms)
-    target = mask_and_stack(target, threshold_land=THRESHOLD_LAND)
+
+    # mask ocean, Antarctica and stack the gridpoints
+    target = mesmer.mask_and_stack(target, threshold_land=THRESHOLD_LAND)
 
     predictors = xr.merge([globmean_smoothed, tas_resid_novolc])
 
