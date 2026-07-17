@@ -22,9 +22,7 @@ class LinAlgWarning(UserWarning):
     pass
 
 
-def mask_and_stack(
-    data: T_DataArraySetTree, threshold_land: float
-) -> T_DataArraySetTree:
+def mask_and_stack(data: T_DataArraySetTree, threshold: float) -> T_DataArraySetTree:
     """mask ocean, Antarctica and stack the gridpoints
 
     helper function which combines ``mask_ocean_fraction``, ``mask_antarctica``, and
@@ -46,7 +44,7 @@ def mask_and_stack(
 
     """
 
-    data = mask_ocean_fraction(data, threshold_land)
+    data = mask_ocean_fraction(data, threshold=threshold)
     data = mask_antarctica(data)
     data = stack_lat_lon(data)
     return data
