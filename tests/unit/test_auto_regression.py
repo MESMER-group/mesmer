@@ -107,6 +107,7 @@ def covariance():
     data = np.eye(2)
 
     covariance = xr.DataArray(data, dims=("gridcell_i", "gridcell_j"))
+    covariance.name = "localized_covariance_adjusted"
 
     return covariance
 
@@ -277,6 +278,25 @@ def test_draw_auto_regression_uncorrelated_coords(ar_params_1D, dim, coords):
 
     assert result[dim].size == coords.size
     np.testing.assert_equal(result[dim].values, coords.values)
+
+
+def test_draw_auto_regression_correlated_cov_wrong_name(ar_params_2D, covariance):
+
+    covariance.name = "covariance"
+
+    with pytest.raises(
+        ValueError,
+        match="Expected the covariance to be named `localized_covariance_adjusted`",
+    ):
+
+        mesmer.stats.draw_auto_regression_correlated(
+            ar_params_2D,
+            covariance,
+            time=1,
+            realisation=1,
+            seed=0,
+            buffer=0,
+        )
 
 
 @pytest.mark.parametrize("drop", ("intercept", "coeffs"))
