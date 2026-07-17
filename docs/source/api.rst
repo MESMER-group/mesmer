@@ -151,6 +151,13 @@ Transform conditional distribution
 Data handling
 =============
 
+Helper functions
+
+.. autosummary::
+   :toctree: generated/
+
+   ~mask_and_stack
+
 Example and test data
 ---------------------
 
