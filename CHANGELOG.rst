@@ -7,6 +7,11 @@ v1.1.0 - unreleased
 New Features
 ^^^^^^^^^^^^
 
+- Added ``mask_and_stack`` helper function, which combines `mask_ocean_fraction``, ``mask_antarctica``, and
+  ``stack_lat_lon``. Use the individual functions if your grid does not have the standard dimension and coordinate names
+  (`#916 <https://github.com/MESMER-group/mesmer/pull/916>`_).
+  By `Mathias Hauser`_.
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 

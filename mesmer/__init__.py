@@ -26,6 +26,7 @@ from mesmer import (
 )
 from mesmer._core import _data as data
 from mesmer._core.options import get_options, set_options
+from mesmer._core.utils import mask_and_stack
 
 __all__ = [
     "_core",
@@ -37,6 +38,7 @@ __all__ = [
     "geospatial",
     "get_options",
     "grid",
+    "mask_and_stack",
     "mask",
     "resample",
     "set_options",

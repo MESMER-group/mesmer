@@ -7,8 +7,8 @@ import mesmer
 
 def data_lon_lat(datatype, x_coords="lon", y_coords="lat"):
 
-    lon = np.arange(0.5, 360, 2)
-    lat = np.arange(90, -91, -2)
+    lon = np.arange(0.5, 360, 4)
+    lat = np.arange(90, -91, -4)
 
     data = np.random.randn(*lat.shape, *lon.shape)
 

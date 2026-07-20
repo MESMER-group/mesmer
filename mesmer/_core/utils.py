@@ -9,6 +9,10 @@ import numpy as np
 import threadpoolctl
 import xarray as xr
 
+from mesmer._core.types import T_DataArraySetTree
+from mesmer.grid import stack_lat_lon
+from mesmer.mask import mask_antarctica, mask_ocean_fraction
+
 
 class OptimizeWarning(UserWarning):
     pass
@@ -16,6 +20,34 @@ class OptimizeWarning(UserWarning):
 
 class LinAlgWarning(UserWarning):
     pass
+
+
+def mask_and_stack(data: T_DataArraySetTree, threshold: float) -> T_DataArraySetTree:
+    """mask ocean, Antarctica and stack the gridpoints
+
+    helper function which combines ``mask_ocean_fraction``, ``mask_antarctica``, and
+    ``stack_lat_lon``. Use the individual functions if your grid does not have the
+    standard dimension and coordinate names.
+
+    Parameters
+    ----------
+    data : xr.DataArray | xr.Dataset | xr.DataTree
+        Data to mask and stack.
+    threshold : float
+        Threshold above which land fraction to consider a grid point as a land grid
+        point. Must be must be between 0 and 1 inclusive.
+
+    Returns
+    -------
+    data : xr.DataArray | xr.Dataset | xr.DataTree
+        Array converted to a regular lat-lon grid.
+
+    """
+
+    data = mask_ocean_fraction(data, threshold=threshold)
+    data = mask_antarctica(data)
+    data = stack_lat_lon(data)
+    return data
 
 
 def _ignore_warnings(messages: list[str] | None = None):

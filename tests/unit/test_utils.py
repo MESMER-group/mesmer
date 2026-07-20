@@ -8,6 +8,9 @@ from packaging.version import Version
 
 import mesmer._core.utils
 from unit import assert_no_warnings
+from unit.test_weighted import (
+    data_lon_lat,
+)  # TODO: unify with the one in test_mask and move to __init__.py
 
 PANDAS_GE_300 = Version(Version(pd.__version__).base_version) >= Version("3.0.0")
 
@@ -43,6 +46,20 @@ def make_dummy_monthly_data(freq, calendar="standard"):
         np.arange(periods), dims=("time"), coords={"time": time}, name="data"
     )
     return data
+
+
+def test_mask_and_stack(datatype):
+
+    data = data_lon_lat(datatype)
+    threshold = 0.33
+
+    result = mesmer.mask_and_stack(data, threshold=threshold)
+
+    expected = mesmer.mask.mask_ocean_fraction(data, threshold=threshold)
+    expected = mesmer.mask.mask_antarctica(expected)
+    expected = mesmer.grid.stack_lat_lon(expected)
+
+    xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.parametrize("freq_y", ["YM", "YS", "YE", "YS-JUL", "YS-NOV"])

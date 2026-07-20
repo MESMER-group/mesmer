@@ -29,8 +29,8 @@ def data_lon_lat(
     datatype: Literal["DataArray", "Dataset", "DataTree"], x_dim="lon", y_dim="lat"
 ) -> xr.DataArray | xr.Dataset | xr.DataTree:
 
-    lon = np.arange(0.5, 360, 2)
-    lat = np.arange(90, -91, -2)
+    lon = np.arange(0.5, 360, 4)
+    lat = np.arange(90, -91, -4)
     time = np.arange(3)
 
     data = np.random.randn(*time.shape, *lat.shape, *lon.shape)

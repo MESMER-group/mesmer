@@ -184,15 +184,8 @@ def test_calibrate_mesmer_x(
     # make global mean of pred data
     pred_data = mesmer.weighted.global_mean(pred_data)
 
-    # stack target data
-    def mask_and_stack(ds, threshold_land):
-        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
-        ds = mesmer.mask.mask_antarctica(ds)
-        ds = mesmer.grid.stack_lat_lon(ds, stack_dim="gridpoint")
-        return ds
-
-    # mask_and_stack_dt = map_over_subtree(mask_and_stack)
-    targ_data = mask_and_stack(targ_data, threshold_land=THRESHOLD_LAND)
+    # mask ocean, Antarctica and stack the gridpoints
+    targ_data = mesmer.mask_and_stack(targ_data, threshold=THRESHOLD_LAND)
 
     # stack datasets
     # weights

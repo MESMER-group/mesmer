@@ -64,15 +64,12 @@ def test_make_emulations_mesmer_m(test_data_root_dir, update_expected_files):
     m_time = xr.open_dataset(time_file, decode_times=time_coder)
 
     # preprocess yearly data
-    def mask_and_stack(ds, threshold_land):
-        ds = mesmer.mask.mask_ocean_fraction(ds, threshold_land)
-        ds = mesmer.mask.mask_antarctica(ds)
-        ds = mesmer.grid.stack_lat_lon(ds)
-        return ds
 
     ref = tas_y.sel(time=REFERENCE_PERIOD).mean("time", keep_attrs=True)
     tas_y = tas_y - ref
-    tas_stacked_y = mask_and_stack(tas_y, threshold_land=THRESHOLD_LAND)
+
+    # mask ocean, Antarctica and stack the gridpoints
+    tas_stacked_y = mesmer.mask_and_stack(tas_y, threshold=THRESHOLD_LAND)
 
     # generate monthly data with harmonic model
     harmonic_model = mesmer.stats.HarmonicModel.from_params(hm_params)
