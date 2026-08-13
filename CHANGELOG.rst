@@ -36,6 +36,8 @@ Documentation
 Internal Changes
 ^^^^^^^^^^^^^^^^
 
+- Simplify filefinder usage  (`#921 <https://github.com/MESMER-group/mesmer/pull/921>`_).
+  By `Mathias Hauser`_.
 
 v1.0.0 - 13.05.2026
 -------------------
