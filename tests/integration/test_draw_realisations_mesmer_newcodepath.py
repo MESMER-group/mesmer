@@ -1,6 +1,6 @@
+import filefisher
 import pytest
 import xarray as xr
-from filefisher import FileFinder
 
 import mesmer
 from mesmer.datatree import map_over_datasets
@@ -18,7 +18,7 @@ def load_and_prepare_forcing_data(scenarios, use_hfds):
     # define paths and load data
     cmip_data_path = mesmer.example_data.cmip6_ng_path()
 
-    CMIP_FILEFINDER = FileFinder(
+    CMIP_FILEFINDER = filefisher.FileFinder(
         path_pattern=str(cmip_data_path / "{variable}/{time_res}/{resolution}"),
         file_pattern="{variable}_{time_res}_{model}_{scenario}_{member}_{resolution}.nc",
     )
@@ -44,16 +44,11 @@ def load_and_prepare_forcing_data(scenarios, use_hfds):
     )
 
     # load data for each scenario
-    def _get_hist_path(meta, fc_hist):
+    def _get_hist_path(meta, fc_hist: filefisher.FileContainer):
 
         meta_hist = meta | {"scenario": "historical"}
 
-        fc = fc_hist.search(**meta_hist)
-
-        if len(fc) == 0:
-            raise FileNotFoundError("no hist file found")
-        if len(fc) != 1:
-            raise ValueError("more than one hist file found")
+        fc = fc_hist.search_single(**meta_hist)
 
         return fc.paths.pop()
 
@@ -197,7 +192,7 @@ def test_make_realisations(
 
     test_path = test_data_root_dir / "output" / outname
 
-    PARAM_FILEFINDER = FileFinder(
+    PARAM_FILEFINDER = filefisher.FileFinder(
         path_pattern=test_path / "test-params/{module}/",
         file_pattern="params_{module}_{esm}_{scen}.nc",
     )
