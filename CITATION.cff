@@ -1,0 +1,100 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software itself and the accompanying paper."
+title: "MESMER"
+abstract: >-
+  MESMER (Modular Earth System Model Emulator with spatially Resolved output) is
+  a Python package for spatially resolved climate model emulation. It translates
+  annual mean global climate trajectories into gridded fields of selected climate
+  variables over land, accounting for both the forced local response and internal
+  variability.
+type: software
+version: 1.0.0
+doi: 10.5281/zenodo.20156753
+license: GPL-3.0-or-later
+repository-code: "https://github.com/MESMER-group/mesmer"
+url: "https://mesmer-emulator.readthedocs.io/"
+keywords:
+  - climate emulator
+  - Earth system model
+  - CMIP6
+  - climate extremes
+  - Python
+authors:
+  - family-names: "Hauser"
+    given-names: "Mathias"
+    orcid: "https://orcid.org/0000-0002-0057-4878"
+    affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+  - family-names: "Bauer"
+    given-names: "Victoria M."
+    orcid: "https://orcid.org/0009-0000-9675-5958"
+    affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+  - family-names: "Quilcaille"
+    given-names: "Yann"
+    orcid: "https://orcid.org/0000-0002-1474-0144"
+    affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+  - family-names: "Schöngart"
+    given-names: "Sarah"
+    orcid: "https://orcid.org/0009-0002-2030-9139"
+    affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+  - family-names: "Beusch"
+    given-names: "Lea"
+  - family-names: "Nicholls"
+    given-names: "Zebedee"
+  - family-names: "Nath"
+    given-names: "Shruti"
+  - family-names: "Pierini"
+    given-names: "Lorenzo"
+  - family-names: "Schwaab"
+    given-names: "Jonas"
+  - family-names: "Gudmundsson"
+    given-names: "Lukas"
+    orcid: "https://orcid.org/0000-0003-3539-8621"
+    affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+  - family-names: "Seneviratne"
+    given-names: "Sonia I."
+    orcid: "https://orcid.org/0000-0001-9528-2917"
+    affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+preferred-citation:
+  type: article
+  title: >-
+    MESMER v1.0.0: consolidating the modular Earth system model emulator into a
+    sustainable research software package
+  authors:
+    - family-names: "Bauer"
+      given-names: "Victoria M."
+      orcid: "https://orcid.org/0009-0000-9675-5958"
+      affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+      email: "victoria.bauer@env.ethz.ch"
+    - family-names: "Hauser"
+      given-names: "Mathias"
+      orcid: "https://orcid.org/0000-0002-0057-4878"
+      affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+    - family-names: "Quilcaille"
+      given-names: "Yann"
+      orcid: "https://orcid.org/0000-0002-1474-0144"
+      affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+    - family-names: "Schöngart"
+      given-names: "Sarah"
+      orcid: "https://orcid.org/0009-0002-2030-9139"
+      affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+    - family-names: "Gudmundsson"
+      given-names: "Lukas"
+      orcid: "https://orcid.org/0000-0003-3539-8621"
+      affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+    - family-names: "Seneviratne"
+      given-names: "Sonia I."
+      orcid: "https://orcid.org/0000-0001-9528-2917"
+      affiliation: "Institute for Atmospheric and Climate Science, ETH Zurich, Switzerland"
+  journal: "Geoscientific Model Development"
+  volume: 19
+  issue: 12
+  start: 5669
+  end: 5688
+  year: 2026
+  month: 6
+  issn: "1991-959X"
+  doi: 10.5194/gmd-19-5669-2026
+  url: "https://gmd.copernicus.org/articles/19/5669/2026/"
+  license: CC-BY-4.0
+  publisher:
+    name: "Copernicus Publications"
