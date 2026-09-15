@@ -65,6 +65,8 @@ _REGISTRY = {
     "cmip6-ng/tas/ann/g025/tas_ann_IPSL-CM6A-LR_ssp126_r1i1p1f1_g025.nc": "b36d2846d9db643ea0c674c565b2180e60380485007e6759b1a58502ada5917b",
     "cmip6-ng/tas/ann/g025/tas_ann_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc": "813de4f222f48f1dc817339f935e453b0fb8418159383383ea1d8938dc2a963b",
     "cmip6-ng/tas/ann/g025/tas_ann_IPSL-CM6A-LR_historical_r1i1p1f1_g025.nc": "6bceba2da6b44f871b8a0e62af6511a628b2722a4fbbc2e1b599dd9ac31d1fa1",
+    "cmip6-ng/pr/mon/g025/pr_mon_IPSL-CM6A-LR_ssp585_r1i1p1f1_g025.nc": "d83b4df899edce16c41421c78706f3fd1b015e7d89c1b9978c62b774bf62cdda",
+    "cmip6-ng/pr/mon/g025/pr_mon_IPSL-CM6A-LR_historical_r1i1p1f1_g025.nc": "7731ed77dd5d311b7a719c20aff20ed6717eff89caa9d5be7a9f3030f7e1dfbf",
 }
 
 
